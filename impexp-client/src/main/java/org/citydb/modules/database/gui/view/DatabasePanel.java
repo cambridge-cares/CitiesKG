@@ -282,6 +282,9 @@ public class DatabasePanel extends JPanel implements ConnectionViewHandler, Even
 					case POSTGIS:
 						portText.setValue(5432);
 						break;
+					case BLAZE:
+						portText.setValue(8081);
+						break;
 					}
 				}
 			}
@@ -366,6 +369,13 @@ public class DatabasePanel extends JPanel implements ConnectionViewHandler, Even
 					break;
 				case POSTGIS:
 					portText.setValue(5432);
+					break;
+				case BLAZE:
+					portText.setValue(8081);
+					userText.setText("anonymous");
+					passwordText.setText("anonymous");
+					serverText.setText("127.0.0.1");
+					databaseText.setText("Default Graph");
 					break;
 				}
 			}

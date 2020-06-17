@@ -28,6 +28,7 @@
 package org.citydb.database.adapter;
 
 import org.citydb.config.project.database.DatabaseType;
+import org.citydb.database.adapter.blazegraph.BlazegraphAdapter;
 import org.citydb.database.adapter.oracle.OracleAdapter;
 import org.citydb.database.adapter.postgis.PostGISAdapter;
 
@@ -51,6 +52,8 @@ public class DatabaseAdapterFactory {
 			return new OracleAdapter();
 		case POSTGIS:
 			return new PostGISAdapter();
+		case BLAZE:
+			return new BlazegraphAdapter();
 		}
 		
 		return null;

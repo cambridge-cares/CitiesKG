@@ -37,7 +37,9 @@ public enum DatabaseType {
 	@XmlEnumValue("Oracle")
 	ORACLE("Oracle"),
 	@XmlEnumValue("PostGIS")
-	POSTGIS("PostgreSQL/PostGIS");
+	POSTGIS("PostgreSQL/PostGIS"),
+	@XmlEnumValue("Blaze")
+	BLAZE("Blazegraph");
 
 	private String value;
 
