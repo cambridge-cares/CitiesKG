@@ -7,9 +7,12 @@ import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.AbstractUtilAdapter;
 import org.citydb.database.adapter.IndexStatusInfo;
 import org.citydb.database.connection.DatabaseMetaData;
+import org.citydb.database.version.DatabaseVersion;
 
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.List;
 
 public class UtilAdapter extends AbstractUtilAdapter {
@@ -21,6 +24,13 @@ public class UtilAdapter extends AbstractUtilAdapter {
     @Override
     protected void getCityDBVersion(DatabaseMetaData metaData, String schema, Connection connection) throws SQLException {
 
+        //@TODO: Replace those values with the ones actually retrieved from the database
+        String productVersion = "4.0.x";
+        int major = 4;
+        int minor = 0;
+        int revision = 0;
+
+        metaData.setCityDBVersion(new DatabaseVersion(major, minor, revision, productVersion));
     }
 
     @Override
@@ -70,7 +80,9 @@ public class UtilAdapter extends AbstractUtilAdapter {
 
     @Override
     protected IndexStatusInfo manageIndexes(String operation, IndexStatusInfo.IndexType type, String schema, Connection connection) throws SQLException {
-        return null;
+        //@TODO: replace with implementation retrieving values from database
+        String[] result = new String[] {};
+        return IndexStatusInfo.createFromDatabaseQuery(result, type);
     }
 
     @Override
