@@ -10,12 +10,14 @@ import java.net.URISyntaxException;
 public class BlazegraphAdapter extends AbstractDatabaseAdapter {
 
     private final static String PROTOCOL = "http";
-    private final static String DRIVER_JENA_CLASS = "org.apache.jena.jdbc.JenaDriver";
+    private final static String DRIVER_JENA_CLASS = "org.apache.jena.jdbc.remote.RemoteEndpointDriver";
     private final static String DRIVER_JENA_REMOTE_ENDPOINT = "jdbc:jena:remote:";
     private final static String SPARQL_REMOTE_QUERY = "query=";
     private final static String SPARQL_REMOTE_UPDATE = "update=";
 
     public BlazegraphAdapter() {
+        sqlAdapter = new SQLAdapter(this);
+        utilAdapter = new UtilAdapter(this);
         schemaAdapter = new SchemaManagerAdapter(this);
     }
 
