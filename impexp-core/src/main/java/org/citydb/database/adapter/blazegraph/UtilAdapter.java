@@ -9,10 +9,8 @@ import org.citydb.database.adapter.IndexStatusInfo;
 import org.citydb.database.connection.DatabaseMetaData;
 import org.citydb.database.version.DatabaseVersion;
 
-import java.sql.Array;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.List;
 
 public class UtilAdapter extends AbstractUtilAdapter {
