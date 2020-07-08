@@ -19,6 +19,7 @@ public class BlazegraphAdapter extends AbstractDatabaseAdapter {
         sqlAdapter = new SQLAdapter(this);
         utilAdapter = new UtilAdapter(this);
         schemaAdapter = new SchemaManagerAdapter(this);
+        geometryAdapter = new GeometryConverterAdapter(this);
     }
 
     @Override
