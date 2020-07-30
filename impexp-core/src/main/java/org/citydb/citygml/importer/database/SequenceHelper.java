@@ -28,28 +28,55 @@
 package org.citydb.citygml.importer.database;
 
 import org.citydb.config.Config;
+import org.citydb.config.project.database.DatabaseType;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
+import org.citydb.database.schema.SequenceEnum;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SequenceHelper {
 	private final Connection connection;
 	private final AbstractDatabaseAdapter databaseAdapter;
 
 	private HashMap<String, PreparedStatement> psIdMap;
+	private ConcurrentHashMap<String, Long> sequences;
 
 	public SequenceHelper(Connection connection, AbstractDatabaseAdapter databaseAdapter, Config config) throws SQLException {
 		this.connection = connection;
 		this.databaseAdapter = databaseAdapter;
 
 		psIdMap = new HashMap<String, PreparedStatement>();
+		sequences = new ConcurrentHashMap<String, Long>();
+		updateSequences();
+	}
+
+	private void updateSequences() {
+		if (databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value())) {
+			long nextSequenceValue;
+			String sequenceKey = SequenceEnum.CITYOBJECT_ID_SEQ.toString();
+			if (sequences.isEmpty()) {
+			/* @todo: replace this with fetching last sequence number from the database
+			     for now start sequencing always from fresh */
+				nextSequenceValue = 1;
+			} else {
+				nextSequenceValue = sequences.get(sequenceKey) + 1;
+			}
+			sequences.put(sequenceKey, Long.valueOf(nextSequenceValue));
+			//@todo store sequence number in database
+		}
 	}
 	
 	public long getNextSequenceValue(String sequence) throws SQLException {
+		if (databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value())) {
+			long value = sequences.get(SequenceEnum.CITYOBJECT_ID_SEQ.toString());
+			updateSequences();
+			return value;
+		}
 		PreparedStatement stmt = psIdMap.get(sequence);
 		if (stmt == null) {
 			StringBuilder query = new StringBuilder("select ").append(databaseAdapter.getSQLAdapter().getNextSequenceValue(sequence));
