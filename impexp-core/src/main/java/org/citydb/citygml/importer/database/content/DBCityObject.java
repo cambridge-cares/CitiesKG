@@ -27,6 +27,7 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.ade.model.LineageProperty;
 import org.citydb.ade.model.ReasonForUpdateProperty;
 import org.citydb.ade.model.UpdatingPersonProperty;
@@ -37,6 +38,7 @@ import org.citydb.citygml.importer.util.LocalAppearanceHandler;
 import org.citydb.citygml.importer.util.LocalGeometryXlinkResolver;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.GeometryObject;
+import org.citydb.config.project.database.DatabaseType;
 import org.citydb.config.project.importer.CreationDateMode;
 import org.citydb.config.project.importer.TerminationDateMode;
 import org.citydb.database.connection.DatabaseConnectionPool;
@@ -165,6 +167,7 @@ public class DBCityObject implements DBImporter {
 		boolean isFeature = object instanceof AbstractFeature;
 		boolean isCityObject = object instanceof AbstractCityObject;
 		boolean isGlobal = !object.isSetParent();
+		boolean isBlazegraph = importer.getDatabaseAdapter().getDatabaseType().value().equals(DatabaseType.BLAZE.value());
 		ZonedDateTime now = ZonedDateTime.now();
 
 		// primary id
@@ -213,6 +216,9 @@ public class DBCityObject implements DBImporter {
 			valueJoiner.join(object.getName(), Code::getValue, Code::getCodeSpace);
 			psCityObject.setString(4, valueJoiner.result(0));
 			psCityObject.setString(5, valueJoiner.result(1));
+		} else if (isBlazegraph) {
+			psCityObject.setObject(4, NodeFactory.createBlankNode());
+			psCityObject.setObject(5, NodeFactory.createBlankNode());
 		} else {
 			psCityObject.setNull(4, Types.VARCHAR);
 			psCityObject.setNull(5, Types.VARCHAR);
@@ -225,6 +231,8 @@ public class DBCityObject implements DBImporter {
 				description = description.trim();
 
 			psCityObject.setString(6, description);
+		} else if (isBlazegraph) {
+			psCityObject.setObject(6, NodeFactory.createBlankNode());
 		} else {
 			psCityObject.setNull(6, Types.VARCHAR);
 		}
@@ -251,6 +259,9 @@ public class DBCityObject implements DBImporter {
 
 			GeometryObject envelope = GeometryObject.createPolygon(coordinates, 3, dbSrid);
 			psCityObject.setObject(7, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(envelope, batchConn));
+		} 	else if (isBlazegraph) {
+			psCityObject.setObject(7, NodeFactory.createBlankNode(),
+					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType());
 		} else {
 			psCityObject.setNull(7, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(), 
 					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
@@ -277,22 +288,32 @@ public class DBCityObject implements DBImporter {
 				terminationDate = terminationDate.withZoneSameInstant(ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS);
 		}
 
-		if (terminationDate == null)
-			psCityObject.setNull(9, Types.TIMESTAMP);
-		else
+		if (terminationDate == null) {
+			if (isBlazegraph) {
+				psCityObject.setObject(9, NodeFactory.createBlankNode());
+			} else {
+				psCityObject.setNull(9, Types.TIMESTAMP);
+			}
+		} else {
 			psCityObject.setObject(9, terminationDate.toOffsetDateTime());
-
+		}
 		// core:relativeToTerrain
-		if (isCityObject && ((AbstractCityObject)object).isSetRelativeToTerrain())
-			psCityObject.setString(10, ((AbstractCityObject)object).getRelativeToTerrain().getValue());
-		else
+		if (isCityObject && ((AbstractCityObject)object).isSetRelativeToTerrain()) {
+			psCityObject.setString(10, ((AbstractCityObject) object).getRelativeToTerrain().getValue());
+		} else if (isBlazegraph) {
+			psCityObject.setObject(10, NodeFactory.createBlankNode());
+		} else {
 			psCityObject.setNull(10, Types.VARCHAR);
+		}
 
 		// core:relativeToWater
-		if (isCityObject && ((AbstractCityObject)object).isSetRelativeToWater())
-			psCityObject.setString(11, ((AbstractCityObject)object).getRelativeToWater().getValue());
-		else
+		if (isCityObject && ((AbstractCityObject)object).isSetRelativeToWater()) {
+			psCityObject.setString(11, ((AbstractCityObject) object).getRelativeToWater().getValue());
+		} else if (isBlazegraph) {
+			psCityObject.setObject(11, NodeFactory.createBlankNode());
+		} else {
 			psCityObject.setNull(11, Types.VARCHAR);
+		}
 
 		// 3DCityDB metadata
 		String updatingPerson = this.updatingPerson;
