@@ -53,7 +53,9 @@ public class DBAppearToSurfaceData implements DBImporter {
 
 	public void doImport(long surfaceDataId, long appearanceId) throws CityGMLImportException, SQLException {
 		psAppearToSurfaceData.setLong(1, surfaceDataId);
-		psAppearToSurfaceData.setLong(2, appearanceId);
+		if (!importer.isBlazegraph()) {
+			psAppearToSurfaceData.setLong(2, appearanceId);
+		}
 
 		psAppearToSurfaceData.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())

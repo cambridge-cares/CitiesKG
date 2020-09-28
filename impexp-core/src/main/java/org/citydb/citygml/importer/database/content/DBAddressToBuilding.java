@@ -53,7 +53,9 @@ public class DBAddressToBuilding implements DBImporter {
 
 	protected void doImport(long addressId, long buildingId) throws CityGMLImportException, SQLException {
 		psAddressToBuilding.setLong(1, buildingId);
-		psAddressToBuilding.setLong(2, addressId);
+		if (!importer.isBlazegraph()) {
+			psAddressToBuilding.setLong(2, addressId);
+		}
 
 		psAddressToBuilding.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())

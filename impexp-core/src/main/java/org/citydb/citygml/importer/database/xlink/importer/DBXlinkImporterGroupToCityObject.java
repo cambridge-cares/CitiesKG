@@ -32,6 +32,7 @@ import java.sql.SQLException;
 
 import org.citydb.citygml.common.database.cache.CacheTable;
 import org.citydb.citygml.common.database.xlink.DBXlinkGroupToCityObject;
+import org.citydb.config.project.database.DatabaseType;
 
 public class DBXlinkImporterGroupToCityObject implements DBXlinkImporter {
 	private final DBXlinkImporterManager xlinkImporterManager;
@@ -47,14 +48,16 @@ public class DBXlinkImporterGroupToCityObject implements DBXlinkImporter {
 	}
 	
 	public boolean insert(DBXlinkGroupToCityObject xlinkEntry) throws SQLException {
-		psXlink.setLong(1, xlinkEntry.getGroupId());
-		psXlink.setString(2, xlinkEntry.getGmlId());		
-		psXlink.setInt(3, xlinkEntry.isParent() ? 1 : 0);		
-		psXlink.setString(4, xlinkEntry.getRole());
+		if (!xlinkImporterManager.getCacheAdapter().getDatabaseType().value().equals(DatabaseType.BLAZE.value())) {
+			psXlink.setLong(1, xlinkEntry.getGroupId());
+			psXlink.setString(2, xlinkEntry.getGmlId());
+			psXlink.setInt(3, xlinkEntry.isParent() ? 1 : 0);
+			psXlink.setString(4, xlinkEntry.getRole());
 
-		psXlink.addBatch();
-		if (++batchCounter == xlinkImporterManager.getCacheAdapter().getMaxBatchSize())
-			executeBatch();
+			psXlink.addBatch();
+			if (++batchCounter == xlinkImporterManager.getCacheAdapter().getMaxBatchSize())
+				executeBatch();
+		}
 
 		return true;
 	}

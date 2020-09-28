@@ -32,6 +32,7 @@ import java.sql.SQLException;
 
 import org.citydb.citygml.common.database.cache.CacheTable;
 import org.citydb.citygml.common.database.xlink.DBXlinkLinearRing;
+import org.citydb.config.project.database.DatabaseType;
 
 public class DBXlinkImporterLinearRing implements DBXlinkImporter {
 	private final DBXlinkImporterManager xlinkImporterManager;
@@ -47,15 +48,16 @@ public class DBXlinkImporterLinearRing implements DBXlinkImporter {
 	}
 
 	public boolean insert(DBXlinkLinearRing xlinkEntry) throws SQLException {
-		psLinearRing.setString(1, xlinkEntry.getGmlId());
-		psLinearRing.setLong(2, xlinkEntry.getParentId());
-		psLinearRing.setLong(3, xlinkEntry.getRingNo());
-		psLinearRing.setInt(4, xlinkEntry.isReverse() ? 1 : 0);
+		if (!xlinkImporterManager.getCacheAdapter().getDatabaseType().value().equals(DatabaseType.BLAZE.value())) {
+			psLinearRing.setString(1, xlinkEntry.getGmlId());
+			psLinearRing.setLong(2, xlinkEntry.getParentId());
+			psLinearRing.setLong(3, xlinkEntry.getRingNo());
+			psLinearRing.setInt(4, xlinkEntry.isReverse() ? 1 : 0);
 
-		psLinearRing.addBatch();
-		if (++batchCounter == xlinkImporterManager.getCacheAdapter().getMaxBatchSize())
-			executeBatch();
-
+			psLinearRing.addBatch();
+			if (++batchCounter == xlinkImporterManager.getCacheAdapter().getMaxBatchSize())
+				executeBatch();
+		}
 		return true;
 	}
 

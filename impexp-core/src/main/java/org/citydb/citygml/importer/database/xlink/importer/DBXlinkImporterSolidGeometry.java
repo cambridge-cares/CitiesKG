@@ -32,6 +32,7 @@ import java.sql.SQLException;
 
 import org.citydb.citygml.common.database.cache.CacheTable;
 import org.citydb.citygml.common.database.xlink.DBXlinkSolidGeometry;
+import org.citydb.config.project.database.DatabaseType;
 
 public class DBXlinkImporterSolidGeometry implements DBXlinkImporter {
 	private final DBXlinkImporterManager xlinkImporterManager;
@@ -46,11 +47,13 @@ public class DBXlinkImporterSolidGeometry implements DBXlinkImporter {
 	}
 	
 	public boolean insert(DBXlinkSolidGeometry xlinkEntry) throws SQLException {
-		psXlink.setLong(1, xlinkEntry.getId());
-		
-		psXlink.addBatch();
-		if (++batchCounter == xlinkImporterManager.getCacheAdapter().getMaxBatchSize())
-			executeBatch();
+		if (!xlinkImporterManager.getCacheAdapter().getDatabaseType().value().equals(DatabaseType.BLAZE.value())) {
+			psXlink.setLong(1, xlinkEntry.getId());
+
+			psXlink.addBatch();
+			if (++batchCounter == xlinkImporterManager.getCacheAdapter().getMaxBatchSize())
+				executeBatch();
+		}
 
 		return true;
 	}

@@ -32,8 +32,10 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
+import org.citydb.config.project.database.DatabaseType;
 import org.citydb.database.schema.SequenceEnum;
 import org.citydb.database.schema.TableEnum;
 import org.citygml4j.model.citygml.core.ExternalObject;
@@ -57,6 +59,7 @@ public class DBExternalReference implements DBImporter {
 	}
 
 	protected void doImport(ExternalReference externalReference, long cityObjectId) throws CityGMLImportException, SQLException {
+		boolean isBlazegraph = importer.getDatabaseAdapter().getDatabaseType().value().equals(DatabaseType.BLAZE.value());
 		// core:informationSystem
 		if (externalReference.isSetInformationSystem())
 			psExternalReference.setString(1, externalReference.getInformationSystem());
@@ -70,6 +73,8 @@ public class DBExternalReference implements DBImporter {
 			// core:name
 			if (externalObject.isSetName()) {
 				psExternalReference.setString(2, externalObject.getName());
+			} else if (isBlazegraph) {
+				psExternalReference.setObject(2, NodeFactory.createBlankNode());
 			} else {
 				psExternalReference.setNull(2, Types.VARCHAR);
 			}
@@ -77,16 +82,23 @@ public class DBExternalReference implements DBImporter {
 			// core:uri
 			if (externalObject.isSetUri()) {
 				psExternalReference.setString(3, externalObject.getUri());
+			} else if (isBlazegraph) {
+				psExternalReference.setObject(3, NodeFactory.createBlankNode());
 			} else {
 				psExternalReference.setNull(3, Types.VARCHAR);
 			}
+		} else if (isBlazegraph) {
+			psExternalReference.setObject(2, NodeFactory.createBlankNode());
+			psExternalReference.setObject(3, NodeFactory.createBlankNode());
 		} else {
 			psExternalReference.setNull(2, Types.VARCHAR);
 			psExternalReference.setNull(3, Types.VARCHAR);
 		}
 
 		// cityObjectId
-		psExternalReference.setLong(4, cityObjectId);
+		if (!isBlazegraph) {
+			psExternalReference.setLong(4, cityObjectId);
+		}
 
 		psExternalReference.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())

@@ -29,6 +29,7 @@ package org.citydb.citygml.common.database.cache;
 
 import org.citydb.citygml.common.database.cache.model.CacheTableModel;
 import org.citydb.config.Config;
+import org.citydb.config.project.database.DatabaseType;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.h2.H2Adapter;
 import org.citydb.database.connection.DatabaseConnectionPool;
@@ -103,7 +104,7 @@ public class CacheTableManager {
 
 	private CacheTable createCacheTable(CacheTableModel model, Connection connection, AbstractDatabaseAdapter adapter) throws SQLException {
 		CacheTable cacheTable = getOrCreateCacheTable(model, adapter, connection);		
-		if (!cacheTable.isCreated())
+		if (!cacheTable.isCreated() && ! adapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value()))
 			cacheTable.create();
 
 		return cacheTable;

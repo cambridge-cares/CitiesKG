@@ -58,9 +58,15 @@ public class DBTextureParam implements DBImporter {
 	protected void doImport(SurfaceGeometryTarget target, long surfaceDataId) throws CityGMLImportException, SQLException {
 		psTextureParam.setLong(1, target.getSurfaceGeometryId());
 		psTextureParam.setInt(2, 1);
-		psTextureParam.setNull(3, Types.VARCHAR);
+		if (importer.isBlazegraph())  {
+			setBlankNode(psTextureParam, 3);
+		} else {
+			psTextureParam.setNull(3, Types.VARCHAR);
+		}
 		psTextureParam.setObject(4, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(target.compileTextureCoordinates(), batchConn));
-		psTextureParam.setLong(5, surfaceDataId);
+		if (!importer.isBlazegraph()) {
+			psTextureParam.setLong(5, surfaceDataId);
+		}
 
 		addBatch();
 	}
@@ -69,9 +75,13 @@ public class DBTextureParam implements DBImporter {
 		psTextureParam.setLong(1, surfaceGeometryId);
 		psTextureParam.setInt(2, 1);
 		psTextureParam.setString(3, worldToTexture);
-		psTextureParam.setNull(4, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
-				importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
-		psTextureParam.setLong(5, surfaceDataId);
+		if (importer.isBlazegraph())  {
+			setBlankNode(psTextureParam, 4);
+		} else {
+			psTextureParam.setNull(4, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
+					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
+			psTextureParam.setLong(5, surfaceDataId);
+		}
 
 		addBatch();
 	}
@@ -79,10 +89,16 @@ public class DBTextureParam implements DBImporter {
 	protected void doImport(long surfaceDataId, long surfaceGeometryId) throws CityGMLImportException, SQLException {
 		psTextureParam.setLong(1, surfaceGeometryId);
 		psTextureParam.setInt(2, 0);
-		psTextureParam.setNull(3, Types.VARCHAR);
-		psTextureParam.setNull(4, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
-				importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
-		psTextureParam.setLong(5, surfaceDataId);
+		if (importer.isBlazegraph())  {
+			setBlankNode(psTextureParam, 3);
+			setBlankNode(psTextureParam, 4);
+		} else {
+			psTextureParam.setNull(3, Types.VARCHAR);
+			psTextureParam.setNull(4, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
+					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
+			psTextureParam.setLong(5, surfaceDataId);
+		}
+
 
 		addBatch();
 	}
@@ -104,6 +120,13 @@ public class DBTextureParam implements DBImporter {
 	@Override
 	public void close() throws CityGMLImportException, SQLException {
 		psTextureParam.close();
+	}
+
+	/**
+	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
+	 */
+	private void setBlankNode(PreparedStatement smt, int index) throws CityGMLImportException {
+		importer.setBlankNode(smt, index);
 	}
 
 }

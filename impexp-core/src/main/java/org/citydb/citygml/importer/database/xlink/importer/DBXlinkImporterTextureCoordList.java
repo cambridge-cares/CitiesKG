@@ -33,6 +33,7 @@ import java.sql.SQLException;
 
 import org.citydb.citygml.common.database.cache.CacheTable;
 import org.citydb.citygml.common.database.xlink.DBXlinkTextureCoordList;
+import org.citydb.config.project.database.DatabaseType;
 
 public class DBXlinkImporterTextureCoordList implements DBXlinkImporter {
 	private final DBXlinkImporterManager xlinkImporterManager;
@@ -51,15 +52,17 @@ public class DBXlinkImporterTextureCoordList implements DBXlinkImporter {
 	}
 
 	public boolean insert(DBXlinkTextureCoordList xlinkEntry) throws SQLException {
-		psXlink.setLong(1, xlinkEntry.getId());
-		psXlink.setString(2, xlinkEntry.getGmlId());
-		psXlink.setString(3, xlinkEntry.getTexParamGmlId());
-		psXlink.setObject(4, xlinkImporterManager.getCacheAdapter().getGeometryConverter().getDatabaseObject(xlinkEntry.getTextureCoord(), connection));
-		psXlink.setLong(5, xlinkEntry.getTargetId());
+		if (!xlinkImporterManager.getCacheAdapter().getDatabaseType().value().equals(DatabaseType.BLAZE.value())) {
+			psXlink.setLong(1, xlinkEntry.getId());
+			psXlink.setString(2, xlinkEntry.getGmlId());
+			psXlink.setString(3, xlinkEntry.getTexParamGmlId());
+			psXlink.setObject(4, xlinkImporterManager.getCacheAdapter().getGeometryConverter().getDatabaseObject(xlinkEntry.getTextureCoord(), connection));
+			psXlink.setLong(5, xlinkEntry.getTargetId());
 
-		psXlink.addBatch();
-		if (++batchCounter == xlinkImporterManager.getCacheAdapter().getMaxBatchSize())
-			executeBatch();
+			psXlink.addBatch();
+			if (++batchCounter == xlinkImporterManager.getCacheAdapter().getMaxBatchSize())
+				executeBatch();
+		}
 
 		return true;
 	}

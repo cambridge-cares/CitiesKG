@@ -27,6 +27,7 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.GeometryObject;
@@ -131,12 +132,47 @@ public class DBAddress implements DBImporter {
 		// get address details
 		addressWalker.reset();
 		address.getXalAddress().getAddressDetails().accept(addressWalker);
-		psAddress.setString(index++, addressWalker.street != null ? addressWalker.street.toString() : null);
-		psAddress.setString(index++, addressWalker.houseNo != null ? addressWalker.houseNo.toString() : null);
-		psAddress.setString(index++, addressWalker.poBox != null ? addressWalker.poBox.toString() : null);
-		psAddress.setString(index++, addressWalker.zipCode != null ? addressWalker.zipCode.toString() : null);
-		psAddress.setString(index++, addressWalker.city != null ? addressWalker.city.toString() : null);
-		psAddress.setString(index++, addressWalker.country != null ? addressWalker.country.toString() : null);
+		Object nullOrBlankNode;
+
+		if (importer.isBlazegraph()) {
+			if (addressWalker.street != null) {
+				psAddress.setString(index++, addressWalker.street.toString());
+			} else {
+				setBlankNode(psAddress, index++);
+			}
+			if (addressWalker.houseNo  != null) {
+				psAddress.setString(index++, addressWalker.houseNo.toString());
+			} else {
+				setBlankNode(psAddress, index++);
+			}
+			if (addressWalker.poBox != null) {
+				psAddress.setString(index++, addressWalker.poBox.toString());
+			} else {
+				setBlankNode(psAddress, index++);
+			}
+			if (addressWalker.zipCode != null) {
+				psAddress.setString(index++, addressWalker.zipCode.toString());
+			} else {
+				setBlankNode(psAddress, index++);
+			}
+			if (addressWalker.city != null) {
+				psAddress.setString(index++, addressWalker.city.toString());
+			} else {
+				setBlankNode(psAddress, index++);
+			}
+			if (addressWalker.country != null) {
+				psAddress.setString(index++, addressWalker.country.toString());
+			} else {
+				setBlankNode(psAddress, index++);
+			}
+		} else {
+			psAddress.setString(index++, addressWalker.street != null ? addressWalker.street.toString() : null);
+			psAddress.setString(index++, addressWalker.houseNo != null ? addressWalker.houseNo.toString() : null);
+			psAddress.setString(index++, addressWalker.poBox != null ? addressWalker.poBox.toString() : null);
+			psAddress.setString(index++, addressWalker.zipCode != null ? addressWalker.zipCode.toString() : null);
+			psAddress.setString(index++, addressWalker.city != null ? addressWalker.city.toString() : null);
+			psAddress.setString(index++, addressWalker.country != null ? addressWalker.country.toString() : null);
+		}
 
 		// multiPoint geometry
 		GeometryObject multiPoint = null;
@@ -146,19 +182,25 @@ public class DBAddress implements DBImporter {
 		if (multiPoint != null) {
 			Object multiPointObj = importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(multiPoint, batchConn);
 			psAddress.setObject(index++, multiPointObj);
-		} else
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psAddress, index++);
+		} else {
 			psAddress.setNull(index++, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
+		}
 
 		// get XML representation of <xal:AddressDetails>
 		String xalSource = null;
 		if (importXALSource)
 			xalSource = importer.marshalObject(address.getXalAddress().getAddressDetails(), XALModuleType.CORE);
 
-		if (xalSource != null && !xalSource.isEmpty())
-			psAddress.setString(index++, xalSource);
-		else
-			psAddress.setNull(index++, Types.CLOB);
+		if (!importer.isBlazegraph()) {
+			if (xalSource != null && !xalSource.isEmpty()) {
+				psAddress.setString(index++, xalSource);
+			} else {
+				psAddress.setNull(index++, Types.CLOB);
+			}
+		}
 
 		psAddress.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
@@ -269,6 +311,13 @@ public class DBAddress implements DBImporter {
 	@Override
 	public void close() throws CityGMLImportException, SQLException {
 		psAddress.close();
+	}
+
+	/**
+	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
+	 */
+	private void setBlankNode(PreparedStatement smt, int index) throws CityGMLImportException {
+		importer.setBlankNode(smt, index);
 	}
 
 }

@@ -60,10 +60,7 @@ import org.citygml4j.model.gml.feature.AbstractFeature;
 import org.citygml4j.model.gml.feature.BoundingShape;
 import org.citygml4j.util.bbox.BoundingBoxOptions;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -278,7 +275,12 @@ public class DBCityObject implements DBImporter {
 		if (creationDate == null)
 			creationDate = now;
 
-		psCityObject.setObject(8, creationDate.toOffsetDateTime());
+		if (isBlazegraph) {
+			psCityObject.setString(8, creationDate.toOffsetDateTime().toString());
+		} else {
+			psCityObject.setObject(8, creationDate.toOffsetDateTime());
+		}
+
 
 		// core:terminationDate
 		ZonedDateTime terminationDate = null;
@@ -332,16 +334,31 @@ public class DBCityObject implements DBImporter {
 		}
 
 		// citydb:lastModificationDate
-		psCityObject.setObject(12, now.toOffsetDateTime());
+		if (isBlazegraph) {
+			psCityObject.setString(12, now.toOffsetDateTime().toString());
+		} else {
+			psCityObject.setObject(12, now.toOffsetDateTime());
+		}
 
 		// citydb:updatingPerson
-		psCityObject.setString(13, updatingPerson);
+		if (isBlazegraph & updatingPerson == null) {
+			psCityObject.setObject(13, NodeFactory.createBlankNode());
+		} else {
+			psCityObject.setString(13, updatingPerson);
+		}
 
 		// citydb:reasonForUpdate
-		psCityObject.setString(14, reasonForUpdate);
+		if (isBlazegraph & reasonForUpdate == null) {
+			psCityObject.setObject(14, NodeFactory.createBlankNode());
+		} else {
+			psCityObject.setString(14, reasonForUpdate);
+		}
 
 		// citydb:lineage
-		psCityObject.setString(15, lineage);
+		if (!isBlazegraph) {
+			psCityObject.setString(15, lineage);
+			//psCityObject.setObject(15, NodeFactory.createBlankNode());
+		}
 
 		// resolve local xlinks to geometry objects
 		if (isGlobal) {

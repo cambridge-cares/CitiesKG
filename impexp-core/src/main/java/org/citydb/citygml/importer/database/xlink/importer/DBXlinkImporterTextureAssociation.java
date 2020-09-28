@@ -32,6 +32,7 @@ import java.sql.SQLException;
 
 import org.citydb.citygml.common.database.cache.CacheTable;
 import org.citydb.citygml.common.database.xlink.DBXlinkTextureAssociation;
+import org.citydb.config.project.database.DatabaseType;
 
 public class DBXlinkImporterTextureAssociation implements DBXlinkImporter {
 	private final DBXlinkImporterManager xlinkImporterManager;
@@ -47,13 +48,15 @@ public class DBXlinkImporterTextureAssociation implements DBXlinkImporter {
 	}
 
 	public boolean insert(DBXlinkTextureAssociation xlinkEntry) throws SQLException {
-		psXlink.setLong(1, xlinkEntry.getId());
-		psXlink.setString(2, xlinkEntry.getGmlId());
-		psXlink.setString(3, xlinkEntry.getTargetURI());
+		if (!xlinkImporterManager.getCacheAdapter().getDatabaseType().value().equals(DatabaseType.BLAZE.value())) {
+			psXlink.setLong(1, xlinkEntry.getId());
+			psXlink.setString(2, xlinkEntry.getGmlId());
+			psXlink.setString(3, xlinkEntry.getTargetURI());
 
-		psXlink.addBatch();
-		if (++batchCounter == xlinkImporterManager.getCacheAdapter().getMaxBatchSize())
-			executeBatch();
+			psXlink.addBatch();
+			if (++batchCounter == xlinkImporterManager.getCacheAdapter().getMaxBatchSize())
+				executeBatch();
+		}
 
 		return true;
 	}

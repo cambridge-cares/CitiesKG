@@ -33,6 +33,7 @@ import java.sql.Types;
 
 import org.citydb.citygml.common.database.cache.CacheTable;
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
+import org.citydb.config.project.database.DatabaseType;
 
 public class DBXlinkImporterBasic implements DBXlinkImporter {
 	private final DBXlinkImporterManager xlinkImporterManager;
@@ -49,20 +50,22 @@ public class DBXlinkImporterBasic implements DBXlinkImporter {
 	}
 
 	public boolean insert(DBXlinkBasic xlinkEntry) throws SQLException {
-		psXlink.setLong(1, xlinkEntry.getId());
-		psXlink.setString(2, xlinkEntry.getTable());
-		psXlink.setString(3, xlinkEntry.getFromColumn());
-		
-		if (xlinkEntry.getToColumn() != null)
-			psXlink.setString(4, xlinkEntry.getToColumn());
-		else
-			psXlink.setNull(4, Types.VARCHAR);
-		
-		psXlink.setString(5, xlinkEntry.getGmlId());
+		if (!xlinkImporterManager.getCacheAdapter().getDatabaseType().value().equals(DatabaseType.BLAZE.value())) {
+			psXlink.setLong(1, xlinkEntry.getId());
+			psXlink.setString(2, xlinkEntry.getTable());
+			psXlink.setString(3, xlinkEntry.getFromColumn());
 
-		psXlink.addBatch();
-		if (++batchCounter == xlinkImporterManager.getCacheAdapter().getMaxBatchSize())
-			executeBatch();
+			if (xlinkEntry.getToColumn() != null)
+				psXlink.setString(4, xlinkEntry.getToColumn());
+			else
+				psXlink.setNull(4, Types.VARCHAR);
+
+			psXlink.setString(5, xlinkEntry.getGmlId());
+
+			psXlink.addBatch();
+			if (++batchCounter == xlinkImporterManager.getCacheAdapter().getMaxBatchSize())
+				executeBatch();
+		}
 
 		return true;
 	}

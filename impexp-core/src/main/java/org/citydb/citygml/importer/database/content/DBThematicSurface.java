@@ -93,21 +93,42 @@ public class DBThematicSurface implements DBImporter {
 		// parent id
 		if (parent instanceof AbstractBuilding) {
 			psThematicSurface.setLong(3, parentId);
-			psThematicSurface.setNull(4, Types.NULL);
-			psThematicSurface.setNull(5, Types.NULL);
+			if (importer.isBlazegraph()) {
+				setBlankNode(psThematicSurface, 4);
+				setBlankNode(psThematicSurface, 5);
+			} else {
+				psThematicSurface.setNull(4, Types.NULL);
+				psThematicSurface.setNull(5, Types.NULL);
+			}
 		} else if (parent instanceof Room) {
-			psThematicSurface.setNull(3, Types.NULL);
 			psThematicSurface.setLong(4, parentId);
-			psThematicSurface.setNull(5, Types.NULL);
+			if (importer.isBlazegraph()) {
+				setBlankNode(psThematicSurface, 3);
+				setBlankNode(psThematicSurface, 5);
+			} else {
+				psThematicSurface.setNull(5, Types.NULL);
+				psThematicSurface.setNull(3, Types.NULL);
+			}
 		} else if (parent instanceof BuildingInstallation
 				|| parent instanceof IntBuildingInstallation) {
-			psThematicSurface.setNull(3, Types.NULL);
-			psThematicSurface.setNull(4, Types.NULL);
+			if (importer.isBlazegraph()) {
+				setBlankNode(psThematicSurface, 3);
+				setBlankNode(psThematicSurface, 4);
+			} else {
+				psThematicSurface.setNull(3, Types.NULL);
+				psThematicSurface.setNull(4, Types.NULL);
+			}
 			psThematicSurface.setLong(5, parentId);
 		} else {
-			psThematicSurface.setNull(3, Types.NULL);
-			psThematicSurface.setNull(4, Types.NULL);
-			psThematicSurface.setNull(5, Types.NULL);
+			if (importer.isBlazegraph()) {
+				setBlankNode(psThematicSurface, 3);
+				setBlankNode(psThematicSurface, 4);
+				setBlankNode(psThematicSurface, 5);
+			} else {
+				psThematicSurface.setNull(3, Types.NULL);
+				psThematicSurface.setNull(4, Types.NULL);
+				psThematicSurface.setNull(5, Types.NULL);
+			}
 		}
 
 		// bldg:lodXMultiSurface
@@ -143,10 +164,13 @@ public class DBThematicSurface implements DBImporter {
 				}
 			}
 
-			if (multiSurfaceId != 0)
+			if (multiSurfaceId != 0) {
 				psThematicSurface.setLong(6 + i, multiSurfaceId);
-			else
+			} else if (importer.isBlazegraph()) {
+				setBlankNode(psThematicSurface, 6);
+			} else {
 				psThematicSurface.setNull(6 + i, Types.NULL);
+			}
 		}
 
 		psThematicSurface.addBatch();
@@ -195,4 +219,10 @@ public class DBThematicSurface implements DBImporter {
 		psThematicSurface.close();
 	}
 
+	/**
+	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
+	 */
+	private void setBlankNode(PreparedStatement smt, int index) throws CityGMLImportException {
+		importer.setBlankNode(smt, index);
+	}
 }

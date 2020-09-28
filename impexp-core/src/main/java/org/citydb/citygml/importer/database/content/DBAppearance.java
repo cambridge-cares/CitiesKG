@@ -119,6 +119,9 @@ public class DBAppearance implements DBImporter {
 			valueJoiner.join(appearance.getName(), Code::getValue, Code::getCodeSpace);
 			psAppearance.setString(3, valueJoiner.result(0));
 			psAppearance.setString(4, valueJoiner.result(1));
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psAppearance, 3);
+			setBlankNode(psAppearance, 4);
 		} else {
 			psAppearance.setNull(3, Types.VARCHAR);
 			psAppearance.setNull(4, Types.VARCHAR);
@@ -131,6 +134,8 @@ public class DBAppearance implements DBImporter {
 				description = description.trim();
 
 			psAppearance.setString(5, description);
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psAppearance, 5);
 		} else {
 			psAppearance.setNull(5, Types.VARCHAR);
 		}
@@ -140,8 +145,16 @@ public class DBAppearance implements DBImporter {
 
 		// cityobject or citymodel id
 		if (isLocalAppearance) {
-			psAppearance.setNull(7, Types.NULL);
-			psAppearance.setLong(8, parentId);
+			if (importer.isBlazegraph()) {
+				setBlankNode(psAppearance, 7);
+			} else {
+				psAppearance.setNull(7, Types.NULL);
+				psAppearance.setLong(8, parentId);
+			}
+
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psAppearance, 7);
+			setBlankNode(psAppearance, 8);
 		} else {
 			psAppearance.setNull(7, Types.NULL);
 			psAppearance.setNull(8, Types.NULL);
@@ -218,6 +231,13 @@ public class DBAppearance implements DBImporter {
 	@Override
 	public void close() throws CityGMLImportException, SQLException {
 		psAppearance.close();
+	}
+
+	/**
+	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
+	 */
+	private void setBlankNode(PreparedStatement smt, int index) throws CityGMLImportException {
+		importer.setBlankNode(smt, index);
 	}
 
 }

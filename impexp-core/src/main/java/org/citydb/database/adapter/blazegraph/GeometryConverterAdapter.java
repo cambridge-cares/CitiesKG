@@ -1,5 +1,6 @@
 package org.citydb.database.adapter.blazegraph;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.AbstractGeometryConverterAdapter;
@@ -54,7 +55,7 @@ public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
 
     @Override
     public Object getDatabaseObject(GeometryObject geomObj, Connection connection) throws SQLException {
-        return null;
+        return NodeFactory.createBlankNode();
     }
 
     @Override

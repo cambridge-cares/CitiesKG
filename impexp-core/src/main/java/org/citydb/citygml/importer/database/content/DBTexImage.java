@@ -123,7 +123,9 @@ public class DBTexImage implements DBImporter {
 			psInsertStmt.setLong(1, texImageId);
 			psInsertStmt.setString(2, fileName);
 			psInsertStmt.setString(3, mimeType);
-			psInsertStmt.setString(4, codeSpace);
+			if (!importer.isBlazegraph()) {
+				psInsertStmt.setString(4, codeSpace);
+			}
 
 			psInsertStmt.addBatch();
 			if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
@@ -159,6 +161,13 @@ public class DBTexImage implements DBImporter {
 	@Override
 	public void close() throws CityGMLImportException, SQLException {
 		psInsertStmt.close();
+	}
+
+	/**
+	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
+	 */
+	private void setBlankNode(PreparedStatement smt, int index) throws CityGMLImportException {
+		importer.setBlankNode(smt, index);
 	}
 
 }

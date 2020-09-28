@@ -27,6 +27,7 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.ade.ADEExtension;
 import org.citydb.ade.ADEExtensionManager;
 import org.citydb.ade.importer.ADEImportManager;
@@ -51,6 +52,7 @@ import org.citydb.citygml.importer.util.ImportLogger.ImportLogEntry;
 import org.citydb.citygml.importer.util.LocalAppearanceHandler;
 import org.citydb.concurrent.WorkerPool;
 import org.citydb.config.Config;
+import org.citydb.config.project.database.DatabaseType;
 import org.citydb.config.project.importer.Importer;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.schema.TableEnum;
@@ -123,6 +125,7 @@ import javax.xml.bind.Marshaller;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -164,6 +167,8 @@ public class CityGMLImportManager implements CityGMLImportHelper {
 
 	private boolean failOnError = false;
 	private boolean hasADESupport = false;
+	private Boolean isBlazegraph;
+	private final String EXC_BNODE = "Failed to set blank node on: ";
 
 	public CityGMLImportManager(InputFile inputFile,
 			Connection connection,
@@ -211,6 +216,33 @@ public class CityGMLImportManager implements CityGMLImportHelper {
 
 		if (hasADESupport)
 			propertyCollector = new ADEPropertyCollector();
+	}
+
+	/**
+	 * Checks, if the current db connection is Blazegraph
+	 *
+	 * @return boolean
+	 */
+	public boolean isBlazegraph() {
+		if (isBlazegraph == null) {
+			isBlazegraph = getDatabaseAdapter().getDatabaseType().value().equals(DatabaseType.BLAZE.value());
+		}
+		return isBlazegraph.booleanValue();
+	}
+
+	/**
+	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
+	 * @param smt
+	 * @param index
+	 * @throws CityGMLImportException
+	 */
+	public PreparedStatement setBlankNode (PreparedStatement smt, int index) throws CityGMLImportException {
+		try {
+			smt.setObject(index, NodeFactory.createBlankNode());
+			return smt;
+		} catch (SQLException e) {
+			throw new CityGMLImportException(EXC_BNODE + index + " " + smt.toString());
+		}
 	}
 
 	@Override

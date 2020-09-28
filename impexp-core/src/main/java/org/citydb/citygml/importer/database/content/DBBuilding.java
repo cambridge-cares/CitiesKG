@@ -27,12 +27,14 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
 import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.GeometryObject;
+import org.citydb.config.project.database.DatabaseType;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
 import org.citygml4j.model.citygml.building.AbstractBoundarySurface;
@@ -125,10 +127,13 @@ public class DBBuilding implements DBImporter {
 		psBuilding.setLong(1, buildingId);
 
 		// parent building id
-		if (parentId != 0)
+		if (parentId != 0) {
 			psBuilding.setLong(2, parentId);
-		else
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psBuilding, 2);
+		} else {
 			psBuilding.setNull(2, Types.NULL);
+		}
 
 		// root building id
 		psBuilding.setLong(3, rootId);
@@ -137,6 +142,9 @@ public class DBBuilding implements DBImporter {
 		if (building.isSetClazz() && building.getClazz().isSetValue()) {
 			psBuilding.setString(4, building.getClazz().getValue());
 			psBuilding.setString(5, building.getClazz().getCodeSpace());
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psBuilding, 4);
+			setBlankNode(psBuilding, 5);
 		} else {
 			psBuilding.setNull(4, Types.VARCHAR);
 			psBuilding.setNull(5, Types.VARCHAR);
@@ -146,7 +154,14 @@ public class DBBuilding implements DBImporter {
 		if (building.isSetFunction()) {
 			valueJoiner.join(building.getFunction(), Code::getValue, Code::getCodeSpace);
 			psBuilding.setString(6, valueJoiner.result(0));
-			psBuilding.setString(7, valueJoiner.result(1));
+			if (valueJoiner.result(1) == null && importer.isBlazegraph()) {
+				setBlankNode(psBuilding, 7);
+			} else {
+				psBuilding.setString(7, valueJoiner.result(1));
+			}
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psBuilding, 6);
+			setBlankNode(psBuilding, 7);
 		} else {
 			psBuilding.setNull(6, Types.VARCHAR);
 			psBuilding.setNull(7, Types.VARCHAR);
@@ -157,6 +172,9 @@ public class DBBuilding implements DBImporter {
 			valueJoiner.join(building.getUsage(), Code::getValue, Code::getCodeSpace);
 			psBuilding.setString(8, valueJoiner.result(0));
 			psBuilding.setString(9, valueJoiner.result(1));
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psBuilding, 8);
+			setBlankNode(psBuilding, 9);
 		} else {
 			psBuilding.setNull(8, Types.VARCHAR);
 			psBuilding.setNull(9, Types.VARCHAR);
@@ -165,6 +183,8 @@ public class DBBuilding implements DBImporter {
 		// bldg:yearOfConstruction
 		if (building.isSetYearOfConstruction()) {
 			psBuilding.setObject(10, building.getYearOfConstruction());
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psBuilding, 10);
 		} else {
 			psBuilding.setNull(10, Types.DATE);
 		}
@@ -172,6 +192,8 @@ public class DBBuilding implements DBImporter {
 		// bldg:yearOfDemolition
 		if (building.isSetYearOfDemolition()) {
 			psBuilding.setObject(11, building.getYearOfDemolition());
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psBuilding, 11);
 		} else {
 			psBuilding.setNull(11, Types.DATE);
 		}
@@ -179,7 +201,14 @@ public class DBBuilding implements DBImporter {
 		// bldg:roofType
 		if (building.isSetRoofType() && building.getRoofType().isSetValue()) {
 			psBuilding.setString(12, building.getRoofType().getValue());
-			psBuilding.setString(13, building.getRoofType().getCodeSpace());
+			if (building.getRoofType().getCodeSpace() == null && importer.isBlazegraph()) {
+				setBlankNode(psBuilding, 13);
+			} else {
+				psBuilding.setString(13, building.getRoofType().getCodeSpace());
+			}
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psBuilding, 12);
+			setBlankNode(psBuilding, 13);
 		} else {
 			psBuilding.setNull(12, Types.VARCHAR);
 			psBuilding.setNull(13, Types.VARCHAR);
@@ -188,7 +217,14 @@ public class DBBuilding implements DBImporter {
 		// bldg:measuredHeight
 		if (building.isSetMeasuredHeight() && building.getMeasuredHeight().isSetValue()) {
 			psBuilding.setDouble(14, building.getMeasuredHeight().getValue());
-			psBuilding.setString(15, building.getMeasuredHeight().getUom());
+			if (building.getMeasuredHeight().getUom() == null && importer.isBlazegraph()) {
+				setBlankNode(psBuilding, 13);
+			} else {
+				psBuilding.setString(15, building.getMeasuredHeight().getUom());
+			}
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psBuilding, 14);
+			setBlankNode(psBuilding, 15);
 		} else {
 			psBuilding.setNull(14, Types.DOUBLE);
 			psBuilding.setNull(15, Types.VARCHAR);
@@ -197,6 +233,8 @@ public class DBBuilding implements DBImporter {
 		// bldg:storeysAboveGround
 		if (building.isSetStoreysAboveGround()) {
 			psBuilding.setInt(16, building.getStoreysAboveGround());
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psBuilding, 16);
 		} else {
 			psBuilding.setNull(16, Types.NULL);
 		}
@@ -204,6 +242,8 @@ public class DBBuilding implements DBImporter {
 		// bldg:storeysBelowGround
 		if (building.isSetStoreysBelowGround()) {
 			psBuilding.setInt(17, building.getStoreysBelowGround());
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psBuilding, 17);
 		} else {
 			psBuilding.setNull(17, Types.NULL);
 		}
@@ -215,6 +255,9 @@ public class DBBuilding implements DBImporter {
 			
 			psBuilding.setString(18, valueJoiner.result(0));
 			psBuilding.setString(19, building.getStoreyHeightsAboveGround().getUom());
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psBuilding, 18);
+			setBlankNode(psBuilding, 19);
 		} else {
 			psBuilding.setNull(18, Types.VARCHAR);
 			psBuilding.setNull(19, Types.VARCHAR);
@@ -227,6 +270,9 @@ public class DBBuilding implements DBImporter {
 
 			psBuilding.setString(20, valueJoiner.result(0));
 			psBuilding.setString(21, building.getStoreyHeightsBelowGround().getUom());
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psBuilding, 20);
+			setBlankNode(psBuilding, 21);
 		} else {
 			psBuilding.setNull(20, Types.VARCHAR);
 			psBuilding.setNull(21, Types.VARCHAR);
@@ -260,6 +306,8 @@ public class DBBuilding implements DBImporter {
 			if (multiLine != null) {
 				Object multiLineObj = importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(multiLine, batchConn);
 				psBuilding.setObject(22 + i, multiLineObj);
+			} else if (importer.isBlazegraph()) {
+				setBlankNode(psBuilding, 22);
 			} else
 				psBuilding.setNull(22 + i, nullGeometryType, nullGeometryTypeName);
 		}
@@ -289,6 +337,8 @@ public class DBBuilding implements DBImporter {
 			if (multiLine != null) {
 				Object multiLineObj = importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(multiLine, batchConn);
 				psBuilding.setObject(26 + i, multiLineObj);
+			} else if (importer.isBlazegraph()) {
+				setBlankNode(psBuilding, 26);
 			} else
 				psBuilding.setNull(26 + i, nullGeometryType, nullGeometryTypeName);
 		}
@@ -323,10 +373,13 @@ public class DBBuilding implements DBImporter {
 				}
 			}
 
-			if (multiSurfaceId != 0)
+			if (multiSurfaceId != 0) {
 				psBuilding.setLong(29 + i, multiSurfaceId);
-			else
+			} else if (importer.isBlazegraph()) {
+				setBlankNode(psBuilding, 29);
+			} else {
 				psBuilding.setNull(29 + i, Types.NULL);
+			}
 		}
 
 		// bldg:lodXMultiSurface
@@ -365,10 +418,13 @@ public class DBBuilding implements DBImporter {
 				}
 			}
 
-			if (multiGeometryId != 0)
+			if (multiGeometryId != 0) {
 				psBuilding.setLong(31 + i, multiGeometryId);
-			else
+			} else if (importer.isBlazegraph()) {
+				setBlankNode(psBuilding, 31);
+			} else {
 				psBuilding.setNull(31 + i, Types.NULL);
+			}
 		}
 
 		// bldg:lodXSolid
@@ -407,14 +463,17 @@ public class DBBuilding implements DBImporter {
 				}
 			}
 
-			if (solidGeometryId != 0)
+			if (solidGeometryId != 0) {
 				psBuilding.setLong(35 + i, solidGeometryId);
-			else
+			} else if (importer.isBlazegraph()) {
+				setBlankNode(psBuilding, 35);
+			} else {
 				psBuilding.setNull(35 + i, Types.NULL);
+			}
 		}
 
 		// objectclass id
-		if (hasObjectClassIdColumn)
+		if (!importer.isBlazegraph() && hasObjectClassIdColumn)
 			psBuilding.setLong(39, featureType.getObjectClassId());
 
 		psBuilding.addBatch();
@@ -561,6 +620,13 @@ public class DBBuilding implements DBImporter {
 	@Override
 	public void close() throws CityGMLImportException, SQLException {
 		psBuilding.close();
+	}
+
+	/**
+	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
+	 */
+	private void setBlankNode(PreparedStatement smt, int index) throws CityGMLImportException {
+		importer.setBlankNode(smt, index);
 	}
 
 }

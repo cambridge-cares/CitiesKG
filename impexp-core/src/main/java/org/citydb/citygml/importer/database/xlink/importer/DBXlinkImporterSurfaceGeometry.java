@@ -29,6 +29,7 @@ package org.citydb.citygml.importer.database.xlink.importer;
 
 import org.citydb.citygml.common.database.cache.CacheTable;
 import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
+import org.citydb.config.project.database.DatabaseType;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -48,24 +49,26 @@ public class DBXlinkImporterSurfaceGeometry implements DBXlinkImporter {
 	}
 
 	public boolean insert(DBXlinkSurfaceGeometry xlinkEntry) throws SQLException {
-		psXlink.setLong(1, xlinkEntry.getId());
-		psXlink.setLong(2, xlinkEntry.getParentId());
-		psXlink.setLong(3, xlinkEntry.getRootId());
-		psXlink.setInt(4, xlinkEntry.isReverse() ? 1 : 0);
-		psXlink.setString(5, xlinkEntry.getGmlId());
-		psXlink.setLong(6, xlinkEntry.getCityObjectId());
+		if (!xlinkImporterManager.getCacheAdapter().getDatabaseType().value().equals(DatabaseType.BLAZE.value())) {
+			psXlink.setLong(1, xlinkEntry.getId());
+			psXlink.setLong(2, xlinkEntry.getParentId());
+			psXlink.setLong(3, xlinkEntry.getRootId());
+			psXlink.setInt(4, xlinkEntry.isReverse() ? 1 : 0);
+			psXlink.setString(5, xlinkEntry.getGmlId());
+			psXlink.setLong(6, xlinkEntry.getCityObjectId());
 
-		if (xlinkEntry.getTable() != null) {
-			psXlink.setString(7, xlinkEntry.getTable());
-			psXlink.setString(8, xlinkEntry.getFromColumn());
-		} else {
-			psXlink.setNull(7, Types.NULL);
-			psXlink.setNull(8, Types.VARCHAR);
+			if (xlinkEntry.getTable() != null) {
+				psXlink.setString(7, xlinkEntry.getTable());
+				psXlink.setString(8, xlinkEntry.getFromColumn());
+			} else {
+				psXlink.setNull(7, Types.NULL);
+				psXlink.setNull(8, Types.VARCHAR);
+			}
+
+			psXlink.addBatch();
+			if (++batchCounter == xlinkImporterManager.getCacheAdapter().getMaxBatchSize())
+				executeBatch();
 		}
-		
-		psXlink.addBatch();
-		if (++batchCounter == xlinkImporterManager.getCacheAdapter().getMaxBatchSize())
-			executeBatch();
 		
 		return true;
 	}

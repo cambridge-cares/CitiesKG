@@ -27,9 +27,11 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.GeometryObject;
+import org.citydb.config.project.database.DatabaseType;
 import org.citydb.database.schema.SequenceEnum;
 import org.citydb.database.schema.TableEnum;
 import org.citygml4j.model.citygml.CityGMLClass;
@@ -83,6 +85,7 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 	}
 
 	protected void doImport(AbstractGenericAttribute genericAttribute, long parentId, long rootId, long cityObjectId) throws CityGMLImportException, SQLException {
+		boolean isBlazegraph = importer.getDatabaseAdapter().getDatabaseType().value().equals(DatabaseType.BLAZE.value());
 		// attribute name may not be null
 		if (!genericAttribute.isSetName())
 			return;
@@ -127,76 +130,116 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 				ps.setInt(2, 1);
 
 				StringAttribute stringAttribute = (StringAttribute)genericAttribute;
-				if (stringAttribute.isSetValue())
+				if (stringAttribute.isSetValue()) {
 					ps.setString(3, stringAttribute.getValue());
-				else
+				} else if (isBlazegraph) {
+					ps.setObject(3, NodeFactory.createBlankNode());
+					ps.setObject(4, NodeFactory.createBlankNode());
+					ps.setObject(5, NodeFactory.createBlankNode());
+					ps.setObject(6, NodeFactory.createBlankNode());
+					ps.setObject(7, NodeFactory.createBlankNode());
+					ps.setObject(8, NodeFactory.createBlankNode());
+				} else {
 					ps.setNull(3, Types.VARCHAR);
 
-				ps.setNull(4, Types.NULL);
-				ps.setNull(5, Types.NULL);
-				ps.setNull(6, Types.VARCHAR);
-				ps.setNull(7, Types.DATE);
-				ps.setNull(8, Types.VARCHAR);
+					ps.setNull(4, Types.NULL);
+					ps.setNull(5, Types.NULL);
+					ps.setNull(6, Types.VARCHAR);
+					ps.setNull(7, Types.DATE);
+					ps.setNull(8, Types.VARCHAR);
+				}
 				break;
 			case INT_ATTRIBUTE:
 				ps.setInt(2, 2);
 
 				IntAttribute intAttribute = (IntAttribute)genericAttribute;
-				if (intAttribute.isSetValue())
+				if (intAttribute.isSetValue()) {
 					ps.setInt(4, intAttribute.getValue());
-				else
+				} else if (isBlazegraph) {
+					ps.setObject(3, NodeFactory.createBlankNode());
+					ps.setObject(4, NodeFactory.createBlankNode());
+					ps.setObject(5, NodeFactory.createBlankNode());
+					ps.setObject(6, NodeFactory.createBlankNode());
+					ps.setObject(7, NodeFactory.createBlankNode());
+					ps.setObject(8, NodeFactory.createBlankNode());
+				} else {
 					ps.setNull(4, Types.NULL);
 
-				ps.setNull(3, Types.VARCHAR);
-				ps.setNull(5, Types.NULL);
-				ps.setNull(6, Types.VARCHAR);
-				ps.setNull(7, Types.DATE);
-				ps.setNull(8, Types.VARCHAR);
+					ps.setNull(3, Types.VARCHAR);
+					ps.setNull(5, Types.NULL);
+					ps.setNull(6, Types.VARCHAR);
+					ps.setNull(7, Types.DATE);
+					ps.setNull(8, Types.VARCHAR);
+				}
 				break;
 			case DOUBLE_ATTRIBUTE:
 				ps.setInt(2, 3);
 
 				DoubleAttribute doubleAttribute = (DoubleAttribute)genericAttribute;
-				if (doubleAttribute.isSetValue())
+				if (doubleAttribute.isSetValue()) {
 					ps.setDouble(5, doubleAttribute.getValue());
-				else
+				} else if (isBlazegraph) {
+					ps.setObject(3, NodeFactory.createBlankNode());
+					ps.setObject(4, NodeFactory.createBlankNode());
+					ps.setObject(5, NodeFactory.createBlankNode());
+					ps.setObject(6, NodeFactory.createBlankNode());
+					ps.setObject(7, NodeFactory.createBlankNode());
+					ps.setObject(8, NodeFactory.createBlankNode());
+				} else {
 					ps.setNull(5, Types.NULL);
 
-				ps.setNull(3, Types.VARCHAR);
-				ps.setNull(4, Types.NULL);
-				ps.setNull(6, Types.VARCHAR);
-				ps.setNull(7, Types.DATE);
-				ps.setNull(8, Types.VARCHAR);
+					ps.setNull(3, Types.VARCHAR);
+					ps.setNull(4, Types.NULL);
+					ps.setNull(6, Types.VARCHAR);
+					ps.setNull(7, Types.DATE);
+					ps.setNull(8, Types.VARCHAR);
+				}
 				break;
 			case URI_ATTRIBUTE:
 				ps.setInt(2, 4);
 
 				UriAttribute uriAttribute = (UriAttribute)genericAttribute;
-				if (uriAttribute.isSetValue())
+				if (uriAttribute.isSetValue()) {
 					ps.setString(6, uriAttribute.getValue());
-				else
+				} else if (isBlazegraph) {
+					ps.setObject(3, NodeFactory.createBlankNode());
+					ps.setObject(4, NodeFactory.createBlankNode());
+					ps.setObject(5, NodeFactory.createBlankNode());
+					ps.setObject(6, NodeFactory.createBlankNode());
+					ps.setObject(7, NodeFactory.createBlankNode());
+					ps.setObject(8, NodeFactory.createBlankNode());
+				} else {
 					ps.setNull(6, Types.VARCHAR);
 
-				ps.setNull(3, Types.VARCHAR);
-				ps.setNull(4, Types.NULL);
-				ps.setNull(5, Types.NULL);
-				ps.setNull(7, Types.DATE);
-				ps.setNull(8, Types.VARCHAR);
+					ps.setNull(3, Types.VARCHAR);
+					ps.setNull(4, Types.NULL);
+					ps.setNull(5, Types.NULL);
+					ps.setNull(7, Types.DATE);
+					ps.setNull(8, Types.VARCHAR);
+				}
 				break;
 			case DATE_ATTRIBUTE:
 				ps.setInt(2, 5);
 
 				DateAttribute dateAttribute = (DateAttribute)genericAttribute;
-				if (dateAttribute.isSetValue())
+				if (dateAttribute.isSetValue()) {
 					ps.setTimestamp(7, Timestamp.valueOf(dateAttribute.getValue().atStartOfDay()));
-				else
+				} else if (isBlazegraph) {
+					ps.setObject(3, NodeFactory.createBlankNode());
+					ps.setObject(4, NodeFactory.createBlankNode());
+					ps.setObject(5, NodeFactory.createBlankNode());
+					ps.setObject(6, NodeFactory.createBlankNode());
+					ps.setObject(7, NodeFactory.createBlankNode());
+					ps.setObject(8, NodeFactory.createBlankNode());
+				} else {
 					ps.setNull(7, Types.TIMESTAMP);
 
-				ps.setNull(3, Types.VARCHAR);
-				ps.setNull(4, Types.NULL);
-				ps.setNull(5, Types.NULL);
-				ps.setNull(6, Types.VARCHAR);
-				ps.setNull(8, Types.VARCHAR);
+					ps.setNull(3, Types.VARCHAR);
+					ps.setNull(4, Types.NULL);
+					ps.setNull(5, Types.NULL);
+					ps.setNull(6, Types.VARCHAR);
+					ps.setNull(8, Types.VARCHAR);
+				}
 				break;
 			case MEASURE_ATTRIBUTE:
 				ps.setInt(2, 6);
@@ -205,18 +248,32 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 				if (measureAttribute.isSetValue()) {
 					ps.setDouble(5, measureAttribute.getValue().getValue());
 					ps.setString(8, measureAttribute.getValue().getUom());
+				} else if (isBlazegraph) {
+					ps.setObject(5, NodeFactory.createBlankNode());
+					ps.setObject(8, NodeFactory.createBlankNode());
 				} else {
 					ps.setNull(5, Types.NULL);
 					ps.setNull(8, Types.VARCHAR);
 				}
 
-				ps.setNull(3, Types.VARCHAR);
-				ps.setNull(4, Types.NULL);
-				ps.setNull(6, Types.VARCHAR);
-				ps.setNull(7, Types.DATE);
+				if (isBlazegraph) {
+					ps.setObject(3, NodeFactory.createBlankNode());
+					ps.setObject(4, NodeFactory.createBlankNode());
+					ps.setObject(6, NodeFactory.createBlankNode());
+					ps.setObject(7, NodeFactory.createBlankNode());
+				} else {
+					ps.setNull(3, Types.VARCHAR);
+					ps.setNull(4, Types.NULL);
+					ps.setNull(6, Types.VARCHAR);
+					ps.setNull(7, Types.DATE);
+				}
 				break;
 			default:
-				ps.setNull(2, Types.NUMERIC);
+				if (isBlazegraph) {
+					ps.setObject(2, NodeFactory.createBlankNode());
+				} else {
+					ps.setNull(2, Types.NUMERIC);
+				}
 			}
 
 			ps.setLong(9, cityObjectId);
@@ -233,17 +290,28 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 	}
 
 	public void doImport(String attributeName, GeometryObject geometry, long cityObjectId) throws CityGMLImportException, SQLException {
+		boolean isBlazegraph = importer.getDatabaseAdapter().getDatabaseType().value().equals(DatabaseType.BLAZE.value());
 		if (attributeName == null || attributeName.length() == 0)
 			return;
 
 		psAtomicGenericAttribute.setString(1, attributeName);
 		psAtomicGenericAttribute.setInt(2, 8);
-		psAtomicGenericAttribute.setNull(3, Types.VARCHAR);
-		psAtomicGenericAttribute.setNull(4, Types.NULL);
-		psAtomicGenericAttribute.setNull(5, Types.NULL);
-		psAtomicGenericAttribute.setNull(6, Types.VARCHAR);
-		psAtomicGenericAttribute.setNull(7, Types.DATE);
-		psAtomicGenericAttribute.setNull(8, Types.VARCHAR);	
+		if (isBlazegraph) {
+			psAtomicGenericAttribute.setObject(3, NodeFactory.createBlankNode());
+			psAtomicGenericAttribute.setObject(4, NodeFactory.createBlankNode());
+			psAtomicGenericAttribute.setObject(5, NodeFactory.createBlankNode());
+			psAtomicGenericAttribute.setObject(6, NodeFactory.createBlankNode());
+			psAtomicGenericAttribute.setObject(7, NodeFactory.createBlankNode());
+			psAtomicGenericAttribute.setObject(8, NodeFactory.createBlankNode());
+		} else {
+			psAtomicGenericAttribute.setNull(3, Types.VARCHAR);
+			psAtomicGenericAttribute.setNull(4, Types.NULL);
+			psAtomicGenericAttribute.setNull(5, Types.NULL);
+			psAtomicGenericAttribute.setNull(6, Types.VARCHAR);
+			psAtomicGenericAttribute.setNull(7, Types.DATE);
+			psAtomicGenericAttribute.setNull(8, Types.VARCHAR);
+		}
+
 		psAtomicGenericAttribute.setObject(9, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometry, batchConn));
 		psAtomicGenericAttribute.setLong(10, cityObjectId);
 
