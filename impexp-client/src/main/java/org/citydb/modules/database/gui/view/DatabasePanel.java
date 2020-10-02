@@ -283,7 +283,7 @@ public class DatabasePanel extends JPanel implements ConnectionViewHandler, Even
 						portText.setValue(5432);
 						break;
 					case BLAZE:
-						portText.setValue(8081);
+						portText.setValue(9999);
 						break;
 					}
 				}
@@ -371,11 +371,12 @@ public class DatabasePanel extends JPanel implements ConnectionViewHandler, Even
 					portText.setValue(5432);
 					break;
 				case BLAZE:
-					portText.setValue(8081);
+					portText.setValue(9999);
+					//@TODO - replace hardcoded values
 					userText.setText("anonymous");
 					passwordText.setText("anonymous");
 					serverText.setText("127.0.0.1");
-					databaseText.setText("Default Graph");
+					databaseText.setText("/blazegraph/namespace/berlin/sparql");
 					break;
 				}
 			}

@@ -27,7 +27,11 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.arq.querybuilder.UpdateBuilder;
+import org.apache.jena.iri.IRI;
+import org.apache.jena.sparql.core.Var;
 import org.citydb.ade.model.LineageProperty;
 import org.citydb.ade.model.ReasonForUpdateProperty;
 import org.citydb.ade.model.UpdatingPersonProperty;
@@ -41,6 +45,7 @@ import org.citydb.config.geometry.GeometryObject;
 import org.citydb.config.project.database.DatabaseType;
 import org.citydb.config.project.importer.CreationDateMode;
 import org.citydb.config.project.importer.TerminationDateMode;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.connection.DatabaseConnectionPool;
 import org.citydb.database.schema.SequenceEnum;
 import org.citydb.database.schema.TableEnum;
@@ -60,6 +65,8 @@ import org.citygml4j.model.gml.feature.AbstractFeature;
 import org.citygml4j.model.gml.feature.BoundingShape;
 import org.citygml4j.util.bbox.BoundingBoxOptions;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.*;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
@@ -92,6 +99,10 @@ public class DBCityObject implements DBImporter {
 	private CreationDateMode creationDateMode;
 	private TerminationDateMode terminationDateMode;
 	private BoundingBoxOptions bboxOptions;
+	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
+	private static final String IRI_GRAPH = "http://localhost/berlin";
+	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
+	private static final String IRI_OBJECT = IRI_GRAPH + "/cityobject/";
 
 	public DBCityObject(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;	
@@ -138,6 +149,31 @@ public class DBCityObject implements DBImporter {
 				"name, name_codespace, description, envelope, creation_date, termination_date, relative_to_terrain, relative_to_water, " +
 				"last_modification_date, updating_person, reason_for_update, lineage) values " +
 				"(?, ?, ?, " + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+		if (importer.isBlazegraph()) {
+			String param = "  ?;";
+			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+					"INSERT DATA" +
+					" { GRAPH <" + IRI_GRAPH + "> " +
+						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+								SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID+ param +
+								SchemaManagerAdapter.ONTO_GML_ID + param +
+								SchemaManagerAdapter.ONTO_NAME + param +
+								SchemaManagerAdapter.ONTO_NAME_CODESPACE + param +
+								SchemaManagerAdapter.ONTO_DESCRIPTION + param +
+								SchemaManagerAdapter.ONTO_ENVELOPE_TYPE + param +
+								SchemaManagerAdapter.ONTO_CREATION_DATE + param +
+								SchemaManagerAdapter.ONTO_TERMINATION_DATE + param +
+								SchemaManagerAdapter.ONTO_RELATIVE_TO_TERRAIN + param +
+								SchemaManagerAdapter.ONTO_RELATIVE_TO_WATER + param +
+								SchemaManagerAdapter.ONTO_LAST_MODIFICATION_DATE + param +
+								SchemaManagerAdapter.ONTO_UPDATING_PERSON + param +
+								SchemaManagerAdapter.ONTO_REASON_FOR_UPDATE + param +
+								SchemaManagerAdapter.ONTO_LINEAGE + param +
+						".}" +
+					"}";
+		}
+
 		psCityObject = batchConn.prepareStatement(stmt);
 
 		genericAttributeImporter = importer.getImporter(DBCityObjectGenericAttrib.class);
@@ -167,12 +203,10 @@ public class DBCityObject implements DBImporter {
 		boolean isBlazegraph = importer.getDatabaseAdapter().getDatabaseType().value().equals(DatabaseType.BLAZE.value());
 		ZonedDateTime now = ZonedDateTime.now();
 
+
+
 		// primary id
 		long objectId = importer.getNextSequenceValue(SequenceEnum.CITYOBJECT_ID_SEQ.getName());
-		psCityObject.setLong(1, objectId);
-
-		// object class id
-		psCityObject.setInt(2, objectType.getObjectClassId());
 
 		// gml:id
 		String origGmlId = object.getId();
@@ -206,19 +240,35 @@ public class DBCityObject implements DBImporter {
 				object.setId(importer.generateNewGmlId());
 		}
 
-		psCityObject.setString(3, object.getId());
+		int index = 0;
+
+		if (isBlazegraph) {
+			try {
+				URL url = new URL(IRI_OBJECT + object.getId() + "/");
+				psCityObject.setURL(++index, url);
+			} catch (MalformedURLException e) {
+				psCityObject.setObject(++index, NodeFactory.createBlankNode());
+			}
+		}
+
+		psCityObject.setLong(++index, objectId);
+
+		// object class id
+		psCityObject.setInt(++index, objectType.getObjectClassId());
+
+		psCityObject.setString(++index, object.getId());
 
 		// gml:name
 		if (object.isSetName()) {
 			valueJoiner.join(object.getName(), Code::getValue, Code::getCodeSpace);
-			psCityObject.setString(4, valueJoiner.result(0));
-			psCityObject.setString(5, valueJoiner.result(1));
+			psCityObject.setString(++index, valueJoiner.result(0));
+			psCityObject.setString(++index, valueJoiner.result(1));
 		} else if (isBlazegraph) {
-			psCityObject.setObject(4, NodeFactory.createBlankNode());
-			psCityObject.setObject(5, NodeFactory.createBlankNode());
+			psCityObject.setObject(++index, NodeFactory.createBlankNode());
+			psCityObject.setObject(++index, NodeFactory.createBlankNode());
 		} else {
-			psCityObject.setNull(4, Types.VARCHAR);
-			psCityObject.setNull(5, Types.VARCHAR);
+			psCityObject.setNull(++index, Types.VARCHAR);
+			psCityObject.setNull(++index, Types.VARCHAR);
 		}
 
 		// gml:description
@@ -227,11 +277,11 @@ public class DBCityObject implements DBImporter {
 			if (description != null)
 				description = description.trim();
 
-			psCityObject.setString(6, description);
+			psCityObject.setString(++index, description);
 		} else if (isBlazegraph) {
-			psCityObject.setObject(6, NodeFactory.createBlankNode());
+			psCityObject.setObject(++index, NodeFactory.createBlankNode());
 		} else {
-			psCityObject.setNull(6, Types.VARCHAR);
+			psCityObject.setNull(++index, Types.VARCHAR);
 		}
 
 		// gml:boundedBy
@@ -255,12 +305,12 @@ public class DBCityObject implements DBImporter {
 			};
 
 			GeometryObject envelope = GeometryObject.createPolygon(coordinates, 3, dbSrid);
-			psCityObject.setObject(7, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(envelope, batchConn));
+			psCityObject.setObject(++index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(envelope, batchConn));
 		} 	else if (isBlazegraph) {
-			psCityObject.setObject(7, NodeFactory.createBlankNode(),
+			psCityObject.setObject(++index, NodeFactory.createBlankNode(),
 					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType());
 		} else {
-			psCityObject.setNull(7, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(), 
+			psCityObject.setNull(++index, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
 		}
 
@@ -276,9 +326,9 @@ public class DBCityObject implements DBImporter {
 			creationDate = now;
 
 		if (isBlazegraph) {
-			psCityObject.setString(8, creationDate.toOffsetDateTime().toString());
+			psCityObject.setString(++index, creationDate.toOffsetDateTime().toString());
 		} else {
-			psCityObject.setObject(8, creationDate.toOffsetDateTime());
+			psCityObject.setObject(++index, creationDate.toOffsetDateTime());
 		}
 
 
@@ -292,29 +342,29 @@ public class DBCityObject implements DBImporter {
 
 		if (terminationDate == null) {
 			if (isBlazegraph) {
-				psCityObject.setObject(9, NodeFactory.createBlankNode());
+				psCityObject.setObject(++index, NodeFactory.createBlankNode());
 			} else {
-				psCityObject.setNull(9, Types.TIMESTAMP);
+				psCityObject.setNull(++index, Types.TIMESTAMP);
 			}
 		} else {
-			psCityObject.setObject(9, terminationDate.toOffsetDateTime());
+			psCityObject.setObject(++index, terminationDate.toOffsetDateTime());
 		}
 		// core:relativeToTerrain
 		if (isCityObject && ((AbstractCityObject)object).isSetRelativeToTerrain()) {
-			psCityObject.setString(10, ((AbstractCityObject) object).getRelativeToTerrain().getValue());
+			psCityObject.setString(++index, ((AbstractCityObject) object).getRelativeToTerrain().getValue());
 		} else if (isBlazegraph) {
-			psCityObject.setObject(10, NodeFactory.createBlankNode());
+			psCityObject.setObject(++index, NodeFactory.createBlankNode());
 		} else {
-			psCityObject.setNull(10, Types.VARCHAR);
+			psCityObject.setNull(++index, Types.VARCHAR);
 		}
 
 		// core:relativeToWater
 		if (isCityObject && ((AbstractCityObject)object).isSetRelativeToWater()) {
-			psCityObject.setString(11, ((AbstractCityObject) object).getRelativeToWater().getValue());
+			psCityObject.setString(++index, ((AbstractCityObject) object).getRelativeToWater().getValue());
 		} else if (isBlazegraph) {
-			psCityObject.setObject(11, NodeFactory.createBlankNode());
+			psCityObject.setObject(++index, NodeFactory.createBlankNode());
 		} else {
-			psCityObject.setNull(11, Types.VARCHAR);
+			psCityObject.setNull(++index, Types.VARCHAR);
 		}
 
 		// 3DCityDB metadata
@@ -335,29 +385,30 @@ public class DBCityObject implements DBImporter {
 
 		// citydb:lastModificationDate
 		if (isBlazegraph) {
-			psCityObject.setString(12, now.toOffsetDateTime().toString());
+			psCityObject.setString(++index, now.toOffsetDateTime().toString());
 		} else {
-			psCityObject.setObject(12, now.toOffsetDateTime());
+			psCityObject.setObject(++index, now.toOffsetDateTime());
 		}
 
 		// citydb:updatingPerson
 		if (isBlazegraph & updatingPerson == null) {
-			psCityObject.setObject(13, NodeFactory.createBlankNode());
+			psCityObject.setObject(++index, NodeFactory.createBlankNode());
 		} else {
-			psCityObject.setString(13, updatingPerson);
+			psCityObject.setString(++index, updatingPerson);
 		}
 
 		// citydb:reasonForUpdate
 		if (isBlazegraph & reasonForUpdate == null) {
-			psCityObject.setObject(14, NodeFactory.createBlankNode());
+			psCityObject.setObject(++index, NodeFactory.createBlankNode());
 		} else {
-			psCityObject.setString(14, reasonForUpdate);
+			psCityObject.setString(++index, reasonForUpdate);
 		}
 
 		// citydb:lineage
-		if (!isBlazegraph) {
-			psCityObject.setString(15, lineage);
-			//psCityObject.setObject(15, NodeFactory.createBlankNode());
+		if (isBlazegraph && lineage == null) {
+			psCityObject.setObject(++index, NodeFactory.createBlankNode());
+		} else {
+			psCityObject.setString(++index, lineage);
 		}
 
 		// resolve local xlinks to geometry objects

@@ -20,6 +20,7 @@ dependencies {
     compile 'org.apache.tika:tika-core:1.23'
     compile 'org.apache.commons:commons-compress:1.20'
     compile 'org.apache.jena:jena-jdbc-driver-remote:3.15.0'
+    compile 'org.apache.jena:jena-querybuilder:3.16.0'
     compile fileTree(dir: 'lib', include: '*.jar')
 }
 
