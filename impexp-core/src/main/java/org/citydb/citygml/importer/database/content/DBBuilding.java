@@ -35,6 +35,7 @@ import org.citydb.citygml.importer.util.AttributeValueJoiner;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.config.project.database.DatabaseType;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
 import org.citygml4j.model.citygml.building.AbstractBoundarySurface;
@@ -55,6 +56,8 @@ import org.citygml4j.model.gml.geometry.aggregates.MultiCurveProperty;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
 import org.citygml4j.model.gml.geometry.primitives.SolidProperty;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -77,7 +80,11 @@ public class DBBuilding implements DBImporter {
 
 	private boolean hasObjectClassIdColumn;
 	private int nullGeometryType;
-	private String nullGeometryTypeName;	
+	private String nullGeometryTypeName;
+	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/building/";
 
 	public DBBuilding(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;
@@ -96,6 +103,57 @@ public class DBBuilding implements DBImporter {
 				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
+
+		if (importer.isBlazegraph()) {
+			String param = "  ?;";
+			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+					"INSERT DATA" +
+					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
+						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+								SchemaManagerAdapter.ONTO_BUILDING_PARENT_ID+ param +
+								SchemaManagerAdapter.ONTO_BUILDING_ROOT_ID + param +
+								SchemaManagerAdapter.ONTO_CLASS + param +
+								SchemaManagerAdapter.ONTO_CLASS_CODESPACE + param +
+								SchemaManagerAdapter.ONTO_FUNCTION + param +
+								SchemaManagerAdapter.ONTO_FUNCTION_CODESPACE + param +
+								SchemaManagerAdapter.ONTO_USAGE + param +
+								SchemaManagerAdapter.ONTO_USAGE_CODESPACE + param +
+								SchemaManagerAdapter.ONTO_YEAR_CONSTRUCTION + param +
+								SchemaManagerAdapter.ONTO_YEAR_DEMOLITION + param +
+								SchemaManagerAdapter.ONTO_ROOF_TYPE + param +
+								SchemaManagerAdapter.ONTO_ROOF_TYPE_CODESPACE + param +
+								SchemaManagerAdapter.ONTO_MEASURED_HEIGHT + param +
+								SchemaManagerAdapter.ONTO_MEASURED_HEIGHT_UNIT + param +
+								SchemaManagerAdapter.ONTO_STOREYS_ABOVE_GROUND + param +
+								SchemaManagerAdapter.ONTO_STOREYS_BELLOW_GROUND + param +
+								SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_ABOVE_GROUND + param +
+								SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_AG_UNIT + param +
+								SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_BELLOW_GROUND + param +
+								SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_BG_UNIT + param +
+								SchemaManagerAdapter.ONTO_LOD1_TERRAIN_INTERSECTION + param +
+								SchemaManagerAdapter.ONTO_LOD2_TERRAIN_INTERSECTION + param +
+								SchemaManagerAdapter.ONTO_LOD3_TERRAIN_INTERSECTION + param +
+								SchemaManagerAdapter.ONTO_LOD4_TERRAIN_INTERSECTION + param +
+								SchemaManagerAdapter.ONTO_LOD2_MULTI_CURVE + param +
+								SchemaManagerAdapter.ONTO_LOD3_MULTI_CURVE + param +
+								SchemaManagerAdapter.ONTO_LOD4_MULTI_CURVE + param +
+								SchemaManagerAdapter.ONTO_FOOTPRINT_ID+ param +
+								SchemaManagerAdapter.ONTO_ROOFPRINT_ID + param +
+								SchemaManagerAdapter.ONTO_LOD1_MULTI_SURFACE_ID + param +
+								SchemaManagerAdapter.ONTO_LOD2_MULTI_SURFACE_ID + param +
+								SchemaManagerAdapter.ONTO_LOD3_MULTI_SURFACE_ID + param +
+								SchemaManagerAdapter.ONTO_LOD4_MULTI_SURFACE_ID + param +
+								SchemaManagerAdapter.ONTO_LOD1_SOLID_ID + param +
+								SchemaManagerAdapter.ONTO_LOD2_SOLID_ID + param +
+								SchemaManagerAdapter.ONTO_LOD3_SOLID_ID + param +
+								SchemaManagerAdapter.ONTO_LOD4_SOLID_ID + param +
+								(hasObjectClassIdColumn ? SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param : "") +
+						".}" +
+					"}";
+		}
+
+
+
 		psBuilding = batchConn.prepareStatement(stmt);
 
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
@@ -122,130 +180,145 @@ public class DBBuilding implements DBImporter {
 		if (rootId == 0)
 			rootId = buildingId;
 
+		int index = 0;
+
+		if (importer.isBlazegraph()) {
+			try {
+				String uuid = building.getId();
+				if (uuid.isEmpty()) {
+					uuid = importer.generateNewGmlId();
+				}
+				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				psBuilding.setURL(++index, url);
+			} catch (MalformedURLException e) {
+				psBuilding.setObject(++index, NodeFactory.createBlankNode());
+			}
+		}
+
 		// import building information
 		// primary id
-		psBuilding.setLong(1, buildingId);
+		psBuilding.setLong(++index, buildingId);
 
 		// parent building id
 		if (parentId != 0) {
-			psBuilding.setLong(2, parentId);
+			psBuilding.setLong(++index, parentId);
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psBuilding, 2);
+			setBlankNode(psBuilding, ++index);
 		} else {
-			psBuilding.setNull(2, Types.NULL);
+			psBuilding.setNull(++index, Types.NULL);
 		}
 
 		// root building id
-		psBuilding.setLong(3, rootId);
+		psBuilding.setLong(++index, rootId);
 
 		// bldg:class
 		if (building.isSetClazz() && building.getClazz().isSetValue()) {
-			psBuilding.setString(4, building.getClazz().getValue());
-			psBuilding.setString(5, building.getClazz().getCodeSpace());
+			psBuilding.setString(++index, building.getClazz().getValue());
+			psBuilding.setString(++index, building.getClazz().getCodeSpace());
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psBuilding, 4);
-			setBlankNode(psBuilding, 5);
+			setBlankNode(psBuilding, ++index);
+			setBlankNode(psBuilding, ++index);
 		} else {
-			psBuilding.setNull(4, Types.VARCHAR);
-			psBuilding.setNull(5, Types.VARCHAR);
+			psBuilding.setNull(++index, Types.VARCHAR);
+			psBuilding.setNull(++index, Types.VARCHAR);
 		}
 
 		// bldg:function
 		if (building.isSetFunction()) {
 			valueJoiner.join(building.getFunction(), Code::getValue, Code::getCodeSpace);
-			psBuilding.setString(6, valueJoiner.result(0));
+			psBuilding.setString(++index, valueJoiner.result(0));
 			if (valueJoiner.result(1) == null && importer.isBlazegraph()) {
-				setBlankNode(psBuilding, 7);
+				setBlankNode(psBuilding, ++index);
 			} else {
-				psBuilding.setString(7, valueJoiner.result(1));
+				psBuilding.setString(++index, valueJoiner.result(1));
 			}
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psBuilding, 6);
-			setBlankNode(psBuilding, 7);
+			setBlankNode(psBuilding, ++index);
+			setBlankNode(psBuilding, ++index);
 		} else {
-			psBuilding.setNull(6, Types.VARCHAR);
-			psBuilding.setNull(7, Types.VARCHAR);
+			psBuilding.setNull(++index, Types.VARCHAR);
+			psBuilding.setNull(++index, Types.VARCHAR);
 		}
 
 		// bldg:usage
 		if (building.isSetUsage()) {
 			valueJoiner.join(building.getUsage(), Code::getValue, Code::getCodeSpace);
-			psBuilding.setString(8, valueJoiner.result(0));
-			psBuilding.setString(9, valueJoiner.result(1));
+			psBuilding.setString(++index, valueJoiner.result(0));
+			psBuilding.setString(++index, valueJoiner.result(1));
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psBuilding, 8);
-			setBlankNode(psBuilding, 9);
+			setBlankNode(psBuilding, ++index);
+			setBlankNode(psBuilding, ++index);
 		} else {
-			psBuilding.setNull(8, Types.VARCHAR);
-			psBuilding.setNull(9, Types.VARCHAR);
+			psBuilding.setNull(++index, Types.VARCHAR);
+			psBuilding.setNull(++index, Types.VARCHAR);
 		}
 
 		// bldg:yearOfConstruction
 		if (building.isSetYearOfConstruction()) {
-			psBuilding.setObject(10, building.getYearOfConstruction());
+			psBuilding.setObject(++index, building.getYearOfConstruction());
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psBuilding, 10);
+			setBlankNode(psBuilding, ++index);
 		} else {
-			psBuilding.setNull(10, Types.DATE);
+			psBuilding.setNull(++index, Types.DATE);
 		}
 
 		// bldg:yearOfDemolition
 		if (building.isSetYearOfDemolition()) {
-			psBuilding.setObject(11, building.getYearOfDemolition());
+			psBuilding.setObject(++index, building.getYearOfDemolition());
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psBuilding, 11);
+			setBlankNode(psBuilding, ++index);
 		} else {
-			psBuilding.setNull(11, Types.DATE);
+			psBuilding.setNull(++index, Types.DATE);
 		}
 
 		// bldg:roofType
 		if (building.isSetRoofType() && building.getRoofType().isSetValue()) {
-			psBuilding.setString(12, building.getRoofType().getValue());
+			psBuilding.setString(++index, building.getRoofType().getValue());
 			if (building.getRoofType().getCodeSpace() == null && importer.isBlazegraph()) {
-				setBlankNode(psBuilding, 13);
+				setBlankNode(psBuilding, ++index);
 			} else {
-				psBuilding.setString(13, building.getRoofType().getCodeSpace());
+				psBuilding.setString(++index, building.getRoofType().getCodeSpace());
 			}
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psBuilding, 12);
-			setBlankNode(psBuilding, 13);
+			setBlankNode(psBuilding, ++index);
+			setBlankNode(psBuilding, ++index);
 		} else {
-			psBuilding.setNull(12, Types.VARCHAR);
-			psBuilding.setNull(13, Types.VARCHAR);
+			psBuilding.setNull(++index, Types.VARCHAR);
+			psBuilding.setNull(++index, Types.VARCHAR);
 		}
 
 		// bldg:measuredHeight
 		if (building.isSetMeasuredHeight() && building.getMeasuredHeight().isSetValue()) {
-			psBuilding.setDouble(14, building.getMeasuredHeight().getValue());
+			psBuilding.setDouble(++index, building.getMeasuredHeight().getValue());
 			if (building.getMeasuredHeight().getUom() == null && importer.isBlazegraph()) {
-				setBlankNode(psBuilding, 13);
+				setBlankNode(psBuilding, ++index);
 			} else {
-				psBuilding.setString(15, building.getMeasuredHeight().getUom());
+				psBuilding.setString(++index, building.getMeasuredHeight().getUom());
 			}
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psBuilding, 14);
-			setBlankNode(psBuilding, 15);
+			setBlankNode(psBuilding, ++index);
+			setBlankNode(psBuilding, ++index);
 		} else {
-			psBuilding.setNull(14, Types.DOUBLE);
-			psBuilding.setNull(15, Types.VARCHAR);
+			psBuilding.setNull(++index, Types.DOUBLE);
+			psBuilding.setNull(++index, Types.VARCHAR);
 		}
 
 		// bldg:storeysAboveGround
 		if (building.isSetStoreysAboveGround()) {
-			psBuilding.setInt(16, building.getStoreysAboveGround());
+			psBuilding.setInt(++index, building.getStoreysAboveGround());
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psBuilding, 16);
+			setBlankNode(psBuilding, ++index);
 		} else {
-			psBuilding.setNull(16, Types.NULL);
+			psBuilding.setNull(++index, Types.NULL);
 		}
 
 		// bldg:storeysBelowGround
 		if (building.isSetStoreysBelowGround()) {
-			psBuilding.setInt(17, building.getStoreysBelowGround());
+			psBuilding.setInt(++index, building.getStoreysBelowGround());
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psBuilding, 17);
+			setBlankNode(psBuilding, ++index);
 		} else {
-			psBuilding.setNull(17, Types.NULL);
+			psBuilding.setNull(++index, Types.NULL);
 		}
 
 		// bldg:storeyHeightsAboveGround
@@ -253,14 +326,14 @@ public class DBBuilding implements DBImporter {
 			valueJoiner.join(" ", building.getStoreyHeightsAboveGround().getDoubleOrNull(),
 					v -> v.isSetDouble() ? v.getDouble().toString() : v.getNull().getValue());
 			
-			psBuilding.setString(18, valueJoiner.result(0));
-			psBuilding.setString(19, building.getStoreyHeightsAboveGround().getUom());
+			psBuilding.setString(++index, valueJoiner.result(0));
+			psBuilding.setString(++index, building.getStoreyHeightsAboveGround().getUom());
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psBuilding, 18);
-			setBlankNode(psBuilding, 19);
+			setBlankNode(psBuilding, ++index);
+			setBlankNode(psBuilding, ++index);
 		} else {
-			psBuilding.setNull(18, Types.VARCHAR);
-			psBuilding.setNull(19, Types.VARCHAR);
+			psBuilding.setNull(++index, Types.VARCHAR);
+			psBuilding.setNull(++index, Types.VARCHAR);
 		}
 
 		// bldg:storeyHeightsBelowGround
@@ -268,14 +341,14 @@ public class DBBuilding implements DBImporter {
 			valueJoiner.join(" ", building.getStoreyHeightsBelowGround().getDoubleOrNull(), 
 					v -> v.isSetDouble() ? v.getDouble().toString() : v.getNull().getValue());
 
-			psBuilding.setString(20, valueJoiner.result(0));
-			psBuilding.setString(21, building.getStoreyHeightsBelowGround().getUom());
+			psBuilding.setString(++index, valueJoiner.result(0));
+			psBuilding.setString(++index, building.getStoreyHeightsBelowGround().getUom());
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psBuilding, 20);
-			setBlankNode(psBuilding, 21);
+			setBlankNode(psBuilding, ++index);
+			setBlankNode(psBuilding, ++index);
 		} else {
-			psBuilding.setNull(20, Types.VARCHAR);
-			psBuilding.setNull(21, Types.VARCHAR);
+			psBuilding.setNull(++index, Types.VARCHAR);
+			psBuilding.setNull(++index, Types.VARCHAR);
 		}
 
 		// bldg:lodXTerrainIntersectionCurve
@@ -305,11 +378,11 @@ public class DBBuilding implements DBImporter {
 
 			if (multiLine != null) {
 				Object multiLineObj = importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(multiLine, batchConn);
-				psBuilding.setObject(22 + i, multiLineObj);
+				psBuilding.setObject(++index + i, multiLineObj);
 			} else if (importer.isBlazegraph()) {
-				setBlankNode(psBuilding, 22);
+				setBlankNode(psBuilding, ++index);
 			} else
-				psBuilding.setNull(22 + i, nullGeometryType, nullGeometryTypeName);
+				psBuilding.setNull(++index + i, nullGeometryType, nullGeometryTypeName);
 		}
 
 		// bldg:lodXMultiCurve
@@ -336,11 +409,11 @@ public class DBBuilding implements DBImporter {
 
 			if (multiLine != null) {
 				Object multiLineObj = importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(multiLine, batchConn);
-				psBuilding.setObject(26 + i, multiLineObj);
+				psBuilding.setObject(++index + i, multiLineObj);
 			} else if (importer.isBlazegraph()) {
-				setBlankNode(psBuilding, 26);
+				setBlankNode(psBuilding, ++index);
 			} else
-				psBuilding.setNull(26 + i, nullGeometryType, nullGeometryTypeName);
+				psBuilding.setNull(++index + i, nullGeometryType, nullGeometryTypeName);
 		}
 
 		// bldg:lod0FootPrint and bldg:lod0RoofEdge
@@ -374,11 +447,11 @@ public class DBBuilding implements DBImporter {
 			}
 
 			if (multiSurfaceId != 0) {
-				psBuilding.setLong(29 + i, multiSurfaceId);
+				psBuilding.setLong(++index + i, multiSurfaceId);
 			} else if (importer.isBlazegraph()) {
-				setBlankNode(psBuilding, 29);
+				setBlankNode(psBuilding, ++index);
 			} else {
-				psBuilding.setNull(29 + i, Types.NULL);
+				psBuilding.setNull(++index + i, Types.NULL);
 			}
 		}
 
@@ -419,11 +492,11 @@ public class DBBuilding implements DBImporter {
 			}
 
 			if (multiGeometryId != 0) {
-				psBuilding.setLong(31 + i, multiGeometryId);
+				psBuilding.setLong(++index + i, multiGeometryId);
 			} else if (importer.isBlazegraph()) {
-				setBlankNode(psBuilding, 31);
+				setBlankNode(psBuilding, ++index);
 			} else {
-				psBuilding.setNull(31 + i, Types.NULL);
+				psBuilding.setNull(++index + i, Types.NULL);
 			}
 		}
 
@@ -464,17 +537,17 @@ public class DBBuilding implements DBImporter {
 			}
 
 			if (solidGeometryId != 0) {
-				psBuilding.setLong(35 + i, solidGeometryId);
+				psBuilding.setLong(++index + i, solidGeometryId);
 			} else if (importer.isBlazegraph()) {
-				setBlankNode(psBuilding, 35);
+				setBlankNode(psBuilding, ++index);
 			} else {
-				psBuilding.setNull(35 + i, Types.NULL);
+				psBuilding.setNull(++index + i, Types.NULL);
 			}
 		}
 
 		// objectclass id
-		if (!importer.isBlazegraph() && hasObjectClassIdColumn)
-			psBuilding.setLong(39, featureType.getObjectClassId());
+		if (hasObjectClassIdColumn)
+			psBuilding.setLong(++index, featureType.getObjectClassId());
 
 		psBuilding.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())

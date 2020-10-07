@@ -100,9 +100,9 @@ public class DBCityObject implements DBImporter {
 	private TerminationDateMode terminationDateMode;
 	private BoundingBoxOptions bboxOptions;
 	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH = "http://localhost/berlin";
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_OBJECT = IRI_GRAPH + "/cityobject/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/cityobject/";
 
 	public DBCityObject(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;	
@@ -154,7 +154,7 @@ public class DBCityObject implements DBImporter {
 			String param = "  ?;";
 			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
 					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH + "> " +
+					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
 						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
 								SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID+ param +
 								SchemaManagerAdapter.ONTO_GML_ID + param +
@@ -244,7 +244,7 @@ public class DBCityObject implements DBImporter {
 
 		if (isBlazegraph) {
 			try {
-				URL url = new URL(IRI_OBJECT + object.getId() + "/");
+				URL url = new URL(IRI_GRAPH_OBJECT + object.getId() + "/");
 				psCityObject.setURL(++index, url);
 			} catch (MalformedURLException e) {
 				psCityObject.setObject(++index, NodeFactory.createBlankNode());

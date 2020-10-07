@@ -17,7 +17,19 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_GML_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "gmlId";
     public static final String ONTO_PARENT_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "parentId";
     public static final String ONTO_ROOT_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "rootId";
+    public static final String ONTO_BUILDING_PARENT_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "buildingParentId";
+    public static final String ONTO_BUILDING_ROOT_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "buildingRootId";
     public static final String ONTO_CITY_OBJECT_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "cityObjectId";
+    public static final String ONTO_FOOTPRINT_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "lod0FootprintId";
+    public static final String ONTO_ROOFPRINT_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "lod0RoofprintId";
+    public static final String ONTO_LOD1_MULTI_SURFACE_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "lod1MultiSurfaceId";
+    public static final String ONTO_LOD2_MULTI_SURFACE_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "lod2MultiSurfaceId";
+    public static final String ONTO_LOD3_MULTI_SURFACE_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "lod3MultiSurfaceId";
+    public static final String ONTO_LOD4_MULTI_SURFACE_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "lod4MultiSurfaceId";
+    public static final String ONTO_LOD1_SOLID_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "lod1SolidId";
+    public static final String ONTO_LOD2_SOLID_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "lod2SolidId";
+    public static final String ONTO_LOD3_SOLID_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "lod3SolidId";
+    public static final String ONTO_LOD4_SOLID_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "lod4SolidId";
     public static final String ONTO_NAME = ONTO_PREFIX_NAME_ONTOCITYGML + "name";
     public static final String ONTO_NAME_CODESPACE = ONTO_PREFIX_NAME_ONTOCITYGML + "nameCodespace";
     public static final String ONTO_DESCRIPTION = ONTO_PREFIX_NAME_ONTOCITYGML + "description";
@@ -38,6 +50,32 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_IS_REVERSE = ONTO_PREFIX_NAME_ONTOCITYGML + "isReverse";
     public static final String ONTO_IS_SOLID = ONTO_PREFIX_NAME_ONTOCITYGML + "isSolid";
     public static final String ONTO_IS_COMPOSITE = ONTO_PREFIX_NAME_ONTOCITYGML + "isComposite";
+    public static final String ONTO_CLASS = ONTO_PREFIX_NAME_ONTOCITYGML + "class";
+    public static final String ONTO_CLASS_CODESPACE = ONTO_PREFIX_NAME_ONTOCITYGML + "classCodespace";
+    public static final String ONTO_FUNCTION = ONTO_PREFIX_NAME_ONTOCITYGML + "function";
+    public static final String ONTO_FUNCTION_CODESPACE = ONTO_PREFIX_NAME_ONTOCITYGML + "functionCodespace";
+    public static final String ONTO_USAGE = ONTO_PREFIX_NAME_ONTOCITYGML + "usage";
+    public static final String ONTO_USAGE_CODESPACE = ONTO_PREFIX_NAME_ONTOCITYGML + "usageCodespace";
+    public static final String ONTO_ROOF_TYPE = ONTO_PREFIX_NAME_ONTOCITYGML + "roofType";
+    public static final String ONTO_ROOF_TYPE_CODESPACE = ONTO_PREFIX_NAME_ONTOCITYGML + "roofTypeCodespace";
+    public static final String ONTO_YEAR_CONSTRUCTION = ONTO_PREFIX_NAME_ONTOCITYGML + "yearOfConstruction";
+    public static final String ONTO_YEAR_DEMOLITION = ONTO_PREFIX_NAME_ONTOCITYGML + "yearOfDemolition";
+    public static final String ONTO_MEASURED_HEIGHT = ONTO_PREFIX_NAME_ONTOCITYGML + "measuredHeigh";
+    public static final String ONTO_MEASURED_HEIGHT_UNIT = ONTO_PREFIX_NAME_ONTOCITYGML + "measuredHeightUnit";
+    public static final String ONTO_STOREYS_ABOVE_GROUND = ONTO_PREFIX_NAME_ONTOCITYGML + "storeysAboveGround";
+    public static final String ONTO_STOREYS_BELLOW_GROUND = ONTO_PREFIX_NAME_ONTOCITYGML + "storeysBelowGround";
+    public static final String ONTO_STOREY_HEIGHTS_ABOVE_GROUND = ONTO_PREFIX_NAME_ONTOCITYGML + "storeyHeightsAboveGround";
+    public static final String ONTO_STOREY_HEIGHTS_BELLOW_GROUND = ONTO_PREFIX_NAME_ONTOCITYGML + "storeyHeightsBelowGround";
+    public static final String ONTO_STOREY_HEIGHTS_AG_UNIT = ONTO_PREFIX_NAME_ONTOCITYGML + "storeyHeightsAgUnit";
+    public static final String ONTO_STOREY_HEIGHTS_BG_UNIT = ONTO_PREFIX_NAME_ONTOCITYGML + "storeyHeightsBgUnit";
+    public static final String ONTO_LOD1_TERRAIN_INTERSECTION = ONTO_PREFIX_NAME_ONTOCITYGML + "lod1TerrainIntersection";
+    public static final String ONTO_LOD2_TERRAIN_INTERSECTION = ONTO_PREFIX_NAME_ONTOCITYGML + "lod2TerrainIntersection";
+    public static final String ONTO_LOD3_TERRAIN_INTERSECTION = ONTO_PREFIX_NAME_ONTOCITYGML + "lod3TerrainIntersection";
+    public static final String ONTO_LOD4_TERRAIN_INTERSECTION = ONTO_PREFIX_NAME_ONTOCITYGML + "lod4TerrainIntersection";
+    public static final String ONTO_LOD2_MULTI_CURVE = ONTO_PREFIX_NAME_ONTOCITYGML + "lod2MultiCurve";
+    public static final String ONTO_LOD3_MULTI_CURVE = ONTO_PREFIX_NAME_ONTOCITYGML + "lod3MultiCurve";
+    public static final String ONTO_LOD4_MULTI_CURVE = ONTO_PREFIX_NAME_ONTOCITYGML + "lod4MultiCurve";
+
 
     protected SchemaManagerAdapter(AbstractDatabaseAdapter databaseAdapter) {
         super(databaseAdapter);

@@ -111,9 +111,9 @@ public class DBSurfaceGeometry implements DBImporter {
 	private LocalAppearanceHandler localAppearanceHandler;
 	private RingValidator ringValidator;
 	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH = "http://localhost/berlin";
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_OBJECT = IRI_GRAPH + "/surfacegeometry/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/surfacegeometry/";
 
 	public DBSurfaceGeometry(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;
@@ -152,7 +152,7 @@ public class DBSurfaceGeometry implements DBImporter {
 			String param = "  ?;";
 			stmt = stmt.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
 					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH + "> " +
+					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
 						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
 								SchemaManagerAdapter.ONTO_GML_ID + param +
 								SchemaManagerAdapter.ONTO_PARENT_ID + param +
@@ -277,7 +277,7 @@ public class DBSurfaceGeometry implements DBImporter {
 
 		if (importer.isBlazegraph()) {
 			try {
-				URL url = new URL(IRI_OBJECT + gmlId + "/");
+				URL url = new URL(IRI_GRAPH_OBJECT + gmlId + "/");
 				psGeomElem.setURL(++index, url);
 			} catch (MalformedURLException e) {
 				psGeomElem.setObject(++index, NodeFactory.createBlankNode());
