@@ -31,6 +31,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.GeometryObject;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.SequenceEnum;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
@@ -45,6 +46,8 @@ import org.citygml4j.model.xal.ThoroughfareName;
 import org.citygml4j.model.xal.ThoroughfareNumber;
 import org.citygml4j.util.walker.XALWalker;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -64,6 +67,10 @@ public class DBAddress implements DBImporter {
 	private boolean importXALSource;
 	private boolean hasGmlIdColumn;
 	private boolean replaceGmlId;
+	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/address/";
 
 	public DBAddress(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;
@@ -84,6 +91,27 @@ public class DBAddress implements DBImporter {
 		String stmt = "insert into " + schema + ".address (id, " + (hasGmlIdColumn ? "gmlid, " : "") + (gmlIdCodespace != null ? "gmlid_codespace, " : "") +
 				"street, house_number, po_box, zip_code, city, country, multi_point, xal_source) values " +
 				"(?, " + (hasGmlIdColumn ? "?, " : "") + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?, ?, ?)";
+
+		if (importer.isBlazegraph()) {
+			String param = "  ?;";
+			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+					"INSERT DATA" +
+					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
+						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+								(hasGmlIdColumn ? SchemaManagerAdapter.ONTO_GML_ID + param : "") +
+								(gmlIdCodespace != null ? SchemaManagerAdapter.ONTO_GML_ID_CODESPACE + param : "") +
+								SchemaManagerAdapter.ONTO_STREET + param +
+								SchemaManagerAdapter.ONTO_HOUSE_NUMBER + param +
+								SchemaManagerAdapter.ONTO_PO_BOX + param +
+								SchemaManagerAdapter.ONTO_ZIP_CODE + param +
+								SchemaManagerAdapter.ONTO_CITY + param +
+								SchemaManagerAdapter.ONTO_COUNTRY + param +
+								SchemaManagerAdapter.ONTO_MULTI_POINT + param +
+								SchemaManagerAdapter.ONTO_XAL_SOURCE + param +
+						".}" +
+					"}";
+		}
+
 		psAddress = batchConn.prepareStatement(stmt);
 
 		addressToBuildingImporter = importer.getImporter(DBAddressToBuilding.class);
@@ -124,7 +152,22 @@ public class DBAddress implements DBImporter {
 				address.setId(importer.generateNewGmlId());
 		}
 
-		int index = 1;			
+		int index = 1;
+
+		if (importer.isBlazegraph()) {
+			try {
+				String uuid = address.getId();
+				if (uuid.isEmpty()) {
+					uuid = importer.generateNewGmlId();
+				}
+				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				psAddress.setURL(index++, url);
+			} catch (MalformedURLException e) {
+				psAddress.setObject(index++, NodeFactory.createBlankNode());
+			}
+		}
+
+
 		psAddress.setLong(index++, addressId);
 		if (hasGmlIdColumn)
 			psAddress.setString(index++, address.getId());
@@ -194,12 +237,12 @@ public class DBAddress implements DBImporter {
 		if (importXALSource)
 			xalSource = importer.marshalObject(address.getXalAddress().getAddressDetails(), XALModuleType.CORE);
 
-		if (!importer.isBlazegraph()) {
-			if (xalSource != null && !xalSource.isEmpty()) {
-				psAddress.setString(index++, xalSource);
-			} else {
-				psAddress.setNull(index++, Types.CLOB);
-			}
+		if (xalSource != null && !xalSource.isEmpty()) {
+			psAddress.setString(index++, xalSource);
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psAddress, index++);
+		}  else {
+			psAddress.setNull(index++, Types.CLOB);
 		}
 
 		psAddress.addBatch();
