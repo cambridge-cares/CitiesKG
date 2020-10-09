@@ -106,6 +106,8 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_GT_ORIENTATION = ONTO_PREFIX_NAME_ONTOCITYGML + "gtOrientation";
     public static final String ONTO_GT_REFERENCE_POINT = ONTO_PREFIX_NAME_ONTOCITYGML + "gtReferencePoint";
     public static final String ONTO_THEME = ONTO_PREFIX_NAME_ONTOCITYGML + "theme";
+    public static final String ONTO_INFO_SYS = ONTO_PREFIX_NAME_ONTOCITYGML + "infoSys";
+    public static final String ONTO_URI = ONTO_PREFIX_NAME_ONTOCITYGML + "URI";
     //@TODO: NOT IN ONTOCITYGML - need to be added:
     //@END
 

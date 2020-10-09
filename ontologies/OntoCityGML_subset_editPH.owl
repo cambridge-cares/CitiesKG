@@ -2331,6 +2331,14 @@ Class for defining constant surface properties. It is based on X3D&apos;s materi
     
 
 
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#URI -->
+
+    <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#URI">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#buildingId -->
 
     <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#buildingId">
@@ -2351,6 +2359,14 @@ Class for defining constant surface properties. It is based on X3D&apos;s materi
 
     <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#city">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#cityModelId -->
+
+    <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#cityModelId">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#id"/>
     </owl:DatatypeProperty>
     
 
@@ -2452,10 +2468,19 @@ Class for defining constant surface properties. It is based on X3D&apos;s materi
     <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#imageURI -->
 
     <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#imageURI">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#URI"/>
         <rdfs:comment>&quot;&lt;xs:complexType name=&quot;&quot;AbstractTextureType&quot;&quot;&gt;
 &lt;xs:annotation&gt;
 &lt;xs:documentation&gt;
 Base class for textures. &quot;&quot;imageURI&quot;&quot; can contain any valid URI from references to a local file to preformatted web service requests. The linking to geometry and texture parameterization is provided by derived classes.&quot;</rdfs:comment>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#infoSys -->
+
+    <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#infoSys">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
     </owl:DatatypeProperty>
     
 
@@ -2666,7 +2691,7 @@ Base class for textures. &quot;&quot;imageURI&quot;&quot; can contain any valid 
     <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#texImageURI -->
 
     <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#texImageURI">
-        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#imageURI"/>
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#URI"/>
     </owl:DatatypeProperty>
     
 
