@@ -378,11 +378,11 @@ public class DBBuilding implements DBImporter {
 
 			if (multiLine != null) {
 				Object multiLineObj = importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(multiLine, batchConn);
-				psBuilding.setObject(++index + i, multiLineObj);
+				psBuilding.setObject(++index, multiLineObj);
 			} else if (importer.isBlazegraph()) {
 				setBlankNode(psBuilding, ++index);
 			} else
-				psBuilding.setNull(++index + i, nullGeometryType, nullGeometryTypeName);
+				psBuilding.setNull(++index, nullGeometryType, nullGeometryTypeName);
 		}
 
 		// bldg:lodXMultiCurve
@@ -409,11 +409,11 @@ public class DBBuilding implements DBImporter {
 
 			if (multiLine != null) {
 				Object multiLineObj = importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(multiLine, batchConn);
-				psBuilding.setObject(++index + i, multiLineObj);
+				psBuilding.setObject(++index, multiLineObj);
 			} else if (importer.isBlazegraph()) {
 				setBlankNode(psBuilding, ++index);
 			} else
-				psBuilding.setNull(++index + i, nullGeometryType, nullGeometryTypeName);
+				psBuilding.setNull(++index, nullGeometryType, nullGeometryTypeName);
 		}
 
 		// bldg:lod0FootPrint and bldg:lod0RoofEdge
@@ -447,11 +447,11 @@ public class DBBuilding implements DBImporter {
 			}
 
 			if (multiSurfaceId != 0) {
-				psBuilding.setLong(++index + i, multiSurfaceId);
+				psBuilding.setLong(++index, multiSurfaceId);
 			} else if (importer.isBlazegraph()) {
 				setBlankNode(psBuilding, ++index);
 			} else {
-				psBuilding.setNull(++index + i, Types.NULL);
+				psBuilding.setNull(++index, Types.NULL);
 			}
 		}
 
@@ -492,11 +492,11 @@ public class DBBuilding implements DBImporter {
 			}
 
 			if (multiGeometryId != 0) {
-				psBuilding.setLong(++index + i, multiGeometryId);
+				psBuilding.setLong(++index, multiGeometryId);
 			} else if (importer.isBlazegraph()) {
 				setBlankNode(psBuilding, ++index);
 			} else {
-				psBuilding.setNull(++index + i, Types.NULL);
+				psBuilding.setNull(++index, Types.NULL);
 			}
 		}
 
@@ -537,11 +537,11 @@ public class DBBuilding implements DBImporter {
 			}
 
 			if (solidGeometryId != 0) {
-				psBuilding.setLong(++index + i, solidGeometryId);
+				psBuilding.setLong(++index, solidGeometryId);
 			} else if (importer.isBlazegraph()) {
 				setBlankNode(psBuilding, ++index);
 			} else {
-				psBuilding.setNull(++index + i, Types.NULL);
+				psBuilding.setNull(++index, Types.NULL);
 			}
 		}
 

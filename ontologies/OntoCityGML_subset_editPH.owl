@@ -1499,6 +1499,22 @@
     
 
 
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#gtOrientation -->
+
+    <owl:ObjectProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#gtOrientation">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#orientation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#gtReferencePoint -->
+
+    <owl:ObjectProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#gtReferencePoint">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#referencePoint"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#height -->
 
     <owl:ObjectProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#height"/>
@@ -2118,10 +2134,34 @@ Class for defining constant surface properties. It is based on X3D&apos;s materi
     
 
 
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#texBorderColor -->
+
+    <owl:ObjectProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#texBorderColor">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#borderColor"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#texMimeType -->
 
     <owl:ObjectProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#texMimeType">
         <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#mimeType"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#texTextureType -->
+
+    <owl:ObjectProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#texTextureType">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#textureType"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#texWrapMode -->
+
+    <owl:ObjectProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#texWrapMode">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#wrapMode"/>
     </owl:ObjectProperty>
     
 
@@ -2226,6 +2266,54 @@ Class for defining constant surface properties. It is based on X3D&apos;s materi
     
 
 
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#x3dAmbientIntensity -->
+
+    <owl:ObjectProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#x3dAmbientIntensity">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#ambientIntensity"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#x3dDiffuseColor -->
+
+    <owl:ObjectProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#x3dDiffuseColor">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#diffuseColor"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#x3dEmissiveColor -->
+
+    <owl:ObjectProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#x3dEmissiveColor">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#emissiveColor"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#x3dShininess -->
+
+    <owl:ObjectProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#x3dShininess">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#shininess"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#x3dSpecularColor -->
+
+    <owl:ObjectProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#x3dSpecularColor">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#specularColor"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#x3dTransparency -->
+
+    <owl:ObjectProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#x3dTransparency">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#transparency"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#xalAddress -->
 
     <owl:ObjectProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#xalAddress"/>
@@ -2317,6 +2405,14 @@ Class for defining constant surface properties. It is based on X3D&apos;s materi
 
     <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#gmlIdCodespace">
         <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#codespace"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#gtPreferWorldFile -->
+
+    <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#gtPreferWorldFile">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#preferWorldFile"/>
     </owl:DatatypeProperty>
     
 
@@ -2594,6 +2690,14 @@ Theme = name of Appearance group&quot;</rdfs:comment>
     <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#value -->
 
     <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#value"/>
+    
+
+
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#x3dIsSmooth -->
+
+    <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#x3dIsSmooth">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#isSmooth"/>
+    </owl:DatatypeProperty>
     
 
 
@@ -8022,134 +8126,6 @@ I would remove it myself, but I just wanted to test the annotation feature.</rdf
         <rdfs:subClassOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#CityObjectGroupProperty"/>
     </owl:Class>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ClosureSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AbstractFeatureType SubClassOf CityGMLCoreModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf AbstractSiteType</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">WallSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">OuterCeilingSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">GroundSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">WallSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf AbstractCityObjectType</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RoofSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf AbstractCityObjectType</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">InteriorWallSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf AbstractSiteType</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">OuterFloorSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf AddressType</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AbstractFeatureType SubClassOf GeometryType</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf CityGMLModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RoofSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">GroundSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">InteriorWallSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">OuterCeilingSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AbstractFeatureType SubClassOf AbstractGMLType</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">InteriorWallSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">OuterFloorSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf AbstractFeatureType</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">OuterCeilingSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CeilingSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RoofSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AbstractFeatureType EquivalentTo cityObjectMember some BuildingType</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">GroundSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AbstractFeatureType SubClassOf AbstractGMLType</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf AbstractSurfaceDataType</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">GroundSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf BuildingModule</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
@@ -8159,22 +8135,6 @@ I would remove it myself, but I just wanted to test the annotation feature.</rdf
     </rdf:Description>
     <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">WallSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf AbstractFeatureCollectionType</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf AbstractCityObjectType</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf AbstractSiteType</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CeilingSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
@@ -8194,19 +8154,47 @@ I would remove it myself, but I just wanted to test the annotation feature.</rdf
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf AbstractSiteType</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AbstractFeatureType SubClassOf GeometryType</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf AbstractFeatureCollectionType</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">WallSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf AbstractCityObjectType</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">OuterCeilingSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf AbstractSiteType</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CeilingSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">WallSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ClosureSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AbstractFeatureType SubClassOf CityGMLCoreModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">InteriorWallSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">OuterFloorSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
@@ -8214,12 +8202,136 @@ I would remove it myself, but I just wanted to test the annotation feature.</rdf
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf AddressType</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">OuterCeilingSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">GroundSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AbstractFeatureType SubClassOf AbstractGMLType</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ClosureSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf AbstractSurfaceDataType</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">GroundSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AbstractFeatureType EquivalentTo cityObjectMember some BuildingType</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CeilingSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AbstractFeatureType SubClassOf CityGMLCoreModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RoofSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf CityGMLCoreModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AbstractFeatureType EquivalentTo cityObjectMember some BuildingType</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">OuterFloorSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ClosureSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">OuterCeilingSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf AbstractSurfaceDataType</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">GroundSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">OuterFloorSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">InteriorWallSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf CityGMLModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">OuterCeilingSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ClosureSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AbstractFeatureType SubClassOf AbstractGMLType</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">FloorSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">FloorSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">FloorSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf CityGMLModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf AbstractFeatureType</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RoofSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf AbstractSiteType</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf AbstractFeatureType</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf CityGMLModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AbstractFeatureType SubClassOf GeometryType</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CeilingSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
@@ -8238,27 +8350,35 @@ I would remove it myself, but I just wanted to test the annotation feature.</rdf
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf AbstractSurfaceDataType</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf AddressType</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf AbstractFeatureType</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">WallSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf CityGMLModule</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AbstractFeatureType SubClassOf GeometryType</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf AbstractFeatureType</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">FloorSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf AddressType</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ClosureSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">FloorSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf AbstractCityObjectType</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf AbstractFeatureType</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">InteriorWallSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
@@ -8266,43 +8386,27 @@ I would remove it myself, but I just wanted to test the annotation feature.</rdf
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">OuterFloorSurfaceType SubClassOf CityGMLCoreModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf CityGMLModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ClosureSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">FloorSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">OuterFloorSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ClosureSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CeilingSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">OuterCeilingSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">GroundSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AbstractFeatureType EquivalentTo cityObjectMember some BuildingType</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">WallSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CityModelType SubClassOf AbstractCityObjectType</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AbstractFeatureType SubClassOf CityGMLCoreModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BuildingType SubClassOf CityGMLCoreModule</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RoofSurfaceType SubClassOf BuildingModule</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
 </rdf:RDF>

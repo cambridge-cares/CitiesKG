@@ -27,6 +27,7 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceDataToTexImage;
 import org.citydb.citygml.common.database.xlink.DBXlinkTextureAssociation;
 import org.citydb.citygml.common.database.xlink.DBXlinkTextureAssociationTarget;
@@ -40,6 +41,7 @@ import org.citydb.citygml.importer.util.LocalAppearanceHandler;
 import org.citydb.citygml.importer.util.LocalAppearanceHandler.SurfaceGeometryTarget;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.GeometryObject;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.connection.DatabaseConnectionPool;
 import org.citydb.database.schema.SequenceEnum;
 import org.citydb.database.schema.TableEnum;
@@ -67,6 +69,8 @@ import org.citygml4j.model.gml.geometry.primitives.PointProperty;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -102,6 +106,10 @@ public class DBSurfaceData implements DBImporter {
 	private boolean affineTransformation;
 	private int nullGeometryType;
 	private String nullGeometryTypeName;
+	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/surfacedata/";
 
 	public DBSurfaceData(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;
@@ -119,20 +127,69 @@ public class DBSurfaceData implements DBImporter {
 		if (gmlIdCodespace != null)
 			gmlIdCodespace = "'" + gmlIdCodespace + "', ";
 
+		String param = "  ?;";
+		String sparqlStmtPart = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
+					"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+						SchemaManagerAdapter.ONTO_GML_ID + param +
+						(gmlIdCodespace != null ? SchemaManagerAdapter.ONTO_GML_ID_CODESPACE + param : "") +
+						SchemaManagerAdapter.ONTO_NAME + param +
+					    SchemaManagerAdapter.ONTO_NAME_CODESPACE + param +
+						SchemaManagerAdapter.ONTO_DESCRIPTION + param +
+						SchemaManagerAdapter.ONTO_IS_FRONT + param +
+						SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param
+				;
+
+
 		String x3dStmt = "insert into " + schema + ".surface_data (id, gmlid, " + (gmlIdCodespace != null ? "gmlid_codespace, " : "") + "name, name_codespace, description, is_front, objectclass_id, " +
 				"x3d_shininess, x3d_transparency, x3d_ambient_intensity, x3d_specular_color, x3d_diffuse_color, x3d_emissive_color, x3d_is_smooth) values " +
 				"(?, ?, " + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+		if (importer.isBlazegraph()) {
+			x3dStmt = sparqlStmtPart +
+					SchemaManagerAdapter.ONTO_X3D_SHININESS + param +
+					SchemaManagerAdapter.ONTO_X3D_TRANSPARENCY + param +
+					SchemaManagerAdapter.ONTO_X3D_AMBIENT_INTENSITY + param +
+					SchemaManagerAdapter.ONTO_X3D_SPECULAR_COLOR + param +
+					SchemaManagerAdapter.ONTO_X3D_DIFFUSE_COLOR + param +
+					SchemaManagerAdapter.ONTO_X3D_EMISSIVE_COLOR + param +
+					SchemaManagerAdapter.ONTO_X3D_IS_SMOOTH + param +
+					".}}";
+		}
+
 		psX3DMaterial = batchConn.prepareStatement(x3dStmt);
 
 		String paraStmt = "insert into " + schema + ".surface_data (id, gmlid, " + (gmlIdCodespace != null ? "gmlid_codespace, " : "") + "name, name_codespace, description, is_front, objectclass_id, " +
 				"tex_texture_type, tex_wrap_mode, tex_border_color) values " +
 				"(?, ?, " + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?, ?, ?)";
+
+		if (importer.isBlazegraph()) {
+			paraStmt = sparqlStmtPart +
+					SchemaManagerAdapter.ONTO_TEX_TEXTURE_TYPE + param +
+					SchemaManagerAdapter.ONTO_TEX_WRAP_MODE + param +
+					SchemaManagerAdapter.ONTO_TEX_BORDER_COLOR + param +
+					".}}";
+		}
+
 		psParaTex = batchConn.prepareStatement(paraStmt);
 
 		String geoStmt = "insert into " + schema + ".surface_data (id, gmlid, " + (gmlIdCodespace != null ? "gmlid_codespace, " : "") + "name, name_codespace, description, is_front, objectclass_id, " +
 				"tex_texture_type, tex_wrap_mode, tex_border_color, " +
 				"gt_prefer_worldfile, gt_orientation, gt_reference_point) values " +
 				"(?, ?, " + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+		if (importer.isBlazegraph()) {
+			geoStmt = sparqlStmtPart +
+					SchemaManagerAdapter.ONTO_TEX_TEXTURE_TYPE + param +
+					SchemaManagerAdapter.ONTO_TEX_WRAP_MODE + param +
+					SchemaManagerAdapter.ONTO_TEX_BORDER_COLOR + param +
+					SchemaManagerAdapter.ONTO_GT_PREFER_WORDFILE + param +
+					SchemaManagerAdapter.ONTO_GT_ORIENTATION + param +
+					SchemaManagerAdapter.ONTO_GT_REFERENCE_POINT + param +
+					".}}";
+		}
+
 		psGeoTex = batchConn.prepareStatement(geoStmt);
 
 		textureParamImporter = importer.getImporter(DBTextureParam.class);
@@ -164,10 +221,6 @@ public class DBSurfaceData implements DBImporter {
 
 		long surfaceDataId = importer.getNextSequenceValue(SequenceEnum.SURFACE_DATA_ID_SEQ.getName());
 
-		// import surface data information
-		// primary id
-		psSurfaceData.setLong(1, surfaceDataId);
-
 		// gml:id
 		String origGmlId = surfaceData.getId();		
 		if (replaceGmlId) {
@@ -186,23 +239,38 @@ public class DBSurfaceData implements DBImporter {
 				surfaceData.setId(importer.generateNewGmlId());
 		}
 
-		psSurfaceData.setString(2, surfaceData.getId());
+		int index = 0;
+
+		if (importer.isBlazegraph()) {
+			try {
+				URL url = new URL(IRI_GRAPH_OBJECT + surfaceData.getId() + "/");
+				psSurfaceData.setURL(++index, url);
+			} catch (MalformedURLException e) {
+				psSurfaceData.setObject(++index, NodeFactory.createBlankNode());
+			}
+		}
+
+		// import surface data information
+		// primary id
+		psSurfaceData.setLong(++index, surfaceDataId);
+
+		psSurfaceData.setString(++index, surfaceData.getId());
 
 		// gml:name
 		if (surfaceData.isSetName()) {
 			valueJoiner.join(surfaceData.getName(), Code::getValue, Code::getCodeSpace);
-			psSurfaceData.setString(3, valueJoiner.result(0));
+			psSurfaceData.setString(++index, valueJoiner.result(0));
 			if (valueJoiner.result(1) == null && importer.isBlazegraph()) {
-				setBlankNode(psSurfaceData, 4);
+				setBlankNode(psSurfaceData, ++index);
 			} else {
-				psSurfaceData.setString(4, valueJoiner.result(1));
+				psSurfaceData.setString(++index, valueJoiner.result(1));
 			}
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psSurfaceData, 3);
-			setBlankNode(psSurfaceData, 4);
+			setBlankNode(psSurfaceData, ++index);
+			setBlankNode(psSurfaceData, ++index);
 		} else {
-			psSurfaceData.setNull(3, Types.VARCHAR);
-			psSurfaceData.setNull(4, Types.VARCHAR);
+			psSurfaceData.setNull(++index, Types.VARCHAR);
+			psSurfaceData.setNull(++index, Types.VARCHAR);
 		}
 
 		// gml:description
@@ -211,21 +279,21 @@ public class DBSurfaceData implements DBImporter {
 			if (description != null)
 				description = description.trim();
 
-			psSurfaceData.setString(5, description);
+			psSurfaceData.setString(++index, description);
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psSurfaceData, 5);
+			setBlankNode(psSurfaceData, ++index);
 		} else {
-			psSurfaceData.setNull(5, Types.VARCHAR);
+			psSurfaceData.setNull(++index, Types.VARCHAR);
 		}
 
 		// app:isFront
 		if (surfaceData.isSetIsFront() && !surfaceData.getIsFront())
-			psSurfaceData.setInt(6, 0);
+			psSurfaceData.setInt(++index, 0);
 		else
-			psSurfaceData.setInt(6, 1);
+			psSurfaceData.setInt(++index, 1);
 
 		// objectclass id
-		psSurfaceData.setInt(7, featureType.getObjectClassId());
+		psSurfaceData.setInt(++index, featureType.getObjectClassId());
 
 		// fill other columns depending on the type
 		String featureSignature = importer.getObjectSignature(surfaceData, origGmlId);
@@ -234,70 +302,73 @@ public class DBSurfaceData implements DBImporter {
 
 			// app:shininess
 			if (material.isSetShininess()) {
-				psSurfaceData.setDouble(8, material.getShininess());
+				psSurfaceData.setDouble(++index, material.getShininess());
 			} else if (importer.isBlazegraph()) {
-				setBlankNode(psSurfaceData, 8);
+				setBlankNode(psSurfaceData, ++index);
 			} else {
-				psSurfaceData.setNull(8, Types.DOUBLE);
+				psSurfaceData.setNull(++index, Types.DOUBLE);
 			}
 
 			// app:transparency
 			if (material.isSetTransparency()) {
-				psSurfaceData.setDouble(9, material.getTransparency());
+				psSurfaceData.setDouble(++index, material.getTransparency());
 			} else if (importer.isBlazegraph()) {
-				setBlankNode(psSurfaceData, 9);
+				setBlankNode(psSurfaceData, ++index);
 			} else {
-				psSurfaceData.setNull(9, Types.DOUBLE);
+				psSurfaceData.setNull(++index, Types.DOUBLE);
 			}
 
 			// app:ambientIntensity
 			if (material.isSetAmbientIntensity()) {
-				psSurfaceData.setDouble(10, material.getAmbientIntensity());
+				psSurfaceData.setDouble(++index, material.getAmbientIntensity());
 			} else if (importer.isBlazegraph()) {
-				setBlankNode(psSurfaceData, 10);
+				setBlankNode(psSurfaceData, ++index);
 			} else {
-				psSurfaceData.setNull(10, Types.DOUBLE);
+				psSurfaceData.setNull(++index, Types.DOUBLE);
 			}
 
 			// app:specularColor
 			if (material.isSetSpecularColor()) {
 				Color color = material.getSpecularColor();
 				String colorString = color.getRed() + " " + color.getGreen() + " " + color.getBlue();
-				psSurfaceData.setString(11, colorString);
+				psSurfaceData.setString(++index, colorString);
 			} else if (importer.isBlazegraph()) {
-				setBlankNode(psSurfaceData, 11);
+				setBlankNode(psSurfaceData, ++index);
 			} else {
-				psSurfaceData.setNull(11, Types.VARCHAR);
+				psSurfaceData.setNull(++index, Types.VARCHAR);
 			}
 
 			// app:diffuseColor
 			if (material.isSetDiffuseColor()) {
 				Color color = material.getDiffuseColor();
 				String colorString = color.getRed() + " " + color.getGreen() + " " + color.getBlue();
-				psSurfaceData.setString(12, colorString);
+				psSurfaceData.setString(++index, colorString);
 			} else if (importer.isBlazegraph()) {
-				setBlankNode(psSurfaceData, 12);
+				setBlankNode(psSurfaceData, ++index);
 			} else {
-				psSurfaceData.setNull(12, Types.VARCHAR);
+				psSurfaceData.setNull(++index, Types.VARCHAR);
 			}
 
 			// app:emissiveColor
 			if (material.isSetEmissiveColor()) {
 				Color color = material.getEmissiveColor();
 				String colorString = color.getRed() + " " + color.getGreen() + " " + color.getBlue();
-				psSurfaceData.setString(13, colorString);
+				psSurfaceData.setString(++index, colorString);
 			} else if (importer.isBlazegraph()) {
-				setBlankNode(psSurfaceData, 13);
+				setBlankNode(psSurfaceData, ++index);
 			} else {
-				psSurfaceData.setNull(13, Types.VARCHAR);
+				psSurfaceData.setNull(++index, Types.VARCHAR);
 			}
 
-			if (!importer.isBlazegraph()) {
-				if (material.isSetIsSmooth() && material.getIsSmooth())
-					psSurfaceData.setInt(14, 1);
-				else
-					psSurfaceData.setInt(14, 0);
+
+			if (material.isSetIsSmooth() && material.getIsSmooth()) {
+				psSurfaceData.setInt(++index, 1);
+			} else if (importer.isBlazegraph()) {
+				setBlankNode(psSurfaceData, ++index);
+			} else {
+				psSurfaceData.setInt(++index, 0);
 			}
+
 
 			psSurfaceData.addBatch();
 			if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
@@ -339,27 +410,27 @@ public class DBSurfaceData implements DBImporter {
 			}
 
 			if (absTex.isSetTextureType()) {
-				psSurfaceData.setString(8, absTex.getTextureType().getValue());
+				psSurfaceData.setString(++index, absTex.getTextureType().getValue());
 			} else if (importer.isBlazegraph()) {
-				setBlankNode(psSurfaceData, 8);
+				setBlankNode(psSurfaceData, ++index);
 			} else {
-				psSurfaceData.setNull(8, Types.VARCHAR);
+				psSurfaceData.setNull(++index, Types.VARCHAR);
 			}
 
 			if (absTex.isSetWrapMode()) {
-				psSurfaceData.setString(9, absTex.getWrapMode().getValue());
+				psSurfaceData.setString(++index, absTex.getWrapMode().getValue());
 			} else if (importer.isBlazegraph()) {
-				setBlankNode(psSurfaceData, 9);
+				setBlankNode(psSurfaceData, ++index);
 			} else {
-				psSurfaceData.setNull(9, Types.VARCHAR);
+				psSurfaceData.setNull(++index, Types.VARCHAR);
 			}
 
-			if (!importer.isBlazegraph()) {
-				if (absTex.isSetBorderColor()) {
-					psSurfaceData.setString(10, valueJoiner.join(" ", absTex.getBorderColor().toList()));
-				} else {
-					psSurfaceData.setNull(10, Types.VARCHAR);
-				}
+			if (absTex.isSetBorderColor()) {
+				psSurfaceData.setString(++index, valueJoiner.join(" ", absTex.getBorderColor().toList()));
+			} else if (importer.isBlazegraph()) {
+				setBlankNode(psSurfaceData, ++index);
+			} else {
+				psSurfaceData.setNull(++index, Types.VARCHAR);
 			}
 
 			// ParameterizedTexture
@@ -545,18 +616,18 @@ public class DBSurfaceData implements DBImporter {
 				if (!geoTex.isSetOrientation() && !geoTex.isSetReferencePoint())
 					processWorldFile(geoTex);
 
-				psSurfaceData.setInt(11, geoTex.isSetPreferWorldFile() && !geoTex.getPreferWorldFile() ? 0 : 1);
+				psSurfaceData.setInt(++index, geoTex.isSetPreferWorldFile() && !geoTex.getPreferWorldFile() ? 0 : 1);
 
 				if (geoTex.isSetOrientation()) {
 					Matrix orientation = geoTex.getOrientation().getMatrix();
 					if (affineTransformation)
 						orientation = importer.getAffineTransformer().transformGeoreferencedTextureOrientation(orientation);
 
-					psSurfaceData.setString(12, valueJoiner.join(" ", orientation.toRowPackedList()));
+					psSurfaceData.setString(++index, valueJoiner.join(" ", orientation.toRowPackedList()));
 				} else if (importer.isBlazegraph()) {
-					setBlankNode(psSurfaceData, 12);
+					setBlankNode(psSurfaceData, ++index);
 				}  else {
-					psSurfaceData.setNull(12, Types.VARCHAR);
+					psSurfaceData.setNull(++index, Types.VARCHAR);
 				}
 
 				GeometryObject geom = null;
@@ -582,11 +653,11 @@ public class DBSurfaceData implements DBImporter {
 				}
 
 				if (geom != null) {
-					psSurfaceData.setObject(13, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geom, batchConn));
+					psSurfaceData.setObject(++index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geom, batchConn));
 				} else if (importer.isBlazegraph()) {
-					setBlankNode(psSurfaceData, 13);
+					setBlankNode(psSurfaceData, ++index);
 				} else {
-					psSurfaceData.setNull(13, nullGeometryType, nullGeometryTypeName);
+					psSurfaceData.setNull(++index, nullGeometryType, nullGeometryTypeName);
 				}
 
 				psSurfaceData.addBatch();

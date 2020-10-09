@@ -84,9 +84,23 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_CITY = ONTO_PREFIX_NAME_ONTOCITYGML + "city";
     public static final String ONTO_COUNTRY = ONTO_PREFIX_NAME_ONTOCITYGML + "country";
     public static final String ONTO_XAL_SOURCE = ONTO_PREFIX_NAME_ONTOCITYGML + "xalSource";
-    public static final String ONTO_TEX_IMAGE_URI = ONTO_PREFIX_NAME_ONTOCITYGML + "tex_image_uri";
-    public static final String ONTO_TEX_MIME_TYPE = ONTO_PREFIX_NAME_ONTOCITYGML + "tex_mime_type";
-    public static final String ONTO_TEX_MIME_TYPE_CODESPACE = ONTO_PREFIX_NAME_ONTOCITYGML + "tex_mime_type_codespace";
+    public static final String ONTO_TEX_IMAGE_URI = ONTO_PREFIX_NAME_ONTOCITYGML + "texImageURI";
+    public static final String ONTO_TEX_MIME_TYPE = ONTO_PREFIX_NAME_ONTOCITYGML + "texMimeType";
+    public static final String ONTO_TEX_MIME_TYPE_CODESPACE = ONTO_PREFIX_NAME_ONTOCITYGML + "texMimeTypeCodespace";
+    public static final String ONTO_IS_FRONT = ONTO_PREFIX_NAME_ONTOCITYGML + "isFront";
+    public static final String ONTO_X3D_SHININESS = ONTO_PREFIX_NAME_ONTOCITYGML + "x3dShininess";
+    public static final String ONTO_X3D_TRANSPARENCY = ONTO_PREFIX_NAME_ONTOCITYGML + "x3dTransparency";
+    public static final String ONTO_X3D_AMBIENT_INTENSITY = ONTO_PREFIX_NAME_ONTOCITYGML + "x3dAmbientIntensity";
+    public static final String ONTO_X3D_SPECULAR_COLOR = ONTO_PREFIX_NAME_ONTOCITYGML + "x3dSpecularColor";
+    public static final String ONTO_X3D_DIFFUSE_COLOR = ONTO_PREFIX_NAME_ONTOCITYGML + "x3dDiffuseColor";
+    public static final String ONTO_X3D_EMISSIVE_COLOR = ONTO_PREFIX_NAME_ONTOCITYGML + "x3dEmissiveColor";
+    public static final String ONTO_X3D_IS_SMOOTH = ONTO_PREFIX_NAME_ONTOCITYGML + "x3dIsSmooth";
+    public static final String ONTO_TEX_TEXTURE_TYPE = ONTO_PREFIX_NAME_ONTOCITYGML + "texTextureType";
+    public static final String ONTO_TEX_WRAP_MODE = ONTO_PREFIX_NAME_ONTOCITYGML + "texWrapMode";
+    public static final String ONTO_TEX_BORDER_COLOR = ONTO_PREFIX_NAME_ONTOCITYGML + "texBorderColor";
+    public static final String ONTO_GT_PREFER_WORDFILE = ONTO_PREFIX_NAME_ONTOCITYGML + "gtPreferWorldFile";
+    public static final String ONTO_GT_ORIENTATION = ONTO_PREFIX_NAME_ONTOCITYGML + "gtOrientation";
+    public static final String ONTO_GT_REFERENCE_POINT = ONTO_PREFIX_NAME_ONTOCITYGML + "gtReferencePoint";
     //@TODO: NOT IN ONTOCITYGML - need to be added:
     //@END
 
