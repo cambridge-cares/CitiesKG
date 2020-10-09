@@ -20,6 +20,7 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_BUILDING_PARENT_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "buildingParentId";
     public static final String ONTO_BUILDING_ROOT_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "buildingRootId";
     public static final String ONTO_CITY_OBJECT_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "cityObjectId";
+    public static final String ONTO_CITY_MODEL_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "cityModelId";
     public static final String ONTO_FOOTPRINT_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "lod0FootprintId";
     public static final String ONTO_ROOFPRINT_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "lod0RoofprintId";
     public static final String ONTO_LOD1_MULTI_SURFACE_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "lod1MultiSurfaceId";
@@ -104,10 +105,9 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_GT_PREFER_WORDFILE = ONTO_PREFIX_NAME_ONTOCITYGML + "gtPreferWorldFile";
     public static final String ONTO_GT_ORIENTATION = ONTO_PREFIX_NAME_ONTOCITYGML + "gtOrientation";
     public static final String ONTO_GT_REFERENCE_POINT = ONTO_PREFIX_NAME_ONTOCITYGML + "gtReferencePoint";
+    public static final String ONTO_THEME = ONTO_PREFIX_NAME_ONTOCITYGML + "theme";
     //@TODO: NOT IN ONTOCITYGML - need to be added:
     //@END
-
-
 
     protected SchemaManagerAdapter(AbstractDatabaseAdapter databaseAdapter) {
         super(databaseAdapter);

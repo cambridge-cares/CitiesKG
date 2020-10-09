@@ -27,11 +27,13 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
 import org.citydb.citygml.importer.util.LocalAppearanceHandler;
 import org.citydb.config.Config;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.SequenceEnum;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
@@ -43,6 +45,8 @@ import org.citygml4j.model.citygml.texturedsurface._AbstractAppearance;
 import org.citygml4j.model.gml.basicTypes.Code;
 import org.citygml4j.model.gml.geometry.primitives.AbstractSurface;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -60,6 +64,10 @@ public class DBAppearance implements DBImporter {
 
 	private int batchCounter;
 	private boolean replaceGmlId;
+	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/appearance/";
 
 	public DBAppearance(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.importer = importer;
@@ -74,6 +82,25 @@ public class DBAppearance implements DBImporter {
 		String stmt = "insert into " + schema + ".appearance (id, gmlid, " + (gmlIdCodespace != null ? "gmlid_codespace, " : "") +
 				"name, name_codespace, description, theme, citymodel_id, cityobject_id) values " +
 				"(?, ?, " + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?)";
+
+		if (importer.isBlazegraph()) {
+			String param = "  ?;";
+			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+					"INSERT DATA" +
+					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
+						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+							SchemaManagerAdapter.ONTO_GML_ID + param +
+							(gmlIdCodespace != null ? SchemaManagerAdapter.ONTO_GML_ID + param : "") +
+							SchemaManagerAdapter.ONTO_NAME + param +
+							SchemaManagerAdapter.ONTO_NAME_CODESPACE + param +
+							SchemaManagerAdapter.ONTO_DESCRIPTION + param +
+							SchemaManagerAdapter.ONTO_THEME + param +
+							SchemaManagerAdapter.ONTO_CITY_MODEL_ID + param +
+							SchemaManagerAdapter.ONTO_CITY_OBJECT_ID + param +
+						".}" +
+					"}";
+		}
+
 		psAppearance = batchConn.prepareStatement(stmt);
 
 		surfaceDataImporter = importer.getImporter(DBSurfaceData.class);
@@ -88,8 +115,7 @@ public class DBAppearance implements DBImporter {
 		if (featureType == null)
 			throw new SQLException("Failed to retrieve feature type.");
 
-		// primary id
-		psAppearance.setLong(1, appearanceId);
+
 
 		// gml:id
 		String origGmlId = appearance.getId();
@@ -112,19 +138,37 @@ public class DBAppearance implements DBImporter {
 				appearance.setId(importer.generateNewGmlId());
 		}
 
-		psAppearance.setString(2, appearance.getId());
+		int index = 0;
+
+		if (importer.isBlazegraph()) {
+			try {
+				String uuid = appearance.getId();
+				if (uuid.isEmpty()) {
+					uuid = importer.generateNewGmlId();
+				}
+				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				psAppearance.setURL(++index, url);
+			} catch (MalformedURLException e) {
+				psAppearance.setObject(++index, NodeFactory.createBlankNode());
+			}
+		}
+
+		// primary id
+		psAppearance.setLong(++index, appearanceId);
+
+		psAppearance.setString(++index, appearance.getId());
 
 		// gml:name
 		if (appearance.isSetName()) {
 			valueJoiner.join(appearance.getName(), Code::getValue, Code::getCodeSpace);
-			psAppearance.setString(3, valueJoiner.result(0));
-			psAppearance.setString(4, valueJoiner.result(1));
+			psAppearance.setString(++index, valueJoiner.result(0));
+			psAppearance.setString(++index, valueJoiner.result(1));
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psAppearance, 3);
-			setBlankNode(psAppearance, 4);
+			setBlankNode(psAppearance, ++index);
+			setBlankNode(psAppearance, ++index);
 		} else {
-			psAppearance.setNull(3, Types.VARCHAR);
-			psAppearance.setNull(4, Types.VARCHAR);
+			psAppearance.setNull(++index, Types.VARCHAR);
+			psAppearance.setNull(++index, Types.VARCHAR);
 		}
 
 		// gml:description
@@ -133,31 +177,30 @@ public class DBAppearance implements DBImporter {
 			if (description != null)
 				description = description.trim();
 
-			psAppearance.setString(5, description);
+			psAppearance.setString(++index, description);
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psAppearance, 5);
+			setBlankNode(psAppearance, ++index);
 		} else {
-			psAppearance.setNull(5, Types.VARCHAR);
+			psAppearance.setNull(++index, Types.VARCHAR);
 		}
 
 		// app:theme
-		psAppearance.setString(6, appearance.getTheme());
+		psAppearance.setString(++index, appearance.getTheme());
 
 		// cityobject or citymodel id
 		if (isLocalAppearance) {
 			if (importer.isBlazegraph()) {
-				setBlankNode(psAppearance, 7);
+				setBlankNode(psAppearance, ++index);
 			} else {
-				psAppearance.setNull(7, Types.NULL);
-				psAppearance.setLong(8, parentId);
+				psAppearance.setNull(++index, Types.NULL);
 			}
-
+			psAppearance.setLong(++index, parentId);
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psAppearance, 7);
-			setBlankNode(psAppearance, 8);
+			setBlankNode(psAppearance, ++index);
+			setBlankNode(psAppearance, ++index);
 		} else {
-			psAppearance.setNull(7, Types.NULL);
-			psAppearance.setNull(8, Types.NULL);
+			psAppearance.setNull(++index, Types.NULL);
+			psAppearance.setNull(++index, Types.NULL);
 		}
 
 		psAppearance.addBatch();
