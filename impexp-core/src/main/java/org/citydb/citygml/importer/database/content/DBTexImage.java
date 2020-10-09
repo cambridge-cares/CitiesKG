@@ -27,17 +27,21 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkTextureFile;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.ConcurrentLockManager;
 import org.citydb.citygml.importer.util.ExternalFileChecker;
 import org.citydb.config.Config;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.SequenceEnum;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.log.Logger;
 import org.citygml4j.model.citygml.appearance.AbstractTexture;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
@@ -56,6 +60,10 @@ public class DBTexImage implements DBImporter {
 	private MessageDigest md5;
 	private boolean importTextureImage;
 	private int batchCounter;
+	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/teximage/";
 
 	public DBTexImage(Connection connection, Config config, CityGMLImportManager importer) throws SQLException {
 		this.importer = importer;
@@ -72,6 +80,20 @@ public class DBTexImage implements DBImporter {
 
 		String stmt = "insert into " + schema + ".tex_image (id, tex_image_uri, tex_mime_type, tex_mime_type_codespace) values " +
 				"(?, ?, ?, ?)";
+
+		if (importer.isBlazegraph()) {
+			String param = "  ?;";
+			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+					"INSERT DATA" +
+					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
+						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+							SchemaManagerAdapter.ONTO_TEX_IMAGE_URI + param +
+							SchemaManagerAdapter.ONTO_TEX_MIME_TYPE + param +
+							SchemaManagerAdapter.ONTO_TEX_MIME_TYPE_CODESPACE + param +
+						".}" +
+					"}";
+		}
+
 		psInsertStmt = connection.prepareStatement(stmt);
 	}
 
@@ -120,12 +142,32 @@ public class DBTexImage implements DBImporter {
 				codeSpace = abstractTexture.getMimeType().getCodeSpace();
 			}
 
-			psInsertStmt.setLong(1, texImageId);
-			psInsertStmt.setString(2, fileName);
-			psInsertStmt.setString(3, mimeType);
-			if (!importer.isBlazegraph()) {
-				psInsertStmt.setString(4, codeSpace);
+			int index = 0;
+
+			if (importer.isBlazegraph()) {
+				try {
+					String uuid = abstractTexture.getId();
+					if (uuid.isEmpty()) {
+						uuid = importer.generateNewGmlId();
+					}
+					URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+					psInsertStmt.setURL(++index, url);
+				} catch (MalformedURLException e) {
+					psInsertStmt.setObject(++index, NodeFactory.createBlankNode());
+				}
 			}
+
+			psInsertStmt.setLong(++index, texImageId);
+			psInsertStmt.setString(++index, fileName);
+			psInsertStmt.setString(++index, mimeType);
+
+			if (codeSpace == null && importer.isBlazegraph()) {
+				psInsertStmt.setObject(++index, NodeFactory.createBlankNode());
+			} else {
+				psInsertStmt.setString(++index, codeSpace);
+			}
+
+
 
 			psInsertStmt.addBatch();
 			if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())

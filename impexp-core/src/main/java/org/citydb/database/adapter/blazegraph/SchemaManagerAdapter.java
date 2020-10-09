@@ -77,7 +77,6 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_LOD4_MULTI_CURVE = ONTO_PREFIX_NAME_ONTOCITYGML + "lod4MultiCurve";
     public static final String ONTO_GML_ID_CODESPACE = ONTO_PREFIX_NAME_ONTOCITYGML + "gmlIdCodespace";
     public static final String ONTO_MULTI_POINT = ONTO_PREFIX_NAME_ONTOCITYGML + "multiPoint";
-    //@TODO: NOT IN ONTOCITYGML - need to be added:
     public static final String ONTO_STREET = ONTO_PREFIX_NAME_ONTOCITYGML + "street";
     public static final String ONTO_HOUSE_NUMBER = ONTO_PREFIX_NAME_ONTOCITYGML + "houseNumber";
     public static final String ONTO_PO_BOX = ONTO_PREFIX_NAME_ONTOCITYGML + "poBox";
@@ -85,6 +84,10 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_CITY = ONTO_PREFIX_NAME_ONTOCITYGML + "city";
     public static final String ONTO_COUNTRY = ONTO_PREFIX_NAME_ONTOCITYGML + "country";
     public static final String ONTO_XAL_SOURCE = ONTO_PREFIX_NAME_ONTOCITYGML + "xalSource";
+    public static final String ONTO_TEX_IMAGE_URI = ONTO_PREFIX_NAME_ONTOCITYGML + "tex_image_uri";
+    public static final String ONTO_TEX_MIME_TYPE = ONTO_PREFIX_NAME_ONTOCITYGML + "tex_mime_type";
+    public static final String ONTO_TEX_MIME_TYPE_CODESPACE = ONTO_PREFIX_NAME_ONTOCITYGML + "tex_mime_type_codespace";
+    //@TODO: NOT IN ONTOCITYGML - need to be added:
     //@END
 
 
