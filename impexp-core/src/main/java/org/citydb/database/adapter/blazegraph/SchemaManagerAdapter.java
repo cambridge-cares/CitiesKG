@@ -30,6 +30,9 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_LOD2_SOLID_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "lod2SolidId";
     public static final String ONTO_LOD3_SOLID_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "lod3SolidId";
     public static final String ONTO_LOD4_SOLID_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "lod4SolidId";
+    public static final String ONTO_BUILDING_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "buildingId";
+    public static final String ONTO_ROOM_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "roomId";
+    public static final String ONTO_BUILDING_INSTALLATION_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "buildingInstallationId";
     public static final String ONTO_NAME = ONTO_PREFIX_NAME_ONTOCITYGML + "name";
     public static final String ONTO_NAME_CODESPACE = ONTO_PREFIX_NAME_ONTOCITYGML + "nameCodespace";
     public static final String ONTO_DESCRIPTION = ONTO_PREFIX_NAME_ONTOCITYGML + "description";

@@ -2331,6 +2331,22 @@ Class for defining constant surface properties. It is based on X3D&apos;s materi
     
 
 
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#buildingId -->
+
+    <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#buildingId">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#id"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#buildingInstallationId -->
+
+    <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#buildingInstallationId">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#id"/>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#city -->
 
     <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#city">
@@ -2587,6 +2603,14 @@ Base class for textures. &quot;&quot;imageURI&quot;&quot; can contain any valid 
 
     <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#roofTypeCodespace">
         <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#codespace"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#roomId -->
+
+    <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#roomId">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#id"/>
     </owl:DatatypeProperty>
     
 
