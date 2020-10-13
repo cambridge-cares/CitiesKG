@@ -34,8 +34,12 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_BUILDING_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "buildingId";
     public static final String ONTO_ROOM_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "roomId";
     public static final String ONTO_BUILDING_INSTALLATION_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "buildingInstallationId";
+    public static final String ONTO_PARRENT_GENATTRIB_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "parentGenattribId";
+    public static final String ONTO_ROOT_GENATTRIB_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "rootGenattribId";
     public static final String ONTO_NAME = ONTO_PREFIX_NAME_ONTOCITYGML + "name";
+    public static final String ONTO_ATTR_NAME = ONTO_PREFIX_NAME_ONTOCITYGML + "attrName";
     public static final String ONTO_NAME_CODESPACE = ONTO_PREFIX_NAME_ONTOCITYGML + "nameCodespace";
+    public static final String ONTO_GENATTRIBSET_CODESPACE = ONTO_PREFIX_NAME_ONTOCITYGML + "genattribsetCodespace";
     public static final String ONTO_DESCRIPTION = ONTO_PREFIX_NAME_ONTOCITYGML + "description";
     public static final String ONTO_ENVELOPE_TYPE = ONTO_PREFIX_NAME_ONTOCITYGML + "EnvelopeType";
     public static final String ONTO_CREATION_DATE = ONTO_PREFIX_NAME_ONTOCITYGML + "creationDate";
@@ -108,6 +112,13 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_THEME = ONTO_PREFIX_NAME_ONTOCITYGML + "theme";
     public static final String ONTO_INFO_SYS = ONTO_PREFIX_NAME_ONTOCITYGML + "infoSys";
     public static final String ONTO_URI = ONTO_PREFIX_NAME_ONTOCITYGML + "URI";
+    public static final String ONTO_DATA_TYPE = ONTO_PREFIX_NAME_ONTOCITYGML + "dataType";
+    public static final String ONTO_STR_VAL = ONTO_PREFIX_NAME_ONTOCITYGML + "strVal";
+    public static final String ONTO_INT_VAL = ONTO_PREFIX_NAME_ONTOCITYGML + "intVal";
+    public static final String ONTO_REAL_VAL = ONTO_PREFIX_NAME_ONTOCITYGML + "realVal";
+    public static final String ONTO_URI_VAL = ONTO_PREFIX_NAME_ONTOCITYGML + "uriVal";
+    public static final String ONTO_DATE_VAL = ONTO_PREFIX_NAME_ONTOCITYGML + "dateVal";
+    public static final String ONTO_UNIT = ONTO_PREFIX_NAME_ONTOCITYGML + "unit";
     //@TODO: NOT IN ONTOCITYGML - need to be added:
     //@END
 
