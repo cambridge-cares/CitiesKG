@@ -2339,6 +2339,22 @@ Class for defining constant surface properties. It is based on X3D&apos;s materi
     
 
 
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#addressId -->
+
+    <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#addressId">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#id"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#appearanceId -->
+
+    <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#appearanceId">
+        <rdfs:subPropertyOf rdf:resource="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#id"/>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#attrName -->
 
     <owl:DatatypeProperty rdf:about="http://www.arkadius.com/ontology/ontocitygml/OntoCityGML.owl#attrName">

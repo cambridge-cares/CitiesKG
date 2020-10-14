@@ -27,12 +27,16 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 
 public class DBAddressToBuilding implements DBImporter {
@@ -40,6 +44,10 @@ public class DBAddressToBuilding implements DBImporter {
 
 	private PreparedStatement psAddressToBuilding;
 	private int batchCounter;
+	//@todo Replace graph IRI and OntocityGML prefix with variables set on the GUI
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/addresstobuilding/";
 
 	public DBAddressToBuilding(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
 		this.importer = importer;
@@ -48,14 +56,37 @@ public class DBAddressToBuilding implements DBImporter {
 
 		String stmt = "insert into " + schema + ".address_to_building (building_id, address_id) values " +
 				"(?, ?)";
+
+		if (importer.isBlazegraph()) {
+			String param = "  ?;";
+			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+					"INSERT DATA" +
+					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
+						"{ ? "+ SchemaManagerAdapter.ONTO_BUILDING_ID + param +
+								SchemaManagerAdapter.ONTO_ADDRESS_ID + param  +
+						".}" +
+					"}";
+		}
+
 		psAddressToBuilding = batchConn.prepareStatement(stmt);
 	}
 
 	protected void doImport(long addressId, long buildingId) throws CityGMLImportException, SQLException {
-		psAddressToBuilding.setLong(1, buildingId);
-		if (!importer.isBlazegraph()) {
-			psAddressToBuilding.setLong(2, addressId);
+
+		int index = 0;
+
+		if (importer.isBlazegraph()) {
+			try {
+				String uuid = importer.generateNewGmlId();
+				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				psAddressToBuilding.setURL(++index, url);
+			} catch (MalformedURLException e) {
+				psAddressToBuilding.setObject(++index, NodeFactory.createBlankNode());
+			}
 		}
+
+		psAddressToBuilding.setLong(++index, buildingId);
+		psAddressToBuilding.setLong(++index, addressId);
 
 		psAddressToBuilding.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())

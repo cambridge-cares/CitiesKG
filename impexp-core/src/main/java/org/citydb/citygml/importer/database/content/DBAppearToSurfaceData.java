@@ -27,12 +27,16 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 
 public class DBAppearToSurfaceData implements DBImporter {
@@ -40,6 +44,10 @@ public class DBAppearToSurfaceData implements DBImporter {
 
 	private PreparedStatement psAppearToSurfaceData;
 	private int batchCounter;
+	//@todo Replace graph IRI and OntocityGML prefix with variables set on the GUI
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/appeartosurfacedata/";
 
 	public DBAppearToSurfaceData(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
 		this.importer = importer;
@@ -48,14 +56,38 @@ public class DBAppearToSurfaceData implements DBImporter {
 
 		String stmt = "insert into " + schema + ".appear_to_surface_data (surface_data_id, appearance_id) values " +
 				"(?, ?)";
+
+		if (importer.isBlazegraph()) {
+			String param = "  ?;";
+			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+					"INSERT DATA" +
+					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
+						"{ ? "+ SchemaManagerAdapter.ONTO_SURFACE_DATA_ID + param +
+								SchemaManagerAdapter.ONTO_APPEARANCE_ID + param  +
+						".}" +
+					"}";
+		}
+
 		psAppearToSurfaceData = batchConn.prepareStatement(stmt);
 	}
 
 	public void doImport(long surfaceDataId, long appearanceId) throws CityGMLImportException, SQLException {
-		psAppearToSurfaceData.setLong(1, surfaceDataId);
-		if (!importer.isBlazegraph()) {
-			psAppearToSurfaceData.setLong(2, appearanceId);
+
+		int index = 0;
+
+		if (importer.isBlazegraph()) {
+			try {
+				String uuid = importer.generateNewGmlId();
+				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				psAppearToSurfaceData.setURL(++index, url);
+			} catch (MalformedURLException e) {
+				psAppearToSurfaceData.setObject(++index, NodeFactory.createBlankNode());
+			}
 		}
+
+		psAppearToSurfaceData.setLong(++index, surfaceDataId);
+		psAppearToSurfaceData.setLong(++index, appearanceId);
+
 
 		psAppearToSurfaceData.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())

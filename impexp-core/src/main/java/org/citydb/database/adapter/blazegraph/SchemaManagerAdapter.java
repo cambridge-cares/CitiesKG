@@ -38,6 +38,8 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_ROOT_GENATTRIB_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "rootGenattribId";
     public static final String ONTO_SURFACE_GEOMETRY_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "surfaceGeometryId";
     public static final String ONTO_SURFACE_DATA_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "surfaceDataId";
+    public static final String ONTO_ADDRESS_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "addressId";
+    public static final String ONTO_APPEARANCE_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "appearanceId";
     public static final String ONTO_NAME = ONTO_PREFIX_NAME_ONTOCITYGML + "name";
     public static final String ONTO_ATTR_NAME = ONTO_PREFIX_NAME_ONTOCITYGML + "attrName";
     public static final String ONTO_NAME_CODESPACE = ONTO_PREFIX_NAME_ONTOCITYGML + "nameCodespace";
