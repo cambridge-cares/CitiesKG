@@ -642,7 +642,10 @@ public class CityGMLImportManager implements CityGMLImportHelper {
 	public void putObjectUID(String gmlId, long id, String mapping, int objectClassId) {
 		UIDCache cache = uidCacheManager.getCache(UIDCacheType.OBJECT);
 		if (cache != null)
-			cache.put(gmlId, id, -1, false, mapping, objectClassId);
+			//@TODO look into enabling UUID caching with Blazegraph
+			if (!isBlazegraph()) {
+				cache.put(gmlId, id, -1, false, mapping, objectClassId);
+			}
 	}
 
 	public void putObjectUID(String gmlId, long id, int objectClassId) {
@@ -671,7 +674,10 @@ public class CityGMLImportManager implements CityGMLImportHelper {
 	public void putTextureImageUID(String gmlId, long id) {
 		UIDCache cache = uidCacheManager.getCache(UIDCacheType.TEXTURE_IMAGE);
 		if (cache != null)
-			cache.put(gmlId, id, -1, false, null, 0);
+			//@TODO look into enabling UUID caching with Blazegraph
+			if (!isBlazegraph()) {
+				cache.put(gmlId, id, -1, false, null, 0);
+			}
 	}
 
 	public long getTextureImageId(String gmlId) {
@@ -689,7 +695,10 @@ public class CityGMLImportManager implements CityGMLImportHelper {
 	public void putGeometryUID(String gmlId, long id, long rootId, boolean reverse, String mapping) {
 		UIDCache cache = uidCacheManager.getCache(UIDCacheType.GEOMETRY);
 		if (cache != null)
-			cache.put(gmlId, id, rootId, reverse, mapping, 0);
+			//@TODO look into enabling UUID caching with Blazegraph
+			if (!isBlazegraph()) {
+				cache.put(gmlId, id, rootId, reverse, mapping, 0);
+			}
 	}
 
 	public long getGeometryIdFromMemory(String gmlId) {

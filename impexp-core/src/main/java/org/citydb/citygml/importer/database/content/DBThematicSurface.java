@@ -60,7 +60,7 @@ public class DBThematicSurface implements DBImporter {
 	private DBSurfaceGeometry surfaceGeometryImporter;
 	private DBOpening openingImporter;
 	private int batchCounter;
-	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
+	//@todo Replace graph IRI and OntocityGML prefix with variables set on the GUI
 	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
 	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/thematicsurface/";

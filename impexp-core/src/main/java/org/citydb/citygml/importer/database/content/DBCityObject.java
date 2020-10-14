@@ -261,8 +261,30 @@ public class DBCityObject implements DBImporter {
 		// gml:name
 		if (object.isSetName()) {
 			valueJoiner.join(object.getName(), Code::getValue, Code::getCodeSpace);
-			psCityObject.setString(++index, valueJoiner.result(0));
-			psCityObject.setString(++index, valueJoiner.result(1));
+			try {
+				if (valueJoiner.result(0) == null & isBlazegraph) {
+					psCityObject.setObject(++index, NodeFactory.createBlankNode());
+				} else {
+					psCityObject.setString(++index, valueJoiner.result(0));
+				}
+			} catch (NullPointerException e) {
+				if (isBlazegraph) {
+					psCityObject.setObject(index, NodeFactory.createBlankNode());
+				}
+			}
+
+			try {
+				if (valueJoiner.result(1) == null & isBlazegraph) {
+					psCityObject.setObject(++index, NodeFactory.createBlankNode());
+				} else {
+					psCityObject.setString(++index, valueJoiner.result(1));
+				}
+			} catch (NullPointerException e) {
+				if (isBlazegraph) {
+					psCityObject.setObject(index, NodeFactory.createBlankNode());
+				}
+			}
+
 		} else if (isBlazegraph) {
 			psCityObject.setObject(++index, NodeFactory.createBlankNode());
 			psCityObject.setObject(++index, NodeFactory.createBlankNode());
