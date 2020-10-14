@@ -27,14 +27,18 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.LocalAppearanceHandler.SurfaceGeometryTarget;
 import org.citydb.config.Config;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 
 public class DBTextureParam implements DBImporter {
@@ -43,6 +47,10 @@ public class DBTextureParam implements DBImporter {
 
 	private PreparedStatement psTextureParam;
 	private int batchCounter;
+	//@todo Replace graph IRI and OntocityGML prefix with variables set on the GUI
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/textureparam/";
 
 	public DBTextureParam(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
 		this.batchConn = batchConn;
@@ -50,55 +58,106 @@ public class DBTextureParam implements DBImporter {
 
 		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
 
-		String texCoordListStmt = "insert into " + schema + ".textureparam (surface_geometry_id, is_texture_parametrization, world_to_texture, texture_coordinates, surface_data_id) values " +
+		String texCoordListStmt = "insert into " + schema + ".textureparam (surface_geometry_id, is_texture_parametrization, " +
+				"world_to_texture, texture_coordinates, surface_data_id) values " +
 				"(?, ?, ?, ?, ?)";
+
+		if (importer.isBlazegraph()) {
+			String param = "  ?;";
+			texCoordListStmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+					"INSERT DATA" +
+					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
+						"{ ? "+ SchemaManagerAdapter.ONTO_SURFACE_GEOMETRY_ID + param +
+								SchemaManagerAdapter.ONTO_IS_TEXTURE_PARAMETRIZATION + param  +
+								SchemaManagerAdapter.ONTO_WORLD_TO_TEXTURE + param  +
+								SchemaManagerAdapter.ONTO_TEXTURE_COORDINATES + param +
+								SchemaManagerAdapter.ONTO_SURFACE_DATA_ID + param +
+						".}" +
+					"}";
+		}
+
 		psTextureParam = batchConn.prepareStatement(texCoordListStmt);
 	}
 
 	protected void doImport(SurfaceGeometryTarget target, long surfaceDataId) throws CityGMLImportException, SQLException {
-		psTextureParam.setLong(1, target.getSurfaceGeometryId());
-		psTextureParam.setInt(2, 1);
+		int index = 0;
+
+		if (importer.isBlazegraph()) {
+			try {
+				String uuid = importer.generateNewGmlId();
+				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				psTextureParam.setURL(++index, url);
+			} catch (MalformedURLException e) {
+				setBlankNode(psTextureParam, ++index);
+			}
+		}
+
+		psTextureParam.setLong(++index, target.getSurfaceGeometryId());
+		psTextureParam.setInt(++index, 1);
 		if (importer.isBlazegraph())  {
-			setBlankNode(psTextureParam, 3);
+			setBlankNode(psTextureParam, ++index);
 		} else {
-			psTextureParam.setNull(3, Types.VARCHAR);
+			psTextureParam.setNull(++index, Types.VARCHAR);
 		}
-		psTextureParam.setObject(4, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(target.compileTextureCoordinates(), batchConn));
-		if (!importer.isBlazegraph()) {
-			psTextureParam.setLong(5, surfaceDataId);
-		}
+		psTextureParam.setObject(++index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(target.compileTextureCoordinates(), batchConn));
+		psTextureParam.setLong(++index, surfaceDataId);
 
 		addBatch();
 	}
 
 	protected void doImport(String worldToTexture, long surfaceDataId, long surfaceGeometryId) throws CityGMLImportException, SQLException {
-		psTextureParam.setLong(1, surfaceGeometryId);
-		psTextureParam.setInt(2, 1);
-		psTextureParam.setString(3, worldToTexture);
-		if (importer.isBlazegraph())  {
-			setBlankNode(psTextureParam, 4);
-		} else {
-			psTextureParam.setNull(4, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
-					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
-			psTextureParam.setLong(5, surfaceDataId);
+		int index = 0;
+
+		if (importer.isBlazegraph()) {
+			try {
+				String uuid = importer.generateNewGmlId();
+				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				psTextureParam.setURL(++index, url);
+			} catch (MalformedURLException e) {
+				setBlankNode(psTextureParam, ++index);
+			}
 		}
+
+		psTextureParam.setLong(++index, surfaceGeometryId);
+		psTextureParam.setInt(++index, 1);
+		psTextureParam.setString(++index, worldToTexture);
+		if (importer.isBlazegraph())  {
+			setBlankNode(psTextureParam, ++index);
+		} else {
+			psTextureParam.setNull(++index, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
+					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
+		}
+
+		psTextureParam.setLong(++index, surfaceDataId);
 
 		addBatch();
 	}
 
 	protected void doImport(long surfaceDataId, long surfaceGeometryId) throws CityGMLImportException, SQLException {
-		psTextureParam.setLong(1, surfaceGeometryId);
-		psTextureParam.setInt(2, 0);
-		if (importer.isBlazegraph())  {
-			setBlankNode(psTextureParam, 3);
-			setBlankNode(psTextureParam, 4);
-		} else {
-			psTextureParam.setNull(3, Types.VARCHAR);
-			psTextureParam.setNull(4, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
-					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
-			psTextureParam.setLong(5, surfaceDataId);
+		int index = 0;
+
+		if (importer.isBlazegraph()) {
+			try {
+				String uuid = importer.generateNewGmlId();
+				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				psTextureParam.setURL(++index, url);
+			} catch (MalformedURLException e) {
+				setBlankNode(psTextureParam, ++index);
+			}
 		}
 
+		psTextureParam.setLong(++index, surfaceGeometryId);
+		psTextureParam.setInt(++index, 0);
+		if (importer.isBlazegraph())  {
+			setBlankNode(psTextureParam, ++index);
+			setBlankNode(psTextureParam, ++index);
+		} else {
+			psTextureParam.setNull(++index, Types.VARCHAR);
+			psTextureParam.setNull(++index, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
+					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
+		}
+
+		psTextureParam.setLong(++index, surfaceDataId);
 
 		addBatch();
 	}

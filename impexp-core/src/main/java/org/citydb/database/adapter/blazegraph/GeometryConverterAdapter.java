@@ -65,6 +65,6 @@ public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
 
     @Override
     public String getNullGeometryTypeName() {
-        return null;
+        return "";
     }
 }

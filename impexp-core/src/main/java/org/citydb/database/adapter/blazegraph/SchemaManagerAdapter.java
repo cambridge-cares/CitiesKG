@@ -36,6 +36,8 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_BUILDING_INSTALLATION_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "buildingInstallationId";
     public static final String ONTO_PARRENT_GENATTRIB_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "parentGenattribId";
     public static final String ONTO_ROOT_GENATTRIB_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "rootGenattribId";
+    public static final String ONTO_SURFACE_GEOMETRY_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "surfaceGeometryId";
+    public static final String ONTO_SURFACE_DATA_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "surfaceDataId";
     public static final String ONTO_NAME = ONTO_PREFIX_NAME_ONTOCITYGML + "name";
     public static final String ONTO_ATTR_NAME = ONTO_PREFIX_NAME_ONTOCITYGML + "attrName";
     public static final String ONTO_NAME_CODESPACE = ONTO_PREFIX_NAME_ONTOCITYGML + "nameCodespace";
@@ -119,6 +121,9 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_URI_VAL = ONTO_PREFIX_NAME_ONTOCITYGML + "uriVal";
     public static final String ONTO_DATE_VAL = ONTO_PREFIX_NAME_ONTOCITYGML + "dateVal";
     public static final String ONTO_UNIT = ONTO_PREFIX_NAME_ONTOCITYGML + "unit";
+    public static final String ONTO_IS_TEXTURE_PARAMETRIZATION = ONTO_PREFIX_NAME_ONTOCITYGML + "isTextureParametrization";
+    public static final String ONTO_WORLD_TO_TEXTURE  = ONTO_PREFIX_NAME_ONTOCITYGML + "worldToTexture";
+    public static final String ONTO_TEXTURE_COORDINATES  = ONTO_PREFIX_NAME_ONTOCITYGML + "textureCoordinates";
     //@TODO: NOT IN ONTOCITYGML - need to be added:
     //@END
 
