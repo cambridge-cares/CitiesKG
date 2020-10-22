@@ -489,12 +489,6 @@
         </ontodebug:testCase>
         <ontodebug:testCase>
             <rdf:Description>
-                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ParameterizedTextureType SubClassOf AppearanceModule</ontodebug:axiom>
-                <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-            </rdf:Description>
-        </ontodebug:testCase>
-        <ontodebug:testCase>
-            <rdf:Description>
                 <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ParameterizedTextureType SubClassOf CityGMLModule</ontodebug:axiom>
                 <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
             </rdf:Description>
@@ -538,6 +532,24 @@
         <ontodebug:testCase>
             <rdf:Description>
                 <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">X3DMaterialType SubClassOf CityGMLModule</ontodebug:axiom>
+                <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+            </rdf:Description>
+        </ontodebug:testCase>
+        <ontodebug:testCase>
+            <rdf:Description>
+                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">lowerCornerPoint Domain EnvelopeType</ontodebug:axiom>
+                <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+            </rdf:Description>
+        </ontodebug:testCase>
+        <ontodebug:testCase>
+            <rdf:Description>
+                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">lowerCornerPoint Range PointType</ontodebug:axiom>
+                <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+            </rdf:Description>
+        </ontodebug:testCase>
+        <ontodebug:testCase>
+            <rdf:Description>
+                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ParameterizedTextureType SubClassOf AppearanceModule</ontodebug:axiom>
                 <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
             </rdf:Description>
         </ontodebug:testCase>
@@ -9362,10 +9374,6 @@ I would remove it myself, but I just wanted to test the annotation feature.</rdf
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ParameterizedTextureType SubClassOf AppearanceModule</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ParameterizedTextureType SubClassOf CityGMLModule</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
@@ -9395,6 +9403,18 @@ I would remove it myself, but I just wanted to test the annotation feature.</rdf
     </rdf:Description>
     <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">X3DMaterialType SubClassOf CityGMLModule</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">lowerCornerPoint Domain EnvelopeType</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">lowerCornerPoint Range PointType</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ParameterizedTextureType SubClassOf AppearanceModule</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
 </rdf:RDF>
