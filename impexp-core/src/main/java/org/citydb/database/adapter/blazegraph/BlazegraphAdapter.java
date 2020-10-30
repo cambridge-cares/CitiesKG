@@ -63,6 +63,6 @@ public class BlazegraphAdapter extends AbstractDatabaseAdapter {
 
     @Override
     public int getMaxBatchSize() {
-        return 0;
+        return 65535;
     }
 }
