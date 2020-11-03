@@ -15,3 +15,6 @@ bin/
 out/
 
 *.DS_Store
+venv/lib/
+venv/bin/
+venv/include
