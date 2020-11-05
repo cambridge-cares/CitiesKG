@@ -73,7 +73,7 @@ class CityGMLProcessor(object):
                            'http://www.opengis.net/citygml/landuse/2.0 ' \
                            'http://schemas.opengis.net/citygml/landuse/2.0/landUse.xsd">\n'
         self.obj_cl_tag = '</cityObjectMember>'
-        self.model_cl_tag = '</CityModel>'
+        self.model_cl_tag = '</CityModel>\n'
         self.part_prefix = 'file_part_'
         self.part_ext = '.gml'
 
