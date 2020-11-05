@@ -171,7 +171,7 @@ public class DBTextureParam implements DBImporter {
 	@Override
 	public void executeBatch() throws CityGMLImportException, SQLException {
 		if (batchCounter > 0) {
-			psTextureParam.executeBatch();
+			//psTextureParam.executeBatch();
 			batchCounter = 0;
 		}
 	}

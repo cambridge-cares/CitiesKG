@@ -685,7 +685,7 @@ public class DBBuilding implements DBImporter {
 	@Override
 	public void executeBatch() throws CityGMLImportException, SQLException {
 		if (batchCounter > 0) {
-			psBuilding.executeBatch();
+			//psBuilding.executeBatch();
 			batchCounter = 0;
 		}
 	}

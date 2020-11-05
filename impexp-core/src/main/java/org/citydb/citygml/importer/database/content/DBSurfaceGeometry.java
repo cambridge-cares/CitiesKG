@@ -1290,7 +1290,7 @@ public class DBSurfaceGeometry implements DBImporter {
 	@Override
 	public void executeBatch() throws CityGMLImportException, SQLException {
 		if (batchCounter > 0) {
-			psGeomElem.executeBatch();
+			//psGeomElem.executeBatch();
 			batchCounter = 0;
 		}
 	}

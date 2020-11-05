@@ -88,9 +88,11 @@ public class DBAddress implements DBImporter {
 				gmlIdCodespace = "'" + gmlIdCodespace + "', ";
 		}
 
-		String stmt = "insert into " + schema + ".address (id, " + (hasGmlIdColumn ? "gmlid, " : "") + (gmlIdCodespace != null ? "gmlid_codespace, " : "") +
+		String stmtSQL = "insert into " + schema + ".address (id, " + (hasGmlIdColumn ? "gmlid, " : "") + (gmlIdCodespace != null ? "gmlid_codespace, " : "") +
 				"street, house_number, po_box, zip_code, city, country, multi_point, xal_source) values " +
 				"(?, " + (hasGmlIdColumn ? "?, " : "") + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?, ?, ?)";
+
+		String stmt = "";
 
 		if (importer.isBlazegraph()) {
 			String param = "  ?;";
@@ -113,6 +115,8 @@ public class DBAddress implements DBImporter {
 		}
 
 		psAddress = batchConn.prepareStatement(stmt);
+
+		PreparedStatement AddressSQL = batchConn.prepareStatement(stmtSQL);
 
 		addressToBuildingImporter = importer.getImporter(DBAddressToBuilding.class);
 		addressToBridgeImporter = importer.getImporter(DBAddressToBridge.class);
@@ -346,7 +350,7 @@ public class DBAddress implements DBImporter {
 	@Override
 	public void executeBatch() throws CityGMLImportException, SQLException {
 		if (batchCounter > 0) {
-			psAddress.executeBatch();
+			//psAddress.executeBatch();
 			batchCounter = 0;
 		}
 	}

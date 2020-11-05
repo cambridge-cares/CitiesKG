@@ -91,6 +91,9 @@ import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.gml.GMLClass;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
@@ -594,6 +597,10 @@ public class Importer implements EventHandler {
 						log.error("A SQL error occurred: " + iter.next().getMessage());
 						while (iter.hasNext())
 							log.error("Cause: " + iter.next().getMessage());
+						Writer buffer = new StringWriter();
+						PrintWriter pw = new PrintWriter(buffer);
+						cause.printStackTrace(pw);
+						log.error(buffer.toString());
 					} else {
 						log.error("An error occurred: " + cause.getMessage());
 						while ((cause = cause.getCause()) != null)
