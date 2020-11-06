@@ -95,6 +95,7 @@ public class DBBuilding implements DBImporter {
 		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
 		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
 
+		// original code for SQL
 		String stmt = "insert into " + schema + ".building (id, building_parent_id, building_root_id, class, class_codespace, function, function_codespace, usage, usage_codespace, year_of_construction, year_of_demolition, " +
 				"roof_type, roof_type_codespace, measured_height, measured_height_unit, storeys_above_ground, storeys_below_ground, storey_heights_above_ground, storey_heights_ag_unit, storey_heights_below_ground, storey_heights_bg_unit, " +
 				"lod1_terrain_intersection, lod2_terrain_intersection, lod3_terrain_intersection, lod4_terrain_intersection, lod2_multi_curve, lod3_multi_curve, lod4_multi_curve, " +
@@ -104,6 +105,7 @@ public class DBBuilding implements DBImporter {
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
 
+		// Modification for SPARQL
 		if (importer.isBlazegraph()) {
 			String param = "  ?;";
 			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +

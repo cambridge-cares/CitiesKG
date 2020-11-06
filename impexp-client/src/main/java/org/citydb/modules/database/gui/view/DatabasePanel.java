@@ -70,7 +70,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
-@SuppressWarnings("serial")
+@SuppressWarnings("serial")		// SY: tell java to ignore certain warnings which can stop the run
 public class DatabasePanel extends JPanel implements ConnectionViewHandler, EventHandler, ViewListener {
 	private final ReentrantLock mainLock = new ReentrantLock();
 	private final Logger log = Logger.getInstance();
