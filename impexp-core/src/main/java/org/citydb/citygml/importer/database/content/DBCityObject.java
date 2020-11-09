@@ -145,12 +145,13 @@ public class DBCityObject implements DBImporter {
 				.useExistingEnvelopes(true)
 				.assignResultToFeatures(true)
 				.useReferencePointAsFallbackForImplicitGeometries(true);
-
+		// initial SQL statement
 		String stmt = "insert into " + schema + ".cityobject (id, objectclass_id, gmlid, " + (gmlIdCodespace != null ? "gmlid_codespace, " : "") +
 				"name, name_codespace, description, envelope, creation_date, termination_date, relative_to_terrain, relative_to_water, " +
 				"last_modification_date, updating_person, reason_for_update, lineage) values " +
 				"(?, ?, ?, " + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
+		// SPARQL statement for precomilation
 		if (importer.isBlazegraph()) {
 			String param = "  ?;";
 			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
@@ -175,7 +176,7 @@ public class DBCityObject implements DBImporter {
 						".}" +
 					"}";
 		}
-
+		// parametrized query statement for precompilation
 		psCityObject = batchConn.prepareStatement(stmt);
 
 		genericAttributeImporter = importer.getImporter(DBCityObjectGenericAttrib.class);
@@ -246,8 +247,8 @@ public class DBCityObject implements DBImporter {
 
 		if (isBlazegraph) {
 			try {
-				URL url = new URL(IRI_GRAPH_OBJECT + object.getId() + "/");
-				psCityObject.setURL(++index, url);
+				URL url = new URL(IRI_GRAPH_BASE + IRI_GRAPH_OBJECT + object.getId() + "/");   // need to get the correct path
+				psCityObject.setURL(++index, url);		// to check
 			} catch (MalformedURLException e) {
 				psCityObject.setObject(++index, NodeFactory.createBlankNode());
 			}
