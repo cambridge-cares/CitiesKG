@@ -102,8 +102,8 @@ public class DBCityObject implements DBImporter {
 	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
 	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	//private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/cityobject/";
-	private static final String IRI_GRAPH_OBJECT = "cityobject/"; // modified by SYL
+	private static final String IRI_GRAPH_OBJECT_REL = "cityobject/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBCityObject(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;	
@@ -151,13 +151,13 @@ public class DBCityObject implements DBImporter {
 				"last_modification_date, updating_person, reason_for_update, lineage) values " +
 				"(?, ?, ?, " + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-		// SPARQL statement for precomilation
+		// SPARQL statement for precompilation
 		if (importer.isBlazegraph()) {
 			String param = "  ?;";
 			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
 					"BASE <" + IRI_GRAPH_BASE + "> " +
 					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
+					" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
 						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
 								SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID+ param +
 								SchemaManagerAdapter.ONTO_GML_ID + param +
@@ -247,9 +247,9 @@ public class DBCityObject implements DBImporter {
 
 		if (isBlazegraph) {
 			try {
-				URL url = new URL(IRI_GRAPH_BASE + IRI_GRAPH_OBJECT + object.getId() + "/");   // need to get the correct path
+				URL url = new URL(IRI_GRAPH_OBJECT + object.getId() + "/");   // need to get the correct path
 				psCityObject.setURL(++index, url);		// to check
-			} catch (MalformedURLException e) {
+			} catch (Exception e) {
 				psCityObject.setObject(++index, NodeFactory.createBlankNode());
 			}
 		}
