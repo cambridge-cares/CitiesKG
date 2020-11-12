@@ -111,9 +111,10 @@ public class DBSurfaceGeometry implements DBImporter {
 	private LocalAppearanceHandler localAppearanceHandler;
 	private RingValidator ringValidator;
 	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/surfacegeometry/";
+	private static final String IRI_GRAPH_OBJECT_REL = "surfacegeometry/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBSurfaceGeometry(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;
@@ -151,8 +152,9 @@ public class DBSurfaceGeometry implements DBImporter {
 			stmt.setLength(0);
 			String param = "  ?;";
 			stmt = stmt.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+					"BASE <" + IRI_GRAPH_BASE + "> " +
 					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
+					" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
 						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
 								SchemaManagerAdapter.ONTO_GML_ID + param +
 								SchemaManagerAdapter.ONTO_PARENT_ID + param +
@@ -182,6 +184,7 @@ public class DBSurfaceGeometry implements DBImporter {
 		pkManager = new PrimaryKeyManager();
 		ringValidator = new RingValidator();
 	}
+
 
 	protected long doImport(AbstractGeometry surfaceGeometry, long cityObjectId) throws CityGMLImportException, SQLException {
 		// check whether we can deal with the geometry

@@ -50,9 +50,10 @@ public class DBExternalReference implements DBImporter {
 	private PreparedStatement psExternalReference;
 	private int batchCounter;
 	//@todo Replace graph IRI and OntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/externalreference/";
+	private static final String IRI_GRAPH_OBJECT_REL = "externalreference/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBExternalReference(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
 		this.importer = importer;
@@ -64,23 +65,30 @@ public class DBExternalReference implements DBImporter {
 				", ?, ?, ?, ?)";
 
 		if (importer.isBlazegraph()) {
-			String param = "  ?;";
-			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
-						"{ ? "+ SchemaManagerAdapter.ONTO_ID + importer.getDatabaseAdapter()
-												.getSQLAdapter()
-												.getNextSequenceValue(SequenceEnum.EXTERNAL_REFERENCE_ID_SEQ.getName()) +
-							SchemaManagerAdapter.ONTO_INFO_SYS + param +
-							SchemaManagerAdapter.ONTO_NAME + param +
-							SchemaManagerAdapter.ONTO_URI + param +
-							SchemaManagerAdapter.ONTO_CITY_OBJECT_ID + param +
-						".}" +
-					"}";
+			stmt = getSPARQLStatement();
 		}
 
 		psExternalReference = batchConn.prepareStatement(stmt);
 	}
+
+	private String getSPARQLStatement(){
+		String param = "  ?;";
+		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? "+ SchemaManagerAdapter.ONTO_ID + importer.getDatabaseAdapter()
+				.getSQLAdapter()
+				.getNextSequenceValue(SequenceEnum.EXTERNAL_REFERENCE_ID_SEQ.getName()) +
+				SchemaManagerAdapter.ONTO_INFO_SYS + param +
+				SchemaManagerAdapter.ONTO_NAME + param +
+				SchemaManagerAdapter.ONTO_URI + param +
+				SchemaManagerAdapter.ONTO_CITY_OBJECT_ID + param +
+				".}" +
+				"}";
+		return stmt;
+	}
+
 
 	protected void doImport(ExternalReference externalReference, long cityObjectId) throws CityGMLImportException, SQLException {
 		boolean isBlazegraph = importer.getDatabaseAdapter().getDatabaseType().value().equals(DatabaseType.BLAZE.value());

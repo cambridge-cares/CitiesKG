@@ -107,9 +107,10 @@ public class DBSurfaceData implements DBImporter {
 	private int nullGeometryType;
 	private String nullGeometryTypeName;
 	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/surfacedata/";
+	private static final String IRI_GRAPH_OBJECT_REL = "surfacedata/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBSurfaceData(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;
@@ -129,8 +130,9 @@ public class DBSurfaceData implements DBImporter {
 
 		String param = "  ?;";
 		String sparqlStmtPart = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +
 				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
 					"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
 						SchemaManagerAdapter.ONTO_GML_ID + param +
 						(gmlIdCodespace != null ? SchemaManagerAdapter.ONTO_GML_ID_CODESPACE + param : "") +
