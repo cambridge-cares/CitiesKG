@@ -149,28 +149,7 @@ public class DBSurfaceGeometry implements DBImporter {
 		stmt.append("?, ?)");
 
 		if (importer.isBlazegraph()) {
-			stmt.setLength(0);
-			String param = "  ?;";
-			stmt = stmt.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-					"BASE <" + IRI_GRAPH_BASE + "> " +
-					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
-						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
-								SchemaManagerAdapter.ONTO_GML_ID + param +
-								SchemaManagerAdapter.ONTO_PARENT_ID + param +
-								SchemaManagerAdapter.ONTO_ROOT_ID + param +
-								SchemaManagerAdapter.ONTO_IS_SOLID + param +
-								SchemaManagerAdapter.ONTO_IS_COMPOSITE + param +
-								SchemaManagerAdapter.ONTO_IS_TRIANGULATED + param +
-								SchemaManagerAdapter.ONTO_IS_XLINK + param +
-								SchemaManagerAdapter.ONTO_IS_REVERSE + param +
-								SchemaManagerAdapter.ONTO_GEOMETRY + param +
-								SchemaManagerAdapter.ONTO_GEOMETRY_SOLID + param +
-								SchemaManagerAdapter.ONTO_GEOMETRY_IMPLICIT + param +
-								SchemaManagerAdapter.ONTO_CITY_OBJECT_ID + param +
-						".}" +
-					"}"
-			);
+			stmt = getSPARQLStatement(stmt);
 		}
 
 
@@ -185,6 +164,31 @@ public class DBSurfaceGeometry implements DBImporter {
 		ringValidator = new RingValidator();
 	}
 
+	private StringBuilder getSPARQLStatement(StringBuilder stmt){
+		stmt.setLength(0);    // clear the StringBuilder
+		String param = "  ?;";
+		stmt = stmt.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+				SchemaManagerAdapter.ONTO_GML_ID + param +
+				SchemaManagerAdapter.ONTO_PARENT_ID + param +
+				SchemaManagerAdapter.ONTO_ROOT_ID + param +
+				SchemaManagerAdapter.ONTO_IS_SOLID + param +
+				SchemaManagerAdapter.ONTO_IS_COMPOSITE + param +
+				SchemaManagerAdapter.ONTO_IS_TRIANGULATED + param +
+				SchemaManagerAdapter.ONTO_IS_XLINK + param +
+				SchemaManagerAdapter.ONTO_IS_REVERSE + param +
+				SchemaManagerAdapter.ONTO_GEOMETRY + param +
+				SchemaManagerAdapter.ONTO_GEOMETRY_SOLID + param +
+				SchemaManagerAdapter.ONTO_GEOMETRY_IMPLICIT + param +
+				SchemaManagerAdapter.ONTO_CITY_OBJECT_ID + param +
+				".}" +
+				"}"
+		);
+		return stmt;
+	}
 
 	protected long doImport(AbstractGeometry surfaceGeometry, long cityObjectId) throws CityGMLImportException, SQLException {
 		// check whether we can deal with the geometry
