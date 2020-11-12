@@ -62,9 +62,11 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 	private PreparedStatement psGenericAttributeMember;
 	private int batchCounter;
 	//@todo Replace graph IRI and OntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/cityobjectgenericattrib/";
+	private static final String IRI_GRAPH_OBJECT_REL = "cityobjectgenericattrib/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
+
 
 	public DBCityObjectGenericAttrib(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
 		this.batchConn = batchConn;
@@ -77,8 +79,9 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 
 		if (importer.isBlazegraph()) {
 			stmt.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+					"BASE <" + IRI_GRAPH_BASE + "> " +
 					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
+					" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
 						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
 								SchemaManagerAdapter.ONTO_PARRENT_GENATTRIB_ID + param +
 								SchemaManagerAdapter.ONTO_ROOT_GENATTRIB_ID + param +
@@ -101,8 +104,9 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 
 		if (importer.isBlazegraph()) {
 			stmt.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+					"BASE <" + IRI_GRAPH_BASE + "> " +
 					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
+					" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
 					//@ TODO: replace sequencing to use SQLAdapter
 					"{ ? "+ SchemaManagerAdapter.ONTO_ID + " " + importer.getNextSequenceValue(
 							SequenceEnum.CITYOBJECT_GENERICATTRIB_ID_SEQ.getName()) + ";" +

@@ -127,6 +127,7 @@ public class DBAddress implements DBImporter {
 				"}";
 		return stmt;
 	}
+
 	protected long doImport(Address address) throws CityGMLImportException, SQLException {
 		if (!address.isSetXalAddress() || !address.getXalAddress().isSetAddressDetails()) {
 			importer.logOrThrowErrorMessage(importer.getObjectSignature(address) + ": Skipping address due to missing xAL address details.");
