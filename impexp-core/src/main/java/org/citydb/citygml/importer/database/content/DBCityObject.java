@@ -153,28 +153,7 @@ public class DBCityObject implements DBImporter {
 
 		// SPARQL statement for precompilation
 		if (importer.isBlazegraph()) {
-			String param = "  ?;";
-			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-					"BASE <" + IRI_GRAPH_BASE + "> " +
-					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
-						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
-								SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID+ param +
-								SchemaManagerAdapter.ONTO_GML_ID + param +
-								SchemaManagerAdapter.ONTO_NAME + param +
-								SchemaManagerAdapter.ONTO_NAME_CODESPACE + param +
-								SchemaManagerAdapter.ONTO_DESCRIPTION + param +
-								SchemaManagerAdapter.ONTO_ENVELOPE_TYPE + param +
-								SchemaManagerAdapter.ONTO_CREATION_DATE + param +
-								SchemaManagerAdapter.ONTO_TERMINATION_DATE + param +
-								SchemaManagerAdapter.ONTO_RELATIVE_TO_TERRAIN + param +
-								SchemaManagerAdapter.ONTO_RELATIVE_TO_WATER + param +
-								SchemaManagerAdapter.ONTO_LAST_MODIFICATION_DATE + param +
-								SchemaManagerAdapter.ONTO_UPDATING_PERSON + param +
-								SchemaManagerAdapter.ONTO_REASON_FOR_UPDATE + param +
-								SchemaManagerAdapter.ONTO_LINEAGE + param +
-						".}" +
-					"}";
+			stmt = getSPARQLStatement();
 		}
 		// parametrized query statement for precompilation
 		psCityObject = batchConn.prepareStatement(stmt);
@@ -185,6 +164,33 @@ public class DBCityObject implements DBImporter {
 		valueJoiner = importer.getAttributeValueJoiner();
 	}
 
+
+	private String getSPARQLStatement(){
+		String param = "  ?;";
+		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+				SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID+ param +
+				SchemaManagerAdapter.ONTO_GML_ID + param +
+				SchemaManagerAdapter.ONTO_NAME + param +
+				SchemaManagerAdapter.ONTO_NAME_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_DESCRIPTION + param +
+				SchemaManagerAdapter.ONTO_ENVELOPE_TYPE + param +
+				SchemaManagerAdapter.ONTO_CREATION_DATE + param +
+				SchemaManagerAdapter.ONTO_TERMINATION_DATE + param +
+				SchemaManagerAdapter.ONTO_RELATIVE_TO_TERRAIN + param +
+				SchemaManagerAdapter.ONTO_RELATIVE_TO_WATER + param +
+				SchemaManagerAdapter.ONTO_LAST_MODIFICATION_DATE + param +
+				SchemaManagerAdapter.ONTO_UPDATING_PERSON + param +
+				SchemaManagerAdapter.ONTO_REASON_FOR_UPDATE + param +
+				SchemaManagerAdapter.ONTO_LINEAGE + param +
+				".}" +
+				"}";
+
+		return stmt;
+	}
 	protected long doImport(AbstractGML object) throws CityGMLImportException, SQLException {
 		AbstractObjectType<?> objectType = importer.getAbstractObjectType(object);
 		if (objectType == null)
@@ -249,7 +255,7 @@ public class DBCityObject implements DBImporter {
 			try {
 				URL url = new URL(IRI_GRAPH_OBJECT + object.getId() + "/");   // need to get the correct path
 				psCityObject.setURL(++index, url);		// to check
-			} catch (Exception e) {
+			} catch (MalformedURLException e) {
 				psCityObject.setObject(++index, NodeFactory.createBlankNode());
 			}
 		}

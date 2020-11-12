@@ -82,10 +82,10 @@ public class DBBuilding implements DBImporter {
 	private int nullGeometryType;
 	private String nullGeometryTypeName;
 	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";	// modified by SYL
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	//private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/building/";
-	private static final String IRI_GRAPH_OBJECT = "building/";  // modified by SYL
+	private static final String IRI_GRAPH_OBJECT_REL = "building/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBBuilding(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;
