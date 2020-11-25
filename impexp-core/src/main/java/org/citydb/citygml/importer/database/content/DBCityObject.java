@@ -254,7 +254,7 @@ public class DBCityObject implements DBImporter {
 		if (isBlazegraph) {
 			try {
 				URL url = new URL(IRI_GRAPH_OBJECT + object.getId() + "/");   // need to get the correct path
-				psCityObject.setURL(++index, url);		// to check
+				psCityObject.setURL(++index, url);		// setURL sets the url into psCityObject/delegate/sqarqlStr
 			} catch (MalformedURLException e) {
 				psCityObject.setObject(++index, NodeFactory.createBlankNode());
 			}

@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class DBCityObjectTest {
 
     @Test
-    void getSPARQLStatementTest() throws NoSuchMethodException, CityGMLImportException, SQLException, InvocationTargetException, IllegalAccessException {
+    void getSPARQLStatementTest() throws Exception {
         // SYL: this is actually the preparedStatement of psCityObject
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
                 "BASE <http://localhost/berlin/> " +
@@ -29,20 +29,15 @@ class DBCityObjectTest {
         String generated = "";  //
         // @todo: implement assigning value generated from DBCityObject class, call the class from outside and get the generated string
 
-        Connection batchConn = DBObjectTestHelper.getConnection();
+        CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
         Config config = DBObjectTestHelper.getConfig();
-        CityGMLImportManager importer;
+        Connection batchConn = DBObjectTestHelper.getConnection();
 
         DBCityObject dbCityObject = new DBCityObject(batchConn, config, importer); // construct cityobject -> output string
-        assertNotNull();
-        //DBCityObject dbCityObject;
-        //dbCityObject.doImport()
-       // PreparedStatement psCityObject;
+        assertNotNull(dbCityObject.getClass().getDeclaredMethod("getSPARQLStatement", null));
         Method getsparqlMethod = DBCityObject.class.getDeclaredMethod("getSPARQLStatement", null);
 
-        String result = (String) getsparqlMethod.invoke(dbCityObject);
-        generated = result;
-
+        generated = (String) getsparqlMethod.invoke(dbCityObject);
         assertEquals(expected, generated);
 
     }
