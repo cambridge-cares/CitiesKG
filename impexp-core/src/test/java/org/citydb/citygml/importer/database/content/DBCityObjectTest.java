@@ -36,7 +36,7 @@ class DBCityObjectTest {
         DBCityObject dbCityObject = new DBCityObject(batchConn, config, importer); // construct cityobject -> output string
         assertNotNull(dbCityObject.getClass().getDeclaredMethod("getSPARQLStatement", null));
         Method getsparqlMethod = DBCityObject.class.getDeclaredMethod("getSPARQLStatement", null);
-
+        getsparqlMethod.setAccessible(true);
         generated = (String) getsparqlMethod.invoke(dbCityObject);
         assertEquals(expected, generated);
 
