@@ -15,9 +15,12 @@ import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.DatabaseAdapterFactory;
 import org.citydb.database.connection.ConnectionManager;
 import org.citydb.database.connection.DatabaseConnectionDetails;
+import org.citydb.database.connection.DatabaseConnectionPool;
 import org.citydb.database.schema.mapping.SchemaMapping;
 import org.citydb.database.version.DatabaseVersion;
+import org.citydb.event.EventDispatcher;
 import org.citydb.file.InputFile;
+import org.citydb.registry.ObjectRegistry;
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.citygml4j.builder.jaxb.CityGMLBuilderFactory;
@@ -322,14 +325,32 @@ public class DBObjectTestHelper {
         return new DatabaseMetaData(connectionDetails);
     }
 
+    public static DBConnection getDBConnection(){
+        DatabaseType blaze = DatabaseType.fromValue("Blazegraph");
+        DBConnection connection = new DBConnection();
+        connection.setDatabaseType(blaze);
+        connection.setUser("anonymous");
+        connection.setInternalPassword("anonymous");
+        connection.setServer("127.0.0.1");
+        connection.setPort(9999);
+        connection.setSid("/blazegraph/namespace/berlin/sparql");
+        return connection;
+    }
+    public static ObjectRegistry getObjectRegistry(){
+        EventDispatcher eventDispatcher = new EventDispatcher();
+
+        ObjectRegistry objectRegistry = ObjectRegistry.getInstance();
+        objectRegistry.setEventDispatcher(eventDispatcher);
+        return objectRegistry;
+    }
+
     public static AbstractDatabaseAdapter getAbstractDatabaseAdapter(){
 
         // setup the connection and set the connection details
         DatabaseType blaze = DatabaseType.fromValue("Blazegraph");
         AbstractDatabaseAdapter abstractDatabaseAdapter = DatabaseAdapterFactory.getInstance().createDatabaseAdapter(blaze);
 
-        DBConnection connection = new DBConnection();
-        connection.setDatabaseType(blaze);
+        DBConnection connection = getDBConnection();
         DatabaseConnectionDetails connectionDetails = new DatabaseConnectionDetails(connection);
         abstractDatabaseAdapter.setConnectionDetails(connectionDetails);
         DatabaseMetaData metaData = getDatabaseMetaData(connectionDetails);
@@ -369,5 +390,9 @@ public class DBObjectTestHelper {
         Config config = getConfig();
         AffineTransformer affineTransformer = new AffineTransformer(config);
         return new CityGMLImportManager(inputFile, connection, abstractDatabaseAdapter, schemaMapping, cityGMLBuilder, dbXlinkWorkerPool, uidCacheManager, affineTransformer, config);
+    }
+
+    public static DatabaseConnectionPool getDatabaseConnectionPool(){
+        return DatabaseConnectionPool.getInstance();
     }
 }

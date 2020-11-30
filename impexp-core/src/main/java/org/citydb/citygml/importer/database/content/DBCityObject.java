@@ -110,8 +110,7 @@ public class DBCityObject implements DBImporter {
 		this.importer = importer;
 
 		affineTransformation = config.getProject().getImporter().getAffineTransformation().isEnabled();
-		//dbSrid = DatabaseConnectionPool.getInstance().getActiveDatabaseAdapter().getConnectionMetaData().getReferenceSystem().getSrid();
-		dbSrid = 0;
+		dbSrid = DatabaseConnectionPool.getInstance().getActiveDatabaseAdapter().getConnectionMetaData().getReferenceSystem().getSrid();
 		importAppearance = config.getProject().getImporter().getAppearances().isSetImportAppearance();
 		creationDateMode = config.getProject().getImporter().getContinuation().getCreationDateMode();
 		terminationDateMode = config.getProject().getImporter().getContinuation().getTerminationDateMode();

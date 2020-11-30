@@ -2,6 +2,9 @@ package org.citydb.citygml.importer.database.content;
 
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
+import org.citydb.config.project.database.DBConnection;
+import org.citydb.database.connection.ConnectionManager;
+import org.citydb.database.connection.DatabaseConnectionPool;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -29,10 +32,16 @@ class DBCityObjectTest {
         String generated = "";  //
         // @todo: implement assigning value generated from DBCityObject class, call the class from outside and get the generated string
 
+        //
+
         CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
         Config config = DBObjectTestHelper.getConfig();
+        DBConnection dbConnection = DBObjectTestHelper.getDBConnection();
+        config.getProject().getDatabase().setActiveConnection(dbConnection);
         Connection batchConn = DBObjectTestHelper.getConnection();
 
+        DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
+        databaseConnectionPool.connect(config);
         DBCityObject dbCityObject = new DBCityObject(batchConn, config, importer); // construct cityobject -> output string
         assertNotNull(dbCityObject.getClass().getDeclaredMethod("getSPARQLStatement", null));
         Method getsparqlMethod = DBCityObject.class.getDeclaredMethod("getSPARQLStatement", null);
