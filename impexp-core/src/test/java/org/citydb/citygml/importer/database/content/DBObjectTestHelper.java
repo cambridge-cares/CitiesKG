@@ -16,6 +16,7 @@ import org.citydb.database.adapter.DatabaseAdapterFactory;
 import org.citydb.database.connection.ConnectionManager;
 import org.citydb.database.connection.DatabaseConnectionDetails;
 import org.citydb.database.schema.mapping.SchemaMapping;
+import org.citydb.database.version.DatabaseVersion;
 import org.citydb.file.InputFile;
 import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
@@ -332,6 +333,11 @@ public class DBObjectTestHelper {
         DatabaseConnectionDetails connectionDetails = new DatabaseConnectionDetails(connection);
         abstractDatabaseAdapter.setConnectionDetails(connectionDetails);
         DatabaseMetaData metaData = getDatabaseMetaData(connectionDetails);
+
+        // setup database version for DBAddress
+        DatabaseVersion databaseVersion = new DatabaseVersion(4,0,0,"4.0x");
+        metaData.setCityDBVersion(databaseVersion);
+
         abstractDatabaseAdapter.setConnectionMetaData(metaData);   // cause problem in GeometryConverter.java
         return abstractDatabaseAdapter;
     }
