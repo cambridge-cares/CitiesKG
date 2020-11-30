@@ -337,6 +337,7 @@ public class DBObjectTestHelper {
         return connection;
     }
     public static ObjectRegistry getObjectRegistry(){
+
         EventDispatcher eventDispatcher = new EventDispatcher();
 
         ObjectRegistry objectRegistry = ObjectRegistry.getInstance();

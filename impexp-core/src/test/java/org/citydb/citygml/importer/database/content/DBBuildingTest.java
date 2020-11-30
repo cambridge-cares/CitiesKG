@@ -1,6 +1,9 @@
 package org.citydb.citygml.importer.database.content;
 
 import org.citydb.config.Config;
+import org.citydb.config.project.database.DBConnection;
+import org.citydb.database.connection.DatabaseConnectionPool;
+import org.citydb.registry.ObjectRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
@@ -30,10 +33,16 @@ class DBBuildingTest {
                 "?;ocgml:lod4SolidId  ?;ocgml:objectClassId  ?;.}}";
         String generated = "";  //
         // @todo: implement assigning value generated from DBCityObject class, call the class from outside and get the generated string
+        ObjectRegistry objectRegistry = DBObjectTestHelper.getObjectRegistry();
 
         CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
         Config config = DBObjectTestHelper.getConfig();
+        DBConnection dbConnection = DBObjectTestHelper.getDBConnection();
+        config.getProject().getDatabase().setActiveConnection(dbConnection);
         Connection batchConn = DBObjectTestHelper.getConnection();
+
+        DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
+        databaseConnectionPool.connect(config);
 
         DBBuilding dbBuilding = new DBBuilding(batchConn, config, importer); // construct cityobject -> output string
         assertNotNull(dbBuilding.getClass().getDeclaredMethod("getSPARQLStatement", null));

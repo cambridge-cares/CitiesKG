@@ -5,6 +5,7 @@ import org.citydb.config.Config;
 import org.citydb.config.project.database.DBConnection;
 import org.citydb.database.connection.ConnectionManager;
 import org.citydb.database.connection.DatabaseConnectionPool;
+import org.citydb.registry.ObjectRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -32,7 +33,8 @@ class DBCityObjectTest {
         String generated = "";  //
         // @todo: implement assigning value generated from DBCityObject class, call the class from outside and get the generated string
 
-        //
+        //TODO: try to create ObjectRegistry that can be accessed by another class
+        ObjectRegistry objectRegistry = DBObjectTestHelper.getObjectRegistry();  // Note: the ObjectRegistry class has a static and synchronized method
 
         CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
         Config config = DBObjectTestHelper.getConfig();
@@ -42,6 +44,8 @@ class DBCityObjectTest {
 
         DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
         databaseConnectionPool.connect(config);
+
+        // create an object
         DBCityObject dbCityObject = new DBCityObject(batchConn, config, importer); // construct cityobject -> output string
         assertNotNull(dbCityObject.getClass().getDeclaredMethod("getSPARQLStatement", null));
         Method getsparqlMethod = DBCityObject.class.getDeclaredMethod("getSPARQLStatement", null);
