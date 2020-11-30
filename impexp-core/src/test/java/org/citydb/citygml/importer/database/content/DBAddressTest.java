@@ -31,8 +31,14 @@ class DBAddressTest {
         Method getsparqlMethod = DBAddress.class.getDeclaredMethod("getSPARQLStatement", String.class);
         getsparqlMethod.setAccessible(true);
 
+        // prepare gmlIdCodespace for getSPARQLStatement method
         boolean hasGmlIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(3, 1, 0) >= 0;
         String gmlIdCodespace = null;
+        if (hasGmlIdColumn) {
+            gmlIdCodespace = config.getInternal().getCurrentGmlIdCodespace();
+            if (gmlIdCodespace != null)
+                gmlIdCodespace = "'" + gmlIdCodespace + "', ";
+        }
 
         generated = (String) getsparqlMethod.invoke(dbAddress, gmlIdCodespace);
         assertEquals(expected, generated);
