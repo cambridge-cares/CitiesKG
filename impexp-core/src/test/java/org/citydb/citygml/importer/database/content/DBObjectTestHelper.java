@@ -336,6 +336,7 @@ public class DBObjectTestHelper {
         connection.setSid("/blazegraph/namespace/berlin/sparql");
         return connection;
     }
+
     public static ObjectRegistry getObjectRegistry(){
 
         EventDispatcher eventDispatcher = new EventDispatcher();
