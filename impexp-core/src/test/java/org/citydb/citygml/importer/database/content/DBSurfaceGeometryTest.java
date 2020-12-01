@@ -38,7 +38,7 @@ class DBSurfaceGeometryTest {
         Method getsparqlMethod = DBSurfaceGeometry.class.getDeclaredMethod("getSPARQLStatement", StringBuilder.class);
         getsparqlMethod.setAccessible(true);
         StringBuilder stmt = new StringBuilder();
-        generated = (String) getsparqlMethod.invoke(dbSurfaceGeometry, stmt);
+        generated = getsparqlMethod.invoke(dbSurfaceGeometry, stmt).toString();
         assertEquals(expected, generated);
 
     }
