@@ -17,30 +17,27 @@ class DBAppearToSurfaceDataTest {
         // SYL: this is actually the preparedStatement of psCityObject
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
                 "BASE <http://localhost/berlin/> " +
-                "INSERT DATA { " +
-                "GRAPH <appeartosurfacedata/> { " +
-                "? ocgml:surfaceDataId  ?;ocgml:appearanceId  ?;.}}";
-        String generated = "";  //
-        // @todo: implement assigning value generated from DBCityObject class, call the class from outside and get the generated string
+                "INSERT DATA " +
+                "{ GRAPH <appeartosurfacedata/> " +
+                "{ ? ocgml:surfaceDataId  ?;ocgml:appearanceId  ?;.}}";
+        String generated = "";
 
-        //TODO: try to create ObjectRegistry that can be accessed by another class
         ObjectRegistry objectRegistry = DBObjectTestHelper.getObjectRegistry();  // Note: the ObjectRegistry class has a static and synchronized method
 
         CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
         Config config = DBObjectTestHelper.getConfig();
-        DBConnection dbConnection = DBObjectTestHelper.getDBConnection();
-        config.getProject().getDatabase().setActiveConnection(dbConnection);
         Connection batchConn = DBObjectTestHelper.getConnection();
 
         DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
         databaseConnectionPool.connect(config);
 
         // create an object
-        DBAppearToSurfaceData dbAppearToSurfaceData = new DBAppearToSurfaceData(batchConn, config, importer); // construct cityobject -> output string
+        DBAppearToSurfaceData dbAppearToSurfaceData = new DBAppearToSurfaceData(batchConn, config, importer);
         assertNotNull(dbAppearToSurfaceData.getClass().getDeclaredMethod("getSPARQLStatement", null));
         Method getsparqlMethod = DBAppearToSurfaceData.class.getDeclaredMethod("getSPARQLStatement", null);
         getsparqlMethod.setAccessible(true);
         generated = (String) getsparqlMethod.invoke(dbAppearToSurfaceData);
+
         assertEquals(expected, generated);
 
     }

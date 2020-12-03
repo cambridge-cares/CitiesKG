@@ -12,26 +12,27 @@ import static org.junit.jupiter.api.Assertions.*;
 class DBAddressTest {
     @Test
     void getSPARQLStatementTest() throws Exception {
-        // SYL: this is actually the preparedStatement of psCityObject
+
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
                 "BASE <http://localhost/berlin/> " +
                 "INSERT DATA { " +
-                "GRAPH <address/> { ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:street  ?;ocgml:houseNumber  " +
-                "?;ocgml:poBox  ?;ocgml:zipCode  ?;ocgml:city  ?;ocgml:country  ?;ocgml:multiPoint  ?;ocgml:xalSource  ?;.}}";
-        String generated = "";  //
-        // @todo: implement assigning value generated from DBCityObject class, call the class from outside and get the generated string
+                "GRAPH <address/> { ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:street  ?;ocgml:houseNumber  ?;" +
+                "ocgml:poBox  ?;ocgml:zipCode  ?;ocgml:city  ?;ocgml:country  ?;ocgml:multiPoint  ?;" +
+                "ocgml:xalSource  ?;.}}";
+        String generated = "";
 
+        // Set up the environment
         CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
         Config config = DBObjectTestHelper.getConfig();
         Connection batchConn = DBObjectTestHelper.getConnection();
 
-        DBAddress dbAddress = new DBAddress(batchConn, config, importer); // construct cityobject -> output string
+        DBAddress dbAddress = new DBAddress(batchConn, config, importer);
 
         assertNotNull(dbAddress.getClass().getDeclaredMethod("getSPARQLStatement", String.class));
         Method getsparqlMethod = DBAddress.class.getDeclaredMethod("getSPARQLStatement", String.class);
         getsparqlMethod.setAccessible(true);
 
-        // prepare gmlIdCodespace for getSPARQLStatement method
+        // Prepare gmlIdCodespace for getSPARQLStatement method
         boolean hasGmlIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(3, 1, 0) >= 0;
         String gmlIdCodespace = null;
         if (hasGmlIdColumn) {

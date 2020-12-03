@@ -309,7 +309,12 @@ public class DBObjectTestHelper {
     }
 
     public static Config getConfig() {
-        return new Config();
+
+        Config config = new Config();
+        DBConnection dbConnection = DBObjectTestHelper.getDBConnection();
+        config.getProject().getDatabase().setActiveConnection(dbConnection);
+
+        return config;
     }
 
     public static CityGMLBuilder getCityGMLBuilder() throws CityGMLBuilderException {
@@ -338,11 +343,14 @@ public class DBObjectTestHelper {
     }
 
     public static ObjectRegistry getObjectRegistry(){
-
-        EventDispatcher eventDispatcher = new EventDispatcher();
+        // Note: ObjectRegistry class has a static and synchronized method for shared resource.
+        // EventDispatchner only need to be registered once.
 
         ObjectRegistry objectRegistry = ObjectRegistry.getInstance();
-        objectRegistry.setEventDispatcher(eventDispatcher);
+        if (objectRegistry.getEventDispatcher() == null) {
+            EventDispatcher eventDispatcher = new EventDispatcher();
+            objectRegistry.setEventDispatcher(eventDispatcher);
+        }
         return objectRegistry;
     }
 

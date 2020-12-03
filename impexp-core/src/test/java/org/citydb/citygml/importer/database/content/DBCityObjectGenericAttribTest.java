@@ -12,7 +12,6 @@ import java.sql.Connection;
 import static org.junit.jupiter.api.Assertions.*;
 
 class DBCityObjectGenericAttribTest {
-    // Note: Both tests can be executed successfully seperated. but if Run the whole class, Error with objectRegistry
 
     @Test
     void getSPARQLStatement1Test() throws Exception {
@@ -30,8 +29,6 @@ class DBCityObjectGenericAttribTest {
 
         CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
         Config config = DBObjectTestHelper.getConfig();
-        DBConnection dbConnection = DBObjectTestHelper.getDBConnection();
-        config.getProject().getDatabase().setActiveConnection(dbConnection);
         Connection batchConn = DBObjectTestHelper.getConnection();
 
         DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
@@ -39,6 +36,7 @@ class DBCityObjectGenericAttribTest {
 
         // Create an object
         DBCityObjectGenericAttrib dbCityObjectGenericAttrib = new DBCityObjectGenericAttrib(batchConn, config, importer);
+
         assertNotNull(dbCityObjectGenericAttrib.getClass().getDeclaredMethod("getSPARQLStatement1", StringBuilder.class));
         Method getsparqlMethod = DBCityObjectGenericAttrib.class.getDeclaredMethod("getSPARQLStatement1", StringBuilder.class);
         getsparqlMethod.setAccessible(true);
@@ -65,15 +63,12 @@ class DBCityObjectGenericAttribTest {
 
         CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
         Config config = DBObjectTestHelper.getConfig();
-        DBConnection dbConnection = DBObjectTestHelper.getDBConnection();
-        config.getProject().getDatabase().setActiveConnection(dbConnection);
-
         Connection batchConn = DBObjectTestHelper.getConnection();
 
         DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
         databaseConnectionPool.connect(config);
 
-        // create an object
+        // Create an object
         DBCityObjectGenericAttrib dbCityObjectGenericAttrib = new DBCityObjectGenericAttrib(batchConn, config, importer);
         assertNotNull(dbCityObjectGenericAttrib.getClass().getDeclaredMethod("getSPARQLStatement2", StringBuilder.class, CityGMLImportManager.class ));
         Method getsparqlMethod = DBCityObjectGenericAttrib.class.getDeclaredMethod("getSPARQLStatement2", StringBuilder.class, CityGMLImportManager.class);

@@ -24,33 +24,31 @@ class DBCityObjectTest {
         // SYL: this is actually the preparedStatement of psCityObject
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
                 "BASE <http://localhost/berlin/> " +
-                "INSERT DATA { " +
-                "GRAPH <cityobject/> " +
-                "{ ? ocgml:id  ?;ocgml:objectClassId  ?;ocgml:gmlId  ?;ocgml:name  ?;ocgml:nameCodespace  " +
-                "?;ocgml:description  ?;ocgml:EnvelopeType  ?;ocgml:creationDate  ?;ocgml:terminationDate  " +
-                "?;ocgml:relativeToTerrain  ?;ocgml:relativeToWater  ?;ocgml:lastModificationDate  " +
-                "?;ocgml:updatingPerson  ?;ocgml:reasonForUpdate  ?;ocgml:lineage  ?;.}}";
-        String generated = "";  //
-        // @todo: implement assigning value generated from DBCityObject class, call the class from outside and get the generated string
+                "INSERT DATA " +
+                "{ GRAPH <cityobject/> " +
+                "{ ? ocgml:id  ?;ocgml:objectClassId  ?;ocgml:gmlId  ?;ocgml:name  ?;ocgml:nameCodespace  ?;" +
+                "ocgml:description  ?;ocgml:EnvelopeType  ?;ocgml:creationDate  ?;ocgml:terminationDate  ?;" +
+                "ocgml:relativeToTerrain  ?;ocgml:relativeToWater  ?;ocgml:lastModificationDate  ?;" +
+                "ocgml:updatingPerson  ?;ocgml:reasonForUpdate  ?;ocgml:lineage  ?;.}}";
+        String generated = "";
 
-        //TODO: try to create ObjectRegistry that can be accessed by another class
+        // Set up the environment
         ObjectRegistry objectRegistry = DBObjectTestHelper.getObjectRegistry();  // Note: the ObjectRegistry class has a static and synchronized method
 
         CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
         Config config = DBObjectTestHelper.getConfig();
-        DBConnection dbConnection = DBObjectTestHelper.getDBConnection();
-        config.getProject().getDatabase().setActiveConnection(dbConnection);
         Connection batchConn = DBObjectTestHelper.getConnection();
 
         DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
         databaseConnectionPool.connect(config);
 
-        // create an object
-        DBCityObject dbCityObject = new DBCityObject(batchConn, config, importer); // construct cityobject -> output string
+        // Create an object
+        DBCityObject dbCityObject = new DBCityObject(batchConn, config, importer);
         assertNotNull(dbCityObject.getClass().getDeclaredMethod("getSPARQLStatement", null));
         Method getsparqlMethod = DBCityObject.class.getDeclaredMethod("getSPARQLStatement", null);
         getsparqlMethod.setAccessible(true);
         generated = (String) getsparqlMethod.invoke(dbCityObject);
+
         assertEquals(expected, generated);
 
     }

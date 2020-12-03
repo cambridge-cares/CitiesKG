@@ -16,11 +16,15 @@ class DBSurfaceGeometryTest {
     @Test
     void getSPARQLStatementTest() throws Exception {
         // SYL: this is actually the preparedStatement of psCityObject
-        String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> BASE <http://localhost/berlin/> INSERT DATA { GRAPH <surfacegeometry/> { ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:parentId  ?;ocgml:rootId  ?;ocgml:isSolid  ?;ocgml:isComposite  ?;ocgml:isTriangulated  ?;ocgml:isXlink  ?;ocgml:isReverse  ?;ocgml:GeometryType  ?;ocgml:SolidType  ?;ocgml:ImplicitGeometryType  ?;ocgml:cityObjectId  ?;.}}";
-        String generated = "";  //
-        // @todo: implement assigning value generated from DBCityObject class, call the class from outside and get the generated string
+        String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
+                "BASE <http://localhost/berlin/> " +
+                "INSERT DATA { GRAPH <surfacegeometry/> " +
+                "{ ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:parentId  ?;ocgml:rootId  ?;ocgml:isSolid  ?;" +
+                "ocgml:isComposite  ?;ocgml:isTriangulated  ?;ocgml:isXlink  ?;ocgml:isReverse  ?;" +
+                "ocgml:GeometryType  ?;ocgml:SolidType  ?;ocgml:ImplicitGeometryType  ?;ocgml:cityObjectId  ?;.}}";
+        String generated = "";
 
-        //TODO: try to create ObjectRegistry that can be accessed by another class
+        // Set up the environment
         ObjectRegistry objectRegistry = DBObjectTestHelper.getObjectRegistry();  // Note: the ObjectRegistry class has a static and synchronized method
 
         CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
@@ -33,12 +37,13 @@ class DBSurfaceGeometryTest {
         databaseConnectionPool.connect(config);
 
         // create an object
-        DBSurfaceGeometry dbSurfaceGeometry = new DBSurfaceGeometry(batchConn, config, importer); // construct cityobject -> output string
+        DBSurfaceGeometry dbSurfaceGeometry = new DBSurfaceGeometry(batchConn, config, importer);
         assertNotNull(dbSurfaceGeometry.getClass().getDeclaredMethod("getSPARQLStatement", StringBuilder.class));
         Method getsparqlMethod = DBSurfaceGeometry.class.getDeclaredMethod("getSPARQLStatement", StringBuilder.class);
         getsparqlMethod.setAccessible(true);
         StringBuilder stmt = new StringBuilder();
         generated = getsparqlMethod.invoke(dbSurfaceGeometry, stmt).toString();
+
         assertEquals(expected, generated);
 
     }

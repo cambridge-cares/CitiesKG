@@ -17,28 +17,25 @@ class DBAppearanceTest {
 
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
                 "BASE <http://localhost/berlin/> " +
-                "INSERT DATA { " +
-                "GRAPH <appearance/> { " +
-                "? ocgml:id  ?;ocgml:gmlId  ?;ocgml:name  " +
-                "?;ocgml:nameCodespace  ?;ocgml:description  ?;ocgml:theme  " +
-                "?;ocgml:cityModelId  ?;ocgml:cityObjectId  ?;.}}";
-        String generated = "";  //
-        // @todo: implement assigning value generated from DBCityObject class, call the class from outside and get the generated string
+                "INSERT DATA " +
+                "{ GRAPH <appearance/> " +
+                "{ ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:name  ?;" +
+                "ocgml:nameCodespace  ?;ocgml:description  ?;ocgml:theme  ?;" +
+                "ocgml:cityModelId  ?;ocgml:cityObjectId  ?;.}}";
+        String generated = "";
 
-        //Note: create ObjectRegistry that can be accessed by another class
+        // Set up the environment
         ObjectRegistry objectRegistry = DBObjectTestHelper.getObjectRegistry();  // Note: the ObjectRegistry class has a static and synchronized method
 
         CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
         Config config = DBObjectTestHelper.getConfig();
-        DBConnection dbConnection = DBObjectTestHelper.getDBConnection();
-        config.getProject().getDatabase().setActiveConnection(dbConnection);
         Connection batchConn = DBObjectTestHelper.getConnection();
 
         DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
         databaseConnectionPool.connect(config);
 
-        // create an object
-        DBAppearance dbAppearance = new DBAppearance(batchConn, config, importer); // construct cityobject -> output string
+        // Create an object
+        DBAppearance dbAppearance = new DBAppearance(batchConn, config, importer);
         assertNotNull(dbAppearance.getClass().getDeclaredMethod("getSPARQLStatement", String.class));
         Method getsparqlMethod = DBAppearance.class.getDeclaredMethod("getSPARQLStatement", String.class);
         getsparqlMethod.setAccessible(true);
@@ -48,6 +45,7 @@ class DBAppearanceTest {
             gmlIdCodespace = "'" + gmlIdCodespace + "', ";
 
         generated = (String) getsparqlMethod.invoke(dbAppearance, gmlIdCodespace);
+
         assertEquals(expected, generated);
 
     }

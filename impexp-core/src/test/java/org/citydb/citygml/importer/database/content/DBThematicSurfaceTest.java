@@ -23,27 +23,25 @@ class DBThematicSurfaceTest {
                 "ocgml:buildingId  ?;ocgml:roomId  ?;ocgml:buildingInstallationId  ?;" +
                 "ocgml:lod2MultiSurfaceId  ?;ocgml:lod3MultiSurfaceId  ?;" +
                 "ocgml:lod4MultiSurfaceId  ?;.}}";
-        String generated = "";  //
-        // @todo: implement assigning value generated from DBCityObject class, call the class from outside and get the generated string
+        String generated = "";
 
-        //TODO: try to create ObjectRegistry that can be accessed by another class
+        // Set up the environment
         ObjectRegistry objectRegistry = DBObjectTestHelper.getObjectRegistry();  // Note: the ObjectRegistry class has a static and synchronized method
 
         CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
         Config config = DBObjectTestHelper.getConfig();
-        DBConnection dbConnection = DBObjectTestHelper.getDBConnection();
-        config.getProject().getDatabase().setActiveConnection(dbConnection);
         Connection batchConn = DBObjectTestHelper.getConnection();
 
         DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
         databaseConnectionPool.connect(config);
 
-        // create an object
-        DBThematicSurface dbThematicSurface = new DBThematicSurface(batchConn, config, importer); // construct cityobject -> output string
+        // Create an object
+        DBThematicSurface dbThematicSurface = new DBThematicSurface(batchConn, config, importer);
         assertNotNull(dbThematicSurface.getClass().getDeclaredMethod("getSPARQLStatement", null));
         Method getsparqlMethod = DBThematicSurface.class.getDeclaredMethod("getSPARQLStatement", null);
         getsparqlMethod.setAccessible(true);
         generated = (String) getsparqlMethod.invoke(dbThematicSurface);
+
         assertEquals(expected, generated);
 
     }

@@ -18,28 +18,27 @@ class DBTexImageTest {
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
                 "BASE <http://localhost/berlin/> " +
                 "INSERT DATA { " +
-                "GRAPH <teximage/> { ? ocgml:id  ?;ocgml:texImageURI  ?;ocgml:texMimeType  ?;ocgml:texMimeTypeCodespace  ?;.}}";
-        String generated = "";  //
-        // @todo: implement assigning value generated from DBCityObject class, call the class from outside and get the generated string
+                "GRAPH <teximage/> { ? ocgml:id  ?;ocgml:texImageURI  ?;ocgml:texMimeType  ?" +
+                ";ocgml:texMimeTypeCodespace  ?;.}}";
+        String generated = "";
 
-        //TODO: try to create ObjectRegistry that can be accessed by another class
+        // Set up the environment
         ObjectRegistry objectRegistry = DBObjectTestHelper.getObjectRegistry();  // Note: the ObjectRegistry class has a static and synchronized method
 
         CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
         Config config = DBObjectTestHelper.getConfig();
-        DBConnection dbConnection = DBObjectTestHelper.getDBConnection();
-        config.getProject().getDatabase().setActiveConnection(dbConnection);
         Connection batchConn = DBObjectTestHelper.getConnection();
 
         DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
         databaseConnectionPool.connect(config);
 
-        // create an object
-        DBTexImage dbTexImage = new DBTexImage(batchConn, config, importer); // construct cityobject -> output string
+        // Create an object
+        DBTexImage dbTexImage = new DBTexImage(batchConn, config, importer);
         assertNotNull(dbTexImage.getClass().getDeclaredMethod("getSPARQLStatement", null));
         Method getsparqlMethod = DBTexImage.class.getDeclaredMethod("getSPARQLStatement", null);
         getsparqlMethod.setAccessible(true);
         generated = (String) getsparqlMethod.invoke(dbTexImage);
+
         assertEquals(expected, generated);
 
     }

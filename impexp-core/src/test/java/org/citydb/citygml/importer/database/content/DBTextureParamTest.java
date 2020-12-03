@@ -21,27 +21,25 @@ class DBTextureParamTest {
                 "INSERT DATA { " +
                 "GRAPH <textureparam/> { ? ocgml:surfaceGeometryId  ?;ocgml:isTextureParametrization  ?;" +
                 "ocgml:worldToTexture  ?;ocgml:textureCoordinates  ?;ocgml:surfaceDataId  ?;.}}";
-        String generated = "";  //
-        // @todo: implement assigning value generated from DBCityObject class, call the class from outside and get the generated string
+        String generated = "";
 
-        //TODO: try to create ObjectRegistry that can be accessed by another class
+        // Set up the environment
         ObjectRegistry objectRegistry = DBObjectTestHelper.getObjectRegistry();  // Note: the ObjectRegistry class has a static and synchronized method
 
         CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
         Config config = DBObjectTestHelper.getConfig();
-        DBConnection dbConnection = DBObjectTestHelper.getDBConnection();
-        config.getProject().getDatabase().setActiveConnection(dbConnection);
         Connection batchConn = DBObjectTestHelper.getConnection();
 
         DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
         databaseConnectionPool.connect(config);
 
-        // create an object
-        DBTextureParam dbTextureParam = new DBTextureParam(batchConn, config, importer); // construct cityobject -> output string
+        // Create an object
+        DBTextureParam dbTextureParam = new DBTextureParam(batchConn, config, importer);
         assertNotNull(dbTextureParam.getClass().getDeclaredMethod("getSPARQLStatement", null));
         Method getsparqlMethod = DBTextureParam.class.getDeclaredMethod("getSPARQLStatement", null);
         getsparqlMethod.setAccessible(true);
         generated = (String) getsparqlMethod.invoke(dbTextureParam);
+
         assertEquals(expected, generated);
 
     }
