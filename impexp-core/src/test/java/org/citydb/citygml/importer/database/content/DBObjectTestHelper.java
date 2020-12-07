@@ -376,14 +376,14 @@ public class DBObjectTestHelper {
 
     public static WorkerPool<DBXlink> getWorkerPool(){
 
-        WorkerFactory workerFactory = new WorkerFactory() {
+        WorkerFactory<DBXlink> workerFactory = new WorkerFactory<DBXlink>() {
             @Override
-            public Worker createWorker() {
+            public Worker<DBXlink> createWorker() {
                 return null;
             }
         };
 
-        return new WorkerPool("dbxlink", 1, 2, null, workerFactory, 1);
+        return new WorkerPool<DBXlink>("dbxlink", 1, 2, null, workerFactory, 1);
     }
 
     public static CityGMLImportManager getCityGMLImportManager() throws Exception {
