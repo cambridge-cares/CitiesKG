@@ -4,7 +4,6 @@ package org.citydb.citygml.importer.database.content;
 import org.citydb.citygml.common.database.uid.UIDCacheManager;
 import org.citydb.citygml.common.database.xlink.DBXlink;
 import org.citydb.citygml.importer.util.AffineTransformer;
-import org.citydb.concurrent.Worker;
 import org.citydb.concurrent.WorkerFactory;
 import org.citydb.concurrent.WorkerPool;
 import org.citydb.config.Config;
@@ -376,14 +375,9 @@ public class DBObjectTestHelper {
 
     public static WorkerPool<DBXlink> getWorkerPool(){
 
-        WorkerFactory<DBXlink> workerFactory = new WorkerFactory<DBXlink>() {
-            @Override
-            public Worker<DBXlink> createWorker() {
-                return null;
-            }
-        };
+        WorkerFactory<DBXlink> workerFactory = () -> null;
 
-        return new WorkerPool<DBXlink>("dbxlink", 1, 2, null, workerFactory, 1);
+        return new WorkerPool<>("dbxlink", 1, 2, null, workerFactory, 1);
     }
 
     public static CityGMLImportManager getCityGMLImportManager() throws Exception {
