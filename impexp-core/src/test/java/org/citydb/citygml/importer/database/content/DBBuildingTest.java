@@ -1,19 +1,12 @@
 package org.citydb.citygml.importer.database.content;
 
-import org.citydb.config.Config;
-import org.citydb.config.project.database.DBConnection;
-import org.citydb.database.connection.DatabaseConnectionPool;
-import org.citydb.registry.ObjectRegistry;
 import org.junit.jupiter.api.Test;
-
 import java.lang.reflect.Method;
-import java.sql.Connection;
-
 import static org.junit.jupiter.api.Assertions.*;
 
-class DBBuildingTest {
+class DBBuildingTest extends DBTest{
     @Test
-    void getSPARQLStatementTest() throws Exception {
+    void getSPARQLStatementTest() {
         // SYL: this is actually the preparedStatement of psCityObject
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
                 "BASE <http://localhost/berlin/> " +
@@ -31,25 +24,24 @@ class DBBuildingTest {
                 "ocgml:lod1MultiSurfaceId  ?;ocgml:lod2MultiSurfaceId  ?;ocgml:lod3MultiSurfaceId  ?;" +
                 "ocgml:lod4MultiSurfaceId  ?;ocgml:lod1SolidId  ?;ocgml:lod2SolidId  ?;ocgml:lod3SolidId  ?;" +
                 "ocgml:lod4SolidId  ?;ocgml:objectClassId  ?;.}}";
-        String generated = "";  //
 
-        // Set up the environment
-        ObjectRegistry objectRegistry = DBObjectTestHelper.getObjectRegistry();
+        String generated;
 
-        CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
-        Config config = DBObjectTestHelper.getConfig();
-        Connection batchConn = DBObjectTestHelper.getConnection();
+        try {
 
-        DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
-        databaseConnectionPool.connect(config);
+            // Create an object
+            DBBuilding dbBuilding = new DBBuilding(batchConn, config, importer);
+            assertNotNull(dbBuilding.getClass().getDeclaredMethod("getSPARQLStatement"));
+            Method getsparqlMethod = DBBuilding.class.getDeclaredMethod("getSPARQLStatement");
+            getsparqlMethod.setAccessible(true);
+            generated = (String) getsparqlMethod.invoke(dbBuilding);
 
-        // Create
-        DBBuilding dbBuilding = new DBBuilding(batchConn, config, importer);
-        assertNotNull(dbBuilding.getClass().getDeclaredMethod("getSPARQLStatement", null));
-        Method getsparqlMethod = DBBuilding.class.getDeclaredMethod("getSPARQLStatement", null);
-        getsparqlMethod.setAccessible(true);
-        generated = (String) getsparqlMethod.invoke(dbBuilding);
-
-        assertEquals(expected, generated);
+            assertEquals(expected, generated);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        } finally {
+            objectRegistry.cleanup();
+        }
     }
 }

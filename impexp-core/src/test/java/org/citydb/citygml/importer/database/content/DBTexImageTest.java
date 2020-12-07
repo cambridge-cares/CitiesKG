@@ -1,45 +1,36 @@
 package org.citydb.citygml.importer.database.content;
 
-import org.citydb.config.Config;
-import org.citydb.config.project.database.DBConnection;
-import org.citydb.database.connection.DatabaseConnectionPool;
-import org.citydb.registry.ObjectRegistry;
 import org.junit.jupiter.api.Test;
-
 import java.lang.reflect.Method;
-import java.sql.Connection;
-
 import static org.junit.jupiter.api.Assertions.*;
 
-class DBTexImageTest {
+public class DBTexImageTest extends DBTest {
+
     @Test
-    void getSPARQLStatementTest() throws Exception {
-        // SYL: this is actually the preparedStatement of psCityObject
+    public void getSPARQLStatementTest() {
+
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
                 "BASE <http://localhost/berlin/> " +
                 "INSERT DATA { " +
                 "GRAPH <teximage/> { ? ocgml:id  ?;ocgml:texImageURI  ?;ocgml:texMimeType  ?" +
                 ";ocgml:texMimeTypeCodespace  ?;.}}";
-        String generated = "";
+        String generated;
 
-        // Set up the environment
-        ObjectRegistry objectRegistry = DBObjectTestHelper.getObjectRegistry();  // Note: the ObjectRegistry class has a static and synchronized method
+        try {
 
-        CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
-        Config config = DBObjectTestHelper.getConfig();
-        Connection batchConn = DBObjectTestHelper.getConnection();
+            // Create an object
+            DBTexImage dbTexImage = new DBTexImage(batchConn, config, importer);
+            assertNotNull(dbTexImage.getClass().getDeclaredMethod("getSPARQLStatement"));
+            Method getsparqlMethod = DBTexImage.class.getDeclaredMethod("getSPARQLStatement");
+            getsparqlMethod.setAccessible(true);
+            generated = (String) getsparqlMethod.invoke(dbTexImage);
 
-        DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
-        databaseConnectionPool.connect(config);
-
-        // Create an object
-        DBTexImage dbTexImage = new DBTexImage(batchConn, config, importer);
-        assertNotNull(dbTexImage.getClass().getDeclaredMethod("getSPARQLStatement", null));
-        Method getsparqlMethod = DBTexImage.class.getDeclaredMethod("getSPARQLStatement", null);
-        getsparqlMethod.setAccessible(true);
-        generated = (String) getsparqlMethod.invoke(dbTexImage);
-
-        assertEquals(expected, generated);
-
+            assertEquals(expected, generated);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        } finally {
+            objectRegistry.cleanup();
+        }
     }
 }

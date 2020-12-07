@@ -1,56 +1,46 @@
 package org.citydb.citygml.importer.database.content;
 
-import org.citydb.config.Config;
-import org.citydb.config.project.database.DBConnection;
-import org.citydb.database.connection.DatabaseConnectionPool;
-import org.citydb.registry.ObjectRegistry;
 import org.junit.jupiter.api.Test;
-
 import java.lang.reflect.Method;
-import java.sql.Connection;
-
 import static org.junit.jupiter.api.Assertions.*;
 
-class DBSurfaceDataTest {
+public class DBSurfaceDataTest extends DBTest{
 
     @Test
-    void getSPARQLStatementTest() throws Exception {
+    public void getSPARQLStatementTest() {
         // SYL: this is actually the preparedStatement of psCityObject
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
                 "BASE <http://localhost/berlin/> " +
                 "INSERT DATA " +
                 "{ GRAPH <surfacedata/> { ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:name  ?;" +
                 "ocgml:nameCodespace  ?;ocgml:description  ?;ocgml:isFront  ?;ocgml:objectClassId  ?;";
-        String generated = "";
+        String generated;
 
-        // Set up the environment
-        ObjectRegistry objectRegistry = DBObjectTestHelper.getObjectRegistry();  // Note: the ObjectRegistry class has a static and synchronized method
+        try {
 
-        CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
-        Config config = DBObjectTestHelper.getConfig();
-        Connection batchConn = DBObjectTestHelper.getConnection();
+            // Create an object
+            DBSurfaceData dbSurfaceData = new DBSurfaceData(batchConn, config, importer); // construct cityobject -> output string
+            assertNotNull(dbSurfaceData.getClass().getDeclaredMethod("getSPARQLStatement", String.class));
+            Method getsparqlMethod = DBSurfaceData.class.getDeclaredMethod("getSPARQLStatement", String.class);
+            getsparqlMethod.setAccessible(true);
 
-        DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
-        databaseConnectionPool.connect(config);
+            String gmlIdCodespace = config.getInternal().getCurrentGmlIdCodespace();
+            if (gmlIdCodespace != null)
+                gmlIdCodespace = "'" + gmlIdCodespace + "', ";
+            generated = (String) getsparqlMethod.invoke(dbSurfaceData, gmlIdCodespace);
 
-        // Create an object
-        DBSurfaceData dbSurfaceData = new DBSurfaceData(batchConn, config, importer); // construct cityobject -> output string
-        assertNotNull(dbSurfaceData.getClass().getDeclaredMethod("getSPARQLStatement", String.class));
-        Method getsparqlMethod = DBSurfaceData.class.getDeclaredMethod("getSPARQLStatement", String.class);
-        getsparqlMethod.setAccessible(true);
-
-        String gmlIdCodespace = config.getInternal().getCurrentGmlIdCodespace();
-        if (gmlIdCodespace != null)
-            gmlIdCodespace = "'" + gmlIdCodespace + "', ";
-        generated = (String) getsparqlMethod.invoke(dbSurfaceData, gmlIdCodespace);
-
-        assertEquals(expected, generated);
-
+            assertEquals(expected, generated);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        } finally {
+            objectRegistry.cleanup();
+        }
     }
 
 
     @Test
-    void getx3dStmtTest() throws Exception {
+    public void getx3dStmtTest() {
         // SYL: this is actually the preparedStatement of psCityObject
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
                 "BASE <http://localhost/berlin/> " +
@@ -60,38 +50,36 @@ class DBSurfaceDataTest {
                 "ocgml:objectClassId  ?;ocgml:x3dShininess  ?;ocgml:x3dTransparency  ?;" +
                 "ocgml:x3dAmbientIntensity  ?;ocgml:x3dSpecularColor  ?;ocgml:x3dDiffuseColor  ?;" +
                 "ocgml:x3dEmissiveColor  ?;ocgml:x3dIsSmooth  ?;.}}";
-        String generated = "";
+        String generated;
 
-        //Set up the environment
-        ObjectRegistry objectRegistry = DBObjectTestHelper.getObjectRegistry();  // Note: the ObjectRegistry class has a static and synchronized method
+        try {
 
-        CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
-        Config config = DBObjectTestHelper.getConfig();
-        Connection batchConn = DBObjectTestHelper.getConnection();
+            // Create an object
+            DBSurfaceData dbSurfaceData = new DBSurfaceData(batchConn, config, importer); // construct cityobject -> output string
+            assertNotNull(dbSurfaceData.getClass().getDeclaredMethod("getx3dStmt", String.class));
+            Method getx3dStmtMethod = DBSurfaceData.class.getDeclaredMethod("getx3dStmt", String.class);
+            getx3dStmtMethod.setAccessible(true);
 
-        DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
-        databaseConnectionPool.connect(config);
+            Method getsparqlMethod = DBSurfaceData.class.getDeclaredMethod("getSPARQLStatement", String.class);
+            getsparqlMethod.setAccessible(true);
+            String gmlIdCodespace = config.getInternal().getCurrentGmlIdCodespace();
+            if (gmlIdCodespace != null)
+                gmlIdCodespace = "'" + gmlIdCodespace + "', ";
+            String stmt = (String) getsparqlMethod.invoke(dbSurfaceData, gmlIdCodespace);
 
-        // Create an object
-        DBSurfaceData dbSurfaceData = new DBSurfaceData(batchConn, config, importer); // construct cityobject -> output string
-        assertNotNull(dbSurfaceData.getClass().getDeclaredMethod("getx3dStmt", String.class));
-        Method getx3dStmtMethod = DBSurfaceData.class.getDeclaredMethod("getx3dStmt", String.class);
-        getx3dStmtMethod.setAccessible(true);
-
-        Method getsparqlMethod = DBSurfaceData.class.getDeclaredMethod("getSPARQLStatement", String.class);
-        getsparqlMethod.setAccessible(true);
-        String gmlIdCodespace = config.getInternal().getCurrentGmlIdCodespace();
-        if (gmlIdCodespace != null)
-            gmlIdCodespace = "'" + gmlIdCodespace + "', ";
-        String stmt = (String) getsparqlMethod.invoke(dbSurfaceData, gmlIdCodespace);
-
-        generated = (String) getx3dStmtMethod.invoke(dbSurfaceData, stmt);
-        assertEquals(expected, generated);
+            generated = (String) getx3dStmtMethod.invoke(dbSurfaceData, stmt);
+            assertEquals(expected, generated);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        } finally {
+            objectRegistry.cleanup();
+        }
     }
 
 
     @Test
-    void getParaStmtTest() throws Exception {
+    public void getParaStmtTest() {
         // SYL: this is actually the preparedStatement of psCityObject
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
                 "BASE <http://localhost/berlin/> " +
@@ -99,39 +87,36 @@ class DBSurfaceDataTest {
                 "{ ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:name  ?;ocgml:nameCodespace  ?;ocgml:description  ?;" +
                 "ocgml:isFront  ?;ocgml:objectClassId  ?;ocgml:texTextureType  ?;ocgml:texWrapMode  ?;" +
                 "ocgml:texBorderColor  ?;.}}";
-        String generated = "";  //
+        String generated;  //
 
-        // Set up the environment
-        ObjectRegistry objectRegistry = DBObjectTestHelper.getObjectRegistry();  // Note: the ObjectRegistry class has a static and synchronized method
+        try {
 
-        CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
-        Config config = DBObjectTestHelper.getConfig();
-        Connection batchConn = DBObjectTestHelper.getConnection();
+            // Create an object
+            DBSurfaceData dbSurfaceData = new DBSurfaceData(batchConn, config, importer); // construct cityobject -> output string
+            assertNotNull(dbSurfaceData.getClass().getDeclaredMethod("getParaStmt", String.class));
+            Method getParaStmtMethod = DBSurfaceData.class.getDeclaredMethod("getParaStmt", String.class);
+            getParaStmtMethod.setAccessible(true);
 
-        DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
-        databaseConnectionPool.connect(config);
+            Method getsparqlMethod = DBSurfaceData.class.getDeclaredMethod("getSPARQLStatement", String.class);
+            getsparqlMethod.setAccessible(true);
+            String gmlIdCodespace = config.getInternal().getCurrentGmlIdCodespace();
+            if (gmlIdCodespace != null)
+                gmlIdCodespace = "'" + gmlIdCodespace + "', ";
+            String stmt = (String) getsparqlMethod.invoke(dbSurfaceData, gmlIdCodespace);
 
-        // Create an object
-        DBSurfaceData dbSurfaceData = new DBSurfaceData(batchConn, config, importer); // construct cityobject -> output string
-        assertNotNull(dbSurfaceData.getClass().getDeclaredMethod("getParaStmt", String.class));
-        Method getParaStmtMethod = DBSurfaceData.class.getDeclaredMethod("getParaStmt", String.class);
-        getParaStmtMethod.setAccessible(true);
+            generated = (String) getParaStmtMethod.invoke(dbSurfaceData, stmt);
 
-        Method getsparqlMethod = DBSurfaceData.class.getDeclaredMethod("getSPARQLStatement", String.class);
-        getsparqlMethod.setAccessible(true);
-        String gmlIdCodespace = config.getInternal().getCurrentGmlIdCodespace();
-        if (gmlIdCodespace != null)
-            gmlIdCodespace = "'" + gmlIdCodespace + "', ";
-        String stmt = (String) getsparqlMethod.invoke(dbSurfaceData, gmlIdCodespace);
-
-        generated = (String) getParaStmtMethod.invoke(dbSurfaceData, stmt);
-
-        assertEquals(expected, generated);
-
+            assertEquals(expected, generated);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        } finally {
+            objectRegistry.cleanup();
+        }
     }
 
     @Test
-    void getGeoStmtTest() throws Exception {
+    public void getGeoStmtTest() {
         // SYL: this is actually the preparedStatement of psCityObject
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
                 "BASE <http://localhost/berlin/> " +
@@ -140,35 +125,32 @@ class DBSurfaceDataTest {
                 "ocgml:description  ?;ocgml:isFront  ?;ocgml:objectClassId  ?;ocgml:texTextureType  ?;" +
                 "ocgml:texWrapMode  ?;ocgml:texBorderColor  ?;ocgml:gtPreferWorldFile  ?;" +
                 "ocgml:gtOrientation  ?;ocgml:gtReferencePoint  ?;.}}";
-        String generated = "";  //
+        String generated;  //
 
-        // Set up the environment
-        ObjectRegistry objectRegistry = DBObjectTestHelper.getObjectRegistry();  // Note: the ObjectRegistry class has a static and synchronized method
+        try {
 
-        CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
-        Config config = DBObjectTestHelper.getConfig();
-        Connection batchConn = DBObjectTestHelper.getConnection();
+            // Create an object
+            DBSurfaceData dbSurfaceData = new DBSurfaceData(batchConn, config, importer);
+            assertNotNull(dbSurfaceData.getClass().getDeclaredMethod("getGeoStmt", String.class));
+            Method getGeoStmtMethod = DBSurfaceData.class.getDeclaredMethod("getGeoStmt", String.class);
+            getGeoStmtMethod.setAccessible(true);
 
-        DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
-        databaseConnectionPool.connect(config);
+            Method getsparqlMethod = DBSurfaceData.class.getDeclaredMethod("getSPARQLStatement", String.class);
+            getsparqlMethod.setAccessible(true);
+            String gmlIdCodespace = config.getInternal().getCurrentGmlIdCodespace();
+            if (gmlIdCodespace != null)
+                gmlIdCodespace = "'" + gmlIdCodespace + "', ";
+            String stmt = (String) getsparqlMethod.invoke(dbSurfaceData, gmlIdCodespace);
 
-        // Create an object
-        DBSurfaceData dbSurfaceData = new DBSurfaceData(batchConn, config, importer);
-        assertNotNull(dbSurfaceData.getClass().getDeclaredMethod("getGeoStmt", String.class));
-        Method getGeoStmtMethod = DBSurfaceData.class.getDeclaredMethod("getGeoStmt", String.class);
-        getGeoStmtMethod.setAccessible(true);
+            generated = (String) getGeoStmtMethod.invoke(dbSurfaceData, stmt);
 
-        Method getsparqlMethod = DBSurfaceData.class.getDeclaredMethod("getSPARQLStatement", String.class);
-        getsparqlMethod.setAccessible(true);
-        String gmlIdCodespace = config.getInternal().getCurrentGmlIdCodespace();
-        if (gmlIdCodespace != null)
-            gmlIdCodespace = "'" + gmlIdCodespace + "', ";
-        String stmt = (String) getsparqlMethod.invoke(dbSurfaceData, gmlIdCodespace);
-
-        generated = (String) getGeoStmtMethod.invoke(dbSurfaceData, stmt);
-
-        assertEquals(expected, generated);
-
+            assertEquals(expected, generated);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        } finally {
+            objectRegistry.cleanup();
+        }
     }
 
 }

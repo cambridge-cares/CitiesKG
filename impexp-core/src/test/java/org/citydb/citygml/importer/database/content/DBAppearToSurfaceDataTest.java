@@ -1,45 +1,37 @@
 package org.citydb.citygml.importer.database.content;
 
-import org.citydb.config.Config;
-import org.citydb.config.project.database.DBConnection;
-import org.citydb.database.connection.DatabaseConnectionPool;
-import org.citydb.registry.ObjectRegistry;
 import org.junit.jupiter.api.Test;
-
 import java.lang.reflect.Method;
-import java.sql.Connection;
-
 import static org.junit.jupiter.api.Assertions.*;
 
-class DBAppearToSurfaceDataTest {
+public class DBAppearToSurfaceDataTest extends DBTest{
+
     @Test
-    void getSPARQLStatementTest() throws Exception {
-        // SYL: this is actually the preparedStatement of psCityObject
+    public void getSPARQLStatementTest() {
+
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
                 "BASE <http://localhost/berlin/> " +
                 "INSERT DATA " +
                 "{ GRAPH <appeartosurfacedata/> " +
                 "{ ? ocgml:surfaceDataId  ?;ocgml:appearanceId  ?;.}}";
-        String generated = "";
+        String generated;
 
-        ObjectRegistry objectRegistry = DBObjectTestHelper.getObjectRegistry();  // Note: the ObjectRegistry class has a static and synchronized method
+        try {
 
-        CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
-        Config config = DBObjectTestHelper.getConfig();
-        Connection batchConn = DBObjectTestHelper.getConnection();
+            // create an object
+            DBAppearToSurfaceData dbAppearToSurfaceData = new DBAppearToSurfaceData(batchConn, config, importer);
+            assertNotNull(dbAppearToSurfaceData.getClass().getDeclaredMethod("getSPARQLStatement"));
+            Method getsparqlMethod = DBAppearToSurfaceData.class.getDeclaredMethod("getSPARQLStatement");
+            getsparqlMethod.setAccessible(true);
+            generated = (String) getsparqlMethod.invoke(dbAppearToSurfaceData);
 
-        DatabaseConnectionPool databaseConnectionPool = DBObjectTestHelper.getDatabaseConnectionPool();
-        databaseConnectionPool.connect(config);
-
-        // create an object
-        DBAppearToSurfaceData dbAppearToSurfaceData = new DBAppearToSurfaceData(batchConn, config, importer);
-        assertNotNull(dbAppearToSurfaceData.getClass().getDeclaredMethod("getSPARQLStatement", null));
-        Method getsparqlMethod = DBAppearToSurfaceData.class.getDeclaredMethod("getSPARQLStatement", null);
-        getsparqlMethod.setAccessible(true);
-        generated = (String) getsparqlMethod.invoke(dbAppearToSurfaceData);
-
-        assertEquals(expected, generated);
-
+            assertEquals(expected, generated);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        } finally {
+            objectRegistry.cleanup();
+        }
     }
 
 }

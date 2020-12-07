@@ -1,14 +1,10 @@
 package org.citydb.citygml.importer.database.content;
 
-import org.citydb.config.Config;
 import org.junit.jupiter.api.Test;
-
 import java.lang.reflect.Method;
-import java.sql.Connection;
-
 import static org.junit.jupiter.api.Assertions.*;
 
-public class DBAddressTest {
+public class DBAddressTest extends DBTest {
 
     @Test
     public void getSPARQLStatementTest() {
@@ -22,13 +18,8 @@ public class DBAddressTest {
         String generated;
 
         try {
-            // Set up the environment
-            CityGMLImportManager importer = DBObjectTestHelper.getCityGMLImportManager();
-            Config config = DBObjectTestHelper.getConfig();
-            Connection batchConn = DBObjectTestHelper.getConnection();
 
             DBAddress dbAddress = new DBAddress(batchConn, config, importer);
-
             assertNotNull(dbAddress.getClass().getDeclaredMethod("getSPARQLStatement", String.class));
             Method getsparqlMethod = DBAddress.class.getDeclaredMethod("getSPARQLStatement", String.class);
             getsparqlMethod.setAccessible(true);
@@ -45,8 +36,11 @@ public class DBAddressTest {
             generated = (String) getsparqlMethod.invoke(dbAddress, gmlIdCodespace);
             assertEquals(expected, generated);
         } catch (Exception e) {
+            e.printStackTrace();
             fail();
+        } finally {
+            objectRegistry.cleanup();
         }
-    }
 
+    }
 }
