@@ -8,7 +8,7 @@ public class DBAppearanceTest extends DBTest {
 
 
     @Test
-    public void getSPARQLStatementTest() throws Exception {
+    public void getSPARQLStatementTest() {
 
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
                 "BASE <http://localhost/berlin/> " +
@@ -17,7 +17,7 @@ public class DBAppearanceTest extends DBTest {
                 "{ ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:name  ?;" +
                 "ocgml:nameCodespace  ?;ocgml:description  ?;ocgml:theme  ?;" +
                 "ocgml:cityModelId  ?;ocgml:cityObjectId  ?;.}}";
-        String generated = "";
+        String generated;
         try {
 
             // Create an object
