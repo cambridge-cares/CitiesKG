@@ -128,11 +128,16 @@ public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
             }
 
             dbObject = NodeFactory.createLiteral(geoLiteral.substring(0, geoLiteral.length() - 1), geoDatatype);
+            makeBlazegraphGeoDatatype(dbObject);
         } catch (URISyntaxException e) {
             dbObject = NodeFactory.createBlankNode();
         }
 
         return dbObject;
+    }
+
+    private void makeBlazegraphGeoDatatype(Node dbObject) {
+        BlazegraphGeoDatatype datatype = new BlazegraphGeoDatatype(dbObject);
     }
 
     @Override
