@@ -3,6 +3,8 @@ plugins {
 }
 
 dependencies {
+    implementation 'org.junit.jupiter:junit-jupiter:5.4.2'
+    implementation 'junit:junit:4.12'
     compile project(':impexp-config')
     compile project(':impexp-plugin-api')
     compile 'org.citydb:sqlbuilder:2.2.1'

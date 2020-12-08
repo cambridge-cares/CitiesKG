@@ -62,9 +62,11 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 	private PreparedStatement psGenericAttributeMember;
 	private int batchCounter;
 	//@todo Replace graph IRI and OntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/cityobjectgenericattrib/";
+	private static final String IRI_GRAPH_OBJECT_REL = "cityobjectgenericattrib/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
+
 
 	public DBCityObjectGenericAttrib(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
 		this.batchConn = batchConn;
@@ -76,19 +78,8 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 		StringBuilder stmt = new StringBuilder();
 
 		if (importer.isBlazegraph()) {
-			stmt.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
-						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
-								SchemaManagerAdapter.ONTO_PARRENT_GENATTRIB_ID + param +
-								SchemaManagerAdapter.ONTO_ROOT_GENATTRIB_ID + param +
-								SchemaManagerAdapter.ONTO_ATTR_NAME + param +
-								SchemaManagerAdapter.ONTO_DATA_TYPE + param +
-								SchemaManagerAdapter.ONTO_GENATTRIBSET_CODESPACE + param +
-								SchemaManagerAdapter.ONTO_CITY_OBJECT_ID + param +
-						".}" +
-					"}"
-			);
+			stmt = getSPARQLStatement1(stmt);
+
 		} else {
 			stmt.append("insert into ").append(schema).append(".cityobject_genericattrib (id, parent_genattrib_id, " +
 					"root_genattrib_id, attrname, datatype, genattribset_codespace, cityobject_id) values ")
@@ -100,22 +91,7 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 		stmt.setLength(0);
 
 		if (importer.isBlazegraph()) {
-			stmt.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
-					//@ TODO: replace sequencing to use SQLAdapter
-					"{ ? "+ SchemaManagerAdapter.ONTO_ID + " " + importer.getNextSequenceValue(
-							SequenceEnum.CITYOBJECT_GENERICATTRIB_ID_SEQ.getName()) + ";" +
-							SchemaManagerAdapter.ONTO_ATTR_NAME + param +
-							SchemaManagerAdapter.ONTO_DATA_TYPE + param +
-							SchemaManagerAdapter.ONTO_STR_VAL + param +
-							SchemaManagerAdapter.ONTO_INT_VAL + param +
-							SchemaManagerAdapter.ONTO_REAL_VAL + param +
-							SchemaManagerAdapter.ONTO_URI_VAL + param +
-							SchemaManagerAdapter.ONTO_DATE_VAL + param +
-							SchemaManagerAdapter.ONTO_UNIT + param +
-							SchemaManagerAdapter.ONTO_CITY_OBJECT_ID + param
-			);
+			stmt = getSPARQLStatement2(stmt, importer);
 
 			psGenericAttributeMember = batchConn.prepareStatement(stmt +
 							SchemaManagerAdapter.ONTO_PARRENT_GENATTRIB_ID + param +
@@ -139,6 +115,47 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 							.getCurrentSequenceValue(SequenceEnum.CITYOBJECT_GENERICATTRIB_ID_SEQ.getName()) + ")");
 		}
 
+	}
+
+	private StringBuilder getSPARQLStatement1(StringBuilder stmt){
+		String param = "  ?;";
+		stmt.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+				SchemaManagerAdapter.ONTO_PARRENT_GENATTRIB_ID + param +
+				SchemaManagerAdapter.ONTO_ROOT_GENATTRIB_ID + param +
+				SchemaManagerAdapter.ONTO_ATTR_NAME + param +
+				SchemaManagerAdapter.ONTO_DATA_TYPE + param +
+				SchemaManagerAdapter.ONTO_GENATTRIBSET_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_CITY_OBJECT_ID + param +
+				".}" +
+				"}"
+		);
+		return stmt;
+	}
+
+	private StringBuilder getSPARQLStatement2(StringBuilder stmt, CityGMLImportManager importer) throws SQLException {
+		String param = "  ?;";
+		stmt.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				//@ TODO: replace sequencing to use SQLAdapter
+				"{ ? "+ SchemaManagerAdapter.ONTO_ID + " " + importer.getNextSequenceValue(
+				SequenceEnum.CITYOBJECT_GENERICATTRIB_ID_SEQ.getName()) + ";" +
+				SchemaManagerAdapter.ONTO_ATTR_NAME + param +
+				SchemaManagerAdapter.ONTO_DATA_TYPE + param +
+				SchemaManagerAdapter.ONTO_STR_VAL + param +
+				SchemaManagerAdapter.ONTO_INT_VAL + param +
+				SchemaManagerAdapter.ONTO_REAL_VAL + param +
+				SchemaManagerAdapter.ONTO_URI_VAL + param +
+				SchemaManagerAdapter.ONTO_DATE_VAL + param +
+				SchemaManagerAdapter.ONTO_UNIT + param +
+				SchemaManagerAdapter.ONTO_CITY_OBJECT_ID + param
+		);
+		return stmt;
 	}
 
 	public void doImport(AbstractGenericAttribute genericAttribute, long cityObjectId) throws CityGMLImportException, SQLException {

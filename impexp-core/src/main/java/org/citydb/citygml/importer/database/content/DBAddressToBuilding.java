@@ -45,10 +45,11 @@ public class DBAddressToBuilding implements DBImporter {
 	private PreparedStatement psAddressToBuilding;
 	private int batchCounter;
 	//@todo Replace graph IRI and OntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/addresstobuilding/";
-
+	private static final String IRI_GRAPH_OBJECT_REL = "addresstobuilding/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
+	
 	public DBAddressToBuilding(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
 		this.importer = importer;
 
@@ -58,18 +59,25 @@ public class DBAddressToBuilding implements DBImporter {
 				"(?, ?)";
 
 		if (importer.isBlazegraph()) {
-			String param = "  ?;";
-			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
-						"{ ? "+ SchemaManagerAdapter.ONTO_BUILDING_ID + param +
-								SchemaManagerAdapter.ONTO_ADDRESS_ID + param  +
-						".}" +
-					"}";
+			stmt = getSPARQLStatement();
 		}
 
 		psAddressToBuilding = batchConn.prepareStatement(stmt);
 	}
+
+	private String getSPARQLStatement(){
+		String param = "  ?;";
+		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + ">" +
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? "+ SchemaManagerAdapter.ONTO_BUILDING_ID + param +
+				SchemaManagerAdapter.ONTO_ADDRESS_ID + param  +
+				".}" +
+				"}";
+		return stmt;
+	}
+
 
 	protected void doImport(long addressId, long buildingId) throws CityGMLImportException, SQLException {
 

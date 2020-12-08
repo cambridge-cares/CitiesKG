@@ -65,9 +65,10 @@ public class DBAppearance implements DBImporter {
 	private int batchCounter;
 	private boolean replaceGmlId;
 	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/appearance/";
+	private static final String IRI_GRAPH_OBJECT_REL = "appearance/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBAppearance(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.importer = importer;
@@ -84,21 +85,7 @@ public class DBAppearance implements DBImporter {
 				"(?, ?, " + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?)";
 
 		if (importer.isBlazegraph()) {
-			String param = "  ?;";
-			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
-						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
-							SchemaManagerAdapter.ONTO_GML_ID + param +
-							(gmlIdCodespace != null ? SchemaManagerAdapter.ONTO_GML_ID + param : "") +
-							SchemaManagerAdapter.ONTO_NAME + param +
-							SchemaManagerAdapter.ONTO_NAME_CODESPACE + param +
-							SchemaManagerAdapter.ONTO_DESCRIPTION + param +
-							SchemaManagerAdapter.ONTO_THEME + param +
-							SchemaManagerAdapter.ONTO_CITY_MODEL_ID + param +
-							SchemaManagerAdapter.ONTO_CITY_OBJECT_ID + param +
-						".}" +
-					"}";
+			stmt = getSPARQLStatement(gmlIdCodespace);
 		}
 
 		psAppearance = batchConn.prepareStatement(stmt);
@@ -106,6 +93,27 @@ public class DBAppearance implements DBImporter {
 		surfaceDataImporter = importer.getImporter(DBSurfaceData.class);
 		texturedSurfaceConverter = new TexturedSurfaceConverter(this, config, importer);
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	private String getSPARQLStatement(String gmlIdCodespace){
+		String param = "  ?;";
+		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+				SchemaManagerAdapter.ONTO_GML_ID + param +
+				(gmlIdCodespace != null ? SchemaManagerAdapter.ONTO_GML_ID + param : "") +
+				SchemaManagerAdapter.ONTO_NAME + param +
+				SchemaManagerAdapter.ONTO_NAME_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_DESCRIPTION + param +
+				SchemaManagerAdapter.ONTO_THEME + param +
+				SchemaManagerAdapter.ONTO_CITY_MODEL_ID + param +
+				SchemaManagerAdapter.ONTO_CITY_OBJECT_ID + param +
+				".}" +
+				"}";
+
+		return stmt;
 	}
 
 	public long doImport(Appearance appearance, long parentId, boolean isLocalAppearance) throws CityGMLImportException, SQLException {
