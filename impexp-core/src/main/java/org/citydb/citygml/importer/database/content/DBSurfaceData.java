@@ -107,9 +107,10 @@ public class DBSurfaceData implements DBImporter {
 	private int nullGeometryType;
 	private String nullGeometryTypeName;
 	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/surfacedata/";
+	private static final String IRI_GRAPH_OBJECT_REL = "surfacedata/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBSurfaceData(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;
@@ -127,35 +128,16 @@ public class DBSurfaceData implements DBImporter {
 		if (gmlIdCodespace != null)
 			gmlIdCodespace = "'" + gmlIdCodespace + "', ";
 
-		String param = "  ?;";
-		String sparqlStmtPart = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
-					"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
-						SchemaManagerAdapter.ONTO_GML_ID + param +
-						(gmlIdCodespace != null ? SchemaManagerAdapter.ONTO_GML_ID_CODESPACE + param : "") +
-						SchemaManagerAdapter.ONTO_NAME + param +
-					    SchemaManagerAdapter.ONTO_NAME_CODESPACE + param +
-						SchemaManagerAdapter.ONTO_DESCRIPTION + param +
-						SchemaManagerAdapter.ONTO_IS_FRONT + param +
-						SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param
-				;
-
+		String sparqlStmtPart = getSPARQLStatement(gmlIdCodespace);
 
 		String x3dStmt = "insert into " + schema + ".surface_data (id, gmlid, " + (gmlIdCodespace != null ? "gmlid_codespace, " : "") + "name, name_codespace, description, is_front, objectclass_id, " +
 				"x3d_shininess, x3d_transparency, x3d_ambient_intensity, x3d_specular_color, x3d_diffuse_color, x3d_emissive_color, x3d_is_smooth) values " +
 				"(?, ?, " + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
+		String param = "  ?;";
+
 		if (importer.isBlazegraph()) {
-			x3dStmt = sparqlStmtPart +
-					SchemaManagerAdapter.ONTO_X3D_SHININESS + param +
-					SchemaManagerAdapter.ONTO_X3D_TRANSPARENCY + param +
-					SchemaManagerAdapter.ONTO_X3D_AMBIENT_INTENSITY + param +
-					SchemaManagerAdapter.ONTO_X3D_SPECULAR_COLOR + param +
-					SchemaManagerAdapter.ONTO_X3D_DIFFUSE_COLOR + param +
-					SchemaManagerAdapter.ONTO_X3D_EMISSIVE_COLOR + param +
-					SchemaManagerAdapter.ONTO_X3D_IS_SMOOTH + param +
-					".}}";
+			x3dStmt = getx3dStmt(sparqlStmtPart);
 		}
 
 		psX3DMaterial = batchConn.prepareStatement(x3dStmt);
@@ -165,11 +147,7 @@ public class DBSurfaceData implements DBImporter {
 				"(?, ?, " + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?, ?, ?)";
 
 		if (importer.isBlazegraph()) {
-			paraStmt = sparqlStmtPart +
-					SchemaManagerAdapter.ONTO_TEX_TEXTURE_TYPE + param +
-					SchemaManagerAdapter.ONTO_TEX_WRAP_MODE + param +
-					SchemaManagerAdapter.ONTO_TEX_BORDER_COLOR + param +
-					".}}";
+			paraStmt = getParaStmt(sparqlStmtPart);
 		}
 
 		psParaTex = batchConn.prepareStatement(paraStmt);
@@ -180,14 +158,7 @@ public class DBSurfaceData implements DBImporter {
 				"(?, ?, " + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 		if (importer.isBlazegraph()) {
-			geoStmt = sparqlStmtPart +
-					SchemaManagerAdapter.ONTO_TEX_TEXTURE_TYPE + param +
-					SchemaManagerAdapter.ONTO_TEX_WRAP_MODE + param +
-					SchemaManagerAdapter.ONTO_TEX_BORDER_COLOR + param +
-					SchemaManagerAdapter.ONTO_GT_PREFER_WORDFILE + param +
-					SchemaManagerAdapter.ONTO_GT_ORIENTATION + param +
-					SchemaManagerAdapter.ONTO_GT_REFERENCE_POINT + param +
-					".}}";
+			geoStmt = getGeoStmt(sparqlStmtPart);
 		}
 
 		psGeoTex = batchConn.prepareStatement(geoStmt);
@@ -199,6 +170,66 @@ public class DBSurfaceData implements DBImporter {
 		valueJoiner = importer.getAttributeValueJoiner();
 		externalFileChecker = importer.getExternalFileChecker();
 	}
+
+	private String getSPARQLStatement(String gmlIdCodespace){
+		String param = "  ?;";
+		String sparqlStmtPart = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+				SchemaManagerAdapter.ONTO_GML_ID + param +
+				(gmlIdCodespace != null ? SchemaManagerAdapter.ONTO_GML_ID_CODESPACE + param : "") +
+				SchemaManagerAdapter.ONTO_NAME + param +
+				SchemaManagerAdapter.ONTO_NAME_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_DESCRIPTION + param +
+				SchemaManagerAdapter.ONTO_IS_FRONT + param +
+				SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param
+				;
+
+		return sparqlStmtPart;
+	}
+
+	private String getGeoStmt(String sparqlStmtPart){
+		String param = "  ?;";
+		String geoStmt = sparqlStmtPart +
+				SchemaManagerAdapter.ONTO_TEX_TEXTURE_TYPE + param +
+				SchemaManagerAdapter.ONTO_TEX_WRAP_MODE + param +
+				SchemaManagerAdapter.ONTO_TEX_BORDER_COLOR + param +
+				SchemaManagerAdapter.ONTO_GT_PREFER_WORDFILE + param +
+				SchemaManagerAdapter.ONTO_GT_ORIENTATION + param +
+				SchemaManagerAdapter.ONTO_GT_REFERENCE_POINT + param +
+				".}}";
+		return geoStmt;
+	}
+
+	private String getParaStmt(String sparqlStmtPart){
+		String param = "  ?;";
+		String paraStmt = sparqlStmtPart +
+				SchemaManagerAdapter.ONTO_TEX_TEXTURE_TYPE + param +
+				SchemaManagerAdapter.ONTO_TEX_WRAP_MODE + param +
+				SchemaManagerAdapter.ONTO_TEX_BORDER_COLOR + param +
+				".}}";
+
+		return paraStmt;
+
+	}
+
+	private String getx3dStmt(String sparqlStmtPart){
+		String param = "  ?;";
+		String x3dStmt = sparqlStmtPart +
+				SchemaManagerAdapter.ONTO_X3D_SHININESS + param +
+				SchemaManagerAdapter.ONTO_X3D_TRANSPARENCY + param +
+				SchemaManagerAdapter.ONTO_X3D_AMBIENT_INTENSITY + param +
+				SchemaManagerAdapter.ONTO_X3D_SPECULAR_COLOR + param +
+				SchemaManagerAdapter.ONTO_X3D_DIFFUSE_COLOR + param +
+				SchemaManagerAdapter.ONTO_X3D_EMISSIVE_COLOR + param +
+				SchemaManagerAdapter.ONTO_X3D_IS_SMOOTH + param +
+				".}}";
+
+		return x3dStmt;
+	}
+
 
 	public long doImport(AbstractSurfaceData surfaceData, long parentId, boolean isLocalAppearance) throws CityGMLImportException, SQLException {
 		PreparedStatement psSurfaceData;

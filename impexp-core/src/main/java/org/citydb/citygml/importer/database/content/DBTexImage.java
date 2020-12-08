@@ -61,9 +61,10 @@ public class DBTexImage implements DBImporter {
 	private boolean importTextureImage;
 	private int batchCounter;
 	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/teximage/";
+	private static final String IRI_GRAPH_OBJECT_REL = "teximage/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBTexImage(Connection connection, Config config, CityGMLImportManager importer) throws SQLException {
 		this.importer = importer;
@@ -82,19 +83,25 @@ public class DBTexImage implements DBImporter {
 				"(?, ?, ?, ?)";
 
 		if (importer.isBlazegraph()) {
-			String param = "  ?;";
-			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
-						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
-							SchemaManagerAdapter.ONTO_TEX_IMAGE_URI + param +
-							SchemaManagerAdapter.ONTO_TEX_MIME_TYPE + param +
-							SchemaManagerAdapter.ONTO_TEX_MIME_TYPE_CODESPACE + param +
-						".}" +
-					"}";
+			stmt = getSPARQLStatement();
 		}
 
 		psInsertStmt = connection.prepareStatement(stmt);
+	}
+
+	private String getSPARQLStatement(){
+		String param = "  ?;";
+		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+				SchemaManagerAdapter.ONTO_TEX_IMAGE_URI + param +
+				SchemaManagerAdapter.ONTO_TEX_MIME_TYPE + param +
+				SchemaManagerAdapter.ONTO_TEX_MIME_TYPE_CODESPACE + param +
+				".}" +
+				"}";
+		return stmt;
 	}
 
 	public long doImport(AbstractTexture abstractTexture, long surfaceDataId) throws CityGMLImportException, SQLException {

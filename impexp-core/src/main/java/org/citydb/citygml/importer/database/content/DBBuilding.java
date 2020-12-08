@@ -82,9 +82,10 @@ public class DBBuilding implements DBImporter {
 	private int nullGeometryType;
 	private String nullGeometryTypeName;
 	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/building/";
+	private static final String IRI_GRAPH_OBJECT_REL = "building/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBBuilding(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;
@@ -95,6 +96,7 @@ public class DBBuilding implements DBImporter {
 		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
 		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
 
+		// original code for SQL
 		String stmt = "insert into " + schema + ".building (id, building_parent_id, building_root_id, class, class_codespace, function, function_codespace, usage, usage_codespace, year_of_construction, year_of_demolition, " +
 				"roof_type, roof_type_codespace, measured_height, measured_height_unit, storeys_above_ground, storeys_below_ground, storey_heights_above_ground, storey_heights_ag_unit, storey_heights_below_ground, storey_heights_bg_unit, " +
 				"lod1_terrain_intersection, lod2_terrain_intersection, lod3_terrain_intersection, lod4_terrain_intersection, lod2_multi_curve, lod3_multi_curve, lod4_multi_curve, " +
@@ -104,55 +106,10 @@ public class DBBuilding implements DBImporter {
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
 
+		// Modification for SPARQL
 		if (importer.isBlazegraph()) {
-			String param = "  ?;";
-			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
-						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
-								SchemaManagerAdapter.ONTO_BUILDING_PARENT_ID+ param +
-								SchemaManagerAdapter.ONTO_BUILDING_ROOT_ID + param +
-								SchemaManagerAdapter.ONTO_CLASS + param +
-								SchemaManagerAdapter.ONTO_CLASS_CODESPACE + param +
-								SchemaManagerAdapter.ONTO_FUNCTION + param +
-								SchemaManagerAdapter.ONTO_FUNCTION_CODESPACE + param +
-								SchemaManagerAdapter.ONTO_USAGE + param +
-								SchemaManagerAdapter.ONTO_USAGE_CODESPACE + param +
-								SchemaManagerAdapter.ONTO_YEAR_CONSTRUCTION + param +
-								SchemaManagerAdapter.ONTO_YEAR_DEMOLITION + param +
-								SchemaManagerAdapter.ONTO_ROOF_TYPE + param +
-								SchemaManagerAdapter.ONTO_ROOF_TYPE_CODESPACE + param +
-								SchemaManagerAdapter.ONTO_MEASURED_HEIGHT + param +
-								SchemaManagerAdapter.ONTO_MEASURED_HEIGHT_UNIT + param +
-								SchemaManagerAdapter.ONTO_STOREYS_ABOVE_GROUND + param +
-								SchemaManagerAdapter.ONTO_STOREYS_BELLOW_GROUND + param +
-								SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_ABOVE_GROUND + param +
-								SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_AG_UNIT + param +
-								SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_BELLOW_GROUND + param +
-								SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_BG_UNIT + param +
-								SchemaManagerAdapter.ONTO_LOD1_TERRAIN_INTERSECTION + param +
-								SchemaManagerAdapter.ONTO_LOD2_TERRAIN_INTERSECTION + param +
-								SchemaManagerAdapter.ONTO_LOD3_TERRAIN_INTERSECTION + param +
-								SchemaManagerAdapter.ONTO_LOD4_TERRAIN_INTERSECTION + param +
-								SchemaManagerAdapter.ONTO_LOD2_MULTI_CURVE + param +
-								SchemaManagerAdapter.ONTO_LOD3_MULTI_CURVE + param +
-								SchemaManagerAdapter.ONTO_LOD4_MULTI_CURVE + param +
-								SchemaManagerAdapter.ONTO_FOOTPRINT_ID+ param +
-								SchemaManagerAdapter.ONTO_ROOFPRINT_ID + param +
-								SchemaManagerAdapter.ONTO_LOD1_MULTI_SURFACE_ID + param +
-								SchemaManagerAdapter.ONTO_LOD2_MULTI_SURFACE_ID + param +
-								SchemaManagerAdapter.ONTO_LOD3_MULTI_SURFACE_ID + param +
-								SchemaManagerAdapter.ONTO_LOD4_MULTI_SURFACE_ID + param +
-								SchemaManagerAdapter.ONTO_LOD1_SOLID_ID + param +
-								SchemaManagerAdapter.ONTO_LOD2_SOLID_ID + param +
-								SchemaManagerAdapter.ONTO_LOD3_SOLID_ID + param +
-								SchemaManagerAdapter.ONTO_LOD4_SOLID_ID + param +
-								(hasObjectClassIdColumn ? SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param : "") +
-						".}" +
-					"}";
+			stmt = getSPARQLStatement();
 		}
-
-
 
 		psBuilding = batchConn.prepareStatement(stmt);
 
@@ -164,6 +121,58 @@ public class DBBuilding implements DBImporter {
 		addressImporter = importer.getImporter(DBAddress.class);
 		geometryConverter = importer.getGeometryConverter();
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+
+	private String getSPARQLStatement(){
+		String param = "  ?;";
+		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +  // add BASE by SYL
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+				SchemaManagerAdapter.ONTO_BUILDING_PARENT_ID+ param +
+				SchemaManagerAdapter.ONTO_BUILDING_ROOT_ID + param +
+				SchemaManagerAdapter.ONTO_CLASS + param +
+				SchemaManagerAdapter.ONTO_CLASS_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_FUNCTION + param +
+				SchemaManagerAdapter.ONTO_FUNCTION_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_USAGE + param +
+				SchemaManagerAdapter.ONTO_USAGE_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_YEAR_CONSTRUCTION + param +
+				SchemaManagerAdapter.ONTO_YEAR_DEMOLITION + param +
+				SchemaManagerAdapter.ONTO_ROOF_TYPE + param +
+				SchemaManagerAdapter.ONTO_ROOF_TYPE_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_MEASURED_HEIGHT + param +
+				SchemaManagerAdapter.ONTO_MEASURED_HEIGHT_UNIT + param +
+				SchemaManagerAdapter.ONTO_STOREYS_ABOVE_GROUND + param +
+				SchemaManagerAdapter.ONTO_STOREYS_BELLOW_GROUND + param +
+				SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_ABOVE_GROUND + param +
+				SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_AG_UNIT + param +
+				SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_BELLOW_GROUND + param +
+				SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_BG_UNIT + param +
+				SchemaManagerAdapter.ONTO_LOD1_TERRAIN_INTERSECTION + param +
+				SchemaManagerAdapter.ONTO_LOD2_TERRAIN_INTERSECTION + param +
+				SchemaManagerAdapter.ONTO_LOD3_TERRAIN_INTERSECTION + param +
+				SchemaManagerAdapter.ONTO_LOD4_TERRAIN_INTERSECTION + param +
+				SchemaManagerAdapter.ONTO_LOD2_MULTI_CURVE + param +
+				SchemaManagerAdapter.ONTO_LOD3_MULTI_CURVE + param +
+				SchemaManagerAdapter.ONTO_LOD4_MULTI_CURVE + param +
+				SchemaManagerAdapter.ONTO_FOOTPRINT_ID+ param +
+				SchemaManagerAdapter.ONTO_ROOFPRINT_ID + param +
+				SchemaManagerAdapter.ONTO_LOD1_MULTI_SURFACE_ID + param +
+				SchemaManagerAdapter.ONTO_LOD2_MULTI_SURFACE_ID + param +
+				SchemaManagerAdapter.ONTO_LOD3_MULTI_SURFACE_ID + param +
+				SchemaManagerAdapter.ONTO_LOD4_MULTI_SURFACE_ID + param +
+				SchemaManagerAdapter.ONTO_LOD1_SOLID_ID + param +
+				SchemaManagerAdapter.ONTO_LOD2_SOLID_ID + param +
+				SchemaManagerAdapter.ONTO_LOD3_SOLID_ID + param +
+				SchemaManagerAdapter.ONTO_LOD4_SOLID_ID + param +
+				(hasObjectClassIdColumn ? SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param : "") +
+				".}" +
+				"}";
+
+		return stmt;
 	}
 
 	protected long doImport(AbstractBuilding building) throws CityGMLImportException, SQLException {

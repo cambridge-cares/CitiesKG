@@ -61,9 +61,10 @@ public class DBThematicSurface implements DBImporter {
 	private DBOpening openingImporter;
 	private int batchCounter;
 	//@todo Replace graph IRI and OntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/thematicsurface/";
+	private static final String IRI_GRAPH_OBJECT_REL = "thematicsurface/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBThematicSurface(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.importer = importer;
@@ -74,20 +75,7 @@ public class DBThematicSurface implements DBImporter {
 				"(?, ?, ?, ?, ?, ?, ?, ?)";
 
 		if (importer.isBlazegraph()) {
-			String param = "  ?;";
-			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
-						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
-							SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param  +
-							SchemaManagerAdapter.ONTO_BUILDING_ID + param  +
-							SchemaManagerAdapter.ONTO_ROOM_ID + param +
-							SchemaManagerAdapter.ONTO_BUILDING_INSTALLATION_ID + param +
-							SchemaManagerAdapter.ONTO_LOD2_MULTI_SURFACE_ID + param +
-							SchemaManagerAdapter.ONTO_LOD3_MULTI_SURFACE_ID + param +
-							SchemaManagerAdapter.ONTO_LOD4_MULTI_SURFACE_ID + param +
-						".}" +
-					"}";
+			stmt = getSPARQLStatement();
 		}
 
 		psThematicSurface = batchConn.prepareStatement(stmt);
@@ -96,6 +84,26 @@ public class DBThematicSurface implements DBImporter {
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
 		openingImporter = importer.getImporter(DBOpening.class);
 	}
+	private String getSPARQLStatement(){
+		String param = "  ?;";
+		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+				SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param  +
+				SchemaManagerAdapter.ONTO_BUILDING_ID + param  +
+				SchemaManagerAdapter.ONTO_ROOM_ID + param +
+				SchemaManagerAdapter.ONTO_BUILDING_INSTALLATION_ID + param +
+				SchemaManagerAdapter.ONTO_LOD2_MULTI_SURFACE_ID + param +
+				SchemaManagerAdapter.ONTO_LOD3_MULTI_SURFACE_ID + param +
+				SchemaManagerAdapter.ONTO_LOD4_MULTI_SURFACE_ID + param +
+				".}" +
+				"}";
+
+		return stmt;
+	}
+
 
 	protected long doImport(AbstractBoundarySurface boundarySurface) throws CityGMLImportException, SQLException {
 		return doImport(boundarySurface, null, 0);

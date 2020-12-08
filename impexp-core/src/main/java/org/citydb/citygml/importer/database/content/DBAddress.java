@@ -68,9 +68,10 @@ public class DBAddress implements DBImporter {
 	private boolean hasGmlIdColumn;
 	private boolean replaceGmlId;
 	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/address/";
+	private static final String IRI_GRAPH_OBJECT_REL = "address/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBAddress(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;
@@ -95,23 +96,7 @@ public class DBAddress implements DBImporter {
 		String stmt = "";
 
 		if (importer.isBlazegraph()) {
-			String param = "  ?;";
-			stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
-						"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
-								(hasGmlIdColumn ? SchemaManagerAdapter.ONTO_GML_ID + param : "") +
-								(gmlIdCodespace != null ? SchemaManagerAdapter.ONTO_GML_ID_CODESPACE + param : "") +
-								SchemaManagerAdapter.ONTO_STREET + param +
-								SchemaManagerAdapter.ONTO_HOUSE_NUMBER + param +
-								SchemaManagerAdapter.ONTO_PO_BOX + param +
-								SchemaManagerAdapter.ONTO_ZIP_CODE + param +
-								SchemaManagerAdapter.ONTO_CITY + param +
-								SchemaManagerAdapter.ONTO_COUNTRY + param +
-								SchemaManagerAdapter.ONTO_MULTI_POINT + param +
-								SchemaManagerAdapter.ONTO_XAL_SOURCE + param +
-						".}" +
-					"}";
+			stmt = getSPARQLStatement(gmlIdCodespace);
 		}
 
 		psAddress = batchConn.prepareStatement(stmt);
@@ -122,6 +107,29 @@ public class DBAddress implements DBImporter {
 		addressToBridgeImporter = importer.getImporter(DBAddressToBridge.class);
 		geometryConverter = importer.getGeometryConverter();
 		addressWalker = new XALAddressWalker();
+	}
+
+
+	private String getSPARQLStatement(String gmlIdCodespace){
+		String param = "  ?;";
+		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+				(hasGmlIdColumn ? SchemaManagerAdapter.ONTO_GML_ID + param : "") +
+				(gmlIdCodespace != null ? SchemaManagerAdapter.ONTO_GML_ID_CODESPACE + param : "") +
+				SchemaManagerAdapter.ONTO_STREET + param +
+				SchemaManagerAdapter.ONTO_HOUSE_NUMBER + param +
+				SchemaManagerAdapter.ONTO_PO_BOX + param +
+				SchemaManagerAdapter.ONTO_ZIP_CODE + param +
+				SchemaManagerAdapter.ONTO_CITY + param +
+				SchemaManagerAdapter.ONTO_COUNTRY + param +
+				SchemaManagerAdapter.ONTO_MULTI_POINT + param +
+				SchemaManagerAdapter.ONTO_XAL_SOURCE + param +
+				".}" +
+				"}";
+		return stmt;
 	}
 
 	protected long doImport(Address address) throws CityGMLImportException, SQLException {

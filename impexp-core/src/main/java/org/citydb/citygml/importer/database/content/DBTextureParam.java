@@ -48,9 +48,10 @@ public class DBTextureParam implements DBImporter {
 	private PreparedStatement psTextureParam;
 	private int batchCounter;
 	//@todo Replace graph IRI and OntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin";
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + "/textureparam/";
+	private static final String IRI_GRAPH_OBJECT_REL = "textureparam/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBTextureParam(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
 		this.batchConn = batchConn;
@@ -63,20 +64,26 @@ public class DBTextureParam implements DBImporter {
 				"(?, ?, ?, ?, ?)";
 
 		if (importer.isBlazegraph()) {
-			String param = "  ?;";
-			texCoordListStmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-					"INSERT DATA" +
-					" { GRAPH <" + IRI_GRAPH_OBJECT + "> " +
-						"{ ? "+ SchemaManagerAdapter.ONTO_SURFACE_GEOMETRY_ID + param +
-								SchemaManagerAdapter.ONTO_IS_TEXTURE_PARAMETRIZATION + param  +
-								SchemaManagerAdapter.ONTO_WORLD_TO_TEXTURE + param  +
-								SchemaManagerAdapter.ONTO_TEXTURE_COORDINATES + param +
-								SchemaManagerAdapter.ONTO_SURFACE_DATA_ID + param +
-						".}" +
-					"}";
+			texCoordListStmt = getSPARQLStatement();
 		}
 
 		psTextureParam = batchConn.prepareStatement(texCoordListStmt);
+	}
+
+	private String getSPARQLStatement(){
+		String param = "  ?;";
+		String texCoordListStmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? "+ SchemaManagerAdapter.ONTO_SURFACE_GEOMETRY_ID + param +
+				SchemaManagerAdapter.ONTO_IS_TEXTURE_PARAMETRIZATION + param  +
+				SchemaManagerAdapter.ONTO_WORLD_TO_TEXTURE + param  +
+				SchemaManagerAdapter.ONTO_TEXTURE_COORDINATES + param +
+				SchemaManagerAdapter.ONTO_SURFACE_DATA_ID + param +
+				".}" +
+				"}";
+		return texCoordListStmt;
 	}
 
 	protected void doImport(SurfaceGeometryTarget target, long surfaceDataId) throws CityGMLImportException, SQLException {
