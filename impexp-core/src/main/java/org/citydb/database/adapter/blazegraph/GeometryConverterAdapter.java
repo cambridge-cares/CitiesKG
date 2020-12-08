@@ -16,11 +16,14 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
 
 public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
 
     private static final String BASE_URL_LITERALS = "http://localhost/blazegraph/literals/";
     private final Logger log = Logger.getInstance();
+    Set<String> configs = new HashSet<>();
 
     protected GeometryConverterAdapter(AbstractDatabaseAdapter databaseAdapter) {
         super(databaseAdapter);
@@ -95,7 +98,7 @@ public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
         if (geomObj == null) {
             throw new SQLException();
         }
-        Node dbObject;
+        Node dbObject = null;
 
         try {
             String geometryType = geomObj.getGeometryType().name();
@@ -115,19 +118,8 @@ public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
             URI datatypeURI = new URI(BASE_URL_LITERALS + geometryType + "-" + coordLen + "-" + coordTotal);
             RDFDatatype geoDatatype = new BaseDatatype(datatypeURI.toString());
             geoLiteral = sb.toString();
-
-            //@TODO remove in final version - for debugging purposes only
-            try {
-                BufferedWriter writer = new BufferedWriter(
-                        new FileWriter("datatypes.txt", true));
-                writer.write(geometryType + "-" + coordLen + "-" + coordTotal);
-                writer.newLine();
-                writer.close();
-            } catch (IOException e) {
-                log.error("could not write to datatypes.txt");
-            }
-
             dbObject = NodeFactory.createLiteral(geoLiteral.substring(0, geoLiteral.length() - 1), geoDatatype);
+
             makeBlazegraphGeoDatatype(dbObject);
         } catch (URISyntaxException e) {
             dbObject = NodeFactory.createBlankNode();
@@ -138,6 +130,7 @@ public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
 
     private void makeBlazegraphGeoDatatype(Node dbObject) {
         BlazegraphGeoDatatype datatype = new BlazegraphGeoDatatype(dbObject);
+        configs.add(datatype.getGeodatatype());
     }
 
     @Override
