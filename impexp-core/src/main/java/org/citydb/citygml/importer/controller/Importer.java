@@ -54,6 +54,7 @@ import org.citydb.config.Config;
 import org.citydb.config.i18n.Language;
 import org.citydb.config.internal.Internal;
 import org.citydb.config.project.database.Database;
+import org.citydb.config.project.database.DatabaseType;
 import org.citydb.config.project.database.Workspace;
 import org.citydb.config.project.importer.ImportGmlId;
 import org.citydb.config.project.importer.ImportResources;
@@ -64,6 +65,8 @@ import org.citydb.database.adapter.IndexStatusInfo;
 import org.citydb.database.adapter.IndexStatusInfo.IndexInfoObject;
 import org.citydb.database.adapter.IndexStatusInfo.IndexStatus;
 import org.citydb.database.adapter.IndexStatusInfo.IndexType;
+import org.citydb.database.adapter.blazegraph.BlazegraphAdapter;
+import org.citydb.database.adapter.blazegraph.BlazegraphConfigBuilder;
 import org.citydb.database.connection.DatabaseConnectionPool;
 import org.citydb.database.schema.mapping.SchemaMapping;
 import org.citydb.event.Event;
@@ -90,10 +93,8 @@ import org.citygml4j.builder.jaxb.CityGMLBuilder;
 import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.gml.GMLClass;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
@@ -104,6 +105,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.commons.io.FileUtils;
 
 public class Importer implements EventHandler {
 	private final Logger log = Logger.getInstance();
@@ -119,6 +121,7 @@ public class Importer implements EventHandler {
 	private HashMap<Integer, Long> objectCounter;
 	private EnumMap<GMLClass, Long> geometryCounter;
 	private DirectoryScanner directoryScanner;
+	private BlazegraphConfigBuilder blazegraphConfigBuilder;
 
 	public Importer(CityGMLBuilder cityGMLBuilder, 
 			SchemaMapping schemaMapping,
@@ -132,6 +135,7 @@ public class Importer implements EventHandler {
 		databaseAdapter = DatabaseConnectionPool.getInstance().getActiveDatabaseAdapter();
 		objectCounter = new HashMap<>();
 		geometryCounter = new EnumMap<>(GMLClass.class);
+		blazegraphConfigBuilder = BlazegraphConfigBuilder.getInstance();
 	}
 
 	public void cleanup() {
@@ -528,7 +532,10 @@ public class Importer implements EventHandler {
 		if (!objectCounter.isEmpty()) {
 			log.info("Imported city objects:");			
 			Map<String, Long> typeNames = Util.mapObjectCounter(objectCounter, schemaMapping);
-			typeNames.keySet().forEach(object -> log.info(object + ": " + typeNames.get(object)));			
+			typeNames.keySet().forEach(object -> log.info(object + ": " + typeNames.get(object)));
+			if (databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value())) {
+				log.info(writeBlazegraphConfig());
+			}
 		}
 
 		// show processed geometries
@@ -539,6 +546,21 @@ public class Importer implements EventHandler {
 			log.info("Total import time: " + Util.formatElapsedTime(System.currentTimeMillis() - start) + ".");
 
 		return shouldRun;
+	}
+
+	private String writeBlazegraphConfig() {
+		String path = BlazegraphAdapter.BLAZEGRAPH_CONFIG_PATH;
+		String msg = "Writing Blazegraph configuration to " + path;
+				String config = blazegraphConfigBuilder.build();
+		File file = new File(path);
+
+		try {
+			FileUtils.writeStringToFile(file, config, Charset.defaultCharset());
+		} catch (IOException e) {
+			log.error(msg + " failed.");
+		}
+
+		return msg + " successfull.";
 	}
 
 	private void manageIndexes(boolean enable, boolean workOnSpatialIndexes) throws SQLException {

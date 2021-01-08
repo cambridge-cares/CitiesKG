@@ -7,23 +7,19 @@ import org.apache.jena.graph.NodeFactory;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.AbstractGeometryConverterAdapter;
-import org.citydb.log.Logger;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+
 
 public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
 
     private static final String BASE_URL_LITERALS = "http://localhost/blazegraph/literals/";
-    private final Logger log = Logger.getInstance();
-    Set<String> configs = new HashSet<>();
+
+
 
     protected GeometryConverterAdapter(AbstractDatabaseAdapter databaseAdapter) {
         super(databaseAdapter);
@@ -98,7 +94,7 @@ public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
         if (geomObj == null) {
             throw new SQLException();
         }
-        Node dbObject = null;
+        Node dbObject;
 
         try {
             String geometryType = geomObj.getGeometryType().name();
@@ -108,9 +104,9 @@ public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
             String geoLiteral = "";
             StringBuilder sb = new StringBuilder(geoLiteral);
 
-            for (int i = 0; i < coordLen; i++) {
-                for (int ii = 0; ii < coordinates[i].length; ii++) {
-                    sb.append(coordinates[i][ii]).append("#");
+            for (double[] coordinate : coordinates) {
+                for (double v : coordinate) {
+                    sb.append(v).append("#");
                     coordTotal++;
                 }
             }
@@ -130,7 +126,7 @@ public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
 
     private void makeBlazegraphGeoDatatype(Node dbObject) {
         BlazegraphGeoDatatype datatype = new BlazegraphGeoDatatype(dbObject);
-        configs.add(datatype.getGeodatatype());
+        BlazegraphConfigBuilder.getInstance().addGeoDataType(datatype.getGeodatatype());
     }
 
     @Override
