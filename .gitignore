@@ -18,3 +18,8 @@ out/
 venv/lib/
 venv/bin/
 venv/include
+
+db/blazegraph.jar
+db/citiesKG.jnl
+db/rules.log
+db/vocabularies/target/
