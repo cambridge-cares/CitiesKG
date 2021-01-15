@@ -37,11 +37,11 @@ public class BlazegraphGeoDatatype {
                 JSONObject field = new JSONObject();
 
                 if (f == 0) {
-                    field.put(KEY_SERVICE_MAPPING, VAL_X);
+                    field.put(KEY_SERVICE_MAPPING, VAL_X + c);
                 } else if (f == 1) {
-                    field.put(KEY_SERVICE_MAPPING, VAL_Y);
+                    field.put(KEY_SERVICE_MAPPING, VAL_Y + c);
                 } else {
-                    field.put(KEY_SERVICE_MAPPING, VAL_Z);
+                    field.put(KEY_SERVICE_MAPPING, VAL_Z + c);
                 }
                 field.put(KEY_MULTIPLIER, VAL_MULTIPLIER);
                 field.put(KEY_VALUE_TYPE, VAL_DOUBLE);
