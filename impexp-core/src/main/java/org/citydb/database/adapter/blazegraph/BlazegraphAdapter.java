@@ -14,7 +14,9 @@ public class BlazegraphAdapter extends AbstractDatabaseAdapter {
     private final static String DRIVER_JENA_REMOTE_ENDPOINT = "jdbc:jena:remote:";
     private final static String SPARQL_REMOTE_QUERY = "query=";
     private final static String SPARQL_REMOTE_UPDATE = "update=";
-    public final static String BLAZEGRAPH_CONFIG_PATH = "resources/RWStore.properties";
+    public final static String BLAZEGRAPH_CFG_PATH = "db/RWStore.properties";
+    public final static String BLAZEGRAPH_VOCAB_CFG_PATH = "db/vocabularies/src/main/resources/config.properties";
+    public final static String BLAZEGRAPH_VOCAB_CFG_KEY_URIS = "db.uris";
 
     public BlazegraphAdapter() {
         sqlAdapter = new SQLAdapter(this);
