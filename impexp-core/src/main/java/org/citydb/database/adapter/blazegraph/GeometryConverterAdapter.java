@@ -126,7 +126,9 @@ public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
 
     private void makeBlazegraphGeoDatatype(Node dbObject) {
         BlazegraphGeoDatatype datatype = new BlazegraphGeoDatatype(dbObject);
-        BlazegraphConfigBuilder.getInstance().addGeoDataType(datatype.getGeodatatype());
+        BlazegraphConfigBuilder.getInstance()
+                .addGeoDataType(datatype.getGeodatatype())
+                .addURIString(dbObject.getLiteral().getDatatypeURI());
     }
 
     @Override
