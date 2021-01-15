@@ -1,6 +1,9 @@
 package org.citydb.database.adapter.blazegraph;
 
+import org.json.JSONArray;
+
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 public class BlazegraphConfigBuilder {
@@ -9,11 +12,13 @@ public class BlazegraphConfigBuilder {
     // accessed by only by getInstance() method. This ensures thread safe singleton.
     private static BlazegraphConfigBuilder instance;
     private final Set<String> geoDataTypes;
+    private final Set<String> uriStrings;
 
     private BlazegraphConfigBuilder()
     {
         // private constructor
         geoDataTypes = new HashSet<>();
+        uriStrings = new HashSet<>();
     }
 
     public static BlazegraphConfigBuilder getInstance()
@@ -33,11 +38,29 @@ public class BlazegraphConfigBuilder {
         return instance;
     }
 
-    public void addGeoDataType(String geoDataType) {
+    public BlazegraphConfigBuilder addGeoDataType(String geoDataType) {
         geoDataTypes.add(geoDataType);
+
+        return instance;
     }
 
-    public String build() {
+    public BlazegraphConfigBuilder addURIString(String uriStr) {
+        uriStrings.add(uriStr);
+
+        return instance;
+    }
+
+    public Properties buildVocabulariesConfig() {
+        JSONArray cfgVal = new JSONArray();
+        Properties prop = new Properties();
+
+        cfgVal.putAll(uriStrings);
+        prop.setProperty(BlazegraphAdapter.BLAZEGRAPH_VOCAB_CFG_KEY_URIS, cfgVal.toString());
+
+        return prop;
+    }
+
+    public Properties build() {
         BlazegraphConfig config = new BlazegraphConfig(geoDataTypes);
         return config.getConfig();
     }
