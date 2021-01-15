@@ -98,11 +98,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.io.FileUtils;
@@ -533,8 +529,10 @@ public class Importer implements EventHandler {
 			log.info("Imported city objects:");			
 			Map<String, Long> typeNames = Util.mapObjectCounter(objectCounter, schemaMapping);
 			typeNames.keySet().forEach(object -> log.info(object + ": " + typeNames.get(object)));
+
 			if (databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value())) {
-				log.info(writeBlazegraphConfig());
+				log.info(writeBlazegraphConfig(BlazegraphAdapter.BLAZEGRAPH_CFG_PATH));
+				log.info(writeBlazegraphConfig(BlazegraphAdapter.BLAZEGRAPH_VOCAB_CFG_PATH));
 			}
 		}
 
@@ -548,19 +546,28 @@ public class Importer implements EventHandler {
 		return shouldRun;
 	}
 
-	private String writeBlazegraphConfig() {
-		String path = BlazegraphAdapter.BLAZEGRAPH_CONFIG_PATH;
+	private String writeBlazegraphConfig(String path) {
+		Properties prop = null;
 		String msg = "Writing Blazegraph configuration to " + path;
-				String config = blazegraphConfigBuilder.build();
-		File file = new File(path);
 
-		try {
-			FileUtils.writeStringToFile(file, config, Charset.defaultCharset());
+		try (OutputStream output = new FileOutputStream(path)) {
+			// build properties for vocabularies
+			if (path.equals(BlazegraphAdapter.BLAZEGRAPH_CFG_PATH)) {
+				prop = blazegraphConfigBuilder.build();
+			} else if (path.equals(BlazegraphAdapter.BLAZEGRAPH_VOCAB_CFG_PATH))  {
+				prop = blazegraphConfigBuilder.buildVocabulariesConfig();
+			}
+
+			// save properties to vocabularies project folder
+			if (!prop.isEmpty()) {
+				prop.store(output, null);
+			}
+
 		} catch (IOException e) {
-			log.error(msg + " failed.");
+			log.error(msg + " failed. " + e.getMessage());
 		}
 
-		return msg + " successfull.";
+		return msg + " successful.";
 	}
 
 	private void manageIndexes(boolean enable, boolean workOnSpatialIndexes) throws SQLException {
