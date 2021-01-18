@@ -105,6 +105,9 @@ import org.apache.commons.io.FileUtils;
 
 public class Importer implements EventHandler {
 	private final Logger log = Logger.getInstance();
+	private final String BLAZE_CFG_MSG = "Writing Blazegraph configuration to ";
+	private final String CFG_MSG_SUCCESS = " successful.";
+	private final String CFG_MSG_FAIL = " failed. ";
 
 	private final CityGMLBuilder cityGMLBuilder;
 	private final AbstractDatabaseAdapter databaseAdapter;
@@ -546,15 +549,24 @@ public class Importer implements EventHandler {
 		return shouldRun;
 	}
 
+	/**
+	 * Writes configuration files for Blazegraph:
+	 * - db/RWStore.properties holding geo-datatype configuration entries
+	 * - db/vocabularies/src/main/resources/config.properties holding URIs used for geo-datatypes
+	 *
+	 * @param path
+	 * @return msg
+	 */
 	private String writeBlazegraphConfig(String path) {
 		Properties prop = null;
-		String msg = "Writing Blazegraph configuration to " + path;
+		String msg = BLAZE_CFG_MSG + path;
 
 		try (OutputStream output = new FileOutputStream(path)) {
-			// build properties for vocabularies
 			if (path.equals(BlazegraphAdapter.BLAZEGRAPH_CFG_PATH)) {
+				// build RWStore.properties for Blazegraph
 				prop = blazegraphConfigBuilder.build();
 			} else if (path.equals(BlazegraphAdapter.BLAZEGRAPH_VOCAB_CFG_PATH))  {
+				// build properties for vocabularies
 				prop = blazegraphConfigBuilder.buildVocabulariesConfig();
 			}
 
@@ -564,10 +576,10 @@ public class Importer implements EventHandler {
 			}
 
 		} catch (IOException e) {
-			log.error(msg + " failed. " + e.getMessage());
+			log.error(msg + CFG_MSG_FAIL + e.getMessage());
 		}
 
-		return msg + " successful.";
+		return msg + CFG_MSG_SUCCESS;
 	}
 
 	private void manageIndexes(boolean enable, boolean workOnSpatialIndexes) throws SQLException {
