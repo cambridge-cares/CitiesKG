@@ -4,9 +4,9 @@ import com.bigdata.rdf.store.AbstractTripleStore;
 import com.bigdata.rdf.vocab.BaseVocabularyDecl;
 import com.bigdata.rdf.vocab.Vocabulary;
 import com.bigdata.rdf.vocab.core.BigdataCoreVocabulary_v20160317;
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.openrdf.model.impl.URIImpl;
-
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,10 +27,11 @@ import java.util.Properties;
  * 
  */
 public class CitiesKGVocabulary extends BigdataCoreVocabulary_v20160317 {
+    private static final transient Logger log = Logger.getLogger(CitiesKGVocabulary.class);
     public final static String CFG_PATH = "config.properties";
     public final static String CFG_KEY_URIS = "db.uris";
-    private final String CFG_ERR = "Could not load ";
-    
+    protected final String CFG_ERR = "Could not load ";
+
     /**
      * De-serialization ctor.
      */
@@ -54,13 +55,12 @@ public class CitiesKGVocabulary extends BigdataCoreVocabulary_v20160317 {
 
     @Override
     protected void addValues() {
-        //try loading properties file
-        try (InputStream input = getClass().getClassLoader().getResourceAsStream(CFG_PATH)) {
-            Properties prop = new Properties();
-            prop.load(input);
-
-            //extract URIs from properties file
-            JSONArray uris = new JSONArray(prop.getProperty(CFG_KEY_URIS));
+        String path;
+        String key;
+        try {
+            path = CFG_PATH;
+            key = CFG_KEY_URIS;
+            JSONArray uris = getURIs(path, key);
 
             //add vocabulary declarations
             for (Object uri: uris) {
@@ -68,12 +68,34 @@ public class CitiesKGVocabulary extends BigdataCoreVocabulary_v20160317 {
                 BaseVocabularyDecl decl = new BaseVocabularyDecl(impl);
                 addDecl(decl);
             }
-
-        } catch (IOException ex) {
-            System.out.println(CFG_ERR + CFG_PATH);
+        } catch (IOException e) {
+            log.error(CFG_ERR + CFG_PATH);
         }
 
         super.addValues();
+    }
+
+    /**
+     * Method to read and extract URI vocabulary items from
+     * configuration properties file.
+     *
+     * Used by {@link CitiesKGVocabulary#addValues()}
+     *
+     * @param path - path to configuration file
+     * @param key - key for the URIs value in the configuration file
+     * @throws IOException if configuration file could not be loaded
+     * @return JSON array of URIs
+     */
+    private JSONArray getURIs(String path, String key) throws IOException {
+
+        //try loading properties file
+        InputStream input = getClass().getClassLoader().getResourceAsStream(path);
+        Properties prop = new Properties();
+        prop.load(input);
+
+        //extract URIs from properties file
+
+        return new JSONArray(prop.getProperty(key));
     }
 
 }
