@@ -53,8 +53,8 @@ public class CitiesKGVocabularyTest extends TestCase {
         CitiesKGVocabulary vocab = new CitiesKGVocabulary();
 
         try {
-            assertNotNull(vocab.getClass().getDeclaredMethod("getURIs", String.class, String.class));
-            Method getURIs = vocab.getClass().getDeclaredMethod("getURIs", String.class, String.class);
+            assertNotNull(vocab.getClass().getDeclaredMethod("getPropertyFromPath", String.class, String.class));
+            Method getURIs = vocab.getClass().getDeclaredMethod("getPropertyFromPath", String.class, String.class);
             getURIs.setAccessible(true);
             assertEquals(JSONArray.class, getURIs.invoke(vocab, "config.properties", "db.uris").getClass());
 

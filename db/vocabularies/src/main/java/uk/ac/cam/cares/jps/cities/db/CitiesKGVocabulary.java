@@ -60,7 +60,7 @@ public class CitiesKGVocabulary extends BigdataCoreVocabulary_v20160317 {
         try {
             path = CFG_PATH;
             key = CFG_KEY_URIS;
-            JSONArray uris = getURIs(path, key);
+            JSONArray uris = getPropertyFromPath(path, key);
 
             //add vocabulary declarations
             for (Object uri: uris) {
@@ -86,7 +86,7 @@ public class CitiesKGVocabulary extends BigdataCoreVocabulary_v20160317 {
      * @throws IOException if configuration file could not be loaded
      * @return JSON array of URIs
      */
-    private JSONArray getURIs(String path, String key) throws IOException {
+    private JSONArray getPropertyFromPath(String path, String key) throws IOException {
 
         //try loading properties file
         InputStream input = getClass().getClassLoader().getResourceAsStream(path);
