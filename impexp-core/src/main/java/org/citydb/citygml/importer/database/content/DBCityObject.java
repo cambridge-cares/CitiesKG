@@ -513,7 +513,7 @@ public class DBCityObject implements DBImporter {
 	@Override
 	public void executeBatch() throws CityGMLImportException, SQLException {
 		if (batchCounter > 0) {
-			//psCityObject.executeBatch();
+			psCityObject.executeBatch();
 			batchCounter = 0;
 		}
 	}

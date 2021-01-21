@@ -490,9 +490,9 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 	@Override
 	public void executeBatch() throws CityGMLImportException, SQLException {
 		if (batchCounter > 0) {
-			//psAtomicGenericAttribute.executeBatch();
-			//psGenericAttributeSet.executeBatch();
-			//psGenericAttributeMember.executeBatch();
+			psAtomicGenericAttribute.executeBatch();
+			psGenericAttributeSet.executeBatch();
+			psGenericAttributeMember.executeBatch();
 			batchCounter = 0;
 		}
 	}

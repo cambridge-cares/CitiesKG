@@ -274,7 +274,7 @@ public class DBAppearance implements DBImporter {
 		texturedSurfaceConverter.flush();
 
 		if (batchCounter > 0) {
-			//psAppearance.executeBatch();
+			psAppearance.executeBatch();
 			batchCounter = 0;
 		}
 	}

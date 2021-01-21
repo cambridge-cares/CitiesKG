@@ -151,7 +151,7 @@ public class DBExternalReference implements DBImporter {
 	@Override
 	public void executeBatch() throws CityGMLImportException, SQLException {
 		if (batchCounter > 0) {
-			//psExternalReference.executeBatch();
+			psExternalReference.executeBatch();
 			batchCounter = 0;
 		}
 	}

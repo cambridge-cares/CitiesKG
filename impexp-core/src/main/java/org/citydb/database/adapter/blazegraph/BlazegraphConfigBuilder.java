@@ -99,7 +99,7 @@ public class BlazegraphConfigBuilder {
             Properties prop = loadProperties(path);
             //extract datatype configs and to existing geoDataTypes set
             for (Object cfg: loadProperties(path).stringPropertyNames().toArray()) {
-                if (String.valueOf(cfg).matches(BlazegraphGeoDatatype.KEY_MAIN+"[0-9]{1}")) {
+                if (String.valueOf(cfg).matches(BlazegraphGeoDatatype.KEY_MAIN+"[0-9]")) {
                     geoDataTypes.add(prop.getProperty(String.valueOf(cfg)));
                 }
             }

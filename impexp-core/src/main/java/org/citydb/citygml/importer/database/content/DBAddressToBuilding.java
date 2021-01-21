@@ -104,7 +104,7 @@ public class DBAddressToBuilding implements DBImporter {
 	@Override
 	public void executeBatch() throws CityGMLImportException, SQLException {
 		if (batchCounter > 0) {
-			//psAddressToBuilding.executeBatch();
+			psAddressToBuilding.executeBatch();
 			batchCounter = 0;
 		}
 	}

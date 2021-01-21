@@ -817,9 +817,9 @@ public class DBSurfaceData implements DBImporter {
 	@Override
 	public void executeBatch() throws CityGMLImportException, SQLException {
 		if (batchCounter > 0) {
-			//psX3DMaterial.executeBatch();
-			//psParaTex.executeBatch();
-			//psGeoTex.executeBatch();
+			psX3DMaterial.executeBatch();
+			psParaTex.executeBatch();
+			psGeoTex.executeBatch();
 			batchCounter = 0;
 		}
 	}

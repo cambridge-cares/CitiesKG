@@ -532,11 +532,11 @@ public class Importer implements EventHandler {
 			log.info("Imported city objects:");			
 			Map<String, Long> typeNames = Util.mapObjectCounter(objectCounter, schemaMapping);
 			typeNames.keySet().forEach(object -> log.info(object + ": " + typeNames.get(object)));
+		}
 
-			if (databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value())) {
-				log.info(writeBlazegraphConfig(BlazegraphAdapter.BLAZEGRAPH_CFG_PATH));
-				log.info(writeBlazegraphConfig(BlazegraphAdapter.BLAZEGRAPH_VOCAB_CFG_PATH));
-			}
+		if (databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value())) {
+			log.info(writeBlazegraphConfig(BlazegraphAdapter.BLAZEGRAPH_CFG_PATH));
+			log.info(writeBlazegraphConfig(BlazegraphAdapter.BLAZEGRAPH_VOCAB_CFG_PATH));
 		}
 
 		// show processed geometries

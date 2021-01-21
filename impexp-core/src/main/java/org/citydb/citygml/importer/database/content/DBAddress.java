@@ -358,7 +358,7 @@ public class DBAddress implements DBImporter {
 	@Override
 	public void executeBatch() throws CityGMLImportException, SQLException {
 		if (batchCounter > 0) {
-			//psAddress.executeBatch();
+			psAddress.executeBatch();
 			batchCounter = 0;
 		}
 	}

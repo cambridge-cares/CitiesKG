@@ -107,7 +107,7 @@ public class DBAppearToSurfaceData implements DBImporter {
 	@Override
 	public void executeBatch() throws CityGMLImportException, SQLException {
 		if (batchCounter > 0) {
-			//psAppearToSurfaceData.executeBatch();
+			psAppearToSurfaceData.executeBatch();
 			batchCounter = 0;
 		}
 	}
