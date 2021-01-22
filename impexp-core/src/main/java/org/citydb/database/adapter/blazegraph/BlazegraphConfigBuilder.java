@@ -24,12 +24,20 @@ public class BlazegraphConfigBuilder {
     private final Set<String> geoDataTypes;
     private final Set<String> uriStrings;
 
+    /**
+     * Private constructor:
+     * - initialises sets for RWStore and vocabularies config entries.
+     */
     private BlazegraphConfigBuilder() {
-        // private constructor
         geoDataTypes = new HashSet<>();
         uriStrings = new HashSet<>();
     }
 
+    /**
+     * Method to get singleton of {@link BlazegraphConfigBuilder}.
+     *
+     * @return instance of {@link BlazegraphConfigBuilder}
+     */
     public static BlazegraphConfigBuilder getInstance() {
         if (instance == null) {
             //synchronized block to remove overhead
@@ -46,18 +54,35 @@ public class BlazegraphConfigBuilder {
         return instance;
     }
 
+    /**
+     * Adds {@link BlazegraphGeoDatatype} string in the format to the set of configuration strings.
+     *
+     * @param geoDataType {@link BlazegraphGeoDatatype} configuration string
+     *
+     * @return instance of {@link BlazegraphConfigBuilder}, for method chaining
+     */
     public BlazegraphConfigBuilder addGeoDataType(String geoDataType) {
         geoDataTypes.add(geoDataType);
 
         return instance;
     }
 
-    public BlazegraphConfigBuilder addURIString(String uriStr) {
+    /**
+     * Adds URI string corresponding to a {@link BlazegraphGeoDatatype} to the set of configuration strings.
+     *
+     * @param uriStr URI string for a {@link BlazegraphGeoDatatype}
+     *
+     */
+    public void addURIString(String uriStr) {
         uriStrings.add(uriStr);
 
-        return instance;
     }
 
+    /**
+     * Builds config for custom Blazegraph vocabulary in {@link Properties} format.
+     *
+     * @return {@link BlazegraphGeoDatatype} for custom Blazegraph vocabulary
+     */
     public Properties buildVocabulariesConfig() {
         JSONArray cfgVal = new JSONArray();
         Properties prop = new Properties();
@@ -68,11 +93,22 @@ public class BlazegraphConfigBuilder {
         return prop;
     }
 
+    /**
+     * Builds config for Blazegraph RWStore in {@link Properties} format.
+     *
+     * @return {@link BlazegraphGeoDatatype} for Blazegraph RWStore
+     */
     public Properties build() {
         BlazegraphConfig config = new BlazegraphConfig(geoDataTypes);
         return config.getConfig();
     }
 
+    /**
+     * Loads URI strings corresponding to a {@link BlazegraphGeoDatatype} to the set of configuration strings
+     * from existing config.properties in {@link BlazegraphAdapter#BLAZEGRAPH_VOCAB_CFG_PATH}.
+     *
+     * Used by {@link BlazegraphConfigBuilder#getInstance()}
+     */
     private void loadURIs() {
         String path;
         String key;
@@ -92,6 +128,12 @@ public class BlazegraphConfigBuilder {
         }
     }
 
+    /**
+     * Loads {@link BlazegraphGeoDatatype} string to the set of configuration strings from
+     * existing RWStore.properties in: {@link BlazegraphAdapter#BLAZEGRAPH_VOCAB_CFG_PATH}.
+     *
+     * Used by {@link BlazegraphConfigBuilder#getInstance()}
+     */
     private void loadDatatypes() {
         String path;
         try {
@@ -110,6 +152,14 @@ public class BlazegraphConfigBuilder {
     }
 
 
+    /**
+     * General method to load {@link Properties} from a file at a given path.
+     * Used by: {@link BlazegraphConfigBuilder#loadDatatypes()} and {@link BlazegraphConfigBuilder#loadURIs()}
+     *
+     * @param path to the {@link Properties} file.
+     * @return {@link Properties} loaded from a given path.
+     * @throws IOException when {@link Properties} could not be loaded from a path.
+     */
     private Properties loadProperties(String path) throws IOException {
         //try loading properties file
         InputStream input = new FileInputStream(path);

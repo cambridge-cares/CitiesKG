@@ -7,23 +7,36 @@ import org.json.JSONObject;
 
 import java.util.Arrays;
 
+/**
+ * Class representing geo-datatype RWStore config entry for Blazegraph as described at:
+ * {@link <a href="https://github.com/blazegraph/database/wiki/GeoSpatial#custom-geospatial-datatypes">}
+ *
+ * @author <a href="mailto:arkadiusz.chadzynski@cares.cam.ac.uk">Arkadiusz Chadzynski</a>
+ * @version $Id$
+ */
 public class BlazegraphGeoDatatype {
 
     public static final String KEY_MAIN = "com.bigdata.rdf.store.AbstractTripleStore.geoSpatialDatatypeConfig.";
-    private final String KEY_CONFIG = "config";
-    private final String KEY_URI = "uri";
-    private final String KEY_FIELDS = "fields";
-    private final String KEY_VALUE_TYPE = "valueType";
-    private final String KEY_MULTIPLIER = "multiplier";
-    private final String KEY_SERVICE_MAPPING = "serviceMapping";
-    private final String VAL_MULTIPLIER = "100000";
-    private final String VAL_DOUBLE = "DOUBLE";
-    private final String VAL_X = "X";
-    private final String VAL_Y = "Y";
-    private final String VAL_Z = "Z";
-    private String geodatatype;
+    private final String geodatatype;
 
+    /**
+     * Constructor:
+     * - creates a geo-datatype string from {@link Node}
+     *
+     * @param dbobject geo-literal object to be converted to the geo-datatype string
+     */
     BlazegraphGeoDatatype(Node dbobject) {
+        String KEY_CONFIG = "config";
+        String KEY_URI = "uri";
+        String KEY_FIELDS = "fields";
+        String KEY_VALUE_TYPE = "valueType";
+        String KEY_MULTIPLIER = "multiplier";
+        String KEY_SERVICE_MAPPING = "serviceMapping";
+        String VAL_MULTIPLIER = "100000";
+        String VAL_DOUBLE = "DOUBLE";
+        String VAL_X = "X";
+        String VAL_Y = "Y";
+        String VAL_Z = "Z";
         JSONObject datatypeCfg = new JSONObject();
         JSONObject config = new JSONObject();
         JSONArray fields = new JSONArray();
@@ -55,6 +68,12 @@ public class BlazegraphGeoDatatype {
         geodatatype = datatypeCfg.toString();
     }
 
+    /**
+     * Returns geo-datatype string.
+     * Used by: {@link GeometryConverterAdapter}
+     *
+     * @return geo-datatype RWStore config entry for Blazegraph
+     */
     public String getGeodatatype() {
         return geodatatype;
     }

@@ -3,13 +3,26 @@ package org.citydb.database.adapter.blazegraph;
 import java.util.Properties;
 import java.util.Set;
 
+/**
+ * Class representing RWStore config for Blazegraph.
+ *
+ * @author <a href="mailto:arkadiusz.chadzynski@cares.cam.ac.uk">Arkadiusz Chadzynski</a>
+ * @version $Id$
+ */
 public class BlazegraphConfig {
     
-    private Properties config;
+    private final Properties config;
 
+    /**
+     * Constructor
+     * - builds config in the required format.
+     *
+     * @param geoDataTypes Set of {@link BlazegraphGeoDatatype} strings.
+     */
     BlazegraphConfig(Set<String> geoDataTypes) {
         Object[] list = geoDataTypes.toArray();
         config = new Properties();
+        //set general properties
         config.setProperty("com.bigdata.journal.AbstractJournal.file","citiesKG.jnl");
         config.setProperty("com.bigdata.journal.AbstractJournal.bufferMode","DiskRW");
         config.setProperty("com.bigdata.service.AbstractTransactionService.minReleaseAge","1");
@@ -36,13 +49,17 @@ public class BlazegraphConfig {
         config.setProperty("com.bigdata.journal.AbstractJournal.historicalIndexCacheTimeout","5000");
         config.setProperty("com.bigdata.rdf.store.AbstractTripleStore.geoSpatial","true");
         config.setProperty("com.bigdata.rdf.store.AbstractTripleStore.geoSpatialIncludeBuiltinDatatypes","true");
-
+        //set {@link BlazegraphGeoDatatype} strings
         for (int i = 0; i < geoDataTypes.size(); i++) {
             config.setProperty(BlazegraphGeoDatatype.KEY_MAIN + i, (String) list[i]);
         }
-
     }
 
+    /**
+     * Returns config in the required format.
+     *
+     * @return config in RWStore.properties format.
+     */
     public Properties getConfig() {
         return config;
     }

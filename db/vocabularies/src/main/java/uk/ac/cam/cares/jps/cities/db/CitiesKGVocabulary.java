@@ -15,7 +15,7 @@ import java.util.Properties;
 
 /**
  * 
- * A {@link Vocabulary} covering the CitiesKG data from {@link <a href="https://www.cares.cam.ac.uk/research/cities/"</a>}.
+ * A {@link Vocabulary} covering the CitiesKG data from {@link <a href="https://www.cares.cam.ac.uk/research/cities/">}.
  * Use the vocabulary by adding a property to your journal file per below.
  * 
  * <code>
