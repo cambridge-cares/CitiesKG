@@ -19,7 +19,7 @@ public class BlazegraphConfig {
      *
      * @param geoDataTypes Set of {@link BlazegraphGeoDatatype} strings.
      */
-    BlazegraphConfig(Set<String> geoDataTypes) {
+    public BlazegraphConfig(Set<String> geoDataTypes) {
         Object[] list = geoDataTypes.toArray();
         config = new Properties();
         //set general properties
