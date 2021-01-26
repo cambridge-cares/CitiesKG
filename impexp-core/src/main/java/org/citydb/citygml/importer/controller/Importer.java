@@ -574,12 +574,13 @@ public class Importer implements EventHandler {
 			if (!prop.isEmpty()) {
 				prop.store(output, null);
 			}
-
+			msg = msg + CFG_MSG_SUCCESS;
 		} catch (IOException e) {
 			log.error(msg + CFG_MSG_FAIL + e.getMessage());
+			msg = msg + CFG_MSG_FAIL;
 		}
 
-		return msg + CFG_MSG_SUCCESS;
+		return msg;
 	}
 
 	private void manageIndexes(boolean enable, boolean workOnSpatialIndexes) throws SQLException {
