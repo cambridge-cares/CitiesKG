@@ -24,7 +24,7 @@ public class BlazegraphConfigBuilderTest extends TestCase {
       + "{\"serviceMapping\":\"X0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
       + "{\"serviceMapping\":\"Y0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
       + "{\"serviceMapping\":\"Z0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"}],"
-      + "\"uri\":" + TEST_URI + "}}";
+      + "\"uri\":\"" + TEST_URI + "\"}}";
   private final String TEST_DATATYPE_CONFIG_PATH = "test_RWStore.properties";
   private final String TEST_VOCAB_CONFIG_PATH = "test_config.properties";
 
@@ -34,8 +34,9 @@ public class BlazegraphConfigBuilderTest extends TestCase {
     BlazegraphConfigBuilder cfgb = null;
     try {
       cfgb = BlazegraphConfigBuilder.getInstance();
-    } finally {
       assertNotNull(cfgb);
+    } catch (Exception e){
+      fail();
     }
   }
 

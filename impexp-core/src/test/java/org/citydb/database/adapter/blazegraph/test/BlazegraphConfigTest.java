@@ -19,8 +19,9 @@ public class BlazegraphConfigTest extends TestCase {
     try {
       geoDataTypes = new HashSet<>();
       cfg = new BlazegraphConfig(geoDataTypes);
-    } finally {
       assertNotNull(cfg);
+    } catch (Exception e){
+      fail();
     }
   }
 

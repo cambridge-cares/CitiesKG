@@ -25,7 +25,7 @@ public class BlazegraphGeoDatatype {
      *
      * @param dbobject geo-literal object to be converted to the geo-datatype string
      */
-    BlazegraphGeoDatatype(Node dbobject) {
+    public BlazegraphGeoDatatype(Node dbobject) {
         String KEY_CONFIG = "config";
         String KEY_URI = "uri";
         String KEY_FIELDS = "fields";
