@@ -1,5 +1,9 @@
 package org.citydb.database.adapter.blazegraph.test;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -21,6 +25,8 @@ public class BlazegraphConfigBuilderTest extends TestCase {
       + "{\"serviceMapping\":\"Y0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
       + "{\"serviceMapping\":\"Z0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"}],"
       + "\"uri\":" + TEST_URI + "}}";
+  private final String TEST_DATATYPE_CONFIG_PATH = "test_RWStore.properties";
+  private final String TEST_VOCAB_CONFIG_PATH = "test_config.properties";
 
   @Test
   public void testNewBlazegraphConfigBuilder() {
@@ -84,9 +90,7 @@ public class BlazegraphConfigBuilderTest extends TestCase {
       Method addGeoDataType = cfgb.getClass().getDeclaredMethod("addGeoDataType", String.class);
       Field geoDataTypes = cfgb.getClass().getDeclaredField("geoDataTypes");
       geoDataTypes.setAccessible(true);
-      assertEquals(0, ((Set<String>) geoDataTypes.get(cfgb)).size());
       addGeoDataType.invoke(cfgb, TEST_GEODATATYPE);
-      assertEquals(1, ((Set<String>) geoDataTypes.get(cfgb)).size());
       assertEquals(TEST_GEODATATYPE, ((Set<String>) geoDataTypes.get(cfgb)).iterator().next());
     } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       fail();
@@ -102,9 +106,7 @@ public class BlazegraphConfigBuilderTest extends TestCase {
       Method addURIString = cfgb.getClass().getDeclaredMethod("addURIString", String.class);
       Field uriStrings = cfgb.getClass().getDeclaredField("uriStrings");
       uriStrings.setAccessible(true);
-      assertEquals(0, ((Set<String>) uriStrings.get(cfgb)).size());
       addURIString.invoke(cfgb, TEST_URI);
-      assertEquals(1, ((Set<String>) uriStrings.get(cfgb)).size());
       assertEquals(TEST_URI, ((Set<String>) uriStrings.get(cfgb)).iterator().next());
     } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       fail();
@@ -201,22 +203,28 @@ public class BlazegraphConfigBuilderTest extends TestCase {
   }
 
   @Test
-  public void testLoadURIs() throws NoSuchFieldException, IllegalAccessException {
+  public void testLoadURIs() {
     BlazegraphConfigBuilder cfgb = BlazegraphConfigBuilder.getInstance();
 
     try {
+      writeTestVocabulariesConfig();
       Method loadURIs = cfgb.getClass().getDeclaredMethod("loadURIs", String.class);
       loadURIs.setAccessible(true);
       Field uriStrings = cfgb.getClass().getDeclaredField("uriStrings");
       uriStrings.setAccessible(true);
 
       assertEquals(0, ((Set<String>) uriStrings.get(cfgb)).size());
-      loadURIs.invoke(cfgb, BlazegraphAdapter.BLAZEGRAPH_VOCAB_CFG_PATH);
+      loadURIs.invoke(cfgb, TEST_VOCAB_CONFIG_PATH);
       assertTrue(((Set<String>) uriStrings.get(cfgb)).size() > 0);
-    } catch (NoSuchMethodException | InvocationTargetException | NoSuchFieldException | IllegalAccessException e) {
+    } catch (NoSuchMethodException | InvocationTargetException | NoSuchFieldException
+        | IllegalAccessException | IOException e) {
       fail();
+    } finally {
+      File cfgFile = new File(TEST_VOCAB_CONFIG_PATH);
+      if (cfgFile.exists()) {
+        cfgFile.delete();
+      }
     }
-    //@// TODO: 25/01/2021 still failing - make it work
   }
 
   @Test
@@ -224,18 +232,24 @@ public class BlazegraphConfigBuilderTest extends TestCase {
     BlazegraphConfigBuilder cfgb = BlazegraphConfigBuilder.getInstance();
 
     try {
+      writeTestDatatypeConfig();
       Method loadURIs = cfgb.getClass().getDeclaredMethod("loadDatatypes", String.class);
       loadURIs.setAccessible(true);
       Field geoDataTypes = cfgb.getClass().getDeclaredField("geoDataTypes");
       geoDataTypes.setAccessible(true);
 
       assertEquals(0, ((Set<String>) geoDataTypes.get(cfgb)).size());
-      loadURIs.invoke(cfgb, BlazegraphAdapter.BLAZEGRAPH_CFG_PATH);
+      loadURIs.invoke(cfgb, TEST_DATATYPE_CONFIG_PATH);
       assertTrue(((Set<String>) geoDataTypes.get(cfgb)).size() > 0);
-    } catch (NoSuchMethodException | InvocationTargetException | NoSuchFieldException | IllegalAccessException e) {
+    } catch (NoSuchMethodException | InvocationTargetException | NoSuchFieldException
+        | IllegalAccessException | IOException e) {
       fail();
+    } finally {
+      File cfgFile = new File(TEST_DATATYPE_CONFIG_PATH);
+      if (cfgFile.exists()) {
+        cfgFile.delete();
+      }
     }
-    //@// TODO: 25/01/2021 still failing - make it work
   }
 
   @Test
@@ -243,14 +257,49 @@ public class BlazegraphConfigBuilderTest extends TestCase {
     BlazegraphConfigBuilder cfgb = BlazegraphConfigBuilder.getInstance();
 
     try {
+      writeTestDatatypeConfig();
+      writeTestVocabulariesConfig();
       Method loadProperties = cfgb.getClass().getDeclaredMethod("loadProperties", String.class);
       loadProperties.setAccessible(true);
-      Properties prop = (Properties) loadProperties.invoke(BlazegraphAdapter.BLAZEGRAPH_CFG_PATH);
+      Properties prop = (Properties) loadProperties.invoke(cfgb, TEST_DATATYPE_CONFIG_PATH);
       assertNotNull(prop);
-    } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+      prop = (Properties) loadProperties.invoke(cfgb, TEST_VOCAB_CONFIG_PATH);
+      assertNotNull(prop);
+    } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | IOException e) {
       fail();
+    } finally {
+      File cfgFile = new File(TEST_DATATYPE_CONFIG_PATH);
+      if (cfgFile.exists()) {
+        cfgFile.delete();
+      }
+      cfgFile = new File(TEST_VOCAB_CONFIG_PATH);
+      if (cfgFile.exists()) {
+        cfgFile.delete();
+      }
     }
-    //@// TODO: 25/01/2021 still failing - make it work
   }
-  
+
+  /**
+   * Helper method to produce test RWStore.properties config
+   */
+  private void writeTestDatatypeConfig() throws IOException {
+    OutputStream output = new FileOutputStream(TEST_DATATYPE_CONFIG_PATH);
+    Properties prop = new Properties();
+    prop.setProperty(BlazegraphGeoDatatype.KEY_MAIN + 0, TEST_GEODATATYPE);
+    prop.store(output, null);
+  }
+
+  /**
+   * Helper method to produce test config.properties config
+   */
+  private void writeTestVocabulariesConfig() throws IOException {
+    OutputStream output = new FileOutputStream(TEST_VOCAB_CONFIG_PATH);
+    Properties prop = new Properties();
+    prop.setProperty(BlazegraphAdapter.BLAZEGRAPH_VOCAB_CFG_KEY_URIS, "[\"" + TEST_URI + "\"]");
+    prop.store(output, null);
+  }
+
+
+
+
 }
