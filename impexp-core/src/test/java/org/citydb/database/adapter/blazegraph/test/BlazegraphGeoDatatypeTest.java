@@ -1,5 +1,6 @@
 package org.citydb.database.adapter.blazegraph.test;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -13,7 +14,7 @@ import org.citydb.database.adapter.blazegraph.BlazegraphGeoDatatype;
 import org.junit.jupiter.api.Test;
 
 public class BlazegraphGeoDatatypeTest   extends TestCase {
-  private final String TEST_URI = "http://localhost/blazegraph/literals/POLYGON-1-3";
+  private final String TEST_URI = "http://localhost/blazegraph/literals/POINT-1-3";
   private final String TEST_GEOLITERAL = "1#2#3";
   private final String TEST_GEODATATYPE = "{\"config\":{\"fields\":["
       + "{\"serviceMapping\":\"X0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
@@ -43,7 +44,16 @@ public class BlazegraphGeoDatatypeTest   extends TestCase {
       Node dbObject = NodeFactory.createLiteral(TEST_GEOLITERAL, geoDatatype);
       BlazegraphGeoDatatype dt = new BlazegraphGeoDatatype(dbObject);
       assertEquals(2, dt.getClass().getDeclaredFields().length);
-    } catch (URISyntaxException e) {
+
+      Field KEY_MAIN = dt.getClass().getDeclaredField("KEY_MAIN");
+      Field geodatatype = dt.getClass().getDeclaredField("geodatatype");
+      geodatatype.setAccessible(true);
+
+      assertEquals("com.bigdata.rdf.store.AbstractTripleStore.geoSpatialDatatypeConfig.",
+          KEY_MAIN.get(dt));
+      assertEquals(TEST_GEODATATYPE, geodatatype.get(dt));
+
+    } catch (URISyntaxException | NoSuchFieldException | IllegalAccessException e) {
       fail();
     }
   }

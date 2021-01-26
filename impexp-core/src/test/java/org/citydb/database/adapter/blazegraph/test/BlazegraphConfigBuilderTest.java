@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 
 public class BlazegraphConfigBuilderTest extends TestCase {
 
-  private final String TEST_URI = "http://localhost/blazegraph/literals/POLYGON-1-3";
+  private final String TEST_URI = "http://localhost/blazegraph/literals/POINT-1-3";
   private final String TEST_GEODATATYPE = "{\"config\":{\"fields\":["
       + "{\"serviceMapping\":\"X0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
       + "{\"serviceMapping\":\"Y0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
@@ -31,7 +31,7 @@ public class BlazegraphConfigBuilderTest extends TestCase {
   @Test
   public void testNewBlazegraphConfigBuilder() {
 
-    BlazegraphConfigBuilder cfgb = null;
+    BlazegraphConfigBuilder cfgb;
     try {
       cfgb = BlazegraphConfigBuilder.getInstance();
       assertNotNull(cfgb);
@@ -213,10 +213,8 @@ public class BlazegraphConfigBuilderTest extends TestCase {
       loadURIs.setAccessible(true);
       Field uriStrings = cfgb.getClass().getDeclaredField("uriStrings");
       uriStrings.setAccessible(true);
-
-      assertEquals(0, ((Set<String>) uriStrings.get(cfgb)).size());
       loadURIs.invoke(cfgb, TEST_VOCAB_CONFIG_PATH);
-      assertTrue(((Set<String>) uriStrings.get(cfgb)).size() > 0);
+      assertTrue(((HashSet) uriStrings.get(cfgb)).contains(TEST_URI));
     } catch (NoSuchMethodException | InvocationTargetException | NoSuchFieldException
         | IllegalAccessException | IOException e) {
       fail();
@@ -234,14 +232,12 @@ public class BlazegraphConfigBuilderTest extends TestCase {
 
     try {
       writeTestDatatypeConfig();
-      Method loadURIs = cfgb.getClass().getDeclaredMethod("loadDatatypes", String.class);
-      loadURIs.setAccessible(true);
+      Method loadDatatypes = cfgb.getClass().getDeclaredMethod("loadDatatypes", String.class);
+      loadDatatypes.setAccessible(true);
       Field geoDataTypes = cfgb.getClass().getDeclaredField("geoDataTypes");
       geoDataTypes.setAccessible(true);
-
-      assertEquals(0, ((Set<String>) geoDataTypes.get(cfgb)).size());
-      loadURIs.invoke(cfgb, TEST_DATATYPE_CONFIG_PATH);
-      assertTrue(((Set<String>) geoDataTypes.get(cfgb)).size() > 0);
+      loadDatatypes.invoke(cfgb, TEST_DATATYPE_CONFIG_PATH);
+      assertTrue(((HashSet) geoDataTypes.get(cfgb)).contains(TEST_GEODATATYPE));
     } catch (NoSuchMethodException | InvocationTargetException | NoSuchFieldException
         | IllegalAccessException | IOException e) {
       fail();
