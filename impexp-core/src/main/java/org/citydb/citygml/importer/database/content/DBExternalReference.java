@@ -41,8 +41,10 @@ import org.citydb.config.project.database.DatabaseType;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.SequenceEnum;
 import org.citydb.database.schema.TableEnum;
+import org.citydb.util.CoreConstants;
 import org.citygml4j.model.citygml.core.ExternalObject;
 import org.citygml4j.model.citygml.core.ExternalReference;
+import org.citygml4j.model.gml.base.AbstractGML;
 
 public class DBExternalReference implements DBImporter {
 	private final CityGMLImportManager importer;
@@ -71,15 +73,13 @@ public class DBExternalReference implements DBImporter {
 		psExternalReference = batchConn.prepareStatement(stmt);
 	}
 
-	private String getSPARQLStatement(){
+	private String getSPARQLStatement() {
 		String param = "  ?;";
 		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
 				"BASE <" + IRI_GRAPH_BASE + "> " +
 				"INSERT DATA" +
 				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
-				"{ ? "+ SchemaManagerAdapter.ONTO_ID + importer.getDatabaseAdapter()
-				.getSQLAdapter()
-				.getNextSequenceValue(SequenceEnum.EXTERNAL_REFERENCE_ID_SEQ.getName()) +
+				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
 				SchemaManagerAdapter.ONTO_INFO_SYS + param +
 				SchemaManagerAdapter.ONTO_NAME + param +
 				SchemaManagerAdapter.ONTO_URI + param +
@@ -100,7 +100,9 @@ public class DBExternalReference implements DBImporter {
 				String uuid = importer.generateNewGmlId();
 				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
 				psExternalReference.setURL(++index, url);
+				psExternalReference.setURL(++index, url);
 			} catch (MalformedURLException e) {
+				psExternalReference.setObject(++index, NodeFactory.createBlankNode());
 				psExternalReference.setObject(++index, NodeFactory.createBlankNode());
 			}
 		}
@@ -141,7 +143,20 @@ public class DBExternalReference implements DBImporter {
 		}
 
 		// cityObjectId
-		psExternalReference.setLong(++index, cityObjectId);
+		if (isBlazegraph) {
+			String URIId = ((AbstractGML)externalReference.getParent()).getLocalProperty(CoreConstants.OBJECT_URIID).toString();
+			if (!URIId.isEmpty()) {
+				try {
+					URL url = new URL(URIId);
+					psExternalReference.setURL(++index, url);
+				} catch (MalformedURLException e) {
+					throw new CityGMLImportException(e);
+				}
+			}
+		} else {
+			psExternalReference.setLong(++index, cityObjectId);
+		}
+
 
 		psExternalReference.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
