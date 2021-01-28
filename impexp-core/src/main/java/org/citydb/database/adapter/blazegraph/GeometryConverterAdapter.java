@@ -173,19 +173,18 @@ public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
         try {
             String geometryType = geomObj.getGeometryType().name();
             double[][] coordinates = geomObj.getCoordinates();
-            int coordLen = coordinates.length;
-            int coordTotal = 0;
+            String coordLen = String.valueOf(geomObj.getDimension());
             String geoLiteral = "";
             StringBuilder sb = new StringBuilder(geoLiteral);
 
             for (double[] coordinate : coordinates) {
+                coordLen = coordLen + "-" + coordinate.length;
                 for (double v : coordinate) {
                     sb.append(v).append("#");
-                    coordTotal++;
                 }
             }
 
-            URI datatypeURI = new URI(BASE_URL_LITERALS + geometryType + "-" + coordLen + "-" + coordTotal);
+            URI datatypeURI = new URI(BASE_URL_LITERALS + geometryType + "-" + coordLen);
             RDFDatatype geoDatatype = new BaseDatatype(datatypeURI.toString());
             geoLiteral = sb.toString();
             dbObject = NodeFactory.createLiteral(geoLiteral.substring(0, geoLiteral.length() - 1), geoDatatype);

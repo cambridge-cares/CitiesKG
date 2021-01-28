@@ -144,15 +144,8 @@ public class DBExternalReference implements DBImporter {
 
 		// cityObjectId
 		if (isBlazegraph) {
-			String URIId = ((AbstractGML)externalReference.getParent()).getLocalProperty(CoreConstants.OBJECT_URIID).toString();
-			if (!URIId.isEmpty()) {
-				try {
-					URL url = new URL(URIId);
-					psExternalReference.setURL(++index, url);
-				} catch (MalformedURLException e) {
-					throw new CityGMLImportException(e);
-				}
-			}
+			psExternalReference.setURL(++index, (URL) ((AbstractGML)externalReference.getParent())
+					.getLocalProperty(CoreConstants.OBJECT_URIID));
 		} else {
 			psExternalReference.setLong(++index, cityObjectId);
 		}

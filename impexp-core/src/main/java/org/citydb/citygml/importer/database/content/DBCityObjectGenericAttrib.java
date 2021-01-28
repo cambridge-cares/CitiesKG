@@ -446,15 +446,7 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 			}
 
 			if (isBlazegraph && genericAttribute.isSetParent()) {
-				String URIId = ((AbstractGML)genericAttribute.getParent()).getLocalProperty(CoreConstants.OBJECT_URIID).toString();
-				if (!URIId.isEmpty()) {
-					try {
-						URL url = new URL(URIId);
-						ps.setURL(++index, url);
-					} catch (MalformedURLException e) {
-						throw new CityGMLImportException(e);
-					}
-				}
+				ps.setURL(++index, (URL) ((AbstractGML)genericAttribute.getParent()).getLocalProperty(CoreConstants.OBJECT_URIID));
 			} else {
 				ps.setLong(++index, cityObjectId);
 			}

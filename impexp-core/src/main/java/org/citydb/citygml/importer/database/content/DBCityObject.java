@@ -256,7 +256,7 @@ public class DBCityObject implements DBImporter {
 				URL url = new URL(IRI_GRAPH_OBJECT + object.getId() + "/");   // need to get the correct path
 				psCityObject.setURL(++index, url);		// setURL sets the url into psCityObject/delegate/sqarqlStr
 				psCityObject.setURL(++index, url);
-				object.setLocalProperty(CoreConstants.OBJECT_URIID, url.toString());
+				object.setLocalProperty(CoreConstants.OBJECT_URIID, url);
 			} catch (MalformedURLException e) {
 				psCityObject.setObject(++index, NodeFactory.createBlankNode());
 			}

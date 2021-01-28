@@ -205,20 +205,9 @@ public class DBBuilding implements DBImporter {
 				// primary id
 				psBuilding.setURL(++index, url);
 				if (building.isSetParent()) {
-					String URIId = ((AbstractGML) building.getParent()).getLocalProperty(
-							CoreConstants.OBJECT_URIID).toString();
-					if (!URIId.isEmpty()) {
-						try {
-							URL parentUrl = new URL(URIId);
-							// parent building id
-							psBuilding.setURL(++index, parentUrl);
-						} catch (MalformedURLException e) {
-							throw new CityGMLImportException(e);
-						}
-					} else {
-						// parent building id
-						setBlankNode(psBuilding, ++index);
-					}
+					// parent building id
+					psBuilding.setURL(++index, (URL) ((AbstractGML) building.getParent()).getLocalProperty(
+							CoreConstants.OBJECT_URIID));
 				} else {
 					// parent building id
 					setBlankNode(psBuilding, ++index);
