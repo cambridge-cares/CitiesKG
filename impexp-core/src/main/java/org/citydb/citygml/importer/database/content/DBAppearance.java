@@ -116,7 +116,7 @@ public class DBAppearance implements DBImporter {
 		return stmt;
 	}
 
-	public long doImport(Appearance appearance, long parentId, boolean isLocalAppearance) throws CityGMLImportException, SQLException {
+	public long doImport(Appearance appearance, Object parentId, boolean isLocalAppearance) throws CityGMLImportException, SQLException {
 		long appearanceId = importer.getNextSequenceValue(SequenceEnum.APPEARANCE_ID_SEQ.getName());
 
 		FeatureType featureType = importer.getFeatureType(appearance);
@@ -148,6 +148,7 @@ public class DBAppearance implements DBImporter {
 
 		int index = 0;
 
+		// primary id
 		if (importer.isBlazegraph()) {
 			try {
 				String uuid = appearance.getId();
@@ -156,13 +157,14 @@ public class DBAppearance implements DBImporter {
 				}
 				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
 				psAppearance.setURL(++index, url);
+				psAppearance.setURL(++index, url);
+				appearance.setLocalProperty(CoreConstants.OBJECT_URIID, url);
 			} catch (MalformedURLException e) {
 				psAppearance.setObject(++index, NodeFactory.createBlankNode());
 			}
+    } else {
+      psAppearance.setLong(++index, appearanceId);
 		}
-
-		// primary id
-		psAppearance.setLong(++index, appearanceId);
 
 		psAppearance.setString(++index, appearance.getId());
 
@@ -199,10 +201,17 @@ public class DBAppearance implements DBImporter {
 		if (isLocalAppearance) {
 			if (importer.isBlazegraph()) {
 				setBlankNode(psAppearance, ++index);
+				try {
+					URL parentURL = new URL((String) parentId);
+					psAppearance.setURL(++index, parentURL);
+					appearance.setLocalProperty(CoreConstants.OBJECT_PARENT_URIID, parentURL);
+				} catch (MalformedURLException e) {
+					throw new CityGMLImportException(e);
+				}
 			} else {
 				psAppearance.setNull(++index, Types.NULL);
+				psAppearance.setLong(++index, (long) parentId);
 			}
-			psAppearance.setLong(++index, parentId);
 		} else if (importer.isBlazegraph()) {
 			setBlankNode(psAppearance, ++index);
 			setBlankNode(psAppearance, ++index);
@@ -250,7 +259,7 @@ public class DBAppearance implements DBImporter {
 
 		if (handler != null) {
 			if (handler.hasAppearances()) {
-				for (Entry<Long, List<Appearance>> entry : handler.getAppearances().entrySet()) {
+				for (Entry<Object, List<Appearance>> entry : handler.getAppearances().entrySet()) {
 					for (Appearance appearance : entry.getValue())
 						doImport(appearance, entry.getKey(), true);
 				}

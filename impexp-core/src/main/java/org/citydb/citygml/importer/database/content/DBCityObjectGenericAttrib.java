@@ -101,7 +101,7 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 
 			psAtomicGenericAttribute = batchConn.prepareStatement(stmt +
 							SchemaManagerAdapter.ONTO_PARRENT_GENATTRIB_ID + param +
-							SchemaManagerAdapter.ONTO_ROOT_GENATTRIB_ID + param);
+							SchemaManagerAdapter.ONTO_ROOT_GENATTRIB_ID + param + ".}}");
 		} else {
 			stmt.append("insert into ").append(schema).append(".cityobject_genericattrib (id, attrname, datatype," +
 					" strval, intval, realval, urival, dateval, unit, cityobject_id, " +

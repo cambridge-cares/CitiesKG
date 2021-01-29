@@ -81,7 +81,7 @@ public class DBAppearToSurfaceData implements DBImporter {
 	}
 
 
-	public void doImport(long surfaceDataId, long appearanceId) throws CityGMLImportException, SQLException {
+	public void doImport(Object surfaceDataId, Object appearanceId) throws CityGMLImportException, SQLException {
 
 		int index = 0;
 
@@ -90,13 +90,15 @@ public class DBAppearToSurfaceData implements DBImporter {
 				String uuid = importer.generateNewGmlId();
 				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
 				psAppearToSurfaceData.setURL(++index, url);
+				psAppearToSurfaceData.setURL(++index, (URL) surfaceDataId);
+				psAppearToSurfaceData.setURL(++index, (URL) appearanceId);
 			} catch (MalformedURLException e) {
 				psAppearToSurfaceData.setObject(++index, NodeFactory.createBlankNode());
 			}
+    } else {
+      psAppearToSurfaceData.setLong(++index, (long) surfaceDataId);
+      psAppearToSurfaceData.setLong(++index, (long) appearanceId);
 		}
-
-		psAppearToSurfaceData.setLong(++index, surfaceDataId);
-		psAppearToSurfaceData.setLong(++index, appearanceId);
 
 
 		psAppearToSurfaceData.addBatch();
