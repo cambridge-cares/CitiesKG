@@ -546,24 +546,35 @@ public class DBBuilding implements DBImporter {
 				break;
 			}
 
-			if (solidProperty != null) {
-				if (solidProperty.isSetSolid()) {
-					solidGeometryId = surfaceGeometryImporter.doImport(solidProperty.getSolid(), buildingId);
-					solidProperty.unsetSolid();
-				} else {
-					String href = solidProperty.getHref();
-					if (href != null && href.length() != 0) {
-						importer.propagateXlink(new DBXlinkSurfaceGeometry(
-								"building",
-								buildingId, 
-								href, 
-								"lod" + (i + 1) + "_solid_id"));
+      if (solidProperty != null) {
+        if (solidProperty.isSetSolid()) {
+          solidGeometryId = surfaceGeometryImporter.doImport(solidProperty.getSolid(), buildingId);
+          if (solidGeometryId != 0) {
+            if (!importer.isBlazegraph()) {
+              psBuilding.setLong(++index, solidGeometryId);
+            } else {
+              try {
+                psBuilding.setURL(
+                    ++index,
+                    new URL(DBSurfaceGeometry.IRI_GRAPH_OBJECT + solidProperty.getSolid().getId()));
+              } catch (MalformedURLException e) {
+                new CityGMLImportException(e);
+              }
+            }
+          } else if (importer.isBlazegraph()) {
+						setBlankNode(psBuilding, ++index);
+					} else {
+						psBuilding.setNull(++index, Types.NULL);
 					}
-				}
-			}
-
-			if (solidGeometryId != 0) {
-				psBuilding.setLong(++index, solidGeometryId);
+          solidProperty.unsetSolid();
+        } else {
+          String href = solidProperty.getHref();
+          if (href != null && href.length() != 0) {
+            importer.propagateXlink(
+                new DBXlinkSurfaceGeometry(
+                    "building", buildingId, href, "lod" + (i + 1) + "_solid_id"));
+          }
+        }
 			} else if (importer.isBlazegraph()) {
 				setBlankNode(psBuilding, ++index);
 			} else {

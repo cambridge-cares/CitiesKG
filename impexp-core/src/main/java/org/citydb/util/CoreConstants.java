@@ -47,5 +47,8 @@ public class CoreConstants {
     public static final String EXPORT_STUB = "exportStub";
     public static final String EXPORT_AS_ADDITIONAL_OBJECT = "additionalObject";
     public static final String UNIQUE_TEXTURE_FILENAME_PREFIX = "tex_";
-    public static final String OBJECT_URIID = "URIId";
+    public static final String OBJECT_URIID = "objectURL";
+    public static final String OBJECT_PARENT_URIID = "parentURL";
+    public static final String OBJECT_ROOT_URIID = "rootURL";
+    public static final String CITYOBJECT_URIID = "cityobjectURL";
 }

@@ -116,7 +116,7 @@ public class DBSurfaceGeometry implements DBImporter {
 	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
 	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
 	private static final String IRI_GRAPH_OBJECT_REL = "surfacegeometry/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
+	public static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBSurfaceGeometry(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;
@@ -409,12 +409,29 @@ public class DBSurfaceGeometry implements DBImporter {
 					if (origGmlId != null && !isCopy)
 						importer.putGeometryUID(origGmlId, surfaceGeometryId, rootId, reverse, gmlId);
 
-
-
-
-					psGeomElem.setLong(++index, surfaceGeometryId);
+					// set root entry
+					//id is already set to URL for Blazegraph
+					if (!importer.isBlazegraph()) {
+						psGeomElem.setLong(++index, surfaceGeometryId);
+					}
 					psGeomElem.setString(++index, gmlId);
-					psGeomElem.setLong(++index, rootId);
+					if (parentId != 0) {
+						if (importer.isBlazegraph()) {
+							psGeomElem.setURL(++index, parentURL);
+							psGeomElem.setURL(++index, rootURL);
+						} else {
+							psGeomElem.setLong(++index, parentId);
+						}
+					} else {
+						if (importer.isBlazegraph()) {
+							setBlankNode(psGeomElem, ++index);
+						} else{
+							psGeomElem.setNull(++index, Types.NULL);
+						}
+					}
+					if (!importer.isBlazegraph()) {
+						psGeomElem.setLong(++index, rootId);
+					}
 					psGeomElem.setInt(++index, 0);
 					psGeomElem.setInt(++index, 0);
 					psGeomElem.setInt(++index, 0);
@@ -424,14 +441,6 @@ public class DBSurfaceGeometry implements DBImporter {
 						setBlankNode(psGeomElem, ++index);
 					}else {
 						psGeomElem.setNull(++index, nullGeometryType, nullGeometryTypeName);
-					}
-
-					if (parentId != 0) {
-						psGeomElem.setLong(++index, parentId);
-					}	else if (importer.isBlazegraph()) {
-							setBlankNode(psGeomElem, ++index);
-					} else {
-						psGeomElem.setNull(++index, Types.NULL);
 					}
 
 					if (!isImplicit) {
@@ -452,7 +461,7 @@ public class DBSurfaceGeometry implements DBImporter {
 
 
 					if (cityObjectId != 0) {
-						psGeomElem.setLong(++index, cityObjectId);
+						psGeomElem.setURL(++index, cityobjectURL);
 					} else if (importer.isBlazegraph()) {
 						setBlankNode(psGeomElem, ++index);
 					} else {
@@ -664,10 +673,8 @@ public class DBSurfaceGeometry implements DBImporter {
 			psGeomElem.setString(++index, gmlId);
 			if (parentId != 0) {
 				if (importer.isBlazegraph()) {
-					psGeomElem.setURL(++index, (URL) ((AbstractGML) ((GeometryProperty) surfaceGeometry
-							.getParent()).getParent()).getLocalProperty(CoreConstants.OBJECT_URIID));
-					psGeomElem.setURL(++index, (URL) ((AbstractGML) ((GeometryProperty) surfaceGeometry
-							.getParent()).getParent()).getLocalProperty(CoreConstants.OBJECT_URIID));
+					psGeomElem.setURL(++index, parentURL);
+					psGeomElem.setURL(++index, rootURL);
 				} else {
 					psGeomElem.setLong(++index, parentId);
 				}
@@ -698,9 +705,7 @@ public class DBSurfaceGeometry implements DBImporter {
 
 			if (cityObjectId != 0) {
 				if (importer.isBlazegraph()) {
-					psGeomElem.setURL(++index, (URL) ((AbstractGML) ((GeometryProperty) ((AbstractGML)
-							((GeometryProperty) surfaceGeometry.getParent()).getParent()).getParent())
-							.getParent()).getLocalProperty(CoreConstants.OBJECT_URIID));
+					psGeomElem.setURL(++index, cityobjectURL);
 				} else {
 					psGeomElem.setLong(++index, cityObjectId);
 				}
@@ -1141,9 +1146,29 @@ public class DBSurfaceGeometry implements DBImporter {
 				importer.putGeometryUID(origGmlId, surfaceGeometryId, rootId, reverse, gmlId);
 
 			// set root entry
-			psGeomElem.setLong(++index, surfaceGeometryId);
+			//id is already set to URL for Blazegraph
+			if (!importer.isBlazegraph()) {
+				psGeomElem.setLong(++index, surfaceGeometryId);
+			}
 			psGeomElem.setString(++index, gmlId);
-			psGeomElem.setLong(++index, rootId);
+			if (parentId != 0) {
+				if (importer.isBlazegraph()) {
+					psGeomElem.setURL(++index, parentURL);
+				} else {
+					psGeomElem.setLong(++index, parentId);
+				}
+			} else {
+				if (importer.isBlazegraph()) {
+					setBlankNode(psGeomElem, ++index);
+				} else{
+					psGeomElem.setNull(++index, Types.NULL);
+				}
+			}
+			if (importer.isBlazegraph()) {
+				psGeomElem.setURL(++index, rootURL);
+			} else {
+				psGeomElem.setLong(++index, rootId);
+			}
 			psGeomElem.setInt(++index, 0);
 			psGeomElem.setInt(++index, 0);
 			psGeomElem.setInt(++index, 0);
@@ -1159,16 +1184,12 @@ public class DBSurfaceGeometry implements DBImporter {
 				psGeomElem.setNull(++index, nullGeometryType, nullGeometryTypeName);
 			}
 
-			if (parentId != 0) {
-				psGeomElem.setLong(++index, parentId);
-			} else if (importer.isBlazegraph()) {
-				setBlankNode(psGeomElem, ++index);
-			} else {
-				psGeomElem.setNull(++index, Types.NULL);
-			}
-
 			if (cityObjectId != 0) {
-				psGeomElem.setLong(++index, cityObjectId);
+				if (importer.isBlazegraph()) {
+					psGeomElem.setURL(++index, cityobjectURL);
+				} else {
+					psGeomElem.setLong(++index, cityObjectId);
+				}
 			} else if (importer.isBlazegraph()) {
 				setBlankNode(psGeomElem, ++index);
 			} else {
