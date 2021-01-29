@@ -68,7 +68,8 @@ public class UtilAdapter extends AbstractUtilAdapter {
 
     @Override
     protected GeometryObject transform(GeometryObject geometry, DatabaseSrs targetSrs, Connection connection) throws SQLException {
-        return null;
+        //return null; // Shiying test
+        return geometry;
     }
 
     @Override

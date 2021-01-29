@@ -3,11 +3,13 @@ package org.citydb.database.adapter.blazegraph;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.adapter.*;
 import org.citydb.query.filter.selection.operator.spatial.SpatialOperatorName;
+import org.citydb.sqlbuilder.SQLStatement;
 import org.citydb.sqlbuilder.schema.Column;
 import org.citydb.sqlbuilder.select.PredicateToken;
 import org.citydb.sqlbuilder.select.projection.Function;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class SQLAdapter extends AbstractSQLAdapter {
@@ -154,5 +156,15 @@ public class SQLAdapter extends AbstractSQLAdapter {
     @Override
     public BlobExportAdapter getBlobExportAdapter(Connection connection, BlobType type) {
         return null;
+    }
+
+    @Override
+    public PreparedStatement prepareStatement(SQLStatement statement, Connection connection) throws SQLException {
+        // @TODO: implement SQLStatement into SPARQLStatement translator
+        // prepareStatement take String as input
+        PreparedStatement preparedStatement = connection.prepareStatement(statement.toString());
+        fillPlaceHolders(statement, preparedStatement, connection);
+
+        return preparedStatement;
     }
 }

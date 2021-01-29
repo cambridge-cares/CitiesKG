@@ -121,7 +121,7 @@ public class KmlSplitter {
 		// create query statement
 		Select select = builder.buildQuery(query);
 
-		try (PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
+ 		try (PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
 			 ResultSet rs = stmt.executeQuery()) {
 			int objectCount = 0;
 

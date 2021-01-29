@@ -268,6 +268,7 @@ public abstract class AbstractUtilAdapter {
         }
     }
 
+    // TODO: change the connection prepareCall
     public boolean isIndexEnabled(String tableName, String columnName) throws SQLException {
         String schema = databaseAdapter.getConnectionDetails().getSchema();
         boolean isIndexed = false;
