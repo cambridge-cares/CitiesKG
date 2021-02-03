@@ -128,7 +128,16 @@ public class DBExternalReference implements DBImporter {
 
 			// core:uri
 			if (externalObject.isSetUri()) {
-				psExternalReference.setString(++index, externalObject.getUri());
+				if (isBlazegraph) {
+					try {
+						URL extURL = new URL(externalObject.getUri());
+						psExternalReference.setURL(++index, extURL);
+					} catch (MalformedURLException e) {
+						throw new CityGMLImportException(e);
+					}
+        } else {
+          psExternalReference.setString(++index, externalObject.getUri());
+				}
 			} else if (isBlazegraph) {
 				psExternalReference.setObject(++index, NodeFactory.createBlankNode());
 			} else {

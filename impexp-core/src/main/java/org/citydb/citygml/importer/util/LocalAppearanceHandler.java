@@ -98,10 +98,7 @@ public class LocalAppearanceHandler {
 			
 			if (!appearances.isEmpty())
 				if (importer.isBlazegraph()) {
-					String URIId = cityObject.getLocalProperty(CoreConstants.OBJECT_URIID).toString();
-					if (!URIId.isEmpty()) {
-						this.appearances.put(URIId, appearances);
-					}
+					this.appearances.put(cityObject.getLocalProperty(CoreConstants.OBJECT_URIID), appearances);
 				} else {
 					this.appearances.put(cityObjectId, appearances);
 				}

@@ -204,6 +204,7 @@ public class DBBuilding implements DBImporter {
 				psBuilding.setURL(++index, url);
 				// primary id
 				psBuilding.setURL(++index, url);
+				building.setLocalProperty(CoreConstants.OBJECT_URIID, url);
 				if (building.isSetParent()) {
 					// parent building id
 					psBuilding.setURL(++index, (URL) ((AbstractGML) building.getParent()).getLocalProperty(

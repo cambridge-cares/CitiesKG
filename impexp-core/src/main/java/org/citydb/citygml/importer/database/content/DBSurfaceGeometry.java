@@ -437,6 +437,7 @@ public class DBSurfaceGeometry implements DBImporter {
 					psGeomElem.setInt(++index, 0);
 					psGeomElem.setInt(++index, isXlink ? 1 : 0);
 					psGeomElem.setInt(++index, reverse ? 1 : 0);
+
 					if (importer.isBlazegraph()) {
 						setBlankNode(psGeomElem, ++index);
 					}else {
@@ -447,13 +448,17 @@ public class DBSurfaceGeometry implements DBImporter {
 						psGeomElem.setObject(++index, obj);
 						if (importer.isBlazegraph()) {
 							setBlankNode(psGeomElem, ++index);
+							setBlankNode(psGeomElem, ++index);
 						} else {
+							psGeomElem.setNull(++index, nullGeometryType, nullGeometryTypeName);
 							psGeomElem.setNull(++index, nullGeometryType, nullGeometryTypeName);
 						}
 					} else {
 						if (importer.isBlazegraph()) {
 							setBlankNode(psGeomElem, ++index);
+							setBlankNode(psGeomElem, ++index);
 						}else {
+							psGeomElem.setNull(++index, nullGeometryType, nullGeometryTypeName);
 							psGeomElem.setNull(++index, nullGeometryType, nullGeometryTypeName);
 						}
 						psGeomElem.setObject(++index, obj);
