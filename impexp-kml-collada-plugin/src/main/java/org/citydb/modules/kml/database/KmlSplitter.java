@@ -115,7 +115,7 @@ public class KmlSplitter {
 		Tile activeTile = null;
 		if (query.isSetTiling()) {
 			activeTile = query.getTiling().getActiveTile();
-			builder.getBuildProperties().addProjectionColumn(MappingConstants.ENVELOPE);
+			builder.getBuildProperties().addProjectionColumn(MappingConstants.ENVELOPE); // add envelop to the builder projectionColumns
 		}
 
 		// create query statement

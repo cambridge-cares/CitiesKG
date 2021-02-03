@@ -2,6 +2,7 @@ package org.citydb.database.adapter.blazegraph;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.query.Query;
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 
 
@@ -17,7 +18,12 @@ public class sql2sparqlStatement {
     public static String transformer1 (String sqlStatement){
         SelectBuilder sb = new SelectBuilder();
         sb.addPrefix("ocgml", "http://locahost/ontocitygml/");
-        sb.addVar("*").addWhere("?s", "?p", "?o").setLimit(10);
+        sb.addVar("?id ?objectclass_id ?gmlid").from(IRI_GRAPH_OBJECT).addWhere("?gmlid", "<http://locahost/ontocitygml/objectClassId>", "?objectclass_id").addWhere("?gmlid", "<http://locahost/ontocitygml/gmlId>", "ID_0518100000225439");
+        try {
+            sb.addFilter("?objectclass_id IN ( 64, 4, 5, 7, 8, 9, 42, 43,44, 45, 14, 46, 85, 21, 23, 26 )");
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
         Query q = sb.build();
         return q.toString();
     }

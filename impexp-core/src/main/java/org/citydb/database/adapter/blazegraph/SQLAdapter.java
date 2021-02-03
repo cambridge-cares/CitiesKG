@@ -161,7 +161,7 @@ public class SQLAdapter extends AbstractSQLAdapter {
     @Override
     public PreparedStatement prepareStatement(SQLStatement statement, Connection connection) throws SQLException {
         // @TODO: implement SQLStatement into SPARQLStatement translator
-        String sparql = sql2sparqlStatement.transformer2(statement.toString());
+        String sparql = sql2sparqlStatement.transformer1(statement.toString());
         PreparedStatement preparedStatement = connection.prepareStatement(sparql);  // same as importer
 
         //PreparedStatement preparedStatement = connection.prepareStatement(statement.toString());
