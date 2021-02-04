@@ -438,12 +438,6 @@ public class DBSurfaceGeometry implements DBImporter {
 					psGeomElem.setInt(++index, isXlink ? 1 : 0);
 					psGeomElem.setInt(++index, reverse ? 1 : 0);
 
-					if (importer.isBlazegraph()) {
-						setBlankNode(psGeomElem, ++index);
-					}else {
-						psGeomElem.setNull(++index, nullGeometryType, nullGeometryTypeName);
-					}
-
 					if (!isImplicit) {
 						psGeomElem.setObject(++index, obj);
 						if (importer.isBlazegraph()) {

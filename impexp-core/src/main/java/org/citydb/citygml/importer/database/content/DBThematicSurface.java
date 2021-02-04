@@ -118,15 +118,22 @@ public class DBThematicSurface implements DBImporter {
 		// import city object information
 		long boundarySurfaceId = cityObjectImporter.doImport(boundarySurface, featureType);
 
-		URL objectURL = (URL) boundarySurface.getLocalProperty(CoreConstants.OBJECT_URIID);
+		URL objectURL;
 		URL parentURL = (URL) parent.getLocalProperty(CoreConstants.OBJECT_URIID);
 		int index = 0;
 
 		// import boundary surface information
 		// primary id
 		if (importer.isBlazegraph()) {
-			psThematicSurface.setURL(++index, objectURL);
-			psThematicSurface.setURL(++index, objectURL);
+			try {
+				objectURL = new URL(IRI_GRAPH_OBJECT + boundarySurface.getId() + "/");
+				psThematicSurface.setURL(++index, objectURL);
+				psThematicSurface.setURL(++index, objectURL);
+				boundarySurface.setLocalProperty(CoreConstants.OBJECT_URIID, objectURL);
+			} catch (MalformedURLException e) {
+				setBlankNode(psThematicSurface, ++index);
+				setBlankNode(psThematicSurface, ++index);
+			}
 			boundarySurface.setLocalProperty(CoreConstants.OBJECT_PARENT_URIID, parentURL);
     } else {
       psThematicSurface.setLong(++index, boundarySurfaceId);
