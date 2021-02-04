@@ -201,13 +201,8 @@ public class DBAppearance implements DBImporter {
 		if (isLocalAppearance) {
 			if (importer.isBlazegraph()) {
 				setBlankNode(psAppearance, ++index);
-				try {
-					URL parentURL = new URL((String) parentId);
-					psAppearance.setURL(++index, parentURL);
-					appearance.setLocalProperty(CoreConstants.OBJECT_PARENT_URIID, parentURL);
-				} catch (MalformedURLException e) {
-					throw new CityGMLImportException(e);
-				}
+				psAppearance.setURL(++index, (URL) parentId);
+				appearance.setLocalProperty(CoreConstants.OBJECT_PARENT_URIID, parentId);
 			} else {
 				psAppearance.setNull(++index, Types.NULL);
 				psAppearance.setLong(++index, (long) parentId);
