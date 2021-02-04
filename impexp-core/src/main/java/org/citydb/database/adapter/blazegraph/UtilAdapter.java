@@ -104,11 +104,11 @@ public class UtilAdapter extends AbstractUtilAdapter {
         return null;
     }
 
-    @Override  // created by Shiying
+    @Override
     public boolean isIndexEnabled(String tableName, String columnName) throws SQLException {
 
         // @TODO: Implement the check for spatial indexes on geometry columns of involved tables
-        String schema = databaseAdapter.getConnectionDetails().getSchema();
+        // For the moment, we set it to always return true. In the future, it should have checked if the spatial index is enabled in DB
         boolean isIndexed = true;
 
         return isIndexed;
