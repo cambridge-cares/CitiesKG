@@ -133,7 +133,7 @@ public class DBExternalReference implements DBImporter {
 						URL extURL = new URL(externalObject.getUri());
 						psExternalReference.setURL(++index, extURL);
 					} catch (MalformedURLException e) {
-						throw new CityGMLImportException(e);
+						psExternalReference.setObject(++index, NodeFactory.createBlankNode());
 					}
         } else {
           psExternalReference.setString(++index, externalObject.getUri());

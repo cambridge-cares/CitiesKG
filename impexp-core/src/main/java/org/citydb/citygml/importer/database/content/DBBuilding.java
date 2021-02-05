@@ -50,6 +50,7 @@ import org.citygml4j.model.citygml.building.IntBuildingInstallation;
 import org.citygml4j.model.citygml.building.IntBuildingInstallationProperty;
 import org.citygml4j.model.citygml.building.InteriorRoomProperty;
 import org.citygml4j.model.citygml.building.Room;
+import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.Address;
 import org.citygml4j.model.citygml.core.AddressProperty;
 import org.citygml4j.model.gml.base.AbstractGML;
@@ -192,7 +193,11 @@ public class DBBuilding implements DBImporter {
 			rootId = buildingId;
 
 		int index = 0;
-
+		URL objectURL = null;
+		URL rootURL = null;
+		URL parentURL = null;
+		
+		
 		// import building information
 		if (importer.isBlazegraph()) {
 			try {
@@ -200,28 +205,36 @@ public class DBBuilding implements DBImporter {
 				if (uuid.isEmpty()) {
 					uuid = importer.generateNewGmlId();
 				}
-				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
-				psBuilding.setURL(++index, url);
-				// primary id
-				psBuilding.setURL(++index, url);
-				building.setLocalProperty(CoreConstants.OBJECT_URIID, url);
-				if (building.isSetParent()) {
-					// parent building id
-					psBuilding.setURL(++index, (URL) ((AbstractGML) building.getParent()).getLocalProperty(
-							CoreConstants.OBJECT_URIID));
-				} else {
-					// parent building id
-					setBlankNode(psBuilding, ++index);
-				}
-				// root building id
-				if (rootId == buildingId)
-					psBuilding.setURL(++index, url);
-				else {
-					psBuilding.setLong(++index, rootId);
-				}
+				objectURL = new URL(IRI_GRAPH_OBJECT + uuid + "/");
 			} catch (MalformedURLException e) {
 				psBuilding.setObject(++index, NodeFactory.createBlankNode());
 			}
+			psBuilding.setURL(++index, objectURL);
+			// primary id
+			psBuilding.setURL(++index, objectURL);
+			building.setLocalProperty(CoreConstants.OBJECT_URIID, objectURL);
+			if (building.isSetParent()) {
+				// parent building id
+				if (featureType.getObjectClassId() == 25) {
+					parentURL = (URL) ((AbstractGML) ((BuildingPartProperty) building.getParent()).getParent())
+							.getLocalProperty(CoreConstants.OBJECT_URIID);
+				} else {
+					parentURL = (URL) ((AbstractGML) building.getParent()).getLocalProperty(
+							CoreConstants.OBJECT_URIID);
+				}
+				psBuilding.setURL(++index, parentURL);
+				building.setLocalProperty(CoreConstants.OBJECT_PARENT_URIID, parentURL);
+			} else {
+				setBlankNode(psBuilding, ++index);
+			}
+			// root building id
+			if (rootId == buildingId) {
+				rootURL = objectURL;
+			} else if (rootId == parentId) {
+				rootURL = parentURL;
+			}
+			psBuilding.setURL(++index, rootURL);
+			building.setLocalProperty(CoreConstants.OBJECT_ROOT_URIID, parentURL);
 		} else {
 			// import building information
 			// primary id
