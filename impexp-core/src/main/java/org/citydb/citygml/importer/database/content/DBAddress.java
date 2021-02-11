@@ -37,6 +37,8 @@ import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
 import org.citydb.util.CoreConstants;
 import org.citygml4j.model.citygml.core.Address;
+import org.citygml4j.model.citygml.core.AddressProperty;
+import org.citygml4j.model.gml.base.AbstractGML;
 import org.citygml4j.model.module.xal.XALModuleType;
 import org.citygml4j.model.xal.CountryName;
 import org.citygml4j.model.xal.LocalityName;
@@ -174,13 +176,15 @@ public class DBAddress implements DBImporter {
 				}
 				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
 				psAddress.setURL(index++, url);
+				psAddress.setURL(index++, url);
+				address.setLocalProperty(CoreConstants.OBJECT_URIID, url);
 			} catch (MalformedURLException e) {
 				psAddress.setObject(index++, NodeFactory.createBlankNode());
 			}
+    } else {
+      psAddress.setLong(index++, addressId);
 		}
 
-
-		psAddress.setLong(index++, addressId);
 		if (hasGmlIdColumn)
 			psAddress.setString(index++, address.getId());
 
@@ -271,7 +275,13 @@ public class DBAddress implements DBImporter {
 	public void importBuildingAddress(Address address, long parentId) throws CityGMLImportException, SQLException {
 		long addressId = doImport(address);
 		if (addressId != 0)
-			addressToBuildingImporter.doImport(addressId, parentId);
+			if (importer.isBlazegraph()) {
+					addressToBuildingImporter.doImport((URL )address.getLocalProperty(CoreConstants.OBJECT_URIID),
+							(URL) ((AbstractGML) ((AddressProperty) address.getParent()).getParent())
+									.getLocalProperty(CoreConstants.OBJECT_URIID));
+      } else {
+        addressToBuildingImporter.doImport(addressId, parentId);
+			}
 	}
 
 	public void importBridgeAddress(Address address, long parentId) throws CityGMLImportException, SQLException {

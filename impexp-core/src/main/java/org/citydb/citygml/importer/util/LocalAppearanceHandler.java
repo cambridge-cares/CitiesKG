@@ -30,6 +30,7 @@ package org.citydb.citygml.importer.util;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.database.content.CityGMLImportManager;
 import org.citydb.config.geometry.GeometryObject;
+import org.citydb.util.CoreConstants;
 import org.citygml4j.model.citygml.appearance.Appearance;
 import org.citygml4j.model.citygml.appearance.AppearanceProperty;
 import org.citygml4j.model.citygml.appearance.ParameterizedTexture;
@@ -41,11 +42,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import org.citygml4j.model.gml.base.AbstractGML;
 
 public class LocalAppearanceHandler {
 	private final CityGMLImportManager importer;
 	
-	private final HashMap<Long, List<Appearance>> appearances;
+	private final HashMap<Object, List<Appearance>> appearances;
 	private final HashMap<Long, SurfaceGeometryTarget> targets;
 	private final HashMap<String, LinearRing> rings;
 	private final HashSet<SurfaceGeometryTarget> localContext;
@@ -95,7 +97,11 @@ public class LocalAppearanceHandler {
 			}
 			
 			if (!appearances.isEmpty())
-				this.appearances.put(cityObjectId, appearances);
+				if (importer.isBlazegraph()) {
+					this.appearances.put(cityObject.getLocalProperty(CoreConstants.OBJECT_URIID), appearances);
+				} else {
+					this.appearances.put(cityObjectId, appearances);
+				}
 		}
 	}
 
@@ -103,7 +109,7 @@ public class LocalAppearanceHandler {
 		return !appearances.isEmpty();
 	}
 	
-	public Map<Long, List<Appearance>> getAppearances() {
+	public Map<Object, List<Appearance>> getAppearances() {
 		return appearances;
 	}
 

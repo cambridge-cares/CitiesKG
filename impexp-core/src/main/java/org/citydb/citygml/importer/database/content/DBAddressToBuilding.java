@@ -101,6 +101,19 @@ public class DBAddressToBuilding implements DBImporter {
 			importer.executeBatch(TableEnum.ADDRESS_TO_BUILDING);
 	}
 
+	protected void doImport(URL addressURL, URL buildingURL) throws CityGMLImportException, SQLException {
+
+		int index = 0;
+
+		psAddressToBuilding.setURL(++index, addressURL);
+		psAddressToBuilding.setURL(++index, buildingURL);
+		psAddressToBuilding.setURL(++index, addressURL);
+		psAddressToBuilding.addBatch();
+
+		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
+			importer.executeBatch(TableEnum.ADDRESS_TO_BUILDING);
+	}
+
 	@Override
 	public void executeBatch() throws CityGMLImportException, SQLException {
 		if (batchCounter > 0) {
