@@ -216,8 +216,7 @@ public class KmlExporter implements EventHandler {
 		// check whether spatial indexes are enabled
 		log.info("Checking for spatial indexes on geometry columns of involved tables...");
 
-		//@TODO: Shiying commented it out. It gets involved the precompile sql statement within JDBC driver
-		/*
+
 		try {
 			if (!databaseAdapter.getUtil().isIndexEnabled("CITYOBJECT", "ENVELOPE") ||
 					!databaseAdapter.getUtil().isIndexEnabled("SURFACE_GEOMETRY", "GEOMETRY")) {
@@ -229,7 +228,6 @@ public class KmlExporter implements EventHandler {
 		} catch (SQLException e) {
 			throw new KmlExportException("Failed to retrieve status of spatial indexes.", e);
 		}
-		*/
 
 		// check whether the selected theme existed in the database,just for Building Class...
 		String selectedTheme = config.getProject().getKmlExporter().getAppearanceTheme();
