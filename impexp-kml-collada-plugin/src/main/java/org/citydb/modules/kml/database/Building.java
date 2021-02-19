@@ -100,7 +100,10 @@ public class Building extends KmlGenericObject{
 		List<PlacemarkType> placemarks = new ArrayList<>();
 		PreparedStatement psQuery = null;
 		ResultSet rs = null;
-		
+
+		// TODO: Added by SHIYING LI
+		boolean isBlazegraph = kmlExporterManager.isBlazegraph();
+
 		try {
 			String query = queries.getBuildingPartsFromBuilding();
 			psQuery = connection.prepareStatement(query);
