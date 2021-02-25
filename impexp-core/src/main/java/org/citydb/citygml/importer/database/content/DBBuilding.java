@@ -38,6 +38,7 @@ import org.citydb.config.project.database.DatabaseType;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
+import org.citydb.util.CoreConstants;
 import org.citygml4j.model.citygml.building.AbstractBoundarySurface;
 import org.citygml4j.model.citygml.building.AbstractBuilding;
 import org.citygml4j.model.citygml.building.BoundarySurfaceProperty;
@@ -49,8 +50,10 @@ import org.citygml4j.model.citygml.building.IntBuildingInstallation;
 import org.citygml4j.model.citygml.building.IntBuildingInstallationProperty;
 import org.citygml4j.model.citygml.building.InteriorRoomProperty;
 import org.citygml4j.model.citygml.building.Room;
+import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.Address;
 import org.citygml4j.model.citygml.core.AddressProperty;
+import org.citygml4j.model.gml.base.AbstractGML;
 import org.citygml4j.model.gml.basicTypes.Code;
 import org.citygml4j.model.gml.geometry.aggregates.MultiCurveProperty;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
@@ -190,35 +193,63 @@ public class DBBuilding implements DBImporter {
 			rootId = buildingId;
 
 		int index = 0;
-
+		URL objectURL = null;
+		URL rootURL = null;
+		URL parentURL = null;
+		
+		
+		// import building information
 		if (importer.isBlazegraph()) {
 			try {
 				String uuid = building.getId();
 				if (uuid.isEmpty()) {
 					uuid = importer.generateNewGmlId();
 				}
-				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
-				psBuilding.setURL(++index, url);
+				objectURL = new URL(IRI_GRAPH_OBJECT + uuid + "/");
 			} catch (MalformedURLException e) {
 				psBuilding.setObject(++index, NodeFactory.createBlankNode());
 			}
-		}
-
-		// import building information
-		// primary id
-		psBuilding.setLong(++index, buildingId);
-
-		// parent building id
-		if (parentId != 0) {
-			psBuilding.setLong(++index, parentId);
-		} else if (importer.isBlazegraph()) {
-			setBlankNode(psBuilding, ++index);
+			psBuilding.setURL(++index, objectURL);
+			// primary id
+			psBuilding.setURL(++index, objectURL);
+			building.setLocalProperty(CoreConstants.OBJECT_URIID, objectURL);
+			if (building.isSetParent()) {
+				// parent building id
+				if (featureType.getObjectClassId() == 25) {
+					parentURL = (URL) ((AbstractGML) ((BuildingPartProperty) building.getParent()).getParent())
+							.getLocalProperty(CoreConstants.OBJECT_URIID);
+				} else {
+					parentURL = (URL) ((AbstractGML) building.getParent()).getLocalProperty(
+							CoreConstants.OBJECT_URIID);
+				}
+				psBuilding.setURL(++index, parentURL);
+				building.setLocalProperty(CoreConstants.OBJECT_PARENT_URIID, parentURL);
+			} else {
+				setBlankNode(psBuilding, ++index);
+			}
+			// root building id
+			if (rootId == buildingId) {
+				rootURL = objectURL;
+			} else if (rootId == parentId) {
+				rootURL = parentURL;
+			}
+			psBuilding.setURL(++index, rootURL);
+			building.setLocalProperty(CoreConstants.OBJECT_ROOT_URIID, parentURL);
 		} else {
-			psBuilding.setNull(++index, Types.NULL);
-		}
+			// import building information
+			// primary id
+			psBuilding.setLong(++index, buildingId);
 
-		// root building id
-		psBuilding.setLong(++index, rootId);
+			// parent building id
+			if (parentId != 0) {
+				psBuilding.setLong(++index, parentId);
+			} else {
+				psBuilding.setNull(++index, Types.NULL);
+			}
+
+			// root building id
+			psBuilding.setLong(++index, rootId);
+		}
 
 		// bldg:class
 		if (building.isSetClazz() && building.getClazz().isSetValue()) {
@@ -529,24 +560,35 @@ public class DBBuilding implements DBImporter {
 				break;
 			}
 
-			if (solidProperty != null) {
-				if (solidProperty.isSetSolid()) {
-					solidGeometryId = surfaceGeometryImporter.doImport(solidProperty.getSolid(), buildingId);
-					solidProperty.unsetSolid();
-				} else {
-					String href = solidProperty.getHref();
-					if (href != null && href.length() != 0) {
-						importer.propagateXlink(new DBXlinkSurfaceGeometry(
-								"building",
-								buildingId, 
-								href, 
-								"lod" + (i + 1) + "_solid_id"));
+      if (solidProperty != null) {
+        if (solidProperty.isSetSolid()) {
+          solidGeometryId = surfaceGeometryImporter.doImport(solidProperty.getSolid(), buildingId);
+          if (solidGeometryId != 0) {
+            if (!importer.isBlazegraph()) {
+              psBuilding.setLong(++index, solidGeometryId);
+            } else {
+              try {
+                psBuilding.setURL(
+                    ++index,
+                    new URL(DBSurfaceGeometry.IRI_GRAPH_OBJECT + solidProperty.getSolid().getId()));
+              } catch (MalformedURLException e) {
+                new CityGMLImportException(e);
+              }
+            }
+          } else if (importer.isBlazegraph()) {
+						setBlankNode(psBuilding, ++index);
+					} else {
+						psBuilding.setNull(++index, Types.NULL);
 					}
-				}
-			}
-
-			if (solidGeometryId != 0) {
-				psBuilding.setLong(++index, solidGeometryId);
+          solidProperty.unsetSolid();
+        } else {
+          String href = solidProperty.getHref();
+          if (href != null && href.length() != 0) {
+            importer.propagateXlink(
+                new DBXlinkSurfaceGeometry(
+                    "building", buildingId, href, "lod" + (i + 1) + "_solid_id"));
+          }
+        }
 			} else if (importer.isBlazegraph()) {
 				setBlankNode(psBuilding, ++index);
 			} else {

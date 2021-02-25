@@ -41,8 +41,10 @@ import org.citydb.config.project.database.DatabaseType;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.SequenceEnum;
 import org.citydb.database.schema.TableEnum;
+import org.citydb.util.CoreConstants;
 import org.citygml4j.model.citygml.core.ExternalObject;
 import org.citygml4j.model.citygml.core.ExternalReference;
+import org.citygml4j.model.gml.base.AbstractGML;
 
 public class DBExternalReference implements DBImporter {
 	private final CityGMLImportManager importer;
@@ -71,15 +73,13 @@ public class DBExternalReference implements DBImporter {
 		psExternalReference = batchConn.prepareStatement(stmt);
 	}
 
-	private String getSPARQLStatement(){
+	private String getSPARQLStatement() {
 		String param = "  ?;";
 		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
 				"BASE <" + IRI_GRAPH_BASE + "> " +
 				"INSERT DATA" +
 				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
-				"{ ? "+ SchemaManagerAdapter.ONTO_ID + importer.getDatabaseAdapter()
-				.getSQLAdapter()
-				.getNextSequenceValue(SequenceEnum.EXTERNAL_REFERENCE_ID_SEQ.getName()) +
+				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
 				SchemaManagerAdapter.ONTO_INFO_SYS + param +
 				SchemaManagerAdapter.ONTO_NAME + param +
 				SchemaManagerAdapter.ONTO_URI + param +
@@ -100,7 +100,9 @@ public class DBExternalReference implements DBImporter {
 				String uuid = importer.generateNewGmlId();
 				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
 				psExternalReference.setURL(++index, url);
+				psExternalReference.setURL(++index, url);
 			} catch (MalformedURLException e) {
+				psExternalReference.setObject(++index, NodeFactory.createBlankNode());
 				psExternalReference.setObject(++index, NodeFactory.createBlankNode());
 			}
 		}
@@ -126,7 +128,16 @@ public class DBExternalReference implements DBImporter {
 
 			// core:uri
 			if (externalObject.isSetUri()) {
-				psExternalReference.setString(++index, externalObject.getUri());
+				if (isBlazegraph) {
+					try {
+						URL extURL = new URL(externalObject.getUri());
+						psExternalReference.setURL(++index, extURL);
+					} catch (MalformedURLException e) {
+						psExternalReference.setObject(++index, NodeFactory.createBlankNode());
+					}
+        } else {
+          psExternalReference.setString(++index, externalObject.getUri());
+				}
 			} else if (isBlazegraph) {
 				psExternalReference.setObject(++index, NodeFactory.createBlankNode());
 			} else {
@@ -141,7 +152,13 @@ public class DBExternalReference implements DBImporter {
 		}
 
 		// cityObjectId
-		psExternalReference.setLong(++index, cityObjectId);
+		if (isBlazegraph) {
+			psExternalReference.setURL(++index, (URL) ((AbstractGML)externalReference.getParent())
+					.getLocalProperty(CoreConstants.OBJECT_URIID));
+		} else {
+			psExternalReference.setLong(++index, cityObjectId);
+		}
+
 
 		psExternalReference.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())

@@ -35,6 +35,7 @@ import org.citydb.config.project.database.DatabaseType;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.SequenceEnum;
 import org.citydb.database.schema.TableEnum;
+import org.citydb.util.CoreConstants;
 import org.citygml4j.model.citygml.CityGMLClass;
 import org.citygml4j.model.citygml.generics.AbstractGenericAttribute;
 import org.citygml4j.model.citygml.generics.DateAttribute;
@@ -52,6 +53,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import org.citygml4j.model.gml.base.AbstractGML;
 
 public class DBCityObjectGenericAttrib implements DBImporter {
 	private final Connection batchConn;
@@ -99,16 +101,12 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 
 			psAtomicGenericAttribute = batchConn.prepareStatement(stmt +
 							SchemaManagerAdapter.ONTO_PARRENT_GENATTRIB_ID + param +
-							//@ TODO: replace sequencing to use SQLAdapter
-							SchemaManagerAdapter.ONTO_ROOT_GENATTRIB_ID + " " + importer.getNextSequenceValue(
-							SequenceEnum.CITYOBJECT_GENERICATTRIB_ID_SEQ.getName()) + ";.}}");
+							SchemaManagerAdapter.ONTO_ROOT_GENATTRIB_ID + param + ".}}");
 		} else {
 			stmt.append("insert into ").append(schema).append(".cityobject_genericattrib (id, attrname, datatype," +
 					" strval, intval, realval, urival, dateval, unit, cityobject_id, " +
 					"parent_genattrib_id, root_genattrib_id) values ")
-					.append("(").append(importer.getDatabaseAdapter().getSQLAdapter()
-					.getNextSequenceValue(SequenceEnum.CITYOBJECT_GENERICATTRIB_ID_SEQ.getName()))
-					.append(", ?, ?, ?, ?, ?, ?, ?, ?, ?, ");
+					.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ");
 			psGenericAttributeMember = batchConn.prepareStatement(stmt + "?, ?)");
 			psAtomicGenericAttribute = batchConn.prepareStatement(stmt + "null, " +
 					importer.getDatabaseAdapter().getSQLAdapter()
@@ -142,9 +140,7 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 				"BASE <" + IRI_GRAPH_BASE + "> " +
 				"INSERT DATA" +
 				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
-				//@ TODO: replace sequencing to use SQLAdapter
-				"{ ? "+ SchemaManagerAdapter.ONTO_ID + " " + importer.getNextSequenceValue(
-				SequenceEnum.CITYOBJECT_GENERICATTRIB_ID_SEQ.getName()) + ";" +
+				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
 				SchemaManagerAdapter.ONTO_ATTR_NAME + param +
 				SchemaManagerAdapter.ONTO_DATA_TYPE + param +
 				SchemaManagerAdapter.ONTO_STR_VAL + param +
@@ -178,7 +174,15 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 				psGenericAttributeSet.setURL(index, url);
 				psAtomicGenericAttribute.setURL(index, url);
 				psGenericAttributeMember.setURL(index, url);
+				++index;
+				psGenericAttributeSet.setURL(index, url);
+				psAtomicGenericAttribute.setURL(index, url);
+				psGenericAttributeMember.setURL(index, url);
 			} catch (MalformedURLException e) {
+				psGenericAttributeSet.setObject(index, NodeFactory.createBlankNode());
+				psAtomicGenericAttribute.setObject(index, NodeFactory.createBlankNode());
+				psGenericAttributeMember.setObject(index, NodeFactory.createBlankNode());
+				++index;
 				psGenericAttributeSet.setObject(index, NodeFactory.createBlankNode());
 				psAtomicGenericAttribute.setObject(index, NodeFactory.createBlankNode());
 				psGenericAttributeMember.setObject(index, NodeFactory.createBlankNode());
@@ -441,12 +445,17 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 				}
 			}
 
-			ps.setLong(++index, cityObjectId);
+			if (isBlazegraph && genericAttribute.isSetParent()) {
+				ps.setURL(++index, (URL) ((AbstractGML)genericAttribute.getParent()).getLocalProperty(CoreConstants.OBJECT_URIID));
+			} else {
+				ps.setLong(++index, cityObjectId);
+			}
 
 			if (rootId != 0) {
 				ps.setLong(++index, parentId);
 				ps.setLong(++index, rootId);
 			} else if (isBlazegraph) {
+				ps.setObject(++index, NodeFactory.createBlankNode());
 				ps.setObject(++index, NodeFactory.createBlankNode());
 			}
 

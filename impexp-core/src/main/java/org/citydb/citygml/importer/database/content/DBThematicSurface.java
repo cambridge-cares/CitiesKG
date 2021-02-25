@@ -42,6 +42,7 @@ import org.citydb.config.Config;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
+import org.citydb.util.CoreConstants;
 import org.citygml4j.model.citygml.building.AbstractBoundarySurface;
 import org.citygml4j.model.citygml.building.AbstractBuilding;
 import org.citygml4j.model.citygml.building.AbstractOpening;
@@ -117,45 +118,50 @@ public class DBThematicSurface implements DBImporter {
 		// import city object information
 		long boundarySurfaceId = cityObjectImporter.doImport(boundarySurface, featureType);
 
+		URL objectURL;
+		URL parentURL = (URL) parent.getLocalProperty(CoreConstants.OBJECT_URIID);
 		int index = 0;
-
-		if (importer.isBlazegraph()) {
-			try {
-				String uuid = boundarySurface.getId();
-				if (uuid.isEmpty()) {
-					uuid = importer.generateNewGmlId();
-				}
-				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
-				psThematicSurface.setURL(++index, url);
-			} catch (MalformedURLException e) {
-				psThematicSurface.setObject(++index, NodeFactory.createBlankNode());
-			}
-		}
 
 		// import boundary surface information
 		// primary id
-		psThematicSurface.setLong(++index, boundarySurfaceId);
+		if (importer.isBlazegraph()) {
+			try {
+				objectURL = new URL(IRI_GRAPH_OBJECT + boundarySurface.getId() + "/");
+				psThematicSurface.setURL(++index, objectURL);
+				psThematicSurface.setURL(++index, objectURL);
+				boundarySurface.setLocalProperty(CoreConstants.OBJECT_URIID, objectURL);
+			} catch (MalformedURLException e) {
+				setBlankNode(psThematicSurface, ++index);
+				setBlankNode(psThematicSurface, ++index);
+			}
+			boundarySurface.setLocalProperty(CoreConstants.OBJECT_PARENT_URIID, parentURL);
+    } else {
+      psThematicSurface.setLong(++index, boundarySurfaceId);
+		}
 
 		// objectclass id
 		psThematicSurface.setInt(++index, featureType.getObjectClassId());
 
 		// parent id
 		if (parent instanceof AbstractBuilding) {
-			psThematicSurface.setLong(++index, parentId);
+
 			if (importer.isBlazegraph()) {
+				psThematicSurface.setURL(++index, parentURL);
 				setBlankNode(psThematicSurface, ++index);
 				setBlankNode(psThematicSurface, ++index);
 			} else {
+				psThematicSurface.setLong(++index, parentId);
 				psThematicSurface.setNull(++index, Types.NULL);
 				psThematicSurface.setNull(++index, Types.NULL);
 			}
 		} else if (parent instanceof Room) {
-			psThematicSurface.setLong(++index, parentId);
 			if (importer.isBlazegraph()) {
 				setBlankNode(psThematicSurface, ++index);
+				psThematicSurface.setURL(++index, parentURL);
 				setBlankNode(psThematicSurface, ++index);
 			} else {
 				psThematicSurface.setNull(++index, Types.NULL);
+				psThematicSurface.setLong(++index, parentId);
 				psThematicSurface.setNull(++index, Types.NULL);
 			}
 		} else if (parent instanceof BuildingInstallation
@@ -163,11 +169,12 @@ public class DBThematicSurface implements DBImporter {
 			if (importer.isBlazegraph()) {
 				setBlankNode(psThematicSurface, ++index);
 				setBlankNode(psThematicSurface, ++index);
+				psThematicSurface.setURL(++index, parentURL);
 			} else {
 				psThematicSurface.setNull(++index, Types.NULL);
 				psThematicSurface.setNull(++index, Types.NULL);
+				psThematicSurface.setLong(++index, parentId);
 			}
-			psThematicSurface.setLong(++index, parentId);
 		} else {
 			if (importer.isBlazegraph()) {
 				setBlankNode(psThematicSurface, ++index);
@@ -200,6 +207,23 @@ public class DBThematicSurface implements DBImporter {
 			if (multiSurfaceProperty != null) {
 				if (multiSurfaceProperty.isSetMultiSurface()) {
 					multiSurfaceId = surfaceGeometryImporter.doImport(multiSurfaceProperty.getMultiSurface(), boundarySurfaceId);
+					if (multiSurfaceId != 0) {
+						if (!importer.isBlazegraph()) {
+							psThematicSurface.setLong(++index, multiSurfaceId);
+						} else {
+							try {
+								psThematicSurface.setURL(
+										++index,
+										new URL(DBSurfaceGeometry.IRI_GRAPH_OBJECT + multiSurfaceProperty.getMultiSurface().getId()));
+							} catch (MalformedURLException e) {
+								new CityGMLImportException(e);
+							}
+						}
+					} else if (importer.isBlazegraph()) {
+						setBlankNode(psThematicSurface, ++index);
+					} else {
+						psThematicSurface.setNull(++index, Types.NULL);
+					}
 					multiSurfaceProperty.unsetMultiSurface();
 				} else {
 					String href = multiSurfaceProperty.getHref();
@@ -211,10 +235,6 @@ public class DBThematicSurface implements DBImporter {
 								"lod" + (i + 2) + "_multi_surface_id"));
 					}
 				}
-			}
-
-			if (multiSurfaceId != 0) {
-				psThematicSurface.setLong(++index, multiSurfaceId);
 			} else if (importer.isBlazegraph()) {
 				setBlankNode(psThematicSurface, ++index);
 			} else {

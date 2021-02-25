@@ -255,12 +255,14 @@ public class DBCityObject implements DBImporter {
 			try {
 				URL url = new URL(IRI_GRAPH_OBJECT + object.getId() + "/");   // need to get the correct path
 				psCityObject.setURL(++index, url);		// setURL sets the url into psCityObject/delegate/sqarqlStr
+				psCityObject.setURL(++index, url);
+				object.setLocalProperty(CoreConstants.OBJECT_URIID, url);
 			} catch (MalformedURLException e) {
 				psCityObject.setObject(++index, NodeFactory.createBlankNode());
 			}
+		} else {
+			psCityObject.setLong(++index, objectId);
 		}
-
-		psCityObject.setLong(++index, objectId);
 
 		// object class id
 		psCityObject.setInt(++index, objectType.getObjectClassId());

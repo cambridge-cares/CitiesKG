@@ -47,14 +47,17 @@ import org.citydb.database.schema.SequenceEnum;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
 import org.citydb.log.Logger;
+import org.citydb.util.CoreConstants;
 import org.citygml4j.geometry.Matrix;
 import org.citygml4j.model.citygml.CityGMLClass;
 import org.citygml4j.model.citygml.appearance.AbstractSurfaceData;
 import org.citygml4j.model.citygml.appearance.AbstractTexture;
 import org.citygml4j.model.citygml.appearance.AbstractTextureParameterization;
+import org.citygml4j.model.citygml.appearance.Appearance;
 import org.citygml4j.model.citygml.appearance.Color;
 import org.citygml4j.model.citygml.appearance.GeoreferencedTexture;
 import org.citygml4j.model.citygml.appearance.ParameterizedTexture;
+import org.citygml4j.model.citygml.appearance.SurfaceDataProperty;
 import org.citygml4j.model.citygml.appearance.TexCoordGen;
 import org.citygml4j.model.citygml.appearance.TexCoordList;
 import org.citygml4j.model.citygml.appearance.TextureAssociation;
@@ -272,18 +275,22 @@ public class DBSurfaceData implements DBImporter {
 
 		int index = 0;
 
+
+		// import surface data information
+		// primary id
 		if (importer.isBlazegraph()) {
 			try {
 				URL url = new URL(IRI_GRAPH_OBJECT + surfaceData.getId() + "/");
 				psSurfaceData.setURL(++index, url);
+				psSurfaceData.setURL(++index, url);
+				surfaceData.setLocalProperty(CoreConstants.OBJECT_URIID, url);
 			} catch (MalformedURLException e) {
 				psSurfaceData.setObject(++index, NodeFactory.createBlankNode());
+				psSurfaceData.setObject(++index, NodeFactory.createBlankNode());
 			}
+    } else {
+      psSurfaceData.setLong(++index, surfaceDataId);
 		}
-
-		// import surface data information
-		// primary id
-		psSurfaceData.setLong(++index, surfaceDataId);
 
 		psSurfaceData.setString(++index, surfaceData.getId());
 
@@ -730,7 +737,9 @@ public class DBSurfaceData implements DBImporter {
 		}
 
 		// appearance to surface data
-		appearToSurfaceDataImporter.doImport(surfaceDataId, parentId);
+		appearToSurfaceDataImporter.doImport(surfaceData.getLocalProperty(CoreConstants.OBJECT_URIID),
+				((Appearance) ((SurfaceDataProperty) surfaceData.getParent()).getParent())
+						.getLocalProperty(CoreConstants.OBJECT_URIID));
 		
 		// ADE-specific extensions
 		if (importer.hasADESupport())
