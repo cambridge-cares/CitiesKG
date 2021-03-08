@@ -58,6 +58,7 @@ import org.citydb.sqlbuilder.select.operator.comparison.ComparisonFactory;
 import org.citydb.sqlbuilder.select.operator.comparison.ComparisonName;
 import org.citydb.util.Util;
 import org.citygml4j.model.citygml.CityGMLClass;
+import org.citydb.config.project.database.DatabaseType; // added by Shiying
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -121,13 +122,21 @@ public class KmlSplitter {
 		// create query statement
 		Select select = builder.buildQuery(query);
 
- 		try (PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
+		boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value()); //@TODO: Try with KMLExporterManager
+
+		try (PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
 			 ResultSet rs = stmt.executeQuery()) {
 			int objectCount = 0;
 
 			while (rs.next() && shouldRun) {
 				long id = rs.getLong(MappingConstants.ID);
-				String gmlId = rs.getString(MappingConstants.GMLID);
+				String gmlId = rs.getString(MappingConstants.GMLID);;
+
+				if (is_Blazegraph) { // added by Shiying
+					String path = rs.getString(MappingConstants.GMLID);
+					String[] segments = path.split("/");
+					gmlId = segments[segments.length-1];
+				}
 				int objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
 
 				GeometryObject envelope = null;

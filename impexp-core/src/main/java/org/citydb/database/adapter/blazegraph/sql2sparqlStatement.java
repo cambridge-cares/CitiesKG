@@ -5,6 +5,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
+import org.citydb.sqlbuilder.SQLStatement;
 
 
 public class sql2sparqlStatement {
@@ -16,7 +17,7 @@ public class sql2sparqlStatement {
     public String sqlStatement;
     public String sparqlStatement;
 
-    public static String transformer1 (String sqlStatement){
+    public static String getSparqlstatement (Query query){
         SelectBuilder sb = new SelectBuilder();
         sb.addPrefix("ocgml", "http://locahost/ontocitygml/");
         sb.addVar("?id ?objectclass_id ?gmlid").from(IRI_GRAPH_OBJECT).addWhere("?gmlid", "<http://locahost/ontocitygml/objectClassId>", "?objectclass_id").addWhere("?gmlid", "<http://locahost/ontocitygml/gmlId>", "?name" ); //"ID_0518100000225439"
@@ -25,7 +26,21 @@ public class sql2sparqlStatement {
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        sb.setVar(Var.alloc("?name"), "ID_0518100000225439");
+
+        sb.setVar(Var.alloc("name"), "ID_0518100000225439");
+        Query q = sb.build();
+        return q.toString();
+    }
+    public static String transformer1 (SQLStatement sqlStatement){
+        SelectBuilder sb = new SelectBuilder();
+        sb.addPrefix("ocgml", "http://locahost/ontocitygml/");
+        sb.addVar("?id ?objectclass_id ?gmlid").from(IRI_GRAPH_OBJECT).addWhere("?gmlid", "<http://locahost/ontocitygml/objectClassId>", "?objectclass_id").addWhere("?gmlid", "<http://locahost/ontocitygml/gmlId>", "?name" ); //"ID_0518100000225439"
+        try {
+            sb.addFilter("?objectclass_id IN ( 64, 4, 5, 7, 8, 9, 42, 43,44, 45, 14, 46, 85, 21, 23, 26 )");
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        sb.setVar(Var.alloc("name"), "ID_0518100000225439");
         Query q = sb.build();
         return q.toString();
     }
