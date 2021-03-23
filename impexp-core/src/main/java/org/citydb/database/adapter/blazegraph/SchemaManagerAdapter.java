@@ -80,6 +80,7 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_STOREY_HEIGHTS_BELLOW_GROUND = ONTO_PREFIX_NAME_ONTOCITYGML + "storeyHeightsBelowGround";
     public static final String ONTO_STOREY_HEIGHTS_AG_UNIT = ONTO_PREFIX_NAME_ONTOCITYGML + "storeyHeightsAgUnit";
     public static final String ONTO_STOREY_HEIGHTS_BG_UNIT = ONTO_PREFIX_NAME_ONTOCITYGML + "storeyHeightsBgUnit";
+    public static final String ONTO_LOD0_TERRAIN_INTERSECTION = ONTO_PREFIX_NAME_ONTOCITYGML + "lod0TerrainIntersection";
     public static final String ONTO_LOD1_TERRAIN_INTERSECTION = ONTO_PREFIX_NAME_ONTOCITYGML + "lod1TerrainIntersection";
     public static final String ONTO_LOD2_TERRAIN_INTERSECTION = ONTO_PREFIX_NAME_ONTOCITYGML + "lod2TerrainIntersection";
     public static final String ONTO_LOD3_TERRAIN_INTERSECTION = ONTO_PREFIX_NAME_ONTOCITYGML + "lod3TerrainIntersection";
@@ -126,6 +127,30 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_IS_TEXTURE_PARAMETRIZATION = ONTO_PREFIX_NAME_ONTOCITYGML + "isTextureParametrization";
     public static final String ONTO_WORLD_TO_TEXTURE  = ONTO_PREFIX_NAME_ONTOCITYGML + "worldToTexture";
     public static final String ONTO_TEXTURE_COORDINATES  = ONTO_PREFIX_NAME_ONTOCITYGML + "textureCoordinates";
+    public static final String ONTO_LOD1_BREP_ID  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod1BrepId";
+    public static final String ONTO_LOD2_BREP_ID  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod2BrepId";
+    public static final String ONTO_LOD3_BREP_ID  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod3BrepId";
+    public static final String ONTO_LOD4_BREP_ID  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod4BrepId";
+    public static final String ONTO_LOD0_OTHER_GEOM  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod0OtherGeom";
+    public static final String ONTO_LOD1_OTHER_GEOM  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod1OtherGeom";
+    public static final String ONTO_LOD2_OTHER_GEOM  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod2OtherGeom";
+    public static final String ONTO_LOD3_OTHER_GEOM  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod3OtherGeom";
+    public static final String ONTO_LOD4_OTHER_GEOM  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod4OtherGeom";
+    public static final String ONTO_LOD0_IMPLICIT_REP_ID  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod0ImplicitRepId";
+    public static final String ONTO_LOD1_IMPLICIT_REP_ID  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod1ImplicitRepId";
+    public static final String ONTO_LOD2_IMPLICIT_REP_ID  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod2ImplicitRepId";
+    public static final String ONTO_LOD3_IMPLICIT_REP_ID  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod3ImplicitRepId";
+    public static final String ONTO_LOD4_IMPLICIT_REP_ID  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod4ImplicitRepId";
+    public static final String ONTO_LOD0_IMPLICIT_REF_POINT  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod0ImplicitRefPoint";
+    public static final String ONTO_LOD1_IMPLICIT_REF_POINT  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod1ImplicitRefPoint";
+    public static final String ONTO_LOD2_IMPLICIT_REF_POINT  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod2ImplicitRefPoint";
+    public static final String ONTO_LOD3_IMPLICIT_REF_POINT  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod3ImplicitRefPoint";
+    public static final String ONTO_LOD4_IMPLICIT_REF_POINT  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod4ImplicitRefPoint";
+    public static final String ONTO_LOD0_IMPLICIT_TRANSFORMATION  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod0ImplicitTransformation";
+    public static final String ONTO_LOD1_IMPLICIT_TRANSFORMATION  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod1ImplicitTransformation";
+    public static final String ONTO_LOD2_IMPLICIT_TRANSFORMATION  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod2ImplicitTransformation";
+    public static final String ONTO_LOD3_IMPLICIT_TRANSFORMATION  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod3ImplicitTransformation";
+    public static final String ONTO_LOD4_IMPLICIT_TRANSFORMATION  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod4ImplicitTransformation";
     //@TODO: NOT IN ONTOCITYGML - need to be added:
     //@END
 
