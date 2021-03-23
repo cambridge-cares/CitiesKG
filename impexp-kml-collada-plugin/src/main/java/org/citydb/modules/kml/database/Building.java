@@ -260,7 +260,7 @@ public class Building extends KmlGenericObject{
 						reversePointOrder = true;
 						int groupBasis = 4;
 
-						try {
+						try { // @TODO: query to modify
 							String query = queries.getBuildingPartAggregateGeometries(0.001,
 									DatabaseConnectionPool.getInstance().getActiveDatabaseAdapter().getUtil().get2DSrid(dbSrs),
 									currentLod,
@@ -298,13 +298,13 @@ public class Building extends KmlGenericObject{
 				}
 			}
 
-			if (rs != null && rs.isBeforeFirst()) { // result not empty
+			if (rs != null && rs.isBeforeFirst()) { // result not empty  // @TODO: process the data
 
 				switch (work.getDisplayForm().getForm()) {
 				case DisplayForm.FOOTPRINT:
 					return createPlacemarksForFootprint(rs, work);
 
-				case DisplayForm.EXTRUDED:
+				case DisplayForm.EXTRUDED:  // @TODO: process the data
 					PreparedStatement psQuery2 = null;
 					ResultSet rs2 = null;
 

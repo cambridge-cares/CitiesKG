@@ -1466,7 +1466,7 @@ public abstract class KmlGenericObject {
 				if (transformer != null)
 					unconvertedGeom = transformer.applyTransformation(unconvertedGeom);
 
-				GeometryObject groundSurface = convertToWGS84(unconvertedGeom);
+				GeometryObject groundSurface = convertToWGS84(unconvertedGeom); // apply transformation, coordinates have totally been changed
 				unconvertedGeom = null;
 
 				int dim = groundSurface.getDimension();
