@@ -37,6 +37,7 @@ import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.GeometryObject;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
 import org.citygml4j.geometry.Matrix;
@@ -64,6 +65,10 @@ public class DBGenericCityObject implements DBImporter {
 	private boolean affineTransformation;
 	private int nullGeometryType;
 	private String nullGeometryTypeName;
+	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
+	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
+	private static final String IRI_GRAPH_OBJECT_REL = "genericcityobject/";
+	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBGenericCityObject(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;
@@ -85,6 +90,11 @@ public class DBGenericCityObject implements DBImporter {
 				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
+
+		if (importer.isBlazegraph()) {
+			stmt = getSPARQLStatement();
+		}
+
 		psGenericCityObject = batchConn.prepareStatement(stmt);
 
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
@@ -92,6 +102,56 @@ public class DBGenericCityObject implements DBImporter {
 		implicitGeometryImporter = importer.getImporter(DBImplicitGeometry.class);
 		geometryConverter = importer.getGeometryConverter();
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	private String getSPARQLStatement(){
+		String param = "  ?;";
+		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+				SchemaManagerAdapter.ONTO_CLASS + param +
+				SchemaManagerAdapter.ONTO_CLASS_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_FUNCTION + param +
+				SchemaManagerAdapter.ONTO_FUNCTION_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_USAGE + param +
+				SchemaManagerAdapter.ONTO_USAGE_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_LOD0_TERRAIN_INTERSECTION + param +
+				SchemaManagerAdapter.ONTO_LOD1_TERRAIN_INTERSECTION + param +
+				SchemaManagerAdapter.ONTO_LOD2_TERRAIN_INTERSECTION + param +
+				SchemaManagerAdapter.ONTO_LOD3_TERRAIN_INTERSECTION + param +
+				SchemaManagerAdapter.ONTO_LOD4_TERRAIN_INTERSECTION + param +
+				SchemaManagerAdapter.ONTO_LOD0_BREP_ID + param +
+				SchemaManagerAdapter.ONTO_LOD1_BREP_ID + param +
+				SchemaManagerAdapter.ONTO_LOD2_BREP_ID + param +
+				SchemaManagerAdapter.ONTO_LOD3_BREP_ID + param +
+				SchemaManagerAdapter.ONTO_LOD4_BREP_ID + param +
+				SchemaManagerAdapter.ONTO_LOD0_OTHER_GEOM + param +
+				SchemaManagerAdapter.ONTO_LOD1_OTHER_GEOM + param +
+				SchemaManagerAdapter.ONTO_LOD2_OTHER_GEOM + param +
+				SchemaManagerAdapter.ONTO_LOD3_OTHER_GEOM + param +
+				SchemaManagerAdapter.ONTO_LOD4_OTHER_GEOM + param +
+				SchemaManagerAdapter.ONTO_LOD0_IMPLICIT_REP_ID + param +
+				SchemaManagerAdapter.ONTO_LOD1_IMPLICIT_REP_ID + param +
+				SchemaManagerAdapter.ONTO_LOD2_IMPLICIT_REP_ID + param +
+				SchemaManagerAdapter.ONTO_LOD3_IMPLICIT_REP_ID + param +
+				SchemaManagerAdapter.ONTO_LOD4_IMPLICIT_REP_ID + param +
+				SchemaManagerAdapter.ONTO_LOD0_IMPLICIT_REF_POINT + param +
+				SchemaManagerAdapter.ONTO_LOD1_IMPLICIT_REF_POINT + param +
+				SchemaManagerAdapter.ONTO_LOD2_IMPLICIT_REF_POINT + param +
+				SchemaManagerAdapter.ONTO_LOD3_IMPLICIT_REF_POINT + param +
+				SchemaManagerAdapter.ONTO_LOD4_IMPLICIT_REF_POINT + param +
+				SchemaManagerAdapter.ONTO_LOD0_IMPLICIT_TRANSFORMATION + param +
+				SchemaManagerAdapter.ONTO_LOD1_IMPLICIT_TRANSFORMATION + param +
+				SchemaManagerAdapter.ONTO_LOD2_IMPLICIT_TRANSFORMATION + param +
+				SchemaManagerAdapter.ONTO_LOD3_IMPLICIT_TRANSFORMATION + param +
+				SchemaManagerAdapter.ONTO_LOD4_IMPLICIT_TRANSFORMATION + param +
+				(hasObjectClassIdColumn ? SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param : "") +
+				".}" +
+				"}";
+
+		return stmt;
 	}
 
 	protected long doImport(GenericCityObject genericCityObject) throws CityGMLImportException, SQLException {
