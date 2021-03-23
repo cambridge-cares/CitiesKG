@@ -1,16 +1,24 @@
 package org.citydb.database.adapter.blazegraph;
 
+import org.apache.jena.query.ParameterizedSparqlString;
+import org.apache.jena.query.Query;
+import org.apache.jena.rdf.listeners.NullListener;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.adapter.*;
 import org.citydb.query.filter.selection.operator.spatial.SpatialOperatorName;
 import org.citydb.sqlbuilder.SQLStatement;
+import org.citydb.sqlbuilder.expression.PlaceHolder;
 import org.citydb.sqlbuilder.schema.Column;
 import org.citydb.sqlbuilder.select.PredicateToken;
 import org.citydb.sqlbuilder.select.projection.Function;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
+import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 
 public class SQLAdapter extends AbstractSQLAdapter {
 
@@ -159,14 +167,29 @@ public class SQLAdapter extends AbstractSQLAdapter {
     }
 
     @Override
-    public PreparedStatement prepareStatement(SQLStatement sqlstatement, Connection connection) throws SQLException {
+    public PreparedStatement prepareStatement(SQLStatement statement, Connection connection) throws SQLException {
         // @TODO: implement SQLStatement into SPARQLStatement translator
-        String sparql = sql2sparqlStatement.transformer1(sqlstatement);
-        PreparedStatement preparedStatement = connection.prepareStatement(sparql);  // same as importer
+        Query sparql = sql2sparqlStatement.transformer1(statement);
+        //String sparql = "SELECT * WHERE {GRAPH ? {?s ?p ?o}}";
+        //PreparedStatement preparedStatement = connection.prepareStatement(statement);  // same as importer
 
-        //PreparedStatement preparedStatement = connection.prepareStatement(statement.toString());
-        //fillPlaceHolders(statement, preparedStatement, connection);   // this will find placeholder"?" symbol and replace it with corresponding ID
+
+        PreparedStatement preparedStatement = connection.prepareStatement(sparql.toString());
+        preparedStatement.setString(1, "ID_0518100000225439");
+        //preparedStatement = transformStatement(preparedStatement);
+        //fillPlaceHolders(sparql, preparedStatement, connection);   // this will find placeholder"?" symbol and replace it with corresponding ID
 
         return preparedStatement;
     }
+
+    public PreparedStatement transformStatement(SQLStatement statement, Connection connection) throws SQLException {
+        // @TODO: implement SQLPreparedStatement into SPARQLPreparedStatement transformer
+        //Connection connection = sqlStmt.getConnection();
+
+        //ParameterMetaData metaData = sqlStmt.getParameterMetaData();
+        //String query =
+        // PreparedStatement preparedStatement = connection.prepareStatement(statement);
+        return null;
+    }
+
 }
