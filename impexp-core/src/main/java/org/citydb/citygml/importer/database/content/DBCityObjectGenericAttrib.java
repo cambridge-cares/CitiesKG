@@ -103,10 +103,11 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 							SchemaManagerAdapter.ONTO_PARRENT_GENATTRIB_ID + param +
 							SchemaManagerAdapter.ONTO_ROOT_GENATTRIB_ID + param + ".}}");
 		} else {
-			stmt.append("insert into ").append(schema).append(".cityobject_genericattrib (id, attrname, datatype," +
-					" strval, intval, realval, urival, dateval, unit, cityobject_id, " +
-					"parent_genattrib_id, root_genattrib_id) values ")
-					.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ");
+			stmt = new StringBuilder()
+					.append("insert into ").append(schema).append(".cityobject_genericattrib (id, attrname, datatype, strval, intval, realval, urival, dateval, unit, cityobject_id, parent_genattrib_id, root_genattrib_id) values ")
+					.append("(").append(importer.getDatabaseAdapter().getSQLAdapter().getNextSequenceValue(SequenceEnum.CITYOBJECT_GENERICATTRIB_ID_SEQ.getName()))
+					.append(", ?, ?, ?, ?, ?, ?, ?, ?, ?, ");
+
 			psGenericAttributeMember = batchConn.prepareStatement(stmt + "?, ?)");
 			psAtomicGenericAttribute = batchConn.prepareStatement(stmt + "null, " +
 					importer.getDatabaseAdapter().getSQLAdapter()
@@ -235,28 +236,22 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 				ps.setInt(++index, 1);
 
 				StringAttribute stringAttribute = (StringAttribute)genericAttribute;
+
 				if (stringAttribute.isSetValue()) {
-					if (isBlazegraph) {
-						ps.setString(++index, stringAttribute.getValue());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-					} else {
-						ps.setString(3, stringAttribute.getValue());
-					}
-				} else if (isBlazegraph) {
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
+					if (isBlazegraph) { ps.setString(++index, stringAttribute.getValue()); }
+					else { ps.setString(3, stringAttribute.getValue()); }
+				}else{
+					if (isBlazegraph) { ps.setObject(++index, NodeFactory.createBlankNode()); }
+					else { ps.setNull(3, Types.VARCHAR); }
+				}
+
+				if (isBlazegraph) {
 					ps.setObject(++index, NodeFactory.createBlankNode());
 					ps.setObject(++index, NodeFactory.createBlankNode());
 					ps.setObject(++index, NodeFactory.createBlankNode());
 					ps.setObject(++index, NodeFactory.createBlankNode());
 					ps.setObject(++index, NodeFactory.createBlankNode());
 				} else {
-					ps.setNull(3, Types.VARCHAR);
-
 					ps.setNull(4, Types.NULL);
 					ps.setNull(5, Types.NULL);
 					ps.setNull(6, Types.VARCHAR);
@@ -280,7 +275,9 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 					} else {
 						ps.setInt(4, intAttribute.getValue());
 					}
-				} else if (isBlazegraph) {
+				}
+
+				if (isBlazegraph) {
 					ps.setObject(++index, NodeFactory.createBlankNode());
 					ps.setObject(++index, NodeFactory.createBlankNode());
 					ps.setObject(++index, NodeFactory.createBlankNode());
@@ -290,7 +287,6 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 					ps.setObject(++index, NodeFactory.createBlankNode());
 				} else {
 					ps.setNull(4, Types.NULL);
-
 					ps.setNull(3, Types.VARCHAR);
 					ps.setNull(5, Types.NULL);
 					ps.setNull(6, Types.VARCHAR);

@@ -460,7 +460,7 @@ public class DBSurfaceGeometry implements DBImporter {
 
 
 					if (cityObjectId != 0) {
-						psGeomElem.setURL(++index, cityobjectURL);
+						psGeomElem.setLong(++index, cityObjectId); // Shiying: setURL cityobjectURL --> setLong cityObjectId
 					} else if (importer.isBlazegraph()) {
 						setBlankNode(psGeomElem, ++index);
 					} else {
