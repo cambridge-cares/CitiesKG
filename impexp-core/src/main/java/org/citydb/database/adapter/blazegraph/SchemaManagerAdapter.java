@@ -127,7 +127,7 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_IS_TEXTURE_PARAMETRIZATION = ONTO_PREFIX_NAME_ONTOCITYGML + "isTextureParametrization";
     public static final String ONTO_WORLD_TO_TEXTURE  = ONTO_PREFIX_NAME_ONTOCITYGML + "worldToTexture";
     public static final String ONTO_TEXTURE_COORDINATES  = ONTO_PREFIX_NAME_ONTOCITYGML + "textureCoordinates";
-    public static final String ONTO_LOD0_BREP_ID  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod1BrepId";
+    public static final String ONTO_LOD0_BREP_ID  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod0BrepId";
     public static final String ONTO_LOD1_BREP_ID  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod1BrepId";
     public static final String ONTO_LOD2_BREP_ID  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod2BrepId";
     public static final String ONTO_LOD3_BREP_ID  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod3BrepId";
