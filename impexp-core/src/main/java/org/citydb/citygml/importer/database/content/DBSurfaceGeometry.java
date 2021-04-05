@@ -458,15 +458,14 @@ public class DBSurfaceGeometry implements DBImporter {
 						psGeomElem.setObject(++index, obj);
 					}
 
-
 					if (cityObjectId != 0) {
-						psGeomElem.setLong(++index, cityObjectId); // Shiying: setURL cityobjectURL --> setLong cityObjectId
-					} else if (importer.isBlazegraph()) {
-						setBlankNode(psGeomElem, ++index);
-					} else {
-						psGeomElem.setNull(++index, Types.NULL);
-					}
 
+						if (importer.isBlazegraph()) { psGeomElem.setURL(++index, cityobjectURL);}
+						else { psGeomElem.setLong(++index, cityObjectId); }
+
+					} else if (importer.isBlazegraph()) { setBlankNode(psGeomElem, ++index);
+					} else { psGeomElem.setNull(++index, Types.NULL);
+					}
 
 					addBatch();
 				}

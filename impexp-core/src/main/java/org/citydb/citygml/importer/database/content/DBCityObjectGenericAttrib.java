@@ -172,11 +172,11 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 			try {
 				String uuid = importer.generateNewGmlId();
 				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
-				psGenericAttributeSet.setURL(index, url);
+				psGenericAttributeSet.setURL(index, url);  // index = 1
 				psAtomicGenericAttribute.setURL(index, url);
 				psGenericAttributeMember.setURL(index, url);
 				++index;
-				psGenericAttributeSet.setURL(index, url);
+				psGenericAttributeSet.setURL(index, url);	// index = 2
 				psAtomicGenericAttribute.setURL(index, url);
 				psGenericAttributeMember.setURL(index, url);
 			} catch (MalformedURLException e) {
@@ -229,65 +229,62 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 		} else {
 			@SuppressWarnings("resource")
 			PreparedStatement ps = rootId == 0 ? psAtomicGenericAttribute : psGenericAttributeMember;
-			ps.setString(++index, genericAttribute.getName());
+			if (isBlazegraph) { ps.setString(++index, genericAttribute.getName()); }	 // index = 3
+			else { ps.setString(1, genericAttribute.getName()); }
+
 
 			switch (genericAttribute.getCityGMLClass()) {
 			case STRING_ATTRIBUTE:
-				ps.setInt(++index, 1);
-
 				StringAttribute stringAttribute = (StringAttribute)genericAttribute;
 
-				if (stringAttribute.isSetValue()) {
-					if (isBlazegraph) { ps.setString(++index, stringAttribute.getValue()); }
-					else { ps.setString(3, stringAttribute.getValue()); }
-				}else{
-					if (isBlazegraph) { ps.setObject(++index, NodeFactory.createBlankNode()); }
-					else { ps.setNull(3, Types.VARCHAR); }
-				}
+				if (isBlazegraph){
+					ps.setInt(++index, 1);  // SPARQL index = 4
 
-				if (isBlazegraph) {
+					if (stringAttribute.isSetValue()) { ps.setString(++index, stringAttribute.getValue()); }
+					else{ ps.setObject(++index, NodeFactory.createBlankNode()); }
+
 					ps.setObject(++index, NodeFactory.createBlankNode());
 					ps.setObject(++index, NodeFactory.createBlankNode());
 					ps.setObject(++index, NodeFactory.createBlankNode());
 					ps.setObject(++index, NodeFactory.createBlankNode());
 					ps.setObject(++index, NodeFactory.createBlankNode());
-				} else {
+
+				}else{
+					ps.setInt(2, 1); // SQL pos = 2
+
+					if (stringAttribute.isSetValue()) { ps.setString(3, stringAttribute.getValue()); }
+					else{ ps.setNull(3, Types.VARCHAR); }
+
 					ps.setNull(4, Types.NULL);
 					ps.setNull(5, Types.NULL);
 					ps.setNull(6, Types.VARCHAR);
 					ps.setNull(7, Types.DATE);
 					ps.setNull(8, Types.VARCHAR);
 				}
+
 				break;
 			case INT_ATTRIBUTE:
-				ps.setInt(++index, 2);
-
 				IntAttribute intAttribute = (IntAttribute)genericAttribute;
-				if (intAttribute.isSetValue()) {
-					if (isBlazegraph) {
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setInt(5, intAttribute.getValue());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-					} else {
-						ps.setInt(4, intAttribute.getValue());
-					}
-				}
 
-				if (isBlazegraph) {
+				if (isBlazegraph){
+					ps.setInt(++index, 2); // SPARQL index = 4
+					ps.setObject(++index, NodeFactory.createBlankNode());
+
+					if (intAttribute.isSetValue()) {ps.setInt(++index, intAttribute.getValue()); }
+					else{ps.setObject(++index, NodeFactory.createBlankNode()); }
+
 					ps.setObject(++index, NodeFactory.createBlankNode());
 					ps.setObject(++index, NodeFactory.createBlankNode());
 					ps.setObject(++index, NodeFactory.createBlankNode());
 					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-				} else {
-					ps.setNull(4, Types.NULL);
+
+				}else{
+					ps.setInt(2, 2);  // SQL pos = 2
 					ps.setNull(3, Types.VARCHAR);
+
+					if (intAttribute.isSetValue()) { ps.setInt(4, intAttribute.getValue()); }
+					else{ ps.setNull(4, Types.NULL);}
+
 					ps.setNull(5, Types.NULL);
 					ps.setNull(6, Types.VARCHAR);
 					ps.setNull(7, Types.DATE);
@@ -295,163 +292,153 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 				}
 				break;
 			case DOUBLE_ATTRIBUTE:
-				ps.setInt(++index, 3);
-
 				DoubleAttribute doubleAttribute = (DoubleAttribute)genericAttribute;
-				if (doubleAttribute.isSetValue()) {
-					if (isBlazegraph) {
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setDouble(6, doubleAttribute.getValue());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-					} else {
-						ps.setDouble(5, doubleAttribute.getValue());
-					}
-				} else if (isBlazegraph) {
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-				} else {
-					ps.setNull(5, Types.NULL);
 
+				if (isBlazegraph){
+					ps.setInt(++index, 3);  // SPARQL index = 4
+					ps.setObject(++index, NodeFactory.createBlankNode());
+					ps.setObject(++index, NodeFactory.createBlankNode());
+
+					if (doubleAttribute.isSetValue()) { ps.setDouble(++index, doubleAttribute.getValue()); }
+					else{ ps.setObject(++index, NodeFactory.createBlankNode());}
+
+					ps.setObject(++index, NodeFactory.createBlankNode());
+					ps.setObject(++index, NodeFactory.createBlankNode());
+					ps.setObject(++index, NodeFactory.createBlankNode());
+
+				}else{
+					ps.setInt(2, 3);  // SQL pos = 2
 					ps.setNull(3, Types.VARCHAR);
 					ps.setNull(4, Types.NULL);
+
+					if (doubleAttribute.isSetValue()) { ps.setDouble(5, doubleAttribute.getValue()); }
+					else{ ps.setNull(5, Types.NULL);}
+
 					ps.setNull(6, Types.VARCHAR);
 					ps.setNull(7, Types.DATE);
 					ps.setNull(8, Types.VARCHAR);
+
 				}
 				break;
 			case URI_ATTRIBUTE:
-				ps.setInt(++index, 4);
-
 				UriAttribute uriAttribute = (UriAttribute)genericAttribute;
-				if (uriAttribute.isSetValue()) {
-					if (isBlazegraph) {
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setString(7, uriAttribute.getValue());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-					} else {
-						ps.setString(6, uriAttribute.getValue());
-					}
-				} else if (isBlazegraph) {
+
+				if (isBlazegraph){
+					ps.setInt(++index, 4);  // SPARQL index = 4
+
 					ps.setObject(++index, NodeFactory.createBlankNode());
 					ps.setObject(++index, NodeFactory.createBlankNode());
 					ps.setObject(++index, NodeFactory.createBlankNode());
+
+					if (uriAttribute.isSetValue()) { ps.setString(++index, uriAttribute.getValue());}
+					else { ps.setObject(++index, NodeFactory.createBlankNode());}
+
 					ps.setObject(++index, NodeFactory.createBlankNode());
 					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-				} else {
-					ps.setNull(6, Types.VARCHAR);
+
+				}else{
+					ps.setInt(2, 4); // SQL pos = 2
 
 					ps.setNull(3, Types.VARCHAR);
 					ps.setNull(4, Types.NULL);
 					ps.setNull(5, Types.NULL);
+
+					if (uriAttribute.isSetValue()) {ps.setString(6, uriAttribute.getValue());}
+					else{ps.setNull(6, Types.VARCHAR);}
+
 					ps.setNull(7, Types.DATE);
 					ps.setNull(8, Types.VARCHAR);
+
 				}
 				break;
 			case DATE_ATTRIBUTE:
-				ps.setInt(++index, 5);
-
 				DateAttribute dateAttribute = (DateAttribute)genericAttribute;
-				if (dateAttribute.isSetValue()) {
-					if (isBlazegraph) {
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setTimestamp(8, Timestamp.valueOf(dateAttribute.getValue().atStartOfDay()));
-						ps.setObject(++index, NodeFactory.createBlankNode());
-					} else {
-						ps.setTimestamp(7, Timestamp.valueOf(dateAttribute.getValue().atStartOfDay()));
-					}
-				} else if (isBlazegraph) {
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-				} else {
-					ps.setNull(7, Types.TIMESTAMP);
 
+				if (isBlazegraph){
+					ps.setInt(++index, 5);	// SPARQL index = 4
+					ps.setObject(++index, NodeFactory.createBlankNode());
+					ps.setObject(++index, NodeFactory.createBlankNode());
+					ps.setObject(++index, NodeFactory.createBlankNode());
+					ps.setObject(++index, NodeFactory.createBlankNode());
+
+					if (dateAttribute.isSetValue()) {ps.setTimestamp(++index, Timestamp.valueOf(dateAttribute.getValue().atStartOfDay()));}
+					else{ ps.setObject(++index, NodeFactory.createBlankNode()); }
+
+					ps.setObject(++index, NodeFactory.createBlankNode());
+
+				}else{
+					ps.setInt(2, 5);  // SQL pos = 2
 					ps.setNull(3, Types.VARCHAR);
 					ps.setNull(4, Types.NULL);
 					ps.setNull(5, Types.NULL);
 					ps.setNull(6, Types.VARCHAR);
+
+					if (dateAttribute.isSetValue()) {ps.setTimestamp(7, Timestamp.valueOf(dateAttribute.getValue().atStartOfDay()));}
+					else{ ps.setNull(7, Types.TIMESTAMP);}
+
 					ps.setNull(8, Types.VARCHAR);
+
 				}
 				break;
 			case MEASURE_ATTRIBUTE:
-				ps.setInt(++index, 6);
-
 				MeasureAttribute measureAttribute = (MeasureAttribute)genericAttribute;
-				if (measureAttribute.isSetValue()) {
-					if (isBlazegraph) {
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setDouble(6, measureAttribute.getValue().getValue());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setString(9, measureAttribute.getValue().getUom());
-					} else {
-						ps.setDouble(5, measureAttribute.getValue().getValue());
-						ps.setString(8, measureAttribute.getValue().getUom());
-					}
-				} else if (isBlazegraph) {
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-				} else {
-					ps.setNull(5, Types.NULL);
-					ps.setNull(8, Types.VARCHAR);
-				}
 
-				if (!isBlazegraph) {
+				if (isBlazegraph){
+					ps.setInt(++index, 6);	// SPARQL index = 4
+					ps.setObject(++index, NodeFactory.createBlankNode());
+					ps.setObject(++index, NodeFactory.createBlankNode());
+
+					if (measureAttribute.isSetValue()) {
+						ps.setDouble(5, measureAttribute.getValue().getValue());		// @TODO: to check if SPARQL index = 7
+						ps.setObject(++index, NodeFactory.createBlankNode());
+						ps.setObject(++index, NodeFactory.createBlankNode());
+						ps.setString(8, measureAttribute.getValue().getUom());		// @TODO: to check if SPARQL index = 10
+					}else{
+						ps.setObject(++index, NodeFactory.createBlankNode());
+						ps.setObject(++index, NodeFactory.createBlankNode());
+						ps.setObject(++index, NodeFactory.createBlankNode());
+						ps.setObject(++index, NodeFactory.createBlankNode());
+					}
+
+				}else{
+					ps.setInt(2, 6);  // SQL pos = 2
 					ps.setNull(3, Types.VARCHAR);
 					ps.setNull(4, Types.NULL);
+
+					if (measureAttribute.isSetValue()) {
+						ps.setDouble(5, measureAttribute.getValue().getValue());
+						ps.setString(8, measureAttribute.getValue().getUom());
+					}else{
+						ps.setNull(5, Types.NULL);
+						ps.setNull(8, Types.VARCHAR);
+					}
+
 					ps.setNull(6, Types.VARCHAR);
 					ps.setNull(7, Types.DATE);
 				}
+
 				break;
 			default:
+
 				if (isBlazegraph) {
 					ps.setObject(++index, NodeFactory.createBlankNode());
-				} else {
-					ps.setNull(++index, Types.NUMERIC);
+				}else{
+					ps.setNull(2, Types.NUMERIC);
 				}
 			}
 
 			if (isBlazegraph && genericAttribute.isSetParent()) {
 				ps.setURL(++index, (URL) ((AbstractGML)genericAttribute.getParent()).getLocalProperty(CoreConstants.OBJECT_URIID));
 			} else {
-				ps.setLong(++index, cityObjectId);
+				ps.setLong(9, cityObjectId);
 			}
 
+			// more for psGenericAttributeMember, in psAtomicGenericAttribute they are pre-set in SQL or set as Blanknode in SPARQL
 			if (rootId != 0) {
 				ps.setLong(++index, parentId);
 				ps.setLong(++index, rootId);
 			} else if (isBlazegraph) {
-				ps.setObject(++index, NodeFactory.createBlankNode());
+				ps.setObject(++index, NodeFactory.createBlankNode()); //TODO: there is not parentId or rootId in SPARQL??
 				ps.setObject(++index, NodeFactory.createBlankNode());
 			}
 
