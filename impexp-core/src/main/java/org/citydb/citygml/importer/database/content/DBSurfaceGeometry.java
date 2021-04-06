@@ -242,7 +242,7 @@ public class DBSurfaceGeometry implements DBImporter {
 	}
 
 	private void doImport(AbstractGeometry surfaceGeometry,
-			long surfaceGeometryId,
+			long surfaceGeometryId,			// id
 			long parentId,
 			long rootId,
 			boolean reverse,
@@ -414,61 +414,61 @@ public class DBSurfaceGeometry implements DBImporter {
 					if (!importer.isBlazegraph()) {
 						psGeomElem.setLong(++index, surfaceGeometryId);
 					}
-					psGeomElem.setString(++index, gmlId);		// SPARQL = 3, SQL = 2
 
-					if (parentId != 0) {
-						if (importer.isBlazegraph()) {
-							psGeomElem.setURL(++index, parentURL);
-							psGeomElem.setURL(++index, rootURL);
-						} else {
-							psGeomElem.setLong(++index, parentId);
-						}
-					} else {
-						if (importer.isBlazegraph()) {
-							setBlankNode(psGeomElem, ++index);
-						} else{
-							psGeomElem.setNull(++index, Types.NULL);
-						}
+					// set gmlId
+					psGeomElem.setString(++index, gmlId);        // SPARQL = 3, SQL = 2
+
+
+					// parentId
+					if (importer.isBlazegraph()) {
+						if (parentId != 0) { psGeomElem.setURL(++index, parentURL);} // SPARQL = 4
+						else{ psGeomElem.setObject(++index, NodeFactory.createBlankNode());}
+					}else{
+						if (parentId != 0) { psGeomElem.setLong(++index, parentId);} // SQL = 3
+						else{ psGeomElem.setNull(++index, Types.NULL);}
 					}
 
-					if (!importer.isBlazegraph()) {
+					// rootId
+					if (importer.isBlazegraph()) {
+						psGeomElem.setURL(++index, rootURL);
+					}else{
 						psGeomElem.setLong(++index, rootId);
 					}
-					psGeomElem.setInt(++index, 0);
+
+					psGeomElem.setInt(++index, 0);		// SQL  = 5, SPARQL = 6
 					psGeomElem.setInt(++index, 0);
 					psGeomElem.setInt(++index, 0);
 					psGeomElem.setInt(++index, isXlink ? 1 : 0);
-					psGeomElem.setInt(++index, reverse ? 1 : 0);
+					psGeomElem.setInt(++index, reverse ? 1 : 0);	// SQL = 9 , SPARQL = 10
 
+					// GeometryType (SQL 10) vs ImplicitGeometryType (SQL 12)
 					if (!isImplicit) {
-						psGeomElem.setObject(++index, obj);
+						psGeomElem.setObject(++index, obj);		// SQL = 10
 						if (importer.isBlazegraph()) {
 							setBlankNode(psGeomElem, ++index);
 							setBlankNode(psGeomElem, ++index);
 						} else {
-							psGeomElem.setNull(++index, nullGeometryType, nullGeometryTypeName);
-							psGeomElem.setNull(++index, nullGeometryType, nullGeometryTypeName);
+							psGeomElem.setNull(++index, nullGeometryType, nullGeometryTypeName);	// SQL = 11
+							psGeomElem.setNull(++index, nullGeometryType, nullGeometryTypeName);	// SQL = 12
 						}
 					} else {
 						if (importer.isBlazegraph()) {
-							setBlankNode(psGeomElem, ++index);
-							setBlankNode(psGeomElem, ++index);
+							setBlankNode(psGeomElem, ++index);		// SQL = 10
+							setBlankNode(psGeomElem, ++index);		// SQL = 11
 						}else {
 							psGeomElem.setNull(++index, nullGeometryType, nullGeometryTypeName);
 							psGeomElem.setNull(++index, nullGeometryType, nullGeometryTypeName);
 						}
-						psGeomElem.setObject(++index, obj);
+						psGeomElem.setObject(++index, obj);		// SQL = 12
 					}
 
 					if (cityObjectId != 0) {
-
-						if (importer.isBlazegraph()) { psGeomElem.setURL(++index, cityobjectURL);}
-						else { psGeomElem.setLong(++index, cityObjectId); }
-
-					} else if (importer.isBlazegraph()) { setBlankNode(psGeomElem, ++index);
-					} else { psGeomElem.setNull(++index, Types.NULL);
+						if (importer.isBlazegraph()) { psGeomElem.setURL(++index, cityobjectURL);}	// SPARQL = 14
+						else { psGeomElem.setLong(++index, cityObjectId); }		// SQL = 13
+					} else {
+						if (importer.isBlazegraph()) {setBlankNode(psGeomElem, ++index); }
+						else { psGeomElem.setNull(++index, Types.NULL); }
 					}
-
 					addBatch();
 				}
 			}
