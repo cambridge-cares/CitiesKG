@@ -27,11 +27,14 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
@@ -40,6 +43,7 @@ import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
+import org.citydb.util.CoreConstants;
 import org.citygml4j.geometry.Matrix;
 import org.citygml4j.model.citygml.core.ImplicitGeometry;
 import org.citygml4j.model.citygml.core.ImplicitRepresentationProperty;
@@ -91,6 +95,7 @@ public class DBGenericCityObject implements DBImporter {
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
 
+		// Modification for SPARQL
 		if (importer.isBlazegraph()) {
 			stmt = getSPARQLStatement();
 		}
@@ -162,37 +167,67 @@ public class DBGenericCityObject implements DBImporter {
 		// import city object information
 		long genericCityObjectId = cityObjectImporter.doImport(genericCityObject, featureType);
 
+		int index = 0;
+		URL objectURL = null;
+		URL rootURL = null;
+		URL parentURL = null;
+
 		// import generic city object information
-		// primary id
-		psGenericCityObject.setLong(1, genericCityObjectId);
+		if (importer.isBlazegraph()) {
+			try {
+				String uuid = genericCityObject.getId();
+				if (uuid.isEmpty()) {
+					uuid = importer.generateNewGmlId();
+				}
+				objectURL = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+			} catch (MalformedURLException e) {
+				psGenericCityObject.setObject(++index, NodeFactory.createBlankNode());
+			}
+			psGenericCityObject.setURL(++index, objectURL);   // index = 1
+			// primary id
+			psGenericCityObject.setURL(++index, objectURL);     //  index = 2
+			genericCityObject.setLocalProperty(CoreConstants.OBJECT_URIID, objectURL);
+		} else {
+			// primary id, SQL index = 1
+			psGenericCityObject.setLong(++index, genericCityObjectId);
+		}
 
 		// gen:class
 		if (genericCityObject.isSetClazz() && genericCityObject.getClazz().isSetValue()) {
-			psGenericCityObject.setString(2, genericCityObject.getClazz().getValue());
-			psGenericCityObject.setString(3, genericCityObject.getClazz().getCodeSpace());
+			psGenericCityObject.setString(++index, genericCityObject.getClazz().getValue());
+			psGenericCityObject.setString(++index, genericCityObject.getClazz().getCodeSpace());
+		} else if (importer.isBlazegraph()) {
+			psGenericCityObject.setObject(++index, NodeFactory.createBlankNode());
+			psGenericCityObject.setObject(++index, NodeFactory.createBlankNode());
 		} else {
-			psGenericCityObject.setNull(2, Types.VARCHAR);
-			psGenericCityObject.setNull(3, Types.VARCHAR);
+			psGenericCityObject.setNull(++index, Types.VARCHAR);
+			psGenericCityObject.setNull(++index, Types.VARCHAR);
 		}
 
 		// gen:function
 		if (genericCityObject.isSetFunction()) {
 			valueJoiner.join(genericCityObject.getFunction(), Code::getValue, Code::getCodeSpace);
-			psGenericCityObject.setString(4, valueJoiner.result(0));
-			psGenericCityObject.setString(5, valueJoiner.result(1));
+			psGenericCityObject.setString(++index, valueJoiner.result(0));
+			psGenericCityObject.setString(++index, valueJoiner.result(1));
+		} else if (importer.isBlazegraph()) {
+			psGenericCityObject.setObject(++index, NodeFactory.createBlankNode());
+			psGenericCityObject.setObject(++index, NodeFactory.createBlankNode());
 		} else {
-			psGenericCityObject.setNull(4, Types.VARCHAR);
-			psGenericCityObject.setNull(5, Types.VARCHAR);
+			psGenericCityObject.setNull(++index, Types.VARCHAR);
+			psGenericCityObject.setNull(++index, Types.VARCHAR);
 		}
 
 		// gen:usage
 		if (genericCityObject.isSetUsage()) {
 			valueJoiner.join(genericCityObject.getUsage(), Code::getValue, Code::getCodeSpace);
-			psGenericCityObject.setString(6, valueJoiner.result(0));
-			psGenericCityObject.setString(7, valueJoiner.result(1));
+			psGenericCityObject.setString(++index, valueJoiner.result(0));   // index = 6
+			psGenericCityObject.setString(++index, valueJoiner.result(1));
+		} else if (importer.isBlazegraph()) {
+			psGenericCityObject.setObject(++index, NodeFactory.createBlankNode());
+			psGenericCityObject.setObject(++index, NodeFactory.createBlankNode());
 		} else {
-			psGenericCityObject.setNull(6, Types.VARCHAR);
-			psGenericCityObject.setNull(7, Types.VARCHAR);
+			psGenericCityObject.setNull(++index, Types.VARCHAR);
+			psGenericCityObject.setNull(++index, Types.VARCHAR);
 		}
 
 		// gen:lodXTerrainIntersectionCurve
@@ -225,10 +260,16 @@ public class DBGenericCityObject implements DBImporter {
 
 			if (multiLine != null) {
 				Object multiLineObj = importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(multiLine, batchConn);
-				psGenericCityObject.setObject(8 + i, multiLineObj);
-			} else
-				psGenericCityObject.setNull(8 + i, nullGeometryType, nullGeometryTypeName);
+				psGenericCityObject.setObject(++index, multiLineObj);    // 8 + i
+			} else if (importer.isBlazegraph()) {
+				psGenericCityObject.setObject(++index, NodeFactory.createBlankNode());
+			} else {
+				psGenericCityObject.setNull(++index, nullGeometryType, nullGeometryTypeName);
+			}
 		}
+
+		int BrepId_index = 0;
+		int Geom_index = 0;
 
 		// gen:lodXGeometry
 		for (int i = 0; i < 5; i++) {
@@ -277,16 +318,30 @@ public class DBGenericCityObject implements DBImporter {
 				}
 			}
 
+			BrepId_index = ++index;
+
 			if (geometryId != 0)
-				psGenericCityObject.setLong(13 + i, geometryId);
+				psGenericCityObject.setLong(BrepId_index, geometryId);  // 13 + i
+			else if (importer.isBlazegraph())
+				psGenericCityObject.setObject(BrepId_index, NodeFactory.createBlankNode());
 			else
-				psGenericCityObject.setNull(13 + i, Types.NULL);
+				psGenericCityObject.setNull(BrepId_index, Types.NULL);  // 13 + i
+
+			Geom_index = BrepId_index + 5;
 
 			if (geometryObject != null)
-				psGenericCityObject.setObject(18 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
+				psGenericCityObject.setObject(Geom_index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
+			else if (importer.isBlazegraph())
+				psGenericCityObject.setObject(Geom_index, NodeFactory.createBlankNode());
 			else
-				psGenericCityObject.setNull(18 + i, nullGeometryType, nullGeometryTypeName);
+				psGenericCityObject.setNull(Geom_index, nullGeometryType, nullGeometryTypeName);
 		}
+
+		index = Geom_index;  // @TODO: Check if index = 18 + 4
+
+		int implicitId_index = 0;
+		int pointGeom_index = 0;
+		int matrixString_index = 0;
 
 		// gen:lodXImplicitRepresentation
 		for (int i = 0; i < 5; i++) {
@@ -335,25 +390,37 @@ public class DBGenericCityObject implements DBImporter {
 				}
 			}
 
-			if (implicitId != 0)
-				psGenericCityObject.setLong(23 + i, implicitId);
-			else
-				psGenericCityObject.setNull(23 + i, Types.NULL);
+			implicitId_index = ++index;
+			pointGeom_index = implicitId_index + 5;
+			matrixString_index = pointGeom_index + 5;
 
-			if (pointGeom != null)
-				psGenericCityObject.setObject(28 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
+			if (implicitId != 0)	// 23 + i
+				psGenericCityObject.setLong(implicitId_index, implicitId);
+			else if (importer.isBlazegraph())
+				psGenericCityObject.setObject(implicitId_index, NodeFactory.createBlankNode());
 			else
-				psGenericCityObject.setNull(28 + i, nullGeometryType, nullGeometryTypeName);
+				psGenericCityObject.setNull(implicitId_index, Types.NULL);
 
-			if (matrixString != null)
-				psGenericCityObject.setString(33 + i, matrixString);
+			if (pointGeom != null)	// 28 + i
+				psGenericCityObject.setObject(pointGeom_index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
+			else if (importer.isBlazegraph())
+				psGenericCityObject.setObject(pointGeom_index, NodeFactory.createBlankNode());
 			else
-				psGenericCityObject.setNull(33 + i, Types.VARCHAR);
+				psGenericCityObject.setNull(pointGeom_index, nullGeometryType, nullGeometryTypeName);
+
+			if (matrixString != null)	// 33 + i
+				psGenericCityObject.setString(matrixString_index, matrixString);
+			else if (importer.isBlazegraph())
+				psGenericCityObject.setObject(matrixString_index, NodeFactory.createBlankNode());
+			else
+				psGenericCityObject.setNull(matrixString_index, Types.VARCHAR);
 		}
+
+		index = matrixString_index;
 
 		// objectclass id
 		if (hasObjectClassIdColumn)
-			psGenericCityObject.setLong(38, featureType.getObjectClassId());
+			psGenericCityObject.setLong(++index, featureType.getObjectClassId());	// 38
 
 		psGenericCityObject.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
