@@ -414,7 +414,8 @@ public class DBSurfaceGeometry implements DBImporter {
 					if (!importer.isBlazegraph()) {
 						psGeomElem.setLong(++index, surfaceGeometryId);
 					}
-					psGeomElem.setString(++index, gmlId);
+					psGeomElem.setString(++index, gmlId);		// SPARQL = 3, SQL = 2
+
 					if (parentId != 0) {
 						if (importer.isBlazegraph()) {
 							psGeomElem.setURL(++index, parentURL);
@@ -429,6 +430,7 @@ public class DBSurfaceGeometry implements DBImporter {
 							psGeomElem.setNull(++index, Types.NULL);
 						}
 					}
+
 					if (!importer.isBlazegraph()) {
 						psGeomElem.setLong(++index, rootId);
 					}
