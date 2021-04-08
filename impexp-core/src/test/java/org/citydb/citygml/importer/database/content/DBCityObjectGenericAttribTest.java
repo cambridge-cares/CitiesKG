@@ -43,7 +43,7 @@ public class DBCityObjectGenericAttribTest extends DBTest{
 
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
                 "BASE <http://localhost/berlin/> " +
-                "INSERT DATA { GRAPH <cityobjectgenericattrib/> { ? ocgml:id 3;ocgml:attrName  ?;" +
+                "INSERT DATA { GRAPH <cityobjectgenericattrib/> { ? ocgml:id  ?;ocgml:attrName  ?;" +
                 "ocgml:dataType  ?;ocgml:strVal  ?;ocgml:intVal  ?;ocgml:realVal  ?;" +
                 "ocgml:uriVal  ?;ocgml:dateVal  ?;ocgml:unit  ?;ocgml:cityObjectId  ?;";
         String generated;

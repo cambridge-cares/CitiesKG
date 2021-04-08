@@ -13,7 +13,7 @@ public class DBExternalReferenceTest extends DBTest {
                 "BASE <http://localhost/berlin/> " +
                 "INSERT DATA " +
                 "{ GRAPH <externalreference/> " +
-                "{ ? ocgml:idnullocgml:infoSys  ?;" +
+                "{ ? ocgml:id  ?;ocgml:infoSys  ?;" +
                 "ocgml:name  ?;ocgml:URI  ?;ocgml:cityObjectId  ?;.}}";
         String generated;
 

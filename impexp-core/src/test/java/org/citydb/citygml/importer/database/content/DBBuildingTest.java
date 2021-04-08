@@ -4,9 +4,9 @@ import org.junit.jupiter.api.Test;
 import java.lang.reflect.Method;
 import static org.junit.jupiter.api.Assertions.*;
 
-class DBBuildingTest extends DBTest{
+public class DBBuildingTest extends DBTest{
     @Test
-    void getSPARQLStatementTest() {
+    public void getSPARQLStatementTest() {
         // SYL: this is actually the preparedStatement of psCityObject
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
                 "BASE <http://localhost/berlin/> " +

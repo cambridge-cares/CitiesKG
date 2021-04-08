@@ -23,3 +23,6 @@ db/blazegraph.jar
 db/citiesKG.jnl
 db/rules.log
 db/vocabularies/target/
+db/*.gml
+db/appearance
+
