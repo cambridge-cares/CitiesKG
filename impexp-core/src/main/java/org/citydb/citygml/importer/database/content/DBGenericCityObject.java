@@ -69,8 +69,8 @@ public class DBGenericCityObject implements DBImporter {
 	private boolean affineTransformation;
 	private int nullGeometryType;
 	private String nullGeometryTypeName;
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
-	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
+	private static final String IRI_GRAPH_BASE =  "http://www.theworldavatar.com/citieskg/"; //"http://localhost/berlin/";
+	private static final String PREFIX_ONTOCITYGML = "http://theworldavatar.com/ontology/ontocitygml/citieskg";//"http://locahost/ontocitygml/";
 	private static final String IRI_GRAPH_OBJECT_REL = "genericcityobject/";
 	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
@@ -181,7 +181,7 @@ public class DBGenericCityObject implements DBImporter {
 				}
 				objectURL = new URL(IRI_GRAPH_OBJECT + uuid + "/");
 			} catch (MalformedURLException e) {
-				psGenericCityObject.setObject(++index, NodeFactory.createBlankNode());
+				setBlankNode(psGenericCityObject, ++index);
 			}
 			psGenericCityObject.setURL(++index, objectURL);   // index = 1
 			// primary id
@@ -197,8 +197,8 @@ public class DBGenericCityObject implements DBImporter {
 			psGenericCityObject.setString(++index, genericCityObject.getClazz().getValue());
 			psGenericCityObject.setString(++index, genericCityObject.getClazz().getCodeSpace());
 		} else if (importer.isBlazegraph()) {
-			psGenericCityObject.setObject(++index, NodeFactory.createBlankNode());
-			psGenericCityObject.setObject(++index, NodeFactory.createBlankNode());
+			setBlankNode(psGenericCityObject, ++index);
+			setBlankNode(psGenericCityObject, ++index);
 		} else {
 			psGenericCityObject.setNull(++index, Types.VARCHAR);
 			psGenericCityObject.setNull(++index, Types.VARCHAR);
@@ -210,8 +210,8 @@ public class DBGenericCityObject implements DBImporter {
 			psGenericCityObject.setString(++index, valueJoiner.result(0));
 			psGenericCityObject.setString(++index, valueJoiner.result(1));
 		} else if (importer.isBlazegraph()) {
-			psGenericCityObject.setObject(++index, NodeFactory.createBlankNode());
-			psGenericCityObject.setObject(++index, NodeFactory.createBlankNode());
+			setBlankNode(psGenericCityObject, ++index);
+			setBlankNode(psGenericCityObject, ++index);
 		} else {
 			psGenericCityObject.setNull(++index, Types.VARCHAR);
 			psGenericCityObject.setNull(++index, Types.VARCHAR);
@@ -223,8 +223,8 @@ public class DBGenericCityObject implements DBImporter {
 			psGenericCityObject.setString(++index, valueJoiner.result(0));   // index = 6
 			psGenericCityObject.setString(++index, valueJoiner.result(1));
 		} else if (importer.isBlazegraph()) {
-			psGenericCityObject.setObject(++index, NodeFactory.createBlankNode());
-			psGenericCityObject.setObject(++index, NodeFactory.createBlankNode());
+			setBlankNode(psGenericCityObject, ++index);
+			setBlankNode(psGenericCityObject, ++index);
 		} else {
 			psGenericCityObject.setNull(++index, Types.VARCHAR);
 			psGenericCityObject.setNull(++index, Types.VARCHAR);
@@ -323,7 +323,7 @@ public class DBGenericCityObject implements DBImporter {
 			if (geometryId != 0)
 				psGenericCityObject.setLong(BrepId_index, geometryId);  // 13 + i
 			else if (importer.isBlazegraph())
-				psGenericCityObject.setObject(BrepId_index, NodeFactory.createBlankNode());
+				setBlankNode(psGenericCityObject, ++index);
 			else
 				psGenericCityObject.setNull(BrepId_index, Types.NULL);  // 13 + i
 
@@ -332,7 +332,7 @@ public class DBGenericCityObject implements DBImporter {
 			if (geometryObject != null)
 				psGenericCityObject.setObject(Geom_index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
 			else if (importer.isBlazegraph())
-				psGenericCityObject.setObject(Geom_index, NodeFactory.createBlankNode());
+				setBlankNode(psGenericCityObject, ++index);
 			else
 				psGenericCityObject.setNull(Geom_index, nullGeometryType, nullGeometryTypeName);
 		}
@@ -397,21 +397,21 @@ public class DBGenericCityObject implements DBImporter {
 			if (implicitId != 0)	// 23 + i
 				psGenericCityObject.setLong(implicitId_index, implicitId);
 			else if (importer.isBlazegraph())
-				psGenericCityObject.setObject(implicitId_index, NodeFactory.createBlankNode());
+				setBlankNode(psGenericCityObject, ++index);
 			else
 				psGenericCityObject.setNull(implicitId_index, Types.NULL);
 
 			if (pointGeom != null)	// 28 + i
 				psGenericCityObject.setObject(pointGeom_index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
 			else if (importer.isBlazegraph())
-				psGenericCityObject.setObject(pointGeom_index, NodeFactory.createBlankNode());
+				setBlankNode(psGenericCityObject, ++index);
 			else
 				psGenericCityObject.setNull(pointGeom_index, nullGeometryType, nullGeometryTypeName);
 
 			if (matrixString != null)	// 33 + i
 				psGenericCityObject.setString(matrixString_index, matrixString);
 			else if (importer.isBlazegraph())
-				psGenericCityObject.setObject(matrixString_index, NodeFactory.createBlankNode());
+				setBlankNode(psGenericCityObject, ++index);
 			else
 				psGenericCityObject.setNull(matrixString_index, Types.VARCHAR);
 		}
@@ -446,4 +446,10 @@ public class DBGenericCityObject implements DBImporter {
 		psGenericCityObject.close();
 	}
 
+	/**
+	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
+	 */
+	private void setBlankNode(PreparedStatement smt, int index) throws CityGMLImportException {
+		importer.setBlankNode(smt, index);
+	}
 }
