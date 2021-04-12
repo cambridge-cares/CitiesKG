@@ -69,7 +69,7 @@ public class DBGenericCityObject implements DBImporter {
 	private boolean affineTransformation;
 	private int nullGeometryType;
 	private String nullGeometryTypeName;
-	private static final String IRI_GRAPH_BASE =  "http://www.theworldavatar.com/citieskg/"; //"http://localhost/berlin/";
+	private static final String IRI_GRAPH_BASE =  "http://www.theworldavatar.com/citieskg/"; //"http://localhost/berlin/";  //@TODO: try out with the port number
 	private static final String PREFIX_ONTOCITYGML = "http://theworldavatar.com/ontology/ontocitygml/citieskg";//"http://locahost/ontocitygml/";
 	private static final String IRI_GRAPH_OBJECT_REL = "genericcityobject/";
 	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
