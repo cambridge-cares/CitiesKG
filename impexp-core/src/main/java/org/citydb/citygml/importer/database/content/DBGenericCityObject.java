@@ -323,7 +323,7 @@ public class DBGenericCityObject implements DBImporter {
 			if (geometryId != 0)
 				psGenericCityObject.setLong(BrepId_index, geometryId);  // 13 + i
 			else if (importer.isBlazegraph())
-				setBlankNode(psGenericCityObject, ++index);
+				setBlankNode(psGenericCityObject, BrepId_index);
 			else
 				psGenericCityObject.setNull(BrepId_index, Types.NULL);  // 13 + i
 
@@ -332,7 +332,7 @@ public class DBGenericCityObject implements DBImporter {
 			if (geometryObject != null)
 				psGenericCityObject.setObject(Geom_index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
 			else if (importer.isBlazegraph())
-				setBlankNode(psGenericCityObject, ++index);
+				setBlankNode(psGenericCityObject, Geom_index);
 			else
 				psGenericCityObject.setNull(Geom_index, nullGeometryType, nullGeometryTypeName);
 		}
@@ -397,21 +397,21 @@ public class DBGenericCityObject implements DBImporter {
 			if (implicitId != 0)	// 23 + i
 				psGenericCityObject.setLong(implicitId_index, implicitId);
 			else if (importer.isBlazegraph())
-				setBlankNode(psGenericCityObject, ++index);
+				setBlankNode(psGenericCityObject, implicitId_index);
 			else
 				psGenericCityObject.setNull(implicitId_index, Types.NULL);
 
 			if (pointGeom != null)	// 28 + i
 				psGenericCityObject.setObject(pointGeom_index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
 			else if (importer.isBlazegraph())
-				setBlankNode(psGenericCityObject, ++index);
+				setBlankNode(psGenericCityObject, pointGeom_index);
 			else
 				psGenericCityObject.setNull(pointGeom_index, nullGeometryType, nullGeometryTypeName);
 
 			if (matrixString != null)	// 33 + i
 				psGenericCityObject.setString(matrixString_index, matrixString);
 			else if (importer.isBlazegraph())
-				setBlankNode(psGenericCityObject, ++index);
+				setBlankNode(psGenericCityObject, matrixString_index);
 			else
 				psGenericCityObject.setNull(matrixString_index, Types.VARCHAR);
 		}
