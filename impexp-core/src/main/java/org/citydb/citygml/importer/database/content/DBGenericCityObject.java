@@ -164,6 +164,8 @@ public class DBGenericCityObject implements DBImporter {
 		if (featureType == null)
 			throw new SQLException("Failed to retrieve feature type.");
 
+		// "http://www.theworldavatar.com:83/citieskg/"
+
 		// import city object information
 		long genericCityObjectId = cityObjectImporter.doImport(genericCityObject, featureType);
 

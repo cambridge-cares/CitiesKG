@@ -2299,10 +2299,26 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod0ImplicitRefPoint -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod0ImplicitRefPoint">
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#geometry"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod0ImplicitRepresentation -->
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod0ImplicitRepresentation">
         <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod0Relation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod0ImplicitTransformation -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod0ImplicitTransformation">
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#transformationMatrix"/>
     </owl:ObjectProperty>
     
 
@@ -2331,6 +2347,14 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod0OtherGeom -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod0OtherGeom">
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#geometry"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod0Relation -->
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod0Relation"/>
@@ -2340,7 +2364,7 @@
     <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod0TerrainIntersection -->
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod0TerrainIntersection">
-        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod0Relation"/>
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#geometry"/>
     </owl:ObjectProperty>
     
 
@@ -2353,10 +2377,26 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod1ImplicitRefPoint -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod1ImplicitRefPoint">
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#geometry"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod1ImplicitRepresentation -->
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod1ImplicitRepresentation">
         <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod1Relation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod1ImplicitTransformation -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod1ImplicitTransformation">
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#transformationMatrix"/>
     </owl:ObjectProperty>
     
 
@@ -2385,6 +2425,14 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod1OtherGeom -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod1OtherGeom">
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#geometry"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod1Relation -->
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod1Relation"/>
@@ -2402,7 +2450,7 @@
     <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod1TerrainIntersection -->
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod1TerrainIntersection">
-        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod1Relation"/>
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#geometry"/>
     </owl:ObjectProperty>
     
 
@@ -2415,10 +2463,26 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod2ImplicitRefPoint -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod2ImplicitRefPoint">
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#geometry"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod2ImplicitRepresentation -->
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod2ImplicitRepresentation">
         <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod2Relation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod2ImplicitTransformation -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod2ImplicitTransformation">
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#transformationMatrix"/>
     </owl:ObjectProperty>
     
 
@@ -2443,6 +2507,14 @@
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod2MultiSurface">
         <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod2Relation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod2OtherGeom -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod2OtherGeom">
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#geometry"/>
     </owl:ObjectProperty>
     
 
@@ -2473,7 +2545,7 @@
     <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod2TerrainIntersection -->
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod2TerrainIntersection">
-        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod2Relation"/>
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#geometry"/>
     </owl:ObjectProperty>
     
 
@@ -2486,10 +2558,26 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod3ImplicitRefPoint -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod3ImplicitRefPoint">
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#geometry"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod3ImplicitRepresentation -->
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod3ImplicitRepresentation">
         <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod3Relation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod3ImplicitTransformation -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod3ImplicitTransformation">
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#transformationMatrix"/>
     </owl:ObjectProperty>
     
 
@@ -2514,6 +2602,14 @@
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod3MultiSurface">
         <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod3Relation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod3OtherGeom -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod3OtherGeom">
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#geometry"/>
     </owl:ObjectProperty>
     
 
@@ -2543,7 +2639,7 @@
     <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod3TerrainIntersection -->
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod3TerrainIntersection">
-        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod3Relation"/>
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#geometry"/>
     </owl:ObjectProperty>
     
 
@@ -2556,10 +2652,26 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod4ImplicitRefPoint -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod4ImplicitRefPoint">
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#geometry"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod4ImplicitRepresentation -->
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod4ImplicitRepresentation">
         <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod4Relation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod4ImplicitTransformation -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod4ImplicitTransformation">
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#transformationMatrix"/>
     </owl:ObjectProperty>
     
 
@@ -2584,6 +2696,14 @@
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod4MultiSurface">
         <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod4Relation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod4OtherGeom -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod4OtherGeom">
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#geometry"/>
     </owl:ObjectProperty>
     
 
@@ -2613,7 +2733,7 @@
     <!-- http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod4TerrainIntersection -->
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod4TerrainIntersection">
-        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#lod4Relation"/>
+        <rdfs:subPropertyOf rdf:resource="http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#geometry"/>
     </owl:ObjectProperty>
     
 
