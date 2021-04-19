@@ -123,7 +123,7 @@ public class KmlSplitter {
 		Select select = builder.buildQuery(query);
 
 		// Added by Shiying
-		//boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value()); //@TODO: Try with KMLExporterManager
+		boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value()); //@TODO: Try with KMLExporterManager
 		//PreparedStatement stmt1 = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
 		//if (is_Blazegraph){
 		//	PreparedStatement stmt = databaseAdapter.getSQLAdapter().transformStatement(select, connection);
@@ -135,16 +135,16 @@ public class KmlSplitter {
 			int objectCount = 0;
 
 			while (rs.next() && shouldRun) {
+
+				//if (is_Blazegraph) {
+				//	String id_str = rs.getString(MappingConstants.GMLID);
+				//	String[] segments = path.split("/");
+				//	gmlId = segments[segments.length-1];
+				//}else {
 				long id = rs.getLong(MappingConstants.ID);
-				String gmlId = rs.getString(MappingConstants.GMLID);;
-
-				/*if (is_Blazegraph) { // added by Shiying
-					String path = rs.getString(MappingConstants.GMLID);
-					String[] segments = path.split("/");
-					gmlId = segments[segments.length-1];
-				}*/
+				String gmlId = rs.getString(MappingConstants.GMLID);
 				int objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
-
+				//}
 				GeometryObject envelope = null;
 				if (query.isSetTiling()) {
 					Object geomObj = rs.getObject(MappingConstants.ENVELOPE);

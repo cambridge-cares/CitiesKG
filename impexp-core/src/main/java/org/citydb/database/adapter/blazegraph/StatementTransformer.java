@@ -62,9 +62,11 @@ public class StatementTransformer {
 
         sb.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "objectClassId", "?objectclass_id");
         sb.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "gmlId", "?gmlid");
+        List<PlaceHolder<?>> placeHolders = sqlStatement.getInvolvedPlaceHolders();
+
         applyPredicate(sb, predicateTokens);
 
-        List<PlaceHolder<?>> placeHolders = sqlStatement.getInvolvedPlaceHolders();
+
         Query q = sb.build();
         return q;
     }
@@ -82,11 +84,12 @@ public class StatementTransformer {
                 conditionStr.append("(" + ((InOperator) predicateToken).getSubQueryExpression() + ")");
                 sb.addFilter(conditionStr.toString());
             } else if (predicateToken instanceof BinaryComparisonOperator) {
+
                 conditionStr.append("?" + ((Column) ((BinaryComparisonOperator) predicateTokens.get(i)).getLeftOperand()).getName());
                 conditionStr.append(" " + ((BinaryComparisonOperator) predicateTokens.get(i)).getSQLName() + " ");
-                conditionStr.append(((BinaryComparisonOperator) predicateTokens.get(i)).getRightOperand());
-                List<PlaceHolder<?>> placeHolders = null;
-                predicateTokens.get(1).getInvolvedPlaceHolders(placeHolders);
+                List<PlaceHolder<?>> placeHolders = new ArrayList<>();
+                predicateTokens.get(i).getInvolvedPlaceHolders(placeHolders);
+                conditionStr.append("\"" + (String) placeHolders.get(0).getValue() + "\"");
                 sb.addFilter(conditionStr.toString());
 
             } else {

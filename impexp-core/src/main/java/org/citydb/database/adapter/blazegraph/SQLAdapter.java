@@ -168,10 +168,9 @@ public class SQLAdapter extends AbstractSQLAdapter {
 
         // @TODO: implement SQLStatement into SPARQLStatement translator
 
-        PreparedStatement preparedStatement = null;
-        preparedStatement = transformStatement(statement, connection);
+        PreparedStatement preparedStatement = transformStatement(statement, connection);
 
-        preparedStatement.setString(1, "ID_0518100000225439");
+        //preparedStatement.setString(1, "ID_0518100000225439");
         //preparedStatement = transformStatement(preparedStatement);
         // this will find placeholder"?" symbol and replace it with corresponding ID
 
