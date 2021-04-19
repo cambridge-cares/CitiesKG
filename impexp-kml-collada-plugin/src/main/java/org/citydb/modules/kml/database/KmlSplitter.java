@@ -119,15 +119,15 @@ public class KmlSplitter {
 			builder.getBuildProperties().addProjectionColumn(MappingConstants.ENVELOPE); // add envelop to the builder projectionColumns
 		}
 
-		// create query statement
+		// create query statement: Top-level Feature ID Queue
 		Select select = builder.buildQuery(query);
 
-		boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value()); //@TODO: Try with KMLExporterManager
-
-		PreparedStatement stmt1 = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
-		if (is_Blazegraph){
-			PreparedStatement stmt = databaseAdapter.getSQLAdapter().transformStatement(select, connection);
-		};
+		// Added by Shiying
+		//boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value()); //@TODO: Try with KMLExporterManager
+		//PreparedStatement stmt1 = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
+		//if (is_Blazegraph){
+		//	PreparedStatement stmt = databaseAdapter.getSQLAdapter().transformStatement(select, connection);
+		//};
 
 		try (PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
 			 ResultSet rs = stmt.executeQuery()) {
@@ -138,11 +138,11 @@ public class KmlSplitter {
 				long id = rs.getLong(MappingConstants.ID);
 				String gmlId = rs.getString(MappingConstants.GMLID);;
 
-				if (is_Blazegraph) { // added by Shiying
+				/*if (is_Blazegraph) { // added by Shiying
 					String path = rs.getString(MappingConstants.GMLID);
 					String[] segments = path.split("/");
 					gmlId = segments[segments.length-1];
-				}
+				}*/
 				int objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
 
 				GeometryObject envelope = null;
