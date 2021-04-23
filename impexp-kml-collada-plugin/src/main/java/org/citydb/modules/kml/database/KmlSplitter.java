@@ -136,24 +136,39 @@ public class KmlSplitter {
 
 			while (rs.next() && shouldRun) {
 
-				//if (is_Blazegraph) {
-				//	String id_str = rs.getString(MappingConstants.GMLID);
-				//	String[] segments = path.split("/");
-				//	gmlId = segments[segments.length-1];
-				//}else {
-				long id = rs.getLong(MappingConstants.ID);
-				String gmlId = rs.getString(MappingConstants.GMLID);
-				int objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
-				//}
-				GeometryObject envelope = null;
-				if (query.isSetTiling()) {
-					Object geomObj = rs.getObject(MappingConstants.ENVELOPE);
-					if (!rs.wasNull() && geomObj != null)
-						envelope = databaseAdapter.getGeometryConverter().getEnvelope(geomObj);
+				if (is_Blazegraph) {
+					String id_str = rs.getString(MappingConstants.ID);
+					String gmlId = rs.getString(MappingConstants.GMLID);
+					int objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
+
+					GeometryObject envelope = null;
+					if (query.isSetTiling()) {
+						Object geomObj = rs.getObject(MappingConstants.ENVELOPE);
+						if (!rs.wasNull() && geomObj != null)
+							envelope = databaseAdapter.getGeometryConverter().getEnvelope(geomObj);
+					}
+
+					// Should go to the implementation for Blazegraph
+					addWorkToQueue(id_str, gmlId, objectClassId, envelope, activeTile, false);
+					objectCount++;
+
+				}else {
+					long id = rs.getLong(MappingConstants.ID);
+					String gmlId = rs.getString(MappingConstants.GMLID);
+					int objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
+
+					GeometryObject envelope = null;
+					if (query.isSetTiling()) {
+						Object geomObj = rs.getObject(MappingConstants.ENVELOPE);
+						if (!rs.wasNull() && geomObj != null)
+							envelope = databaseAdapter.getGeometryConverter().getEnvelope(geomObj);
+					}
+
+					addWorkToQueue(id, gmlId, objectClassId, envelope, activeTile, false);
+					objectCount++;
 				}
 
-				addWorkToQueue(id, gmlId, objectClassId, envelope, activeTile, false);
-				objectCount++;
+
 			}
 
 			if (query.isSetTiling())
@@ -174,6 +189,89 @@ public class KmlSplitter {
 		shouldRun = false;
 	}
 
+	// For Blazegraph, "String id" instead of "long id"
+	private void addWorkToQueue(String id, String gmlId, int objectClassId, GeometryObject envelope, Tile activeTile, boolean isCityObjectGroupMember) throws SQLException, FilterException {
+		FeatureType featureType = schemaMapping.getFeatureType(objectClassId);
+
+		// In order to avoid the duplication of export, cityobjectgroup members
+		// should not be exported if it belongs to the feature types (except CityObjectGroup)
+		// that have been already selected in the featureClass-Filter (ComplexFilter)
+		if (isCityObjectGroupMember
+				&& query.getFeatureTypeFilter().containsFeatureType(featureType)
+				&& Util.getCityGMLClass(objectClassId) != CityGMLClass.CITY_OBJECT_GROUP)
+			return;
+
+		// 1) If only the feature type CityObjectGroup is checked, then all city
+		// object groups and all their group members (independent of their
+		// feature type) are exported.
+		// 2) If further feature types are selected in addition to
+		// CityObjectGroup, then only group members matching those feature types
+		// are exported. Of course, all features that match the type selection
+		// but are not group members are also exported.
+		if (query.getFeatureTypeFilter().containsFeatureType(featureType)
+				|| (isCityObjectGroupMember && query.getFeatureTypeFilter().size() == 1)) {
+
+			// check whether center point of the feature's envelope is within the tile extent
+			if (envelope != null && envelope.getGeometryType() == GeometryType.ENVELOPE) {
+				double coordinates[] = envelope.getCoordinates(0);
+				if (!activeTile.isOnTile(new org.citydb.config.geometry.Point(
+								(coordinates[0] + coordinates[3]) / 2.0,
+								(coordinates[1] + coordinates[4]) / 2.0,
+								databaseAdapter.getConnectionMetaData().getReferenceSystem()),
+						databaseAdapter))
+					return;
+			}
+
+			// create json
+			CityObject4JSON cityObject4Json = new CityObject4JSON(gmlId);
+			cityObject4Json.setTileRow(activeTile != null ? activeTile.getX() : 0);
+			cityObject4Json.setTileColumn(activeTile != null ? activeTile.getY() : 0);
+			cityObject4Json.setEnvelope(getEnvelopeInWGS84(envelope));
+			/**
+			// put on work queue
+			KmlSplittingResult splitter = new KmlSplittingResult(id, gmlId, objectClassId, cityObject4Json, displayForm);
+			dbWorkerPool.addWork(splitter);
+
+			if (splitter.getCityGMLClass() == CityGMLClass.CITY_OBJECT_GROUP) {
+				Table cityObject = new Table("cityobject", schema);
+				Table groupToCityObject = new Table("group_to_cityobject", schema);
+				//PlaceHolder<Long> groupId = new PlaceHolder<>(id);
+				PlaceHolder<String> groupId = new PlaceHolder<>(id);
+
+				Select select = new Select()
+						.addProjection(cityObject.getColumn(MappingConstants.ID))
+						.addProjection(cityObject.getColumn(MappingConstants.GMLID))
+						.addProjection(cityObject.getColumn(MappingConstants.OBJECTCLASS_ID))
+						.addProjection(cityObject.getColumn(MappingConstants.ENVELOPE))
+						.addSelection(ComparisonFactory.in(
+								cityObject.getColumn(MappingConstants.ID),
+								new Select()
+										.addProjection(cityObject.getColumn(MappingConstants.ID))
+										.addJoin(JoinFactory.inner(cityObject, MappingConstants.ID, ComparisonName.EQUAL_TO, groupToCityObject.getColumn("cityobject_id")))
+										.addSelection(ComparisonFactory.equalTo(groupToCityObject.getColumn("cityobjectgroup_id"), groupId))
+						));
+
+				try (PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
+					 ResultSet rs = stmt.executeQuery()) {
+					while (rs.next() && shouldRun) {
+						long _id = rs.getLong(MappingConstants.ID);
+						String _gmlId = rs.getString(MappingConstants.GMLID);
+						int _objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
+
+						GeometryObject _envelope = null;
+						Object geomObj = rs.getObject(MappingConstants.ENVELOPE);
+						if (!rs.wasNull() && geomObj != null)
+							_envelope = databaseAdapter.getGeometryConverter().getEnvelope(geomObj);
+
+						// Recursion in CityObjectGroup
+						addWorkToQueue(_id,  _gmlId, _objectClassId, _envelope, activeTile, true);
+					}
+				}
+			}**/
+		}
+	}
+
+	// For relational database
 	private void addWorkToQueue(long id, String gmlId, int objectClassId, GeometryObject envelope, Tile activeTile, boolean isCityObjectGroupMember) throws SQLException, FilterException {
 		FeatureType featureType = schemaMapping.getFeatureType(objectClassId);
 

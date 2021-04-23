@@ -142,7 +142,7 @@ public class GenericCityObject extends KmlGenericObject{
 					String query = queries.getGenericCityObjectBasisData(currentLod);
 					psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 					for (int i = 1; i <= getParameterCount(query); i++)
-						psQuery.setLong(i, work.getId());
+						psQuery.setLong(i, (long)work.getId());
 
 					rs = psQuery.executeQuery();
 					if (rs.isBeforeFirst()) {
@@ -159,7 +159,7 @@ public class GenericCityObject extends KmlGenericObject{
 					query = queries.getGenericCityObjectPointAndCurveQuery(currentLod);
 					psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 					for (int i = 1; i <= getParameterCount(query); i++)
-						psQuery.setLong(i, work.getId());
+						psQuery.setLong(i, (long)work.getId());
 
 					rs = psQuery.executeQuery();
 					if (rs.isBeforeFirst()) {					
@@ -242,7 +242,7 @@ public class GenericCityObject extends KmlGenericObject{
 							query = queries.getExtrusionHeight();
 							psQuery2 = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 							for (int i = 1; i <= getParameterCount(query); i++)
-								psQuery2.setLong(i, work.getId());
+								psQuery2.setLong(i, (long)work.getId());
 
 							rs2 = psQuery2.executeQuery();
 							rs2.next();
@@ -281,9 +281,9 @@ public class GenericCityObject extends KmlGenericObject{
 						log.info("Object " + work.getGmlId() + " has more than " + GEOMETRY_AMOUNT_WARNING + " geometries. This may take a while to process...");
 
 					List<Point3d> anchorCandidates = getOrigins();
-					double zOffset = getZOffsetFromConfigOrDB(work.getId());
+					double zOffset = getZOffsetFromConfigOrDB((long)work.getId());
 					if (zOffset == Double.MAX_VALUE) {
-						zOffset = getZOffsetFromGEService(work.getId(), anchorCandidates);
+						zOffset = getZOffsetFromGEService((long)work.getId(), anchorCandidates);
 					}
 					setZOffset(zOffset);
 
@@ -328,11 +328,11 @@ public class GenericCityObject extends KmlGenericObject{
 		PointAndCurve pacSettings = config.getProject().getKmlExporter().getGenericCityObjectPointAndCurve();
 		List<PlacemarkType> placemarkList= new ArrayList<>();
 
-		double zOffset = getZOffsetFromConfigOrDB(work.getId());
+		double zOffset = getZOffsetFromConfigOrDB((long)work.getId());
 		List<Point3d> lowestPointCandidates = getLowestPointsCoordinates(rs, (zOffset == Double.MAX_VALUE));
 		rs.beforeFirst(); // return cursor to beginning
 		if (zOffset == Double.MAX_VALUE) {
-			zOffset = getZOffsetFromGEService(work.getId(), lowestPointCandidates);
+			zOffset = getZOffsetFromGEService((long)work.getId(), lowestPointCandidates);
 		}
 		while (rs.next()) {
 
@@ -616,7 +616,7 @@ public class GenericCityObject extends KmlGenericObject{
 					if (balloonTemplateFilename != null && balloonTemplateFilename.length() > 0) {
 						setBalloonTemplateHandler(new BalloonTemplateHandler(new File(balloonTemplateFilename), databaseAdapter));
 					}
-					addBalloonContents(placemark, work.getId());
+					addBalloonContents(placemark, (long)work.getId());
 				}
 
 			}
@@ -644,7 +644,7 @@ public class GenericCityObject extends KmlGenericObject{
 						setBalloonTemplateHandler(new BalloonTemplateHandler(new File(balloonTemplateFilename), databaseAdapter));
 					}
 					// this is the reason for the isPoint dirty hack
-					addBalloonContents(placemark, work.getId());
+					addBalloonContents(placemark, (long)work.getId());
 				}
 				switch (pacSettings.getCurveAltitudeMode()) {
 				case ABSOLUTE:

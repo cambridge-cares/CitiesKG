@@ -147,7 +147,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-public abstract class KmlGenericObject {
+public abstract class KmlGenericObject<T> {
 	private final Logger log = Logger.getInstance();
 	protected final int GEOMETRY_AMOUNT_WARNING = 10000;
 	private final double TOLERANCE = Math.pow(10, -7);
@@ -167,7 +167,7 @@ public abstract class KmlGenericObject {
 	// key is surfaceId, surfaceId is originally a Long
 	private HashMap<Long, X3DMaterial> x3dMaterials = null;
 
-	private long id;
+	private T id;
 	private String gmlId;
 	private BigInteger vertexIdCounter = new BigInteger("-1");
 	protected VertexInfo firstVertexInfo = null;
@@ -256,11 +256,11 @@ public abstract class KmlGenericObject {
 		this.balloonTemplateHandler = balloonTemplateHandler;
 	}
 
-	public void setId(long id) {
+	public void setId(T id) {
 		this.id = id;
 	}
 
-	public long getId() {
+	public T getId() {
 		return id;
 	}
 
@@ -1048,11 +1048,11 @@ public abstract class KmlGenericObject {
 		while (iterator.hasNext()) {
 			Long surfaceId = iterator.next();
 			this.addX3dMaterial(surfaceId, objectToAppend.getX3dMaterial(surfaceId));
-			String imageUri = objectToAppend.texImageUris.get(surfaceId);
+			String imageUri = (String) objectToAppend.texImageUris.get(surfaceId);
 			this.addTexImageUri(surfaceId, imageUri);
 			this.addTexImage(imageUri, objectToAppend.getTexImage(imageUri));
 			this.addUnsupportedTexImageId(imageUri, objectToAppend.getUnsupportedTexImageId(imageUri));
-			this.surfaceInfos.put(surfaceId, objectToAppend.surfaceInfos.get(surfaceId));
+			this.surfaceInfos.put(surfaceId, (SurfaceInfo) objectToAppend.surfaceInfos.get(surfaceId));
 		}
 
 		// adapt id accordingly
@@ -1377,7 +1377,7 @@ public abstract class KmlGenericObject {
 		}
 
 		if (getBalloonSettings().isIncludeDescription()) {
-			addBalloonContents(placemark, work.getId());
+			addBalloonContents(placemark, (long)work.getId());
 		}
 		MultiGeometryType multiGeometry = kmlFactory.createMultiGeometryType();
 		placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
@@ -1446,7 +1446,7 @@ public abstract class KmlGenericObject {
 			placemark.setStyleUrl("#" + getStyleBasisName() + DisplayForm.EXTRUDED_STR + "Normal");
 		}
 		if (getBalloonSettings().isIncludeDescription()) {
-			addBalloonContents(placemark, work.getId());
+			addBalloonContents(placemark, (long)work.getId());
 		}
 		MultiGeometryType multiGeometry = kmlFactory.createMultiGeometryType();
 		placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
@@ -1550,10 +1550,10 @@ public abstract class KmlGenericObject {
 
 				rs = geometryQuery.executeQuery();				
 
-				double zOffset = getZOffsetFromConfigOrDB(work.getId());
+				double zOffset = getZOffsetFromConfigOrDB((long)work.getId());
 				List<Point3d> lowestPointCandidates = getLowestPointsCoordinates(rs, (zOffset == Double.MAX_VALUE));
 				if (zOffset == Double.MAX_VALUE)
-					zOffset = getZOffsetFromGEService(work.getId(), lowestPointCandidates);
+					zOffset = getZOffsetFromGEService((long)work.getId(), lowestPointCandidates);
 
 				double lowestZCoordinate = convertPointCoordinatesToWGS84(new double[] {
 						lowestPointCandidates.get(0).x,
@@ -1740,7 +1740,7 @@ public abstract class KmlGenericObject {
 
 			if (getBalloonSettings().isIncludeDescription() &&
 					!work.getDisplayForm().isHighlightingEnabled()) { // avoid double description
-				addBalloonContents(placemark, work.getId());
+				addBalloonContents(placemark, (long)work.getId());
 			}
 			multiGeometry = multiGeometries.get(surfaceType);
 			placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
@@ -2040,7 +2040,7 @@ public abstract class KmlGenericObject {
 
 			ColladaOptions colladaOptions = getColladaOptions();
 			if (!colladaOptions.isGroupObjects() || colladaOptions.getGroupSize() == 1) {
-				addBalloonContents(placemark, getId());
+				addBalloonContents(placemark, (long)getId());
 			}
 		}
 
@@ -2110,7 +2110,7 @@ public abstract class KmlGenericObject {
 		placemarkList.add(placemark);
 
 		if (getBalloonSettings().isIncludeDescription()) {
-			addBalloonContents(placemark, work.getId());
+			addBalloonContents(placemark, (long)work.getId());
 		}
 
 		MultiGeometryType multiGeometry =  kmlFactory.createMultiGeometryType();
@@ -2146,10 +2146,10 @@ public abstract class KmlGenericObject {
 
 				rs = geometryQuery.executeQuery();
 
-				double zOffset = getZOffsetFromConfigOrDB(work.getId());
+				double zOffset = getZOffsetFromConfigOrDB((long)work.getId());
 				if (zOffset == Double.MAX_VALUE) {
 					List<Point3d> lowestPointCandidates = getLowestPointsCoordinates(rs, (zOffset == Double.MAX_VALUE));
-					zOffset = getZOffsetFromGEService(work.getId(), lowestPointCandidates);
+					zOffset = getZOffsetFromGEService((long)work.getId(), lowestPointCandidates);
 				}
 
 				rs.beforeFirst(); // return cursor to beginning

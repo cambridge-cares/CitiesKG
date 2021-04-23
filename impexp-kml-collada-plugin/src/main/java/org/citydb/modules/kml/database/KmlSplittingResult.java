@@ -32,15 +32,15 @@ import org.citydb.modules.kml.util.CityObject4JSON;
 import org.citydb.util.Util;
 import org.citygml4j.model.citygml.CityGMLClass;
 
-public class KmlSplittingResult {
-	private final long id;
+public class KmlSplittingResult<T> {
+	private final T id;
 	private final String gmlId;
 	private final int objectClassId;
 	private final CityGMLClass cityGMLClass;
 	private DisplayForm displayForm;
 	private CityObject4JSON json;
 
-	public KmlSplittingResult(long id, String gmlId, int objectClassId, CityObject4JSON json, DisplayForm displayForm) {
+	public KmlSplittingResult(T id, String gmlId, int objectClassId, CityObject4JSON json, DisplayForm displayForm) {
 		this.id = id;
 		this.gmlId = gmlId;
 		this.objectClassId = objectClassId;
@@ -50,9 +50,7 @@ public class KmlSplittingResult {
 		cityGMLClass = Util.getCityGMLClass(objectClassId);
 	}
 
-	public long getId() {
-		return id;
-	}
+	public T getId() { return id; }
 
 	public String getGmlId() {
 		return gmlId;

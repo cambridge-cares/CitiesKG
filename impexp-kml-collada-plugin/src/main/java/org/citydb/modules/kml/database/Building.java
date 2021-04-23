@@ -36,6 +36,7 @@ import org.citydb.config.project.kmlExporter.DisplayForm;
 import org.citydb.config.project.kmlExporter.Lod0FootprintMode;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.BlobExportAdapter;
+import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.database.connection.DatabaseConnectionPool;
 import org.citydb.event.EventDispatcher;
 import org.citydb.log.Logger;
@@ -106,9 +107,18 @@ public class Building extends KmlGenericObject{
 
 		try {
 			String query = queries.getBuildingPartsFromBuilding();
+			// TODO: Translate the query
+
+			//String SPARQLstatement = StatementTransformer.transformer1(query);
 			psQuery = connection.prepareStatement(query);
+
+			// Modified by Shiying
 			for (int i = 1; i <= getParameterCount(query); i++)
-				psQuery.setLong(i, work.getId());
+				if (isBlazegraph) {
+					psQuery.setString(i, (String)work.getId());
+				}else{
+					psQuery.setLong(i, (long)work.getId());
+				}
 
 			rs = psQuery.executeQuery();
 			while (rs.next()) {
@@ -298,7 +308,7 @@ public class Building extends KmlGenericObject{
 				}
 			}
 
-			if (rs != null && rs.isBeforeFirst()) { // result not empty  // @TODO: process the data
+			if (rs != null && rs.isBeforeFirst()) { // result not empty  // This step will process the result
 
 				switch (work.getDisplayForm().getForm()) {
 				case DisplayForm.FOOTPRINT:
@@ -326,7 +336,7 @@ public class Building extends KmlGenericObject{
 
 				case DisplayForm.GEOMETRY:
 					setGmlId(work.getGmlId());
-					setId(work.getId());
+					//setId(work.getId());
 					if (work.getDisplayForm().isHighlightingEnabled()) {
 						if (query.isSetTiling()) { // region
 							List<PlacemarkType> hlPlacemarks = createPlacemarksForHighlighting(rs, work, true);
@@ -345,15 +355,15 @@ public class Building extends KmlGenericObject{
 					fillGenericObjectForCollada(rs, config.getProject().getKmlExporter().getBuildingColladaOptions().isGenerateTextureAtlases(), true); // fill and refill
 					String currentgmlId = getGmlId();
 					setGmlId(work.getGmlId());
-					setId(work.getId());
+					//setId(work.getId());
 
 					if (currentgmlId != null && !currentgmlId.equals(work.getGmlId()) && getGeometryAmount() > GEOMETRY_AMOUNT_WARNING)
 						log.info("Object " + work.getGmlId() + " has more than " + GEOMETRY_AMOUNT_WARNING + " geometries. This may take a while to process...");
 
 					List<Point3d> anchorCandidates = getOrigins(); // setOrigins() called mainly for the side-effect
-					double zOffset = getZOffsetFromConfigOrDB(work.getId());
+					double zOffset = getZOffsetFromConfigOrDB((long)work.getId());
 					if (zOffset == Double.MAX_VALUE) {
-						zOffset = getZOffsetFromGEService(work.getId(), anchorCandidates);
+						zOffset = getZOffsetFromGEService((long)work.getId(), anchorCandidates);
 					}
 					setZOffset(zOffset);
 

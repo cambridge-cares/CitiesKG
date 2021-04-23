@@ -532,10 +532,10 @@ public class KmlExportWorker extends Worker<KmlSplittingResult> {
 			colladaBundle.setUnsupportedTexImageIds(objectGroup.getUnsupportedTexImageIds());
 			colladaBundle.setPlacemark(objectGroup.createPlacemarkForColladaModel());
 			colladaBundle.setGmlId(objectGroup.getGmlId());
-			colladaBundle.setId(objectGroup.getId());
+			colladaBundle.setId((long)objectGroup.getId());
 
 			kmlExporterManager.print(colladaBundle,
-					objectGroup.getId(),					
+					(long)objectGroup.getId(),
 					objectGroup.getBalloonSettings().isBalloonContentInSeparateFile());
 		}
 		catch (Exception e) {

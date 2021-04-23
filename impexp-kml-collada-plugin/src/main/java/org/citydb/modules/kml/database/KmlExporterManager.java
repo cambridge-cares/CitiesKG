@@ -160,7 +160,7 @@ public class KmlExporterManager {
 		else
 			objectCounter.put(work.getObjectClassId(), counter + 1);		
 
-		tracker.put(work.getId(), work.getJson());
+		tracker.put((long)work.getId(), work.getJson());
 		eventDispatcher.triggerEvent(new CounterEvent(CounterType.TOPLEVEL_FEATURE, 1, this));
 	}
 
@@ -320,7 +320,7 @@ public class KmlExporterManager {
 							}
 
 							LatLonAltBoxType latLonAltBoxType = kmlFactory.createLatLonAltBoxType();
-							CityObject4JSON cityObject4JSON = tracker.get(work.getId());
+							CityObject4JSON cityObject4JSON = tracker.get((long)work.getId());
 							if (cityObject4JSON != null) { // avoid NPE when aborting large KML/COLLADA exports
 								latLonAltBoxType.setNorth(cityObject4JSON.getEnvelopeYmax());
 								latLonAltBoxType.setSouth(cityObject4JSON.getEnvelopeYmin());
