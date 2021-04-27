@@ -11,6 +11,7 @@ import org.citydb.database.version.DatabaseVersion;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.List;
 
 public class UtilAdapter extends AbstractUtilAdapter {
@@ -101,5 +102,15 @@ public class UtilAdapter extends AbstractUtilAdapter {
     @Override
     public DatabaseSrs getWGS843D() {
         return null;
+    }
+
+    @Override
+    public boolean isIndexEnabled(String tableName, String columnName) throws SQLException {
+
+        // @TODO: Implement the check for spatial indexes on geometry columns of involved tables
+        // For the moment, we set it to always return true. In the future, it should have checked if the spatial index is enabled in DB
+        boolean isIndexed = true;
+
+        return isIndexed;
     }
 }
