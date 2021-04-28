@@ -182,7 +182,7 @@ public class SQLAdapter extends AbstractSQLAdapter {
         Query SPARQLStatement = null;
         PreparedStatement preparedStatement = null;
         try {
-            SPARQLStatement = StatementTransformer.transformer1(statement);
+            SPARQLStatement = StatementTransformer.queryObject_transformer(statement);
             preparedStatement = connection.prepareStatement(SPARQLStatement.toString());
         } catch (ParseException e) {
             e.printStackTrace();

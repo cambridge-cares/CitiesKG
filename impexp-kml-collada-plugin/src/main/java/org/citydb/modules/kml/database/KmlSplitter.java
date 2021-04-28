@@ -227,7 +227,7 @@ public class KmlSplitter {
 			cityObject4Json.setTileRow(activeTile != null ? activeTile.getX() : 0);
 			cityObject4Json.setTileColumn(activeTile != null ? activeTile.getY() : 0);
 			cityObject4Json.setEnvelope(getEnvelopeInWGS84(envelope));
-			/**
+
 			// put on work queue
 			KmlSplittingResult splitter = new KmlSplittingResult(id, gmlId, objectClassId, cityObject4Json, displayForm);
 			dbWorkerPool.addWork(splitter);
@@ -235,7 +235,7 @@ public class KmlSplitter {
 			if (splitter.getCityGMLClass() == CityGMLClass.CITY_OBJECT_GROUP) {
 				Table cityObject = new Table("cityobject", schema);
 				Table groupToCityObject = new Table("group_to_cityobject", schema);
-				//PlaceHolder<Long> groupId = new PlaceHolder<>(id);
+				//PlaceHolder<Long> groupId = new PlaceHolder<>(id); // Add BY Shiying
 				PlaceHolder<String> groupId = new PlaceHolder<>(id);
 
 				Select select = new Select()
@@ -267,7 +267,7 @@ public class KmlSplitter {
 						addWorkToQueue(_id,  _gmlId, _objectClassId, _envelope, activeTile, true);
 					}
 				}
-			}**/
+			}
 		}
 	}
 

@@ -1,11 +1,10 @@
 package org.citydb.database.adapter.blazegraph;
 // implemented by SHIYING LI
+
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
-import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import org.citydb.query.filter.projection.Projection;
 import org.citydb.sqlbuilder.SQLStatement;
 import org.citydb.sqlbuilder.expression.PlaceHolder;
 import org.citydb.sqlbuilder.schema.Column;
@@ -13,7 +12,6 @@ import org.citydb.sqlbuilder.schema.Table;
 import org.citydb.sqlbuilder.select.PredicateToken;
 import org.citydb.sqlbuilder.select.ProjectionToken;
 import org.citydb.sqlbuilder.select.Select;
-import org.citydb.sqlbuilder.select.operator.comparison.AbstractComparisonOperator;
 import org.citydb.sqlbuilder.select.operator.comparison.BinaryComparisonOperator;
 import org.citydb.sqlbuilder.select.operator.comparison.InOperator;
 
@@ -47,7 +45,7 @@ public class StatementTransformer {
     }
 
     // Analyze SQL statement and transform
-    public static Query transformer1 (SQLStatement sqlStatement) throws ParseException {
+    public static Query queryObject_transformer (SQLStatement sqlStatement) throws ParseException {
         Select select = (Select) sqlStatement;
         List<ProjectionToken> projectionTokens = select.getProjection();
         Set<Table> InvolvedTables = sqlStatement.getInvolvedTables();
@@ -71,6 +69,10 @@ public class StatementTransformer {
         return q;
     }
 
+    public static String queryTransform (String sqlquery){
+        //Force2D instance = new Force2D();
+        return null;
+    }
 
     public static void applyPredicate (SelectBuilder sb, List<PredicateToken> predicateTokens) throws ParseException {
 
