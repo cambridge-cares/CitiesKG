@@ -46,17 +46,21 @@ import org.citydb.query.Query;
 
 import javax.vecmath.Point3d;
 import javax.xml.bind.JAXBException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Building extends KmlGenericObject{
 	private final Logger log = Logger.getInstance();
 
 	public static final String STYLE_BASIS_NAME = ""; // "Building"
+	public boolean isBlazegraph = kmlExporterManager.isBlazegraph();
 
 	public Building(Connection connection,
 			Query query,
@@ -102,28 +106,43 @@ public class Building extends KmlGenericObject{
 		PreparedStatement psQuery = null;
 		ResultSet rs = null;
 
-		// TODO: Added by SHIYING LI
-		boolean isBlazegraph = kmlExporterManager.isBlazegraph();
-
 		try {
 			String query = queries.getBuildingPartsFromBuilding();
-			// TODO: Translate the query
 
-			//String SPARQLstatement = StatementTransformer.transformer1(query);
+			// TODO: Translate the query
+			if (isBlazegraph) {
+				query = StatementTransformer.getSPARQLStatement_BuildingParts(query);
+			}
 			psQuery = connection.prepareStatement(query);
 
 			// Modified by Shiying
-			for (int i = 1; i <= getParameterCount(query); i++)
-				if (isBlazegraph) {
-					psQuery.setString(i, (String)work.getId());
+			if (isBlazegraph) {
+				String baseURL = "http://localhost/berlin/building/";
+				URL url = null;
+				try {
+					url = new URL(baseURL + work.getGmlId()+"/");
+				} catch (MalformedURLException e) {
+					e.printStackTrace(); // @TODO:
+				}
+				psQuery.setURL(1, url);   // setURL will add <> around the URL
+			} else {
+				for (int i = 1; i <= getParameterCount(query); i++) {
+					psQuery.setLong(i, (long) work.getId());
+				}
+			}
+			rs = psQuery.executeQuery();
+
+			List<PlacemarkType> placemarkBPart = null;
+			while (rs.next()) {
+
+				if (isBlazegraph){
+					String buildingPartId = rs.getString(1);
+					placemarkBPart = readBuildingPart(buildingPartId, work);
 				}else{
-					psQuery.setLong(i, (long)work.getId());
+					long buildingPartId = rs.getLong(1);
+					placemarkBPart = readBuildingPart(buildingPartId, work);
 				}
 
-			rs = psQuery.executeQuery();
-			while (rs.next()) {
-				long buildingPartId = rs.getLong(1);
-				List<PlacemarkType> placemarkBPart = readBuildingPart(buildingPartId, work);
 				if (placemarkBPart != null)
 					placemarks.addAll(placemarkBPart);
 			}
@@ -174,7 +193,7 @@ public class Building extends KmlGenericObject{
 		}
 	}
 
-	private List<PlacemarkType> readBuildingPart(long buildingPartId, KmlSplittingResult work) {
+	private <T> List<PlacemarkType> readBuildingPart(T buildingPartId, KmlSplittingResult work) {
 		PreparedStatement psQuery = null;
 		ResultSet rs = null;
 		boolean reversePointOrder = false;
@@ -199,7 +218,7 @@ public class Building extends KmlGenericObject{
 							String query = queries.getBuildingPartQuery(currentLod, lod0FootprintMode, work.getDisplayForm(), true);
 							psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 							for (int i = 1; i <= getParameterCount(query); i++)
-								psQuery.setLong(i, buildingPartId);
+								psQuery.setLong(i, (long)buildingPartId);
 
 							rs = psQuery.executeQuery();
 							if (rs.isBeforeFirst())
@@ -222,7 +241,7 @@ public class Building extends KmlGenericObject{
 						String query = queries.getBuildingPartQuery(currentLod, lod0FootprintMode, work.getDisplayForm(), false);
 						psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 						for (int i = 1; i <= getParameterCount(query); i++)
-							psQuery.setLong(i, buildingPartId);
+							psQuery.setLong(i, (long)buildingPartId);
 
 						rs = psQuery.executeQuery();
 					} catch (SQLException e) {
@@ -248,13 +267,30 @@ public class Building extends KmlGenericObject{
 					try {
 						// first, check whether we have an LOD0 geometry or a GroundSurface
 						String query = queries.getBuildingPartQuery(currentLod, lod0FootprintMode, work.getDisplayForm(), false);
+						if (isBlazegraph) {
+							query = StatementTransformer.getSPARQLStatement_BuildingPartQuery(query);
+						}
 						psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-						for (int i = 1; i <= getParameterCount(query); i++)
-							psQuery.setLong(i, buildingPartId);
+						if (isBlazegraph) {
+							URL url = null;
+							try {
+								url = new URL((String)buildingPartId);
+							} catch (MalformedURLException e) {
+								e.printStackTrace();
+							}
+							psQuery.setURL(1, url);
+						}else{
+							for (int i = 1; i <= getParameterCount(query); i++)
+								psQuery.setLong(i, (long)buildingPartId);
+						}
 
 						rs = psQuery.executeQuery();
-						if (rs.isBeforeFirst())
+						//if (rs.isBeforeFirst()){ // POSTGIS: false vs. BLAZEGRAPH: true for empty result
+						//	break;}
+						//@Note: Shiying has modified
+						if (rs.next()){
 							break;
+						}
 
 						try { rs.close(); } catch (SQLException sqle) {} 
 						try { psQuery.close(); } catch (SQLException sqle) {}
@@ -280,7 +316,7 @@ public class Building extends KmlGenericObject{
 
 							psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 							for (int i = 1; i <= getParameterCount(query); i++)
-								psQuery.setLong(i, buildingPartId);
+								psQuery.setLong(i, (long)buildingPartId);
 
 							rs = psQuery.executeQuery();
 							if (rs.isBeforeFirst()) {
@@ -321,13 +357,28 @@ public class Building extends KmlGenericObject{
 					try {
 						String query = queries.getExtrusionHeight();
 						psQuery2 = connection.prepareStatement(query);
-						for (int i = 1; i <= getParameterCount(query); i++)
-							psQuery2.setLong(i, buildingPartId);
-
+						if (isBlazegraph){
+							URL url = null;
+							try {
+								url = new URL("http://localhost/berlin/cityobject/" + work.getGmlId()+"/");
+							} catch (MalformedURLException e) {
+								e.printStackTrace();
+							}
+							psQuery2.setURL(1, url);
+						} else {
+							for (int i = 1; i <= getParameterCount(query); i++)
+								psQuery2.setLong(i, (long) buildingPartId);
+						}
 						rs2 = psQuery2.executeQuery();
 						rs2.next();
 
-						double measuredHeight = rs2.getDouble("envelope_measured_height");
+						double measuredHeight = 0;
+						if (isBlazegraph) {
+							String envelop = rs2.getString(1);
+							measuredHeight = extractHeight(envelop);
+						} else {
+							measuredHeight = rs2.getDouble("envelope_measured_height");
+						}
 						return createPlacemarksForExtruded(rs, work, measuredHeight, reversePointOrder);
 					} finally {
 						try { if (rs2 != null) rs2.close(); } catch (SQLException e) {}
@@ -405,6 +456,22 @@ public class Building extends KmlGenericObject{
 				reducePrecisionForZ(originInWGS84[2]));
 
 		return super.createPlacemarkForColladaModel();
+	}
+
+	public double extractHeight (String envelop){
+		String[] arrOfStr = envelop.split("#");
+		//double[] heights = new double[5];
+
+		ArrayList<Double> heights = new ArrayList<Double>();
+		for (int k = 1; k <= 5; k++){
+			System.out.println(arrOfStr[(k*3)-1]);
+			//heights[k-1] = Double.valueOf(arrOfStr[(k*3)-1]);
+			heights.add(Double.valueOf(arrOfStr[(k*3)-1]));
+		}
+		double max = Collections.max(heights);
+		double min = Collections.min(heights);
+
+		return max-min;
 	}
 
 }

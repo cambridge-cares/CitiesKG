@@ -107,18 +107,22 @@ public class Queries {
 
 	public String getExtrusionHeight() {
 		switch (databaseAdapter.getDatabaseType()) {
-		case ORACLE:
-			return new StringBuilder("SELECT ")
-			.append("SDO_GEOM.SDO_MAX_MBR_ORDINATE(co.envelope, 3) - SDO_GEOM.SDO_MIN_MBR_ORDINATE(co.envelope, 3) AS envelope_measured_height ")
-			.append("FROM ").append(schema).append(".CITYOBJECT co ")
-			.append("WHERE co.id = ?").toString();
-		case POSTGIS:
-			return new StringBuilder("SELECT ")
-			.append("ST_ZMax(Box3D(co.envelope)) - ST_ZMin(Box3D(co.envelope)) AS envelope_measured_height ")
-			.append("FROM ").append(schema).append(".CITYOBJECT co ")
-			.append("WHERE co.id = ?").toString();
-		default:
-			return null;
+			case BLAZE:
+				return new StringBuilder("PREFIX  ocgml: <http://locahost/ontocitygml/>")
+						.append("SELECT  ?envelope FROM <http://localhost/berlin/cityobject/>")
+						.append("WHERE { ?s ocgml:EnvelopeType ?envelope ; ocgml:id ? . }").toString();
+			case ORACLE:
+				return new StringBuilder("SELECT ")
+						.append("SDO_GEOM.SDO_MAX_MBR_ORDINATE(co.envelope, 3) - SDO_GEOM.SDO_MIN_MBR_ORDINATE(co.envelope, 3) AS envelope_measured_height ")
+						.append("FROM ").append(schema).append(".CITYOBJECT co ")
+						.append("WHERE co.id = ?").toString();
+			case POSTGIS:
+				return new StringBuilder("SELECT ")
+						.append("ST_ZMax(Box3D(co.envelope)) - ST_ZMin(Box3D(co.envelope)) AS envelope_measured_height ")
+						.append("FROM ").append(schema).append(".CITYOBJECT co ")
+						.append("WHERE co.id = ?").toString();
+			default:
+				return null;
 		}
 	}
 

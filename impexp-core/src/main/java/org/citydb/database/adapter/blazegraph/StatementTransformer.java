@@ -43,8 +43,37 @@ public class StatementTransformer {
         Query q = sb.build();
         return q.toString();
     }
+    // getBuildingPartAggregateGeometries
+    public static String getSPARQLStatement_BuildingPartAggregateGeometries (String sqlquery){
+        String sparql = "";
+        return sparql;
+    }
 
-    // Analyze SQL statement and transform
+
+
+    // getBuildingPartsFromBuilding() in Building.java
+    public static String getSPARQLStatement_BuildingParts (String sqlQuery) {
+        String sparql = "PREFIX  ocgml: <http://locahost/ontocitygml/> " +
+                "SELECT * WHERE { " +
+                "GRAPH <http://localhost/berlin/building/>{ " +
+                "?id ocgml:buildingRootId ? . } }";
+
+        return sparql;
+    }
+
+    //getBuildingPartQuery() in Building.java
+    public static String getSPARQLStatement_BuildingPartQuery (String sqlQuery) {
+        String sparql = "PREFIX  ocgml: <http://locahost/ontocitygml/> SELECT ?geomtype WHERE { GRAPH <http://localhost/berlin/thematicsurface/> { ?ts_id ocgml:objectClassId 35 ; ocgml:buildingId ? ; ocgml:lod2MultiSurfaceId ?lod2MSid .} GRAPH <http://localhost/berlin/surfacegeometry/> {" +
+                "?sg_id ocgml:rootId ?lod2MSid ; ocgml:GeometryType ?geomtype . } }" +
+                "LIMIT 1000";
+        return sparql;
+    }
+
+
+
+
+
+    // Analyze SQL statement and transform it to a SPARQL query
     public static Query queryObject_transformer (SQLStatement sqlStatement) throws ParseException {
         Select select = (Select) sqlStatement;
         List<ProjectionToken> projectionTokens = select.getProjection();
