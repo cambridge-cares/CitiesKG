@@ -27,14 +27,6 @@
  */
 package org.citydb.citygml.importer.database.content;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Types;
-
-import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
 import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
@@ -43,15 +35,16 @@ import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
 import org.citydb.util.CoreConstants;
-import org.citygml4j.model.citygml.building.AbstractBoundarySurface;
-import org.citygml4j.model.citygml.building.AbstractBuilding;
-import org.citygml4j.model.citygml.building.AbstractOpening;
-import org.citygml4j.model.citygml.building.BuildingInstallation;
-import org.citygml4j.model.citygml.building.IntBuildingInstallation;
-import org.citygml4j.model.citygml.building.OpeningProperty;
-import org.citygml4j.model.citygml.building.Room;
+import org.citygml4j.model.citygml.building.*;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Types;
 
 public class DBThematicSurface implements DBImporter {
 	private final CityGMLImportManager importer;
@@ -214,7 +207,7 @@ public class DBThematicSurface implements DBImporter {
 							try {
 								psThematicSurface.setURL(
 										++index,
-										new URL(DBSurfaceGeometry.IRI_GRAPH_OBJECT + multiSurfaceProperty.getMultiSurface().getId()));
+										new URL(DBSurfaceGeometry.IRI_GRAPH_OBJECT + multiSurfaceProperty.getMultiSurface().getId() + "/"));
 							} catch (MalformedURLException e) {
 								new CityGMLImportException(e);
 							}
