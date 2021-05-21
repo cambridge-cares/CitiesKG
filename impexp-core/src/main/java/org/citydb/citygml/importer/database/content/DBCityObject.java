@@ -99,11 +99,10 @@ public class DBCityObject implements DBImporter {
 	private CreationDateMode creationDateMode;
 	private TerminationDateMode terminationDateMode;
 	private BoundingBoxOptions bboxOptions;
-	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
-	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_GRAPH_OBJECT_REL = "cityobject/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
+	private String PREFIX_ONTOCITYGML;
+	private String IRI_GRAPH_BASE;
+	private String IRI_GRAPH_OBJECT_REL = "cityobject/";
+	private String IRI_GRAPH_OBJECT;
 
 	public DBCityObject(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;	
@@ -153,6 +152,11 @@ public class DBCityObject implements DBImporter {
 
 		// SPARQL statement for precompilation
 		if (importer.isBlazegraph()) {
+			PREFIX_ONTOCITYGML = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
+			IRI_GRAPH_BASE = "http://" + importer.getDatabaseAdapter().getConnectionDetails().getServer() +
+					":" + importer.getDatabaseAdapter().getConnectionDetails().getPort() + "/" +
+					importer.getDatabaseAdapter().getConnectionDetails().getSid();
+			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 			stmt = getSPARQLStatement();
 		}
 		// parametrized query statement for precompilation
@@ -167,7 +171,7 @@ public class DBCityObject implements DBImporter {
 
 	private String getSPARQLStatement(){
 		String param = "  ?;";
-		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+		String stmt = "PREFIX ocgml: <" + 	PREFIX_ONTOCITYGML + "> " +
 				"BASE <" + IRI_GRAPH_BASE + "> " +
 				"INSERT DATA" +
 				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
