@@ -371,12 +371,15 @@ public class DatabasePanel extends JPanel implements ConnectionViewHandler, Even
 					portText.setValue(5432);
 					break;
 				case BLAZE:
-					portText.setValue(9999);
-					//@TODO - replace hardcoded values
-					userText.setText("anonymous");
-					passwordText.setText("anonymous");
-					serverText.setText("127.0.0.1");
-					databaseText.setText("/blazegraph/namespace/berlin/sparql");
+					portText.setValue(83);
+					userText.setText(Language.I18N.getString("db.label.blazegraph.user"));
+					passwordText.setText(Language.I18N.getString("db.label.blazegraph.password"));
+					serverText.setText(Language.I18N.getString("db.label.blazegraph.server"));
+					databaseText.setText(Language.I18N.getString("db.label.blazegraph.database"));
+					String schema = Language.I18N.getString("db.label.blazegraph.schema");
+					schemaCombo.removeAllItems();
+					schemaCombo.addItem(schema);
+					schemaCombo.setSelectedItem(schema);
 					break;
 				}
 			}

@@ -4,6 +4,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.AbstractSchemaManagerAdapter;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -171,7 +176,19 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
 
     @Override
     public boolean existsSchema(Connection connection, String schema) {
-        return false;
+        boolean exists = true;
+        try {
+            URL myURL = new URL(schema);
+            HttpURLConnection myURLConnection = (HttpURLConnection) myURL.openConnection();
+            myURLConnection.connect();
+            if (myURLConnection.getResponseCode() != 200) {
+                exists = false;
+            }
+        }
+        catch (IOException e){
+            exists = false;
+        }
+        return exists;
     }
 
     @Override
@@ -181,6 +198,6 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
 
     @Override
     public String formatSchema(String schema) {
-        return null;
+        return schema != null ? schema.trim() : null;
     }
 }
