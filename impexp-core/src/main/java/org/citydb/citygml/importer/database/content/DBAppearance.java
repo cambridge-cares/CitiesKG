@@ -124,7 +124,6 @@ public class DBAppearance implements DBImporter {
 			throw new SQLException("Failed to retrieve feature type.");
 
 
-
 		// gml:id
 		String origGmlId = appearance.getId();
 		if (origGmlId != null)

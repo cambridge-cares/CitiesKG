@@ -27,13 +27,6 @@
  */
 package org.citydb.citygml.importer.database.content;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Types;
-
 import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
@@ -53,6 +46,13 @@ import org.citygml4j.model.gml.geometry.AbstractGeometry;
 import org.citygml4j.model.gml.geometry.GeometryProperty;
 import org.citygml4j.model.gml.geometry.aggregates.MultiCurveProperty;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Types;
+
 public class DBGenericCityObject implements DBImporter {
 	private final Connection batchConn;
 	private final CityGMLImportManager importer;
@@ -69,8 +69,8 @@ public class DBGenericCityObject implements DBImporter {
 	private boolean affineTransformation;
 	private int nullGeometryType;
 	private String nullGeometryTypeName;
-	private static final String IRI_GRAPH_BASE =  "http://www.theworldavatar.com/citieskg/"; //"http://localhost/berlin/";  //@TODO: try out with the port number
-	private static final String PREFIX_ONTOCITYGML = "http://theworldavatar.com/ontology/ontocitygml/citieskg";//"http://locahost/ontocitygml/";
+	private static final String IRI_GRAPH_BASE =  "http://localhost/berlin/"; //"http://www.theworldavatar.com/citieskg/";   //@TODO: try out with the port number
+	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/"; //"http://theworldavatar.com/ontology/ontocitygml/citieskg"; // the second option is for the worldavatar but it does not work for the local DB
 	private static final String IRI_GRAPH_OBJECT_REL = "genericcityobject/";
 	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
