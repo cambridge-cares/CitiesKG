@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-
 public class StatementTransformer {
     private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
     private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";

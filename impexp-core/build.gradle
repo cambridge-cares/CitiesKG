@@ -25,6 +25,9 @@ dependencies {
     compile 'org.apache.jena:jena-querybuilder:3.16.0'
     compile group: 'org.json', name: 'json', version: '20201115'
     compile fileTree(dir: 'lib', include: '*.jar')
+    implementation 'io.github.galbiston:geosparql-jena:1.1.2'
+    //implementation 'GeoJena:SpatialIndexProcessor:0.0.3'
+    //implementation 'com.github.lisha992610:jena-geo:v0.0.2'
 }
 
 javadoc {
