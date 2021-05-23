@@ -2040,7 +2040,7 @@ public abstract class KmlGenericObject<T> {
 
 			ColladaOptions colladaOptions = getColladaOptions();
 			if (!colladaOptions.isGroupObjects() || colladaOptions.getGroupSize() == 1) {
-				addBalloonContents(placemark, (long) getId());
+				addBalloonContents(placemark, Long.class.cast(getId()));
 			}
 		}
 

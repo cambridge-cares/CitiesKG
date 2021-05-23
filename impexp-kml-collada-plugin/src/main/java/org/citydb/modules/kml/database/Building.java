@@ -127,7 +127,7 @@ public class Building extends KmlGenericObject{
 				psQuery.setURL(1, url);   // setURL will add <> around the URL
 			} else {
 				for (int i = 1; i <= getParameterCount(query); i++) {
-					psQuery.setLong(i, (long) work.getId());
+					psQuery.setLong(i, Long.class.cast(work.getId()));
 				}
 			}
 			rs = psQuery.executeQuery();
@@ -218,7 +218,7 @@ public class Building extends KmlGenericObject{
 							String query = queries.getBuildingPartQuery(currentLod, lod0FootprintMode, work.getDisplayForm(), true);
 							psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 							for (int i = 1; i <= getParameterCount(query); i++)
-								psQuery.setLong(i, (long)buildingPartId);
+								psQuery.setLong(i, Long.class.cast(buildingPartId));
 
 							rs = psQuery.executeQuery();
 							if (rs.isBeforeFirst())
@@ -241,7 +241,7 @@ public class Building extends KmlGenericObject{
 						String query = queries.getBuildingPartQuery(currentLod, lod0FootprintMode, work.getDisplayForm(), false);
 						psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 						for (int i = 1; i <= getParameterCount(query); i++)
-							psQuery.setLong(i, (long)buildingPartId);
+							psQuery.setLong(i, Long.class.cast(buildingPartId));
 
 						rs = psQuery.executeQuery();
 					} catch (SQLException e) {
@@ -281,7 +281,7 @@ public class Building extends KmlGenericObject{
 							psQuery.setURL(1, url);
 						}else{
 							for (int i = 1; i <= getParameterCount(query); i++)
-								psQuery.setLong(i, (long)buildingPartId);
+								psQuery.setLong(i, Long.class.cast(buildingPartId));
 						}
 
 						rs = psQuery.executeQuery();
@@ -316,7 +316,7 @@ public class Building extends KmlGenericObject{
 
 							psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 							for (int i = 1; i <= getParameterCount(query); i++)
-								psQuery.setLong(i, (long)buildingPartId);
+								psQuery.setLong(i, Long.class.cast(buildingPartId));
 
 							rs = psQuery.executeQuery();
 							if (rs.isBeforeFirst()) {
@@ -367,7 +367,7 @@ public class Building extends KmlGenericObject{
 							psQuery2.setURL(1, url);
 						} else {
 							for (int i = 1; i <= getParameterCount(query); i++)
-								psQuery2.setLong(i, (long) buildingPartId);
+								psQuery2.setLong(i, Long.class.cast(buildingPartId));
 						}
 						rs2 = psQuery2.executeQuery();
 						rs2.next();
@@ -412,9 +412,9 @@ public class Building extends KmlGenericObject{
 						log.info("Object " + work.getGmlId() + " has more than " + GEOMETRY_AMOUNT_WARNING + " geometries. This may take a while to process...");
 
 					List<Point3d> anchorCandidates = getOrigins(); // setOrigins() called mainly for the side-effect
-					double zOffset = getZOffsetFromConfigOrDB((long)work.getId());
+					double zOffset = getZOffsetFromConfigOrDB(Long.class.cast(work.getId()));
 					if (zOffset == Double.MAX_VALUE) {
-						zOffset = getZOffsetFromGEService((long)work.getId(), anchorCandidates);
+						zOffset = getZOffsetFromGEService(Long.class.cast(work.getId()), anchorCandidates);
 					}
 					setZOffset(zOffset);
 
