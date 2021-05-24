@@ -84,11 +84,10 @@ public class DBBuilding implements DBImporter {
 	private boolean hasObjectClassIdColumn;
 	private int nullGeometryType;
 	private String nullGeometryTypeName;
-	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
-	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
+	private String PREFIX_ONTOCITYGML;
+	private String IRI_GRAPH_BASE;
+	private String IRI_GRAPH_OBJECT;
 	private static final String IRI_GRAPH_OBJECT_REL = "building/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBBuilding(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;
@@ -111,6 +110,11 @@ public class DBBuilding implements DBImporter {
 
 		// Modification for SPARQL
 		if (importer.isBlazegraph()) {
+			PREFIX_ONTOCITYGML = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
+			IRI_GRAPH_BASE = "http://" + importer.getDatabaseAdapter().getConnectionDetails().getServer() +
+					":" + importer.getDatabaseAdapter().getConnectionDetails().getPort() + "/" +
+					importer.getDatabaseAdapter().getConnectionDetails().getSid();
+			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 			stmt = getSPARQLStatement();
 		}
 
