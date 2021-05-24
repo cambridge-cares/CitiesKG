@@ -114,7 +114,7 @@ public class DBSurfaceGeometry implements DBImporter {
 	private RingValidator ringValidator;
 	private String PREFIX_ONTOCITYGML;
 	private String IRI_GRAPH_BASE;
-	private String IRI_GRAPH_OBJECT;
+	public static String IRI_GRAPH_OBJECT;
 	private static final String IRI_GRAPH_OBJECT_REL = "surfacegeometry/";
 
 	public DBSurfaceGeometry(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
