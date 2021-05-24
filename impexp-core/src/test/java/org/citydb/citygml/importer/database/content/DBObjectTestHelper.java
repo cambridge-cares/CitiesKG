@@ -327,9 +327,13 @@ public class DBObjectTestHelper {
     }
 
     public static DBConnection getDBConnection(){
-        DatabaseType blaze = DatabaseType.fromValue("Blazegraph");
+        return createDbConnection("Blazegraph");
+    }
+
+    public static DBConnection createDbConnection(String type) {
+        DatabaseType dbType = DatabaseType.fromValue(type);
         DBConnection connection = new DBConnection();
-        connection.setDatabaseType(blaze);
+        connection.setDatabaseType(dbType);
         connection.setUser("anonymous");
         connection.setInternalPassword("anonymous");
         connection.setServer("127.0.0.1");
@@ -350,13 +354,13 @@ public class DBObjectTestHelper {
         return objectRegistry;
     }
 
-    public static AbstractDatabaseAdapter getAbstractDatabaseAdapter(){
 
+    public static AbstractDatabaseAdapter createAbstractDatabaseAdapter(String DbType){
         // setup the connection and set the connection details
-        DatabaseType blaze = DatabaseType.fromValue("Blazegraph");
+        DatabaseType blaze = DatabaseType.fromValue(DbType);
         AbstractDatabaseAdapter abstractDatabaseAdapter = DatabaseAdapterFactory.getInstance().createDatabaseAdapter(blaze);
 
-        DBConnection connection = getDBConnection();
+        DBConnection connection = createDbConnection(DbType);
         DatabaseConnectionDetails connectionDetails = new DatabaseConnectionDetails(connection);
         abstractDatabaseAdapter.setConnectionDetails(connectionDetails);
         DatabaseMetaData metaData = getDatabaseMetaData(connectionDetails);
@@ -381,17 +385,26 @@ public class DBObjectTestHelper {
     }
 
     public static CityGMLImportManager getCityGMLImportManager() throws Exception {
-        
+        return createCityGMLImportManager("Blazegraph");
+    }
+
+    public static CityGMLImportManager getCityGMLImportManagerPostGis() throws Exception {
+        return createCityGMLImportManager("PostGIS");
+    }
+
+    public static CityGMLImportManager createCityGMLImportManager(String DbType) throws Exception {
         InputFile inputFile = getInputFile();
         Connection connection = getConnection();
-        AbstractDatabaseAdapter abstractDatabaseAdapter = getAbstractDatabaseAdapter();
+        AbstractDatabaseAdapter abstractDatabaseAdapter = createAbstractDatabaseAdapter(DbType);
         SchemaMapping schemaMapping = getSchemapping();
         CityGMLBuilder cityGMLBuilder = getCityGMLBuilder();
         WorkerPool<DBXlink> dbXlinkWorkerPool = getWorkerPool();
         UIDCacheManager uidCacheManager = new UIDCacheManager();
         Config config = getConfig();
         AffineTransformer affineTransformer = new AffineTransformer(config);
-        return new CityGMLImportManager(inputFile, connection, abstractDatabaseAdapter, schemaMapping, cityGMLBuilder, dbXlinkWorkerPool, uidCacheManager, affineTransformer, config);
+        return new CityGMLImportManager(inputFile, connection,
+                abstractDatabaseAdapter, schemaMapping, cityGMLBuilder, dbXlinkWorkerPool, uidCacheManager,
+                affineTransformer, config);
     }
 
     public static DatabaseConnectionPool getDatabaseConnectionPool(){
