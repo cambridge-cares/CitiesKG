@@ -110,10 +110,8 @@ public class DBBuilding implements DBImporter {
 
 		// Modification for SPARQL
 		if (importer.isBlazegraph()) {
-			PREFIX_ONTOCITYGML = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-			IRI_GRAPH_BASE = "http://" + importer.getDatabaseAdapter().getConnectionDetails().getServer() +
-					":" + importer.getDatabaseAdapter().getConnectionDetails().getPort() + "/" +
-					importer.getDatabaseAdapter().getConnectionDetails().getSid();
+			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
+			IRI_GRAPH_BASE = importer.getGraphBaseIri();
 			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 			stmt = getSPARQLStatement();
 		}

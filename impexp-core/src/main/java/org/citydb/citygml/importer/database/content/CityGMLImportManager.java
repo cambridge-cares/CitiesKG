@@ -169,6 +169,8 @@ public class CityGMLImportManager implements CityGMLImportHelper {
 	private boolean hasADESupport = false;
 	private Boolean isBlazegraph;
 	private final String EXC_BNODE = "Failed to set blank node on: ";
+	private String PREFIX_ONTOCITYGML;
+	private String IRI_GRAPH_BASE;
 
 	public CityGMLImportManager(InputFile inputFile,
 			Connection connection,
@@ -245,6 +247,32 @@ public class CityGMLImportManager implements CityGMLImportHelper {
 		}
 	}
 
+	/**
+	 * Gets OntoCityGML prefix from connection details if the the current db connection is Blazegraph.
+	 *
+	 * @return OntoCityGML prefix
+	 */
+	public String getOntoCityGmlPrefix() {
+		if (PREFIX_ONTOCITYGML == null && isBlazegraph()) {
+			PREFIX_ONTOCITYGML = getDatabaseAdapter().getConnectionDetails().getSchema();
+		}
+		return PREFIX_ONTOCITYGML;
+	}
+
+	/**
+	 * Gets IRI of the base graph from connection details if the current db connection is Blazegraph.
+	 *
+	 * @return String - IRI of the base graph
+	 */
+	public String getGraphBaseIri() {
+		if (IRI_GRAPH_BASE == null && isBlazegraph()) {
+			IRI_GRAPH_BASE = "http://" + getDatabaseAdapter().getConnectionDetails().getServer() +
+					":" + getDatabaseAdapter().getConnectionDetails().getPort() + "/" +
+					getDatabaseAdapter().getConnectionDetails().getSid();
+		}
+		return IRI_GRAPH_BASE;
+	}
+	
 	@Override
 	public long importObject(AbstractGML object) throws CityGMLImportException, SQLException {
 		if (object instanceof ADEModelObject) {
