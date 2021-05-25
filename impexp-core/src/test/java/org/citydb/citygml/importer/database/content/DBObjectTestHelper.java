@@ -339,6 +339,7 @@ public class DBObjectTestHelper {
         connection.setServer("127.0.0.1");
         connection.setPort(9999);
         connection.setSid("/blazegraph/namespace/berlin/sparql");
+        connection.setSchema("http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl");
         return connection;
     }
 

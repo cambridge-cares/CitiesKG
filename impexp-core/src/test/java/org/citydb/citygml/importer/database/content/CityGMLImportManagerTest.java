@@ -31,7 +31,8 @@ public class CityGMLImportManagerTest {
     public void getOntoCityGmlPrefixTest() {
         try {
             CityGMLImportManager cityGMLImportManager = DBObjectTestHelper.getCityGMLImportManager();
-            assertEquals(cityGMLImportManager.getOntoCityGmlPrefix(), null);
+            assertEquals(cityGMLImportManager.getOntoCityGmlPrefix(),
+                    "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl");
         } catch (Exception e) {
             fail();
         }
