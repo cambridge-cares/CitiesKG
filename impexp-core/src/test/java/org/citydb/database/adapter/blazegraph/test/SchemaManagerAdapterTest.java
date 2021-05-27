@@ -3,7 +3,6 @@ package org.citydb.database.adapter.blazegraph.test;
 import junit.framework.TestCase;
 import org.citydb.citygml.importer.database.content.CityGMLImportManager;
 import org.citydb.citygml.importer.database.content.DBObjectTestHelper;
-import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
