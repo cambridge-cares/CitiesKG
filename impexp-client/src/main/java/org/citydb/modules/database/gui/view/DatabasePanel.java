@@ -380,6 +380,9 @@ public class DatabasePanel extends JPanel implements ConnectionViewHandler, Even
 					schemaCombo.removeAllItems();
 					schemaCombo.addItem(schema);
 					schemaCombo.setSelectedItem(schema);
+					//@TODO: enable importing appearances, while implemented for Blazegraph and remove those 2 lines:
+					config.getProject().getImporter().getAppearances().setImportAppearances(false);
+					config.getProject().getImporter().getAppearances().setImportTextureFiles(false);
 					break;
 				}
 			}
