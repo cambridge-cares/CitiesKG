@@ -267,7 +267,7 @@ public class CityGMLImportManager implements CityGMLImportHelper {
 	public String getGraphBaseIri() {
 		if (IRI_GRAPH_BASE == null && isBlazegraph()) {
 			IRI_GRAPH_BASE = "http://" + getDatabaseAdapter().getConnectionDetails().getServer() +
-					":" + getDatabaseAdapter().getConnectionDetails().getPort() + "/" +
+					":" + getDatabaseAdapter().getConnectionDetails().getPort() +
 					getDatabaseAdapter().getConnectionDetails().getSid();
 		}
 		return IRI_GRAPH_BASE;
