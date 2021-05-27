@@ -1,0 +1,119 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+apply from: 'properties.gradle'
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'maven-publish'
+
+    group 'org.citydb'
+    version '4.2.3'
+
+    sourceCompatibility = 1.8
+    compileJava.options.encoding = 'UTF-8'
+
+    repositories {
+        maven {
+            url 'https://repo.osgeo.org/repository/release'
+        }
+        maven {
+            url 'https://dl.bintray.com/3dcitydb/maven'
+        }
+        jcenter()
+    }
+
+    task processLicense(type: Copy) {
+        from("$rootDir/resources/license/LICENSE.txt") {
+            filteringCharset = 'UTF-8'
+            filter(ReplaceTokens, tokens: [
+                    name: project.impexpName
+            ])
+        }
+        into "$buildDir/tmp/license"
+    }
+
+    javadoc {
+        include 'org/citydb/**'
+        options {
+            overview "$buildDir/tmp/javadoc/overview.html"
+            header "${project.name} ${project.version}"
+            bottom """
+                <a href="${impexpIssueTrackerUrl}">Report a bug or suggest an enhancement</a><br>
+                ${project.name} is open source and licensed under the <a target="_blank" href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.<br>
+                Official website and more information at: <a target="_blank" href="${project.citydbWebsiteUrl}">${project.citydbWebsiteUrl}</a><br>
+                Copyright &copy; ${project.vendorCopyright}<br>
+                ${project.vendorName}<br>
+                ${project.vendorOrganisation}, ${project.vendorCountry}<br>
+                <a target="_blank" href="${project.vendorWebsiteUrl}">${project.vendorWebsiteUrl}</a>
+                """.replaceAll("[\r|\n]+", "")
+            addStringOption('doctitle', project.name + ' - ' + project.version)
+            addStringOption('Xdoclint:none', '-quiet')
+        }
+
+        doFirst {
+            copy {
+                from("$rootDir/resources/javadoc/overview.html") {
+                    filteringCharset = 'UTF-8'
+                    filter(ReplaceTokens, tokens: [
+                            name: project.name,
+                            version: project.version,
+                            impexpName: project.impexpName,
+                    ])
+                }
+                into "$buildDir/tmp/javadoc"
+            }
+        }
+    }
+
+    jar {
+        manifest {
+            attributes('Implementation-Title': project.impexpName,
+                    'Implementation-Version': project.version,
+                    'Implementation-Vendor': project.vendorName + ', ' + project.vendorOrganisation
+            )
+        }
+        into('META-INF') {
+            from "$rootDir/resources/license/APACHE-2.0.txt"
+            from processLicense
+        }
+    }
+
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        archiveClassifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        archiveClassifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+                artifact sourcesJar
+                artifact javadocJar
+                pom {
+                    name = project.name
+                    url = project.citydbVcsUrl
+                    licenses {
+                        license {
+                            name = 'The Apache License, Version 2.0'
+                            url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                            distribution = 'repo'
+                        }
+                    }
+                    scm {
+                        url = project.impexpVcsUrl
+                        connection = 'scm:git:' + project.impexpGit
+                    }
+                }
+            }
+        }
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+}

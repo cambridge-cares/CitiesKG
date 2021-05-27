@@ -1,0 +1,1 @@
+java  -Xmx8g -classpath 'vocabularies/target/lib/json-20190722.jar:vocabularies/target/vocabularies-1.0.1.jar:blazegraph.jar' -server com.bigdata.rdf.sail.webapp.NanoSparqlServer 9999 berlin RWStore.properties

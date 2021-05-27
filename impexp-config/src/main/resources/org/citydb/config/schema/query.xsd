@@ -1,0 +1,751 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xs:schema elementFormDefault="qualified" version="1.0" targetNamespace="http://www.3dcitydb.org/importer-exporter/config" xmlns="http://www.3dcitydb.org/importer-exporter/config" xmlns:tns="http://www.3dcitydb.org/importer-exporter/config" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:element name="and" type="AndOperatorType"/>
+
+  <xs:element name="bbox" type="BBOXOperatorType"/>
+
+  <xs:element name="beyond" type="BeyondOperatorType"/>
+
+  <xs:element name="contains" type="ContainsOperatorType"/>
+
+  <xs:element name="dWithin" type="DWithinOperatorType"/>
+
+  <xs:element name="disjoint" type="DisjointOperatorType"/>
+
+  <xs:element name="envelope" type="BoundingBoxType"/>
+
+  <xs:element name="equals" type="EqualsOperatorType"/>
+
+  <xs:element name="filter" type="SelectionFilterType"/>
+
+  <xs:element name="intersects" type="IntersectsOperatorType"/>
+
+  <xs:element name="lineString" type="LineStringType"/>
+
+  <xs:element name="multiLineString" type="MultiLineStringType"/>
+
+  <xs:element name="multiPoint" type="MultiPointType"/>
+
+  <xs:element name="multiPolygon" type="MultiPolygonType"/>
+
+  <xs:element name="not" type="NotOperatorType"/>
+
+  <xs:element name="or" type="OrOperatorType"/>
+
+  <xs:element name="overlaps" type="OverlapsOperatorType"/>
+
+  <xs:element name="point" type="PointType"/>
+
+  <xs:element name="polygon" type="PolygonType"/>
+
+  <xs:element name="propertyIsBetween" type="BetweenOperatorType"/>
+
+  <xs:element name="propertyIsEqualTo" type="EqualToOperatorType"/>
+
+  <xs:element name="propertyIsGreaterThan" type="GreaterThanOperatorType"/>
+
+  <xs:element name="propertyIsGreaterThanOrEqualTo" type="GreaterThanOrEqualToOperatorType"/>
+
+  <xs:element name="propertyIsLessThan" type="LessThanOperatorType"/>
+
+  <xs:element name="propertyIsLessThanOrEqualTo" type="LessThanOrEqualToOperatorType"/>
+
+  <xs:element name="propertyIsLike" type="LikeOperatorType"/>
+
+  <xs:element name="propertyIsNotEqualTo" type="NotEqualToOperatorType"/>
+
+  <xs:element name="propertyIsNull" type="NullOperatorType"/>
+
+  <xs:element name="query" type="QueryType"/>
+
+  <xs:element name="resourceIds" type="ResourceIdType"/>
+
+  <xs:element name="sql" type="SelectOperatorType"/>
+
+  <xs:element name="touches" type="TouchesOperatorType"/>
+
+  <xs:element name="within" type="WithinOperatorType"/>
+
+  <xs:element name="wrapper" type="QueryWrapperType"/>
+
+  <xs:complexType name="QueryWrapperType">
+    <xs:sequence>
+      <xs:element ref="query" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="QueryType">
+    <xs:sequence>
+      <xs:element name="typeNames" type="FeatureTypeFilterType" minOccurs="0"/>
+      <xs:element name="propertyNames" type="ProjectionFilterType" minOccurs="0"/>
+      <xs:element ref="filter" minOccurs="0"/>
+      <xs:element name="limit" type="CounterFilterType" minOccurs="0"/>
+      <xs:element name="lods" type="LodFilterType" minOccurs="0"/>
+      <xs:element name="appearance" type="AppearanceFilterType" minOccurs="0"/>
+      <xs:element name="sortBy" type="SortingType" minOccurs="0"/>
+      <xs:element name="tiling" type="TilingType" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="targetSrs" type="xs:IDREF"/>
+    <xs:attribute name="targetSrid" type="xs:int"/>
+    <xs:attribute name="targetSrsName" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="FeatureTypeFilterType">
+    <xs:sequence>
+      <xs:element name="typeName" type="xs:QName" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ProjectionFilterType">
+    <xs:sequence>
+      <xs:element name="context" type="ProjectionContextType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ProjectionContextType">
+    <xs:sequence>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="propertyName" type="PropertyNameType"/>
+        <xs:element name="genericAttributeName" type="GenericAttributeNameType"/>
+      </xs:choice>
+    </xs:sequence>
+    <xs:attribute name="typeName" type="xs:QName" use="required"/>
+    <xs:attribute name="mode" type="ProjectionModeType"/>
+  </xs:complexType>
+
+  <xs:simpleType name="PropertyNameType">
+    <xs:restriction base="xs:QName"/>
+  </xs:simpleType>
+
+  <xs:complexType name="GenericAttributeNameType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute name="type" type="GenericAttributeTypeType"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="SelectionFilterType">
+    <xs:choice>
+      <xs:element ref="and"/>
+      <xs:element ref="or"/>
+      <xs:element ref="not"/>
+      <xs:element ref="propertyIsEqualTo"/>
+      <xs:element ref="propertyIsNotEqualTo"/>
+      <xs:element ref="propertyIsLessThan"/>
+      <xs:element ref="propertyIsLessThanOrEqualTo"/>
+      <xs:element ref="propertyIsGreaterThan"/>
+      <xs:element ref="propertyIsGreaterThanOrEqualTo"/>
+      <xs:element ref="propertyIsBetween"/>
+      <xs:element ref="propertyIsLike"/>
+      <xs:element ref="propertyIsNull"/>
+      <xs:element ref="bbox"/>
+      <xs:element ref="equals"/>
+      <xs:element ref="disjoint"/>
+      <xs:element ref="touches"/>
+      <xs:element ref="within"/>
+      <xs:element ref="overlaps"/>
+      <xs:element ref="intersects"/>
+      <xs:element ref="contains"/>
+      <xs:element ref="beyond"/>
+      <xs:element ref="dWithin"/>
+      <xs:element ref="resourceIds"/>
+      <xs:element ref="sql"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="AbstractPredicateType" abstract="true">
+    <xs:sequence/>
+  </xs:complexType>
+
+  <xs:complexType name="AbstractLogicalOperatorType" abstract="true">
+    <xs:complexContent>
+      <xs:extension base="AbstractPredicateType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="AbstractBinaryLogicalOperatorType" abstract="true">
+    <xs:complexContent>
+      <xs:extension base="AbstractLogicalOperatorType">
+        <xs:sequence>
+          <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element ref="and"/>
+            <xs:element ref="or"/>
+            <xs:element ref="not"/>
+            <xs:element ref="propertyIsEqualTo"/>
+            <xs:element ref="propertyIsNotEqualTo"/>
+            <xs:element ref="propertyIsLessThan"/>
+            <xs:element ref="propertyIsLessThanOrEqualTo"/>
+            <xs:element ref="propertyIsGreaterThan"/>
+            <xs:element ref="propertyIsGreaterThanOrEqualTo"/>
+            <xs:element ref="propertyIsBetween"/>
+            <xs:element ref="propertyIsLike"/>
+            <xs:element ref="propertyIsNull"/>
+            <xs:element ref="bbox"/>
+            <xs:element ref="equals"/>
+            <xs:element ref="disjoint"/>
+            <xs:element ref="touches"/>
+            <xs:element ref="within"/>
+            <xs:element ref="overlaps"/>
+            <xs:element ref="intersects"/>
+            <xs:element ref="contains"/>
+            <xs:element ref="beyond"/>
+            <xs:element ref="dWithin"/>
+            <xs:element ref="resourceIds"/>
+            <xs:element ref="sql"/>
+          </xs:choice>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="AndOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractBinaryLogicalOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="OrOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractBinaryLogicalOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="NotOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractLogicalOperatorType">
+        <xs:choice>
+          <xs:element ref="and"/>
+          <xs:element ref="or"/>
+          <xs:element ref="not"/>
+          <xs:element ref="propertyIsEqualTo"/>
+          <xs:element ref="propertyIsNotEqualTo"/>
+          <xs:element ref="propertyIsLessThan"/>
+          <xs:element ref="propertyIsLessThanOrEqualTo"/>
+          <xs:element ref="propertyIsGreaterThan"/>
+          <xs:element ref="propertyIsGreaterThanOrEqualTo"/>
+          <xs:element ref="propertyIsBetween"/>
+          <xs:element ref="propertyIsLike"/>
+          <xs:element ref="propertyIsNull"/>
+          <xs:element ref="bbox"/>
+          <xs:element ref="equals"/>
+          <xs:element ref="disjoint"/>
+          <xs:element ref="touches"/>
+          <xs:element ref="within"/>
+          <xs:element ref="overlaps"/>
+          <xs:element ref="intersects"/>
+          <xs:element ref="contains"/>
+          <xs:element ref="beyond"/>
+          <xs:element ref="dWithin"/>
+          <xs:element ref="resourceIds"/>
+          <xs:element ref="sql"/>
+        </xs:choice>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="AbstractComparisonOperatorType" abstract="true">
+    <xs:complexContent>
+      <xs:extension base="AbstractPredicateType">
+        <xs:sequence>
+          <xs:element name="valueReference" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="AbstractBinaryComparisonOperatorType" abstract="true">
+    <xs:complexContent>
+      <xs:extension base="AbstractComparisonOperatorType">
+        <xs:sequence>
+          <xs:element name="literal" type="xs:string"/>
+        </xs:sequence>
+        <xs:attribute name="matchCase" type="xs:boolean"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="EqualToOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractBinaryComparisonOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="NotEqualToOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractBinaryComparisonOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="LessThanOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractBinaryComparisonOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="LessThanOrEqualToOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractBinaryComparisonOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="GreaterThanOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractBinaryComparisonOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="GreaterThanOrEqualToOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractBinaryComparisonOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="BetweenOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractComparisonOperatorType">
+        <xs:sequence>
+          <xs:element name="lowerBoundary" type="xs:string"/>
+          <xs:element name="upperBoundary" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="LikeOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractComparisonOperatorType">
+        <xs:sequence>
+          <xs:element name="literal" type="xs:string"/>
+        </xs:sequence>
+        <xs:attribute name="wildCard" type="xs:string"/>
+        <xs:attribute name="singleCharacter" type="xs:string"/>
+        <xs:attribute name="escapeCharacter" type="xs:string"/>
+        <xs:attribute name="matchCase" type="xs:boolean"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="NullOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractComparisonOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="AbstractSpatialOperatorType" abstract="true">
+    <xs:complexContent>
+      <xs:extension base="AbstractPredicateType">
+        <xs:sequence>
+          <xs:element name="valueReference" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="BBOXOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractSpatialOperatorType">
+        <xs:sequence>
+          <xs:choice minOccurs="0">
+            <xs:element name="operand" type="BoundingBoxType"/>
+            <xs:element ref="envelope"/>
+          </xs:choice>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="BoundingBoxType">
+    <xs:complexContent>
+      <xs:extension base="AbstractGeometryType">
+        <xs:sequence>
+          <xs:element name="lowerCorner" type="PositionType"/>
+          <xs:element name="upperCorner" type="PositionType"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="AbstractGeometryType" abstract="true">
+    <xs:sequence/>
+    <xs:attribute name="srsRef" type="xs:IDREF"/>
+    <xs:attribute name="srid" type="xs:int"/>
+  </xs:complexType>
+
+  <xs:simpleType name="PositionType">
+    <xs:list itemType="xs:double"/>
+  </xs:simpleType>
+
+  <xs:complexType name="DatabaseSrsType" final="extension restriction">
+    <xs:sequence>
+      <xs:element name="srid" type="xs:int"/>
+      <xs:element name="gmlSrsName" type="xs:string" minOccurs="0"/>
+      <xs:element name="description" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:ID"/>
+  </xs:complexType>
+
+  <xs:complexType name="PointType">
+    <xs:complexContent>
+      <xs:extension base="AbstractGeometryType">
+        <xs:sequence>
+          <xs:element name="pos" type="PositionType"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="MultiPointType">
+    <xs:complexContent>
+      <xs:extension base="AbstractGeometryType">
+        <xs:sequence>
+          <xs:element ref="point" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="LineStringType">
+    <xs:complexContent>
+      <xs:extension base="AbstractGeometryType">
+        <xs:sequence>
+          <xs:element name="posList" type="PositionListType"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="PositionListType">
+    <xs:simpleContent>
+      <xs:extension base="DoubleListType">
+        <xs:attribute name="dimension" type="xs:int"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:simpleType name="DoubleListType">
+    <xs:list itemType="xs:double"/>
+  </xs:simpleType>
+
+  <xs:complexType name="MultiLineStringType">
+    <xs:complexContent>
+      <xs:extension base="AbstractGeometryType">
+        <xs:sequence>
+          <xs:element ref="lineString" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="PolygonType">
+    <xs:complexContent>
+      <xs:extension base="AbstractGeometryType">
+        <xs:sequence>
+          <xs:element name="exterior" type="PositionListType"/>
+          <xs:element name="interior" type="PositionListType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="MultiPolygonType">
+    <xs:complexContent>
+      <xs:extension base="AbstractGeometryType">
+        <xs:sequence>
+          <xs:element ref="polygon" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="AbstractBinarySpatialOperatorType" abstract="true">
+    <xs:complexContent>
+      <xs:extension base="AbstractSpatialOperatorType">
+        <xs:choice>
+          <xs:element ref="envelope"/>
+          <xs:element ref="point"/>
+          <xs:element ref="multiPoint"/>
+          <xs:element ref="lineString"/>
+          <xs:element ref="multiLineString"/>
+          <xs:element ref="polygon"/>
+          <xs:element ref="multiPolygon"/>
+        </xs:choice>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="EqualsOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractBinarySpatialOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="DisjointOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractBinarySpatialOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="TouchesOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractBinarySpatialOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="WithinOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractBinarySpatialOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="OverlapsOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractBinarySpatialOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="IntersectsOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractBinarySpatialOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="ContainsOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractBinarySpatialOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="AbstractDistanceOperatorType" abstract="true">
+    <xs:complexContent>
+      <xs:extension base="AbstractBinarySpatialOperatorType">
+        <xs:sequence>
+          <xs:element name="distance" type="DistanceType"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="DistanceType">
+    <xs:simpleContent>
+      <xs:extension base="xs:double">
+        <xs:attribute name="uom" type="xs:string"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="BeyondOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractDistanceOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="DWithinOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractDistanceOperatorType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="ResourceIdType">
+    <xs:complexContent>
+      <xs:extension base="AbstractPredicateType">
+        <xs:sequence>
+          <xs:element name="id" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="SelectOperatorType">
+    <xs:complexContent>
+      <xs:extension base="AbstractPredicateType">
+        <xs:sequence>
+          <xs:element name="select" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="CounterFilterType">
+    <xs:sequence>
+      <xs:element name="count" type="xs:nonNegativeInteger" minOccurs="0"/>
+      <xs:element name="startIndex" type="xs:nonNegativeInteger" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="LodFilterType">
+    <xs:sequence>
+      <xs:element name="lod" type="xs:int" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="mode" type="LodFilterModeType"/>
+    <xs:attribute name="searchMode" type="LodSearchDepthModeType"/>
+    <xs:attribute name="searchDepth" type="xs:int"/>
+  </xs:complexType>
+
+  <xs:complexType name="AppearanceFilterType">
+    <xs:sequence>
+      <xs:element name="nullTheme" type="xs:boolean" minOccurs="0"/>
+      <xs:element name="theme" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SortingType">
+    <xs:sequence>
+      <xs:element name="sortProperty" type="SortPropertyType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SortPropertyType">
+    <xs:sequence>
+      <xs:element name="valueReference" type="xs:string"/>
+      <xs:element name="sortOrder" type="SortOrderType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="TilingType">
+    <xs:complexContent>
+      <xs:extension base="AbstractTilingType">
+        <xs:sequence>
+          <xs:choice minOccurs="0">
+            <xs:element name="cityGMLTilingOptions" type="CityGMLTilingOptionsType"/>
+            <xs:element name="kmlTilingOptions" type="KmlTilingOptionsType"/>
+          </xs:choice>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="AbstractTilingType" abstract="true">
+    <xs:sequence>
+      <xs:element name="extent" type="BoundingBoxType"/>
+      <xs:element name="rows" type="xs:int" default="1"/>
+      <xs:element name="columns" type="xs:int" default="1"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="CityGMLTilingOptionsType">
+    <xs:complexContent>
+      <xs:extension base="AbstractTilingOptionsType">
+        <xs:sequence>
+          <xs:element name="tilePath" type="xs:string" minOccurs="0"/>
+          <xs:element name="tilePathSuffix" type="TileSuffixModeType" minOccurs="0"/>
+          <xs:element name="tileNameSuffix" type="TileNameSuffixModeType" minOccurs="0"/>
+          <xs:element name="includeTileAsGenericAttribute" type="xs:boolean" default="false" minOccurs="0"/>
+          <xs:element name="genericAttributeValue" type="TileSuffixModeType" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="AbstractTilingOptionsType" abstract="true">
+    <xs:sequence/>
+  </xs:complexType>
+
+  <xs:complexType name="KmlTilingOptionsType">
+    <xs:complexContent>
+      <xs:extension base="AbstractTilingOptionsType">
+        <xs:sequence>
+          <xs:element name="autoTileSideLength" type="xs:double"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:simpleType name="ProjectionModeType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="keep"/>
+      <xs:enumeration value="remove"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="GenericAttributeTypeType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="stringAttribute"/>
+      <xs:enumeration value="intAttribute"/>
+      <xs:enumeration value="doubleAttribute"/>
+      <xs:enumeration value="dateAttribute"/>
+      <xs:enumeration value="uriAttribute"/>
+      <xs:enumeration value="measureAttribute"/>
+      <xs:enumeration value="genericAttributeSet"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="LodFilterModeType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="or"/>
+      <xs:enumeration value="and"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="LodSearchDepthModeType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="all"/>
+      <xs:enumeration value="depth"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="SortOrderType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="asc"/>
+      <xs:enumeration value="desc"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="TileSuffixModeType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="row_column"/>
+      <xs:enumeration value="xMin_yMin"/>
+      <xs:enumeration value="xMax_yMin"/>
+      <xs:enumeration value="xMin_yMax"/>
+      <xs:enumeration value="xMax_yMax"/>
+      <xs:enumeration value="xMin_yMin_xMax_yMax"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="TileNameSuffixModeType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="none"/>
+      <xs:enumeration value="sameAsPath"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>
+

@@ -1,0 +1,28 @@
+.gradle/
+gradle.properties
+build/
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# Intellij
+.idea/
+*.iml
+*.iws
+out/
+
+*.DS_Store
+venv/lib/
+venv/bin/
+venv/include
+
+db/blazegraph.jar
+db/citiesKG.jnl
+db/rules.log
+db/vocabularies/target/
+db/*.gml
+db/appearance
+

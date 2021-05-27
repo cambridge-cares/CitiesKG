@@ -1,0 +1,52 @@
+plugins {
+    id 'com.jfrog.bintray' version '1.8.4'
+}
+
+dependencies {
+    implementation 'org.junit.jupiter:junit-jupiter:5.4.2'
+    implementation 'junit:junit:4.12'
+    compile project(':impexp-config')
+    compile project(':impexp-plugin-api')
+    compile 'org.citydb:sqlbuilder:2.2.1'
+    compile 'org.citydb:3dcitydb-ade-citygml4j:1.1.1'
+    compile 'org.citygml4j:citygml4j:2.10.5'
+    compile 'org.geotools:gt-epsg-extension:20.1'
+    compile 'org.geotools:gt-epsg-hsql:20.1'
+    compile 'org.geotools:gt-referencing:20.1'
+    compile 'com.h2database:h2:1.4.200'
+    compile 'org.locationtech.jts:jts-core:1.16.1'
+    compile 'org.postgresql:postgresql:42.2.10'
+    compile 'net.postgis:postgis-jdbc:2.3.0'
+    compile 'org.apache.tomcat:tomcat-jdbc:9.0.30'
+    compile 'org.apache.tomcat:tomcat-juli:9.0.30'
+    compile 'org.apache.tika:tika-core:1.23'
+    compile 'org.apache.commons:commons-compress:1.20'
+    compile 'org.apache.jena:jena-jdbc-driver-remote:3.15.0'
+    compile 'org.apache.jena:jena-querybuilder:3.16.0'
+    compile group: 'org.json', name: 'json', version: '20201115'
+    compile fileTree(dir: 'lib', include: '*.jar')
+}
+
+javadoc {
+    source += project(':impexp-config').sourceSets.main.allJava
+    source += project(':impexp-plugin-api').sourceSets.main.allJava
+}
+
+bintray {
+    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+
+    publications = ['mavenJava']
+    pkg {
+        repo = 'maven'
+        userOrg = '3dcitydb'
+        name = project.name
+        websiteUrl = project.citydbVcsUrl
+        vcsUrl = project.impexpGit
+        issueTrackerUrl = project.impexpIssueTrackerUrl
+        licenses = ['Apache-2.0']
+        version {
+            name = project.version
+        }
+    }
+}
