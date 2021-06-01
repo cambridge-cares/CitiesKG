@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class DBGenericCityObjectTest extends DBTest{
+
     @Test
     public void getSPARQLStatementTest(){
         String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
