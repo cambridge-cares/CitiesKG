@@ -1,9 +1,20 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
+import org.apache.http.protocol.HTTP;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import org.json.JSONObject;
+import uk.ac.cam.cares.jps.base.http.Http;
+
+import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.HttpMethod;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Set;
+
 
 /**
  * A JPSAgent framework based 3D City Import Agent class used to import data into Semantic 3D City Database
@@ -22,21 +33,60 @@ import java.util.ArrayList;
  * @version $Id$
  *
  */
+@WebServlet(
+        urlPatterns = {
+                CityImportAgent.URI_LISTEN,
+                CityImportAgent.URI_ACTION
+        })
 public class CityImportAgent extends JPSAgent {
-    
+
+    public static final String URI_LISTEN = "/import/source";
+    public static final String URI_ACTION = "/import/action";
+    public static final String KEY_REQ_METHOD = "method";
+    public static final String KEY_REQ_URL = "requestUrl";
+    public static final String KEY_DIRECTORY = "directory";
+
+
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
-        //@Todo: implementation
-        validateInput(requestParams);
+        if (validateInput(requestParams)) {
+            if (requestParams.getString(KEY_REQ_URL).contains(URI_LISTEN)) {
+                listenToImport(requestParams.getString(KEY_DIRECTORY));
+            } else if (requestParams.getString(KEY_REQ_URL).contains(URI_ACTION)) {
+                //@Todo: implementation
+            }
+        }
         return requestParams;
     }
 
     @Override
     public boolean validateInput(JSONObject requestParams) throws BadRequestException {
-        //@Todo: implementation
-        if (requestParams.isEmpty()) {
+        boolean error = true;
+        if (!requestParams.isEmpty()) {
+            Set<String> keys = requestParams.keySet();
+            if (keys.contains(KEY_REQ_METHOD) && keys.contains(KEY_REQ_URL)) {
+                if (requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.POST)) {
+                    try {
+                        URL reqUrl = new URL((String) requestParams.get(KEY_REQ_URL));
+                        if (reqUrl.getPath().contains(URI_LISTEN) && keys.contains(KEY_DIRECTORY)) {
+                            File dir = new File((String) requestParams.get(KEY_DIRECTORY));
+                            if (dir.getAbsolutePath().length() > 0) {
+                                error = false;
+                            }
+                        } else if (reqUrl.getPath().contains(URI_ACTION)) {
+                            //@Todo: implementation
+                        }
+                    } catch (MalformedURLException e) {
+                        throw new BadRequestException();
+                    }
+                }
+            }
+        }
+
+        if (error) {
             throw new BadRequestException();
         }
+
         return true;
     }
 
