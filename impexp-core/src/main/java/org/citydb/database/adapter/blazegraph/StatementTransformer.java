@@ -1,9 +1,6 @@
 package org.citydb.database.adapter.blazegraph;
 // implemented by SHIYING LI
 
-//import de.hsmainz.cs.semgis.arqextension.geometry.attribute.IsValidDetail;
-//import io.github.galbiston.geosparql_jena.implementation.GeometryWrapperFactory;
-//import io.github.galbiston.geosparql_jena.implementation.datatype.WKTDatatype;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
@@ -18,11 +15,11 @@ import org.citydb.sqlbuilder.select.ProjectionToken;
 import org.citydb.sqlbuilder.select.Select;
 import org.citydb.sqlbuilder.select.operator.comparison.BinaryComparisonOperator;
 import org.citydb.sqlbuilder.select.operator.comparison.InOperator;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.*;
 import org.locationtech.jts.operation.valid.IsValidOp;
 import org.locationtech.jts.operation.valid.TopologyValidationError;
+
+import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 
 import java.util.*;
 
@@ -160,6 +157,7 @@ public class StatementTransformer {
     public static void main(String[] args) {
         checkValidTest();
     }
+
     public static void checkValidTest() {
             String blaze_geometry = "385378.016138475#5819494.72358936#36.5200004577637#385378.143842939#5819493.07912378#36.5200004577637#" +
                     "385378.786499313#5819484.76944437#36.5200004577637#385317.300349907#5819479.76855148#36.5200004577637#" +
@@ -188,36 +186,73 @@ public class StatementTransformer {
                     "82136.574 454214.882 -0.526,82135.922 454214.916 -0.526,82134.585 454215.166 -0.526,82132.371 454215.483 -0.526,82131.031 454215.731 -0.526," +
                     "82130.68 454215.789 -0.526,82125.286 454216.795 -0.526,82123.94 454217.036 -0.526,82118.21 454218.086 -0.526,82116.869 454218.345 -0.526," +
                     "82111.134 454219.407 -0.526,82109.79 454219.651 -0.526,82107.919 454219.98 -0.526,82106.507 454220.236 -0.526,82106.765 454221.659 -0.526";
+        String st_geometry1 = "82106.765 454221.659 -0.526,82107.759 454227.024 -0.526,82108.99 454233.752 -0.526,82109.056 454234.11 -0.526," +
+                "82109.301 454235.449 -0.526,82110.361 454241.194 -0.526,82110.597 454242.533 -0.526,82111.667 454248.272 -0.526,82111.79 454248.937 -0.526," +
+                "82111.586 454248.97 -0.526,82112.523 454254.297 -0.526,82112.779 454254.933 -0.526,82113.133 454255.521 -0.526,82113.576 454256.045 -0.526," +
+                "82114.095 454256.492 -0.526,82114.679 454256.852 -0.526,82115.312 454257.115 -0.526,82115.979 454257.275 -0.526,82116.679 454257.347 -0.526," +
+                "82117.38 454257.306 -0.526,82118.066 454257.153 -0.526,82118.719 454256.891 -0.526,82119.321 454256.528 -0.526,82119.857 454256.073 -0.526," +
+                "82120.313 454255.538 -0.526,82120.672 454254.897 -0.526,82120.41 454254.77 -0.526,82139.425 454221.057 -0.526,82139.823 454220.351 -0.526," +
+                "82140.059 454219.694 -0.526,82140.175 454219.006 -0.526,82140.168 454218.309 -0.526,82140.038 454217.623 -0.526,82139.79 454216.971 -0.526," +
+                "82139.43 454216.373 -0.526,82138.971 454215.848 -0.526,82138.429 454215.447 -0.526,82137.847 454215.151 -0.526,82137.222 454214.961 -0.526," +
+                "82136.574 454214.882 -0.526,82135.922 454214.916 -0.526,82134.585 454215.166 -0.526,82132.371 454215.483 -0.526,82131.031 454215.731 -0.526," +
+                "82130.68 454215.789 -0.526,82125.286 454216.795 -0.526,82123.94 454217.036 -0.526,82118.21 454218.086 -0.526,82116.869 454218.345 -0.526," +
+                "82111.134 454219.407 -0.526,82109.79 454219.651 -0.526,82107.919 454219.98 -0.526,82106.507 454220.236 -0.526,82106.765 454221.659 -0.526";
+        String st_geometry2 = "82107.919 454219.98 130.672,82109.79 454219.651 130.672,82111.134 454219.407 130.672,82116.869 454218.345 130.672,82118.21 454218.086 130.672," +
+                "82123.94 454217.036 130.672,82125.286 454216.795 130.672,82130.68 454215.789 130.672,82131.031 454215.731 130.672,82132.371 454215.483 130.672,82134.585 454215.166 130.672," +
+                "82135.922 454214.916 130.672,82136.574 454214.882 130.672,82137.222 454214.961 130.672,82137.847 454215.151 130.672,82138.429 454215.447 130.672,82138.971 454215.848 130.672," +
+                "82139.43 454216.373 130.672,82139.79 454216.971 130.672,82140.038 454217.623 130.672,82140.168 454218.309 130.672,82140.175 454219.006 130.672,82140.059 454219.694 130.672," +
+                "82139.823 454220.351 130.672,82139.425 454221.057 130.672,82120.41 454254.77 130.672,82120.672 454254.897 130.672,82120.313 454255.538 130.672,82119.857 454256.073 130.672," +
+                "82119.321 454256.528 130.672,82118.719 454256.891 130.672,82118.066 454257.153 130.672,82117.38 454257.306 130.672,82116.679 454257.347 130.672,82115.979 454257.275 130.672," +
+                "82115.312 454257.115 130.672,82114.679 454256.852 130.672,82114.095 454256.492 130.672,82113.576 454256.045 130.672,82113.133 454255.521 130.672,82112.779 454254.933 130.672," +
+                "82112.523 454254.297 130.672,82111.586 454248.97 130.672,82111.79 454248.937 130.672,82111.667 454248.272 130.672,82110.597 454242.533 130.672,82110.361 454241.194 130.672," +
+                "82109.301 454235.449 130.672,82109.056 454234.11 130.672,82108.99 454233.752 130.672,82107.759 454227.024 130.672,82106.765 454221.659 130.672,82106.507 454220.236 130.672," +
+                "82107.919 454219.98 130.672";
 
-            //str2coords (blaze_geometry);
-            //str2coords (noValid_geometry);
-            //str2coords (valid_geometry);
-            System.out.println(checkValid(str2coords(blaze_geometry)));
-            System.out.println(checkValid(str2coords(noValid_geometry)));
-            System.out.println(checkValid(str2coords(valid_geometry)));
+        String testdata1 = "743238 2967416 0,743238 2967450 0,743265 2967450 0,743265.625 2967416 0,743238 2967416 0";
+        String testpolygon = "-7 4.2 2,-7.1 4.2 3,-7.1 4.3 2,-7 4.2 2";
+        String testpoint1 = "5 5 5";
+        String testpoint2 = "-2 3 1";
+        String testlineString = "5 5 5,10 10 10";
+        GeometryFactory fac = new GeometryFactory();
+        Coordinate pcor1 = new Coordinate(5,5, 5);
+        Coordinate pcor2 = new Coordinate(-2,3, 1);
+        Polygon testpoly = fac.createPolygon(str2coords(testpolygon).toArray(new Coordinate[0]));
+        Point testp1 = fac.createPoint(pcor1);
+        Point testp2 = fac.createPoint(pcor2);
+        Geometry testl = fac.createLineString(str2coords(testlineString).toArray(new Coordinate[0]));
+        Geometry testll = null;
+        try {
+
+            testll = fac.createLineString(str2coords(testlineString).toArray(new Coordinate[0]));
+
+        }catch (Exception ex){
+            System.out.println(ex.toString());
         }
 
-        public static String checkValid(List<Coordinate> geometry) {
+        String testpolygon2 = "743238 2967416 0,743238 2967450 0,743265 2967450 0,743265.625 2967416 0,743238 2967416 0";
+        Polygon testpoly2 = fac.createPolygon(str2coords(testpolygon2).toArray(new Coordinate[0]));
+        testpoly2.setSRID(2249);
 
-            GeometryFactory fac = new GeometryFactory();
-            Polygon pointlist = fac.createPolygon(geometry.toArray(new Coordinate[0]));
+            /*
+            System.out.println(Arrays.toString(GeoSpatialProcessor.IsValid(str2coords(blaze_geometry))));
+            System.out.println(Arrays.toString(GeoSpatialProcessor.IsValid(str2coords(noValid_geometry))));
+            System.out.println(Arrays.toString(GeoSpatialProcessor.IsValid(str2coords(valid_geometry))));
+            */
+            //System.out.println(Arrays.toString(GeoSpatialProcessor.IsValid(str2coords(testdata1))));
 
-            IsValidOp isValidOp = new IsValidOp(pointlist);
-            boolean result_boolean = isValidOp.isValid();
-            Object[] details = new Object[3];
+            Geometry geom = fac.createPolygon(str2coords(testdata1).toArray(new Coordinate[0]));
+            System.out.println(Arrays.toString(GeoSpatialProcessor.IsValid(geom)));
+            System.out.println(GeoSpatialProcessor.Force2D(geom));
+            System.out.println(GeoSpatialProcessor.transform(geom, 2249, 4326));
+            System.out.println(GeoSpatialProcessor.CalculateArea(testpoly2));
+            //System.out.println(GeoSpatialProcessor.Force2D(str2coords(blaze_geometry)));
 
-            TopologyValidationError error = isValidOp.getValidationError();
-            if (error != null) {
-                details[0] = false;
-                details[1] = error.getMessage();
-                details[2] = fac.createPoint(error.getCoordinate());
-            } else {
-                details[0] = true;
-                details[1] = "Valid Geometry";
-            }
-            NodeValue result_message = NodeValue.makeString(Arrays.toString(details));
-            return result_message.toString();
+            //System.out.println(GeoSpatialProcessor.CalculateArea(str2coords(st_geometry1)));
+
+            System.out.println(GeoSpatialProcessor.Union(testpoly, testpoly2));
+
         }
+
 
         /*Convert the input String into list of coordinates*/
         public static List<Coordinate> str2coords(String st_geometry) {
