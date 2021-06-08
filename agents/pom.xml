@@ -74,5 +74,11 @@
             <version>3.1.0</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>uk.ac.cam.cares.jps.aws</groupId>
+            <artifactId>JPS_AWS</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 </project>

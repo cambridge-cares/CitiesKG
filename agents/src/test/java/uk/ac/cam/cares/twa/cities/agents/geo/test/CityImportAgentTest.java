@@ -65,4 +65,12 @@ public class CityImportAgentTest extends TestCase {
         //@Todo: implementation
     }
 
+    public void testValidateListenInput() {
+        //@Todo: implementation
+    }
+
+    public void testValidateActionInput() {
+        //@Todo: implementation
+    }
+
 }

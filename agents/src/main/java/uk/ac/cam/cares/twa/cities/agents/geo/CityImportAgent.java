@@ -1,18 +1,19 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
-import org.apache.http.protocol.HTTP;
+import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
+import uk.ac.cam.cares.jps.aws.WatcherCallback;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import org.json.JSONObject;
-import uk.ac.cam.cares.jps.base.http.Http;
-
+import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+import uk.ac.cam.cares.jps.aws.CreateFileWatcher;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Set;
 
 
@@ -41,21 +42,26 @@ import java.util.Set;
 public class CityImportAgent extends JPSAgent {
 
     public static final String URI_LISTEN = "/import/source";
-    public static final String URI_ACTION = "/import/action";
+    public static final String URI_ACTION = "/import/citygml";
     public static final String KEY_REQ_METHOD = "method";
     public static final String KEY_REQ_URL = "requestUrl";
     public static final String KEY_DIRECTORY = "directory";
-
+    private String requestUrl;
+    private File importDir;
 
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
         if (validateInput(requestParams)) {
-            if (requestParams.getString(KEY_REQ_URL).contains(URI_LISTEN)) {
-                listenToImport(requestParams.getString(KEY_DIRECTORY));
-            } else if (requestParams.getString(KEY_REQ_URL).contains(URI_ACTION)) {
-                //@Todo: implementation
+            requestUrl = requestParams.getString(KEY_REQ_URL);
+            if (requestUrl.contains(URI_LISTEN)) {
+                importDir = listenToImport(requestParams.getString(KEY_DIRECTORY));
+            } else if (requestUrl.contains(URI_ACTION)) {
+                requestParams = new JSONObject(
+                        importFiles(requestParams.getString(AsynchronousWatcherService.KEY_WATCH))
+                );
             }
         }
+
         return requestParams;
     }
 
@@ -68,13 +74,10 @@ public class CityImportAgent extends JPSAgent {
                 if (requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.POST)) {
                     try {
                         URL reqUrl = new URL((String) requestParams.get(KEY_REQ_URL));
-                        if (reqUrl.getPath().contains(URI_LISTEN) && keys.contains(KEY_DIRECTORY)) {
-                            File dir = new File((String) requestParams.get(KEY_DIRECTORY));
-                            if (dir.getAbsolutePath().length() > 0) {
-                                error = false;
-                            }
+                        if (reqUrl.getPath().contains(URI_LISTEN)) {
+                            error = validateListenInput(requestParams, keys);
                         } else if (reqUrl.getPath().contains(URI_ACTION)) {
-                            //@Todo: implementation
+                            error = validateActionInput(requestParams, keys);
                         }
                     } catch (MalformedURLException e) {
                         throw new BadRequestException();
@@ -91,15 +94,77 @@ public class CityImportAgent extends JPSAgent {
     }
 
     /**
+     * Validates input specific to requests commint to URI_LISTEN
+     *
+     * @param requestParams - request body in JSON format
+     * @param keys - request body keys
+     *
+     * @return boolean saying if request is valid or not
+     */
+    private boolean validateListenInput(JSONObject requestParams, Set<String> keys) {
+        boolean error = true;
+        if (keys.contains(KEY_DIRECTORY)) {
+            File dir = new File((String) requestParams.get(KEY_DIRECTORY));
+            if (dir.getAbsolutePath().length() > 0) {
+                error = false;
+            }
+        }
+
+        return error;
+    }
+
+    /**
+     * Validates input specific to requests commint to URI_ACTION
+     *
+     * @param requestParams - request body in JSON format
+     * @param keys - request body keys
+     *
+     * @return boolean saying if request is valid or not
+     */
+    private boolean validateActionInput(JSONObject requestParams, Set<String> keys) {
+        boolean error = true;
+        if (keys.contains(AsynchronousWatcherService.KEY_WATCH)) {
+            File dir = new File((String) requestParams.get(AsynchronousWatcherService.KEY_WATCH));
+            if (dir.isDirectory()) {
+                error = false;
+            }
+        }
+
+        return error;
+    }
+
+    /**
      * Starts agent listening process to the new file appearing events in a given directory.
+     * Creates import directory, if it does not exist.
+     * Asks Asynchronous Watching Service to start watching the directory.
      *
      * @param directoryName - which directory to look for new files
-     * @return information about listening process start
+     * @return directory watched for new files to import
+     *
      */
-    private boolean listenToImport(String directoryName) {
-        //@Todo: implementation
-        boolean listening = false;
-        return listening;
+    private File listenToImport(String directoryName) {
+        File dir = new File(directoryName);
+
+        if (!dir.exists() && dir.mkdirs()) {
+            throw new JPSRuntimeException(new FileNotFoundException(directoryName));
+        }
+
+        try {
+            JSONObject json = new JSONObject();
+            String url = requestUrl.replace(URI_LISTEN, URI_ACTION);
+            json.put(AsynchronousWatcherService.KEY_WATCH, directoryName);
+            json.put(AsynchronousWatcherService.KEY_CALLBACK_URL, url);
+            CreateFileWatcher watcher = new CreateFileWatcher(dir,
+                    AsynchronousWatcherService.PARAM_TIMEOUT * AsynchronousWatcherService.TIMEOUT_MUL);
+            WatcherCallback callback = watcher.getCallback(url, json.toString());
+            watcher.setCallback(callback);
+            watcher.setWatchAnyFile(true);
+            watcher.start();
+        } catch (Exception e) {
+            throw new JPSRuntimeException(e);
+        }
+
+        return dir;
     }
 
     /**
