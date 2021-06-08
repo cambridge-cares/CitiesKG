@@ -87,7 +87,8 @@ public class DBBuildingInstallation implements DBImporter {
 		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
 
 		// original code for SQL
-		String stmt = "insert into " + schema + ".building_installation (id, objectclass_id, class, class_codespace, function, function_codespace, usage, usage_codespace, building_id, room_id, " +
+		String stmt = "insert into " + schema + ".building_installation (id, objectclass_id, class, class_codespace," +
+				" function, function_codespace, usage, usage_codespace, building_id, room_id, " +
 				"lod2_brep_id, lod3_brep_id, lod4_brep_id, lod2_other_geom, lod3_other_geom, lod4_other_geom, " +
 				"lod2_implicit_rep_id, lod3_implicit_rep_id, lod4_implicit_rep_id, " +
 				"lod2_implicit_ref_point, lod3_implicit_ref_point, lod4_implicit_ref_point, " +
