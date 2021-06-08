@@ -9,12 +9,10 @@ public class DBExternalReferenceTest extends DBTest {
     @Test
     public void getSPARQLStatementTest() {
         // SYL: this is actually the preparedStatement of psCityObject
-        String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
-                "BASE <http://localhost/berlin/> " +
-                "INSERT DATA " +
-                "{ GRAPH <externalreference/> " +
-                "{ ? ocgml:id  ?;ocgml:infoSys  ?;" +
-                "ocgml:name  ?;ocgml:URI  ?;ocgml:cityObjectId  ?;.}}";
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
+                "BASE <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> " +
+                "INSERT DATA { GRAPH <externalreference/> { ? ocgml:id  ?;ocgml:infoSys  ?;ocgml:name  ?;" +
+                "ocgml:URI  ?;ocgml:cityObjectId  ?;.}}";
         String generated;
 
         try {

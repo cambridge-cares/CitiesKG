@@ -42,7 +42,7 @@ public class CityGMLImportManagerTest {
     public void getGraphBaseIriTest() {
         try {
             CityGMLImportManager cityGMLImportManager = DBObjectTestHelper.getCityGMLImportManager();
-            assertEquals(cityGMLImportManager.getGraphBaseIri(), "http://127.0.0.1:9999//blazegraph/namespace/berlin/sparql");
+            assertEquals(cityGMLImportManager.getGraphBaseIri(), "http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql");
         } catch (Exception e) {
             fail();
         }

@@ -9,12 +9,11 @@ public class DBCityObjectGenericAttribTest extends DBTest{
     @Test
     public void getSPARQLStatement1Test() {
 
-        String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
-                "BASE <http://localhost/berlin/> " +
-                "INSERT DATA { " +
-                "GRAPH <cityobjectgenericattrib/> { ? ocgml:id  ?" +
-                ";ocgml:parentGenattribId  ?;ocgml:rootGenattribId  ?;ocgml:attrName  ?;" +
-                "ocgml:dataType  ?;ocgml:genattribsetCodespace  ?;ocgml:cityObjectId  ?;.}}";
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
+                "BASE <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> " +
+                "INSERT DATA { GRAPH <cityobjectgenericattrib/> { ? ocgml:id  ?;ocgml:parentGenattribId  ?;" +
+                "ocgml:rootGenattribId  ?;ocgml:attrName  ?;ocgml:dataType  ?;ocgml:genattribsetCodespace  ?;" +
+                "ocgml:cityObjectId  ?;.}}";
         String generated;  //
 
         try {
@@ -41,11 +40,11 @@ public class DBCityObjectGenericAttribTest extends DBTest{
     @Test
     public void getSPARQLStatement2Test() {
 
-        String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
-                "BASE <http://localhost/berlin/> " +
-                "INSERT DATA { GRAPH <cityobjectgenericattrib/> { ? ocgml:id  ?;ocgml:attrName  ?;" +
-                "ocgml:dataType  ?;ocgml:strVal  ?;ocgml:intVal  ?;ocgml:realVal  ?;" +
-                "ocgml:uriVal  ?;ocgml:dateVal  ?;ocgml:unit  ?;ocgml:cityObjectId  ?;";
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
+                "BASE <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> " +
+                "INSERT DATA { GRAPH <cityobjectgenericattrib/> { ? ocgml:id  ?;ocgml:attrName  ?;ocgml:dataType  ?;" +
+                "ocgml:strVal  ?;ocgml:intVal  ?;ocgml:realVal  ?;ocgml:uriVal  ?;ocgml:dateVal  ?;ocgml:unit  ?;" +
+                "ocgml:cityObjectId  ?;";
         String generated;
 
         try {

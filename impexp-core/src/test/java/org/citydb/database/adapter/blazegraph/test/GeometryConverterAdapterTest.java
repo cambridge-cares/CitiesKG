@@ -23,7 +23,7 @@ import org.apache.jena.graph.Node;
 
 public class GeometryConverterAdapterTest extends TestCase {
   private final String TEST_DB_ADAPTER_TYPE = "Blazegraph";
-  private final String TEST_URI = "http://localhost/blazegraph/literals/POINT-1-3";
+  private final String TEST_URI = "http://localhost/blazegraph/literals/POINT-3-3";
   private final String TEST_GEODATATYPE = "{\"config\":{\"fields\":["
       + "{\"serviceMapping\":\"X0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
       + "{\"serviceMapping\":\"Y0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"

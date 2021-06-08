@@ -9,10 +9,9 @@ public class DBSurfaceDataTest extends DBTest{
     @Test
     public void getSPARQLStatementTest() {
         // SYL: this is actually the preparedStatement of psCityObject
-        String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
-                "BASE <http://localhost/berlin/> " +
-                "INSERT DATA " +
-                "{ GRAPH <surfacedata/> { ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:name  ?;" +
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
+                "BASE <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> " +
+                "INSERT DATA { GRAPH <surfacedata/> { ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:name  ?;" +
                 "ocgml:nameCodespace  ?;ocgml:description  ?;ocgml:isFront  ?;ocgml:objectClassId  ?;";
         String generated;
 
@@ -42,14 +41,12 @@ public class DBSurfaceDataTest extends DBTest{
     @Test
     public void getx3dStmtTest() {
         // SYL: this is actually the preparedStatement of psCityObject
-        String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
-                "BASE <http://localhost/berlin/> " +
-                "INSERT DATA { " +
-                "GRAPH <surfacedata/> { ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:name  ?;" +
-                "ocgml:nameCodespace  ?;ocgml:description  ?;ocgml:isFront  ?;" +
-                "ocgml:objectClassId  ?;ocgml:x3dShininess  ?;ocgml:x3dTransparency  ?;" +
-                "ocgml:x3dAmbientIntensity  ?;ocgml:x3dSpecularColor  ?;ocgml:x3dDiffuseColor  ?;" +
-                "ocgml:x3dEmissiveColor  ?;ocgml:x3dIsSmooth  ?;.}}";
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
+                "BASE <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> " +
+                "INSERT DATA { GRAPH <surfacedata/> { ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:name  ?;" +
+                "ocgml:nameCodespace  ?;ocgml:description  ?;ocgml:isFront  ?;ocgml:objectClassId  ?;" +
+                "ocgml:x3dShininess  ?;ocgml:x3dTransparency  ?;ocgml:x3dAmbientIntensity  ?;" +
+                "ocgml:x3dSpecularColor  ?;ocgml:x3dDiffuseColor  ?;ocgml:x3dEmissiveColor  ?;ocgml:x3dIsSmooth  ?;.}}";
         String generated;
 
         try {
@@ -81,12 +78,11 @@ public class DBSurfaceDataTest extends DBTest{
     @Test
     public void getParaStmtTest() {
         // SYL: this is actually the preparedStatement of psCityObject
-        String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
-                "BASE <http://localhost/berlin/> " +
-                "INSERT DATA { GRAPH <surfacedata/> " +
-                "{ ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:name  ?;ocgml:nameCodespace  ?;ocgml:description  ?;" +
-                "ocgml:isFront  ?;ocgml:objectClassId  ?;ocgml:texTextureType  ?;ocgml:texWrapMode  ?;" +
-                "ocgml:texBorderColor  ?;.}}";
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
+                "BASE <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> " +
+                "INSERT DATA { GRAPH <surfacedata/> { ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:name  ?;" +
+                "ocgml:nameCodespace  ?;ocgml:description  ?;ocgml:isFront  ?;ocgml:objectClassId  ?;" +
+                "ocgml:texTextureType  ?;ocgml:texWrapMode  ?;ocgml:texBorderColor  ?;.}}";
         String generated;  //
 
         try {
@@ -118,13 +114,12 @@ public class DBSurfaceDataTest extends DBTest{
     @Test
     public void getGeoStmtTest() {
         // SYL: this is actually the preparedStatement of psCityObject
-        String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
-                "BASE <http://localhost/berlin/> " +
-                "INSERT DATA { GRAPH <surfacedata/> " +
-                "{ ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:name  ?;ocgml:nameCodespace  ?;" +
-                "ocgml:description  ?;ocgml:isFront  ?;ocgml:objectClassId  ?;ocgml:texTextureType  ?;" +
-                "ocgml:texWrapMode  ?;ocgml:texBorderColor  ?;ocgml:gtPreferWorldFile  ?;" +
-                "ocgml:gtOrientation  ?;ocgml:gtReferencePoint  ?;.}}";
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
+                "BASE <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> " +
+                "INSERT DATA { GRAPH <surfacedata/> { ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:name  ?;" +
+                "ocgml:nameCodespace  ?;ocgml:description  ?;ocgml:isFront  ?;ocgml:objectClassId  ?;" +
+                "ocgml:texTextureType  ?;ocgml:texWrapMode  ?;ocgml:texBorderColor  ?;" +
+                "ocgml:gtPreferWorldFile  ?;ocgml:gtOrientation  ?;ocgml:gtReferencePoint  ?;.}}";
         String generated;  //
 
         try {

@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 
 public class BlazegraphConfigBuilderTest extends TestCase {
 
-  private final String TEST_URI = "http://localhost/blazegraph/literals/POINT-1-3";
+  private final String TEST_URI = "http://localhost/blazegraph/literals/POINT-3-3";
   private final String TEST_GEODATATYPE = "{\"config\":{\"fields\":["
       + "{\"serviceMapping\":\"X0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
       + "{\"serviceMapping\":\"Y0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
