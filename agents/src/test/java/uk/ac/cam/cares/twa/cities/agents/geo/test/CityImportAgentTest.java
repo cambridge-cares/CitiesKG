@@ -4,9 +4,10 @@ import junit.framework.TestCase;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
-
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
+import java.io.File;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashSet;
@@ -26,11 +27,19 @@ public class CityImportAgentTest extends TestCase {
 
     }
 
-    public void testValidateListenInput() throws NoSuchMethodException {
+    public void testValidateListenInput()  {
         CityImportAgent agent  = new CityImportAgent();
-        Method validateListenInput = agent.getClass().getDeclaredMethod(
-                "validateListenInput" , JSONObject.class, Set.class);
-        validateListenInput.setAccessible(true);
+        Method validateListenInput = null;
+
+
+        try {
+            validateListenInput = agent.getClass().getDeclaredMethod(
+                    "validateListenInput" , JSONObject.class, Set.class);
+            validateListenInput.setAccessible(true);
+        } catch (Exception e) {
+           fail();
+        }
+
 
         JSONObject requestParams = new JSONObject();
         Set<String> keys = new HashSet<>();
@@ -50,11 +59,18 @@ public class CityImportAgentTest extends TestCase {
 
     }
 
-    public void testValidateActionInput() throws NoSuchMethodException {
+    public void testValidateActionInput()  {
         CityImportAgent agent  = new CityImportAgent();
-        Method validateListenInput = agent.getClass().getDeclaredMethod(
-                "validateActionInput", JSONObject.class, Set.class);
-        validateListenInput.setAccessible(true);
+        Method validateListenInput = null;
+
+        try {
+            validateListenInput = agent.getClass().getDeclaredMethod(
+                    "validateActionInput", JSONObject.class, Set.class);
+            validateListenInput.setAccessible(true);
+        } catch (NoSuchMethodException e) {
+            fail();
+        }
+
 
         JSONObject requestParams = new JSONObject();
         Set<String> keys = new HashSet<>();
@@ -72,12 +88,21 @@ public class CityImportAgentTest extends TestCase {
         }
     }
 
-    public void testValidateInput() throws NoSuchMethodException {
+    public void testValidateInput()  {
         CityImportAgent agent  = new CityImportAgent();
-        Method validateInput = agent.getClass().getDeclaredMethod("validateInput", JSONObject.class);
+        Method validateInput = null;
+
+        try {
+            validateInput = agent.getClass().getDeclaredMethod("validateInput", JSONObject.class);
+        } catch (Exception e) {
+            fail();
+        }
 
         JSONObject requestParams = new JSONObject();
         Set<String> keys = new HashSet<>();
+        String localhostURL = "http://localhost";
+
+        //General keys and values check
 
         try {
             validateInput.invoke(agent, requestParams);
@@ -125,13 +150,98 @@ public class CityImportAgentTest extends TestCase {
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
-        //@Todo: implementation
+        //Listen case:
+
+        requestParams.put(CityImportAgent.KEY_REQ_URL, CityImportAgent.URI_LISTEN);
+
+        try {
+            validateInput.invoke(agent, requestParams);
+        } catch (Exception e) {
+            assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
+        }
+
+        requestParams.put(CityImportAgent.KEY_REQ_URL, localhostURL + CityImportAgent.URI_LISTEN);
+
+        try {
+            validateInput.invoke(agent, requestParams);
+        } catch (Exception e) {
+            assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
+        }
+
+        requestParams.put(CityImportAgent.KEY_DIRECTORY, "");
+
+        try {
+            validateInput.invoke(agent, requestParams);
+        } catch (Exception e) {
+            assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
+        }
+
+        requestParams.put(CityImportAgent.KEY_DIRECTORY, System.getProperty("java.io.tmpdir"));
+
+        try {
+            assertTrue((Boolean) validateInput.invoke(agent, requestParams));
+        } catch (Exception e) {
+            fail();
+        }
+
+        //Action case:
+
+        requestParams.put(CityImportAgent.KEY_REQ_URL, CityImportAgent.URI_ACTION);
+
+        try {
+            validateInput.invoke(agent, requestParams);
+        } catch (Exception e) {
+            assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
+        }
+
+        requestParams.put(CityImportAgent.KEY_REQ_URL, localhostURL + CityImportAgent.URI_ACTION);
+
+        try {
+            validateInput.invoke(agent, requestParams);
+        } catch (Exception e) {
+            assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
+        }
+
+        requestParams.put(AsynchronousWatcherService.KEY_WATCH, "");
+
+        try {
+            validateInput.invoke(agent, requestParams);
+        } catch (Exception e) {
+            assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
+        }
+
+        requestParams.put(AsynchronousWatcherService.KEY_WATCH, System.getProperty("java.io.tmpdir"));
+
+        try {
+            assertTrue((Boolean) validateInput.invoke(agent, requestParams));
+        } catch (Exception e) {
+            fail();
+        }
 
     }
 
-
     public void testListenToImport() {
-        //@Todo: implementation
+        CityImportAgent agent  = new CityImportAgent();
+        Method listenToImport = null;
+        String listenDir = System.getProperty("java.io.tmpdir") + "import";
+
+        try {
+            listenToImport = agent.getClass().getDeclaredMethod("listenToImport", String.class);
+            listenToImport.setAccessible(true);
+            Field requestUrl = agent.getClass().getDeclaredField("requestUrl");
+            requestUrl.setAccessible(true);
+            requestUrl.set(agent, CityImportAgent.URI_LISTEN);
+        } catch (Exception e) {
+            fail();
+        }
+
+        try {
+            assertEquals(((File) listenToImport.invoke(agent, listenDir)).getAbsolutePath(), listenDir);
+        } catch (Exception e) {
+            fail();
+        }
+
+        // watching directory already tested in CreateFileWatcherTest
     }
 
     public void testImportFiles() {
