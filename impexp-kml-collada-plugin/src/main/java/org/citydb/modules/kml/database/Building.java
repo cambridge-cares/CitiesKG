@@ -306,7 +306,7 @@ public class Building extends KmlGenericObject{
 						reversePointOrder = true;
 						int groupBasis = 4;
 
-						try { // @TODO: query to modify
+						try { // @TODO: query to modify, the complex sql query
 							String query = queries.getBuildingPartAggregateGeometries(0.001,
 									DatabaseConnectionPool.getInstance().getActiveDatabaseAdapter().getUtil().get2DSrid(dbSrs),
 									currentLod,

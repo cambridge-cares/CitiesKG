@@ -452,6 +452,8 @@ public class Queries {
 			.append("WHERE ST_IsValid(get_geoms.simple_geom) = 'TRUE') AS get_valid_geoms ")
 			// ST_Area for WGS84 only works correctly if the geometry is a geography data type
 			.append("WHERE ST_Area(ST_Transform(get_valid_geoms.simple_geom,4326)::geography, true) > <TOLERANCE>) AS get_valid_area").toString();
+		case BLAZE:
+			return new StringBuilder("SELECT ST_Union(get_valid_area.simple_geom) ").toString();
 		default:
 			return null;
 		}

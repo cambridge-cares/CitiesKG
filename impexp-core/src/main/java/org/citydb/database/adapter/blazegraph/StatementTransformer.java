@@ -1,9 +1,15 @@
 package org.citydb.database.adapter.blazegraph;
 // implemented by SHIYING LI
 
+import org.apache.jena.arq.querybuilder.ExprFactory;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.arq.querybuilder.WhereBuilder;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.E_IsBlank;
 import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.citydb.sqlbuilder.SQLStatement;
@@ -153,135 +159,49 @@ public class StatementTransformer {
         }
         return varStr.toString();
     }
+    public static void main(String[] args) throws ParseException {
+        String sqlquery =  "SELECT ST_Union(get_valid_area.simple_geom) " +
+                "FROM (SELECT * FROM (SELECT * FROM (SELECT ST_Force2D(sg.geometry) AS simple_geom " +
+                "FROM citydb.SURFACE_GEOMETRY sg WHERE sg.root_id IN( " +
+                "SELECT b.lod2_multi_surface_id FROM citydb.BUILDING b WHERE b.id = ? AND b.lod2_multi_surface_id IS NOT NULL " +
+                "UNION SELECT b.lod2_solid_id FROM citydb.BUILDING b WHERE b.id = ? AND b.lod2_solid_id IS NOT NULL " +
+                "UNION SELECT ts.lod2_multi_surface_id FROM citydb.THEMATIC_SURFACE ts WHERE ts.building_id = ? " +
+                "AND ts.lod2_multi_surface_id IS NOT NULL ) AND sg.geometry IS NOT NULL) AS get_geoms " +
+                "WHERE ST_IsValid(get_geoms.simple_geom) = 'TRUE') AS get_valid_geoms " +
+                "WHERE ST_Area(ST_Transform(get_valid_geoms.simple_geom,4326)::geography, true) > 0.001) AS get_valid_area";
+        String output = getSPARQLqueryStage2(sqlquery);
 
-    public static void main(String[] args) {
-        checkValidTest();
     }
 
-    public static void checkValidTest() {
-            String blaze_geometry = "385378.016138475#5819494.72358936#36.5200004577637#385378.143842939#5819493.07912378#36.5200004577637#" +
-                    "385378.786499313#5819484.76944437#36.5200004577637#385317.300349907#5819479.76855148#36.5200004577637#" +
-                    "385316.14659639#5819479.67454114#36.5200004577637#385316.343807439#5819477.03355724#36.5200004577637#" +
-                    "385301.703458502#5819476.19301668#36.5200004577637#385300.950074006#5819486.31327541#36.5200004577637#" +
-                    "385307.09120739#5819486.77136495#36.5200004577637#385307.460985192#5819481.81075803#36.5200004577637#" +
-                    "385308.693746104#5819481.90326643#36.5200004577637#385308.45066795#5819485.1666353#36.5200004577637#" +
-                    "385316.810961469#5819485.78848991#36.5200004577637#385316.490861222#5819489.71917047#36.5200004577637#" +
-                    "385324.704941389#5819490.38683337#36.5200004577637#385324.526018414#5819492.5952832#36.5200004577637#" +
-                    "385330.77917557#5819493.10311801#36.5200004577637#385330.959341237#5819490.89586548#36.5200004577637#" +
-                    "385344.583365563#5819492.00379023#36.5200004577637#385344.403522196#5819494.21195249#36.5200004577637#" +
-                    "385350.971202767#5819494.74706581#36.5200004577637#385351.151327801#5819492.53767831#36.5200004577637#" +
-                    "385364.669308965#5819493.63754988#36.5200004577637#385364.489178164#5819495.84663344#36.5200004577637#" +
-                    "385371.115215387#5819496.38551926#36.5200004577637#385371.294125703#5819494.17645895#36.5200004577637#" +
-                    "385378.016138475#5819494.72358936#36.5200004577637";
-            String noValid_geometry = "82120.313 454255.538 130.672,82120.672 454254.897 130.672,82120.672 454254.897 -0.526," +
-                    "82120.313 454255.538 -0.526,82120.313 454255.538 130.672";
-            String valid_geometry = "82106.765 454221.659 -0.526,82107.759 454227.024 -0.526,82108.99 454233.752 -0.526,82109.056 454234.11 -0.526," +
-                    "82109.301 454235.449 -0.526,82110.361 454241.194 -0.526,82110.597 454242.533 -0.526,82111.667 454248.272 -0.526,82111.79 454248.937 -0.526," +
-                    "82111.586 454248.97 -0.526,82112.523 454254.297 -0.526,82112.779 454254.933 -0.526,82113.133 454255.521 -0.526,82113.576 454256.045 -0.526," +
-                    "82114.095 454256.492 -0.526,82114.679 454256.852 -0.526,82115.312 454257.115 -0.526,82115.979 454257.275 -0.526,82116.679 454257.347 -0.526," +
-                    "82117.38 454257.306 -0.526,82118.066 454257.153 -0.526,82118.719 454256.891 -0.526,82119.321 454256.528 -0.526,82119.857 454256.073 -0.526," +
-                    "82120.313 454255.538 -0.526,82120.672 454254.897 -0.526,82120.41 454254.77 -0.526,82139.425 454221.057 -0.526,82139.823 454220.351 -0.526," +
-                    "82140.059 454219.694 -0.526,82140.175 454219.006 -0.526,82140.168 454218.309 -0.526,82140.038 454217.623 -0.526,82139.79 454216.971 -0.526," +
-                    "82139.43 454216.373 -0.526,82138.971 454215.848 -0.526,82138.429 454215.447 -0.526,82137.847 454215.151 -0.526,82137.222 454214.961 -0.526," +
-                    "82136.574 454214.882 -0.526,82135.922 454214.916 -0.526,82134.585 454215.166 -0.526,82132.371 454215.483 -0.526,82131.031 454215.731 -0.526," +
-                    "82130.68 454215.789 -0.526,82125.286 454216.795 -0.526,82123.94 454217.036 -0.526,82118.21 454218.086 -0.526,82116.869 454218.345 -0.526," +
-                    "82111.134 454219.407 -0.526,82109.79 454219.651 -0.526,82107.919 454219.98 -0.526,82106.507 454220.236 -0.526,82106.765 454221.659 -0.526";
-        String st_geometry1 = "82106.765 454221.659 -0.526,82107.759 454227.024 -0.526,82108.99 454233.752 -0.526,82109.056 454234.11 -0.526," +
-                "82109.301 454235.449 -0.526,82110.361 454241.194 -0.526,82110.597 454242.533 -0.526,82111.667 454248.272 -0.526,82111.79 454248.937 -0.526," +
-                "82111.586 454248.97 -0.526,82112.523 454254.297 -0.526,82112.779 454254.933 -0.526,82113.133 454255.521 -0.526,82113.576 454256.045 -0.526," +
-                "82114.095 454256.492 -0.526,82114.679 454256.852 -0.526,82115.312 454257.115 -0.526,82115.979 454257.275 -0.526,82116.679 454257.347 -0.526," +
-                "82117.38 454257.306 -0.526,82118.066 454257.153 -0.526,82118.719 454256.891 -0.526,82119.321 454256.528 -0.526,82119.857 454256.073 -0.526," +
-                "82120.313 454255.538 -0.526,82120.672 454254.897 -0.526,82120.41 454254.77 -0.526,82139.425 454221.057 -0.526,82139.823 454220.351 -0.526," +
-                "82140.059 454219.694 -0.526,82140.175 454219.006 -0.526,82140.168 454218.309 -0.526,82140.038 454217.623 -0.526,82139.79 454216.971 -0.526," +
-                "82139.43 454216.373 -0.526,82138.971 454215.848 -0.526,82138.429 454215.447 -0.526,82137.847 454215.151 -0.526,82137.222 454214.961 -0.526," +
-                "82136.574 454214.882 -0.526,82135.922 454214.916 -0.526,82134.585 454215.166 -0.526,82132.371 454215.483 -0.526,82131.031 454215.731 -0.526," +
-                "82130.68 454215.789 -0.526,82125.286 454216.795 -0.526,82123.94 454217.036 -0.526,82118.21 454218.086 -0.526,82116.869 454218.345 -0.526," +
-                "82111.134 454219.407 -0.526,82109.79 454219.651 -0.526,82107.919 454219.98 -0.526,82106.507 454220.236 -0.526,82106.765 454221.659 -0.526";
-        String st_geometry2 = "82107.919 454219.98 130.672,82109.79 454219.651 130.672,82111.134 454219.407 130.672,82116.869 454218.345 130.672,82118.21 454218.086 130.672," +
-                "82123.94 454217.036 130.672,82125.286 454216.795 130.672,82130.68 454215.789 130.672,82131.031 454215.731 130.672,82132.371 454215.483 130.672,82134.585 454215.166 130.672," +
-                "82135.922 454214.916 130.672,82136.574 454214.882 130.672,82137.222 454214.961 130.672,82137.847 454215.151 130.672,82138.429 454215.447 130.672,82138.971 454215.848 130.672," +
-                "82139.43 454216.373 130.672,82139.79 454216.971 130.672,82140.038 454217.623 130.672,82140.168 454218.309 130.672,82140.175 454219.006 130.672,82140.059 454219.694 130.672," +
-                "82139.823 454220.351 130.672,82139.425 454221.057 130.672,82120.41 454254.77 130.672,82120.672 454254.897 130.672,82120.313 454255.538 130.672,82119.857 454256.073 130.672," +
-                "82119.321 454256.528 130.672,82118.719 454256.891 130.672,82118.066 454257.153 130.672,82117.38 454257.306 130.672,82116.679 454257.347 130.672,82115.979 454257.275 130.672," +
-                "82115.312 454257.115 130.672,82114.679 454256.852 130.672,82114.095 454256.492 130.672,82113.576 454256.045 130.672,82113.133 454255.521 130.672,82112.779 454254.933 130.672," +
-                "82112.523 454254.297 130.672,82111.586 454248.97 130.672,82111.79 454248.937 130.672,82111.667 454248.272 130.672,82110.597 454242.533 130.672,82110.361 454241.194 130.672," +
-                "82109.301 454235.449 130.672,82109.056 454234.11 130.672,82108.99 454233.752 130.672,82107.759 454227.024 130.672,82106.765 454221.659 130.672,82106.507 454220.236 130.672," +
-                "82107.919 454219.98 130.672";
+    public static String getSPARQLqueryStage2 (String inputquery) throws ParseException {
+        String sparqlquery = "";
+        String buildingId = "<http://localhost/berlin/building/ID_0518100000225439/>";
 
-        String testdata1 = "743238 2967416 0,743238 2967450 0,743265 2967450 0,743265.625 2967416 0,743238 2967416 0";
-        String testpolygon = "-7 4.2 2,-7.1 4.2 3,-7.1 4.3 2,-7 4.2 2";
-        String testpoint1 = "5 5 5";
-        String testpoint2 = "-2 3 1";
-        String testlineString = "5 5 5,10 10 10";
-        GeometryFactory fac = new GeometryFactory();
-        Coordinate pcor1 = new Coordinate(5,5, 5);
-        Coordinate pcor2 = new Coordinate(-2,3, 1);
-        Polygon testpoly = fac.createPolygon(str2coords(testpolygon).toArray(new Coordinate[0]));
-        Point testp1 = fac.createPoint(pcor1);
-        Point testp2 = fac.createPoint(pcor2);
-        Geometry testl = fac.createLineString(str2coords(testlineString).toArray(new Coordinate[0]));
-        Geometry testll = null;
+        // subquery 1.3
+        SelectBuilder subquery1 = new SelectBuilder();
+        ExprFactory exprF1 = subquery1.getExprFactory();
+        subquery1.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML);
+        Node graphName1 = NodeFactory.createURI("http://localhost/berlin/thematicsurface/");
+        subquery1.addVar(exprF1.asExpr("?lod2MultiSurfaceId"), "rootId");
+        WhereBuilder whr = new WhereBuilder().addGraph(graphName1,new WhereBuilder().addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML).addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "buildingId", buildingId).addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "lod2MultiSurfaceId", "?lod2MultiSurfaceId").addFilter("!isBlank(?lod2MultiSurfaceId)"));
+        subquery1.addWhere(whr);
+        //subquery1.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "buildingId", buildingId);
+        //subquery1.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "lod2MultiSurfaceId", "?lod2MultiSurfaceId");
+
+        // query 2
+        SelectBuilder query2 = new SelectBuilder();
+        query2.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML);
+        query2.addVar("?rootId ?geometry").from("http://localhost/berlin/surfacegeometry/");
+        query2.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "rootId", "?rootId");
+        query2.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "GeometryType", "?geometry");
+
         try {
-
-            testll = fac.createLineString(str2coords(testlineString).toArray(new Coordinate[0]));
-
-        }catch (Exception ex){
-            System.out.println(ex.toString());
+            query2.addFilter("!isBlank(?geometry)");
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
+        query2.addSubQuery(subquery1);
 
-        String testpolygon2 = "743238 2967416 0,743238 2967450 0,743265 2967450 0,743265.625 2967416 0,743238 2967416 0";
-        Polygon testpoly2 = fac.createPolygon(str2coords(testpolygon2).toArray(new Coordinate[0]));
-        testpoly2.setSRID(2249);
-
-            /*
-            System.out.println(Arrays.toString(GeoSpatialProcessor.IsValid(str2coords(blaze_geometry))));
-            System.out.println(Arrays.toString(GeoSpatialProcessor.IsValid(str2coords(noValid_geometry))));
-            System.out.println(Arrays.toString(GeoSpatialProcessor.IsValid(str2coords(valid_geometry))));
-            */
-            //System.out.println(Arrays.toString(GeoSpatialProcessor.IsValid(str2coords(testdata1))));
-
-            Geometry geom = fac.createPolygon(str2coords(testdata1).toArray(new Coordinate[0]));
-            System.out.println(Arrays.toString(GeoSpatialProcessor.IsValid(geom)));
-            System.out.println(GeoSpatialProcessor.Force2D(geom));
-            System.out.println(GeoSpatialProcessor.transform(geom, 2249, 4326));
-            System.out.println(GeoSpatialProcessor.CalculateArea(testpoly2));
-            //System.out.println(GeoSpatialProcessor.Force2D(str2coords(blaze_geometry)));
-
-            //System.out.println(GeoSpatialProcessor.CalculateArea(str2coords(st_geometry1)));
-
-            System.out.println(GeoSpatialProcessor.Union(testpoly, testpoly2));
-
-        }
-
-
-        /*Convert the input String into list of coordinates*/
-        public static List<Coordinate> str2coords(String st_geometry) {
-            String[] pointXYZList = null;
-            List<Coordinate> coords = new LinkedList<Coordinate>();
-
-            if (st_geometry.contains(",")) {
-                System.out.println("====================== InputString is from POSTGIS");
-                pointXYZList = st_geometry.split(",");
-
-                for (int i = 0; i < pointXYZList.length; ++i) {
-                    String[] pointXYZ = pointXYZList[i].split(" ");
-                    coords.add(new Coordinate(Double.valueOf(pointXYZ[0]), Double.valueOf(pointXYZ[1]), Double.valueOf(pointXYZ[2])));
-                }
-            } else if (st_geometry.contains("#")) {
-                System.out.println("====================== InputString is from Blazegraph");
-                pointXYZList = st_geometry.split("#");
-                if (pointXYZList.length % 3 == 0) {
-                    // 3d coordinates
-                    for (int i = 0; i < pointXYZList.length; i = i + 3) {
-                        coords.add(new Coordinate(Double.valueOf(pointXYZList[i]), Double.valueOf(pointXYZList[i + 1]), Double.valueOf(pointXYZList[i + 2])));
-                    }
-                }
-            } else {
-                System.out.println("InputString has no valid format");
-            }
-
-            return coords;
-
-        }
-
+        return subquery1.toString();
+    }
 }

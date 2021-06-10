@@ -17,6 +17,8 @@ import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 public class GeoSpatialProcessor {
@@ -116,8 +118,54 @@ public class GeoSpatialProcessor {
         } catch (DatatypeFormatException | MismatchedDimensionException ex) {
             throw new ExprEvalException(ex.getMessage(), ex);
         }
+    }
+
+    /*Convert the input String into list of coordinates
+    * Polygon testpoly2 = fac.createPolygon(str2coords(testpolygon2).toArray(new Coordinate[0]));
+    * */
+    public static List<Coordinate> str2coords(String st_geometry) {
+        String[] pointXYZList = null;
+        List<Coordinate> coords = new LinkedList<Coordinate>();
+
+        if (st_geometry.contains(",")) {
+            //System.out.println("====================== InputString is from POSTGIS");
+            pointXYZList = st_geometry.split(",");
+
+            for (int i = 0; i < pointXYZList.length; ++i) {
+                String[] pointXYZ = pointXYZList[i].split(" ");
+                List<String> coordinates = Arrays.asList(pointXYZ);
+                coordinates.removeIf(String::isEmpty);
+                if (coordinates.size() == 2){
+                    coords.add(new Coordinate(Double.valueOf(pointXYZ[0]), Double.valueOf(pointXYZ[1])));
+                }else if(coordinates.size() ==3){
+                    coords.add(new Coordinate(Double.valueOf(pointXYZ[0]), Double.valueOf(pointXYZ[1]), Double.valueOf(pointXYZ[2])));
+                }else{
+
+                }
+
+            }
+        } else if (st_geometry.contains("#")) {
+            //System.out.println("====================== InputString is from Blazegraph");
+            pointXYZList = st_geometry.split("#");
+            if (pointXYZList.length % 3 == 0) {
+                // 3d coordinates
+                for (int i = 0; i < pointXYZList.length; i = i + 3) {
+                    coords.add(new Coordinate(Double.valueOf(pointXYZList[i]), Double.valueOf(pointXYZList[i + 1]), Double.valueOf(pointXYZList[i + 2])));
+                }
+            }else if (pointXYZList.length % 2 == 0) {
+                // 2d coordinates
+                for (int i = 0; i < pointXYZList.length; i = i + 2) {
+                    coords.add(new Coordinate(Double.valueOf(pointXYZList[i]), Double.valueOf(pointXYZList[i + 1])));
+                }
+            }
+        } else {
+            System.out.println("InputString has no valid format");
+        }
+        return coords;
 
     }
+
+
 
 
 }
