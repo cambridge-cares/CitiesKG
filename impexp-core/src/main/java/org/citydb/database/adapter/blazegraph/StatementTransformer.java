@@ -202,6 +202,6 @@ public class StatementTransformer {
         }
         query2.addSubQuery(subquery1);
 
-        return subquery1.toString();
+        return query2.toString();
     }
 }

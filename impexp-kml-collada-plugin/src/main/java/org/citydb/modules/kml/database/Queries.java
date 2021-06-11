@@ -27,9 +27,12 @@
  */
 package org.citydb.modules.kml.database;
 
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
+import org.citydb.config.project.database.DatabaseType;
 import org.citydb.config.project.kmlExporter.DisplayForm;
 import org.citydb.config.project.kmlExporter.Lod0FootprintMode;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
+import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.database.schema.SequenceEnum;
 
 public class Queries {
@@ -452,8 +455,6 @@ public class Queries {
 			.append("WHERE ST_IsValid(get_geoms.simple_geom) = 'TRUE') AS get_valid_geoms ")
 			// ST_Area for WGS84 only works correctly if the geometry is a geography data type
 			.append("WHERE ST_Area(ST_Transform(get_valid_geoms.simple_geom,4326)::geography, true) > <TOLERANCE>) AS get_valid_area").toString();
-		case BLAZE:
-			return new StringBuilder("SELECT ST_Union(get_valid_area.simple_geom) ").toString();
 		default:
 			return null;
 		}
@@ -589,6 +590,17 @@ public class Queries {
 
 	public String getBuildingPartAggregateGeometries(double tolerance, int srid2D, int lodToExportFrom, double groupBy1, double groupBy2, double groupBy3) {
 		if (lodToExportFrom > 1) {
+			if (databaseAdapter.getDatabaseType() == DatabaseType.BLAZE){
+				// do the following
+				String sqlquery = "";
+				String sparqlquery = "";
+				try {
+					sparqlquery = StatementTransformer.getSPARQLqueryStage2(sqlquery);
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+				return sparqlquery;
+			}
 			return getBuildingPartAggregateGeometriesForLOD2OrHigher().replace("<TOLERANCE>", String.valueOf(tolerance))
 					.replace("<2D_SRID>", String.valueOf(srid2D))
 					.replace("<LoD>", String.valueOf(lodToExportFrom))

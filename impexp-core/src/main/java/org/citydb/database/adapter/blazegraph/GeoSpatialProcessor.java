@@ -4,10 +4,8 @@ import org.apache.jena.datatypes.DatatypeFormatException;
 import org.apache.jena.sparql.expr.ExprEvalException;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.*;
+import org.locationtech.jts.operation.union.UnaryUnionOp;
 import org.locationtech.jts.operation.valid.IsValidOp;
 import org.locationtech.jts.operation.valid.TopologyValidationError;
 import org.opengis.geometry.MismatchedDimensionException;
@@ -22,12 +20,12 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class GeoSpatialProcessor {
-
-
+    public GeoSpatialProcessor() {
+    }
     /* Equivalent to ST_isValidDetail, geoJena_IsValidDetail
     * Input of IsValidOp is; POLYGON () , 2D polygon of LinearRing
     * Return: Object[] with [Boolean, String, Null/Point]*/
-    public static Object[] IsValid(Geometry geom) {
+    public Object[] IsValidDetail(Geometry geom) {
 
         GeometryFactory fac = new GeometryFactory();
         IsValidOp isValidOp = new IsValidOp(geom); // Polygon 2D consists of LinearRing with shell and hole
@@ -48,12 +46,12 @@ public class GeoSpatialProcessor {
         return details;
     }
 
-    /* Equivalen ST_Transform(Geometry g1, integer srid)
+    /* Equivalent ST_Transform(Geometry g1, integer srid)
      * https://postgis.net/docs/ST_Transform.html
      * Return: Geometry
      * Default : SRID 4326
     * */
-    public static Geometry transform (Geometry geom, int srcSRID, int dstSRID){
+    public Geometry Transform (Geometry geom, int srcSRID, int dstSRID){
 
         GeometryFactory fac = new GeometryFactory();
         Geometry sourceGeometry = fac.createGeometry(geom);
@@ -72,7 +70,7 @@ public class GeoSpatialProcessor {
         return targetGeometry;
     }
 
-    public static Geometry Force2D (Geometry geom){
+    public Geometry Force2D (Geometry geom){
 
         GeometryFactory fac = new GeometryFactory();
 
@@ -90,17 +88,18 @@ public class GeoSpatialProcessor {
     * return sqft
     * Returns the area of a polygonal geometry. For geometry types a 2D Cartesian (planar) area is computed, with units specified by the SRID.
     * */
-    public static double CalculateArea(Geometry geom){
+    public double CalculateArea(Geometry geom){
 
         if (geom instanceof Polygon){
             return geom.getArea();
         }
         return 0.0;
     }
+
     /* Equivalent as ST_UNION(geometry g1, geometry g2)
     * https://postgis.net/docs/ST_Union.html
     * */
-    public static Geometry Union (Geometry geom1, Geometry geom2){
+    public Geometry Union (Geometry geom1, Geometry geom2){
 
         try {
             // Convert to 2D first
@@ -111,7 +110,7 @@ public class GeoSpatialProcessor {
                 geom2.setSRID(4326);
             }
 
-            Geometry transGeom2 = transform(geom2, geom2.getSRID(), geom1.getSRID());
+            Geometry transGeom2 = Transform(geom2, geom2.getSRID(), geom1.getSRID());
             // Union
             Geometry uniongeom = geom1.union(transGeom2);
             return uniongeom;
@@ -120,10 +119,20 @@ public class GeoSpatialProcessor {
         }
     }
 
+    /* Equivalent ST_UNION with multiple Geometry together */
+    public Geometry UnaryUnion (List<Geometry> geomlist){
+        GeometryFactory fac = new GeometryFactory();
+        Geometry[] col = geomlist.toArray(new Geometry[0]);
+        GeometryCollection coll = new GeometryCollection(col, fac);
+        UnaryUnionOp op = new UnaryUnionOp(coll);
+        Geometry union = op.union();
+        return union;
+    }
+
     /*Convert the input String into list of coordinates
     * Polygon testpoly2 = fac.createPolygon(str2coords(testpolygon2).toArray(new Coordinate[0]));
     * */
-    public static List<Coordinate> str2coords(String st_geometry) {
+    public List<Coordinate> str2coords(String st_geometry) {
         String[] pointXYZList = null;
         List<Coordinate> coords = new LinkedList<Coordinate>();
 
@@ -133,16 +142,18 @@ public class GeoSpatialProcessor {
 
             for (int i = 0; i < pointXYZList.length; ++i) {
                 String[] pointXYZ = pointXYZList[i].split(" ");
-                List<String> coordinates = Arrays.asList(pointXYZ);
+                List<String> coordinates = new LinkedList<String>(Arrays.asList(pointXYZ));
                 coordinates.removeIf(String::isEmpty);
-                if (coordinates.size() == 2){
+                //coordinates.removeAll(Arrays.asList(null, ""));
+                pointXYZ = coordinates.toArray(new String[0]);
+                if (pointXYZ.length == 2){
                     coords.add(new Coordinate(Double.valueOf(pointXYZ[0]), Double.valueOf(pointXYZ[1])));
-                }else if(coordinates.size() ==3){
+                }else if(pointXYZ.length == 3){
                     coords.add(new Coordinate(Double.valueOf(pointXYZ[0]), Double.valueOf(pointXYZ[1]), Double.valueOf(pointXYZ[2])));
                 }else{
-
+                    System.out.println("InputString has no valid format");
+                    return null;
                 }
-
             }
         } else if (st_geometry.contains("#")) {
             //System.out.println("====================== InputString is from Blazegraph");
@@ -160,12 +171,10 @@ public class GeoSpatialProcessor {
             }
         } else {
             System.out.println("InputString has no valid format");
+            return null;
         }
         return coords;
 
     }
-
-
-
 
 }
