@@ -27,6 +27,11 @@ import org.locationtech.jts.operation.valid.TopologyValidationError;
 
 import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 
+import javax.sql.rowset.CachedRowSet;
+import javax.sql.rowset.RowSetFactory;
+import javax.sql.rowset.RowSetProvider;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 
@@ -53,13 +58,6 @@ public class StatementTransformer {
         Query q = sb.build();
         return q.toString();
     }
-    // getBuildingPartAggregateGeometries
-    public static String getSPARQLStatement_BuildingPartAggregateGeometries (String sqlquery){
-        String sparql = "";
-        return sparql;
-    }
-
-
 
     // getBuildingPartsFromBuilding() in Building.java
     public static String getSPARQLStatement_BuildingParts (String sqlQuery) {
@@ -169,29 +167,53 @@ public class StatementTransformer {
                 "AND ts.lod2_multi_surface_id IS NOT NULL ) AND sg.geometry IS NOT NULL) AS get_geoms " +
                 "WHERE ST_IsValid(get_geoms.simple_geom) = 'TRUE') AS get_valid_geoms " +
                 "WHERE ST_Area(ST_Transform(get_valid_geoms.simple_geom,4326)::geography, true) > 0.001) AS get_valid_area";
-        String output = getSPARQLqueryStage2(sqlquery);
+        String output = getSPARQLqueryStage2(sqlquery, String.valueOf(2));
 
     }
 
-    public static String getSPARQLqueryStage2 (String inputquery) throws ParseException {
-        String sparqlquery = "";
-        String buildingId = "<http://localhost/berlin/building/ID_0518100000225439/>";
+    public static String getSPARQLqueryStage2 (String inputquery, String LoD) throws ParseException {
 
-        // subquery 1.3
+        //String buildingId = "<http://localhost/berlin/building/ID_0518100000225439/>";
+        String buildingId = "?";
+        String lodXMultiSurfaceId = "lod<LoD>MultiSurfaceId";
+        String lodXSolidId = "lod<LoD>SolidId";
+        lodXMultiSurfaceId = lodXMultiSurfaceId.replace("<LoD>", LoD);
+        lodXSolidId = lodXSolidId.replace("<LoD>", LoD);
+
+        // subquery 1.1
+        // SELECT b.lod2_multi_surface_id FROM citydb.BUILDING b WHERE b.id = 360 AND b.lod2_multi_surface_id IS NOT NULL
         SelectBuilder subquery1 = new SelectBuilder();
         ExprFactory exprF1 = subquery1.getExprFactory();
         subquery1.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML);
-        Node graphName1 = NodeFactory.createURI("http://localhost/berlin/thematicsurface/");
-        subquery1.addVar(exprF1.asExpr("?lod2MultiSurfaceId"), "rootId");
-        WhereBuilder whr = new WhereBuilder().addGraph(graphName1,new WhereBuilder().addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML).addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "buildingId", buildingId).addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "lod2MultiSurfaceId", "?lod2MultiSurfaceId").addFilter("!isBlank(?lod2MultiSurfaceId)"));
-        subquery1.addWhere(whr);
-        //subquery1.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "buildingId", buildingId);
-        //subquery1.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "lod2MultiSurfaceId", "?lod2MultiSurfaceId");
+        Node graphName1 = NodeFactory.createURI("http://localhost/berlin/building/");
+        subquery1.addVar(exprF1.asExpr("?" + lodXMultiSurfaceId), "rootId");
+        WhereBuilder whr1 = new WhereBuilder().addGraph(graphName1,new WhereBuilder().addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML).addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "buildingId", buildingId).addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + lodXMultiSurfaceId, "?"+lodXMultiSurfaceId).addFilter("!isBlank(?"+ lodXMultiSurfaceId+")"));
+        subquery1.addWhere(whr1);
+
+        // subquery 1.2
+        // SELECT b.lod2_solid_id FROM citydb.BUILDING b WHERE b.id = 360 AND b.lod2_solid_id IS NOT NULL
+        SelectBuilder subquery2 = new SelectBuilder();
+        ExprFactory exprF2 = subquery2.getExprFactory();
+        subquery2.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML);
+        Node graphName2 = NodeFactory.createURI("http://localhost/berlin/building/");
+        subquery2.addVar(exprF2.asExpr("?"+lodXSolidId), "rootId");
+        WhereBuilder whr2 = new WhereBuilder().addGraph(graphName2,new WhereBuilder().addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML).addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "buildingId", buildingId).addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + lodXSolidId, "?"+lodXSolidId).addFilter("!isBlank(?"+lodXSolidId+")"));
+        subquery2.addWhere(whr2);
+
+        // subquery 1.3
+        // SELECT ts.lod2_multi_surface_id FROM citydb.THEMATIC_SURFACE ts WHERE ts.building_id = 360 AND ts.lod2_multi_surface_id IS NOT NULL
+        SelectBuilder subquery3 = new SelectBuilder();
+        ExprFactory exprF3 = subquery3.getExprFactory();
+        subquery3.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML);
+        Node graphName3 = NodeFactory.createURI("http://localhost/berlin/thematicsurface/");
+        subquery3.addVar(exprF3.asExpr("?"+lodXMultiSurfaceId), "rootId");
+        WhereBuilder whr3 = new WhereBuilder().addGraph(graphName3, new WhereBuilder().addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML).addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "buildingId", buildingId).addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + lodXMultiSurfaceId, "?"+lodXMultiSurfaceId).addFilter("!isBlank(?"+ lodXMultiSurfaceId+ ")"));
+        subquery3.addWhere(whr3);
 
         // query 2
         SelectBuilder query2 = new SelectBuilder();
         query2.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML);
-        query2.addVar("?rootId ?geometry").from("http://localhost/berlin/surfacegeometry/");
+        query2.addVar("?geometry").from("http://localhost/berlin/surfacegeometry/");
         query2.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "rootId", "?rootId");
         query2.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "GeometryType", "?geometry");
 
@@ -200,8 +222,62 @@ public class StatementTransformer {
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        query2.addSubQuery(subquery1);
+
+        WhereBuilder sb = new WhereBuilder();
+        sb.addUnion(subquery1);
+        sb.addUnion(subquery2);
+        sb.addUnion(subquery3);
+        query2.addWhere(sb);
 
         return query2.toString();
     }
+
+    public static ResultSet filterResultSet(ResultSet sparqlrs, double tolerance) {
+
+
+
+        List<String> extractResult = new ArrayList<>();
+        List<String> resultList = new ArrayList<>();
+        GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
+        try {
+
+            if (sparqlrs.isBeforeFirst()) {
+                while (sparqlrs.next()){
+                    String row = sparqlrs.getString("geometry");
+                    extractResult.add(row);
+                }
+            }
+
+            int length = extractResult.size();
+            for (int i = 0; i < length; ++i){
+                Geometry geomobj = geospatial.createGeometry(extractResult.get(i));
+                if (geospatial.IsValid(geomobj) && geospatial.CalculateArea(geospatial.Transform(geomobj, 4326, 4326)) > tolerance){
+                    resultList.add(extractResult.get(i));
+                }
+            }
+            int result4 = resultList.size();
+            List<Geometry> geom2union = new ArrayList<>();
+            for (int j = 0; j < resultList.size(); ++j){
+                Geometry geomobj = geospatial.createGeometry(resultList.get(j));
+                geom2union.add (geomobj);
+            }
+
+            Geometry union = geospatial.UnaryUnion(geom2union);
+            Coordinate[] unionCoord = union.getCoordinates();
+
+
+            // create a resultSet from places other than a query
+            // https://jena.apache.org/documentation/javadoc/arq/org/apache/jena/query/ResultSetFactory.html
+
+            RowSetFactory factory = RowSetProvider.newFactory();
+            CachedRowSet rowSet = factory.createCachedRowSet();
+            rowSet.populate(sparqlrs);
+            rowSet.insertRow();
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return null;
+    }
+
 }

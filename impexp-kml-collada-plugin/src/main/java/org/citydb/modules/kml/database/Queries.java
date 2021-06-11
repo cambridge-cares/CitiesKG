@@ -590,12 +590,13 @@ public class Queries {
 
 	public String getBuildingPartAggregateGeometries(double tolerance, int srid2D, int lodToExportFrom, double groupBy1, double groupBy2, double groupBy3) {
 		if (lodToExportFrom > 1) {
+			// For SPARQL: the replacement of the string can raise error for the predicate. Need to be handled separately
 			if (databaseAdapter.getDatabaseType() == DatabaseType.BLAZE){
-				// do the following
+
 				String sqlquery = "";
 				String sparqlquery = "";
 				try {
-					sparqlquery = StatementTransformer.getSPARQLqueryStage2(sqlquery);
+					sparqlquery = StatementTransformer.getSPARQLqueryStage2(sqlquery, String.valueOf(lodToExportFrom));
 				} catch (ParseException e) {
 					e.printStackTrace();
 				}

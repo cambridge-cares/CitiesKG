@@ -315,13 +315,28 @@ public class Building extends KmlGenericObject{
 									Math.pow(groupBasis, 2));
 
 							psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-							if (isBlazegraph) {}
+							if (isBlazegraph) {
+								URL url = null;
+								try {
+									url = new URL((String)buildingPartId);
+								} catch (MalformedURLException e) {
+									e.printStackTrace();
+								}
+								psQuery.setURL(1, url);
+								psQuery.setURL(2, url);
+								psQuery.setURL(3, url);
+							}
 							else {
 								for (int i = 1; i <= getParameterCount(query); i++)
 									psQuery.setLong(i, Long.class.cast(buildingPartId));
 							}
 
 							rs = psQuery.executeQuery();
+
+							// Added by Shiying: Filter the resultSet until it is the same as the sql result. Expected: 1 row bcos of ST_UNION
+							if (isBlazegraph){
+								rs = StatementTransformer.filterResultSet(rs, 0.001);
+							}
 							if (rs.isBeforeFirst()) {
 								rs.next();
 								if (rs.getObject(1) != null) {
@@ -347,7 +362,7 @@ public class Building extends KmlGenericObject{
 				}
 			}
 
-			if (rs != null && rs.isBeforeFirst()) { // result not empty  // This step will process the result
+			if (rs != null && rs.isBeforeFirst()) { // if result of Line 334 is not empty. This step will process the result.
 
 				switch (work.getDisplayForm().getForm()) {
 				case DisplayForm.FOOTPRINT:

@@ -2,6 +2,7 @@ package org.citydb.database.adapter.blazegraph;
 
 import org.apache.jena.datatypes.DatatypeFormatException;
 import org.apache.jena.sparql.expr.ExprEvalException;
+import org.citydb.registry.ObjectRegistry;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.*;
@@ -21,6 +22,11 @@ import java.util.List;
 
 public class GeoSpatialProcessor {
     public GeoSpatialProcessor() {
+    }
+
+    public boolean IsValid (Geometry geom) {
+        Object[] result = IsValidDetail(geom);
+        return (boolean)result[0];
     }
     /* Equivalent to ST_isValidDetail, geoJena_IsValidDetail
     * Input of IsValidOp is; POLYGON () , 2D polygon of LinearRing
@@ -175,6 +181,11 @@ public class GeoSpatialProcessor {
         }
         return coords;
 
+    }
+    public Geometry createGeometry (String coordlist){
+        GeometryFactory fac = new GeometryFactory();
+        Geometry geom = fac.createPolygon(str2coords(coordlist).toArray(new Coordinate[0]));
+        return geom;
     }
 
 }
