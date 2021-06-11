@@ -12,12 +12,42 @@
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>official-maven-repo</id>
+            <url>https://repo.maven.apache.org/maven2/</url>
+        </repository>
+
+        <repository>
+            <id>osgeo-repo</id>
+            <url>https://repo.osgeo.org/repository/release/</url>
+        </repository>
+    </repositories>
+
     <dependencies>
+
         <dependency>
             <groupId>uk.ac.cam.cares.jps</groupId>
             <artifactId>jps-base-lib</artifactId>
             <version>1.3.0</version>
          </dependency>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+
+        <!-- https://repo.osgeo.org/repository/release/org.geotools/gt-main -->
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-main</artifactId>
+            <version>25.1</version>
+        </dependency>
+
     </dependencies>
+
+
 
 </project>

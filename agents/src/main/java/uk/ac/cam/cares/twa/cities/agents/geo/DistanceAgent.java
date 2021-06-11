@@ -1,5 +1,12 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
+import org.geotools.geometry.jts.JTS;
+import org.geotools.referencing.CRS;
+import org.locationtech.jts.geom.Point;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import org.json.JSONObject;
 import javax.ws.rs.BadRequestException;
@@ -25,8 +32,8 @@ public class DistanceAgent extends JPSAgent {
         return true;
     }
 
-    /** The getDistance method retrieves values from KG for distances between objects.
-     *  It returns distance if such already exists, and if not - computes, sets in the KG and returns it.
+    /**
+     *  The method retrieves values from KG for distances between objects. If it does not exists - it computes it.
      */
     private float[] getDistance(URI[] objects){
         float[] distances = new float[objects.length * objects.length];
@@ -34,8 +41,8 @@ public class DistanceAgent extends JPSAgent {
 
     }
 
-    /** The getEnvelope method retrieves values from the KG for objects envelopes.
-     *  It returns object's envelope string.
+    /**
+     *  The getEnvelope method retrieves values from the KG for objects envelopes as strings.
      */
     private String[] getEnvelope(URI[] objects){
         String[] envelopeString = new String[objects.length];
@@ -43,26 +50,38 @@ public class DistanceAgent extends JPSAgent {
 
     }
 
-    /** The computeDistance method computes distance between envelope centroids.
-     *  It returns array of distances between objects.
+    /** The computeDistance method computes distance between two centroids.
      */
-    private float[] computeDistance(float[] centroids){
-        float[] computedDistances = new float [centroids.length * centroids.length];
-        return computedDistances;
+    private double computeDistance(Envelope envelope1, Envelope envelope2){
+        //if JAVA library is not available:
+        //CommandHelper.executeCommands("", new ArrayList<String>("python script"));
 
+        Point centroid1 = envelope1.getCentroid();
+        Point centroid2 = envelope2.getCentroid();
+        String crs1 = envelope1.getCRS();
+        String crs2 = envelope2.getCRS();
+        if (!crs1.equals(crs2)){
+            centroid2 = setUniformCRS(centroid2, crs2, crs1);
+        }
+        return centroid1.distance(centroid2);
     }
 
     /** The setUniformCRS method sets the CRS to the same coordinate system.
      */
-    private void setUniformCRS(String[] CRString){
-
+    private Point setUniformCRS(Point point, String sourceCRSstring, String targetCRSstring) {
+        try {
+            CoordinateReferenceSystem sourceCRS = CRS.decode(sourceCRSstring);
+            CoordinateReferenceSystem targetCRS = CRS.decode(targetCRSstring);
+            MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
+            point = (Point) JTS.transform(point, transform);
+        } catch (FactoryException | TransformException e) {
+            throw new JPSRuntimeException(e);
+        }
+        return point;
     }
 
     /** The setDistance method writes distance between objects into KG.
      */
-    private void setDistance(URI[] objects, float[] distances){
-
-    }
-
+   // private void setDistance(URI[] objects, float[] distances){}
 
 }
