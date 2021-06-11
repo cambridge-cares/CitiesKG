@@ -6,14 +6,20 @@ import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.aws.CreateFileWatcher;
+import uk.ac.cam.cares.jps.base.util.CommandHelper;
+
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Set;
 
 
@@ -46,6 +52,8 @@ public class CityImportAgent extends JPSAgent {
     public static final String KEY_REQ_METHOD = "method";
     public static final String KEY_REQ_URL = "requestUrl";
     public static final String KEY_DIRECTORY = "directory";
+    public static final String KEY_SPLIT = "split";
+    public final int CHUNK_SIZE = 100;
     private String requestUrl;
     private File importDir;
 
@@ -175,22 +183,53 @@ public class CityImportAgent extends JPSAgent {
      * @return - import summary
      */
     private String importFiles(String directoryName) {
-        //@Todo: implementation
         String imported = "";
+        File[] dirContent = new File(directoryName).listFiles();
+
+        for (int i = 0; i < dirContent.length; i++) {
+            //@Todo: implementation
+            ArrayList<String> chunks = splitFile(dirContent[i], CHUNK_SIZE);
+            for (int j = 0; j < chunks.size(); j++) {
+                importChunk(chunks.get(j));
+            }
+        }
+
         return imported;
     }
 
     /**
      * Splits CityGML files into smaller chunks in order to better manage the import process
      *
-     * @param fileName - file to split
+     * @param file - file to split
      * @param chunkSize - number of cityOBjectMebers in targer chunks after split
      *
      * @return - list of CityGML chunk files
      */
-    private ArrayList splitFile(String fileName, int chunkSize) {
-        //@Todo: implementation
-        ArrayList chunks = new ArrayList<>();
+    private ArrayList<String> splitFile(File file, int chunkSize) {
+
+        ArrayList chunks = new ArrayList<String>();
+
+        File splitDir = new File(file.getParent() + System.getProperty("file.separator") +
+                KEY_SPLIT + new Date().getTime());
+        splitDir.mkdir();
+        String fileSrc = file.getPath();
+        String fileDst = splitDir.getPath()  +  System.getProperty("file.separator") + file.getName();
+
+        try {
+            ArrayList<String> args = new ArrayList<String>();
+            args.add("python");
+            //@TODO: change path
+            args.add("../citygml_splitter.py");
+            args.add(fileDst);
+            args.add(String.valueOf(CHUNK_SIZE));
+            String result = CommandHelper.executeCommands(splitDir.getPath(), args);
+            Files.move(Paths.get(fileSrc), Paths.get(fileDst));
+            CommandHelper.executeCommands(splitDir.getPath(), args);
+            //@Todo: implementation
+        } catch (IOException e) {
+            throw new JPSRuntimeException(e);
+        }
+
         return chunks;
     }
 
