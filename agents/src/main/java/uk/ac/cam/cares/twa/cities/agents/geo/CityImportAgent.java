@@ -18,9 +18,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -187,9 +185,9 @@ public class CityImportAgent extends JPSAgent {
         File[] dirContent = new File(directoryName).listFiles();
 
         for (int i = 0; i < dirContent.length; i++) {
-            //@Todo: implementation
-            ArrayList<String> chunks = splitFile(dirContent[i], CHUNK_SIZE);
+            ArrayList<File> chunks = splitFile(dirContent[i], CHUNK_SIZE);
             for (int j = 0; j < chunks.size(); j++) {
+                //@Todo: implementation
                 importChunk(chunks.get(j));
             }
         }
@@ -205,9 +203,9 @@ public class CityImportAgent extends JPSAgent {
      *
      * @return - list of CityGML chunk files
      */
-    private ArrayList<String> splitFile(File file, int chunkSize) {
+    private ArrayList<File> splitFile(File file, int chunkSize) {
 
-        ArrayList chunks = new ArrayList<String>();
+        ArrayList<File> chunks = new ArrayList<>();
 
         File splitDir = new File(file.getParent() + System.getProperty("file.separator") +
                 KEY_SPLIT + new Date().getTime());
@@ -219,13 +217,20 @@ public class CityImportAgent extends JPSAgent {
             ArrayList<String> args = new ArrayList<String>();
             args.add("python");
             //@TODO: change path
-            args.add("../citygml_splitter.py");
+            args.add(".../CARES/CitiesKG-git/utils/citygml_splitter.py");
             args.add(fileDst);
             args.add(String.valueOf(CHUNK_SIZE));
-            String result = CommandHelper.executeCommands(splitDir.getPath(), args);
             Files.move(Paths.get(fileSrc), Paths.get(fileDst));
-            CommandHelper.executeCommands(splitDir.getPath(), args);
-            //@Todo: implementation
+            String result = CommandHelper.executeCommands(splitDir.getPath(), args);
+            System.out.println(result);
+            Iterator<File> files = Arrays.stream(splitDir.listFiles()).iterator();
+
+            while (files.hasNext()) {
+                File splitFile = files.next();
+                if (!file.getPath().equals(fileDst)) {
+                    chunks.add(splitFile);
+                 }
+            }
         } catch (IOException e) {
             throw new JPSRuntimeException(e);
         }
@@ -237,10 +242,10 @@ public class CityImportAgent extends JPSAgent {
      * Imports CityGML chunk file (for verification and detection,
      * if there are features not yet implemented in ImpExp tool in the chunk)
      *
-     * @param fileName - chunk to import
+     * @param file- chunk to import
      * @return - information about local import success
      */
-    private boolean importChunk(String fileName) {
+    private boolean importChunk(File file) {
         //@Todo: implementation
         boolean imported = false;
         return imported;
