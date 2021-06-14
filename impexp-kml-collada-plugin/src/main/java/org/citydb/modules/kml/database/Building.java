@@ -313,9 +313,10 @@ public class Building extends KmlGenericObject{
 									Math.pow(groupBasis, 4),
 									Math.pow(groupBasis, 3),
 									Math.pow(groupBasis, 2));
-
 							psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
 							if (isBlazegraph) {
+								// need to
 								URL url = null;
 								try {
 									url = new URL((String)buildingPartId);
@@ -334,9 +335,9 @@ public class Building extends KmlGenericObject{
 							rs = psQuery.executeQuery();
 
 							// Added by Shiying: Filter the resultSet until it is the same as the sql result. Expected: 1 row bcos of ST_UNION
-							if (isBlazegraph){
-								rs = StatementTransformer.filterResultSet(rs, 0.001);
-							}
+							//if (isBlazegraph){
+							//	rs = StatementTransformer.filterResultSet(rs, 0.001);
+							//}
 							if (rs.isBeforeFirst()) {
 								rs.next();
 								if (rs.getObject(1) != null) {
@@ -374,6 +375,7 @@ public class Building extends KmlGenericObject{
 
 					try {
 						String query = queries.getExtrusionHeight();
+
 						psQuery2 = connection.prepareStatement(query);
 						if (isBlazegraph){
 							URL url = null;
@@ -394,10 +396,12 @@ public class Building extends KmlGenericObject{
 						if (isBlazegraph) {
 							String envelop = rs2.getString(1);
 							measuredHeight = extractHeight(envelop);
+							return createPlacemarksForExtruded_geospatial(rs, work, measuredHeight, reversePointOrder, null);
 						} else {
 							measuredHeight = rs2.getDouble("envelope_measured_height");
+							return createPlacemarksForExtruded(rs, work, measuredHeight, reversePointOrder);
 						}
-						return createPlacemarksForExtruded(rs, work, measuredHeight, reversePointOrder);
+
 					} finally {
 						try { if (rs2 != null) rs2.close(); } catch (SQLException e) {}
 						try { if (psQuery2 != null) psQuery2.close(); } catch (SQLException e) {}

@@ -8,6 +8,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_IsBlank;
 import org.apache.jena.sparql.expr.NodeValue;
@@ -30,6 +31,8 @@ import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetFactory;
 import javax.sql.rowset.RowSetProvider;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.Charset;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -231,10 +234,35 @@ public class StatementTransformer {
 
         return query2.toString();
     }
+    public static Geometry filterResult(List<String> extracted, double tolerance) {
+
+        GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
+        List<Geometry> geom2union = new ArrayList<>();
+
+        for (int i = 0; i < extracted.size(); ++i){
+            Geometry geomobj = geospatial.createGeometry(extracted.get(i));
+            if (geospatial.IsValid(geomobj) && geospatial.CalculateArea(geospatial.Transform(geomobj, 4326, 4326)) > tolerance){
+                geom2union.add(geomobj);
+            }
+        }
+
+        Geometry union = geospatial.UnaryUnion(geom2union);
+        //Coordinate[] unionCoord = union.getCoordinates();
+        /*
+        StringBuilder coordinates = new StringBuilder();
+        // convert it to blazegraph string
+        for (int i = 0; i < unionCoord.length; ++i ){
+            if (i == unionCoord.length-1){
+                coordinates.append(unionCoord[i].x).append("#").append(unionCoord[i].y).append("#").append(unionCoord[i].getZ());
+            }else {
+                coordinates.append(unionCoord[i].x).append("#").append(unionCoord[i].y).append("#").append(unionCoord[i].getZ()).append("#");
+            }
+        }
+        return coordinates.toString();*/
+        return union;
+    }
 
     public static ResultSet filterResultSet(ResultSet sparqlrs, double tolerance) {
-
-
 
         List<String> extractResult = new ArrayList<>();
         List<String> resultList = new ArrayList<>();
@@ -269,10 +297,6 @@ public class StatementTransformer {
             // create a resultSet from places other than a query
             // https://jena.apache.org/documentation/javadoc/arq/org/apache/jena/query/ResultSetFactory.html
 
-            RowSetFactory factory = RowSetProvider.newFactory();
-            CachedRowSet rowSet = factory.createCachedRowSet();
-            rowSet.populate(sparqlrs);
-            rowSet.insertRow();
 
         } catch (SQLException throwables) {
             throwables.printStackTrace();

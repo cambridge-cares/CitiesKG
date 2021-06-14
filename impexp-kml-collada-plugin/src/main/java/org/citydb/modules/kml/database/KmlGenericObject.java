@@ -54,6 +54,7 @@ import org.citydb.config.project.kmlExporter.KmlExporter;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.AbstractGeometryConverterAdapter;
 import org.citydb.database.adapter.BlobExportAdapter;
+import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.event.EventDispatcher;
 import org.citydb.event.global.CounterEvent;
 import org.citydb.event.global.CounterType;
@@ -1434,6 +1435,91 @@ public abstract class KmlGenericObject<T> {
 		return createPlacemarksForExtruded(rs, work, measuredHeight, reversePointOrder, null);
 	}
 
+	// Designed for the geospatial extension for Blazegraph
+	// Added by Shiying
+	protected List<PlacemarkType> createPlacemarksForExtruded_geospatial(ResultSet rs, KmlSplittingResult work, double measuredHeight, boolean reversePointOrder, AffineTransformer transformer) throws SQLException {
+		List<PlacemarkType> placemarkList = new ArrayList<PlacemarkType>();
+		PlacemarkType placemark = kmlFactory.createPlacemarkType();
+		placemark.setName(work.getGmlId());
+		placemark.setId(config.getProject().getKmlExporter().getIdPrefixes().getPlacemarkExtruded() + placemark.getName());
+		if (work.getDisplayForm().isHighlightingEnabled()) {
+			placemark.setStyleUrl("#" + getStyleBasisName() + DisplayForm.EXTRUDED_STR + "Style");
+		}
+		else {
+			placemark.setStyleUrl("#" + getStyleBasisName() + DisplayForm.EXTRUDED_STR + "Normal");
+		}
+		if (getBalloonSettings().isIncludeDescription()) {
+			addBalloonContents(placemark, (long)work.getId());
+		}
+		MultiGeometryType multiGeometry = kmlFactory.createMultiGeometryType();
+		placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
+
+		PolygonType polygon = null;
+
+		List<String> extractResult = new ArrayList<>();
+		List<Object> extractResult1 = new ArrayList<>();
+
+		while (rs.next()) {
+			String row = rs.getString(1);  // "geometry"
+			extractResult.add(row);
+			//Object row1 = rs.getObject(1);
+			//extractResult1.add(row1);
+		}
+		// Added by Shiying: Filter the results, return Geometry object
+		Object buildingGeometryObj = StatementTransformer.filterResult(extractResult, 0.001);
+
+		if (!rs.wasNull() && buildingGeometryObj != null) {
+			eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
+
+			GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
+			//if (unconvertedGeom == null || (unconvertedGeom.getGeometryType() != GeometryType.POLYGON && unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON))
+			//	continue;
+
+			// for implicit geometries, we need to apply the transformation matrix first
+			if (transformer != null)
+				unconvertedGeom = transformer.applyTransformation(unconvertedGeom);
+
+			GeometryObject groundSurface = convertToWGS84(unconvertedGeom); // apply transformation, coordinates have totally been changed
+			unconvertedGeom = null;
+
+			int dim = groundSurface.getDimension();
+
+			for (int i = 0; i < groundSurface.getNumElements(); i++) {
+				LinearRingType linearRing = kmlFactory.createLinearRingType();
+				BoundaryType boundary = kmlFactory.createBoundaryType();
+				boundary.setLinearRing(linearRing);
+
+				if (groundSurface.getElementType(i) == ElementType.EXTERIOR_LINEAR_RING) {
+					polygon = kmlFactory.createPolygonType();
+					polygon.setTessellate(true);
+					polygon.setExtrude(true);
+					polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
+					polygon.setOuterBoundaryIs(boundary);
+					multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
+				} else
+					polygon.getInnerBoundaryIs().add(boundary);
+
+				double[] ordinatesArray = groundSurface.getCoordinates(i);
+				if (reversePointOrder) {
+					for (int j = 0; j < ordinatesArray.length; j = j+dim)
+						linearRing.getCoordinates().add(String.valueOf(ordinatesArray[j] + "," + ordinatesArray[j+1] + "," + measuredHeight));
+
+				} else if (polygon != null)
+					// order points counter-clockwise
+					for (int j = ordinatesArray.length - dim; j >= 0; j = j-dim)
+						linearRing.getCoordinates().add(String.valueOf(ordinatesArray[j] + "," + ordinatesArray[j+1] + "," + measuredHeight));
+			}
+		}
+
+		if (polygon != null) { // if there is at least some content
+			placemarkList.add(placemark);
+		}
+
+
+		return placemarkList;
+	}
+
+
 	protected List<PlacemarkType> createPlacemarksForExtruded(ResultSet rs, KmlSplittingResult work, double measuredHeight, boolean reversePointOrder, AffineTransformer transformer) throws SQLException {
 		List<PlacemarkType> placemarkList = new ArrayList<PlacemarkType>();
 		PlacemarkType placemark = kmlFactory.createPlacemarkType();
@@ -1451,9 +1537,9 @@ public abstract class KmlGenericObject<T> {
 		MultiGeometryType multiGeometry = kmlFactory.createMultiGeometryType();
 		placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
 
-		PolygonType polygon = null; 
+		PolygonType polygon = null;
 		while (rs.next()) {
-			Object buildingGeometryObj = rs.getObject(1); 
+			Object buildingGeometryObj = rs.getObject(1);
 
 			if (!rs.wasNull() && buildingGeometryObj != null) {
 				eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
