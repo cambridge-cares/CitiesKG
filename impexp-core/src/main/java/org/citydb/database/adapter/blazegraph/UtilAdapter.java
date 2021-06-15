@@ -8,10 +8,12 @@ import org.citydb.database.adapter.AbstractUtilAdapter;
 import org.citydb.database.adapter.IndexStatusInfo;
 import org.citydb.database.connection.DatabaseMetaData;
 import org.citydb.database.version.DatabaseVersion;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class UtilAdapter extends AbstractUtilAdapter {
@@ -66,10 +68,36 @@ public class UtilAdapter extends AbstractUtilAdapter {
     protected BoundingBox transformBoundingBox(BoundingBox bbox, DatabaseSrs sourceSrs, DatabaseSrs targetSrs, Connection connection) throws SQLException {
         return null;
     }
-
+    //The postgis implementation is to execute ST_Transform in postgis
     @Override
     protected GeometryObject transform(GeometryObject geometry, DatabaseSrs targetSrs, Connection connection) throws SQLException {
-        return null;
+        GeometryObject result = null;
+
+        Object unconverted = databaseAdapter.getGeometryConverter().getDatabaseObject(geometry, connection);
+        GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
+        List<Coordinate> coords = new ArrayList<>();
+        double[] coordlist = geometry.getCoordinates(0);
+        for (int i  = 0; i < coordlist.length; i = i+2){
+            Coordinate cor = new Coordinate(coordlist[i], coordlist[i+1]);
+            coords.add(cor);
+        }
+        GeometryFactory fac = new GeometryFactory();
+        Geometry geom = fac.createPolygon(coords.toArray(new Coordinate[0]));
+
+        int sourceSrsId;
+        if (geometry.getSrid() == 0){
+            sourceSrsId = 31466;
+        }else{
+            sourceSrsId = geometry.getSrid();
+        }
+
+        Geometry converted = geospatial.Transform(geom,sourceSrsId, targetSrs.getSrid());
+
+        // need to reverse the coordinates to match POSTGIS results
+        Coordinate[] reverseCoord = geospatial.getReversedCoordinates(converted);
+        Geometry reverseConverted = fac.createPolygon(reverseCoord);
+        result = databaseAdapter.getGeometryConverter().getGeometry(reverseConverted);
+        return result;
     }
 
     @Override

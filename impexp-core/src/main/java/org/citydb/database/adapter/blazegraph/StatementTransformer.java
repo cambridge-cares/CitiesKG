@@ -247,6 +247,7 @@ public class StatementTransformer {
         }
 
         Geometry union = geospatial.UnaryUnion(geom2union);
+
         //Coordinate[] unionCoord = union.getCoordinates();
         /*
         StringBuilder coordinates = new StringBuilder();
