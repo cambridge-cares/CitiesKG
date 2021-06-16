@@ -1,5 +1,14 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
+import com.bigdata.rdf.sail.webapp.ConfigParams;
+import com.bigdata.rdf.sail.webapp.NanoSparqlServer;
+
+import com.bigdata.rdf.sail.webapp.StandaloneNanoSparqlServer;
+import com.bigdata.util.config.NicUtil;
+import org.checkerframework.checker.units.qual.C;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.webapp.WebAppContext;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
 import uk.ac.cam.cares.jps.aws.WatcherCallback;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
@@ -184,11 +193,13 @@ public class CityImportAgent extends JPSAgent {
         String imported = "";
         File[] dirContent = new File(directoryName).listFiles();
 
-        for (int i = 0; i < dirContent.length; i++) {
-            ArrayList<File> chunks = splitFile(dirContent[i], CHUNK_SIZE);
-            for (int j = 0; j < chunks.size(); j++) {
-                //@Todo: implementation
-                importChunk(chunks.get(j));
+        if (dirContent != null) {
+            for (File file : dirContent) {
+                ArrayList<File> chunks = splitFile(file);
+                for (File chunk : chunks) {
+                    //@Todo: implementation
+                    importChunk(chunk);
+                }
             }
         }
 
@@ -199,11 +210,9 @@ public class CityImportAgent extends JPSAgent {
      * Splits CityGML files into smaller chunks in order to better manage the import process
      *
      * @param file - file to split
-     * @param chunkSize - number of cityOBjectMebers in targer chunks after split
-     *
      * @return - list of CityGML chunk files
      */
-    private ArrayList<File> splitFile(File file, int chunkSize) {
+    private ArrayList<File> splitFile(File file) {
 
         ArrayList<File> chunks = new ArrayList<>();
 
@@ -214,20 +223,19 @@ public class CityImportAgent extends JPSAgent {
         String fileDst = splitDir.getPath()  +  System.getProperty("file.separator") + file.getName();
 
         try {
-            ArrayList<String> args = new ArrayList<String>();
+            ArrayList<String> args = new ArrayList<>();
             args.add("python");
             //@TODO: change path
-            args.add(".../CARES/CitiesKG-git/utils/citygml_splitter.py");
+            args.add("/Users/arek/git/CARES/CitiesKG-git/utils/citygml_splitter.py");
             args.add(fileDst);
             args.add(String.valueOf(CHUNK_SIZE));
             Files.move(Paths.get(fileSrc), Paths.get(fileDst));
-            String result = CommandHelper.executeCommands(splitDir.getPath(), args);
-            System.out.println(result);
+            CommandHelper.executeCommands(splitDir.getPath(), args);
             Iterator<File> files = Arrays.stream(splitDir.listFiles()).iterator();
 
             while (files.hasNext()) {
                 File splitFile = files.next();
-                if (!file.getPath().equals(fileDst)) {
+                if (!splitFile.getPath().equals(fileDst)) {
                     chunks.add(splitFile);
                  }
             }
@@ -248,19 +256,58 @@ public class CityImportAgent extends JPSAgent {
     private boolean importChunk(File file) {
         //@Todo: implementation
         boolean imported = false;
+        URL endpoint = startBlazegraphInstance();
+
         return imported;
     }
 
     /**
      * Starts local Blazegraph SPARQL server instance.
      *
-     * @param port - SPARQL server port
-     * @return - information about start success
+     * @return - URL of the SPARQL update endpoint
      */
-    private boolean startBlazegraphInstance(int port) {
+    private URL startBlazegraphInstance() {
         //@Todo: implementation
-        boolean started = false;
-        return started;
+        URL endpoint = null;
+
+        try {
+            int port = 0;
+            String propertyFile = "RWStore.properties";
+
+            String jettyXml =  NanoSparqlServer.class.getResource("../../../../../jetty.xml").toExternalForm();
+            String war =  NanoSparqlServer.class.getResource("../../../../../war").toExternalForm();
+
+            System.setProperty("jetty.home", war);
+            System.setProperty(NanoSparqlServer.SystemProperties.JETTY_XML, jettyXml);
+            System.setProperty(NanoSparqlServer.SystemProperties.BIGDATA_PROPERTY_FILE, propertyFile);
+            LinkedHashMap<String, String> initParams = new LinkedHashMap<String, String>();
+            initParams.put(ConfigParams.PROPERTY_FILE, propertyFile);
+            initParams.put(ConfigParams.NAMESPACE, "kb");
+            initParams.put(ConfigParams.QUERY_THREAD_POOL_SIZE, String.valueOf(ConfigParams.DEFAULT_QUERY_THREAD_POOL_SIZE));
+            initParams.put(ConfigParams.FORCE_OVERFLOW, "false");
+            initParams.put(ConfigParams.READ_LOCK, "0");
+
+            NanoSparqlServer nss = new NanoSparqlServer();
+            Server server = new Server(port);
+            WebAppContext webapp = new WebAppContext();
+
+            webapp.setAttribute("INIT_PARAMS_OVERRIDES", initParams);
+            webapp.setContextPath("/blazegraph");
+            webapp.setWar(war);
+            webapp.setExtractWAR(true);
+            server.setHandler(webapp);
+            server.start();
+            String serviceURL = server.getURI().toString();
+            System.out.println("serviceURL: " + serviceURL);
+            server.join();
+            
+        } catch (Exception e) {
+           throw new JPSRuntimeException(e);
+        }
+
+
+
+        return endpoint;
     }
 
     /**
