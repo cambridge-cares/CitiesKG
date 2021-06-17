@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.aws.CreateFileWatcher;
 import uk.ac.cam.cares.jps.base.util.CommandHelper;
+import uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask;
 
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
@@ -24,10 +25,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 
 /**
@@ -61,8 +65,10 @@ public class CityImportAgent extends JPSAgent {
     public static final String KEY_DIRECTORY = "directory";
     public static final String KEY_SPLIT = "split";
     public final int CHUNK_SIZE = 100;
+    public final int NUM_THREADS = 4;
     private String requestUrl;
     private File importDir;
+    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_THREADS);
 
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
@@ -226,7 +232,7 @@ public class CityImportAgent extends JPSAgent {
             ArrayList<String> args = new ArrayList<>();
             args.add("python");
             //@TODO: change path
-            args.add("/Users/arek/git/CARES/CitiesKG-git/utils/citygml_splitter.py");
+            args.add("/CitiesKG-git/utils/citygml_splitter.py");
             args.add(fileDst);
             args.add(String.valueOf(CHUNK_SIZE));
             Files.move(Paths.get(fileSrc), Paths.get(fileDst));
@@ -254,9 +260,11 @@ public class CityImportAgent extends JPSAgent {
      * @return - information about local import success
      */
     private boolean importChunk(File file) {
-        //@Todo: implementation
+
         boolean imported = false;
-        URL endpoint = startBlazegraphInstance();
+        BlazegraphServerTask serverTask = startBlazegraphInstance(file.getAbsolutePath());
+        URI endpoint = serverTask.getServiceUri();
+        //@Todo: implementation
 
         return imported;
     }
@@ -266,48 +274,12 @@ public class CityImportAgent extends JPSAgent {
      *
      * @return - URL of the SPARQL update endpoint
      */
-    private URL startBlazegraphInstance() {
-        //@Todo: implementation
-        URL endpoint = null;
+    private BlazegraphServerTask startBlazegraphInstance(String filepath) {
 
-        try {
-            int port = 0;
-            String propertyFile = "RWStore.properties";
+        BlazegraphServerTask task = new BlazegraphServerTask(filepath.replace(".gml", ".jnl"));
+        executor.execute(task);
 
-            String jettyXml =  NanoSparqlServer.class.getResource("../../../../../jetty.xml").toExternalForm();
-            String war =  NanoSparqlServer.class.getResource("../../../../../war").toExternalForm();
-
-            System.setProperty("jetty.home", war);
-            System.setProperty(NanoSparqlServer.SystemProperties.JETTY_XML, jettyXml);
-            System.setProperty(NanoSparqlServer.SystemProperties.BIGDATA_PROPERTY_FILE, propertyFile);
-            LinkedHashMap<String, String> initParams = new LinkedHashMap<String, String>();
-            initParams.put(ConfigParams.PROPERTY_FILE, propertyFile);
-            initParams.put(ConfigParams.NAMESPACE, "kb");
-            initParams.put(ConfigParams.QUERY_THREAD_POOL_SIZE, String.valueOf(ConfigParams.DEFAULT_QUERY_THREAD_POOL_SIZE));
-            initParams.put(ConfigParams.FORCE_OVERFLOW, "false");
-            initParams.put(ConfigParams.READ_LOCK, "0");
-
-            NanoSparqlServer nss = new NanoSparqlServer();
-            Server server = new Server(port);
-            WebAppContext webapp = new WebAppContext();
-
-            webapp.setAttribute("INIT_PARAMS_OVERRIDES", initParams);
-            webapp.setContextPath("/blazegraph");
-            webapp.setWar(war);
-            webapp.setExtractWAR(true);
-            server.setHandler(webapp);
-            server.start();
-            String serviceURL = server.getURI().toString();
-            System.out.println("serviceURL: " + serviceURL);
-            server.join();
-            
-        } catch (Exception e) {
-           throw new JPSRuntimeException(e);
-        }
-
-
-
-        return endpoint;
+        return task;
     }
 
     /**
