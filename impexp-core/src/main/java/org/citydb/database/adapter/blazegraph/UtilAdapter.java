@@ -91,7 +91,7 @@ public class UtilAdapter extends AbstractUtilAdapter {
             sourceSrsId = geometry.getSrid();
         }
 
-        Geometry converted = geospatial.Transform(geom,sourceSrsId, targetSrs.getSrid());
+        Geometry converted = geospatial.Transform(geom,28992, targetSrs.getSrid());
 
         // need to reverse the coordinates to match POSTGIS results
         Coordinate[] reverseCoord = geospatial.getReversedCoordinates(converted);

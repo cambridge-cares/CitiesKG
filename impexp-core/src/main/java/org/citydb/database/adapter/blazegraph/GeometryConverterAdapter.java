@@ -129,6 +129,43 @@ public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
         return GeometryObject.createPolygon(getPolygonCoordinates(polygon), polygon.getDimension(), polygon.getSrid());
     }
 
+
+    private GeometryObject getMultiPolygon(MultiPolygon multiPolygon) {
+        int numRings = 0;
+        for (Polygon polygon : multiPolygon.getPolygons())
+            numRings += polygon.numRings();
+
+        int[] exteriorRings = new int[multiPolygon.numPolygons()];
+        double[][] coordinates = new double[numRings][];
+        int dimension = multiPolygon.getDimension();
+
+        int ringNo = 0;
+        for (int i = 0; i < multiPolygon.numPolygons(); i++) {
+            Polygon polygon = multiPolygon.getPolygon(i);
+            exteriorRings[i] = ringNo;
+
+            for (int j = 0; j < polygon.numRings(); j++, ringNo++) {
+                LinearRing ring = polygon.getRing(j);
+                coordinates[ringNo] = new double[ring.numPoints() * dimension];
+                int element = 0;
+
+                if (dimension == 3) {
+                    for (Point point : ring.getPoints()) {
+                        coordinates[ringNo][element++] = point.x;
+                        coordinates[ringNo][element++] = point.y;
+                        coordinates[ringNo][element++] = point.z;
+                    }
+                } else {
+                    for (Point point : ring.getPoints()) {
+                        coordinates[ringNo][element++] = point.x;
+                        coordinates[ringNo][element++] = point.y;
+                    }
+                }
+            }
+        }
+
+        return GeometryObject.createMultiPolygon(coordinates, exteriorRings, dimension, multiPolygon.getSrid());
+    }
     private double[][] getPolygonCoordinates(Polygon polygon) {
         double[][] coordinates = new double[polygon.numRings()][];
         int dimension = polygon.getDimension();

@@ -160,7 +160,7 @@ public class KmlExporterManager {
 		else
 			objectCounter.put(work.getObjectClassId(), counter + 1);		
 
-		tracker.put(work.getId(), work.getJson());  // changed by Shiying
+		tracker.put(work.getId(), work.getJson());  // The interfae of tracker has been changed. here will remain the same
 		eventDispatcher.triggerEvent(new CounterEvent(CounterType.TOPLEVEL_FEATURE, 1, this));
 	}
 

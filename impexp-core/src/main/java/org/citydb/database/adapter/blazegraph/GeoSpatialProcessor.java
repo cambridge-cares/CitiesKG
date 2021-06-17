@@ -65,8 +65,9 @@ public class GeoSpatialProcessor {
         GeometryFactory fac = new GeometryFactory();
 
         // need to reverse the coordinates of the polygpn
-        Coordinate[] sourceCoords = getReversedCoordinates(geom);
-        Geometry sourceGeometry = fac.createPolygon(sourceCoords);
+        //Coordinate[] sourceCoords = getReversedCoordinates(geom);
+        //Geometry sourceGeometry = fac.createPolygon(sourceCoords);
+        Geometry sourceGeometry = fac.createGeometry(geom);
 
         Geometry targetGeometry = null;
         try {

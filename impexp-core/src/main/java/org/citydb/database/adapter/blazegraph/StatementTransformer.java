@@ -47,21 +47,6 @@ public class StatementTransformer {
     public String sqlStatement;
     public String sparqlStatement;
 
-    public static String getSparqlstatement (Query query){
-        SelectBuilder sb = new SelectBuilder();
-        sb.addPrefix("ocgml", "http://locahost/ontocitygml/");
-        sb.addVar("?id ?objectclass_id ?gmlid").from(IRI_GRAPH_OBJECT).addWhere("?gmlid", "<http://locahost/ontocitygml/objectClassId>", "?objectclass_id").addWhere("?gmlid", "<http://locahost/ontocitygml/gmlId>", "?name" ); //"ID_0518100000225439"
-        try {
-            sb.addFilter("?objectclass_id IN ( 64, 4, 5, 7, 8, 9, 42, 43,44, 45, 14, 46, 85, 21, 23, 26 )");
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
-        sb.setVar(Var.alloc("name"), "ID_0518100000225439");
-        Query q = sb.build();
-        return q.toString();
-    }
-
     // getBuildingPartsFromBuilding() in Building.java
     public static String getSPARQLStatement_BuildingParts (String sqlQuery) {
         String sparql = "PREFIX  ocgml: <http://locahost/ontocitygml/> " +
@@ -104,11 +89,6 @@ public class StatementTransformer {
 
         Query q = sb.build();
         return q;
-    }
-
-    public static String queryTransform (String sqlquery){
-        //Force2D instance = new Force2D();
-        return null;
     }
 
     public static void applyPredicate (SelectBuilder sb, List<PredicateToken> predicateTokens) throws ParseException {
@@ -248,61 +228,7 @@ public class StatementTransformer {
 
         Geometry union = geospatial.UnaryUnion(geom2union);
 
-        //Coordinate[] unionCoord = union.getCoordinates();
-        /*
-        StringBuilder coordinates = new StringBuilder();
-        // convert it to blazegraph string
-        for (int i = 0; i < unionCoord.length; ++i ){
-            if (i == unionCoord.length-1){
-                coordinates.append(unionCoord[i].x).append("#").append(unionCoord[i].y).append("#").append(unionCoord[i].getZ());
-            }else {
-                coordinates.append(unionCoord[i].x).append("#").append(unionCoord[i].y).append("#").append(unionCoord[i].getZ()).append("#");
-            }
-        }
-        return coordinates.toString();*/
         return union;
-    }
-
-    public static ResultSet filterResultSet(ResultSet sparqlrs, double tolerance) {
-
-        List<String> extractResult = new ArrayList<>();
-        List<String> resultList = new ArrayList<>();
-        GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
-        try {
-
-            if (sparqlrs.isBeforeFirst()) {
-                while (sparqlrs.next()){
-                    String row = sparqlrs.getString("geometry");
-                    extractResult.add(row);
-                }
-            }
-
-            int length = extractResult.size();
-            for (int i = 0; i < length; ++i){
-                Geometry geomobj = geospatial.createGeometry(extractResult.get(i));
-                if (geospatial.IsValid(geomobj) && geospatial.CalculateArea(geospatial.Transform(geomobj, 4326, 4326)) > tolerance){
-                    resultList.add(extractResult.get(i));
-                }
-            }
-            int result4 = resultList.size();
-            List<Geometry> geom2union = new ArrayList<>();
-            for (int j = 0; j < resultList.size(); ++j){
-                Geometry geomobj = geospatial.createGeometry(resultList.get(j));
-                geom2union.add (geomobj);
-            }
-
-            Geometry union = geospatial.UnaryUnion(geom2union);
-            Coordinate[] unionCoord = union.getCoordinates();
-
-
-            // create a resultSet from places other than a query
-            // https://jena.apache.org/documentation/javadoc/arq/org/apache/jena/query/ResultSetFactory.html
-
-
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-        }
-        return null;
     }
 
 }

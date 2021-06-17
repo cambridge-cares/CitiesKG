@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ExportTracker<T> {
 	
-	private final ConcurrentHashMap<T, CityObject4JSON> map;  // Long --> T
+	private final ConcurrentHashMap<T, CityObject4JSON> map;  // All Long has been changed to general type T
 	private String currentWorkingDirectoryPath;
 	
 	public ExportTracker() {
