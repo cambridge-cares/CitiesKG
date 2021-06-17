@@ -1,6 +1,4 @@
 package uk.ac.cam.cares.twa.cities.model.geo;
-import java.util.Arrays;
-
 import org.geotools.geometry.jts.GeometryBuilder;
 import org.locationtech.jts.geom.*;
 
@@ -24,13 +22,11 @@ public class Envelope {
 
     public static void main (String[] args){
       Envelope envelope = new Envelope("EPSG:4326");
-      String envelopeString = "1.29227#103.83094#496#1.29262#103.83094#333#1.29262#103.83148#12#1.29227#103.83148#567#1.29227#103.83094#111";
-
+      String envelopeString = "1.29227#103.83094#1#1.29262#103.83094#1#1.29262#103.83148#1#1.29227#103.83148#1#1.29227#103.83094#1";
       envelope.extractEnvelopePoints(envelopeString);
-
       System.out.println(envelope.boundary);
       System.out.println(envelope.boundary.getDimension());
-      System.out.println(envelope.getCentroid());
+      System.out.println(envelope.getCentroid().getCoordinate());
    }
 
    /** It transforms envelopeString into 5 points representing envelope boundary attribute.
@@ -52,13 +48,22 @@ public class Envelope {
           points[index]= Double.parseDouble(pointsAsString[index]);
       }
 
+      double centroidZ = 0;
       if (numberOfDimensions == 3){
           boundary = factory.polygonZ(points);
+          for (int z = 2; z < points.length; z +=3 ){
+              centroidZ += points[z];
+          }
+          centroidZ = centroidZ/numberOfPoints;
       }
       else{
           boundary = factory.polygon(points);
       }
       centroid = boundary.getCentroid();
+
+      // Updates the centroid Z value. If it's 3D, it overrides the existing Z, of it's 2D: it's replaces default NaN with 0.
+      centroid.getCoordinateSequence().setOrdinate(0, 2, centroidZ);
+      centroid.geometryChanged();
    }
 
     /** Method gets centroid as Point.

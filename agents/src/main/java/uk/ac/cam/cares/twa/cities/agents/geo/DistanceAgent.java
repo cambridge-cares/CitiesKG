@@ -60,10 +60,13 @@ public class DistanceAgent extends JPSAgent {
         Point centroid2 = envelope2.getCentroid();
         String crs1 = envelope1.getCRS();
         String crs2 = envelope2.getCRS();
-        if (!crs1.equals(crs2)){
-            centroid2 = setUniformCRS(centroid2, crs2, crs1);
-        }
-        return centroid1.distance(centroid2);
+
+        //TODO: target CRS should be a variable so that it could be changed depending on the use case location.
+
+        // distance3D calculation works only with cartesian CRS.
+        centroid1 = setUniformCRS(centroid1, crs1, "EPSG:24500");
+        centroid2 = setUniformCRS(centroid2, crs2, "EPSG:24500");
+        return Distance3DOp.distance(centroid1, centroid2);
     }
 
     /** The setUniformCRS method sets the CRS to the same coordinate system.
