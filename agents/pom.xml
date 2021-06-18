@@ -13,14 +13,7 @@
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
         <testSourceDirectory>src/test/java</testSourceDirectory>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <excludes>
-                    <exclude>**/*.java</exclude>
-                </excludes>
-            </resource>
-        </resources>
+
         <pluginManagement>
             <plugins>
 
@@ -57,7 +50,7 @@
                     <executions>
                         <execution>
                             <id>default-copy-resources</id>
-                            <phase>process-resources</phase>
+                            <phase>generate-sources</phase>
                             <goals>
                                 <goal>copy-resources</goal>
                             </goals>
@@ -69,6 +62,9 @@
                                 <resources>
                                     <resource>
                                         <directory>${project.basedir}/src/main/resources</directory>
+                                    </resource>
+                                    <resource>
+                                        <directory>${project.basedir}/../utils</directory>
                                     </resource>
                                 </resources>
                             </configuration>
@@ -114,6 +110,11 @@
             <groupId>com.blazegraph</groupId>
             <artifactId>blazegraph-jar</artifactId>
             <version>2.1.5</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.6</version>
         </dependency>
     </dependencies>
 

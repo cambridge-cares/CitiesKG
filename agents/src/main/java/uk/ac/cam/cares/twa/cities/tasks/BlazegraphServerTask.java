@@ -16,10 +16,12 @@ import java.util.LinkedHashMap;
 
 public class BlazegraphServerTask implements Runnable {
     private final String PROPERTY_FILE = "RWStore.properties";
+    private final String PROPERTY_FILE_PATH = "../../../../../../../";
     private final String JETTY_CFG_PATH = "../../../../../jetty.xml";
     private final String WAR_PATH = "../../../../../war";
     private final String NAMESPACE = "tmpkb";
     private final String DEF_JOURNAL_NAME = "citiesKG.jnl";
+    private final String FS = System.getProperty("file.separator");
     private String journalPath;
     private URI serviceUri;
     private Boolean stop = false;
@@ -36,6 +38,10 @@ public class BlazegraphServerTask implements Runnable {
         return serviceUri;
     }
 
+    public boolean getStop() {
+        return stop;
+    }
+
     public void stop() {
         stop = true;
     }
@@ -47,23 +53,28 @@ public class BlazegraphServerTask implements Runnable {
         while (!stop) {
             try {
                 int port = 0;
-                String propFileName = new File(journalPath).getName().split("\\.")[0] + PROPERTY_FILE;
-                Files.copy(Paths.get(PROPERTY_FILE), Paths.get(propFileName));
-                propFile = new File(propFileName);
-                String data = FileUtils.readFileToString(propFile, Charset.defaultCharset());
+                File journalFile =  new File(journalPath);
+                String propFileName = journalFile.getName().split("\\.")[0] + PROPERTY_FILE;
+                String propFilePath = journalFile.getParent();
+                String propFileAbsPath = propFilePath + FS + propFileName;
+                Files.copy(Paths.get(getClass().getResource(PROPERTY_FILE_PATH + PROPERTY_FILE).toURI()),
+                        Paths.get(propFileAbsPath));
+                propFile = new File(propFileAbsPath);
+                String data = FileUtils.readFileToString(propFile, String.valueOf(Charset.defaultCharset()));
                 data = data.replace(DEF_JOURNAL_NAME, journalPath);
-                FileUtils.writeStringToFile(propFile, data, Charset.defaultCharset());
+                FileUtils.writeStringToFile(propFile, data);
 
                 String jettyXml = NanoSparqlServer.class.getResource(JETTY_CFG_PATH).toExternalForm();
                 String war = NanoSparqlServer.class.getResource(WAR_PATH).toExternalForm();
 
                 System.setProperty("jetty.home", war);
                 System.setProperty(NanoSparqlServer.SystemProperties.JETTY_XML, jettyXml);
-                System.setProperty(NanoSparqlServer.SystemProperties.BIGDATA_PROPERTY_FILE, propFileName);
-                LinkedHashMap<String, String> initParams = new LinkedHashMap<String, String>();
-                initParams.put(ConfigParams.PROPERTY_FILE, propFileName);
+                System.setProperty(NanoSparqlServer.SystemProperties.BIGDATA_PROPERTY_FILE, propFileAbsPath);
+                LinkedHashMap<String, String> initParams = new LinkedHashMap<>();
+                initParams.put(ConfigParams.PROPERTY_FILE, propFileAbsPath);
                 initParams.put(ConfigParams.NAMESPACE, NAMESPACE);
-                initParams.put(ConfigParams.QUERY_THREAD_POOL_SIZE, String.valueOf(ConfigParams.DEFAULT_QUERY_THREAD_POOL_SIZE));
+                initParams.put(ConfigParams.QUERY_THREAD_POOL_SIZE,
+                        String.valueOf(ConfigParams.DEFAULT_QUERY_THREAD_POOL_SIZE));
                 initParams.put(ConfigParams.FORCE_OVERFLOW, "false");
                 initParams.put(ConfigParams.READ_LOCK, "0");
 
@@ -74,9 +85,6 @@ public class BlazegraphServerTask implements Runnable {
                 serviceUri = server.getURI();
 
                 server.join();
-               
-
-                server.stop();
 
             } catch (Exception e) {
                 throw new JPSRuntimeException(e);

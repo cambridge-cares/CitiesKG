@@ -1,14 +1,5 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
-import com.bigdata.rdf.sail.webapp.ConfigParams;
-import com.bigdata.rdf.sail.webapp.NanoSparqlServer;
-
-import com.bigdata.rdf.sail.webapp.StandaloneNanoSparqlServer;
-import com.bigdata.util.config.NicUtil;
-import org.checkerframework.checker.units.qual.C;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.webapp.WebAppContext;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
 import uk.ac.cam.cares.jps.aws.WatcherCallback;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
@@ -263,8 +254,13 @@ public class CityImportAgent extends JPSAgent {
 
         boolean imported = false;
         BlazegraphServerTask serverTask = startBlazegraphInstance(file.getAbsolutePath());
-        URI endpoint = serverTask.getServiceUri();
         //@Todo: implementation
+        while (!serverTask.getStop()) {
+            URI endpointUri = serverTask.getServiceUri();
+            if (endpointUri != null) {
+                importToLocalBlazegraphInstance(file, endpointUri);
+            }
+        }
 
         return imported;
     }
@@ -285,11 +281,11 @@ public class CityImportAgent extends JPSAgent {
     /**
      * Imports CityGML file into local Blazegraph instance.
      *
-     * @param filename - file to import
-     * @param port - port of local SPARQL server instance
+     * @param file - file to import
+     * @param endpointUri - endpoint of local SPARQL server instance
      * @return
      */
-    private String importToLocalBlazegraphInstance(String filename, int port) {
+    private String importToLocalBlazegraphInstance(File file, URI endpointUri) {
         //@Todo: implementation
         String importLog = "";
         return importLog;
