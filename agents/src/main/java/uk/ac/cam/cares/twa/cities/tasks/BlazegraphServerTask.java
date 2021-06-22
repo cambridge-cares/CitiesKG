@@ -8,7 +8,9 @@ import org.eclipse.jetty.server.Server;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -52,40 +54,14 @@ public class BlazegraphServerTask implements Runnable {
         File  propFile = null;
         while (!stop) {
             try {
-                int port = 0;
-                File journalFile =  new File(journalPath);
-                String propFileName = journalFile.getName().split("\\.")[0] + PROPERTY_FILE;
-                String propFilePath = journalFile.getParent();
-                String propFileAbsPath = propFilePath + FS + propFileName;
-                Files.copy(Paths.get(getClass().getResource(PROPERTY_FILE_PATH + PROPERTY_FILE).toURI()),
-                        Paths.get(propFileAbsPath));
-                propFile = new File(propFileAbsPath);
-                String data = FileUtils.readFileToString(propFile, String.valueOf(Charset.defaultCharset()));
-                data = data.replace(DEF_JOURNAL_NAME, journalPath);
-                FileUtils.writeStringToFile(propFile, data);
-
-                String jettyXml = NanoSparqlServer.class.getResource(JETTY_CFG_PATH).toExternalForm();
-                String war = NanoSparqlServer.class.getResource(WAR_PATH).toExternalForm();
-
-                System.setProperty("jetty.home", war);
-                System.setProperty(NanoSparqlServer.SystemProperties.JETTY_XML, jettyXml);
-                System.setProperty(NanoSparqlServer.SystemProperties.BIGDATA_PROPERTY_FILE, propFileAbsPath);
-                LinkedHashMap<String, String> initParams = new LinkedHashMap<>();
-                initParams.put(ConfigParams.PROPERTY_FILE, propFileAbsPath);
-                initParams.put(ConfigParams.NAMESPACE, NAMESPACE);
-                initParams.put(ConfigParams.QUERY_THREAD_POOL_SIZE,
-                        String.valueOf(ConfigParams.DEFAULT_QUERY_THREAD_POOL_SIZE));
-                initParams.put(ConfigParams.FORCE_OVERFLOW, "false");
-                initParams.put(ConfigParams.READ_LOCK, "0");
-
-                server = StandaloneNanoSparqlServer.newInstance(port, jettyXml, null, initParams);
-
+                String propFileAbsPath = setupPaths();
+                propFile = setupFiles(propFileAbsPath);
+                String jettyXml = setupSystem(propFileAbsPath);
+                LinkedHashMap<String, String> initParams = setupServer(propFileAbsPath);
+                server = StandaloneNanoSparqlServer.newInstance(0, jettyXml, null, initParams);
                 StandaloneNanoSparqlServer.awaitServerStart(server);
-
                 serviceUri = server.getURI();
-
                 server.join();
-
             } catch (Exception e) {
                 throw new JPSRuntimeException(e);
             }
@@ -101,4 +77,48 @@ public class BlazegraphServerTask implements Runnable {
             propFile.delete();
         }
     }
+
+    private String setupPaths() {
+        File journalFile =  new File(journalPath);
+        String propFileName = journalFile.getName().split("\\.")[0] + PROPERTY_FILE;
+        String propFilePath = journalFile.getParent();
+        String propFileAbsPath = propFilePath + FS + propFileName;
+
+        return propFileAbsPath;
+    }
+
+    private File setupFiles(String propFileAbsPath) throws URISyntaxException, IOException {
+        Files.copy(Paths.get(getClass().getResource(PROPERTY_FILE_PATH + PROPERTY_FILE).toURI()),
+                Paths.get(propFileAbsPath));
+        File  propFile= new File(propFileAbsPath);
+        String data = FileUtils.readFileToString(propFile, String.valueOf(Charset.defaultCharset()));
+        data = data.replace(DEF_JOURNAL_NAME, journalPath);
+        FileUtils.writeStringToFile(propFile, data);
+
+        return propFile;
+    }
+
+    private String setupSystem(String propFileAbsPath) {
+        String jettyXml = NanoSparqlServer.class.getResource(JETTY_CFG_PATH).toExternalForm();
+        String war = NanoSparqlServer.class.getResource(WAR_PATH).toExternalForm();
+
+        System.setProperty("jetty.home", war);
+        System.setProperty(NanoSparqlServer.SystemProperties.JETTY_XML, jettyXml);
+        System.setProperty(NanoSparqlServer.SystemProperties.BIGDATA_PROPERTY_FILE, propFileAbsPath);
+
+        return jettyXml;
+    }
+
+    private LinkedHashMap setupServer(String propFileAbsPath) {
+        LinkedHashMap<String, String> initParams = new LinkedHashMap<>();
+        initParams.put(ConfigParams.PROPERTY_FILE, propFileAbsPath);
+        initParams.put(ConfigParams.NAMESPACE, NAMESPACE);
+        initParams.put(ConfigParams.QUERY_THREAD_POOL_SIZE,
+                String.valueOf(ConfigParams.DEFAULT_QUERY_THREAD_POOL_SIZE));
+        initParams.put(ConfigParams.FORCE_OVERFLOW, "false");
+        initParams.put(ConfigParams.READ_LOCK, "0");
+
+        return initParams;
+    }
+
 }
