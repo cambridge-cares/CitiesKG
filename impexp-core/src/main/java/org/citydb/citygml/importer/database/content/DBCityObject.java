@@ -342,8 +342,7 @@ public class DBCityObject implements DBImporter {
 			GeometryObject envelope = GeometryObject.createPolygon(coordinates, 3, dbSrid);
 			psCityObject.setObject(++index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(envelope, batchConn));
 		} 	else if (isBlazegraph) {
-			psCityObject.setObject(++index, NodeFactory.createBlankNode(),
-					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType());
+			psCityObject.setObject(++index, NodeFactory.createBlankNode());
 		} else {
 			psCityObject.setNull(++index, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
