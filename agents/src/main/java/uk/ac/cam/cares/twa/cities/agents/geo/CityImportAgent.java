@@ -8,6 +8,7 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.aws.CreateFileWatcher;
 import uk.ac.cam.cares.jps.base.util.CommandHelper;
 import uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask;
+import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
 
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
@@ -21,6 +22,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -56,10 +59,13 @@ public class CityImportAgent extends JPSAgent {
     public static final String KEY_DIRECTORY = "directory";
     public static final String KEY_SPLIT = "split";
     public final int CHUNK_SIZE = 100;
-    public final int NUM_THREADS = 4;
+    public final int NUM_SERVER_THREADS = 4;
+    public final int NUM_IMPORTER_THREADS = 4;
     private String requestUrl;
     private File importDir;
-    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_THREADS);
+    private final ThreadPoolExecutor serverExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_SERVER_THREADS);
+    private final ThreadPoolExecutor importerExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_IMPORTER_THREADS);
+
 
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
@@ -194,9 +200,18 @@ public class CityImportAgent extends JPSAgent {
             for (File file : dirContent) {
                 ArrayList<File> chunks = splitFile(file);
                 for (File chunk : chunks) {
-                    //@Todo: implementation
                     importChunk(chunk);
                 }
+            }
+        }
+
+        BlockingQueue<Runnable> queue = importerExecutor.getQueue();
+
+        while (!queue.isEmpty()) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                new JPSRuntimeException(e);
             }
         }
 
@@ -223,7 +238,7 @@ public class CityImportAgent extends JPSAgent {
             ArrayList<String> args = new ArrayList<>();
             args.add("python");
             //@TODO: change path
-            args.add("/CitiesKG-git/utils/citygml_splitter.py");
+            args.add("/Users/arek/git/CARES/CitiesKG-git/utils/citygml_splitter.py");
             args.add(fileDst);
             args.add(String.valueOf(CHUNK_SIZE));
             Files.move(Paths.get(fileSrc), Paths.get(fileDst));
@@ -250,19 +265,10 @@ public class CityImportAgent extends JPSAgent {
      * @param file- chunk to import
      * @return - information about local import success
      */
-    private boolean importChunk(File file) {
-
-        boolean imported = false;
+    private void importChunk(File file) {
         BlazegraphServerTask serverTask = startBlazegraphInstance(file.getAbsolutePath());
-        //@Todo: implementation
-        while (!serverTask.getStop()) {
-            URI endpointUri = serverTask.getServiceUri();
-            if (endpointUri != null) {
-                importToLocalBlazegraphInstance(file, endpointUri);
-            }
-        }
+        importToLocalBlazegraphInstance(serverTask, file);
 
-        return imported;
     }
 
     /**
@@ -271,9 +277,8 @@ public class CityImportAgent extends JPSAgent {
      * @return - URL of the SPARQL update endpoint
      */
     private BlazegraphServerTask startBlazegraphInstance(String filepath) {
-
         BlazegraphServerTask task = new BlazegraphServerTask(filepath.replace(".gml", ".jnl"));
-        executor.execute(task);
+        serverExecutor.execute(task);
 
         return task;
     }
@@ -281,14 +286,15 @@ public class CityImportAgent extends JPSAgent {
     /**
      * Imports CityGML file into local Blazegraph instance.
      *
+     * @param serverTask - an instance BlazegraphServerTask
      * @param file - file to import
-     * @param endpointUri - endpoint of local SPARQL server instance
      * @return
      */
-    private String importToLocalBlazegraphInstance(File file, URI endpointUri) {
-        //@Todo: implementation
-        String importLog = "";
-        return importLog;
+    private ImporterTask importToLocalBlazegraphInstance(BlazegraphServerTask serverTask, File file) {
+        ImporterTask task = new ImporterTask(serverTask, file);
+        importerExecutor.execute(task);
+
+        return task;
     }
 
     /**

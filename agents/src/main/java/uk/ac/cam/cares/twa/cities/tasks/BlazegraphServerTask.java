@@ -57,8 +57,8 @@ public class BlazegraphServerTask implements Runnable {
                 String propFileAbsPath = setupPaths();
                 propFile = setupFiles(propFileAbsPath);
                 String jettyXml = setupSystem(propFileAbsPath);
-                LinkedHashMap<String, String> initParams = setupServer(propFileAbsPath);
-                server = StandaloneNanoSparqlServer.newInstance(0, jettyXml, null, initParams);
+                server = setupServer(propFileAbsPath, jettyXml);
+
                 StandaloneNanoSparqlServer.awaitServerStart(server);
                 serviceUri = server.getURI();
                 server.join();
@@ -109,7 +109,7 @@ public class BlazegraphServerTask implements Runnable {
         return jettyXml;
     }
 
-    private LinkedHashMap setupServer(String propFileAbsPath) {
+    private Server setupServer(String propFileAbsPath, String jettyXml) throws Exception {
         LinkedHashMap<String, String> initParams = new LinkedHashMap<>();
         initParams.put(ConfigParams.PROPERTY_FILE, propFileAbsPath);
         initParams.put(ConfigParams.NAMESPACE, NAMESPACE);
@@ -117,8 +117,9 @@ public class BlazegraphServerTask implements Runnable {
                 String.valueOf(ConfigParams.DEFAULT_QUERY_THREAD_POOL_SIZE));
         initParams.put(ConfigParams.FORCE_OVERFLOW, "false");
         initParams.put(ConfigParams.READ_LOCK, "0");
+        Server server = StandaloneNanoSparqlServer.newInstance(0, jettyXml, null, initParams);
 
-        return initParams;
+        return server;
     }
 
 }
