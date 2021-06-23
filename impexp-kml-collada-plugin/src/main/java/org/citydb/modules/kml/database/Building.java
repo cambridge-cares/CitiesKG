@@ -316,7 +316,6 @@ public class Building extends KmlGenericObject{
 							psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
 							if (isBlazegraph) {
-								// need to
 								URL url = null;
 								try {
 									url = new URL((String)buildingPartId);

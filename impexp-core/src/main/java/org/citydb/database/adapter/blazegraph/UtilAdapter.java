@@ -2,6 +2,8 @@ package org.citydb.database.adapter.blazegraph;
 
 import org.citydb.config.geometry.BoundingBox;
 import org.citydb.config.geometry.GeometryObject;
+import org.citydb.config.geometry.GeometryType;
+import org.citydb.config.geometry.MultiPolygon;
 import org.citydb.config.project.database.DatabaseSrs;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.AbstractUtilAdapter;
@@ -73,16 +75,24 @@ public class UtilAdapter extends AbstractUtilAdapter {
     protected GeometryObject transform(GeometryObject geometry, DatabaseSrs targetSrs, Connection connection) throws SQLException {
         GeometryObject result = null;
 
-        Object unconverted = databaseAdapter.getGeometryConverter().getDatabaseObject(geometry, connection);
-        GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
-        List<Coordinate> coords = new ArrayList<>();
-        double[] coordlist = geometry.getCoordinates(0);
-        for (int i  = 0; i < coordlist.length; i = i+2){
-            Coordinate cor = new Coordinate(coordlist[i], coordlist[i+1]);
-            coords.add(cor);
-        }
+        int numPolygon = geometry.getNumElements();
+        double[][] coordinates = new double[numPolygon][];
         GeometryFactory fac = new GeometryFactory();
-        Geometry geom = fac.createPolygon(coords.toArray(new Coordinate[0]));
+        GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
+
+        List<Geometry> polygonlist = new ArrayList<>();
+
+        for (int i = 0; i < numPolygon; ++i){
+            coordinates[i] = geometry.getCoordinates(i);
+        }
+
+        for (int j = 0; j < numPolygon; ++j) {
+            List<Coordinate> polygoncoord = new ArrayList<>();
+            for (int k = 0; k < coordinates[j].length; k = k + 2){
+                polygoncoord.add(new Coordinate(coordinates[j][k], coordinates[j][k+1]));
+            }
+            polygonlist.add(fac.createPolygon(polygoncoord.toArray(polygoncoord.toArray(new Coordinate[0]))));
+        }
 
         int sourceSrsId;
         if (geometry.getSrid() == 0){
@@ -91,12 +101,17 @@ public class UtilAdapter extends AbstractUtilAdapter {
             sourceSrsId = geometry.getSrid();
         }
 
-        Geometry converted = geospatial.Transform(geom,28992, targetSrs.getSrid());
+        List<Geometry> convertedGeometry = new ArrayList<>();
+        for (int i = 0; i < numPolygon; ++i){
+            Geometry converted = geospatial.Transform(polygonlist.get(i),28992, targetSrs.getSrid());
+            Coordinate[] reverseCoord = geospatial.getReversedCoordinates(converted);
+            Geometry reverseConverted = fac.createPolygon(reverseCoord);
+            convertedGeometry.add(reverseConverted);
+        }
 
         // need to reverse the coordinates to match POSTGIS results
-        Coordinate[] reverseCoord = geospatial.getReversedCoordinates(converted);
-        Geometry reverseConverted = fac.createPolygon(reverseCoord);
-        result = databaseAdapter.getGeometryConverter().getGeometry(reverseConverted);
+        Geometry union = geospatial.UnaryUnion(convertedGeometry);
+        result = databaseAdapter.getGeometryConverter().getGeometry(union);
         return result;
     }
 
