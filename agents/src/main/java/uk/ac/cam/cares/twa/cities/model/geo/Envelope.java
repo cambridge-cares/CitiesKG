@@ -22,16 +22,17 @@ public class Envelope {
 
     public static void main (String[] args){
       Envelope envelope = new Envelope("EPSG:4326");
-      String envelopeString = "1.29227#103.83094#1#1.29262#103.83094#1#1.29262#103.83148#1#1.29227#103.83148#1#1.29227#103.83094#1";
+      String envelopeString = "1#1#1#1#2#1#2#2#1#2#1#1#1#1#1";
       envelope.extractEnvelopePoints(envelopeString);
       System.out.println(envelope.boundary);
       System.out.println(envelope.boundary.getDimension());
       System.out.println(envelope.getCentroid().getCoordinate());
+      System.out.println(envelope.getCentroid());
    }
 
    /** It transforms envelopeString into 5 points representing envelope boundary attribute.
     */
-   public void extractEnvelopePoints(String envelopeString){
+   public void extractEnvelopePoints(String envelopeString) {
 
       String[] pointsAsString = (envelopeString.split("#"));
 
@@ -43,18 +44,16 @@ public class Envelope {
        }
       numberOfPoints = pointsAsString.length/numberOfDimensions;
       double[] points = new double[pointsAsString.length];
-
       for (int index = 0; index < pointsAsString.length; index++){
           points[index]= Double.parseDouble(pointsAsString[index]);
       }
-
       double centroidZ = 0;
       if (numberOfDimensions == 3){
           boundary = factory.polygonZ(points);
-          for (int z = 2; z < points.length; z +=3 ){
+          for (int z = 2; z < points.length-3; z +=3 ){
               centroidZ += points[z];
           }
-          centroidZ = centroidZ/numberOfPoints;
+          centroidZ = centroidZ/(numberOfPoints-1);
       }
       else{
           boundary = factory.polygon(points);
