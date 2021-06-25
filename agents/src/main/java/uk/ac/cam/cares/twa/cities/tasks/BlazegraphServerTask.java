@@ -21,7 +21,7 @@ public class BlazegraphServerTask implements Runnable {
     private final String PROPERTY_FILE_PATH = "../../../../../../../";
     private final String JETTY_CFG_PATH = "../../../../../jetty.xml";
     private final String WAR_PATH = "../../../../../war";
-    private final String NAMESPACE = "tmpkb";
+    public static final String NAMESPACE = "tmpkb";
     private final String DEF_JOURNAL_NAME = "citiesKG.jnl";
     private final String FS = System.getProperty("file.separator");
     private String journalPath;
