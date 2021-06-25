@@ -300,8 +300,10 @@ public class ImpExp {
 		ObjectRegistry registry = ObjectRegistry.getInstance();
 
 		// create and register application-wide event dispatcher
-		EventDispatcher eventDispatcher = new EventDispatcher();		
-		registry.setEventDispatcher(eventDispatcher);
+		EventDispatcher eventDispatcher = new EventDispatcher();
+		if (registry.getEventDispatcher() == null) {
+			registry.setEventDispatcher(eventDispatcher);
+		}
 
 		// create and register database controller
 		DatabaseController databaseController = new DatabaseController(config);
