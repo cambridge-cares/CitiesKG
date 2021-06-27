@@ -15,7 +15,6 @@ public class Envelope {
     private GeometryBuilder factory = new GeometryBuilder();
     private String crs;
 
-    //Constructor so that user is forced by creating instance to add a CRS.
     public Envelope(String crs) {
         this.crs = crs;
     }
@@ -33,16 +32,29 @@ public class Envelope {
    /** It transforms envelopeString into 5 points representing envelope boundary attribute.
     */
    public void extractEnvelopePoints(String envelopeString) {
+       if (envelopeString.equals("")) {
+           throw new IllegalArgumentException("empty String");
+       }
+       else if (!envelopeString.contains("#")){
+           throw new IllegalArgumentException("Does not contain #");
+       }
 
       String[] pointsAsString = (envelopeString.split("#"));
 
       if (pointsAsString.length % 3 == 0){
            numberOfDimensions = 3;
       }
-      else {
+      else if (pointsAsString.length % 2 == 0){
            numberOfDimensions = 2;
        }
+      else {
+          throw new IllegalArgumentException("Number of points is not divisible by 3 or 2");
+       }
+
       numberOfPoints = pointsAsString.length/numberOfDimensions;
+       if (numberOfPoints < 4) {
+          throw new IllegalArgumentException("Polygon has less than 4 points");
+       }
       double[] points = new double[pointsAsString.length];
       for (int index = 0; index < pointsAsString.length; index++){
           points[index]= Double.parseDouble(pointsAsString[index]);
@@ -70,6 +82,7 @@ public class Envelope {
   public Point getCentroid() {
       return centroid;
   }
+
     /** Method gets envelope CRS.
      */
   public String getCRS(){
