@@ -61,8 +61,6 @@ public class DistanceAgent extends JPSAgent {
         String crs1 = envelope1.getCRS();
         String crs2 = envelope2.getCRS();
 
-        //TODO: target CRS should be a variable so that it could be changed depending on the use case location.
-
         // distance3D calculation works only with cartesian CRS.
         centroid1 = setUniformCRS(centroid1, crs1, "EPSG:24500");
         centroid2 = setUniformCRS(centroid2, crs2, "EPSG:24500");
@@ -70,6 +68,7 @@ public class DistanceAgent extends JPSAgent {
     }
 
     /** The setUniformCRS method sets the CRS to the same coordinate system.
+     * Conversion that geotools uses is not the same as on the official epsg.io website but the same as python package pyproj 3.1.0
      */
     private Point setUniformCRS(Point point, String sourceCRSstring, String targetCRSstring) {
         try {
