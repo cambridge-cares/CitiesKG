@@ -1,5 +1,9 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
+import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.Query;
+import org.apache.jena.sparql.core.Var;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Point;
@@ -32,8 +36,9 @@ public class DistanceAgent extends JPSAgent {
         return true;
     }
 
-    /**
-     *  The method retrieves values from KG for distances between objects. If it does not exists - it computes it.
+
+
+    /** The method retrieves values from KG for distances between objects. If it does not exists - it computes it.
      */
     private float[] getDistance(URI[] objects){
         float[] distances = new float[objects.length * objects.length];
@@ -41,8 +46,7 @@ public class DistanceAgent extends JPSAgent {
 
     }
 
-    /**
-     *  The getEnvelope method retrieves values from the KG for objects envelopes as strings.
+    /** The getEnvelope method retrieves values from the KG for objects envelopes as strings.
      */
     private String[] getEnvelope(URI[] objects){
         String[] envelopeString = new String[objects.length];
@@ -68,7 +72,6 @@ public class DistanceAgent extends JPSAgent {
     }
 
     /** The setUniformCRS method sets the CRS to the same coordinate system.
-     * Conversion that geotools uses is not the same as on the official epsg.io website but the same as python package pyproj 3.1.0
      */
     private Point setUniformCRS(Point point, String sourceCRSstring, String targetCRSstring) {
         try {
