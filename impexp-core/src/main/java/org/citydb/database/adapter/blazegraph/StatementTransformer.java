@@ -11,7 +11,9 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.E_IsBlank;
+import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.lang.arq.ARQParser;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.citydb.sqlbuilder.SQLStatement;
 import org.citydb.sqlbuilder.expression.PlaceHolder;
@@ -32,6 +34,9 @@ import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetFactory;
 import javax.sql.rowset.RowSetProvider;
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -46,6 +51,34 @@ public class StatementTransformer {
 
     public String sqlStatement;
     public String sparqlStatement;
+
+    // create the query based on number of predicates and * for all
+    public static String getTopFeatureId(SQLStatement sqlStatement){
+        Select select = (Select) sqlStatement;
+        List<PredicateToken> predicateTokens = select.getSelection();
+        List<PlaceHolder<?>> placeHolders = new ArrayList<>();
+        predicateTokens.get(0).getInvolvedPlaceHolders(placeHolders);
+        if (placeHolders.get(0).getValue() == "*"){
+            // input is * => retrieve all gmlId from database
+        }else{
+
+        }
+        //queryObject_transformer
+        return null;
+    }
+
+    // try test with multiple gmlId
+    public static String getObjectId (){
+        String sparql = "PREFIX  ocgml: <http://locahost/ontocitygml/>\n" +
+                "SELECT  ?id ?objectclass_id ?gmlid\n" +
+                "FROM <http://localhost/berlin/cityobject/>\n" +
+                "WHERE  { ?id ocgml:objectClassId  ?objectclass_id .    \n" +
+                "        ?id ocgml:gmlId ?gmlid    \n" +
+                "        FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) ).    \n" +
+                "        FILTER ( ?gmlid IN ( ? , ? ))  }";
+        return sparql;
+    }
+
 
     // getBuildingPartsFromBuilding() in Building.java
     public static String getSPARQLStatement_BuildingParts (String sqlQuery) {
@@ -66,7 +99,7 @@ public class StatementTransformer {
     }
 
 
-    // Analyze SQL statement and transform it to a SPARQL query
+    // Analyze SQL statement and transform it to a SPARQL query (Normal usuage: single gmlid or multiple gmlid)
     public static Query queryObject_transformer (SQLStatement sqlStatement) throws ParseException {
         Select select = (Select) sqlStatement;
         List<ProjectionToken> projectionTokens = select.getProjection();
@@ -84,14 +117,15 @@ public class StatementTransformer {
         sb.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "gmlId", "?gmlid");
         List<PlaceHolder<?>> placeHolders = sqlStatement.getInvolvedPlaceHolders();
 
-        applyPredicate(sb, predicateTokens);
+        applyPredicate(sb, predicateTokens, placeHolders);
 
 
         Query q = sb.build();
         return q;
     }
 
-    public static void applyPredicate (SelectBuilder sb, List<PredicateToken> predicateTokens) throws ParseException {
+    public static void applyPredicate (SelectBuilder sb, List<PredicateToken> predicateTokens, List<PlaceHolder<?>> placeHolders) throws ParseException {
+        ExprFactory exprF = sb.getExprFactory();
 
         for (int i = 0; i < predicateTokens.size(); ++i) {
             PredicateToken predicateToken = predicateTokens.get(i);
@@ -100,17 +134,45 @@ public class StatementTransformer {
             if (predicateToken instanceof InOperator) {
                 conditionStr.append("?" + ((Column) ((InOperator) predicateToken).getOperand()).getName());
                 conditionStr.append(" IN ");
-                conditionStr.append("(" + ((InOperator) predicateToken).getSubQueryExpression() + ")");
+                conditionStr.append("( ");
+                if(((InOperator) predicateToken).getSubQueryExpression().toString().contains("?")){
+                    int count = 0;
+                    String searchStr = ((InOperator) predicateToken).getSubQueryExpression().toString();
+                    for (int j = 0; j < searchStr.length(); j++) {
+                        if (searchStr.charAt(j) == '?') {
+                            count++;
+                        }
+                    }
+                    if (placeHolders.size() == count) {
+                        for (int k = 0; k < count; ++k) {
+                            conditionStr.append("\"");
+                            conditionStr.append(placeHolders.get(k).getValue().toString());
+                            conditionStr.append("\"");
+                            if (k < count-1){
+                                conditionStr.append(",");
+                            }
+                        }
+                    }else {
+                        System.out.println("Number of ? does not match number of placeholder");
+                    }
+
+                }else {
+                    conditionStr.append(((InOperator) predicateToken).getSubQueryExpression());
+                }
+                conditionStr.append(" )");
                 sb.addFilter(conditionStr.toString());
+                // if there is only 1 gmlid or * given as input
             } else if (predicateToken instanceof BinaryComparisonOperator) {
-
-                conditionStr.append("?" + ((Column) ((BinaryComparisonOperator) predicateTokens.get(i)).getLeftOperand()).getName());
-                conditionStr.append(" " + ((BinaryComparisonOperator) predicateTokens.get(i)).getSQLName() + " ");
-                List<PlaceHolder<?>> placeHolders = new ArrayList<>();
-                predicateTokens.get(i).getInvolvedPlaceHolders(placeHolders);
-                conditionStr.append("\"" + (String) placeHolders.get(0).getValue() + "\"");
-                sb.addFilter(conditionStr.toString());
-
+                List<PlaceHolder<?>> placeHolders1 = new ArrayList<>();
+                predicateTokens.get(i).getInvolvedPlaceHolders(placeHolders1);
+                if (placeHolders1.get(0).getValue().equals("*")) {
+                    continue;
+                }else{
+                    conditionStr.append("?" + ((Column) ((BinaryComparisonOperator) predicateTokens.get(i)).getLeftOperand()).getName());
+                    conditionStr.append(" " + ((BinaryComparisonOperator) predicateTokens.get(i)).getSQLName() + " ");
+                    conditionStr.append("\"" + (String) placeHolders1.get(0).getValue() + "\"");
+                    sb.addFilter(conditionStr.toString());
+                }
             } else {
 
             }

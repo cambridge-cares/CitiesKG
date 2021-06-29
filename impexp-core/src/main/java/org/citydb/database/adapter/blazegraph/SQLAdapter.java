@@ -6,13 +6,17 @@ import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.adapter.*;
 import org.citydb.query.filter.selection.operator.spatial.SpatialOperatorName;
 import org.citydb.sqlbuilder.SQLStatement;
+import org.citydb.sqlbuilder.expression.PlaceHolder;
 import org.citydb.sqlbuilder.schema.Column;
 import org.citydb.sqlbuilder.select.PredicateToken;
 import org.citydb.sqlbuilder.select.projection.Function;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 
 public class SQLAdapter extends AbstractSQLAdapter {
 
@@ -166,8 +170,8 @@ public class SQLAdapter extends AbstractSQLAdapter {
         //PreparedStatement preparedStatement = connection.prepareStatement(statement);  // same as importer
         //fillPlaceHolders(statement, preparedStatement, connection);
 
-        // @TODO: implement SQLStatement into SPARQLStatement translator
 
+        // @TODO: implement SQLStatement (template) into SPARQLStatement (with injected value) translator
         PreparedStatement preparedStatement = transformStatement(statement, connection);
 
         //preparedStatement.setString(1, "ID_0518100000225439");
@@ -184,6 +188,15 @@ public class SQLAdapter extends AbstractSQLAdapter {
         try {
             SPARQLStatement = StatementTransformer.queryObject_transformer(statement);
             preparedStatement = connection.prepareStatement(SPARQLStatement.toString());
+            //preparedStatement = connection.prepareStatement(StatementTransformer.getObjectId());
+            //List<PlaceHolder<?>> placeHolders = statement.getInvolvedPlaceHolders();
+
+            // This will not effect the multiple gmlid case
+            /*
+            for (int i = 0; i < placeHolders.size(); ++i ){
+                preparedStatement.setString(i+1, placeHolders.get(i).getValue().toString());
+            }*/
+
         } catch (ParseException e) {
             e.printStackTrace();
         }
