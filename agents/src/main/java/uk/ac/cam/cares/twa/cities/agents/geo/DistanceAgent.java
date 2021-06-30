@@ -54,7 +54,7 @@ public class DistanceAgent extends JPSAgent {
 
     }
 
-    /** The computeDistance method computes distance between two centroids.
+    /** The computeDistance method computes distance between two centroids.Distance3D calculation works only with cartesian CRS
      */
     private double computeDistance(Envelope envelope1, Envelope envelope2){
         //if JAVA library is not available:
@@ -64,8 +64,6 @@ public class DistanceAgent extends JPSAgent {
         Point centroid2 = envelope2.getCentroid();
         String crs1 = envelope1.getCRS();
         String crs2 = envelope2.getCRS();
-
-        // distance3D calculation works only with cartesian CRS.
         centroid1 = setUniformCRS(centroid1, crs1, "EPSG:24500");
         centroid2 = setUniformCRS(centroid2, crs2, "EPSG:24500");
         return Distance3DOp.distance(centroid1, centroid2);

@@ -1,14 +1,19 @@
 package uk.ac.cam.cares.twa.cities.agents.geo.test;
 
 import junit.framework.TestCase;
+import org.geotools.geometry.jts.GeometryBuilder;
+import org.json.JSONArray;
 import org.junit.Test;
 import org.locationtech.jts.geom.Point;
 import uk.ac.cam.cares.twa.cities.agents.geo.DistanceAgent;
 import uk.ac.cam.cares.twa.cities.model.geo.Envelope;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import org.locationtech.jts.geom.Point;
 
 public class DistanceAgentTest extends TestCase {
 
@@ -44,7 +49,6 @@ public class DistanceAgentTest extends TestCase {
         assertEquals(1.4142135623730951, distanceAgent.computeDistance(envelope1, envelope2));
 
         // test distance calculation with CRS conversion.
-
         String envelopeString3 = "2.85#-1.85#0#2.85#0.15#0#4.85#0.15#0#4.85#-1.85#0#2.85#-1.85#0";
         Envelope envelope3 =  new Envelope("EPSG:3414");
         envelope3.extractEnvelopePoints(envelopeString3);
@@ -53,6 +57,27 @@ public class DistanceAgentTest extends TestCase {
     }
 
     @Test
-    public void testSetDistance(){
+    public void testSetUniformCRS(){
+        DistanceAgent distanceAgent = new DistanceAgent();
+        GeometryBuilder builder = new GeometryBuilder();
+        Point point = builder.pointZ(1,1,0);
+
+        try{
+            assertNotNull(distanceAgent.getClass().getDeclaredMethod("setUniformCRS", Point.class, String.class, String.class));
+            Method setUniformCRS = distanceAgent.getClass().getDeclaredMethod("setUniformCRS", Point.class, String.class, String.class);
+            setUniformCRS.setAccessible(true);
+
+            Point pointTransformed = (Point) setUniformCRS.invoke(distanceAgent,point, "EPSG:3414", "EPSG:24500");
+
+            assertEquals(3.3531995128068957, pointTransformed.getCoordinate().x);
+            assertEquals(-0.34659662783087697, pointTransformed.getCoordinate().y);
+            assertEquals(0.0, pointTransformed.getCoordinate().z);
+        }
+        catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
     }
+
+    @Test
+    public void testSetDistance(){}
 }
