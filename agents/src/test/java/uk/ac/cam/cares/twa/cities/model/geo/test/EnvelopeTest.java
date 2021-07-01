@@ -1,28 +1,53 @@
 package uk.ac.cam.cares.twa.cities.model.geo.test;
 
 import junit.framework.TestCase;
+import org.apache.jena.query.Query;
 import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.jts.geom.Point;
 import uk.ac.cam.cares.twa.cities.model.geo.Envelope;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public class EnvelopeTest extends TestCase {
 
     @Test
-    public void testGetCentroid(){
+    public void testGetEnvelopeQuery(){
+
+        String expectedQuery = "PREFIX  ocgml: <http://locahost/ontocitygml/>\n\nSELECT  ?Envelope\nWHERE\n  { GRAPH <http://localhost/berlin/cityobject/>\n      { <http://localhost/berlin/cityobject/UUID_39742eff-29ec-4c04-a732-22ee2a7986c4/>\n                  ocgml:EnvelopeType  ?Envelope}}\n";
+
         Envelope envelope = new Envelope("EPSG:4326");
-        assertNull(envelope.getCentroid());
+        String uriString = "http://localhost/berlin/cityobject/UUID_39742eff-29ec-4c04-a732-22ee2a7986c4/";
 
-        String envelopeString = "1.29227#103.83094#1#1.29262#103.83094#1#1.29262#103.83148#1#1.29227#103.83148#1#1.29227#103.83094#1";
-        envelope.extractEnvelopePoints(envelopeString);
-        Point centroid = envelope.getCentroid();
-        assertFalse(Double.isNaN(centroid.getCoordinate().getZ()));
+        try{
+            assertNotNull(envelope.getClass().getDeclaredMethod("getEnvelopeQuery", String.class));
+            Method getEnvelopeQuery = envelope.getClass().getDeclaredMethod("getEnvelopeQuery", String.class);
+            getEnvelopeQuery.setAccessible(true);
 
-        String envelopeString2 = "1.29227#103.83094#1.29262#103.83094#1.29262#103.83148#1.29227#103.83148#1.29227#103.83094";
-        envelope.extractEnvelopePoints(envelopeString2);
-        Point centroid2 = envelope.getCentroid();
-        assertFalse(Double.isNaN(centroid2.getCoordinate().getZ()));
+            Query q = (Query) getEnvelopeQuery.invoke(envelope, uriString);
+            assertEquals(expectedQuery, q.toString());
+
+        } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
     }
+
+
+    @Test
+    public void testGetEnvelopeString(){
+        Envelope envelope =  new Envelope("EPSG:4236");
+        String uriString = "http://www.theworldavatar.com/citieskg/singapore/cityobject/UUID_00790be5-11a4-4da8-9be8-7c0c9dc7cfc2/";
+        String expectedEnvelopeString = "29021.61944#28581.3432#0.0#29108.64926#28581.3432#0.0#29108.64926#28762.99547#68.5#29021.61944#28762.99547#68.5#29021.61944#28581.3432#0.0";
+
+        assertEquals(expectedEnvelopeString, envelope.getEnvelopeString(uriString));
+    }
+
+
+    @Test
+    public void testGetKGClientForEnvelopeQuery(){
+
+    }
+
 
     @Test
     public void testExtractEnvelopePoints(){
@@ -82,6 +107,24 @@ public class EnvelopeTest extends TestCase {
         assertEquals(6.0/4.0, envelope.getCentroid().getCoordinate().getY());
         assertEquals(0.0, envelope.getCentroid().getCoordinate().getZ());
     }
+
+
+    @Test
+    public void testGetCentroid(){
+        Envelope envelope = new Envelope("EPSG:4326");
+        assertNull(envelope.getCentroid());
+
+        String envelopeString = "1.29227#103.83094#1#1.29262#103.83094#1#1.29262#103.83148#1#1.29227#103.83148#1#1.29227#103.83094#1";
+        envelope.extractEnvelopePoints(envelopeString);
+        Point centroid = envelope.getCentroid();
+        assertFalse(Double.isNaN(centroid.getCoordinate().getZ()));
+
+        String envelopeString2 = "1.29227#103.83094#1.29262#103.83094#1.29262#103.83148#1.29227#103.83148#1.29227#103.83094";
+        envelope.extractEnvelopePoints(envelopeString2);
+        Point centroid2 = envelope.getCentroid();
+        assertFalse(Double.isNaN(centroid2.getCoordinate().getZ()));
+    }
+
 
     @Test
     public void testGetCRS(){

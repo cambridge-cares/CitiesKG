@@ -1,6 +1,13 @@
 package uk.ac.cam.cares.twa.cities.model.geo;
+import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.Query;
+import org.apache.jena.sparql.core.Var;
 import org.geotools.geometry.jts.GeometryBuilder;
+import org.json.JSONArray;
 import org.locationtech.jts.geom.*;
+import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
+import uk.ac.cam.cares.jps.base.query.KGRouter;
 
 /**
  * Unique URIs are used as inputs for Envelope class.
@@ -14,23 +21,72 @@ public class Envelope {
     private Point centroid;
     private GeometryBuilder factory = new GeometryBuilder();
     private String crs;
-
     public Envelope(String crs) {
         this.crs = crs;
     }
 
-    public static void main (String[] args){
-      Envelope envelope = new Envelope("EPSG:4326");
-      String envelopeString = "1#1#1#1#2#1#2#2#1#2#1#1#1#1#1";
-      envelope.extractEnvelopePoints(envelopeString);
-      System.out.println(envelope.boundary);
-      System.out.println(envelope.boundary.getDimension());
-      System.out.println(envelope.getCentroid().getCoordinate());
-      System.out.println(envelope.getCentroid());
-   }
+    private static final String HOST =  "www.theworldavatar.com";
+    private static final String PORT = "";
+    private static final String NAMESPACE = "/citieskg/singapore/";
+    private static final String ONTOLOGY_URI = "http://theworldavatar.com/ontology/ontocitygml/citieskg/";
+    private static final String ENVELOPE_GRAPH_URI = "http://www.theworldavatar.com/citieskg/singapore/cityobject/";
+    private static final String ROUTE = "http://kb/citieskg-singapore";
 
-   /** It transforms envelopeString into 5 points representing envelope boundary attribute.
+
+    //private static final String HOST =  "localhost";
+    //private static final String PORT = "";
+    //private static final String NAMESPACE = "/berlin/";
+    //private static String ONTOLOGY_URI = "http://locahost/ontocitygml/";
+    //private static String ENVELOPE_GRAPH_URI = "http://localhost/berlin/cityobject/";
+
+    public static void main(String[] args){
+        Envelope envelope = new Envelope("EPSG:4326");
+        envelope.getEnvelopeString("http://localhost/berlin/cityobject/UUID_39742eff-29ec-4c04-a732-22ee2a7986c4/");
+    }
+
+   /** build a SPARQL query for a specific URI.
     */
+    private Query getEnvelopeQuery(String uriString) {
+
+        SelectBuilder sb = new SelectBuilder()
+                .addPrefix( "ocgml",  ONTOLOGY_URI )
+                .addVar( "?Envelope" )
+                .addGraph(NodeFactory.createURI(ENVELOPE_GRAPH_URI), "?s", "ocgml:EnvelopeType", "?Envelope");
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
+        Query q = sb.build();
+
+        return q;
+    }
+
+    /** use SPARQL query to retrieve the envelope string from the KG.
+     */
+    public String getEnvelopeString(String uriString) {
+        String envelopeString = new String();
+        Query q = getEnvelopeQuery(uriString);
+
+        //get KGClient via KGrouter and execute query to get envelope string.
+        KnowledgeBaseClientInterface kgClient = getKGClientForEnvelopeQuery();
+        String queryResultString = kgClient.execute(q.toString());
+
+        JSONArray queryResult = new JSONArray(queryResultString);
+        envelopeString = queryResult.getJSONObject(0).get("Envelope").toString();
+        return envelopeString;
+    }
+
+
+    /** use SPARQL query to retrieve the envelope string from the KG.
+     */
+    private KnowledgeBaseClientInterface getKGClientForEnvelopeQuery() {
+        String targetResourceIRIOrPath = ROUTE;
+        KnowledgeBaseClientInterface kgClient = KGRouter.getKnowledgeBaseClient(targetResourceIRIOrPath,
+                true,
+                false);
+
+        return kgClient;
+    }
+
+    /** Transforms envelopeString into 5 points representing envelope boundary.
+     */
    public void extractEnvelopePoints(String envelopeString) {
        if (envelopeString.equals("")) {
            throw new IllegalArgumentException("empty String");
@@ -40,7 +96,6 @@ public class Envelope {
        }
 
       String[] pointsAsString = (envelopeString.split("#"));
-
       if (pointsAsString.length % 3 == 0){
            numberOfDimensions = 3;
       }
