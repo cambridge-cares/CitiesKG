@@ -2,7 +2,6 @@ package uk.ac.cam.cares.twa.cities.tasks;
 
 import com.bigdata.rdf.sail.webapp.ConfigParams;
 import com.bigdata.rdf.sail.webapp.NanoSparqlServer;
-import com.bigdata.rdf.sail.webapp.StandaloneNanoSparqlServer;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Server;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -44,8 +43,8 @@ public class BlazegraphServerTask implements Runnable {
         return stop;
     }
 
-    public void stop() {
-        stop = true;
+    public void stop(boolean value) {
+        stop = value;
     }
 
     @Override
@@ -53,28 +52,31 @@ public class BlazegraphServerTask implements Runnable {
         Server server = null;
         File  propFile = null;
         while (!stop) {
-            try {
-                String propFileAbsPath = setupPaths();
-                propFile = setupFiles(propFileAbsPath);
-                String jettyXml = setupSystem(propFileAbsPath);
-                server = setupServer(propFileAbsPath, jettyXml);
+            if (serviceUri == null) {
+                try {
+                    String propFileAbsPath = setupPaths();
+                    propFile = setupFiles(propFileAbsPath);
+                    String jettyXml = setupSystem(propFileAbsPath);
+                    server = setupServer(propFileAbsPath, jettyXml);
 
-                StandaloneNanoSparqlServer.awaitServerStart(server);
-                serviceUri = server.getURI();
-                server.join();
-            } catch (Exception e) {
-                throw new JPSRuntimeException(e);
+                    NanoSparqlServer.awaitServerStart(server);
+                    serviceUri = server.getURI();
+                } catch (Exception e) {
+                    throw new JPSRuntimeException(e);
+                }
             }
         }
         if (server != null) {
-            try {
+           try {
                 server.stop();
+                server.destroy();
             } catch (Exception e) {
                 throw new JPSRuntimeException(e);
-            }
-        }
-        if (propFile != null && propFile.isFile()) {
-            propFile.delete();
+            } finally {
+                if (propFile != null && propFile.isFile()) {
+                    propFile.delete();
+                }
+             }
         }
     }
 
@@ -117,7 +119,7 @@ public class BlazegraphServerTask implements Runnable {
                 String.valueOf(ConfigParams.DEFAULT_QUERY_THREAD_POOL_SIZE));
         initParams.put(ConfigParams.FORCE_OVERFLOW, "false");
         initParams.put(ConfigParams.READ_LOCK, "0");
-        Server server = StandaloneNanoSparqlServer.newInstance(0, jettyXml, null, initParams);
+        Server server = NanoSparqlServer.newInstance(0, jettyXml, null, initParams);
 
         return server;
     }

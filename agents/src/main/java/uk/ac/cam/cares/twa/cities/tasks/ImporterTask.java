@@ -25,6 +25,7 @@ public class ImporterTask implements Runnable {
     public ImporterTask(BlazegraphServerTask serverTask, File importFile) {
         this.serverTask = serverTask;
         this.importFile = importFile;
+        this.serverTask.stop(false);
     }
 
     public boolean getStop() {
@@ -48,6 +49,9 @@ public class ImporterTask implements Runnable {
                         ImpExp.main(args);
                     } catch (Exception e) {
                         throw new JPSRuntimeException(e);
+                    } finally {
+                        serverTask.stop(true);
+                        stop();
                     }
                 }
             }
@@ -62,7 +66,7 @@ public class ImporterTask implements Runnable {
         String cfgData = FileUtils.readFileToString(cfgFile, String.valueOf(Charset.defaultCharset()));
         cfgData = cfgData.replace(PLACEHOLDER_HOST, endpointUri.getHost());
         cfgData = cfgData.replace(PLACEHOLDER_PORT, String.valueOf(endpointUri.getPort()));
-        cfgData = cfgData.replace(PLACEHOLDER_NS, "blazegraph/namespace/" +
+        cfgData = cfgData.replace(PLACEHOLDER_NS, "/blazegraph/namespace/" +
                 BlazegraphServerTask.NAMESPACE +
                 "/sparql/");
         FileUtils.writeStringToFile(cfgFile, cfgData);
