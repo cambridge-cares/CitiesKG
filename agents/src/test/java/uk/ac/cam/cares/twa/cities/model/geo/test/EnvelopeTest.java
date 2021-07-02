@@ -35,6 +35,7 @@ public class EnvelopeTest extends TestCase {
 
     @Test
     public void testGetEnvelopeString(){
+        //tbd
         Envelope envelope =  new Envelope("EPSG:4236");
         String uriString = "http://www.theworldavatar.com/citieskg/singapore/cityobject/UUID_00790be5-11a4-4da8-9be8-7c0c9dc7cfc2/";
         String expectedEnvelopeString = "29021.61944#28581.3432#0.0#29108.64926#28581.3432#0.0#29108.64926#28762.99547#68.5#29021.61944#28762.99547#68.5#29021.61944#28581.3432#0.0";
@@ -45,7 +46,7 @@ public class EnvelopeTest extends TestCase {
 
     @Test
     public void testGetKGClientForEnvelopeQuery(){
-
+    //tbd
     }
 
 

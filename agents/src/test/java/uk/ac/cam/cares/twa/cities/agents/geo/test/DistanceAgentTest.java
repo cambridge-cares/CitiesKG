@@ -1,39 +1,54 @@
 package uk.ac.cam.cares.twa.cities.agents.geo.test;
 
 import junit.framework.TestCase;
+import org.apache.jena.query.Query;
 import org.geotools.geometry.jts.GeometryBuilder;
-import org.json.JSONArray;
 import org.junit.Test;
 import org.locationtech.jts.geom.Point;
 import uk.ac.cam.cares.twa.cities.agents.geo.DistanceAgent;
 import uk.ac.cam.cares.twa.cities.model.geo.Envelope;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import org.locationtech.jts.geom.Point;
 
 public class DistanceAgentTest extends TestCase {
 
     @Test
-    public void testGetDistance(){
+    public void testGetDistanceQuery() {
+        DistanceAgent distanceAgent = new DistanceAgent();
+        String expectedQuery = "PREFIX  ocgml: <http://locahost/ontocitygml/>\n" + "\n" + "SELECT  ?distance\n" + "WHERE\n" + "  { GRAPH <SomeGraph>\n" + "      { <http://localhost/berlin/cityobject/UUID_39742eff-29ec-4c04-a732-22ee2a7986c4/>\n" + "                  ocgml:hasDistance  ?distanceUri}\n" + "    <http://localhost/berlin/cityobject/UUID_39742eff-29ec-4c04-a732-22ee2a7986c4/>\n" + "              ocgml:hasDistance  ?distanceUri .\n" + "    ?distanceUri  ocgml:hasValue  ?distance\n" + "  }"+ "\n";
+        String uri1 = "http://localhost/berlin/cityobject/UUID_39742eff-29ec-4c04-a732-22ee2a7986c4/";
+        String uri2 = "http://localhost/berlin/cityobject/UUID_39742eff-29ec-4c04-a732-22ee2a7986c4/";
+
+        try {
+            assertNotNull(distanceAgent.getClass().getDeclaredMethod("getDistanceQuery", String.class, String.class));
+            Method getDistanceQuery = distanceAgent.getClass().getDeclaredMethod("getDistanceQuery", String.class, String.class);
+            getDistanceQuery.setAccessible(true);
+
+            Query q = (Query) getDistanceQuery.invoke(distanceAgent, uri1, uri2);
+            assertEquals(expectedQuery, q.toString());
+
+        } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
-    public void testGetEnvelope() {
-        DistanceAgent distanceAgent = new DistanceAgent();
-
-        String uri1 = "http://localhost/berlin/cityobject/UUID_3eda2ae1-5621-47f6-91f9-cfb2ca7ff69a/";
-        String uri2 = "http://localhost/berlin/cityobject/UUID_d75160e2-57b5-441d-b2d4-3b92f698515c/";
-
-        ArrayList<String> uris = new ArrayList<>();
-        uris.add(uri1);
-        uris.add(uri2);
-
-        distanceAgent.getEnvelope(uris);
+    public void testGetDistance(){
+        //tbd
     }
+
+
+    @Test
+    public void testGetKGClientForDistanceQuery(){
+        //tbd
+    }
+
+
+    @Test
+    public void testGetEnvelope() {
+        //tbd
+    }
+
 
     @Test
     public void testComputeDistance(){
@@ -55,6 +70,7 @@ public class DistanceAgentTest extends TestCase {
 
         assertEquals(1.0034225353460755, distanceAgent.computeDistance(envelope1, envelope3));
     }
+
 
     @Test
     public void testSetUniformCRS(){
@@ -78,6 +94,9 @@ public class DistanceAgentTest extends TestCase {
         }
     }
 
+
     @Test
-    public void testSetDistance(){}
+    public void testSetDistance(){
+        //tbd
+    }
 }

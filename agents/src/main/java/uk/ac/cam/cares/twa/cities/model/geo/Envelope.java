@@ -32,19 +32,14 @@ public class Envelope {
     private static final String ENVELOPE_GRAPH_URI = "http://www.theworldavatar.com/citieskg/singapore/cityobject/";
     private static final String ROUTE = "http://kb/citieskg-singapore";
 
-
     //private static final String HOST =  "localhost";
     //private static final String PORT = "";
     //private static final String NAMESPACE = "/berlin/";
-    //private static String ONTOLOGY_URI = "http://locahost/ontocitygml/";
-    //private static String ENVELOPE_GRAPH_URI = "http://localhost/berlin/cityobject/";
+    //private static final String ONTOLOGY_URI = "http://locahost/ontocitygml/";
+    //private static final String ENVELOPE_GRAPH_URI = "http://localhost/berlin/cityobject/";
 
-    public static void main(String[] args){
-        Envelope envelope = new Envelope("EPSG:4326");
-        envelope.getEnvelopeString("http://localhost/berlin/cityobject/UUID_39742eff-29ec-4c04-a732-22ee2a7986c4/");
-    }
 
-   /** build a SPARQL query for a specific URI.
+   /** builds a SPARQL query for a specific URI to find envelope.
     */
     private Query getEnvelopeQuery(String uriString) {
 
@@ -58,6 +53,7 @@ public class Envelope {
         return q;
     }
 
+
     /** use SPARQL query to retrieve the envelope string from the KG.
      */
     public String getEnvelopeString(String uriString) {
@@ -70,11 +66,12 @@ public class Envelope {
 
         JSONArray queryResult = new JSONArray(queryResultString);
         envelopeString = queryResult.getJSONObject(0).get("Envelope").toString();
+
         return envelopeString;
     }
 
 
-    /** use SPARQL query to retrieve the envelope string from the KG.
+    /** getsKG Client for created envelope query.
      */
     private KnowledgeBaseClientInterface getKGClientForEnvelopeQuery() {
         String targetResourceIRIOrPath = ROUTE;
@@ -84,6 +81,7 @@ public class Envelope {
 
         return kgClient;
     }
+
 
     /** Transforms envelopeString into 5 points representing envelope boundary.
      */
@@ -132,11 +130,13 @@ public class Envelope {
       centroid.geometryChanged();
    }
 
+
     /** Method gets centroid as Point.
      */
   public Point getCentroid() {
       return centroid;
   }
+
 
     /** Method gets envelope CRS.
      */

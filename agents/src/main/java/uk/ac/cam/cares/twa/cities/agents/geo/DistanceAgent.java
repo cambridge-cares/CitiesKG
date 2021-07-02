@@ -1,6 +1,7 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
@@ -37,8 +38,24 @@ public class DistanceAgent extends JPSAgent {
     }
 
 
+    /** builds a SPARQL query for a specific URI to find a distance.
+     */
+    private Query getDistanceQuery(String uriString1, String uriString2){
+        SelectBuilder sb = new SelectBuilder()
+                .addPrefix( "ocgml",  ONTOLOGY_URI )
+                .addVar( "?distance" )
+                .addGraph(NodeFactory.createURI(DISTANCE_GRAPH_URI), "?firstUri", "ocgml:hasDistance", "?distanceUri")
+                .addWhere("?secondUri", "ocgml:hasDistance", "?distanceUri")
+                .addWhere("?distanceUri", "ocgml:hasValue", "?Distance");
+        sb.setVar( Var.alloc( "firstUri" ), NodeFactory.createURI(uriString1));
+        sb.setVar( Var.alloc( "secondUri" ), NodeFactory.createURI(uriString2));
+        Query q = sb.build();
 
-    /** The method retrieves values from KG for distances between objects. If it does not exists - it computes it.
+        return q;
+    }
+
+
+    /** Retrieves values from KG for distances between objects.
      */
     private float[] getDistance(URI[] objects){
         float[] distances = new float[objects.length * objects.length];
@@ -46,7 +63,20 @@ public class DistanceAgent extends JPSAgent {
 
     }
 
-    /** The getEnvelope method retrieves values from the KG for objects envelopes as strings.
+
+    /** gets KG Client for created distance query.
+     */
+    private KnowledgeBaseClientInterface getKGClientForDistanceQuery() {
+        String targetResourceIRIOrPath = ROUTE;
+        KnowledgeBaseClientInterface kgClient = KGRouter.getKnowledgeBaseClient(targetResourceIRIOrPath,
+                true,
+                false);
+
+        return kgClient;
+    }
+
+
+    /** Returns object envelope with its attributes.
      */
     private String[] getEnvelope(URI[] objects){
         String[] envelopeString = new String[objects.length];
@@ -54,7 +84,8 @@ public class DistanceAgent extends JPSAgent {
 
     }
 
-    /** The computeDistance method computes distance between two centroids.Distance3D calculation works only with cartesian CRS
+
+    /** Computes distance between two centroids. Distance3D calculation works only with cartesian CRS
      */
     private double computeDistance(Envelope envelope1, Envelope envelope2){
         //if JAVA library is not available:
@@ -69,7 +100,8 @@ public class DistanceAgent extends JPSAgent {
         return Distance3DOp.distance(centroid1, centroid2);
     }
 
-    /** The setUniformCRS method sets the CRS to the same coordinate system.
+
+    /** Sets point CRS to the same coordinate system.
      */
     private Point setUniformCRS(Point point, String sourceCRSstring, String targetCRSstring) {
         try {
@@ -83,8 +115,9 @@ public class DistanceAgent extends JPSAgent {
         return point;
     }
 
+
     /** The setDistance method writes distance between objects into KG.
      */
-   // private void setDistance(URI[] objects, float[] distances){}
+   private void setDistance(String[] objects, double[] distances){}
 
 }
