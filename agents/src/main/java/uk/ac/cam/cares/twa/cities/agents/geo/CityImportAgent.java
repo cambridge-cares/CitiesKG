@@ -15,6 +15,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -59,8 +60,9 @@ public class CityImportAgent extends JPSAgent {
     public static final String KEY_DIRECTORY = "directory";
     public static final String KEY_SPLIT = "split";
     public final int CHUNK_SIZE = 100;
-    public final int NUM_SERVER_THREADS = 4;
-    public final int NUM_IMPORTER_THREADS = 4;
+    //@todo: ImpExp.main() seems to work better if there is only one thread of it at a time. It needs further investigation.
+    public final int NUM_SERVER_THREADS = 1;
+    public final int NUM_IMPORTER_THREADS = 1;
     private String requestUrl;
     private File importDir;
     private final ThreadPoolExecutor serverExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_SERVER_THREADS);
@@ -163,7 +165,7 @@ public class CityImportAgent extends JPSAgent {
     private File listenToImport(String directoryName) {
         File dir = new File(directoryName);
 
-        if (!dir.exists() && dir.mkdirs()) {
+        if (!dir.exists() && !dir.mkdirs()) {
             throw new JPSRuntimeException(new FileNotFoundException(directoryName));
         }
 
@@ -209,11 +211,18 @@ public class CityImportAgent extends JPSAgent {
 
         while (!queue.isEmpty()) {
             try {
-                wait();
+                File[] dirJnlContent = new File(directoryName)
+                        .listFiles((dir, name) -> name.toLowerCase().endsWith(".jnl"));
+                for (File file : dirJnlContent) {
+                    exportToNquads(file.getAbsolutePath());
+                }
+                Thread.sleep(5000);
             } catch (InterruptedException e) {
                 new JPSRuntimeException(e);
             }
         }
+
+        System.out.println("Import Done.");
 
         return imported;
     }
