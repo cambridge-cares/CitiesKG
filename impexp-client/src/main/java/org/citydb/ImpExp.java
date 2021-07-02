@@ -375,8 +375,10 @@ public class ImpExp {
 				context.registerADEContext(adeContext);
 			
 			// create CityGML builder and register with object registry
-			CityGMLBuilder cityGMLBuilder = context.createCityGMLBuilder(externalLoader);			
-			registry.setCityGMLBuilder(cityGMLBuilder);
+			CityGMLBuilder cityGMLBuilder = context.createCityGMLBuilder(externalLoader);
+			if (registry.getCityGMLBuilder() == null) {
+				registry.setCityGMLBuilder(cityGMLBuilder);
+			}
 		} catch (CityGMLBuilderException | ADEException e) {
 			throw new ImpExpException("CityGML context could not be initialized.", e);
 		}
