@@ -219,6 +219,7 @@ public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
         if (geomObj == null) {
             throw new SQLException();
         }
+        // geomObj should be a string with "POLYGON()"
         PGgeometry newGeom = new PGgeometry(geomObj.toString());
 
         if (newGeom instanceof PGgeometry) {

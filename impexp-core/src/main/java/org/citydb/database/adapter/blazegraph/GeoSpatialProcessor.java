@@ -3,6 +3,7 @@ package org.citydb.database.adapter.blazegraph;
 import org.apache.jena.datatypes.DatatypeFormatException;
 import org.apache.jena.shacl.lib.G;
 import org.apache.jena.sparql.expr.ExprEvalException;
+import org.citydb.config.geometry.GeometryObject;
 import org.citydb.registry.ObjectRegistry;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
@@ -193,6 +194,10 @@ public class GeoSpatialProcessor {
     public Geometry createGeometry(String coordlist) {
         GeometryFactory fac = new GeometryFactory();
         Geometry geom = fac.createPolygon(str2coords(coordlist).toArray(new Coordinate[0]));
+
+        // Either coordlist to double[] or to Coordinates[]
+        //GeometryObject geomObj = GeometryObject.createPolygon();
+
         return geom;
     }
 

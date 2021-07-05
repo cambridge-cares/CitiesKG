@@ -93,7 +93,7 @@ public class StatementTransformer {
     //getBuildingPartQuery() in Building.java
     public static String getSPARQLStatement_BuildingPartQuery (String sqlQuery) {
         String sparql = "PREFIX  ocgml: <http://locahost/ontocitygml/> SELECT ?geomtype WHERE { GRAPH <http://localhost/berlin/thematicsurface/> { ?ts_id ocgml:objectClassId 35 ; ocgml:buildingId ? ; ocgml:lod2MultiSurfaceId ?lod2MSid .} GRAPH <http://localhost/berlin/surfacegeometry/> {" +
-                "?sg_id ocgml:rootId ?lod2MSid ; ocgml:GeometryType ?geomtype . } }" +
+                "?sg_id ocgml:rootId ?lod2MSid ; ocgml:GeometryType ?geomtype . FILTER(!isBlank(?geomtype))} }" +
                 "LIMIT 1000";
         return sparql;
     }
@@ -276,6 +276,13 @@ public class StatementTransformer {
 
         return query2.toString();
     }
+
+    public static Geometry Str2Geometry (String extracted){
+        GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
+        Geometry geomobj = geospatial.createGeometry(extracted);
+        return geomobj;
+    }
+
     public static Geometry filterResult(List<String> extracted, double tolerance) {
 
         GeoSpatialProcessor geospatial = new GeoSpatialProcessor();

@@ -197,6 +197,8 @@ public class Building extends KmlGenericObject{
 		PreparedStatement psQuery = null;
 		ResultSet rs = null;
 		boolean reversePointOrder = false;
+		// Shiying: we need to add a variable to differentiate two different cases in FOOTPRINT/EXTRUDED, if GroundSurface exists
+		boolean existGS = false;
 
 		try {
 			currentLod = config.getProject().getKmlExporter().getLodToExportFrom();
@@ -285,12 +287,14 @@ public class Building extends KmlGenericObject{
 						}
 
 						rs = psQuery.executeQuery();
-						//if (rs.isBeforeFirst()){ // POSTGIS: false vs. BLAZEGRAPH: true for empty result
-						//	break;}
+						if (rs.isBeforeFirst()){
+							// Shiying
+							existGS = true;
+							break;}
 						//@Note: Shiying has modified
-						if (rs.next()){
-							break;
-						}
+						//if (rs.next()){
+						//	break;
+						//}
 
 						try { rs.close(); } catch (SQLException sqle) {} 
 						try { psQuery.close(); } catch (SQLException sqle) {}
@@ -341,6 +345,7 @@ public class Building extends KmlGenericObject{
 								rs.next();
 								if (rs.getObject(1) != null) {
 									rs.beforeFirst();
+									existGS = false; // Shiying
 									break;
 								}
 							}
@@ -362,7 +367,7 @@ public class Building extends KmlGenericObject{
 				}
 			}
 
-			if (rs != null && rs.isBeforeFirst()) { // if result of Line 334 is not empty. This step will process the result.
+			if (rs != null && rs.isBeforeFirst()) { // if result of Line 334 or287 is not empty. This step will process the result.
 
 				switch (work.getDisplayForm().getForm()) {
 				case DisplayForm.FOOTPRINT:
@@ -395,7 +400,7 @@ public class Building extends KmlGenericObject{
 						if (isBlazegraph) {
 							String envelop = rs2.getString(1);
 							measuredHeight = extractHeight(envelop);
-							return createPlacemarksForExtruded_geospatial(rs, work, measuredHeight, reversePointOrder, null);
+							return createPlacemarksForExtruded_geospatial(rs, work, measuredHeight, reversePointOrder, existGS, null);
 						} else {
 							measuredHeight = rs2.getDouble("envelope_measured_height");
 							return createPlacemarksForExtruded(rs, work, measuredHeight, reversePointOrder);
