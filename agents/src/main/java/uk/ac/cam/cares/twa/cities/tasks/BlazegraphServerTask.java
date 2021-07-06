@@ -16,7 +16,7 @@ import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 
 public class BlazegraphServerTask implements Runnable {
-    private final String PROPERTY_FILE = "RWStore.properties";
+    public static final String PROPERTY_FILE = "RWStore.properties";
     private final String PROPERTY_FILE_PATH = "../../../../../../../";
     private final String JETTY_CFG_PATH = "../../../../../jetty.xml";
     private final String WAR_PATH = "../../../../../war";

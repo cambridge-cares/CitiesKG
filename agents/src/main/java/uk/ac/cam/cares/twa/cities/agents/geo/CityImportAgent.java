@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
+import com.bigdata.rdf.sail.ExportKB;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
 import uk.ac.cam.cares.jps.aws.WatcherCallback;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
@@ -15,15 +16,12 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -59,12 +57,20 @@ public class CityImportAgent extends JPSAgent {
     public static final String KEY_REQ_URL = "requestUrl";
     public static final String KEY_DIRECTORY = "directory";
     public static final String KEY_SPLIT = "split";
+    public static final String ARG_OUTDIR = "-outdir";
+    public static final String ARG_FORMAT = "-format";
+    public static final String NQ_OUTDIR = "quads";
+    public static final String NQ_FORMAT = "N-Quads";
+    public static final String NQ_FILENAME = "data.nq.gz";
+    public static final String EXT_GZ = ".gz";
+    private final String FS = System.getProperty("file.separator");
     public final int CHUNK_SIZE = 100;
     //@todo: ImpExp.main() seems to work better if there is only one thread of it at a time. It needs further investigation.
     public final int NUM_SERVER_THREADS = 1;
     public final int NUM_IMPORTER_THREADS = 1;
     private String requestUrl;
     private File importDir;
+    File splitDir;
     private final ThreadPoolExecutor serverExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_SERVER_THREADS);
     private final ThreadPoolExecutor importerExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_IMPORTER_THREADS);
 
@@ -76,9 +82,8 @@ public class CityImportAgent extends JPSAgent {
             if (requestUrl.contains(URI_LISTEN)) {
                 importDir = listenToImport(requestParams.getString(KEY_DIRECTORY));
             } else if (requestUrl.contains(URI_ACTION)) {
-                requestParams = new JSONObject(
-                        importFiles(requestParams.getString(AsynchronousWatcherService.KEY_WATCH))
-                );
+                importDir = new File(requestParams.getString(AsynchronousWatcherService.KEY_WATCH));
+                requestParams = new JSONObject(importFiles(importDir));
             }
         }
 
@@ -190,13 +195,13 @@ public class CityImportAgent extends JPSAgent {
     /**
      * Imports CityGML files present in a given directory
      *
-     * @param directoryName - contains CityGML files to import
+     * @param importDir - contains CityGML files to import
      *
      * @return - import summary
      */
-    private String importFiles(String directoryName) {
+    private String importFiles(File importDir) {
         String imported = "";
-        File[] dirContent = new File(directoryName).listFiles();
+        File[] dirContent = importDir.listFiles();
 
         if (dirContent != null) {
             for (File file : dirContent) {
@@ -207,20 +212,7 @@ public class CityImportAgent extends JPSAgent {
             }
         }
 
-        BlockingQueue<Runnable> queue = importerExecutor.getQueue();
-
-        while (!queue.isEmpty()) {
-            try {
-                File[] dirJnlContent = new File(directoryName)
-                        .listFiles((dir, name) -> name.toLowerCase().endsWith(".jnl"));
-                for (File file : dirJnlContent) {
-                    exportToNquads(file.getAbsolutePath());
-                }
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                new JPSRuntimeException(e);
-            }
-        }
+        exportToNquads(splitDir);
 
         System.out.println("Import Done.");
 
@@ -237,11 +229,10 @@ public class CityImportAgent extends JPSAgent {
 
         ArrayList<File> chunks = new ArrayList<>();
 
-        File splitDir = new File(file.getParent() + System.getProperty("file.separator") +
-                KEY_SPLIT + new Date().getTime());
+        splitDir = new File(file.getParent() + FS + KEY_SPLIT + new Date().getTime());
         splitDir.mkdir();
         String fileSrc = file.getPath();
-        String fileDst = splitDir.getPath()  +  System.getProperty("file.separator") + file.getName();
+        String fileDst = splitDir.getPath() + FS + file.getName();
 
         try {
             ArrayList<String> args = new ArrayList<>();
@@ -286,7 +277,7 @@ public class CityImportAgent extends JPSAgent {
      * @return - URL of the SPARQL update endpoint
      */
     private BlazegraphServerTask startBlazegraphInstance(String filepath) {
-        BlazegraphServerTask task = new BlazegraphServerTask(filepath.replace(".gml", ".jnl"));
+        BlazegraphServerTask task = new BlazegraphServerTask(filepath.replace(ImporterTask.EXT_FILE_GML, ImporterTask.EXT_FILE_JNL));
         serverExecutor.execute(task);
 
         return task;
@@ -330,10 +321,41 @@ public class CityImportAgent extends JPSAgent {
     /**
      * Exports data from Blazegraph journal file to n-quads format.
      *
-     * @param journalFileName - file to export from
+     * @param journalDir - directory with jnl files
      * @return - exported n-quads file name
      */
-    private String exportToNquads(String journalFileName) {
+    private String exportToNquads(File journalDir) {
+
+        BlockingQueue<Runnable> queue = importerExecutor.getQueue();
+
+        while (!queue.isEmpty()) {
+            try {
+                File[] dirJnlContent = journalDir.listFiles((dir, name) -> name.toLowerCase().endsWith(ImporterTask.EXT_FILE_JNL));
+                for (File file : dirJnlContent) {
+                    File nqFile = new File(file.getAbsolutePath().replace(ImporterTask.EXT_FILE_JNL, ImporterTask.EXT_FILE_NQUADS));
+                    String nqDir = nqFile.getParent() + FS + NQ_OUTDIR;
+                    if (nqFile.isFile()) {
+                        try {
+                            String[] args = {ARG_OUTDIR, nqDir,
+                                    ARG_FORMAT, NQ_FORMAT,
+                                    file.getAbsolutePath().replace(ImporterTask.EXT_FILE_JNL, BlazegraphServerTask.PROPERTY_FILE)};
+                            ExportKB.main(args);
+                            File exportedNqFile = new File(nqDir + FS + BlazegraphServerTask.NAMESPACE + FS + NQ_FILENAME);
+                            File targetNqFile = new File(nqFile.getAbsolutePath() + EXT_GZ);
+                            exportedNqFile.renameTo(targetNqFile);
+                            exportedNqFile.delete();
+                            nqFile.delete();
+                        } catch (Exception e) {
+                            throw new JPSRuntimeException(e);
+                        }
+                    }
+                }
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                new JPSRuntimeException(e);
+            }
+        }
+
         //@Todo: implementation
         String nQuadsFileName = "";
         return nQuadsFileName;

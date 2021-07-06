@@ -17,6 +17,9 @@ public class ImporterTask implements Runnable {
     private final String PLACEHOLDER_HOST = "{{host}}";
     private final String PLACEHOLDER_PORT = "{{port}}";
     private final String PLACEHOLDER_NS = "{{namespace}}";
+    public static final String EXT_FILE_JNL = ".jnl";
+    public static final String EXT_FILE_GML = ".gml";
+    public static final String EXT_FILE_NQUADS = ".nq";
     private BlazegraphServerTask serverTask;
     private File importFile;
 
@@ -47,6 +50,7 @@ public class ImporterTask implements Runnable {
                         String[] args = {"-shell", "-import=" + importFile.getAbsolutePath(),
                         "-config=" + cfgfile.getAbsolutePath()};
                         ImpExp.main(args);
+                        new File(importFile.getAbsolutePath().replace(EXT_FILE_GML, EXT_FILE_NQUADS)).createNewFile();
                     } catch (Exception e) {
                         throw new JPSRuntimeException(e);
                     } finally {
@@ -59,7 +63,7 @@ public class ImporterTask implements Runnable {
     }
 
     private File setupFiles(URI endpointUri) throws URISyntaxException, IOException {
-        String projectCfg = importFile.getAbsolutePath().replace(".gml", PROJECT_CONFIG);
+        String projectCfg = importFile.getAbsolutePath().replace(EXT_FILE_GML, PROJECT_CONFIG);
         Files.copy(Paths.get(getClass().getClassLoader().getResource(PROJECT_CONFIG).toURI()),
                 Paths.get(projectCfg));
         File cfgFile = new File(projectCfg);
