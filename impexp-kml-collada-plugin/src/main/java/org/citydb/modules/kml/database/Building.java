@@ -287,14 +287,16 @@ public class Building extends KmlGenericObject{
 						}
 
 						rs = psQuery.executeQuery();
-						if (rs.isBeforeFirst()){
+						//if (rs.isBeforeFirst()){
 							// Shiying
+						//	existGS = true;
+						//	break;}
+						//@TODO: (Shiying) isBeforeFirst() returns different results between Blazegraph and PostGIS for emptySet
+						if (rs.next()){
 							existGS = true;
-							break;}
-						//@Note: Shiying has modified
-						//if (rs.next()){
-						//	break;
-						//}
+							rs.beforeFirst(); // reset the cursor to avoid missing first row
+							break;
+						}
 
 						try { rs.close(); } catch (SQLException sqle) {} 
 						try { psQuery.close(); } catch (SQLException sqle) {}
@@ -337,15 +339,11 @@ public class Building extends KmlGenericObject{
 
 							rs = psQuery.executeQuery();
 
-							// Added by Shiying: Filter the resultSet until it is the same as the sql result. Expected: 1 row bcos of ST_UNION
-							//if (isBlazegraph){
-							//	rs = StatementTransformer.filterResultSet(rs, 0.001);
-							//}
 							if (rs.isBeforeFirst()) {
 								rs.next();
+								existGS = false;
 								if (rs.getObject(1) != null) {
 									rs.beforeFirst();
-									existGS = false; // Shiying
 									break;
 								}
 							}
