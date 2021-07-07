@@ -1464,6 +1464,8 @@ public abstract class KmlGenericObject<T> {
 		if (existGS) {
 			while (rs.next()) {
 				int que = rs.getMetaData().getColumnType(1);
+				String que1 = rs.getCursorName();
+				String que2 = rs.getMetaData().getColumnClassName(1);
 				Object buildingGeometryObj = rs.getObject("geomtype");
 
 				//String obj = ((MaterializedSelectResults) rs).getNode(1).getLiteral();
@@ -1516,6 +1518,9 @@ public abstract class KmlGenericObject<T> {
 
 		} else {
 			while (rs.next()) {
+				int que = rs.getMetaData().getColumnType(1);
+				String que1 = rs.getCursorName();
+				String que2 = rs.getMetaData().getColumnClassName(1);
 				String row = rs.getString(1);  // "geometry"
 				extractResult.add(row);
 				//Object row1 = rs.getObject(1);
