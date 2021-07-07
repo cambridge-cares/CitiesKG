@@ -9,8 +9,8 @@ import org.locationtech.jts.geom.*;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.jps.base.query.KGRouter;
 
+
 /**
- * Unique URIs are used as inputs for Envelope class.
  * The class transforms Envelope string into a list of points that defines envelope boundary and from it computes envelope centroid.
  */
 public class Envelope {
@@ -21,22 +21,19 @@ public class Envelope {
     private Point centroid;
     private GeometryBuilder factory = new GeometryBuilder();
     private String crs;
+
+    //private static final String ONTOLOGY_URI = "http://theworldavatar.com/ontology/ontocitygml/citieskg/";
+    //private static final String ENVELOPE_GRAPH_URI = "http://www.theworldavatar.com/citieskg/singapore/cityobject/";
+    //private static final String ROUTE = "http://kb/citieskg-singapore";
+    private static final String ONTOLOGY_URI = "http://locahost/ontocitygml/";
+    private static final String ENVELOPE_GRAPH_URI = "http://localhost/berlin/cityobject/";
+    private static final String ROUTE = "http://kb/singapore-local";
+
+    private KnowledgeBaseClientInterface kgClient;
+
     public Envelope(String crs) {
         this.crs = crs;
     }
-
-    private static final String HOST =  "www.theworldavatar.com";
-    private static final String PORT = "";
-    private static final String NAMESPACE = "/citieskg/singapore/";
-    private static final String ONTOLOGY_URI = "http://theworldavatar.com/ontology/ontocitygml/citieskg/";
-    private static final String ENVELOPE_GRAPH_URI = "http://www.theworldavatar.com/citieskg/singapore/cityobject/";
-    private static final String ROUTE = "http://kb/citieskg-singapore";
-
-    //private static final String HOST =  "localhost";
-    //private static final String PORT = "";
-    //private static final String NAMESPACE = "/berlin/";
-    //private static final String ONTOLOGY_URI = "http://locahost/ontocitygml/";
-    //private static final String ENVELOPE_GRAPH_URI = "http://localhost/berlin/cityobject/";
 
 
    /** builds a SPARQL query for a specific URI to find envelope.
@@ -54,14 +51,14 @@ public class Envelope {
     }
 
 
-    /** use SPARQL query to retrieve the envelope string from the KG.
+    /** get KGClient via KGrouter and execute query to get envelope string.
      */
     public String getEnvelopeString(String uriString) {
+        setKGClient(ROUTE);
+
         String envelopeString = new String();
         Query q = getEnvelopeQuery(uriString);
 
-        //get KGClient via KGrouter and execute query to get envelope string.
-        KnowledgeBaseClientInterface kgClient = getKGClientForEnvelopeQuery();
         String queryResultString = kgClient.execute(q.toString());
 
         JSONArray queryResult = new JSONArray(queryResultString);
@@ -71,15 +68,12 @@ public class Envelope {
     }
 
 
-    /** getsKG Client for created envelope query.
+    /** sets KG Client for created envelope query.
      */
-    private KnowledgeBaseClientInterface getKGClientForEnvelopeQuery() {
-        String targetResourceIRIOrPath = ROUTE;
-        KnowledgeBaseClientInterface kgClient = KGRouter.getKnowledgeBaseClient(targetResourceIRIOrPath,
+    private void setKGClient(String route){
+        this.kgClient = KGRouter.getKnowledgeBaseClient(route,
                 true,
                 false);
-
-        return kgClient;
     }
 
 
@@ -87,45 +81,38 @@ public class Envelope {
      */
    public void extractEnvelopePoints(String envelopeString) {
        if (envelopeString.equals("")) {
-           throw new IllegalArgumentException("empty String");
-       }
+           throw new IllegalArgumentException("empty String"); }
        else if (!envelopeString.contains("#")){
-           throw new IllegalArgumentException("Does not contain #");
-       }
+           throw new IllegalArgumentException("Does not contain #"); }
 
       String[] pointsAsString = (envelopeString.split("#"));
+
       if (pointsAsString.length % 3 == 0){
-           numberOfDimensions = 3;
-      }
+           numberOfDimensions = 3; }
       else if (pointsAsString.length % 2 == 0){
-           numberOfDimensions = 2;
-       }
+           numberOfDimensions = 2; }
       else {
-          throw new IllegalArgumentException("Number of points is not divisible by 3 or 2");
-       }
+          throw new IllegalArgumentException("Number of points is not divisible by 3 or 2"); }
 
       numberOfPoints = pointsAsString.length/numberOfDimensions;
        if (numberOfPoints < 4) {
-          throw new IllegalArgumentException("Polygon has less than 4 points");
-       }
+          throw new IllegalArgumentException("Polygon has less than 4 points"); }
       double[] points = new double[pointsAsString.length];
       for (int index = 0; index < pointsAsString.length; index++){
           points[index]= Double.parseDouble(pointsAsString[index]);
       }
+
       double centroidZ = 0;
+
       if (numberOfDimensions == 3){
           boundary = factory.polygonZ(points);
           for (int z = 2; z < points.length-3; z +=3 ){
-              centroidZ += points[z];
-          }
-          centroidZ = centroidZ/(numberOfPoints-1);
-      }
-      else{
-          boundary = factory.polygon(points);
-      }
-      centroid = boundary.getCentroid();
+              centroidZ += points[z]; }
+          centroidZ = centroidZ/(numberOfPoints-1); }
+      else {
+          boundary = factory.polygon(points); }
 
-      // Updates the centroid Z value. If it's 3D, it overrides the existing Z, of it's 2D: it's replaces default NaN with 0.
+      centroid = boundary.getCentroid();
       centroid.getCoordinateSequence().setOrdinate(0, 2, centroidZ);
       centroid.geometryChanged();
    }

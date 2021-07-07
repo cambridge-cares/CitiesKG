@@ -2,51 +2,72 @@ package uk.ac.cam.cares.twa.cities.model.geo.test;
 
 import junit.framework.TestCase;
 import org.apache.jena.query.Query;
+import org.json.JSONException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.jts.geom.Point;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
+import uk.ac.cam.cares.jps.base.query.KGRouter;
+import uk.ac.cam.cares.jps.base.query.RemoteKnowledgeBaseClient;
 import uk.ac.cam.cares.twa.cities.model.geo.Envelope;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+
 public class EnvelopeTest extends TestCase {
+
+    @Mock
+    KnowledgeBaseClientInterface kgClientMock = Mockito.mock(RemoteKnowledgeBaseClient.class);
 
     @Test
     public void testGetEnvelopeQuery(){
 
-        String expectedQuery = "PREFIX  ocgml: <http://locahost/ontocitygml/>\n\nSELECT  ?Envelope\nWHERE\n  { GRAPH <http://localhost/berlin/cityobject/>\n      { <http://localhost/berlin/cityobject/UUID_39742eff-29ec-4c04-a732-22ee2a7986c4/>\n                  ocgml:EnvelopeType  ?Envelope}}\n";
-
         Envelope envelope = new Envelope("EPSG:4326");
-        String uriString = "http://localhost/berlin/cityobject/UUID_39742eff-29ec-4c04-a732-22ee2a7986c4/";
+        String uriString = "http://localhost/berlin/cityobject/UUID_89f9a49d-e53b-4f59-beb5-748371d58c25/";
 
-        try{
+        try {
             assertNotNull(envelope.getClass().getDeclaredMethod("getEnvelopeQuery", String.class));
             Method getEnvelopeQuery = envelope.getClass().getDeclaredMethod("getEnvelopeQuery", String.class);
             getEnvelopeQuery.setAccessible(true);
 
             Query q = (Query) getEnvelopeQuery.invoke(envelope, uriString);
-            assertEquals(expectedQuery, q.toString());
+            assertTrue(q.toString().contains("<http://localhost/berlin/cityobject/UUID_89f9a49d-e53b-4f59-beb5-748371d58c25/>"));
 
         } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-            e.printStackTrace();
-        }
+            e.printStackTrace(); }
     }
 
 
     @Test
     public void testGetEnvelopeString(){
-        //tbd
-        Envelope envelope =  new Envelope("EPSG:4236");
-        String uriString = "http://www.theworldavatar.com/citieskg/singapore/cityobject/UUID_00790be5-11a4-4da8-9be8-7c0c9dc7cfc2/";
-        String expectedEnvelopeString = "29021.61944#28581.3432#0.0#29108.64926#28581.3432#0.0#29108.64926#28762.99547#68.5#29021.61944#28762.99547#68.5#29021.61944#28581.3432#0.0";
+        Envelope envelope = new Envelope("EPSG:4326");
 
-        assertEquals(expectedEnvelopeString, envelope.getEnvelopeString(uriString));
-    }
+        //test with mocked kgClient and kgRouter when it returns a string.
+        String json = "[{'Envelope': '1#2#0'}]";
+        Mockito.when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(json);
+
+        try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
+            kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
+                    .thenReturn(kgClientMock);
+            assertEquals("1#2#0", envelope.getEnvelopeString("test_uri")); }
 
 
-    @Test
-    public void testGetKGClientForEnvelopeQuery(){
-    //tbd
+        //test with mocked kgClient and kgRouter when there is no string to return.
+        String jsonEmpty = "[]";
+        Mockito.when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(jsonEmpty);
+
+        try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
+            kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
+                    .thenReturn(kgClientMock);
+            try {
+                envelope.getEnvelopeString("test_uri");
+                Assert.fail(); }
+            catch (JSONException error){
+                assertEquals("JSONArray[0] not found.", error.getMessage()); } }
     }
 
 
@@ -56,43 +77,35 @@ public class EnvelopeTest extends TestCase {
 
         //empty string;
         String envelopeString5 = "";
-        try{
+        try {
             envelope.extractEnvelopePoints(envelopeString5);
-            Assert.fail();
-        }
+            Assert.fail(); }
         catch (IllegalArgumentException error){
-            assertEquals("empty String", error.getMessage());
-        }
+            assertEquals("empty String", error.getMessage()); }
 
         //string with no #;
         String envelopeString6 = "1 1 1 1 2 1 2 2 1 2 1 1 1 1 1";
-        try{
+        try {
             envelope.extractEnvelopePoints(envelopeString6);
-            Assert.fail();
-        }
+            Assert.fail(); }
         catch (IllegalArgumentException error){
-            assertEquals("Does not contain #", error.getMessage());
-        }
+            assertEquals("Does not contain #", error.getMessage()); }
 
         // Number of coordinates is not divisible by 3 or 2 or if there is less points than 4?;
         String envelopeString4 = "1#1#1#1#2";
-        try{
+        try {
             envelope.extractEnvelopePoints(envelopeString4);
-            Assert.fail();
-        }
+            Assert.fail(); }
         catch (IllegalArgumentException error){
-            assertEquals("Number of points is not divisible by 3 or 2", error.getMessage());
-        }
+            assertEquals("Number of points is not divisible by 3 or 2", error.getMessage()); }
 
         // string would have less than 4 points;
         String envelopeString8 = "1#1#1#1#2#1#2#2#1";
-        try{
+        try {
             envelope.extractEnvelopePoints(envelopeString8);
-            Assert.fail();
-        }
+            Assert.fail(); }
         catch  (IllegalArgumentException error){
-            assertEquals("Polygon has less than 4 points", error.getMessage());
-        }
+            assertEquals("Polygon has less than 4 points", error.getMessage()); }
 
         // string would 5 points and 3 dimensions;
         String envelopeString1 = "1#1#1#1#2#1#2#2#1#2#1#1#1#1#1";
