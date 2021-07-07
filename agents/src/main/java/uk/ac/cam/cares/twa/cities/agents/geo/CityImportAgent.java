@@ -211,8 +211,17 @@ public class CityImportAgent extends JPSAgent {
                 }
             }
         }
+        ArrayList<File> rejected = new ArrayList<>();
 
-        exportToNquads(splitDir);
+        for (File nqlFile: exportChunksToNquads(splitDir)) {
+            if (changeUrlsInNQuadsFile(nqlFile, "", "")) {
+                if (!uploadNQuadsFileToBlazegraphInstance(nqlFile, "")) {
+                    rejected.add(nqlFile);
+                }
+            } else {
+                rejected.add(nqlFile);
+            }
+        }
 
         System.out.println("Import Done.");
 
@@ -319,71 +328,108 @@ public class CityImportAgent extends JPSAgent {
     }
 
     /**
-     * Exports data from Blazegraph journal file to n-quads format.
+     * Exports data from Blazegraph journal files to n-quads format.
      *
      * @param journalDir - directory with jnl files
-     * @return - exported n-quads file name
+     * @return - exported n-quads files
      */
-    private String exportToNquads(File journalDir) {
+    private ArrayList<File> exportChunksToNquads(File journalDir) {
+        ArrayList<File> nqFiles = new ArrayList<>();
 
         BlockingQueue<Runnable> queue = importerExecutor.getQueue();
 
+        //Export for finished tasks when the queue is not empty
         while (!queue.isEmpty()) {
             try {
-                File[] dirJnlContent = journalDir.listFiles((dir, name) -> name.toLowerCase().endsWith(ImporterTask.EXT_FILE_JNL));
-                for (File file : dirJnlContent) {
-                    File nqFile = new File(file.getAbsolutePath().replace(ImporterTask.EXT_FILE_JNL, ImporterTask.EXT_FILE_NQUADS));
-                    String nqDir = nqFile.getParent() + FS + NQ_OUTDIR;
-                    if (nqFile.isFile()) {
-                        try {
-                            String[] args = {ARG_OUTDIR, nqDir,
-                                    ARG_FORMAT, NQ_FORMAT,
-                                    file.getAbsolutePath().replace(ImporterTask.EXT_FILE_JNL, BlazegraphServerTask.PROPERTY_FILE)};
-                            ExportKB.main(args);
-                            File exportedNqFile = new File(nqDir + FS + BlazegraphServerTask.NAMESPACE + FS + NQ_FILENAME);
-                            File targetNqFile = new File(nqFile.getAbsolutePath() + EXT_GZ);
-                            exportedNqFile.renameTo(targetNqFile);
-                            exportedNqFile.delete();
-                            nqFile.delete();
-                        } catch (Exception e) {
-                            throw new JPSRuntimeException(e);
-                        }
-                    }
+                for (File jnlFile: collectJournalFilesForNquadsExport(journalDir)) {
+                    nqFiles.add(exportToNquadsFileFromJnlFile(jnlFile));
                 }
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
-                new JPSRuntimeException(e);
+                throw new JPSRuntimeException(e);
             }
         }
 
-        //@Todo: implementation
-        String nQuadsFileName = "";
-        return nQuadsFileName;
+        //After the queue is empty, last check on the directory
+        for (File jnlFile: collectJournalFilesForNquadsExport(journalDir)) {
+            nqFiles.add(exportToNquadsFileFromJnlFile(jnlFile));
+        }
+
+        return nqFiles;
     }
 
+    /**
+     * Produces a list of journal files suitable for esport to n-quads,
+     * for which importing process already finished.
+     *
+     * @param journalDir
+     * @return
+     */
+    private ArrayList<File>  collectJournalFilesForNquadsExport(File journalDir) {
+        ArrayList<File> jnlFiles = new ArrayList<>();
+
+        File[] dirJnlContent = journalDir.listFiles((dir, name) -> name.toLowerCase().endsWith(ImporterTask.EXT_FILE_JNL));
+        for (File file : dirJnlContent) {
+            File nqFile = new File(file.getAbsolutePath().replace(ImporterTask.EXT_FILE_JNL, ImporterTask.EXT_FILE_NQUADS));
+            if (nqFile.isFile()) {
+                jnlFiles.add(file);
+            }
+        }
+
+        return jnlFiles;
+    }
+
+    /**
+     * Exports individual journal file to n-quads file. Removes helper files after that.
+     *
+     * @param jnlFile
+     * @return
+     */
+    private File exportToNquadsFileFromJnlFile(File jnlFile) {
+        File nqFile = new File(jnlFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_JNL, ImporterTask.EXT_FILE_NQUADS));
+        String nqDir = nqFile.getParent() + FS + NQ_OUTDIR;
+        String[] args = {ARG_OUTDIR, nqDir,
+                ARG_FORMAT, NQ_FORMAT,
+                jnlFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_JNL, BlazegraphServerTask.PROPERTY_FILE)};
+        try {
+            ExportKB.main(args);
+        } catch (Exception e) {
+            throw new JPSRuntimeException(e);
+        }
+        File exportedNqFile = new File(nqDir + FS + BlazegraphServerTask.NAMESPACE + FS + NQ_FILENAME);
+        File targetNqFile = new File(nqFile.getAbsolutePath() + EXT_GZ);
+        exportedNqFile.renameTo(targetNqFile);
+        exportedNqFile.delete();
+        nqFile.delete();
+
+        return targetNqFile;
+    }
+    
     /**
      * Find and replace on n-quads files to prepare them to contain URLs of the target system
      * instead of the local instance.
      *
-     * @param filename - n-quads file to replace URLs in
+     * @param nqFile - n-quads file to replace URLs in
      * @param from - string to replace
      * @param to - string to replace with
      * @return - information about replacement success
      */
-    private boolean changeUrlsInNQuadsFile(String filename, String from, String to) {
+    private boolean changeUrlsInNQuadsFile(File nqFile, String from, String to) {
         //@Todo: implementation
         boolean changed = false;
+
+
         return changed;
     }
 
     /**
      * Imports n-quads file into a running Blazegraph instance.
      *
-     * @param fileName - n-quads file
+     * @param nqFile - n-quads file
      * @param blasegraphImportURL - URL of the Blazegraph instance
      * @return  - information about import success
      */
-    private boolean uploadNQuadsFileToBlazegraphInstance(String fileName, String blasegraphImportURL) {
+    private boolean uploadNQuadsFileToBlazegraphInstance(File nqFile, String blasegraphImportURL) {
         //@Todo: implementation
         boolean uploaded = false;
         return uploaded;
