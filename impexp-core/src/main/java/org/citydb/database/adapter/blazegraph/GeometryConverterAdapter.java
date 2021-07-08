@@ -219,7 +219,7 @@ public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
         if (geomObj == null) {
             throw new SQLException();
         }
-        // geomObj should be a string with "POLYGON()"
+        // geomObj should be a string with "POLYGON()", JTS geometry can be converted to PGgeometry
         PGgeometry newGeom = new PGgeometry(geomObj.toString());
 
         if (newGeom instanceof PGgeometry) {

@@ -6,14 +6,7 @@ import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.ResultSetFactory;
-import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.E_IsBlank;
-import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.expr.NodeValue;
-import org.apache.jena.sparql.lang.arq.ARQParser;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.citydb.sqlbuilder.SQLStatement;
 import org.citydb.sqlbuilder.expression.PlaceHolder;
@@ -25,21 +18,6 @@ import org.citydb.sqlbuilder.select.Select;
 import org.citydb.sqlbuilder.select.operator.comparison.BinaryComparisonOperator;
 import org.citydb.sqlbuilder.select.operator.comparison.InOperator;
 import org.locationtech.jts.geom.*;
-import org.locationtech.jts.operation.valid.IsValidOp;
-import org.locationtech.jts.operation.valid.TopologyValidationError;
-
-import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
-
-import javax.sql.rowset.CachedRowSet;
-import javax.sql.rowset.RowSetFactory;
-import javax.sql.rowset.RowSetProvider;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.Reader;
-import java.io.StringReader;
-import java.nio.charset.Charset;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.*;
 
 
@@ -57,14 +35,26 @@ public class StatementTransformer {
         Select select = (Select) sqlStatement;
         List<PredicateToken> predicateTokens = select.getSelection();
         List<PlaceHolder<?>> placeHolders = new ArrayList<>();
-        predicateTokens.get(0).getInvolvedPlaceHolders(placeHolders);
-        if (placeHolders.get(0).getValue() == "*"){
+        predicateTokens.get(1).getInvolvedPlaceHolders(placeHolders);
+        String sparql = null;
+        if (placeHolders.get(0).getValue().equals("*")){
             // input is * => retrieve all gmlId from database
+            // Create the query for retrieving all entries in the database
+            sparql = "PREFIX  ocgml: <http://locahost/ontocitygml/> " +
+                    "SELECT  ?id ?objectclass_id ?gmlid " +
+                    "FROM <http://localhost/berlin/cityobject/> " +
+                    "WHERE { " +
+                    "?id ocgml:objectClassId  ?objectclass_id . " +
+                    "?id ocgml:gmlId ?gmlid " +
+                    "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )}";
         }else{
-
+            try {
+                sparql = queryObject_transformer(sqlStatement).toString();
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
         }
-        //queryObject_transformer
-        return null;
+        return sparql;
     }
 
     // try test with multiple gmlId
@@ -78,7 +68,6 @@ public class StatementTransformer {
                 "        FILTER ( ?gmlid IN ( ? , ? ))  }";
         return sparql;
     }
-
 
     // getBuildingPartsFromBuilding() in Building.java
     public static String getSPARQLStatement_BuildingParts (String sqlQuery) {
@@ -118,8 +107,6 @@ public class StatementTransformer {
         List<PlaceHolder<?>> placeHolders = sqlStatement.getInvolvedPlaceHolders();
 
         applyPredicate(sb, predicateTokens, placeHolders);
-
-
         Query q = sb.build();
         return q;
     }
@@ -301,7 +288,6 @@ public class StatementTransformer {
     }
 
     public static Geometry filterResult(List<String> extracted, double tolerance) {
-
         GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
         List<Geometry> geom2union = new ArrayList<>();
 
@@ -311,10 +297,7 @@ public class StatementTransformer {
                 geom2union.add(geomobj);
             }
         }
-
         Geometry union = geospatial.UnaryUnion(geom2union);
-
         return union;
     }
-
 }

@@ -183,23 +183,15 @@ public class SQLAdapter extends AbstractSQLAdapter {
 
     public PreparedStatement transformStatement(SQLStatement statement, Connection connection) throws SQLException {
         // @TODO: implement SQLPreparedStatement into SPARQLPreparedStatement transformer
-        Query SPARQLStatement = null;
+        String SPARQLStatement = null;
+        // Query SPARQLStatement = null;
         PreparedStatement preparedStatement = null;
-        try {
-            SPARQLStatement = StatementTransformer.queryObject_transformer(statement);
-            preparedStatement = connection.prepareStatement(SPARQLStatement.toString());
-            //preparedStatement = connection.prepareStatement(StatementTransformer.getObjectId());
-            //List<PlaceHolder<?>> placeHolders = statement.getInvolvedPlaceHolders();
+        //SPARQLStatement = StatementTransformer.queryObject_transformer(statement);
+        SPARQLStatement = StatementTransformer.getTopFeatureId(statement);
 
-            // This will not effect the multiple gmlid case
-            /*
-            for (int i = 0; i < placeHolders.size(); ++i ){
-                preparedStatement.setString(i+1, placeHolders.get(i).getValue().toString());
-            }*/
-
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+        preparedStatement = connection.prepareStatement(SPARQLStatement.toString());
+        //preparedStatement = connection.prepareStatement(StatementTransformer.getObjectId());
+        //List<PlaceHolder<?>> placeHolders = statement.getInvolvedPlaceHolders();
 
         return preparedStatement;
     }
