@@ -1,6 +1,9 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
 import com.bigdata.rdf.sail.ExportKB;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
 import uk.ac.cam.cares.jps.aws.WatcherCallback;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
@@ -14,6 +17,9 @@ import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -57,6 +63,7 @@ public class CityImportAgent extends JPSAgent {
     public static final String KEY_REQ_URL = "requestUrl";
     public static final String KEY_DIRECTORY = "directory";
     public static final String KEY_SPLIT = "split";
+    public static final String KEY_TARGET_URL = "targetURL";
     public static final String ARG_OUTDIR = "-outdir";
     public static final String ARG_FORMAT = "-format";
     public static final String NQ_OUTDIR = "quads";
@@ -69,6 +76,7 @@ public class CityImportAgent extends JPSAgent {
     public final int NUM_SERVER_THREADS = 1;
     public final int NUM_IMPORTER_THREADS = 1;
     private String requestUrl;
+    private String targetUrl;
     private File importDir;
     File splitDir;
     private final ThreadPoolExecutor serverExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_SERVER_THREADS);
@@ -79,6 +87,7 @@ public class CityImportAgent extends JPSAgent {
     public JSONObject processRequestParameters(JSONObject requestParams) {
         if (validateInput(requestParams)) {
             requestUrl = requestParams.getString(KEY_REQ_URL);
+            targetUrl = requestParams.getString(KEY_TARGET_URL);
             if (requestUrl.contains(URI_LISTEN)) {
                 importDir = listenToImport(requestParams.getString(KEY_DIRECTORY));
             } else if (requestUrl.contains(URI_ACTION)) {
@@ -95,16 +104,17 @@ public class CityImportAgent extends JPSAgent {
         boolean error = true;
         if (!requestParams.isEmpty()) {
             Set<String> keys = requestParams.keySet();
-            if (keys.contains(KEY_REQ_METHOD) && keys.contains(KEY_REQ_URL)) {
+            if (keys.contains(KEY_REQ_METHOD) && keys.contains(KEY_REQ_URL) && keys.contains(KEY_TARGET_URL)) {
                 if (requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.POST)) {
                     try {
-                        URL reqUrl = new URL((String) requestParams.get(KEY_REQ_URL));
+                        URL reqUrl = new URL(requestParams.getString(KEY_REQ_URL));
+                        new URL(requestParams.getString(KEY_TARGET_URL));
                         if (reqUrl.getPath().contains(URI_LISTEN)) {
                             error = validateListenInput(requestParams, keys);
                         } else if (reqUrl.getPath().contains(URI_ACTION)) {
                             error = validateActionInput(requestParams, keys);
                         }
-                    } catch (MalformedURLException e) {
+                    } catch (Exception e) {
                         throw new BadRequestException();
                     }
                 }
@@ -179,6 +189,7 @@ public class CityImportAgent extends JPSAgent {
             String url = requestUrl.replace(URI_LISTEN, URI_ACTION);
             json.put(AsynchronousWatcherService.KEY_WATCH, directoryName);
             json.put(AsynchronousWatcherService.KEY_CALLBACK_URL, url);
+            json.put(KEY_TARGET_URL, targetUrl);
             CreateFileWatcher watcher = new CreateFileWatcher(dir,
                     AsynchronousWatcherService.PARAM_TIMEOUT * AsynchronousWatcherService.TIMEOUT_MUL);
             WatcherCallback callback = watcher.getCallback(url, json.toString());
@@ -214,8 +225,8 @@ public class CityImportAgent extends JPSAgent {
         ArrayList<File> rejected = new ArrayList<>();
 
         for (File nqlFile: exportChunksToNquads(splitDir)) {
-            if (changeUrlsInNQuadsFile(nqlFile, "", "")) {
-                if (!uploadNQuadsFileToBlazegraphInstance(nqlFile, "")) {
+            if (changeUrlsInNQuadsFile(nqlFile, "", targetUrl)) {
+                if (!uploadNQuadsFileToBlazegraphInstance(nqlFile, targetUrl + "sparql")) {
                     rejected.add(nqlFile);
                 }
             } else {
@@ -404,7 +415,7 @@ public class CityImportAgent extends JPSAgent {
 
         return targetNqFile;
     }
-    
+
     /**
      * Find and replace on n-quads files to prepare them to contain URLs of the target system
      * instead of the local instance.
@@ -417,9 +428,37 @@ public class CityImportAgent extends JPSAgent {
     private boolean changeUrlsInNQuadsFile(File nqFile, String from, String to) {
         //@Todo: implementation
         boolean changed = false;
+        if (from.isEmpty()) {
+            from = getLocalSourceUrlFromProjectCfg(nqFile);
+        }
+
 
 
         return changed;
+    }
+
+    /**
+     * Extracts url of entities from the project config corresponding to a given n-quads file.
+     *
+     * @param nqFile - n-quads file
+     * @return local url string for the entities in the n-quads file
+     */
+    private String getLocalSourceUrlFromProjectCfg(File nqFile) {
+        String url = "";
+        try {
+            File projectCfg = new File(nqFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_NQUADS + EXT_GZ,
+                    ImporterTask.PROJECT_CONFIG));
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document cfg = builder.parse(projectCfg);
+            NodeList server = cfg.getElementsByTagName("server");
+            NodeList port = cfg.getElementsByTagName("port");
+            NodeList sid = cfg.getElementsByTagName("port");
+        } catch (ParserConfigurationException | SAXException | IOException e) {
+            throw new JPSRuntimeException(e);
+        }
+
+        return url;
     }
 
     /**

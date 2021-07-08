@@ -126,6 +126,14 @@ public class CityImportAgentTest extends TestCase {
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
+        keys.add(CityImportAgent.KEY_TARGET_URL);
+
+        try {
+            validateInput.invoke(agent, requestParams);
+        } catch (Exception e) {
+            assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
+        }
+
         requestParams.put(CityImportAgent.KEY_REQ_METHOD, HttpMethod.GET);
 
         try {
@@ -149,6 +157,16 @@ public class CityImportAgentTest extends TestCase {
         } catch (Exception e) {
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
+
+        requestParams.put(CityImportAgent.KEY_TARGET_URL, "abc");
+
+        try {
+            validateInput.invoke(agent, requestParams);
+        } catch (Exception e) {
+            assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
+        }
+
+        requestParams.put(CityImportAgent.KEY_TARGET_URL, localhostURL);
 
         //Listen case:
 

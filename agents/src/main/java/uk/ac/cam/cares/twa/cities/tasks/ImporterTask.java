@@ -13,7 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class ImporterTask implements Runnable {
-    private final String PROJECT_CONFIG = "project.xml";
+    public static final String PROJECT_CONFIG = "project.xml";
     private final String PLACEHOLDER_HOST = "{{host}}";
     private final String PLACEHOLDER_PORT = "{{port}}";
     private final String PLACEHOLDER_NS = "{{namespace}}";
