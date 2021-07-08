@@ -1464,13 +1464,14 @@ public abstract class KmlGenericObject<T> {
 		if (existGS) {
 			while (rs.next()) {
 				Object buildingGeometryObj = rs.getObject("geomtype");
+				String datatype = rs.getString("type");
 
 				//String obj = ((MaterializedSelectResults) rs).getNode(1).getLiteral();
 				if (!rs.wasNull() && buildingGeometryObj != null) {
 					eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
 
 					// Added by Shiying: convert the # string to geometry
-					buildingGeometryObj = StatementTransformer.Str2Geometry(buildingGeometryObj.toString());
+					buildingGeometryObj = StatementTransformer.Str2Geometry(buildingGeometryObj.toString(), datatype);
 
 					GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
 					if (unconvertedGeom == null || (unconvertedGeom.getGeometryType() != GeometryType.POLYGON && unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON))

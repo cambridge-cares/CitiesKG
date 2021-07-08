@@ -191,6 +191,33 @@ public class GeoSpatialProcessor {
 
     }
 
+    public Geometry createGeometry(String coordlist, String geomtype, int dimension, int[] dimOfRings) {
+        GeometryFactory fac = new GeometryFactory();
+        Coordinate[] coordinates = str2coords(coordlist).toArray(new Coordinate[0]);
+
+        Geometry geom = null;
+        if (geomtype.equals("POLYGON")){
+            if (dimOfRings.length >= 2){ // Polygon with Holes : LinearRing shell and LinearRing[] holes
+                Coordinate[] shell_coords = Arrays.copyOfRange(coordinates, 0, dimOfRings[0] / dimension);
+                LinearRing shell = fac.createLinearRing(shell_coords);
+                ArrayList<LinearRing> holeslist = new ArrayList<>();
+                int start = dimOfRings[0] / dimension;
+                for (int k = 1; k < dimOfRings.length; ++k){
+                    Coordinate[] holes_coords = Arrays.copyOfRange(coordinates, start, start + dimOfRings[k] /dimension);
+                    holeslist.add(fac.createLinearRing(holes_coords));
+                    start = start + dimOfRings[k] / dimension;
+                }
+                LinearRing[] holes = holeslist.toArray(new LinearRing[0]);
+                geom = fac.createPolygon(shell, holes);
+            } else if (dimOfRings.length == 1) {
+                // Polygon without holes
+                LinearRing shell = fac.createLinearRing(coordinates);
+                geom = fac.createPolygon(shell);
+            }
+        }
+        return geom;
+    }
+
     public Geometry createGeometry(String coordlist) {
         GeometryFactory fac = new GeometryFactory();
         Geometry geom = fac.createPolygon(str2coords(coordlist).toArray(new Coordinate[0]));

@@ -92,7 +92,7 @@ public class StatementTransformer {
 
     //getBuildingPartQuery() in Building.java
     public static String getSPARQLStatement_BuildingPartQuery (String sqlQuery) {
-        String sparql = "PREFIX  ocgml: <http://locahost/ontocitygml/> SELECT ?geomtype WHERE { GRAPH <http://localhost/berlin/thematicsurface/> { ?ts_id ocgml:objectClassId 35 ; ocgml:buildingId ? ; ocgml:lod2MultiSurfaceId ?lod2MSid .} GRAPH <http://localhost/berlin/surfacegeometry/> {" +
+        String sparql = "PREFIX  ocgml: <http://locahost/ontocitygml/> SELECT ?geomtype (datatype(?geomtype) AS ?type) WHERE { GRAPH <http://localhost/berlin/thematicsurface/> { ?ts_id ocgml:objectClassId 35 ; ocgml:buildingId ? ; ocgml:lod2MultiSurfaceId ?lod2MSid .} GRAPH <http://localhost/berlin/surfacegeometry/> {" +
                 "?sg_id ocgml:rootId ?lod2MSid ; ocgml:GeometryType ?geomtype . FILTER(!isBlank(?geomtype))} }" +
                 "LIMIT 1000";
         return sparql;
@@ -277,10 +277,27 @@ public class StatementTransformer {
         return query2.toString();
     }
 
-    public static Geometry Str2Geometry (String extracted){
+    public static Geometry Str2Geometry (String extracted, String datatypeURI){
         GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
-        Geometry geomobj = geospatial.createGeometry(extracted);
-        return geomobj;
+
+        if (datatypeURI == null){
+            Geometry geomobj = geospatial.createGeometry(extracted);
+            return geomobj;
+
+        }else{  // if the polygon contains multiple rings of the dimension X1, X2
+            // extract the pattern "POLYGON-X1-X2" which is the last part of the URI
+            String datatype = datatypeURI.substring(datatypeURI.lastIndexOf('/') + 1);
+            String[] datatype_list = datatype.split("-");
+            String geomtype = datatype_list[0];
+            int dim = Integer.valueOf(datatype_list[1]);
+            int[] dimOfRings = new int[datatype_list.length-2];
+            for (int i = 2; i < datatype_list.length; ++i){
+                dimOfRings[i-2] = Integer.valueOf(datatype_list[i]);
+            }
+            // put in createGeopmetry (extracted, geomtype, listOfDim)
+            Geometry geomobj = geospatial.createGeometry(extracted, geomtype, dim, dimOfRings);
+            return geomobj;
+        }
     }
 
     public static Geometry filterResult(List<String> extracted, double tolerance) {
