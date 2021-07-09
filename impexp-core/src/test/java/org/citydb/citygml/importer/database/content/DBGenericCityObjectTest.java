@@ -1,14 +1,15 @@
 package org.citydb.citygml.importer.database.content;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import java.lang.reflect.Method;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class DBGenericCityObjectTest extends DBTest{
+
     @Test
     public void getSPARQLStatementTest(){
-        String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
-                "BASE <http://localhost/berlin/> " +
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
+                "BASE <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> "+
                 "INSERT DATA { " +
                 "GRAPH <genericcityobject/> { ? ocgml:id  ?;" +
                 "ocgml:class  ?;ocgml:classCodespace  ?;" +

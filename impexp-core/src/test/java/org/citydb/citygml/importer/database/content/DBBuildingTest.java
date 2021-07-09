@@ -8,14 +8,12 @@ public class DBBuildingTest extends DBTest{
     @Test
     public void getSPARQLStatementTest() {
         // SYL: this is actually the preparedStatement of psCityObject
-        String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
-                "BASE <http://localhost/berlin/> " +
-                "INSERT DATA { " +
-                "GRAPH <building/> { ? ocgml:id  ?;ocgml:buildingParentId  ?;" +
-                "ocgml:buildingRootId  ?;ocgml:class  ?;ocgml:classCodespace  ?;" +
-                "ocgml:function  ?;ocgml:functionCodespace  ?;ocgml:usage  ?;" +
-                "ocgml:usageCodespace  ?;ocgml:yearOfConstruction  ?;ocgml:yearOfDemolition  ?;" +
-                "ocgml:roofType  ?;ocgml:roofTypeCodespace  ?;ocgml:measuredHeigh  ?;" +
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
+                "BASE <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> " +
+                "INSERT DATA { GRAPH <building/> { ? ocgml:id  ?;ocgml:buildingParentId  ?;" +
+                "ocgml:buildingRootId  ?;ocgml:class  ?;ocgml:classCodespace  ?;ocgml:function  ?;" +
+                "ocgml:functionCodespace  ?;ocgml:usage  ?;ocgml:usageCodespace  ?;ocgml:yearOfConstruction  ?;" +
+                "ocgml:yearOfDemolition  ?;ocgml:roofType  ?;ocgml:roofTypeCodespace  ?;ocgml:measuredHeigh  ?;" +
                 "ocgml:measuredHeightUnit  ?;ocgml:storeysAboveGround  ?;ocgml:storeysBelowGround  ?;" +
                 "ocgml:storeyHeightsAboveGround  ?;ocgml:storeyHeightsAgUnit  ?;ocgml:storeyHeightsBelowGround  ?;" +
                 "ocgml:storeyHeightsBgUnit  ?;ocgml:lod1TerrainIntersection  ?;ocgml:lod2TerrainIntersection  ?;" +

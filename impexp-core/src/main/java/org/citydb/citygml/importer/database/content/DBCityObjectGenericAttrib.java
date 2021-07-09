@@ -63,11 +63,10 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 	private PreparedStatement psGenericAttributeSet;
 	private PreparedStatement psGenericAttributeMember;
 	private int batchCounter;
-	//@todo Replace graph IRI and OntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
-	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
+	private String PREFIX_ONTOCITYGML;
+	private String IRI_GRAPH_BASE;
+	private String IRI_GRAPH_OBJECT;
 	private static final String IRI_GRAPH_OBJECT_REL = "cityobjectgenericattrib/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 
 	public DBCityObjectGenericAttrib(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
@@ -80,6 +79,9 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 		StringBuilder stmt = new StringBuilder();
 
 		if (importer.isBlazegraph()) {
+			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
+			IRI_GRAPH_BASE = importer.getGraphBaseIri();
+			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 			stmt = getSPARQLStatement1(stmt);
 
 		} else {

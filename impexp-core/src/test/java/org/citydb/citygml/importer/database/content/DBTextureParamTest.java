@@ -9,10 +9,9 @@ public class DBTextureParamTest extends DBTest {
     @Test
     public void getSPARQLStatementTest() {
         // SYL: this is actually the preparedStatement of psCityObject
-        String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
-                "BASE <http://localhost/berlin/> " +
-                "INSERT DATA { " +
-                "GRAPH <textureparam/> { ? ocgml:surfaceGeometryId  ?;ocgml:isTextureParametrization  ?;" +
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
+                "BASE <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> " +
+                "INSERT DATA { GRAPH <textureparam/> { ? ocgml:surfaceGeometryId  ?;ocgml:isTextureParametrization  ?;" +
                 "ocgml:worldToTexture  ?;ocgml:textureCoordinates  ?;ocgml:surfaceDataId  ?;.}}";
         String generated;
 

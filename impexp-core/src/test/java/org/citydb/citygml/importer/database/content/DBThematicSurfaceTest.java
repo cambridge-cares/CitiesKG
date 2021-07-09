@@ -9,13 +9,11 @@ public class DBThematicSurfaceTest extends DBTest{
     @Test
     public void getSPARQLStatementTest() {
         // SYL: this is actually the preparedStatement of psCityObject
-        String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
-                "BASE <http://localhost/berlin/> " +
-                "INSERT DATA { " +
-                "GRAPH <thematicsurface/> { ? ocgml:id  ?;ocgml:objectClassId  ?;" +
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
+                "BASE <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> " +
+                "INSERT DATA { GRAPH <thematicsurface/> { ? ocgml:id  ?;ocgml:objectClassId  ?;" +
                 "ocgml:buildingId  ?;ocgml:roomId  ?;ocgml:buildingInstallationId  ?;" +
-                "ocgml:lod2MultiSurfaceId  ?;ocgml:lod3MultiSurfaceId  ?;" +
-                "ocgml:lod4MultiSurfaceId  ?;.}}";
+                "ocgml:lod2MultiSurfaceId  ?;ocgml:lod3MultiSurfaceId  ?;ocgml:lod4MultiSurfaceId  ?;.}}";
         String generated;
 
         try {

@@ -99,11 +99,10 @@ public class DBCityObject implements DBImporter {
 	private CreationDateMode creationDateMode;
 	private TerminationDateMode terminationDateMode;
 	private BoundingBoxOptions bboxOptions;
-	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
-	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-	private static final String IRI_GRAPH_OBJECT_REL = "cityobject/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
+	private String PREFIX_ONTOCITYGML;
+	private String IRI_GRAPH_BASE;
+	private String IRI_GRAPH_OBJECT_REL = "cityobject/";
+	private String IRI_GRAPH_OBJECT;
 
 	public DBCityObject(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;	
@@ -153,6 +152,9 @@ public class DBCityObject implements DBImporter {
 
 		// SPARQL statement for precompilation
 		if (importer.isBlazegraph()) {
+			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
+			IRI_GRAPH_BASE = importer.getGraphBaseIri();
+			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 			stmt = getSPARQLStatement();
 		}
 		// parametrized query statement for precompilation
@@ -167,7 +169,7 @@ public class DBCityObject implements DBImporter {
 
 	private String getSPARQLStatement(){
 		String param = "  ?;";
-		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+		String stmt = "PREFIX ocgml: <" + 	PREFIX_ONTOCITYGML + "> " +
 				"BASE <" + IRI_GRAPH_BASE + "> " +
 				"INSERT DATA" +
 				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
@@ -340,8 +342,7 @@ public class DBCityObject implements DBImporter {
 			GeometryObject envelope = GeometryObject.createPolygon(coordinates, 3, dbSrid);
 			psCityObject.setObject(++index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(envelope, batchConn));
 		} 	else if (isBlazegraph) {
-			psCityObject.setObject(++index, NodeFactory.createBlankNode(),
-					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType());
+			psCityObject.setObject(++index, NodeFactory.createBlankNode());
 		} else {
 			psCityObject.setNull(++index, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());

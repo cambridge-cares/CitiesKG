@@ -9,12 +9,12 @@ public class DBSurfaceGeometryTest extends DBTest {
     @Test
     public void getSPARQLStatementTest() {
 
-        String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
-                "BASE <http://localhost/berlin/> " +
-                "INSERT DATA { GRAPH <surfacegeometry/> " +
-                "{ ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:parentId  ?;ocgml:rootId  ?;ocgml:isSolid  ?;" +
-                "ocgml:isComposite  ?;ocgml:isTriangulated  ?;ocgml:isXlink  ?;ocgml:isReverse  ?;" +
-                "ocgml:GeometryType  ?;ocgml:SolidType  ?;ocgml:ImplicitGeometryType  ?;ocgml:cityObjectId  ?;.}}";
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
+                "BASE <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> " +
+                "INSERT DATA { GRAPH <surfacegeometry/> { ? ocgml:id  ?;ocgml:gmlId  ?;ocgml:parentId  ?;" +
+                "ocgml:rootId  ?;ocgml:isSolid  ?;ocgml:isComposite  ?;ocgml:isTriangulated  ?;ocgml:isXlink  ?;" +
+                "ocgml:isReverse  ?;ocgml:GeometryType  ?;ocgml:SolidType  ?;ocgml:ImplicitGeometryType  ?;" +
+                "ocgml:cityObjectId  ?;.}}";
         String generated;
 
         try {
