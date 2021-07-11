@@ -31,22 +31,38 @@ public class DistanceAgent extends JPSAgent {
 
     @Override
     public boolean validateInput(JSONObject requestParams) throws BadRequestException {
-        if (requestParams.isEmpty()) {
-            throw new BadRequestException();
+        boolean error = true;
+        if (!requestParams.isEmpty()) {
+            Set<String> keys = requestParams.keySet();
+            if (keys.contains(KEY_REQ_METHOD) && keys.contains(KEY_IRIS)) {
+                if (requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.POST)) {
+                    try {
+                      JSONArray iris = requestParams.getJSONArray(KEY_IRIS);
+                      for (Object iri: iris) {
+                          URL distUrl = new URL((String) iri);
+                      }
+                    } catch (Exception e) {
+                        throw new BadRequestException(); }
+            }
         }
-        return true;
     }
+        if (error) {
+        throw new BadRequestException(); }
+        return true; }
 
 
     /** builds a SPARQL query for a specific URI to find a distance.
      */
     private Query getDistanceQuery(String uriString1, String uriString2){
-        SelectBuilder sb = new SelectBuilder()
+        WhereBuilder wb = new WhereBuilder()
                 .addPrefix( "ocgml",  ONTOLOGY_URI )
-                .addVar( "?distance" )
-                .addGraph(NodeFactory.createURI(DISTANCE_GRAPH_URI), "?firstUri", "ocgml:hasDistance", "?distanceUri")
+                .addWhere("?firstUri", "ocgml:hasDistance", "?distanceUri")
                 .addWhere("?secondUri", "ocgml:hasDistance", "?distanceUri")
-                .addWhere("?distanceUri", "ocgml:hasValue", "?Distance");
+                .addWhere("?distanceUri", "ocgml:hasValue", "?distance");
+
+        SelectBuilder sb = new SelectBuilder()
+                .addVar( "?distance" )
+                .addGraph(NodeFactory.createURI(DISTANCE_GRAPH_URI), wb);
         sb.setVar( Var.alloc( "firstUri" ), NodeFactory.createURI(uriString1));
         sb.setVar( Var.alloc( "secondUri" ), NodeFactory.createURI(uriString2));
         Query q = sb.build();
@@ -55,7 +71,7 @@ public class DistanceAgent extends JPSAgent {
     }
 
 
-    /** Retrieves values from KG for distances between objects.
+    /** get KGClient via KGrouter and execute query to get distances between two objects.
      */
     private float[] getDistance(URI[] objects){
         float[] distances = new float[objects.length * objects.length];
@@ -64,15 +80,12 @@ public class DistanceAgent extends JPSAgent {
     }
 
 
-    /** gets KG Client for created distance query.
+    /** sets KG Client for created envelope query.
      */
-    private KnowledgeBaseClientInterface getKGClientForDistanceQuery() {
-        String targetResourceIRIOrPath = ROUTE;
-        KnowledgeBaseClientInterface kgClient = KGRouter.getKnowledgeBaseClient(targetResourceIRIOrPath,
+    private void setKGClient(String route){
+        this.kgClient = KGRouter.getKnowledgeBaseClient(route,
                 true,
                 false);
-
-        return kgClient;
     }
 
 
@@ -110,14 +123,15 @@ public class DistanceAgent extends JPSAgent {
             MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
             point = (Point) JTS.transform(point, transform);
         } catch (FactoryException | TransformException e) {
-            throw new JPSRuntimeException(e);
-        }
+            throw new JPSRuntimeException(e); }
         return point;
     }
 
 
     /** The setDistance method writes distance between objects into KG.
      */
-   private void setDistance(String[] objects, double[] distances){}
+   private void setDistance(String[] objects, double[] distances){
+       // examples:
+   }
 
 }

@@ -55,7 +55,6 @@ public class EnvelopeTest extends TestCase {
                     .thenReturn(kgClientMock);
             assertEquals("1#2#0", envelope.getEnvelopeString("test_uri")); }
 
-
         //test with mocked kgClient and kgRouter when there is no string to return.
         String jsonEmpty = "[]";
         Mockito.when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(jsonEmpty);
