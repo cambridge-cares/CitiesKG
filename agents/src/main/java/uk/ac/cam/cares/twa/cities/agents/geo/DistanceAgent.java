@@ -7,6 +7,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
+import org.json.JSONArray;
 import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -15,17 +16,68 @@ import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import org.json.JSONObject;
 import javax.ws.rs.BadRequestException;
-import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Set;
+import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
+import uk.ac.cam.cares.jps.base.query.KGRouter;
+import uk.ac.cam.cares.twa.cities.model.geo.Envelope;
+import org.locationtech.jts.operation.distance3d.Distance3DOp;
+import javax.servlet.annotation.WebServlet;
+import javax.ws.rs.HttpMethod;
 
 /** This comment describes the DistanceAgent class.
  *  Two unique IRIs are used as inputs for the DistanceAgent class.
  *  First, the agent checks if the distance already exists between two IRIs and if not, it uses the envelope string of each IRI to create two envelope objects and calculate the distance between them.
  *  Second, the DistanceAgent class inserts the resulted distance into the Blazegraph and also returns it.
  */
+@WebServlet(
+        urlPatterns = {
+            DistanceAgent.URI_DISTANCE
+        })
 public class DistanceAgent extends JPSAgent {
+    public static final String URI_DISTANCE = "/distance";
+    public static final String KEY_REQ_METHOD = "method";
+    public static final String KEY_IRIS = "iris";
+
+    private static final String ONTOLOGY_URI = "http://locahost/ontocitygml/";
+    private static final String DISTANCE_GRAPH_URI = "SomeGraph";
+    private static final String ROUTE = "http://kb/citieskg-singapore";
+
+    private KnowledgeBaseClientInterface kgClient;
+
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
         validateInput(requestParams);
+        String uri1 = "http://www.obja.com/a";
+        String uri2 = "http://www.obja.com/b";
+
+        ArrayList<String> uris = new ArrayList<>();
+        uris.add(uri1);
+        uris.add(uri2);
+
+        ArrayList distances = new ArrayList();
+
+        for (int firstURI = 0; firstURI < uris.size(); firstURI++) {
+            String objectUri1 = uris.get(firstURI);
+
+            for ( int secondURI = firstURI+1; secondURI< uris.size(); secondURI++){
+                String objectUri2 = uris.get(secondURI);
+
+                double distance = 0;
+
+                try {
+                    distance = getDistance(objectUri1, objectUri2);
+                }
+                catch (Exception e) {
+                    distance = computeDistance(getEnvelope(objectUri1), getEnvelope(objectUri2));
+                    //setDistance();
+                }
+                distances.add(distance);
+            }
+        }
+        requestParams.append("distances", distances);
         return requestParams;
     }
 
@@ -73,10 +125,18 @@ public class DistanceAgent extends JPSAgent {
 
     /** get KGClient via KGrouter and execute query to get distances between two objects.
      */
-    private float[] getDistance(URI[] objects){
-        float[] distances = new float[objects.length * objects.length];
-        return distances;
+    private double getDistance(String uriString1, String uriString2) {
 
+       double distance;
+       Query q = getDistanceQuery(uriString1, uriString2);
+       setKGClient(ROUTE);
+
+       String queryResultString = kgClient.execute(q.toString());
+
+       JSONArray queryResult = new JSONArray(queryResultString);
+       distance = (Double) queryResult.getJSONObject(0).get("Distance");
+
+       return distance;
     }
 
 
@@ -91,18 +151,20 @@ public class DistanceAgent extends JPSAgent {
 
     /** Returns object envelope with its attributes.
      */
-    private String[] getEnvelope(URI[] objects){
-        String[] envelopeString = new String[objects.length];
-        return envelopeString;
+    public Envelope getEnvelope(String uriString) {
 
+        String coordinateSystem = "EPSG:4326";
+        Envelope envelope = new Envelope(coordinateSystem);
+        String envelopeString = envelope.getEnvelopeString(uriString);
+        envelope.extractEnvelopePoints(envelopeString);
+
+        return envelope;
     }
 
 
     /** Computes distance between two centroids. Distance3D calculation works only with cartesian CRS
      */
-    private double computeDistance(Envelope envelope1, Envelope envelope2){
-        //if JAVA library is not available:
-        //CommandHelper.executeCommands("", new ArrayList<String>("python script"));
+    public double computeDistance(Envelope envelope1, Envelope envelope2){
 
         Point centroid1 = envelope1.getCentroid();
         Point centroid2 = envelope2.getCentroid();
@@ -110,6 +172,7 @@ public class DistanceAgent extends JPSAgent {
         String crs2 = envelope2.getCRS();
         centroid1 = setUniformCRS(centroid1, crs1, "EPSG:24500");
         centroid2 = setUniformCRS(centroid2, crs2, "EPSG:24500");
+
         return Distance3DOp.distance(centroid1, centroid2);
     }
 
