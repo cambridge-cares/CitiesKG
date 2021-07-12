@@ -1,10 +1,12 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.update.UpdateRequest;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.json.JSONArray;
@@ -19,6 +21,8 @@ import javax.ws.rs.BadRequestException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.UUID;
+
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.jps.base.query.KGRouter;
@@ -42,7 +46,8 @@ public class DistanceAgent extends JPSAgent {
     public static final String KEY_IRIS = "iris";
 
     private static final String ONTOLOGY_URI = "http://locahost/ontocitygml/";
-    private static final String DISTANCE_GRAPH_URI = "SomeGraph";
+    private static final String KNOWLEDGE_GRAPH_URI = "http://localhost:9999/blazegraph/namespaces/SLA/sparql/";
+    private static final String DISTANCE_GRAPH_URI = KNOWLEDGE_GRAPH_URI + "distance/";
     private static final String ROUTE = "http://kb/citieskg-singapore";
 
     private KnowledgeBaseClientInterface kgClient;
@@ -72,7 +77,7 @@ public class DistanceAgent extends JPSAgent {
                 }
                 catch (Exception e) {
                     distance = computeDistance(getEnvelope(objectUri1), getEnvelope(objectUri2));
-                    //setDistance();
+                    setDistance(objectUri1, objectUri1, distance);
                 }
                 distances.add(distance);
             }
@@ -191,10 +196,40 @@ public class DistanceAgent extends JPSAgent {
     }
 
 
+    /** This method generates a unique ID for distance subject.
+     */
+    private UpdateRequest getSetDistanceQuery(String firstUri, String secondUri, double distance){
+        String distanceUri = uniqueURIGenerator();
+
+        UpdateBuilder insertBuilder = new UpdateBuilder()
+                .addPrefix( "ocgml",  ONTOLOGY_URI )
+                .addInsert( "?graph", NodeFactory.createURI(firstUri), "ocgml:hasDistance", "?distanceUri")
+                .addInsert( "?graph", NodeFactory.createURI(secondUri), "ocgml:hasDistance", "?distanceUri")
+                .addInsert( "?graph", "?distanceUri", "ocgml:hasValue", distance);
+        insertBuilder.setVar( Var.alloc( "graph" ), NodeFactory.createURI(DISTANCE_GRAPH_URI));
+        insertBuilder.setVar( Var.alloc( "distanceUri" ), NodeFactory.createURI(distanceUri));
+        UpdateRequest ur = insertBuilder.buildRequest();
+
+        return ur;
+    }
+
+
+    /** This method generates a unique ID for distance subject.
+     */
+    private String uniqueURIGenerator(){
+        String uuid = UUID.randomUUID().toString();
+        String uniqueName = "DIST_" + uuid;
+        String distanceUri =  DISTANCE_GRAPH_URI + uniqueName;
+        return distanceUri;
+    }
+
+
     /** The setDistance method writes distance between objects into KG.
      */
-   private void setDistance(String[] objects, double[] distances){
-       // examples:
-   }
+   private void setDistance(String firstUri, String secondUri,  double distance){
 
+       UpdateRequest ur = getSetDistanceQuery(firstUri, secondUri, distance);
+       setKGClient(ROUTE);
+       kgClient.execute(ur.toString());
+   }
 }
