@@ -30,33 +30,7 @@ public class StatementTransformer {
     public String sqlStatement;
     public String sparqlStatement;
 
-    // create the query based on number of predicates and * for all
-    public static String getTopFeatureId(SQLStatement sqlStatement){
-        Select select = (Select) sqlStatement;
-        List<PredicateToken> predicateTokens = select.getSelection();
-        List<PlaceHolder<?>> placeHolders = new ArrayList<>();
-        predicateTokens.get(1).getInvolvedPlaceHolders(placeHolders);
-        String sparql = null;
-        if (placeHolders.get(0).getValue().equals("*")){
-            // input is * => retrieve all gmlId from database
-            // Create the query for retrieving all entries in the database
-            sparql = "PREFIX  ocgml: <http://locahost/ontocitygml/> " +
-                    "SELECT  ?id ?objectclass_id ?gmlid " +
-                    "FROM <http://localhost/berlin/cityobject/> " +
-                    "WHERE { " +
-                    "?id ocgml:objectClassId  ?objectclass_id . " +
-                    "?id ocgml:gmlId ?gmlid " +
-                    "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )}";
-        }else{
-            try {
-                sparql = queryObject_transformer(sqlStatement).toString();
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-        }
-        return sparql;
-    }
-
+    /*
     // try test with multiple gmlId
     public static String getObjectId (){
         String sparql = "PREFIX  ocgml: <http://locahost/ontocitygml/>\n" +
@@ -68,7 +42,7 @@ public class StatementTransformer {
                 "        FILTER ( ?gmlid IN ( ? , ? ))  }";
         return sparql;
     }
-
+    */
     // getBuildingPartsFromBuilding() in Building.java
     public static String getSPARQLStatement_BuildingParts (String sqlQuery) {
         String sparql = "PREFIX  ocgml: <http://locahost/ontocitygml/> " +
@@ -88,8 +62,17 @@ public class StatementTransformer {
     }
 
 
-    // Analyze SQL statement and transform it to a SPARQL query (Normal usuage: single gmlid or multiple gmlid)
-    public static Query queryObject_transformer (SQLStatement sqlStatement) throws ParseException {
+    // Analyze SQL statement and transform it to a SPARQL query (Normal usuage: single gmlid or multiple gmlid or *)
+    /* PREFIX  ocgml: <http://locahost/ontocitygml/>
+       SELECT  ?id ?objectclass_id ?gmlid
+       FROM <http://localhost/berlin/cityobject/>
+       WHERE  { ?id ocgml:objectClassId  ?objectclass_id .
+                ?id ocgml:gmlId ?gmlid
+                FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )." +
+                FILTER ( ?gmlid IN ( ? , ? ))  }";   // FILTER ( ?gmlid = ? ) // ...
+     */
+    // rename queryObject_transformer to getTopFeatureId
+    public static String getTopFeatureId (SQLStatement sqlStatement) throws ParseException {
         Select select = (Select) sqlStatement;
         List<ProjectionToken> projectionTokens = select.getProjection();
         Set<Table> InvolvedTables = sqlStatement.getInvolvedTables();
@@ -108,7 +91,7 @@ public class StatementTransformer {
 
         applyPredicate(sb, predicateTokens, placeHolders);
         Query q = sb.build();
-        return q;
+        return q.toString();
     }
 
     public static void applyPredicate (SelectBuilder sb, List<PredicateToken> predicateTokens, List<PlaceHolder<?>> placeHolders) throws ParseException {
@@ -161,7 +144,7 @@ public class StatementTransformer {
                     sb.addFilter(conditionStr.toString());
                 }
             } else {
-
+                continue;
             }
         }
 

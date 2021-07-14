@@ -1,9 +1,0 @@
-#Wed Apr 28 15:20:43 SGT 2021
-com.bigdata.rdf.store.AbstractTripleStore.quads=true
-com.bigdata.rdf.store.AbstractTripleStore.geoSpatial=true
-com.bigdata.journal.AbstractJournal.file=citiesKG.jnl
-com.bigdata.rdf.sail.truthMaintenance=false
-com.bigdata.rdf.store.AbstractTripleStore.axiomsClass=com.bigdata.rdf.axioms.NoAxioms
-com.bigdata.rdf.store.AbstractTripleStore.geoSpatialDatatypeConfig.0={"config"\:{"fields"\:[{"serviceMapping"\:"X0","multiplier"\:"100000","valueType"\:"DOUBLE"},{"serviceMapping"\:"Y0","multiplier"\:"100000","valueType"\:"DOUBLE"},{"serviceMapping"\:"Z0","multiplier"\:"100000","valueType"\:"DOUBLE"},{"serviceMapping"\:"X1","multiplier"\:"100000","valueType"\:"DOUBLE"},{"serviceMapping"\:"Y1","multiplier"\:"100000","valueType"\:"DOUBLE"},{"serviceMapping"\:"Z1","multiplier"\:"100000","valueType"\:"DOUBLE"},{"serviceMapping"\:"X2","multiplier"\:"100000","valueType"\:"DOUBLE"},{"serviceMapping"\:"Y2","multiplier"\:"100000","valueType"\:"DOUBLE"},{"serviceMapping"\:"Z2","multiplier"\:"100000","valueType"\:"DOUBLE"},{"serviceMapping"\:"X3","multiplier"\:"100000","valueType"\:"DOUBLE"},{"serviceMapping"\:"Y3","multiplier"\:"100000","valueType"\:"DOUBLE"},{"serviceMapping"\:"Z3","multiplier"\:"100000","valueType"\:"DOUBLE"},{"serviceMapping"\:"X4","multiplier"\:"100000","valueType"\:"DOUBLE"},{"serviceMapping"\:"Y4","multiplier"\:"100000","valueType"\:"DOUBLE"},{"serviceMapping"\:"Z4","multiplier"\:"100000","valueType"\:"DOUBLE"}],"uri"\:"http\://localhost/blazegraph/literals/POLYGON-3-15"}}
-com.bigdata.rdf.store.AbstractTripleStore.vocabularyClass=uk.ac.cam.cares.jps.cities.db.CitiesKGVocabulary
-com.bigdata.journal.AbstractJournal.bufferMode=DiskRW

@@ -187,7 +187,11 @@ public class SQLAdapter extends AbstractSQLAdapter {
         // Query SPARQLStatement = null;
         PreparedStatement preparedStatement = null;
         //SPARQLStatement = StatementTransformer.queryObject_transformer(statement);
-        SPARQLStatement = StatementTransformer.getTopFeatureId(statement);
+        try {
+            SPARQLStatement = StatementTransformer.getTopFeatureId(statement);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
 
         preparedStatement = connection.prepareStatement(SPARQLStatement.toString());
         //preparedStatement = connection.prepareStatement(StatementTransformer.getObjectId());
