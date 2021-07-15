@@ -111,9 +111,7 @@ public class Queries {
 	public String getExtrusionHeight() {
 		switch (databaseAdapter.getDatabaseType()) {
 			case BLAZE:
-				return new StringBuilder("PREFIX  ocgml: <http://locahost/ontocitygml/>")
-						.append("SELECT  ?envelope FROM <http://localhost/berlin/cityobject/>")
-						.append("WHERE { ?s ocgml:EnvelopeType ?envelope ; ocgml:id ? . }").toString();
+				return StatementTransformer.getExtrusionHeight();
 			case ORACLE:
 				return new StringBuilder("SELECT ")
 						.append("SDO_GEOM.SDO_MAX_MBR_ORDINATE(co.envelope, 3) - SDO_GEOM.SDO_MIN_MBR_ORDINATE(co.envelope, 3) AS envelope_measured_height ")

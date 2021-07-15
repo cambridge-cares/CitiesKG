@@ -124,10 +124,6 @@ public class KmlSplitter {
 
 		// Added by Shiying
 		boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value()); //@TODO: Try with KMLExporterManager
-		//PreparedStatement stmt1 = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
-		//if (is_Blazegraph){
-		//	PreparedStatement stmt = databaseAdapter.getSQLAdapter().transformStatement(select, connection);
-		//};
 
 		try (PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
 			 ResultSet rs = stmt.executeQuery()) {

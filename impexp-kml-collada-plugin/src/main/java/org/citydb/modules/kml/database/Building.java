@@ -117,7 +117,7 @@ public class Building extends KmlGenericObject{
 
 			// Modified by Shiying
 			if (isBlazegraph) {
-				String baseURL = "http://localhost/berlin/building/";
+				String baseURL = StatementTransformer.getIriObjectBase() + "building/";
 				URL url = null;
 				try {
 					url = new URL(baseURL + work.getGmlId()+"/");
@@ -382,7 +382,7 @@ public class Building extends KmlGenericObject{
 						if (isBlazegraph){
 							URL url = null;
 							try {
-								url = new URL("http://localhost/berlin/cityobject/" + work.getGmlId()+"/");
+								url = new URL(StatementTransformer.getIriObjectBase() + "cityobject/" + work.getGmlId()+"/");
 							} catch (MalformedURLException e) {
 								e.printStackTrace();
 							}
