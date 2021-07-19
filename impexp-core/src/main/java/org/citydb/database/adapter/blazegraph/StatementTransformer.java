@@ -88,7 +88,6 @@ public class StatementTransformer {
                         "?ts_id ocgml:objectClassId 35 ; ocgml:buildingId ? ;ocgml:lod2MultiSurfaceId ?lod2MSid .}" +
                         "GRAPH " + IRI_GRAPH_BASE + "surfacegeometry/> {" +
                         "?sg_id ocgml:rootId ?lod2MSid; ocgml:GeometryType ?geomtype . FILTER(!isBlank(?geomtype))} }";
-
         return sparql;
     }
 
