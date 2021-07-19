@@ -352,6 +352,7 @@ public class Building extends KmlGenericObject{
 							try { psQuery.close(); } catch (SQLException sqle) {}
 							rs = null;
 						} catch (SQLException e) {
+							log.error("Error at : " + buildingPartId);
 							log.error("SQL error while aggregating geometries in LOD " + currentLod + ": " + e.getMessage());
 							try { if (rs != null) rs.close(); } catch (SQLException sqle) {} 
 							try { if (psQuery != null) psQuery.close(); } catch (SQLException sqle) {}
@@ -396,6 +397,7 @@ public class Building extends KmlGenericObject{
 
 						double measuredHeight = 0;
 						if (isBlazegraph) {
+							//log.info("Processing : " + buildingPartId);
 							String envelop = rs2.getString(1);
 							measuredHeight = extractHeight(envelop);
 							return createPlacemarksForExtruded_geospatial(rs, work, measuredHeight, reversePointOrder, existGS, null);
@@ -488,7 +490,7 @@ public class Building extends KmlGenericObject{
 
 		ArrayList<Double> heights = new ArrayList<Double>();
 		for (int k = 1; k <= 5; k++){
-			System.out.println(arrOfStr[(k*3)-1]);
+			//System.out.println(arrOfStr[(k*3)-1]);
 			//heights[k-1] = Double.valueOf(arrOfStr[(k*3)-1]);
 			heights.add(Double.valueOf(arrOfStr[(k*3)-1]));
 		}
