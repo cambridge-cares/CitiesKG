@@ -11,6 +11,8 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.concurrent.BlockingQueue;
+import org.eclipse.jetty.server.Server;
 
 public class ImporterTask implements Runnable {
     public static final String PROJECT_CONFIG = "project.xml";
@@ -20,20 +22,15 @@ public class ImporterTask implements Runnable {
     public static final String EXT_FILE_JNL = ".jnl";
     public static final String EXT_FILE_GML = ".gml";
     public static final String EXT_FILE_NQUADS = ".nq";
-    private BlazegraphServerTask serverTask;
-    private File importFile;
-
+    private final BlockingQueue serverInstances;
+    private final File importFile;
     private Boolean stop = false;
 
-    public ImporterTask(BlazegraphServerTask serverTask, File importFile) {
-        this.serverTask = serverTask;
+    public ImporterTask(BlockingQueue serverInstances, File importFile) {
+        this.serverInstances = serverInstances;
         this.importFile = importFile;
-        this.serverTask.stop(false);
     }
 
-    public boolean getStop() {
-        return stop;
-    }
 
     public void stop() {
         stop = true;
@@ -42,21 +39,19 @@ public class ImporterTask implements Runnable {
     @Override
     public void run() {
         while (!stop) {
-            while (!serverTask.getStop()) {
-                URI endpointUri = serverTask.getServiceUri();
-                if (endpointUri != null) {
-                    try {
-                        File cfgfile = setupFiles(endpointUri);
-                        String[] args = {"-shell", "-import=" + importFile.getAbsolutePath(),
-                        "-config=" + cfgfile.getAbsolutePath()};
-                        ImpExp.main(args);
-                        new File(importFile.getAbsolutePath().replace(EXT_FILE_GML, EXT_FILE_NQUADS)).createNewFile();
-                    } catch (Exception e) {
-                        throw new JPSRuntimeException(e);
-                    } finally {
-                        serverTask.stop(true);
-                        stop();
-                    }
+            while (!serverInstances.isEmpty()) {
+                try {
+                    Server server = (Server) serverInstances.take();
+                    File cfgfile = setupFiles(server.getURI());
+                    String[] args = {"-shell", "-import=" + importFile.getAbsolutePath(),
+                            "-config=" + cfgfile.getAbsolutePath()};
+                    ImpExp.main(args);
+                    new File(importFile.getAbsolutePath().replace(EXT_FILE_GML, EXT_FILE_NQUADS)).createNewFile();
+                    server.stop();
+               } catch (Exception e) {
+                    throw new JPSRuntimeException(e);
+                } finally {
+                    stop();
                 }
             }
         }

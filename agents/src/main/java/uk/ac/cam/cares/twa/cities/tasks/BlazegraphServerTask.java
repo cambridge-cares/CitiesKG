@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.tasks;
 
 import com.bigdata.rdf.sail.webapp.ConfigParams;
 import com.bigdata.rdf.sail.webapp.NanoSparqlServer;
+import com.bigdata.rdf.sail.webapp.StandaloneNanoSparqlServer;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Server;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -14,6 +15,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
+import java.util.concurrent.BlockingQueue;
 
 public class BlazegraphServerTask implements Runnable {
     public static final String PROPERTY_FILE = "RWStore.properties";
@@ -23,62 +25,43 @@ public class BlazegraphServerTask implements Runnable {
     public static final String NAMESPACE = "tmpkb";
     private final String DEF_JOURNAL_NAME = "citiesKG.jnl";
     private final String FS = System.getProperty("file.separator");
-    private String journalPath;
-    private URI serviceUri;
+    private final String journalPath;
+    private final BlockingQueue<Server> queue;
     private Boolean stop = false;
+    private Server server = null;
 
-    public BlazegraphServerTask(String journalName) {
+
+    public BlazegraphServerTask(BlockingQueue<Server> queue, String journalName) {
+        this.queue = queue;
         this.journalPath = journalName;
     }
 
-    public String getJournalName() {
-        return journalPath;
-    }
 
-    public URI getServiceUri() {
-        return serviceUri;
-    }
-
-    public boolean getStop() {
-        return stop;
-    }
-
-    public void stop(boolean value) {
-        stop = value;
+    public void stop() {
+        stop = true;
     }
 
     @Override
     public void run() {
-        Server server = null;
-        File  propFile = null;
-        while (!stop) {
-            if (serviceUri == null) {
+        while (!stop ) {
+            if (server == null) {
                 try {
                     String propFileAbsPath = setupPaths();
-                    propFile = setupFiles(propFileAbsPath);
+                    setupFiles(propFileAbsPath);
                     String jettyXml = setupSystem(propFileAbsPath);
                     server = setupServer(propFileAbsPath, jettyXml);
-
-                    NanoSparqlServer.awaitServerStart(server);
-                    serviceUri = server.getURI();
+                    StandaloneNanoSparqlServer.awaitServerStart(server);
+                    queue.put(server);
                 } catch (Exception e) {
                     throw new JPSRuntimeException(e);
                 }
+            } else if (server.isStopped()) {
+                server.destroy();
+                stop();
             }
         }
-        if (server != null) {
-           try {
-                server.stop();
-                server.destroy();
-            } catch (Exception e) {
-                throw new JPSRuntimeException(e);
-            } finally {
-                if (propFile != null && propFile.isFile()) {
-                    propFile.delete();
-                }
-             }
-        }
     }
+
 
     private String setupPaths() {
         File journalFile =  new File(journalPath);
@@ -103,7 +86,6 @@ public class BlazegraphServerTask implements Runnable {
     private String setupSystem(String propFileAbsPath) {
         String jettyXml = NanoSparqlServer.class.getResource(JETTY_CFG_PATH).toExternalForm();
         String war = NanoSparqlServer.class.getResource(WAR_PATH).toExternalForm();
-
         System.setProperty("jetty.home", war);
         System.setProperty(NanoSparqlServer.SystemProperties.JETTY_XML, jettyXml);
         System.setProperty(NanoSparqlServer.SystemProperties.BIGDATA_PROPERTY_FILE, propFileAbsPath);
@@ -115,11 +97,7 @@ public class BlazegraphServerTask implements Runnable {
         LinkedHashMap<String, String> initParams = new LinkedHashMap<>();
         initParams.put(ConfigParams.PROPERTY_FILE, propFileAbsPath);
         initParams.put(ConfigParams.NAMESPACE, NAMESPACE);
-        initParams.put(ConfigParams.QUERY_THREAD_POOL_SIZE,
-                String.valueOf(ConfigParams.DEFAULT_QUERY_THREAD_POOL_SIZE));
-        initParams.put(ConfigParams.FORCE_OVERFLOW, "false");
-        initParams.put(ConfigParams.READ_LOCK, "0");
-        Server server = NanoSparqlServer.newInstance(0, jettyXml, null, initParams);
+        Server server = StandaloneNanoSparqlServer.newInstance(0, jettyXml, null, initParams);
 
         return server;
     }

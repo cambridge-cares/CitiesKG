@@ -1,6 +1,7 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
 import com.bigdata.rdf.sail.ExportKB;
+import org.eclipse.jetty.server.Server;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -24,13 +25,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 
 
 /**
@@ -72,8 +72,8 @@ public class CityImportAgent extends JPSAgent {
     public static final String EXT_GZ = ".gz";
     private final String FS = System.getProperty("file.separator");
     public final int CHUNK_SIZE = 100;
+    public final int NUM_SERVER_THREADS = 4;
     //@todo: ImpExp.main() seems to work better if there is only one thread of it at a time. It needs further investigation.
-    public final int NUM_SERVER_THREADS = 1;
     public final int NUM_IMPORTER_THREADS = 1;
     private String requestUrl;
     private String targetUrl;
@@ -222,17 +222,8 @@ public class CityImportAgent extends JPSAgent {
                 }
             }
         }
-        ArrayList<File> rejected = new ArrayList<>();
 
-        for (File nqlFile: exportChunksToNquads(splitDir)) {
-            if (changeUrlsInNQuadsFile(nqlFile, "", targetUrl)) {
-                if (!uploadNQuadsFileToBlazegraphInstance(nqlFile, targetUrl + "sparql")) {
-                    rejected.add(nqlFile);
-                }
-            } else {
-                rejected.add(nqlFile);
-            }
-        }
+        exportChunksToNquads(importDir);
 
         System.out.println("Import Done.");
 
@@ -286,8 +277,9 @@ public class CityImportAgent extends JPSAgent {
      * @return - information about local import success
      */
     private void importChunk(File file) {
-        BlazegraphServerTask serverTask = startBlazegraphInstance(file.getAbsolutePath());
-        importToLocalBlazegraphInstance(serverTask, file);
+        BlockingQueue<Server> queue = new LinkedBlockingDeque<>();
+        startBlazegraphInstance(queue, file.getAbsolutePath());
+        importToLocalBlazegraphInstance(queue, file);
 
     }
 
@@ -296,8 +288,9 @@ public class CityImportAgent extends JPSAgent {
      *
      * @return - URL of the SPARQL update endpoint
      */
-    private BlazegraphServerTask startBlazegraphInstance(String filepath) {
-        BlazegraphServerTask task = new BlazegraphServerTask(filepath.replace(ImporterTask.EXT_FILE_GML, ImporterTask.EXT_FILE_JNL));
+    private BlazegraphServerTask startBlazegraphInstance(BlockingQueue<Server>  queue, String filepath) {
+        BlazegraphServerTask task = new BlazegraphServerTask(queue,
+                filepath.replace(ImporterTask.EXT_FILE_GML, ImporterTask.EXT_FILE_JNL));
         serverExecutor.execute(task);
 
         return task;
@@ -306,28 +299,17 @@ public class CityImportAgent extends JPSAgent {
     /**
      * Imports CityGML file into local Blazegraph instance.
      *
-     * @param serverTask - an instance BlazegraphServerTask
+     * @param queue - queue for instances of Blazegraph
      * @param file - file to import
      * @return
      */
-    private ImporterTask importToLocalBlazegraphInstance(BlazegraphServerTask serverTask, File file) {
-        ImporterTask task = new ImporterTask(serverTask, file);
+    private ImporterTask importToLocalBlazegraphInstance(BlockingQueue<Server> queue, File file) {
+        ImporterTask task = new ImporterTask(queue, file);
         importerExecutor.execute(task);
 
         return task;
     }
 
-    /**
-     * Stops local Blazegraph SPARQL server instance.
-     *
-     * @param port - SPARQL server port
-     * @return - information about stop success
-     */
-    private boolean stopBlazegraphInstance(int port) {
-        //@Todo: implementation
-        boolean stopped = false;
-        return stopped;
-    }
 
     /**
      * Writes error log to a file.
@@ -399,9 +381,10 @@ public class CityImportAgent extends JPSAgent {
     private File exportToNquadsFileFromJnlFile(File jnlFile) {
         File nqFile = new File(jnlFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_JNL, ImporterTask.EXT_FILE_NQUADS));
         String nqDir = nqFile.getParent() + FS + NQ_OUTDIR;
+        String propFilePath = jnlFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_JNL, BlazegraphServerTask.PROPERTY_FILE);
         String[] args = {ARG_OUTDIR, nqDir,
                 ARG_FORMAT, NQ_FORMAT,
-                jnlFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_JNL, BlazegraphServerTask.PROPERTY_FILE)};
+                propFilePath};
         try {
             ExportKB.main(args);
         } catch (Exception e) {
@@ -412,6 +395,8 @@ public class CityImportAgent extends JPSAgent {
         exportedNqFile.renameTo(targetNqFile);
         exportedNqFile.delete();
         nqFile.delete();
+        jnlFile.delete();
+        new File(propFilePath).delete();
 
         return targetNqFile;
     }
