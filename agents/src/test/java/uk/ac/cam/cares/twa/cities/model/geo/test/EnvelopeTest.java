@@ -41,7 +41,6 @@ public class EnvelopeTest extends TestCase {
             e.printStackTrace(); }
     }
 
-
     @Test
     public void testGetEnvelopeString(){
         Envelope envelope = new Envelope("EPSG:4326");
@@ -68,7 +67,6 @@ public class EnvelopeTest extends TestCase {
             catch (JSONException error){
                 assertEquals("JSONArray[0] not found.", error.getMessage()); } }
     }
-
 
     @Test
     public void testExtractEnvelopePoints(){
@@ -121,7 +119,6 @@ public class EnvelopeTest extends TestCase {
         assertEquals(0.0, envelope.getCentroid().getCoordinate().getZ());
     }
 
-
     @Test
     public void testGetCentroid(){
         Envelope envelope = new Envelope("EPSG:4326");
@@ -137,7 +134,6 @@ public class EnvelopeTest extends TestCase {
         Point centroid2 = envelope.getCentroid();
         assertFalse(Double.isNaN(centroid2.getCoordinate().getZ()));
     }
-
 
     @Test
     public void testGetCRS(){

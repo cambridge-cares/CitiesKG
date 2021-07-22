@@ -9,9 +9,7 @@ import org.locationtech.jts.geom.*;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.jps.base.query.KGRouter;
 
-
-/**
- * The class transforms Envelope string into a list of points that defines envelope boundary and from it computes envelope centroid.
+/** The class transforms Envelope string into a list of points that defines envelope boundary and from it computes envelope centroid.
  */
 public class Envelope {
 
@@ -22,9 +20,6 @@ public class Envelope {
     private GeometryBuilder factory = new GeometryBuilder();
     private String crs;
 
-    //private static final String ONTOLOGY_URI = "http://theworldavatar.com/ontology/ontocitygml/citieskg/";
-    //private static final String ENVELOPE_GRAPH_URI = "http://www.theworldavatar.com/citieskg/singapore/cityobject/";
-    //private static final String ROUTE = "http://kb/citieskg-singapore";
     private static final String ONTOLOGY_URI = "http://locahost/ontocitygml/";
     private static final String ENVELOPE_GRAPH_URI = "http://localhost/berlin/cityobject/";
     private static final String ROUTE = "http://kb/singapore-local";
@@ -35,9 +30,7 @@ public class Envelope {
         this.crs = crs;
     }
 
-
-   /** builds a SPARQL query for a specific URI to find envelope.
-    */
+   /** builds a SPARQL query for a specific URI to find envelope. */
     private Query getEnvelopeQuery(String uriString) {
 
         SelectBuilder sb = new SelectBuilder()
@@ -50,9 +43,14 @@ public class Envelope {
         return q;
     }
 
+    /** sets KG Client for created envelope query. */
+    private void setKGClient(String route){
+        this.kgClient = KGRouter.getKnowledgeBaseClient(route,
+                true,
+                false);
+    }
 
-    /** get KGClient via KGrouter and execute query to get envelope string.
-     */
+    /** get KGClient via KGrouter and execute query to get envelope string. */
     public String getEnvelopeString(String uriString) {
         setKGClient(ROUTE);
 
@@ -67,19 +65,8 @@ public class Envelope {
         return envelopeString;
     }
 
-
-    /** sets KG Client for created envelope query.
-     */
-    private void setKGClient(String route){
-        this.kgClient = KGRouter.getKnowledgeBaseClient(route,
-                true,
-                false);
-    }
-
-
-    /** Transforms envelopeString into 5 points representing envelope boundary.
-     */
-   public void extractEnvelopePoints(String envelopeString) {
+    /** Transforms envelopeString into 5 points representing envelope boundary. */
+    public void extractEnvelopePoints(String envelopeString) {
        if (envelopeString.equals("")) {
            throw new IllegalArgumentException("empty String"); }
        else if (!envelopeString.contains("#")){
@@ -117,17 +104,13 @@ public class Envelope {
       centroid.geometryChanged();
    }
 
-
-    /** Method gets centroid as Point.
-     */
-  public Point getCentroid() {
+    /** Method gets centroid as Point. */
+    public Point getCentroid() {
       return centroid;
   }
 
-
-    /** Method gets envelope CRS.
-     */
+  /** Method gets envelope CRS. */
   public String getCRS(){
-      return crs;
+        return crs;
   }
 }
