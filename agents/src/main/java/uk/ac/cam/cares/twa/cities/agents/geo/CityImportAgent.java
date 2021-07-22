@@ -14,6 +14,8 @@ import uk.ac.cam.cares.jps.aws.CreateFileWatcher;
 import uk.ac.cam.cares.jps.base.util.CommandHelper;
 import uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask;
 import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
+import uk.ac.cam.cares.twa.cities.tasks.NquadsExporterTask;
+import uk.ac.cam.cares.twa.cities.tasks.NquadsUploaderTask;
 
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
@@ -26,6 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -72,8 +75,8 @@ public class CityImportAgent extends JPSAgent {
     public static final String EXT_GZ = ".gz";
     private final String FS = System.getProperty("file.separator");
     public final int CHUNK_SIZE = 100;
-    public final int NUM_SERVER_THREADS = 4;
-    //@todo: ImpExp.main() seems to work better if there is only one thread of it at a time. It needs further investigation.
+    public final int NUM_SERVER_THREADS = 2;
+    //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
     public final int NUM_IMPORTER_THREADS = 1;
     private String requestUrl;
     private String targetUrl;
@@ -81,6 +84,8 @@ public class CityImportAgent extends JPSAgent {
     File splitDir;
     private final ThreadPoolExecutor serverExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_SERVER_THREADS);
     private final ThreadPoolExecutor importerExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_IMPORTER_THREADS);
+    private final ExecutorService nqExportExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService nqUploadExecutor = Executors.newSingleThreadExecutor();
 
 
     @Override
@@ -218,12 +223,16 @@ public class CityImportAgent extends JPSAgent {
             for (File file : dirContent) {
                 ArrayList<File> chunks = splitFile(file);
                 for (File chunk : chunks) {
-                    importChunk(chunk);
+                    try {
+                        importChunk(chunk);
+                    } catch (Exception e) {
+                        throw new JPSRuntimeException(e);
+                    }
                 }
             }
         }
 
-        exportChunksToNquads(importDir);
+        //exportChunksToNquads(importDir);
 
         System.out.println("Import Done.");
 
@@ -276,10 +285,13 @@ public class CityImportAgent extends JPSAgent {
      * @param file- chunk to import
      * @return - information about local import success
      */
-    private void importChunk(File file) {
-        BlockingQueue<Server> queue = new LinkedBlockingDeque<>();
-        startBlazegraphInstance(queue, file.getAbsolutePath());
-        importToLocalBlazegraphInstance(queue, file);
+    private void importChunk(File file) throws URISyntaxException {
+        BlockingQueue<Server> localImportqueue = new LinkedBlockingDeque<>();
+        BlockingQueue<File> remoteImportqueue = new LinkedBlockingDeque<>();
+        startBlazegraphInstance(localImportqueue, file.getAbsolutePath());
+        importToLocalBlazegraphInstance(localImportqueue, file);
+        exportToNquads(remoteImportqueue, file);
+        uploadNQuadsFileToBlazegraphInstance(remoteImportqueue, new URI(targetUrl));
 
     }
 
@@ -310,6 +322,12 @@ public class CityImportAgent extends JPSAgent {
         return task;
     }
 
+    private NquadsExporterTask exportToNquads(BlockingQueue<File> queue, File file) {
+        NquadsExporterTask task = new NquadsExporterTask(queue, file, targetUrl);
+        nqExportExecutor.execute(task);
+
+        return task;
+    }
 
     /**
      * Writes error log to a file.
@@ -325,7 +343,7 @@ public class CityImportAgent extends JPSAgent {
      *
      * @param journalDir - directory with jnl files
      * @return - exported n-quads files
-     */
+
     private ArrayList<File> exportChunksToNquads(File journalDir) {
         ArrayList<File> nqFiles = new ArrayList<>();
 
@@ -357,7 +375,7 @@ public class CityImportAgent extends JPSAgent {
      *
      * @param journalDir
      * @return
-     */
+
     private ArrayList<File>  collectJournalFilesForNquadsExport(File journalDir) {
         ArrayList<File> jnlFiles = new ArrayList<>();
 
@@ -371,92 +389,21 @@ public class CityImportAgent extends JPSAgent {
 
         return jnlFiles;
     }
-
-    /**
-     * Exports individual journal file to n-quads file. Removes helper files after that.
-     *
-     * @param jnlFile
-     * @return
      */
-    private File exportToNquadsFileFromJnlFile(File jnlFile) {
-        File nqFile = new File(jnlFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_JNL, ImporterTask.EXT_FILE_NQUADS));
-        String nqDir = nqFile.getParent() + FS + NQ_OUTDIR;
-        String propFilePath = jnlFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_JNL, BlazegraphServerTask.PROPERTY_FILE);
-        String[] args = {ARG_OUTDIR, nqDir,
-                ARG_FORMAT, NQ_FORMAT,
-                propFilePath};
-        try {
-            ExportKB.main(args);
-        } catch (Exception e) {
-            throw new JPSRuntimeException(e);
-        }
-        File exportedNqFile = new File(nqDir + FS + BlazegraphServerTask.NAMESPACE + FS + NQ_FILENAME);
-        File targetNqFile = new File(nqFile.getAbsolutePath() + EXT_GZ);
-        exportedNqFile.renameTo(targetNqFile);
-        exportedNqFile.delete();
-        nqFile.delete();
-        jnlFile.delete();
-        new File(propFilePath).delete();
 
-        return targetNqFile;
-    }
-
-    /**
-     * Find and replace on n-quads files to prepare them to contain URLs of the target system
-     * instead of the local instance.
-     *
-     * @param nqFile - n-quads file to replace URLs in
-     * @param from - string to replace
-     * @param to - string to replace with
-     * @return - information about replacement success
-     */
-    private boolean changeUrlsInNQuadsFile(File nqFile, String from, String to) {
-        //@Todo: implementation
-        boolean changed = false;
-        if (from.isEmpty()) {
-            from = getLocalSourceUrlFromProjectCfg(nqFile);
-        }
-
-
-
-        return changed;
-    }
-
-    /**
-     * Extracts url of entities from the project config corresponding to a given n-quads file.
-     *
-     * @param nqFile - n-quads file
-     * @return local url string for the entities in the n-quads file
-     */
-    private String getLocalSourceUrlFromProjectCfg(File nqFile) {
-        String url = "";
-        try {
-            File projectCfg = new File(nqFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_NQUADS + EXT_GZ,
-                    ImporterTask.PROJECT_CONFIG));
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document cfg = builder.parse(projectCfg);
-            NodeList server = cfg.getElementsByTagName("server");
-            NodeList port = cfg.getElementsByTagName("port");
-            NodeList sid = cfg.getElementsByTagName("port");
-        } catch (ParserConfigurationException | SAXException | IOException e) {
-            throw new JPSRuntimeException(e);
-        }
-
-        return url;
-    }
 
     /**
      * Imports n-quads file into a running Blazegraph instance.
      *
-     * @param nqFile - n-quads file
-     * @param blasegraphImportURL - URL of the Blazegraph instance
-     * @return  - information about import success
+     * @param queue - n-quads file queue
+     * @param blazegraphImportUri - URI of the Blazegraph instance
+     * @return  - NquadsUploaderTask
      */
-    private boolean uploadNQuadsFileToBlazegraphInstance(File nqFile, String blasegraphImportURL) {
-        //@Todo: implementation
-        boolean uploaded = false;
-        return uploaded;
+    private NquadsUploaderTask uploadNQuadsFileToBlazegraphInstance(BlockingQueue<File> queue, URI blazegraphImportUri) {
+        NquadsUploaderTask task = new NquadsUploaderTask(queue, blazegraphImportUri);
+        nqUploadExecutor.execute(task);
+
+        return task;
     }
 
     /**
