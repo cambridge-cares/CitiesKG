@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.agents.geo.test;
 
 import junit.framework.TestCase;
 import org.apache.jena.query.Query;
+import org.apache.jena.update.UpdateRequest;
 import org.geotools.geometry.jts.GeometryBuilder;
 import org.json.JSONException;
 import org.junit.Assert;
@@ -18,6 +19,7 @@ import uk.ac.cam.cares.twa.cities.agents.geo.DistanceAgent;
 import uk.ac.cam.cares.twa.cities.model.geo.Envelope;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.UUID;
 
 public class DistanceAgentTest extends TestCase {
 
@@ -27,8 +29,8 @@ public class DistanceAgentTest extends TestCase {
     @Test
     public void testGetDistanceQuery() {
         DistanceAgent distanceAgent = new DistanceAgent();
-        String uri1 = "http://localhost/berlin/cityobject/UUID_39742eff-29ec-4c04-a732-22ee2a7986c4/";
-        String uri2 = "http://localhost/berlin/cityobject/UUID_39742eff-29ec-4c04-a732-22ee2a7986c5/";
+        String uri1 = "http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/";
+        String uri2 = "http://localhost/berlin/cityobject/UUID_6cbfb096-5116-4962-9162-48b736768cd4/";
 
         try {
             assertNotNull(distanceAgent.getClass().getDeclaredMethod("getDistanceQuery", String.class, String.class));
@@ -36,9 +38,8 @@ public class DistanceAgentTest extends TestCase {
             getDistanceQuery.setAccessible(true);
 
             Query q = (Query) getDistanceQuery.invoke(distanceAgent, uri1, uri2);
-            assertTrue(q.toString().contains("<http://localhost/berlin/cityobject/UUID_39742eff-29ec-4c04-a732-22ee2a7986c4/>"));
-            assertTrue(q.toString().contains("<http://localhost/berlin/cityobject/UUID_39742eff-29ec-4c04-a732-22ee2a7986c5/>"));
-
+            assertTrue(q.toString().contains("<http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/>"));
+            assertTrue(q.toString().contains("<http://localhost/berlin/cityobject/UUID_6cbfb096-5116-4962-9162-48b736768cd4/>"));
         } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
             e.printStackTrace();
         }
@@ -50,24 +51,20 @@ public class DistanceAgentTest extends TestCase {
         DistanceAgent distanceAgent = new DistanceAgent();
 
         //test with mocked kgClient and kgRouter when it returns a string.
-        String distance = "[{'Distance': 10.0}]";
+        String distance = "[{'distance': 10.0}]";
         Mockito.when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(distance);
-
         try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
             kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
                     .thenReturn(kgClientMock);
             assertNotNull(distanceAgent.getClass().getDeclaredMethod("getDistance", String.class, String.class));
             Method getDistance = distanceAgent.getClass().getDeclaredMethod("getDistance", String.class, String.class);
             getDistance.setAccessible(true);
-
             assertEquals(10.0, getDistance.invoke(distanceAgent,"firstUri", "secondUri" ));
         }
-
 
         //test with mocked kgClient and kgRouter when there is no string to return.
         String distanceEmpty = "[]";
         Mockito.when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(distanceEmpty);
-
         try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
             kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
                     .thenReturn(kgClientMock);
@@ -78,20 +75,16 @@ public class DistanceAgentTest extends TestCase {
 
                 getDistance.invoke(distanceAgent,"firstUri", "secondUri");
                 Assert.fail(); }
-
             catch (InvocationTargetException e){
                 assertEquals(JSONException.class, e.getCause().getClass());
                 assertEquals("JSONArray[0] not found.", e.getCause().getMessage()); }
         }
     }
 
-
-
     @Test
     public void testGetEnvelope() {
-        //tbd
-    }
 
+    }
 
     @Test
     public void testComputeDistance(){
@@ -113,7 +106,6 @@ public class DistanceAgentTest extends TestCase {
 
         assertEquals(1.0034225353460755, distanceAgent.computeDistance(envelope1, envelope3));
     }
-
 
     @Test
     public void testSetUniformCRS(){
@@ -137,9 +129,50 @@ public class DistanceAgentTest extends TestCase {
         }
     }
 
+    @Test
+    public void testGetSetDistanceQuery(){
+        DistanceAgent distanceAgent = new DistanceAgent();
+
+        String uri1 = "http:cityobjectxample/cityobject2";
+        String uri2 = "http:cityobjectxample/cityobject3";
+        String distanceUriMock = "123e4567-e89b-12d3-a456-556642440000";
+        String valueUriMock = "123e4567-e89b-12d3-a456-556642441111";
+        double distance = 10.0;
+
+        try (MockedStatic<UUID> randomUUID = Mockito.mockStatic(UUID.class, Mockito.RETURNS_DEEP_STUBS)) {
+            randomUUID.when(() -> UUID.randomUUID().toString())
+                    .thenReturn(distanceUriMock, valueUriMock);
+
+            assertNotNull(distanceAgent.getClass().getDeclaredMethod("getSetDistanceQuery", String.class, String.class, double.class));
+            Method getSetDistanceQuery = distanceAgent.getClass().getDeclaredMethod("getSetDistanceQuery", String.class, String.class, double.class);
+            getSetDistanceQuery.setAccessible(true);
+
+            UpdateRequest ur = (UpdateRequest) getSetDistanceQuery.invoke(distanceAgent, uri1, uri2, distance);
+
+            assertTrue(ur.toString().contains("<http:cityobjectxample/cityobject2>"));
+            assertTrue(ur.toString().contains("<http:cityobjectxample/cityobject3>"));
+            assertTrue(ur.toString().contains("10.0"));
+            assertTrue(ur.toString().contains("123e4567-e89b-12d3-a456-556642440000"));
+            assertTrue(ur.toString().contains("123e4567-e89b-12d3-a456-556642441111"));
+        }
+        catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Test
-    public void testSetDistance(){
-        //tbd
+    public void testSetDistance() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+        DistanceAgent distanceAgent = new DistanceAgent();
+
+        //test with mocked kgClient and kgRouter when it returns a string.
+        Mockito.when(kgClientMock.executeUpdate(ArgumentMatchers.any(UpdateRequest.class))).thenReturn(0);
+        try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
+            kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
+                    .thenReturn(kgClientMock);
+            assertNotNull(distanceAgent.getClass().getDeclaredMethod("setDistance", String.class, String.class, double.class));
+            Method setDistance = distanceAgent.getClass().getDeclaredMethod("setDistance", String.class, String.class, double.class);
+            setDistance.setAccessible(true);
+            assertEquals(0, setDistance.invoke(distanceAgent,"firstUri", "secondUri", 10.0 ));
+        }
     }
 }
