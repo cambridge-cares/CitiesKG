@@ -28,6 +28,7 @@ public class DistanceAgentTest extends TestCase {
 
     @Test
     public void testGetDistanceQuery() {
+
         DistanceAgent distanceAgent = new DistanceAgent();
         String uri1 = "http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/";
         String uri2 = "http://localhost/berlin/cityobject/UUID_6cbfb096-5116-4962-9162-48b736768cd4/";
@@ -82,17 +83,15 @@ public class DistanceAgentTest extends TestCase {
     }
 
     @Test
-    public void testGetEnvelope() {
-
-    }
-
-    @Test
     public void testComputeDistance(){
+
         DistanceAgent distanceAgent = new DistanceAgent();
 
+        // test distance calculation without CRS conversion.
         String envelopeString1 = "1#1#0#1#2#0#2#2#0#2#1#0#1#1#0";
         Envelope envelope1 =  new Envelope("EPSG:24500");
         envelope1.extractEnvelopePoints(envelopeString1);
+
         String envelopeString2 = "1#2#1#1#3#1#2#3#1#2#2#1#1#2#1";
         Envelope envelope2 =  new Envelope("EPSG:24500");
         envelope2.extractEnvelopePoints(envelopeString2);
@@ -109,6 +108,7 @@ public class DistanceAgentTest extends TestCase {
 
     @Test
     public void testSetUniformCRS(){
+
         DistanceAgent distanceAgent = new DistanceAgent();
         GeometryBuilder builder = new GeometryBuilder();
         Point point = builder.pointZ(1,1,0);
@@ -131,6 +131,7 @@ public class DistanceAgentTest extends TestCase {
 
     @Test
     public void testGetSetDistanceQuery(){
+
         DistanceAgent distanceAgent = new DistanceAgent();
 
         String uri1 = "http:cityobjectxample/cityobject2";
@@ -162,9 +163,9 @@ public class DistanceAgentTest extends TestCase {
 
     @Test
     public void testSetDistance() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+
         DistanceAgent distanceAgent = new DistanceAgent();
 
-        //test with mocked kgClient and kgRouter when it returns a string.
         Mockito.when(kgClientMock.executeUpdate(ArgumentMatchers.any(UpdateRequest.class))).thenReturn(0);
         try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
             kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))

@@ -9,8 +9,11 @@ import org.locationtech.jts.geom.*;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.jps.base.query.KGRouter;
 
-/** The class transforms Envelope string into a list of points that defines envelope boundary and from it computes envelope centroid.
+/**
+ * The class retrieves envelope string of a specific URI from the KG.
+ * It further transforms envelope string into an envelope with a boundary(list of five points), centroid and crs attributes.
  */
+
 public class Envelope {
 
     private int numberOfPoints = 5;
@@ -19,18 +22,18 @@ public class Envelope {
     private Point centroid;
     private GeometryBuilder factory = new GeometryBuilder();
     private String crs;
-
     private static final String ONTOLOGY_URI = "http://locahost/ontocitygml/";
     private static final String ENVELOPE_GRAPH_URI = "http://localhost/berlin/cityobject/";
     private static final String ROUTE = "http://kb/singapore-local";
-
     private KnowledgeBaseClientInterface kgClient;
 
     public Envelope(String crs) {
         this.crs = crs;
     }
 
-   /** builds a SPARQL query for a specific URI to find envelope. */
+
+   /** builds a SPARQL query for a specific URI to retrieve its envelope. */
+
     private Query getEnvelopeQuery(String uriString) {
 
         SelectBuilder sb = new SelectBuilder()
@@ -43,15 +46,21 @@ public class Envelope {
         return q;
     }
 
-    /** sets KG Client for created envelope query. */
+
+    /** sets KG Client for specific endpoint. */
+
     private void setKGClient(String route){
+
         this.kgClient = KGRouter.getKnowledgeBaseClient(route,
                 true,
                 false);
     }
 
-    /** get KGClient via KGrouter and execute query to get envelope string. */
+
+    /** executes query on SPARQL endpoint and retrieves envelope string for specific URI. */
+
     public String getEnvelopeString(String uriString) {
+
         setKGClient(ROUTE);
 
         String envelopeString = new String();
@@ -65,27 +74,39 @@ public class Envelope {
         return envelopeString;
     }
 
-    /** Transforms envelopeString into 5 points representing envelope boundary. */
+
+    /** transforms envelopeString into 5 points representing envelope boundary, computes its centroid and sets envelope attributes. */
+
     public void extractEnvelopePoints(String envelopeString) {
+
        if (envelopeString.equals("")) {
-           throw new IllegalArgumentException("empty String"); }
+           throw new IllegalArgumentException("empty String");
+       }
        else if (!envelopeString.contains("#")){
-           throw new IllegalArgumentException("Does not contain #"); }
+           throw new IllegalArgumentException("Does not contain #");
+       }
 
       String[] pointsAsString = (envelopeString.split("#"));
 
       if (pointsAsString.length % 3 == 0){
-           numberOfDimensions = 3; }
+           numberOfDimensions = 3;
+      }
       else if (pointsAsString.length % 2 == 0){
-           numberOfDimensions = 2; }
+           numberOfDimensions = 2;
+      }
       else {
-          throw new IllegalArgumentException("Number of points is not divisible by 3 or 2"); }
+          throw new IllegalArgumentException("Number of points is not divisible by 3 or 2");
+      }
 
       numberOfPoints = pointsAsString.length/numberOfDimensions;
+
        if (numberOfPoints < 4) {
-          throw new IllegalArgumentException("Polygon has less than 4 points"); }
+          throw new IllegalArgumentException("Polygon has less than 4 points");
+       }
+
       double[] points = new double[pointsAsString.length];
-      for (int index = 0; index < pointsAsString.length; index++){
+
+      for (int index = 0; index < pointsAsString.length; index++) {
           points[index]= Double.parseDouble(pointsAsString[index]);
       }
 
@@ -93,24 +114,33 @@ public class Envelope {
 
       if (numberOfDimensions == 3){
           boundary = factory.polygonZ(points);
+
           for (int z = 2; z < points.length-3; z +=3 ){
-              centroidZ += points[z]; }
-          centroidZ = centroidZ/(numberOfPoints-1); }
+              centroidZ += points[z];
+          }
+
+          centroidZ = centroidZ/(numberOfPoints-1);
+      }
       else {
-          boundary = factory.polygon(points); }
+          boundary = factory.polygon(points);
+      }
 
       centroid = boundary.getCentroid();
       centroid.getCoordinateSequence().setOrdinate(0, 2, centroidZ);
       centroid.geometryChanged();
    }
 
-    /** Method gets centroid as Point. */
+
+    /** gets centroid as Point. */
+
     public Point getCentroid() {
       return centroid;
   }
 
-  /** Method gets envelope CRS. */
-  public String getCRS(){
+
+    /** gets envelope CRS. */
+
+    public String getCRS(){
         return crs;
   }
 }
