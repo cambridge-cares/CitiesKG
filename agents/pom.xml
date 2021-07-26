@@ -99,12 +99,14 @@
             <version>3.1.0</version>
             <scope>compile</scope>
         </dependency>
+        <!--
         <dependency>
             <groupId>uk.ac.cam.cares.jps.aws</groupId>
             <artifactId>JPS_AWS</artifactId>
             <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>
+        -->
         <!-- https://mvnrepository.com/artifact/com.blazegraph/blazegraph-jar -->
         <dependency>
             <groupId>com.blazegraph</groupId>
