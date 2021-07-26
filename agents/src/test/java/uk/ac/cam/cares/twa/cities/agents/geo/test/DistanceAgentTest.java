@@ -8,10 +8,7 @@ import org.json.JSONException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.jts.geom.Point;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
+import org.mockito.*;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.jps.base.query.KGRouter;
 import uk.ac.cam.cares.jps.base.query.RemoteKnowledgeBaseClient;
@@ -20,6 +17,8 @@ import uk.ac.cam.cares.twa.cities.model.geo.Envelope;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.UUID;
+
+import static org.mockito.Mockito.*;
 
 public class DistanceAgentTest extends TestCase {
 
@@ -53,7 +52,7 @@ public class DistanceAgentTest extends TestCase {
 
         //test with mocked kgClient and kgRouter when it returns a string.
         String distance = "[{'distance': 10.0}]";
-        Mockito.when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(distance);
+        when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(distance);
         try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
             kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
                     .thenReturn(kgClientMock);
@@ -65,7 +64,7 @@ public class DistanceAgentTest extends TestCase {
 
         //test with mocked kgClient and kgRouter when there is no string to return.
         String distanceEmpty = "[]";
-        Mockito.when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(distanceEmpty);
+        when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(distanceEmpty);
         try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
             kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
                     .thenReturn(kgClientMock);
@@ -79,6 +78,23 @@ public class DistanceAgentTest extends TestCase {
             catch (InvocationTargetException e){
                 assertEquals(JSONException.class, e.getCause().getClass());
                 assertEquals("JSONArray[0] not found.", e.getCause().getMessage()); }
+        }
+    }
+
+    @Test
+    public void testGetEnvelope(){
+
+        DistanceAgent distanceAgent = new DistanceAgent();
+        String uri = "http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/";
+        String mockedEnvelopeString = "0#0#0#0#1#0#1#1#0#1#0#0";
+
+        try (MockedConstruction mockedEnvelope = mockConstruction(Envelope.class,
+                (mock, context)-> {
+            when(mock.getEnvelopeString(uri)).thenReturn(mockedEnvelopeString);
+                })) {
+            Envelope envelope = distanceAgent.getEnvelope(uri);
+            Mockito.verify(envelope).getEnvelopeString(uri);
+            Mockito.verify(envelope).extractEnvelopePoints(mockedEnvelopeString);
         }
     }
 
@@ -166,7 +182,7 @@ public class DistanceAgentTest extends TestCase {
 
         DistanceAgent distanceAgent = new DistanceAgent();
 
-        Mockito.when(kgClientMock.executeUpdate(ArgumentMatchers.any(UpdateRequest.class))).thenReturn(0);
+        when(kgClientMock.executeUpdate(ArgumentMatchers.any(UpdateRequest.class))).thenReturn(0);
         try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
             kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
                     .thenReturn(kgClientMock);
