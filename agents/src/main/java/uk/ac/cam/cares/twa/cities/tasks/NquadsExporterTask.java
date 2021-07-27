@@ -2,16 +2,15 @@ package uk.ac.cam.cares.twa.cities.tasks;
 
 import com.bigdata.rdf.sail.ExportKB;
 import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.concurrent.BlockingQueue;
+import java.util.zip.GZIPInputStream;
 
 public class NquadsExporterTask implements Runnable {
     public static final String ARG_OUTDIR = "-outdir";
@@ -41,10 +40,13 @@ public class NquadsExporterTask implements Runnable {
         File nqFile = new File(importFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_GML, ImporterTask.EXT_FILE_NQUADS));
         while (!stop) {
             if (nqFile.isFile()) {
-                File targetNqFile = exportToNquadsFileFromJnlFile(nqFile);
-                String sourceUrl = getLocalSourceUrlFromProjectCfg(nqFile);
-                if (!changeUrlsInNQuadsFile(targetNqFile, sourceUrl, targetUrl)) {
-                    throw new JPSRuntimeException(targetNqFile.getAbsolutePath());
+                try {
+                    File targetGzNqFile = exportToNquadsFileFromJnlFile(nqFile);
+                    String sourceUrl = getLocalSourceUrlFromProjectCfg(targetGzNqFile);
+                    File targetNqFile = changeUrlsInNQuadsFile(targetGzNqFile, sourceUrl, targetUrl);
+                    nqQueue.put(targetNqFile);
+                } catch (InterruptedException | IOException e) {
+                    throw new JPSRuntimeException(e);
                 }
                 stop();
             }
@@ -81,48 +83,64 @@ public class NquadsExporterTask implements Runnable {
     }
 
     /**
-     * Find and replace on n-quads files to prepare them to contain URLs of the target system
-     * instead of the local instance.
-     *
-     * @param nqFile - n-quads file to replace URLs in
-     * @param from - string to replace
-     * @param to - string to replace with
-     * @return - information about replacement success
-     */
-    private boolean changeUrlsInNQuadsFile(File nqFile, String from, String to) {
-        //@Todo: implementation
-        boolean changed = false;
-        if (from.isEmpty()) {
-            from = getLocalSourceUrlFromProjectCfg(nqFile);
-        }
-
-
-
-        return changed;
-    }
-
-    /**
      * Extracts url of entities from the project config corresponding to a given n-quads file.
      *
      * @param nqFile - n-quads file
      * @return local url string for the entities in the n-quads file
      */
     private String getLocalSourceUrlFromProjectCfg(File nqFile) {
-        String url = "";
+        String url = "/";
         try {
             File projectCfg = new File(nqFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_NQUADS + EXT_GZ,
                     ImporterTask.PROJECT_CONFIG));
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document cfg = builder.parse(projectCfg);
-            NodeList server = cfg.getElementsByTagName("server");
-            NodeList port = cfg.getElementsByTagName("port");
-            NodeList sid = cfg.getElementsByTagName("port");
+            String server = cfg.getElementsByTagName("server").item(0).getTextContent();
+            String port = cfg.getElementsByTagName("port").item(0).getTextContent();
+            String sid = cfg.getElementsByTagName("sid").item(0).getTextContent();
+            url = org.apache.http.HttpHost.DEFAULT_SCHEME_NAME.concat(":/").concat(
+                    url.concat(server).concat(":").concat(port).concat(sid));
+            new File(nqFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_NQUADS + EXT_GZ,
+                    ImporterTask.PROJECT_CONFIG)).delete();
+
         } catch (ParserConfigurationException | SAXException | IOException e) {
             throw new JPSRuntimeException(e);
         }
 
         return url;
+    }
+
+    /**
+     * Find and replace on n-quads files to prepare them to contain URLs of the target system
+     * instead of the local instance.
+     *
+     * @param nqFile - n-quads file to replace URLs in
+     * @param from - string to replace
+     * @param to - string to replace with
+     * @return - target N-Quads file with replaced URLs
+     */
+    private File changeUrlsInNQuadsFile(File nqFile, String from, String to) throws IOException {
+        File targetNqFile  = new File(nqFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_NQUADS + EXT_GZ,
+                ImporterTask.EXT_FILE_NQUADS));
+
+        GZIPInputStream gzis = new GZIPInputStream(new FileInputStream(nqFile));
+        InputStreamReader reader = new InputStreamReader(gzis);
+        BufferedReader in = new BufferedReader(reader);
+        FileOutputStream fos = new FileOutputStream(targetNqFile);
+        OutputStreamWriter osw = new OutputStreamWriter(fos);
+        BufferedWriter bw = new BufferedWriter(osw);
+
+        String readed;
+        while ((readed = in.readLine()) != null) {
+            bw.write(readed.replaceAll(from, to));
+            bw.newLine();
+        }
+
+        osw.close();
+        nqFile.delete();
+
+        return targetNqFile;
     }
 
 }

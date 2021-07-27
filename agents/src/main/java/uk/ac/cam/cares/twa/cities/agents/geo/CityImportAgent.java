@@ -1,10 +1,6 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
-import com.bigdata.rdf.sail.ExportKB;
 import org.eclipse.jetty.server.Server;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
 import uk.ac.cam.cares.jps.aws.WatcherCallback;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
@@ -20,13 +16,9 @@ import uk.ac.cam.cares.twa.cities.tasks.NquadsUploaderTask;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -67,12 +59,6 @@ public class CityImportAgent extends JPSAgent {
     public static final String KEY_DIRECTORY = "directory";
     public static final String KEY_SPLIT = "split";
     public static final String KEY_TARGET_URL = "targetURL";
-    public static final String ARG_OUTDIR = "-outdir";
-    public static final String ARG_FORMAT = "-format";
-    public static final String NQ_OUTDIR = "quads";
-    public static final String NQ_FORMAT = "N-Quads";
-    public static final String NQ_FILENAME = "data.nq.gz";
-    public static final String EXT_GZ = ".gz";
     private final String FS = System.getProperty("file.separator");
     public final int CHUNK_SIZE = 100;
     public final int NUM_SERVER_THREADS = 2;
@@ -82,10 +68,10 @@ public class CityImportAgent extends JPSAgent {
     private String targetUrl;
     private File importDir;
     File splitDir;
-    private final ThreadPoolExecutor serverExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_SERVER_THREADS);
-    private final ThreadPoolExecutor importerExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_IMPORTER_THREADS);
-    private final ExecutorService nqExportExecutor = Executors.newSingleThreadExecutor();
-    private final ExecutorService nqUploadExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService  serverExecutor = Executors.newFixedThreadPool(NUM_SERVER_THREADS);
+    private final ExecutorService  importerExecutor = Executors.newFixedThreadPool(NUM_IMPORTER_THREADS);
+    private final ExecutorService nqExportExecutor = Executors.newFixedThreadPool(NUM_IMPORTER_THREADS);
+    private final ExecutorService nqUploadExecutor = Executors.newFixedThreadPool(NUM_IMPORTER_THREADS);
 
 
     @Override
@@ -286,12 +272,12 @@ public class CityImportAgent extends JPSAgent {
      * @return - information about local import success
      */
     private void importChunk(File file) throws URISyntaxException {
-        BlockingQueue<Server> localImportqueue = new LinkedBlockingDeque<>();
-        BlockingQueue<File> remoteImportqueue = new LinkedBlockingDeque<>();
-        startBlazegraphInstance(localImportqueue, file.getAbsolutePath());
-        importToLocalBlazegraphInstance(localImportqueue, file);
-        exportToNquads(remoteImportqueue, file);
-        uploadNQuadsFileToBlazegraphInstance(remoteImportqueue, new URI(targetUrl));
+        BlockingQueue<Server> localImportQueue = new LinkedBlockingDeque<>();
+        BlockingQueue<File> remoteImportQueue = new LinkedBlockingDeque<>();
+        startBlazegraphInstance(localImportQueue, file.getAbsolutePath());
+        importToLocalBlazegraphInstance(localImportQueue, file);
+        exportToNquads(remoteImportQueue, file);
+        uploadNQuadsFileToBlazegraphInstance(remoteImportQueue, new URI(targetUrl));
 
     }
 

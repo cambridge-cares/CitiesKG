@@ -9,7 +9,6 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
