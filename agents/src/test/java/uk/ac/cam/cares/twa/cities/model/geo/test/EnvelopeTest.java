@@ -4,7 +4,6 @@ import junit.framework.TestCase;
 import org.apache.jena.query.Query;
 import org.json.JSONException;
 import org.junit.Assert;
-import org.junit.Test;
 import org.locationtech.jts.geom.Point;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
@@ -22,7 +21,6 @@ public class EnvelopeTest extends TestCase {
     @Mock
     KnowledgeBaseClientInterface kgClientMock = Mockito.mock(RemoteKnowledgeBaseClient.class);
 
-    @Test
     public void testGetEnvelopeQuery(){
 
         Envelope envelope = new Envelope("EPSG:4326");
@@ -37,11 +35,10 @@ public class EnvelopeTest extends TestCase {
             assertTrue(q.toString().contains("<http://localhost/berlin/cityobject/UUID_89f9a49d-e53b-4f59-beb5-748371d58c25/>"));
         }
         catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-            e.printStackTrace();
+            fail();
         }
     }
 
-    @Test
     public void testGetEnvelopeString(){
 
         Envelope envelope = new Envelope("EPSG:4326");
@@ -73,7 +70,6 @@ public class EnvelopeTest extends TestCase {
         }
     }
 
-    @Test
     public void testExtractEnvelopePoints(){
 
         Envelope envelope = new Envelope("EPSG:4326");
@@ -133,7 +129,6 @@ public class EnvelopeTest extends TestCase {
         assertEquals(0.0, envelope.getCentroid().getCoordinate().getZ());
     }
 
-    @Test
     public void testGetCentroid(){
 
         Envelope envelope = new Envelope("EPSG:4326");
@@ -152,7 +147,6 @@ public class EnvelopeTest extends TestCase {
         assertFalse(Double.isNaN(centroid2.getCoordinate().getZ()));
     }
 
-    @Test
     public void testGetCRS(){
         Envelope envelope = new Envelope("EPSG:4326");
         assertEquals(envelope.getCRS(),"EPSG:4326");

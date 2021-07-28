@@ -1,4 +1,5 @@
 package uk.ac.cam.cares.twa.cities.model.geo;
+
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
@@ -10,18 +11,14 @@ import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.jps.base.query.KGRouter;
 
 /**
- * The class retrieves envelope string of a specific URI from the KG.
- * It further transforms envelope string into an envelope with a boundary(list of five points), centroid and crs attributes.
+ *  The class retrieves envelope string of a specific URI from the KG.
+ *  It further transforms envelope string into an envelope with a boundary(list of five points), centroid and crs attributes.
  */
-
 public class Envelope {
 
-    private int numberOfPoints = 5;
-    private int numberOfDimensions = 3;
-    private Polygon boundary;
     private Point centroid;
-    private GeometryBuilder factory = new GeometryBuilder();
-    private String crs;
+    private final GeometryBuilder factory = new GeometryBuilder();
+    private final String crs;
     private static final String ONTOLOGY_URI = "http://locahost/ontocitygml/";
     private static final String ENVELOPE_GRAPH_URI = "http://localhost/berlin/cityobject/";
     private static final String ROUTE = "http://kb/singapore-local";
@@ -31,9 +28,11 @@ public class Envelope {
         this.crs = crs;
     }
 
-
-   /** builds a SPARQL query for a specific URI to retrieve its envelope. */
-
+    /**
+     * builds a SPARQL query for a specific URI to retrieve its envelope.
+     * @param uriString object id
+     * @return returns a query
+     */
     private Query getEnvelopeQuery(String uriString) {
 
         SelectBuilder sb = new SelectBuilder()
@@ -41,29 +40,30 @@ public class Envelope {
                 .addVar( "?Envelope" )
                 .addGraph(NodeFactory.createURI(ENVELOPE_GRAPH_URI), "?s", "ocgml:EnvelopeType", "?Envelope");
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
-        Query q = sb.build();
 
-        return q;
+        return sb.build();
     }
 
+    /**
+     * sets KG Client for specific endpoint.
+     */
+    private void setKGClient(){
 
-    /** sets KG Client for specific endpoint. */
-
-    private void setKGClient(String route){
-
-        this.kgClient = KGRouter.getKnowledgeBaseClient(route,
+        this.kgClient = KGRouter.getKnowledgeBaseClient(Envelope.ROUTE,
                 true,
                 false);
     }
 
-
-    /** executes query on SPARQL endpoint and retrieves envelope string for specific URI. */
-
+    /**
+     * executes query on SPARQL endpoint and retrieves envelope string for specific URI.
+     * @param uriString city object id
+     * @return envelope string
+     */
     public String getEnvelopeString(String uriString) {
 
-        setKGClient(ROUTE);
+        setKGClient();
 
-        String envelopeString = new String();
+        String envelopeString;
         Query q = getEnvelopeQuery(uriString);
 
         String queryResultString = kgClient.execute(q.toString());
@@ -74,9 +74,10 @@ public class Envelope {
         return envelopeString;
     }
 
-
-    /** transforms envelopeString into 5 points representing envelope boundary, computes its centroid and sets envelope attributes. */
-
+    /**
+     * transforms envelopeString into 5 points representing envelope boundary, computes its centroid and sets envelope attributes.
+     * @param envelopeString envelope string from KG.
+     */
     public void extractEnvelopePoints(String envelopeString) {
 
        if (envelopeString.equals("")) {
@@ -88,38 +89,38 @@ public class Envelope {
 
       String[] pointsAsString = (envelopeString.split("#"));
 
-      if (pointsAsString.length % 3 == 0){
+       int numberOfDimensions;
+       if (pointsAsString.length % 3 == 0){
            numberOfDimensions = 3;
-      }
-      else if (pointsAsString.length % 2 == 0){
+       }
+       else if (pointsAsString.length % 2 == 0){
            numberOfDimensions = 2;
-      }
-      else {
+       }
+       else {
           throw new IllegalArgumentException("Number of points is not divisible by 3 or 2");
-      }
+       }
 
-      numberOfPoints = pointsAsString.length/numberOfDimensions;
-
+       int numberOfPoints = pointsAsString.length / numberOfDimensions;
        if (numberOfPoints < 4) {
           throw new IllegalArgumentException("Polygon has less than 4 points");
        }
 
       double[] points = new double[pointsAsString.length];
-
       for (int index = 0; index < pointsAsString.length; index++) {
           points[index]= Double.parseDouble(pointsAsString[index]);
       }
 
       double centroidZ = 0;
 
-      if (numberOfDimensions == 3){
+        Polygon boundary;
+        if (numberOfDimensions == 3){
           boundary = factory.polygonZ(points);
 
           for (int z = 2; z < points.length-3; z +=3 ){
               centroidZ += points[z];
           }
 
-          centroidZ = centroidZ/(numberOfPoints-1);
+          centroidZ = centroidZ/(numberOfPoints -1);
       }
       else {
           boundary = factory.polygon(points);
@@ -130,16 +131,18 @@ public class Envelope {
       centroid.geometryChanged();
    }
 
-
-    /** gets centroid as Point. */
-
+    /**
+     * gets centroid as Point.
+     * @return centroid
+     */
     public Point getCentroid() {
       return centroid;
   }
 
-
-    /** gets envelope CRS. */
-
+    /**
+     * gets envelope CRS.
+     * @return crs
+     */
     public String getCRS(){
         return crs;
   }

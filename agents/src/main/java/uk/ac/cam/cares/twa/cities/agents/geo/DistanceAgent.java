@@ -31,8 +31,8 @@ import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.HttpMethod;
 
 /**
- * DistanceAgent class retrieves existing distance between the centroids of two objects envelopes from the KG.
- * If such distance does not exists, DistanceAgent computes distance, inserts it into the KG.
+ *  DistanceAgent class retrieves existing distance between the centroids of two objects envelopes from the KG.
+ *  If such distance does not exists, DistanceAgent computes distance, inserts it into the KG.
  */
 
 @WebServlet(
@@ -51,6 +51,7 @@ public class DistanceAgent extends JPSAgent {
     private static final String DISTANCE_GRAPH_URI = KNOWLEDGE_GRAPH_URI + "distance/";
     private static final String ROUTE = "http://kb/singapore-local";
     private KnowledgeBaseClientInterface kgClient;
+    private static final String targetCRSstring = "EPSG:24500";
 
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
@@ -63,7 +64,7 @@ public class DistanceAgent extends JPSAgent {
             uris.add(iri.toString());
         }
 
-        ArrayList distances = new ArrayList();
+        ArrayList<Double> distances = new ArrayList<>();
 
         for (int firstURI = 0; firstURI < uris.size(); firstURI++) {
             String firstObjectUri = uris.get(firstURI);
@@ -71,14 +72,17 @@ public class DistanceAgent extends JPSAgent {
             for ( int secondURI = firstURI+1; secondURI< uris.size(); secondURI++){
                 String secondObjectUri = uris.get(secondURI);
 
-                double distance;
+                double distance = getDistance(firstObjectUri,secondObjectUri);
 
-                try {
-                    distance = getDistance(firstObjectUri, secondObjectUri);
-                }
-                catch (Exception e) {
+                if (distance < 0){
                     distance = computeDistance(getEnvelope(firstObjectUri), getEnvelope(secondObjectUri));
-                    setDistance(firstObjectUri, secondObjectUri, distance);
+
+                    try {
+                        setDistance(firstObjectUri, secondObjectUri, distance);
+                    }
+                    catch (Exception e) {
+                        System.out.println("Distance was not set");
+                    }
                 }
                 distances.add(distance);
             }
@@ -89,7 +93,6 @@ public class DistanceAgent extends JPSAgent {
 
     @Override
     public boolean validateInput(JSONObject requestParams) throws BadRequestException {
-        boolean error = true;
         if (!requestParams.isEmpty()) {
             Set<String> keys = requestParams.keySet();
             if (keys.contains(KEY_REQ_METHOD) && keys.contains(KEY_IRIS)) {
@@ -97,7 +100,7 @@ public class DistanceAgent extends JPSAgent {
                     try {
                       JSONArray iris = requestParams.getJSONArray(KEY_IRIS);
                       for (Object iri: iris) {
-                          URL distUrl = new URL((String) iri);
+                          new URL((String) iri);
                       }
                     } catch (Exception e) {
                         throw new BadRequestException();
@@ -105,15 +108,15 @@ public class DistanceAgent extends JPSAgent {
                 }
             }
         }
-        if (error) {
-            throw new BadRequestException();
-        }
         return true;
     }
 
-
-    /** builds a SPARQL query for a specific pair of URIs to retrieve a distance. */
-
+    /**
+     * builds a SPARQL query for a specific pair of URIs to retrieve a distance.
+     * @param firstUriString city object id 1
+     * @param secondUriString city object id 2
+     * @return returns a query string
+     */
     private Query getDistanceQuery(String firstUriString, String secondUriString) {
 
         WhereBuilder wb = new WhereBuilder()
@@ -125,40 +128,48 @@ public class DistanceAgent extends JPSAgent {
         SelectBuilder sb = new SelectBuilder()
                 .addVar( "?distance" )
                 .addGraph(NodeFactory.createURI(DISTANCE_GRAPH_URI), wb);
-        Query q = sb.build();
 
-        return q;
+        return sb.build();
     }
 
-
-    /** executes query on SPARQL endpoint and retrieves distance between two specific URIs. */
-
+    /**
+     * executes query on SPARQL endpoint and retrieves distance between two specific URIs.
+     * @param firstUriString city object id 1
+     * @param secondUriString city object id 2
+     * @return distance as double
+     */
     private double getDistance(String firstUriString, String secondUriString){
 
-       double distance;
-       setKGClient(ROUTE, true);
+       double distance =  -1.0;
+       setKGClient(true);
 
         Query q = getDistanceQuery(firstUriString, secondUriString);
         String queryResultString = kgClient.execute(q.toString());
        JSONArray queryResult = new JSONArray(queryResultString);
-       distance = Double.parseDouble(queryResult.getJSONObject(0).get("distance").toString());
 
+       if(!queryResult.isEmpty()){
+           distance = Double.parseDouble(queryResult.getJSONObject(0).get("distance").toString());
+       }
        return distance;
     }
 
 
-    /** sets KG Client for specific endpoint. */
+    /**
+     * sets KG Client for specific endpoint.
+     * @param isQuery boolean
+     */
+    private void setKGClient(boolean isQuery){
 
-    private void setKGClient(String route, boolean isQuery){
-
-        this.kgClient = KGRouter.getKnowledgeBaseClient(route,
+        this.kgClient = KGRouter.getKnowledgeBaseClient(ROUTE,
                 isQuery,
                 !isQuery);
     }
 
-
-    /** returns object's envelope with its attributes. */
-
+    /**
+     * returns object's envelope with its attributes.
+     * @param uriString  city object id
+     * @return envelope
+     */
     public Envelope getEnvelope(String uriString) {
 
         String coordinateSystem = "EPSG:4326";
@@ -169,25 +180,31 @@ public class DistanceAgent extends JPSAgent {
         return envelope;
     }
 
-
-    /** computes distance between two centroids. Distance3D calculation works only with cartesian CRS. */
-
+    /**
+     * computes distance between two centroids. Distance3D calculation works only with cartesian CRS.
+     * @param envelope1 city object 1 envelope
+     * @param envelope2 city object 2 envelope
+     * @return distance
+     */
     public double computeDistance(Envelope envelope1, Envelope envelope2){
 
         Point centroid1 = envelope1.getCentroid();
         Point centroid2 = envelope2.getCentroid();
         String crs1 = envelope1.getCRS();
         String crs2 = envelope2.getCRS();
-        centroid1 = setUniformCRS(centroid1, crs1, "EPSG:24500");
-        centroid2 = setUniformCRS(centroid2, crs2, "EPSG:24500");
+        centroid1 = setUniformCRS(centroid1, crs1);
+        centroid2 = setUniformCRS(centroid2, crs2);
 
         return Distance3DOp.distance(centroid1, centroid2);
     }
 
-
-    /** sets point CRS to a fixed coordinate system.*/
-
-    private Point setUniformCRS(Point point, String sourceCRSstring, String targetCRSstring) {
+    /**
+     * sets point CRS to a fixed coordinate system.
+     * @param point original points
+     * @param sourceCRSstring source CRS
+     * @return points
+     */
+    private Point setUniformCRS(Point point, String sourceCRSstring) {
 
         try {
             CoordinateReferenceSystem sourceCRS = CRS.decode(sourceCRSstring);
@@ -196,13 +213,18 @@ public class DistanceAgent extends JPSAgent {
             point = (Point) JTS.transform(point, transform);
         }
         catch (FactoryException | TransformException | JPSRuntimeException e){
+            throw new JPSRuntimeException(e);
         }
         return point;
     }
 
-
-    /** generates a update request to insert distance in the KG. */
-
+    /**
+     * generates a update request to insert distance in the KG.
+     * @param firstUri city object 1
+     * @param secondUri city object 2
+     * @param distance distance between two city objects
+     * @return update query
+     */
     private UpdateRequest getSetDistanceQuery(String firstUri, String secondUri, double distance){
 
         String distanceUri = DISTANCE_GRAPH_URI + "DIST_" + uniqueURIGenerator() + "/";
@@ -224,26 +246,30 @@ public class DistanceAgent extends JPSAgent {
                 .addInsert( "?graph",  NodeFactory.createURI(valueUri), "om:hasNumericValue", distance)
                 .addInsert( "?graph",  NodeFactory.createURI(valueUri), "om:hasUnit", "om:metre");
         ib.setVar( Var.alloc( "graph" ), NodeFactory.createURI(DISTANCE_GRAPH_URI));
-        UpdateRequest ur = ib.buildRequest();
 
-        return ur;
+        return ib.buildRequest();
     }
 
-    /** generates a unique ID. */
-
+    /**
+     * generates a unique ID.
+     * @return unique id
+     */
     private String uniqueURIGenerator(){
 
-        String uuid = UUID.randomUUID().toString();
-
-        return uuid;
+        return UUID.randomUUID().toString();
     }
 
-    /** inserts distance between two URIs into KG. */
-
+    /**
+     * inserts distance between two URIs into KG.
+     * @param firstUri city object 1
+     * @param secondUri city object 2
+     * @param distance distance between two city objects
+     * @return confirmation
+     */
    private int setDistance(String firstUri, String secondUri, double distance){
 
        UpdateRequest ur = getSetDistanceQuery(firstUri, secondUri, distance);
-       setKGClient(ROUTE, false);
+       setKGClient(false);
 
        return kgClient.executeUpdate(ur);
    }

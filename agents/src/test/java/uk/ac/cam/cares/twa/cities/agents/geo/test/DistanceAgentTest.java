@@ -4,9 +4,6 @@ import junit.framework.TestCase;
 import org.apache.jena.query.Query;
 import org.apache.jena.update.UpdateRequest;
 import org.geotools.geometry.jts.GeometryBuilder;
-import org.json.JSONException;
-import org.junit.Assert;
-import org.junit.Test;
 import org.locationtech.jts.geom.Point;
 import org.mockito.*;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
@@ -25,7 +22,6 @@ public class DistanceAgentTest extends TestCase {
     @Mock
     KnowledgeBaseClientInterface kgClientMock = Mockito.mock(RemoteKnowledgeBaseClient.class);
 
-    @Test
     public void testGetDistanceQuery() {
 
         DistanceAgent distanceAgent = new DistanceAgent();
@@ -40,12 +36,12 @@ public class DistanceAgentTest extends TestCase {
             Query q = (Query) getDistanceQuery.invoke(distanceAgent, uri1, uri2);
             assertTrue(q.toString().contains("<http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/>"));
             assertTrue(q.toString().contains("<http://localhost/berlin/cityobject/UUID_6cbfb096-5116-4962-9162-48b736768cd4/>"));
-        } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-            e.printStackTrace();
+        }
+        catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+            fail();
         }
     }
 
-    @Test
     public void testGetDistance() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         DistanceAgent distanceAgent = new DistanceAgent();
@@ -68,37 +64,28 @@ public class DistanceAgentTest extends TestCase {
         try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
             kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
                     .thenReturn(kgClientMock);
-            try {
-                assertNotNull(distanceAgent.getClass().getDeclaredMethod("getDistance", String.class, String.class));
-                Method getDistance = distanceAgent.getClass().getDeclaredMethod("getDistance", String.class, String.class);
-                getDistance.setAccessible(true);
+            assertNotNull(distanceAgent.getClass().getDeclaredMethod("getDistance", String.class, String.class));
+            Method getDistance = distanceAgent.getClass().getDeclaredMethod("getDistance", String.class, String.class);
+            getDistance.setAccessible(true);
 
-                getDistance.invoke(distanceAgent,"firstUri", "secondUri");
-                Assert.fail(); }
-            catch (InvocationTargetException e){
-                assertEquals(JSONException.class, e.getCause().getClass());
-                assertEquals("JSONArray[0] not found.", e.getCause().getMessage()); }
+            assertEquals(-1.0,  getDistance.invoke(distanceAgent,"firstUri", "secondUri"));
         }
     }
 
-    @Test
     public void testGetEnvelope(){
 
         DistanceAgent distanceAgent = new DistanceAgent();
         String uri = "http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/";
         String mockedEnvelopeString = "0#0#0#0#1#0#1#1#0#1#0#0";
 
-        try (MockedConstruction mockedEnvelope = mockConstruction(Envelope.class,
-                (mock, context)-> {
-            when(mock.getEnvelopeString(uri)).thenReturn(mockedEnvelopeString);
-                })) {
+        try (MockedConstruction<Envelope> ignored = mockConstruction(Envelope.class,
+                (mock, context)-> when(mock.getEnvelopeString(uri)).thenReturn(mockedEnvelopeString))) {
             Envelope envelope = distanceAgent.getEnvelope(uri);
             Mockito.verify(envelope).getEnvelopeString(uri);
             Mockito.verify(envelope).extractEnvelopePoints(mockedEnvelopeString);
         }
     }
 
-    @Test
     public void testComputeDistance(){
 
         DistanceAgent distanceAgent = new DistanceAgent();
@@ -116,13 +103,12 @@ public class DistanceAgentTest extends TestCase {
 
         // test distance calculation with CRS conversion.
         String envelopeString3 = "2.85#-1.85#0#2.85#0.15#0#4.85#0.15#0#4.85#-1.85#0#2.85#-1.85#0";
-        Envelope envelope3 =  new Envelope("EPSG:3414");
+        Envelope envelope3 = new Envelope("EPSG:3414");
         envelope3.extractEnvelopePoints(envelopeString3);
 
         assertEquals(1.0034225353460755, distanceAgent.computeDistance(envelope1, envelope3));
     }
 
-    @Test
     public void testSetUniformCRS(){
 
         DistanceAgent distanceAgent = new DistanceAgent();
@@ -130,22 +116,21 @@ public class DistanceAgentTest extends TestCase {
         Point point = builder.pointZ(1,1,0);
 
         try {
-            assertNotNull(distanceAgent.getClass().getDeclaredMethod("setUniformCRS", Point.class, String.class, String.class));
-            Method setUniformCRS = distanceAgent.getClass().getDeclaredMethod("setUniformCRS", Point.class, String.class, String.class);
+            assertNotNull(distanceAgent.getClass().getDeclaredMethod("setUniformCRS", Point.class, String.class));
+            Method setUniformCRS = distanceAgent.getClass().getDeclaredMethod("setUniformCRS", Point.class, String.class);
             setUniformCRS.setAccessible(true);
 
-            Point pointTransformed = (Point) setUniformCRS.invoke(distanceAgent,point, "EPSG:3414", "EPSG:24500");
+            Point pointTransformed = (Point) setUniformCRS.invoke(distanceAgent,point, "EPSG:3414");
 
             assertEquals(3.3531995128068957, pointTransformed.getCoordinate().x);
             assertEquals(-0.34659662783087697, pointTransformed.getCoordinate().y);
             assertEquals(0.0, pointTransformed.getCoordinate().z);
         }
         catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-            e.printStackTrace();
+            fail();
         }
     }
 
-    @Test
     public void testGetSetDistanceQuery(){
 
         DistanceAgent distanceAgent = new DistanceAgent();
@@ -173,11 +158,10 @@ public class DistanceAgentTest extends TestCase {
             assertTrue(ur.toString().contains("123e4567-e89b-12d3-a456-556642441111"));
         }
         catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-            e.printStackTrace();
+            fail();
         }
     }
 
-    @Test
     public void testSetDistance() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
 
         DistanceAgent distanceAgent = new DistanceAgent();
