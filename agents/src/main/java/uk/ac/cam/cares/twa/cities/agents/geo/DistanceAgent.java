@@ -81,7 +81,7 @@ public class DistanceAgent extends JPSAgent {
                         setDistance(firstObjectUri, secondObjectUri, distance);
                     }
                     catch (Exception e) {
-                        System.out.println("Distance was not set");
+                        System.out.println("DistanceAgent: distance was not set");
                     }
                 }
                 distances.add(distance);
@@ -102,13 +102,15 @@ public class DistanceAgent extends JPSAgent {
                       for (Object iri: iris) {
                           new URL((String) iri);
                       }
+                      return true;
+
                     } catch (Exception e) {
                         throw new BadRequestException();
                     }
                 }
             }
         }
-        return true;
+        throw new BadRequestException();
     }
 
     /**
@@ -140,17 +142,17 @@ public class DistanceAgent extends JPSAgent {
      */
     private double getDistance(String firstUriString, String secondUriString){
 
-       double distance =  -1.0;
-       setKGClient(true);
+        double distance =  -1.0;
+        setKGClient(true);
 
         Query q = getDistanceQuery(firstUriString, secondUriString);
         String queryResultString = kgClient.execute(q.toString());
-       JSONArray queryResult = new JSONArray(queryResultString);
+        JSONArray queryResult = new JSONArray(queryResultString);
 
-       if(!queryResult.isEmpty()){
-           distance = Double.parseDouble(queryResult.getJSONObject(0).get("distance").toString());
-       }
-       return distance;
+        if(!queryResult.isEmpty()){
+            distance = Double.parseDouble(queryResult.getJSONObject(0).get("distance").toString());
+        }
+        return distance;
     }
 
 
