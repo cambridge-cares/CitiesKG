@@ -9,6 +9,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingQueue;
 import java.util.zip.GZIPInputStream;
 
@@ -18,7 +20,11 @@ public class NquadsExporterTask implements Runnable {
     public static final String NQ_OUTDIR = "quads";
     public static final String NQ_FORMAT = "N-Quads";
     public static final String NQ_FILENAME = "data.nq.gz";
+    public static final String EX_PROP_FILENAME = "kb.properties";
     public static final String EXT_GZ = ".gz";
+    public static final String CFG_KEY_SERVER = "server";
+    public static final String CFG_KEY_PORT = "port";
+    public static final String CFG_KEY_SID = "sid";
     private final String FS = System.getProperty("file.separator");
     private Boolean stop = false;
     private final BlockingQueue<File>  nqQueue;
@@ -56,8 +62,8 @@ public class NquadsExporterTask implements Runnable {
     /**
      * Exports individual journal file to n-quads file. Removes helper files after that.
      *
-     * @param nqFile
-     * @return
+     * @param nqFile empty N-quads input file identifying finished journal file
+     * @return target N-quads file
      */
     private File exportToNquadsFileFromJnlFile(File nqFile) {
         File jnlFile = new File(nqFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_NQUADS, ImporterTask.EXT_FILE_JNL));
@@ -66,18 +72,24 @@ public class NquadsExporterTask implements Runnable {
         String[] args = {ARG_OUTDIR, nqDir,
                 ARG_FORMAT, NQ_FORMAT,
                 propFilePath};
+        File targetNqFile = new File(nqFile.getAbsolutePath() + EXT_GZ);
         try {
             ExportKB.main(args);
+            File exportedNqFile = new File(nqDir + FS + BlazegraphServerTask.NAMESPACE + FS + NQ_FILENAME);
+            File exportedPropFile = new File(nqDir + FS + BlazegraphServerTask.NAMESPACE + FS + EX_PROP_FILENAME);
+            File propFile = new File(propFilePath);
+
+            if (!exportedNqFile.renameTo(targetNqFile) ||
+                    !exportedPropFile.delete() ||
+                    !nqFile.delete() ||
+                    !jnlFile.delete() ||
+                    !propFile.delete()) {
+                throw new IOException();
+            }
         } catch (Exception e) {
             throw new JPSRuntimeException(e);
         }
-        File exportedNqFile = new File(nqDir + FS + BlazegraphServerTask.NAMESPACE + FS + NQ_FILENAME);
-        File targetNqFile = new File(nqFile.getAbsolutePath() + EXT_GZ);
-        exportedNqFile.renameTo(targetNqFile);
-        exportedNqFile.delete();
-        nqFile.delete();
-        jnlFile.delete();
-        new File(propFilePath).delete();
+
 
         return targetNqFile;
     }
@@ -96,14 +108,16 @@ public class NquadsExporterTask implements Runnable {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document cfg = builder.parse(projectCfg);
-            String server = cfg.getElementsByTagName("server").item(0).getTextContent();
-            String port = cfg.getElementsByTagName("port").item(0).getTextContent();
-            String sid = cfg.getElementsByTagName("sid").item(0).getTextContent();
+            String server = cfg.getElementsByTagName(CFG_KEY_SERVER).item(0).getTextContent();
+            String port = cfg.getElementsByTagName(CFG_KEY_PORT).item(0).getTextContent();
+            String sid = cfg.getElementsByTagName(CFG_KEY_SID).item(0).getTextContent();
             url = org.apache.http.HttpHost.DEFAULT_SCHEME_NAME.concat(":/").concat(
                     url.concat(server).concat(":").concat(port).concat(sid));
-            new File(nqFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_NQUADS + EXT_GZ,
-                    ImporterTask.PROJECT_CONFIG)).delete();
-
+            File cfgFile = new File(nqFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_NQUADS + EXT_GZ,
+                    ImporterTask.PROJECT_CONFIG));
+            if (!cfgFile.delete()) {
+                throw new IOException();
+            }
         } catch (ParserConfigurationException | SAXException | IOException e) {
             throw new JPSRuntimeException(e);
         }
@@ -127,18 +141,31 @@ public class NquadsExporterTask implements Runnable {
         GZIPInputStream gzis = new GZIPInputStream(new FileInputStream(nqFile));
         InputStreamReader reader = new InputStreamReader(gzis);
         BufferedReader in = new BufferedReader(reader);
+        Iterator<String> it = in.lines().iterator();
         FileOutputStream fos = new FileOutputStream(targetNqFile);
         OutputStreamWriter osw = new OutputStreamWriter(fos);
         BufferedWriter bw = new BufferedWriter(osw);
 
-        String readed;
-        while ((readed = in.readLine()) != null) {
-            bw.write(readed.replaceAll(from, to));
-            bw.newLine();
-        }
+        String line;
+        String replaced;
 
+            while (it.hasNext()) {
+                try {
+                    line = it.next();
+                } catch (NoSuchElementException e) {
+                    throw new JPSRuntimeException(e);
+                }
+                replaced = line.replaceAll(from, to + "/");
+                bw.write(replaced);
+                bw.newLine();
+            }
+
+
+        bw.close();
         osw.close();
-        nqFile.delete();
+        if (!nqFile.delete()) {
+            throw new IOException();
+        }
 
         return targetNqFile;
     }

@@ -218,10 +218,6 @@ public class CityImportAgent extends JPSAgent {
             }
         }
 
-        //exportChunksToNquads(importDir);
-
-        System.out.println("Import Done.");
-
         return imported;
     }
 
@@ -316,69 +312,6 @@ public class CityImportAgent extends JPSAgent {
     }
 
     /**
-     * Writes error log to a file.
-     *
-     * @param errorLog - error contents.
-     */
-    private void writeErrorLog(String errorLog) {
-        //@Todo: implementation
-    }
-
-    /**
-     * Exports data from Blazegraph journal files to n-quads format.
-     *
-     * @param journalDir - directory with jnl files
-     * @return - exported n-quads files
-
-    private ArrayList<File> exportChunksToNquads(File journalDir) {
-        ArrayList<File> nqFiles = new ArrayList<>();
-
-        BlockingQueue<Runnable> queue = importerExecutor.getQueue();
-
-        //Export for finished tasks when the queue is not empty
-        while (!queue.isEmpty()) {
-            try {
-                for (File jnlFile: collectJournalFilesForNquadsExport(journalDir)) {
-                    nqFiles.add(exportToNquadsFileFromJnlFile(jnlFile));
-                }
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                throw new JPSRuntimeException(e);
-            }
-        }
-
-        //After the queue is empty, last check on the directory
-        for (File jnlFile: collectJournalFilesForNquadsExport(journalDir)) {
-            nqFiles.add(exportToNquadsFileFromJnlFile(jnlFile));
-        }
-
-        return nqFiles;
-    }
-
-    /**
-     * Produces a list of journal files suitable for esport to n-quads,
-     * for which importing process already finished.
-     *
-     * @param journalDir
-     * @return
-
-    private ArrayList<File>  collectJournalFilesForNquadsExport(File journalDir) {
-        ArrayList<File> jnlFiles = new ArrayList<>();
-
-        File[] dirJnlContent = journalDir.listFiles((dir, name) -> name.toLowerCase().endsWith(ImporterTask.EXT_FILE_JNL));
-        for (File file : dirJnlContent) {
-            File nqFile = new File(file.getAbsolutePath().replace(ImporterTask.EXT_FILE_JNL, ImporterTask.EXT_FILE_NQUADS));
-            if (nqFile.isFile()) {
-                jnlFiles.add(file);
-            }
-        }
-
-        return jnlFiles;
-    }
-     */
-
-
-    /**
      * Imports n-quads file into a running Blazegraph instance.
      *
      * @param queue - n-quads file queue
@@ -390,6 +323,15 @@ public class CityImportAgent extends JPSAgent {
         nqUploadExecutor.execute(task);
 
         return task;
+    }
+
+    /**
+     * Writes error log to a file.
+     *
+     * @param errorLog - error contents.
+     */
+    private void writeErrorLog(String errorLog) {
+        //@Todo: implementation
     }
 
     /**
