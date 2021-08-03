@@ -76,13 +76,8 @@ public class DistanceAgent extends JPSAgent {
 
                 if (distance < 0){
                     distance = computeDistance(getEnvelope(firstObjectUri), getEnvelope(secondObjectUri));
+                    setDistance(firstObjectUri, secondObjectUri, distance);
 
-                    try {
-                        setDistance(firstObjectUri, secondObjectUri, distance);
-                    }
-                    catch (Exception e) {
-                        System.out.println("DistanceAgent: distance was not set");
-                    }
                 }
                 distances.add(distance);
             }
@@ -229,8 +224,8 @@ public class DistanceAgent extends JPSAgent {
      */
     private UpdateRequest getSetDistanceQuery(String firstUri, String secondUri, double distance){
 
-        String distanceUri = DISTANCE_GRAPH_URI + "DIST_" + uniqueURIGenerator() + "/";
-        String valueUri = DISTANCE_GRAPH_URI + "VAL_" + uniqueURIGenerator() + "/";
+        String distanceUri = DISTANCE_GRAPH_URI + "DIST_" + UUID.randomUUID() + "/";
+        String valueUri = DISTANCE_GRAPH_URI + "VAL_" + UUID.randomUUID() + "/";
 
         UpdateBuilder ib= new UpdateBuilder()
                 .addPrefix( "om",  UNIT_ONTOLOGY )
@@ -250,15 +245,6 @@ public class DistanceAgent extends JPSAgent {
         ib.setVar( Var.alloc( "graph" ), NodeFactory.createURI(DISTANCE_GRAPH_URI));
 
         return ib.buildRequest();
-    }
-
-    /**
-     * generates a unique ID.
-     * @return unique id
-     */
-    private String uniqueURIGenerator(){
-
-        return UUID.randomUUID().toString();
     }
 
     /**
