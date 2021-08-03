@@ -1,4 +1,4 @@
 POST http://localhost:8081/agents/export/kml
 Content-Type: application/json
 
-{"gmlid":"BLDG_000300020011fab3, 12345", "outputpath":  ""}
+{"gmlid":"BLDG_000300020011fab3, 12345", "outputpath":  "C:/Users/Shiying/Documents/CKG/Exported_data/testagent.kml"}
