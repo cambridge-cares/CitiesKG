@@ -14,15 +14,27 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 
+/**
+ * Runnable task instantiating Blazegraph's {@link StandaloneNanoSparqlServer} and placing the running instance in the
+ * {@link BlockingQueue} fot the other tasks to pick up when it is ready to start working with it. The server is
+ * destroyed after being stopped by other tasks and this task is stopped after that as well. All the necessary
+ * configuration files and system variables required to start the server instance are set up by methods of this class.
+ *
+ * @author <a href="mailto:arkadiusz.chadzynski@cares.cam.ac.uk">Arkadiusz Chadzynski</a>
+ * @version $Id$
+ *
+ */
 public class BlazegraphServerTask implements Runnable {
     public static final String PROPERTY_FILE = "RWStore.properties";
-    private final String PROPERTY_FILE_PATH = "../../../../../../../";
-    private final String JETTY_CFG_PATH = "../../../../../jetty.xml";
-    private final String WAR_PATH = "../../../../../war";
+    public static final String PROPERTY_FILE_PATH = "../../../../../../../";
+    public static final String JETTY_CFG_PATH = "../../../../../jetty.xml";
+    public static final String WAR_PATH = "../../../../../war";
+    public static final String SYS_PROP_JETTY = "jetty.home";
     public static final String NAMESPACE = "tmpkb";
-    private final String DEF_JOURNAL_NAME = "citiesKG.jnl";
+    public static final String DEF_JOURNAL_NAME = "citiesKG.jnl";
     private final String FS = System.getProperty("file.separator");
     private final String journalPath;
     private final BlockingQueue<Server> queue;
@@ -46,9 +58,9 @@ public class BlazegraphServerTask implements Runnable {
             if (server == null) {
                 try {
                     String propFileAbsPath = setupPaths();
-                    setupFiles(propFileAbsPath);
-                    String jettyXml = setupSystem(propFileAbsPath);
-                    server = setupServer(propFileAbsPath, jettyXml);
+                    File propFile = setupFiles(propFileAbsPath);
+                    String jettyXml = setupSystem(propFile.getAbsolutePath());
+                    server = setupServer(propFile.getAbsolutePath(), jettyXml);
                     StandaloneNanoSparqlServer.awaitServerStart(server);
                     queue.put(server);
                 } catch (Exception e) {
@@ -61,20 +73,31 @@ public class BlazegraphServerTask implements Runnable {
         }
     }
 
-
+    /**
+     * Creates path to a local Blazergaph RWStore.properties file based on the journal filename.
+     *
+     * @return - properties file path
+     */
     private String setupPaths() {
         File journalFile =  new File(journalPath);
         String propFileName = journalFile.getName().split("\\.")[0] + PROPERTY_FILE;
         String propFilePath = journalFile.getParent();
-        String propFileAbsPath = propFilePath + FS + propFileName;
 
-        return propFileAbsPath;
+        return propFilePath + FS + propFileName;
     }
 
+    /**
+     * Creates local Blazergaph RWStore.properties file with appropriate journal file path variable.
+     *
+     * @param propFileAbsPath - path to a target properties file
+     * @return - target properties file
+     * @throws URISyntaxException - when properties file path could not be converted to URI
+     * @throws IOException - when read/write operations on files fail
+     */
     private File setupFiles(String propFileAbsPath) throws URISyntaxException, IOException {
-        Files.copy(Paths.get(getClass().getResource(PROPERTY_FILE_PATH + PROPERTY_FILE).toURI()),
+        Files.copy(Paths.get(Objects.requireNonNull(getClass().getResource(PROPERTY_FILE_PATH + PROPERTY_FILE)).toURI()),
                 Paths.get(propFileAbsPath));
-        File  propFile= new File(propFileAbsPath);
+        File  propFile = new File(propFileAbsPath);
         String data = FileUtils.readFileToString(propFile, String.valueOf(Charset.defaultCharset()));
         data = data.replace(DEF_JOURNAL_NAME, journalPath);
         FileUtils.writeStringToFile(propFile, data);
@@ -82,23 +105,36 @@ public class BlazegraphServerTask implements Runnable {
         return propFile;
     }
 
+    /**
+     * Sets system properties required to instantiate Blazegraph.
+     *
+     * @param propFileAbsPath  - path to a target properties file
+     * @return - jetty config path
+     */
     private String setupSystem(String propFileAbsPath) {
-        String jettyXml = NanoSparqlServer.class.getResource(JETTY_CFG_PATH).toExternalForm();
-        String war = NanoSparqlServer.class.getResource(WAR_PATH).toExternalForm();
-        System.setProperty("jetty.home", war);
+        String jettyXml = Objects.requireNonNull(NanoSparqlServer.class.getResource(JETTY_CFG_PATH)).toExternalForm();
+        String war = Objects.requireNonNull(NanoSparqlServer.class.getResource(WAR_PATH)).toExternalForm();
+        System.setProperty(SYS_PROP_JETTY, war);
         System.setProperty(NanoSparqlServer.SystemProperties.JETTY_XML, jettyXml);
         System.setProperty(NanoSparqlServer.SystemProperties.BIGDATA_PROPERTY_FILE, propFileAbsPath);
 
         return jettyXml;
     }
 
+    /**
+     * Creates an instance of StandaloneNanoSparqlServer.
+     *
+     * @param propFileAbsPath - path to a target properties file
+     * @param jettyXml - jetty config path
+     * @return - instance of local StandaloneNanoSparqlServer
+     * @throws Exception - when creating NanoSparqlServer instance fails
+     */
     private Server setupServer(String propFileAbsPath, String jettyXml) throws Exception {
         LinkedHashMap<String, String> initParams = new LinkedHashMap<>();
         initParams.put(ConfigParams.PROPERTY_FILE, propFileAbsPath);
         initParams.put(ConfigParams.NAMESPACE, NAMESPACE);
-        Server server = StandaloneNanoSparqlServer.newInstance(0, jettyXml, null, initParams);
 
-        return server;
+        return StandaloneNanoSparqlServer.newInstance(0, jettyXml, null, initParams);
     }
 
 }

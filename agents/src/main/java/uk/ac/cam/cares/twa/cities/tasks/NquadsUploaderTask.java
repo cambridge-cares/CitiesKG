@@ -13,6 +13,15 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 
+/**
+ * Runnable task uploading a data stored in an N-Quads format {@link <https://www.w3.org/TR/n-quads/>} into a given
+ * endpoint capable of bulk data uploads. The upload starts after a file is picked up from the {@link BlockingQueue}.
+ * The task stops itself after the upload process is finished.
+ *
+ * @author <a href="mailto:arkadiusz.chadzynski@cares.cam.ac.uk">Arkadiusz Chadzynski</a>
+ * @version $Id$
+ *
+ */
 public class NquadsUploaderTask implements Runnable {
     public static final String CTYPE_NQ = "text/x-nquads";
     private Boolean stop = false;

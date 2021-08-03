@@ -14,6 +14,17 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingQueue;
 import java.util.zip.GZIPInputStream;
 
+/**
+ * Runnable task exporting an OntoCityGML model to N-Quads format {@link <https://www.w3.org/TR/n-quads/>}. The model is
+ * exported from Blazegraph's journal file using {@link ExportKB} and placed into the {@link BlockingQueue} to be picked
+ * up by any other tasks. Local URLs are replaced in the target N-Quads file to make it ready for upload to the target
+ * instance of Blazegraph with different URLs. All the helper files are removed by the methods in this class as well.
+ * The task stops itself after the export process is finished and the target N-Quads file is placed in the queue.
+ *
+ * @author <a href="mailto:arkadiusz.chadzynski@cares.cam.ac.uk">Arkadiusz Chadzynski</a>
+ * @version $Id$
+ *
+ */
 public class NquadsExporterTask implements Runnable {
     public static final String ARG_OUTDIR = "-outdir";
     public static final String ARG_FORMAT = "-format";
@@ -137,7 +148,6 @@ public class NquadsExporterTask implements Runnable {
     private File changeUrlsInNQuadsFile(File nqFile, String from, String to) throws IOException {
         File targetNqFile  = new File(nqFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_NQUADS + EXT_GZ,
                 ImporterTask.EXT_FILE_NQUADS));
-
         GZIPInputStream gzis = new GZIPInputStream(new FileInputStream(nqFile));
         InputStreamReader reader = new InputStreamReader(gzis);
         BufferedReader in = new BufferedReader(reader);
@@ -145,21 +155,19 @@ public class NquadsExporterTask implements Runnable {
         FileOutputStream fos = new FileOutputStream(targetNqFile);
         OutputStreamWriter osw = new OutputStreamWriter(fos);
         BufferedWriter bw = new BufferedWriter(osw);
-
         String line;
         String replaced;
 
-            while (it.hasNext()) {
-                try {
-                    line = it.next();
-                } catch (NoSuchElementException e) {
-                    throw new JPSRuntimeException(e);
-                }
-                replaced = line.replaceAll(from, to + "/");
-                bw.write(replaced);
-                bw.newLine();
+        while (it.hasNext()) {
+            try {
+                line = it.next();
+            } catch (NoSuchElementException e) {
+                throw new JPSRuntimeException(e);
             }
-
+            replaced = line.replaceAll(from, to + "/");
+            bw.write(replaced);
+            bw.newLine();
+        }
 
         bw.close();
         osw.close();
