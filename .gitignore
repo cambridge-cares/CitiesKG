@@ -26,6 +26,8 @@ db/vocabularies/target/
 db/*.gml
 db/appearance
 
+target/
+JPS-AWS-git/
 *.jar
 *.war
 
