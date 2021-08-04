@@ -30,8 +30,9 @@ import java.util.concurrent.BlockingQueue;
 public class BlazegraphServerTask implements Runnable {
     public static final String PROPERTY_FILE = "RWStore.properties";
     public static final String PROPERTY_FILE_PATH = "../../../../../../../";
-    public static final String JETTY_CFG_PATH = "../../../../../jetty.xml";
-    public static final String WAR_PATH = "../../../../../war";
+    public static final String JETTY_CFG_PATH = "jetty.xml";
+    public static final String WAR_PATH = "war";
+    public static final String NSS_PATH = "com/bigdata/rdf/sail/webapp/";
     public static final String SYS_PROP_JETTY = "jetty.home";
     public static final String NAMESPACE = "tmpkb";
     public static final String DEF_JOURNAL_NAME = "citiesKG.jnl";
@@ -112,8 +113,10 @@ public class BlazegraphServerTask implements Runnable {
      * @return - jetty config path
      */
     private String setupSystem(String propFileAbsPath) {
-        String jettyXml = Objects.requireNonNull(NanoSparqlServer.class.getResource(JETTY_CFG_PATH)).toExternalForm();
-        String war = Objects.requireNonNull(NanoSparqlServer.class.getResource(WAR_PATH)).toExternalForm();
+        String jettyXml = Objects.requireNonNull(NanoSparqlServer.class.getResource("")).toExternalForm()
+                .replace(NSS_PATH, JETTY_CFG_PATH);
+        String war = Objects.requireNonNull(NanoSparqlServer.class.getResource("")).toExternalForm()
+                .replace(NSS_PATH, WAR_PATH);
         System.setProperty(SYS_PROP_JETTY, war);
         System.setProperty(NanoSparqlServer.SystemProperties.JETTY_XML, jettyXml);
         System.setProperty(NanoSparqlServer.SystemProperties.BIGDATA_PROPERTY_FILE, propFileAbsPath);
@@ -121,7 +124,7 @@ public class BlazegraphServerTask implements Runnable {
         return jettyXml;
     }
 
-    /**
+   /**
      * Creates an instance of StandaloneNanoSparqlServer.
      *
      * @param propFileAbsPath - path to a target properties file
