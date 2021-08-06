@@ -5,6 +5,30 @@
   <groupId>org.citydb</groupId>
   <artifactId>impexp-kml-collada-plugin</artifactId>
   <version>4.2.3</version>
+  <build>
+    <pluginManagement>
+      <plugins>
+
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.1</version>
+          <configuration>
+            <source>1.8</source>
+            <target>1.8</target>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <repositories>
+  <repository>
+    <snapshots><enabled>false</enabled></snapshots>
+    <id>central</id>
+    <name>bintray</name>
+    <url>https://jcenter.bintray.com</url>
+  </repository>
+  </repositories>
   <dependencies>
     <dependency>
       <groupId>org.citydb</groupId>
