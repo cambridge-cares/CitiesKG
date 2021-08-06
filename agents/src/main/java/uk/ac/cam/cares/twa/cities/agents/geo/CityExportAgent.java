@@ -31,7 +31,7 @@ public class CityExportAgent extends JPSAgent {
             //TODO: after validation, the gmlId and outputpath should be retrieved
             String gmlids = requestParams.getString(KEY_GMLID);
             String outputpath = requestParams.getString(KEY_OUTPUTPATH);
-            kmlExportToLocal(gmlids,outputpath);
+            exportKml(gmlids,outputpath);
         }
         //TODO
         return null;
@@ -66,13 +66,10 @@ public class CityExportAgent extends JPSAgent {
         return !error;
     }
 
-    private ExporterTask kmlExportToLocal (String gmlIds, String outputpath){
+    private ExporterTask exportKml (String gmlIds, String outputpath){
         ExporterTask task = new ExporterTask(gmlIds, outputpath);
         exporterExecutor.execute(task);  // Note: If no breakpoint is put here or in this script, the debugger can enter task scriptva
         return task;
     }
-
-
-
 
 }

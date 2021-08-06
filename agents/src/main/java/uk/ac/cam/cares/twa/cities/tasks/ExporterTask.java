@@ -31,7 +31,7 @@ public class ExporterTask implements Runnable {
     @Override
     public void run() {
         File cfgfile = null;
-        System.out.println("look here 1");
+        //System.out.println("look here 1");
         while (!stop) {
 
             try {
