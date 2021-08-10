@@ -5,6 +5,11 @@
   <groupId>org.citydb</groupId>
   <artifactId>impexp-kml-collada-plugin</artifactId>
   <version>4.2.3</version>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  </properties>
   <build>
     <pluginManagement>
       <plugins>
@@ -22,13 +27,12 @@
   </build>
 
   <repositories>
-  <repository>
-    <snapshots><enabled>false</enabled></snapshots>
-    <id>central</id>
-    <name>bintray</name>
-    <url>https://jcenter.bintray.com</url>
-  </repository>
+      <repository>
+        <id>scijava.public</id>
+        <url>https://maven.scijava.org/content/groups/public</url>
+      </repository>
   </repositories>
+
   <dependencies>
     <dependency>
       <groupId>org.citydb</groupId>
