@@ -1,6 +1,8 @@
 package uk.ac.cam.cares.twa.cities.tasks.test;
 
+import com.bigdata.rdf.sail.webapp.NanoSparqlServer;
 import junit.framework.TestCase;
+import org.eclipse.jetty.server.Server;
 import uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask;
 
 import java.io.File;
@@ -177,12 +179,36 @@ public class BlazegraphServerTaskTest  extends TestCase {
             Method setupSystem = task.getClass().getDeclaredMethod("setupSystem", String.class);
             setupSystem.setAccessible(true);
             assertEquals(new File((String) setupSystem.invoke(task, jnlPath)).getName(), jettyCfg);
+            assertTrue(System.getProperty(BlazegraphServerTask.SYS_PROP_JETTY).contains(".jar!/war"));
+            assertTrue(System.getProperty(NanoSparqlServer.SystemProperties.JETTY_XML).contains(".jar!/jetty.xml"));
+            assertEquals(System.getProperty(NanoSparqlServer.SystemProperties.BIGDATA_PROPERTY_FILE), jnlPath);
 
-            //@todo check system vars
-            
         } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             fail();
         }
+    }
+
+    public void testNewBlazegraphServerTaskSetupServerMethod() {
+        String jnlPath = System.getProperty("java.io.tmpdir") + "test.jnl";
+        BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), jnlPath);
+        String jettyCfg = "jetty.xml";
+
+        try {
+            Method setupServer = task.getClass().getDeclaredMethod("setupServer", String.class, String.class);
+            setupServer.setAccessible(true);
+
+            try {
+                setupServer.invoke(task, jnlPath, "");
+            } catch (InvocationTargetException e) {
+                assertEquals(e.getTargetException().getStackTrace()[1].getClassName(),
+                        "com.bigdata.rdf.sail.webapp.NanoSparqlServer");
+            }
+
+            assertEquals(setupServer.invoke(task, jnlPath, jettyCfg).getClass(), Server.class);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            fail();
+        }
+
     }
 
 }
