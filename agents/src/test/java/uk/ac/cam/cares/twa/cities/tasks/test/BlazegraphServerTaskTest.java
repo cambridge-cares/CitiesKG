@@ -3,7 +3,9 @@ package uk.ac.cam.cares.twa.cities.tasks.test;
 import com.bigdata.rdf.sail.webapp.NanoSparqlServer;
 import junit.framework.TestCase;
 import org.eclipse.jetty.server.Server;
+import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask;
+import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,6 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class BlazegraphServerTaskTest  extends TestCase {
@@ -190,6 +193,8 @@ public class BlazegraphServerTaskTest  extends TestCase {
 
     public void testNewBlazegraphServerTaskSetupServerMethod() {
         String jnlPath = System.getProperty("java.io.tmpdir") + "test.jnl";
+        File jnlFile = new File(jnlPath);
+        File propFile = new File(jnlPath.replace(ImporterTask.EXT_FILE_JNL, BlazegraphServerTask.PROPERTY_FILE));
         BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), jnlPath);
         String jettyCfg = "jetty.xml";
 
@@ -207,7 +212,105 @@ public class BlazegraphServerTaskTest  extends TestCase {
             assertEquals(setupServer.invoke(task, jnlPath, jettyCfg).getClass(), Server.class);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             fail();
+        } finally {
+            if (Objects.requireNonNull(jnlFile).isFile()) {
+                if (!jnlFile.delete()) {
+                    fail();
+                }
+            }
+            if (Objects.requireNonNull(propFile).isFile()) {
+                if (!propFile.delete()) {
+                    fail();
+                }
+            }
         }
+
+    }
+
+    public void testNewBlazegraphServerTaskRunMethod() {
+        String jnlPath = System.getProperty("java.io.tmpdir") + "test.jnl";
+        File jnlFile = new File(jnlPath);
+        File propFile = new File(jnlPath.replace(ImporterTask.EXT_FILE_JNL, BlazegraphServerTask.PROPERTY_FILE));
+
+        BlazegraphServerTask task = new BlazegraphServerTask(null, jnlPath);
+
+        try {
+            task.run();
+            fail();
+        } catch (JPSRuntimeException e) {
+            assertEquals(e.getClass(), JPSRuntimeException.class);
+        } finally {
+            if (Objects.requireNonNull(jnlFile).isFile()) {
+                if (!jnlFile.delete()) {
+                    fail();
+                }
+            }
+            if (Objects.requireNonNull(propFile).isFile()) {
+                if (!propFile.delete()) {
+                    fail();
+                }
+            }
+        }
+
+        task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), "");
+
+        try {
+            task.run();
+            fail();
+        } catch (JPSRuntimeException e) {
+            assertEquals(e.getClass(), JPSRuntimeException.class);
+        }
+
+        task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), null);
+
+        try {
+            task.run();
+            fail();
+        } catch (JPSRuntimeException e) {
+            assertEquals(e.getClass(), JPSRuntimeException.class);
+        }
+
+        task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), jnlPath);
+
+        try {
+            Field server = task.getClass().getDeclaredField("server");
+            Field stop = task.getClass().getDeclaredField("stop");
+            Field queue = task.getClass().getDeclaredField("queue");
+            server.setAccessible(true);
+            stop.setAccessible(true);
+            queue.setAccessible(true);
+            new Thread(task).start();
+
+            while (!(boolean) stop.get(task)) {
+                if (server.get(task) != null ) {
+                    assertEquals(Server.class, server.get(task).getClass());
+                    if (((Server) server.get(task)).isRunning()) {
+                        if (((BlockingQueue<?>) queue.get(task)).size() > 0) {
+                            assertEquals(Server.class, ((BlockingQueue<?>) queue.get(task)).take().getClass());
+                            //Expected behaviour of stopping server just after it started to result in printing runtime
+                            //error log to the console. The test of the run() method will pass.
+                            //ERROR: CreateKBTask.java:121: java.lang.RuntimeException: java.lang.RuntimeException: java.lang.InterruptedException
+                            ((Server) server.get(task)).stop();
+                            assertFalse(((Server) server.get(task)).isRunning());
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            fail();
+        } finally {
+            if (Objects.requireNonNull(jnlFile).isFile()) {
+                if (!jnlFile.delete()) {
+                    fail();
+                }
+            }
+            if (Objects.requireNonNull(propFile).isFile()) {
+                if (!propFile.delete()) {
+                    fail();
+                }
+            }
+        }
+
 
     }
 
