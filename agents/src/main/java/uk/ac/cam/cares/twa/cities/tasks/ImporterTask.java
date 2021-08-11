@@ -40,7 +40,7 @@ public class ImporterTask implements Runnable {
     public static final String ARG_CFG = "-config=";
     private final BlockingQueue<Server> serverInstances;
     private final File importFile;
-    private Boolean stop = false;
+    private boolean stop = false;
 
     public ImporterTask(BlockingQueue<Server> serverInstances, File importFile) {
         this.serverInstances = serverInstances;
