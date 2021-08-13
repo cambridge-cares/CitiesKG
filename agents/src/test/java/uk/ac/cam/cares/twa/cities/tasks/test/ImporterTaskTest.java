@@ -1,8 +1,10 @@
 package uk.ac.cam.cares.twa.cities.tasks.test;
 
 import junit.framework.TestCase;
+import org.eclipse.jetty.server.Server;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
+import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask;
 import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
 import uk.ac.cam.cares.twa.cities.tasks.NquadsExporterTask;
@@ -17,7 +19,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.util.Objects;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class ImporterTaskTest extends TestCase {
@@ -161,6 +167,79 @@ public class ImporterTaskTest extends TestCase {
             }
         }
 
+    }
+
+    public void testNewImporterTaskRunMethod() {
+        File impFile = new File(System.getProperty("java.io.tmpdir") + "test.gml");
+        File testFile = new File(Objects.requireNonNull(this.getClass().getResource("/test.gml")).getFile());
+        File nqFile = new File(impFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_GML, ImporterTask.EXT_FILE_NQUADS));
+        File jnlFile = new File(impFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_GML, ImporterTask.EXT_FILE_JNL));
+        File propFile = new File(impFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_GML, BlazegraphServerTask.PROPERTY_FILE));
+        File projFile = new File(impFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_GML, ImporterTask.PROJECT_CONFIG));
+        assertTrue(testFile.exists());
+        try {
+            Files.copy(testFile.toPath(), impFile.toPath());
+        } catch (IOException e) {
+            fail();
+        }
+
+        ExecutorService serverExecutor = Executors.newFixedThreadPool(1);
+        BlockingQueue<Server> importQueue = new LinkedBlockingDeque<>();
+        BlazegraphServerTask serverTask = new BlazegraphServerTask(importQueue, jnlFile.getAbsolutePath());
+        serverExecutor.execute(serverTask);
+
+        ImporterTask task = new ImporterTask(importQueue, new File(""));
+
+        try {
+            task.run();
+            fail();
+        } catch (JPSRuntimeException e) {
+            assertEquals(e.getClass(), JPSRuntimeException.class);
+        }
+
+        try {
+            Field server = serverTask.getClass().getDeclaredField("server");
+            server.setAccessible(true);
+            importQueue.put((Server) server.get(serverTask));
+            task = new ImporterTask(importQueue, impFile);
+            Field stop = task.getClass().getDeclaredField("stop");
+            Field serverInstances = task.getClass().getDeclaredField("serverInstances");
+            stop.setAccessible(true);
+            serverInstances.setAccessible(true);
+            new Thread(task).start();
+
+            while (!(boolean) stop.get(task)) {
+                if (((BlockingQueue<?>) serverInstances.get(task)).size() == 0) {
+                    if (Objects.requireNonNull(nqFile).isFile()) {
+                        assertTrue(nqFile.delete());
+                    }
+                }
+            }
+
+        } catch (NoSuchFieldException | IllegalAccessException | InterruptedException e) {
+            fail();
+        } finally {
+            if (Objects.requireNonNull(impFile).isFile()) {
+                if (!impFile.delete()) {
+                    fail();
+                }
+            }
+            if (Objects.requireNonNull(jnlFile).isFile()) {
+                if (!jnlFile.delete()) {
+                    fail();
+                }
+            }
+            if (Objects.requireNonNull(propFile).isFile()) {
+                if (!propFile.delete()) {
+                    fail();
+                }
+            }
+            if (Objects.requireNonNull(projFile).isFile()) {
+                if (!projFile.delete()) {
+                    fail();
+                }
+            }
+        }
     }
 
 }
