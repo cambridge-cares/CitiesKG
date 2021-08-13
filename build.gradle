@@ -20,6 +20,9 @@ subprojects {
         maven {
             url 'https://dl.bintray.com/3dcitydb/maven'
         }
+        maven {
+            url 'https://maven.scijava.org/content/repositories/public/'
+        }
         jcenter()
 
     }
