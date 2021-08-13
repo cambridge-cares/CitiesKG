@@ -42,6 +42,7 @@ public class DatePicker extends JXDatePicker implements EventHandler {
         ObjectRegistry.getInstance().getEventDispatcher().addEventHandler(EventType.SWITCH_LOCALE, this);
         setFormats("yyyy-MM-dd", "dd.MM.yyyy");
         getMonthView().setZoomable(true);
+
     }
 
     @Override
