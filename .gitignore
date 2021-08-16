@@ -31,6 +31,6 @@ JPS-AWS-git/
 *.jar
 *.war
 
-test_RWStore.properties
-test_config.properties
+**/test_RWStore.properties
+**/test_config.properties
 
