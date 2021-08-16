@@ -2,14 +2,12 @@ package uk.ac.cam.cares.twa.cities.tasks;
 
 import org.apache.commons.io.FileUtils;
 import org.citydb.ImpExp;
-import org.json.JSONObject;
-import org.json.XML;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Files;
+import java.nio.charset.Charset;
+import java.util.ResourceBundle;
 
 public class ExporterTask implements Runnable {
 
@@ -17,6 +15,7 @@ public class ExporterTask implements Runnable {
     private final String inputs;
     private final String outputpath;
     private Boolean stop = false;
+    private final String PLACEHOLDER_GMLID = "{{gmlid}}";
 
     public ExporterTask(String gmlIds, String outputpath) {
         this.inputs = gmlIds;
@@ -30,7 +29,7 @@ public class ExporterTask implements Runnable {
 
     @Override
     public void run() {
-        File cfgfile = null;
+        File cfgfile;
         //System.out.println("look here 1");
         while (!stop) {
 
@@ -58,35 +57,13 @@ public class ExporterTask implements Runnable {
      * */
     private File setupConfig() throws IOException {
         // config file is stored in system-default place
-        String projectCfg = "C:\\Users\\Shiying\\Documents\\CKG\\CitiesKG-git\\agents\\src\\main\\resources\\project.xml";
+        ResourceBundle rd = ResourceBundle.getBundle("config");
+        String projectCfg = rd.getString("projectCfg");
 
         File cfgFile = new File(projectCfg);
-        /*
-        byte[] b = Files.readAllBytes(cfgFile.toPath());
-        String xml = new String(b);
-        JSONObject obj = XML.toJSONObject(xml);
-        JSONObject gmlIdobj = obj.getJSONObject("project").getJSONObject("kmlExport").getJSONObject("query").getJSONObject("gmlIds");
-        gmlIdobj.put("id", this.inputs);
-        String cfgData = XML.toString(obj);
-        FileUtils.writeStringToFile(cfgFile, cfgData);
-        */
-
-        //System.out.println(obj);
-        // Possible reading: obj.getJSONObject("project").getJSONObject("kmlExport").getJSONObject("query").getJSONObject("gmlIds").getString("id")
-        /*
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db = dbf.newDocumentBuilder();
-        Document document = db.parse(cfgFile);
-        */
-
-        /*
-        URL url = XMLtoJsonConverter.class.getClassLoader().getResource("sample.xml");
-        inputStream = url.openStream();
-        String xml = IOUtils.toString(inputStream);
-        JSON objJson = new XMLSerializer().read(xml);
-        System.out.println("JSON data : " + objJson);
-        */
-
+        String cfgData = FileUtils.readFileToString(cfgFile, String.valueOf(Charset.defaultCharset()));
+        cfgData = cfgData.replace(PLACEHOLDER_GMLID, this.inputs);
+        FileUtils.writeStringToFile(cfgFile, cfgData, (Charset) null);
         return cfgFile;
     }
 }

@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.twa.cities.tasks.ExporterTask;
@@ -7,6 +8,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.io.File;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -30,8 +32,9 @@ public class CityExportAgent extends JPSAgent {
         if (validateInput(requestParams)) {
             //TODO: after validation, the gmlId and outputpath should be retrieved
             String gmlids = requestParams.getString(KEY_GMLID);
-            String outputpath = requestParams.getString(KEY_OUTPUTPATH);
-            exportKml(gmlids,outputpath);
+            ResourceBundle rd = ResourceBundle.getBundle("config");
+            String outputPath = rd.getString("outputPath");
+            exportKml(gmlids,outputPath);
         }
         //TODO
         return null;
@@ -47,15 +50,12 @@ public class CityExportAgent extends JPSAgent {
                 if (requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.POST)) {
                     try {
                         // Check if GMLID and OUTPUTPATH is empty and if OUTPUTPATH exists
-                        if (!requestParams.getString(KEY_GMLID).isEmpty() && !requestParams.getString(KEY_OUTPUTPATH).isEmpty()){
-                            File file = new File(requestParams.getString(KEY_OUTPUTPATH));
-                            file.createNewFile();
-                            if (file.exists()){
-                                error = false;   // no error
-                            }
+                        //if (!requestParams.getString(KEY_GMLID).isEmpty() && !requestParams.getString(KEY_OUTPUTPATH).isEmpty()){
+                        if (!requestParams.getString(KEY_GMLID).isEmpty()){
+                            error = false;
                         }
-                    } catch (Exception e) {
-                        throw new BadRequestException(e);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
                 }
             }
