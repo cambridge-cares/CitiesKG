@@ -61,7 +61,7 @@ public class CitiesKGVocabularyTest extends TestCase {
             try {
                 getURIs.invoke(vocab, "non-existent", "db.uris");
             } catch (InvocationTargetException e) {
-                assertEquals(e.getTargetException().getStackTrace()[2].getClassName(), "java.util.Properties");
+                assertEquals(e.getTargetException().getStackTrace()[1].getClassName(), "java.util.Properties");
             }
 
             try {
