@@ -9,16 +9,19 @@ import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
 import uk.ac.cam.cares.twa.cities.tasks.NquadsExporterTask;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.zip.GZIPOutputStream;
 
 public class NquadsExporterTaskTest  extends TestCase {
 
@@ -121,8 +124,8 @@ public class NquadsExporterTaskTest  extends TestCase {
     }
 
     public void testNewNquadsExporterTaskExportToNquadsFileFromJnlFileMethod() {
-        File impFile = new File(System.getProperty("java.io.tmpdir") + "test.gml");
-        File nqFile = new File(impFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_GML, ImporterTask.EXT_FILE_NQUADS));
+        File impFile = NquadsExporterTaskTestHelper.impFile;
+        File nqFile = NquadsExporterTaskTestHelper.nqFile;
         NquadsExporterTask task = new NquadsExporterTask(new LinkedBlockingDeque<>(), impFile, "http://www.test.com/");
 
         try {
@@ -136,7 +139,7 @@ public class NquadsExporterTaskTest  extends TestCase {
             }
 
             NquadsExporterTaskTestHelper.setUp();
-            assertEquals(((File) exportToNquadsFileFromJnlFile.invoke(task, nqFile)).getAbsolutePath(), nqFile.getAbsolutePath() + NquadsExporterTask.EXT_GZ);
+            assertEquals(((File) exportToNquadsFileFromJnlFile.invoke(task, nqFile)).getAbsolutePath(), NquadsExporterTaskTestHelper.nqGzFile.getAbsolutePath());
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             fail();
         } finally {
@@ -146,97 +149,222 @@ public class NquadsExporterTaskTest  extends TestCase {
     }
 
     public void testNewNquadsExporterTaskGetLocalSourceUrlFromProjectCfgMethod() {
+        NquadsExporterTask task = new NquadsExporterTask(new LinkedBlockingDeque<>(), NquadsExporterTaskTestHelper.impFile, "http://www.test.com/");
+
+        try {
+            Method getLocalSourceUrlFromProjectCfg = task.getClass().getDeclaredMethod("getLocalSourceUrlFromProjectCfg", File.class);
+            getLocalSourceUrlFromProjectCfg.setAccessible(true);
+
+            try {
+                getLocalSourceUrlFromProjectCfg.invoke(task, new File(""));
+            } catch (InvocationTargetException e) {
+                assertEquals(e.getTargetException().getClass(), JPSRuntimeException.class);
+            }
+
+            Files.copy(NquadsExporterTaskTestHelper.testNqFile.toPath(), NquadsExporterTaskTestHelper.nqGzFile.toPath());
+            Files.copy(NquadsExporterTaskTestHelper.testProjFile.toPath(), NquadsExporterTaskTestHelper.projFile.toPath());
+
+            assertEquals(getLocalSourceUrlFromProjectCfg.invoke(task, NquadsExporterTaskTestHelper.nqGzFile), "http://127.0.0.1:52066/blazegraph/namespace/tmpkb/sparql/");
+
+        } catch (NoSuchMethodException | IllegalAccessException | IOException | InvocationTargetException e) {
+            fail();
+        } finally {
+            NquadsExporterTaskTestHelper.tearDown();
+        }
 
     }
 
     public void testNewNquadsExporterTaskChangeUrlsInNQuadsFileMethod() {
+        String from = "127.0.0.1:52066";
+        String to = "www.test.com";
+        File nqGzFile = NquadsExporterTaskTestHelper.nqGzFile;
+        NquadsExporterTask task = new NquadsExporterTask(new LinkedBlockingDeque<>(), NquadsExporterTaskTestHelper.impFile, "http://"+ to + "/");
 
+        try {
+            Method changeUrlsInNQuadsFile = task.getClass().getDeclaredMethod("changeUrlsInNQuadsFile", File.class, String.class, String.class);
+            changeUrlsInNQuadsFile.setAccessible(true);
+
+            try {
+                changeUrlsInNQuadsFile.invoke(task, new File(""), from, to);
+            } catch (InvocationTargetException e) {
+                assertEquals(e.getTargetException().getClass().getSuperclass(), IOException.class);
+            }
+
+            try {
+                Files.copy(NquadsExporterTaskTestHelper.testNqFile.toPath(),nqGzFile.toPath());
+                changeUrlsInNQuadsFile.invoke(task, nqGzFile, from, to);
+            } catch (InvocationTargetException e) {
+                assertEquals(e.getTargetException().getClass().getSuperclass(), IOException.class);
+            }
+
+            String nQuads = FileUtils.readFileToString(nqGzFile, String.valueOf(StandardCharsets.UTF_8));
+            assertEquals(nQuads.indexOf(to), -1);
+
+            FileOutputStream fos = new FileOutputStream(nqGzFile.getAbsolutePath());
+
+            GZIPOutputStream gzos = new GZIPOutputStream(fos);
+            gzos.write(nQuads.getBytes());
+            gzos.finish();
+
+            File targetNqFile = (File) changeUrlsInNQuadsFile.invoke(task, nqGzFile, from, to);
+
+            assertEquals(targetNqFile.getAbsolutePath(), NquadsExporterTaskTestHelper.nqFile.getAbsolutePath());
+
+            nQuads = FileUtils.readFileToString(targetNqFile, String.valueOf(StandardCharsets.UTF_8));
+            assertEquals(nQuads.indexOf(to), 8);
+
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IOException e) {
+            fail();
+        } finally {
+            NquadsExporterTaskTestHelper.tearDown();
+        }
     }
 
     public void testNewNquadsExporterTaskRunMethod() {
+        String to = "www.test.com";
+        NquadsExporterTask task = new NquadsExporterTask(new LinkedBlockingDeque<>(), NquadsExporterTaskTestHelper.impFile, "http://"+ to + "/");
+
+        try {
+            Files.copy(NquadsExporterTaskTestHelper.testNqFile.toPath(), NquadsExporterTaskTestHelper.nqFile.toPath());
+            Files.copy(NquadsExporterTaskTestHelper.testPropFile.toPath(), NquadsExporterTaskTestHelper.propFile.toPath());
+            try {
+                task.run();
+            } catch (Exception e) {
+                assertEquals(e.getClass(), JPSRuntimeException.class);
+            } finally {
+                NquadsExporterTaskTestHelper.tearDown();
+            }
+        } catch (IOException e) {
+            fail();
+        }
+
+        try {
+            Files.copy(NquadsExporterTaskTestHelper.testNqFile.toPath(), NquadsExporterTaskTestHelper.nqFile.toPath());
+            Files.copy(NquadsExporterTaskTestHelper.testPropFile.toPath(), NquadsExporterTaskTestHelper.propFile.toPath());
+            Files.copy(NquadsExporterTaskTestHelper.testProjFile.toPath(), NquadsExporterTaskTestHelper.projFile.toPath());
+            try {
+                task.run();
+            } catch (Exception e) {
+                assertEquals(e.getClass(), JPSRuntimeException.class);
+            } finally {
+                NquadsExporterTaskTestHelper.tearDown();
+            }
+        } catch (IOException e) {
+            fail();
+        }
+
+        NquadsExporterTaskTestHelper.setUp();
+
+        try {
+            Field stop = task.getClass().getDeclaredField("stop");
+            Field nqQueue = task.getClass().getDeclaredField("nqQueue");
+            stop.setAccessible(true);
+            nqQueue.setAccessible(true);
+
+            new Thread(task).start();
+
+            while (!(boolean) stop.get(task)) {
+                if (((BlockingQueue<?>) nqQueue.get(task)).size() > 0) {
+                    File targetNqFile = (File) ((BlockingQueue<?>) nqQueue.get(task)).take();
+                    assertEquals(targetNqFile.getAbsolutePath(), NquadsExporterTaskTestHelper.nqFile.getAbsolutePath());
+                    assertEquals(FileUtils.readFileToString(targetNqFile, String.valueOf(StandardCharsets.UTF_8)).indexOf(to), 8);
+                    Method stopM = task.getClass().getDeclaredMethod("stop");
+                    stopM.setAccessible(true);
+                    stopM.invoke(task);
+                }
+            }
+
+        } catch (NoSuchFieldException | IllegalAccessException | InterruptedException | IOException | NoSuchMethodException | InvocationTargetException e) {
+            fail();
+        }
 
     }
-
 
     public static class NquadsExporterTaskTestHelper {
         public static final File impFile = new File(System.getProperty("java.io.tmpdir") + "test.gml");
         public static final File testFile = new File(Objects.requireNonNull(NquadsExporterTaskTest.NquadsExporterTaskTestHelper.class.getClassLoader().getResource("test.gml")).getFile());
+        public static final File testNqFile = new File(Objects.requireNonNull(NquadsExporterTaskTest.NquadsExporterTaskTestHelper.class.getClassLoader().getResource("test.nq")).getFile());
+        public static final File testProjFile = new File(Objects.requireNonNull(NquadsExporterTaskTest.NquadsExporterTaskTestHelper.class.getClassLoader().getResource("testproject.xml")).getFile());
+        public static final File testPropFile = new File(Objects.requireNonNull(NquadsExporterTaskTest.NquadsExporterTaskTestHelper.class.getClassLoader().getResource("RWStore.properties")).getFile());
         public static final File nqFile = new File(impFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_GML, ImporterTask.EXT_FILE_NQUADS));
+        public static final File nqGzFile = new File(nqFile.getAbsolutePath() + NquadsExporterTask.EXT_GZ);
         public static final File jnlFile = new File(impFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_GML, ImporterTask.EXT_FILE_JNL));
         public static final File propFile = new File(impFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_GML, BlazegraphServerTask.PROPERTY_FILE));
         public static final File projFile = new File(impFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_GML, ImporterTask.PROJECT_CONFIG));
         public static final File quadsDir = new File(System.getProperty("java.io.tmpdir") + NquadsExporterTask.NQ_OUTDIR);
 
+        public static void setUp() {
+            assertTrue(testFile.exists());
+            try {
+                Files.copy(testFile.toPath(), impFile.toPath());
+            } catch (IOException e) {
+                fail();
+            }
+            ExecutorService serverExecutor = Executors.newFixedThreadPool(1);
+            BlockingQueue<Server> importQueue = new LinkedBlockingDeque<>();
+            BlazegraphServerTask serverTask = new BlazegraphServerTask(importQueue, jnlFile.getAbsolutePath());
+            serverExecutor.execute(serverTask);
 
-            public static void setUp() {
-                assertTrue(testFile.exists());
-                try {
-                    Files.copy(testFile.toPath(), impFile.toPath());
-                } catch (IOException e) {
-                    fail();
-                }
-                ExecutorService serverExecutor = Executors.newFixedThreadPool(1);
-                BlockingQueue<Server> importQueue = new LinkedBlockingDeque<>();
-                BlazegraphServerTask serverTask = new BlazegraphServerTask(importQueue, jnlFile.getAbsolutePath());
-                serverExecutor.execute(serverTask);
+            ImporterTask task = new ImporterTask(importQueue, impFile);
 
-                ImporterTask task = new ImporterTask(importQueue, impFile);
+            try {
+                Field stop = task.getClass().getDeclaredField("stop");
+                Field serverInstances = task.getClass().getDeclaredField("serverInstances");
+                stop.setAccessible(true);
+                serverInstances.setAccessible(true);
+                new Thread(task).start();
 
-                try {
-                    Field stop = task.getClass().getDeclaredField("stop");
-                    Field serverInstances = task.getClass().getDeclaredField("serverInstances");
-                    stop.setAccessible(true);
-                    serverInstances.setAccessible(true);
-                    new Thread(task).start();
-
-                    while (!(boolean) stop.get(task)) {
-                        if (((BlockingQueue<?>) serverInstances.get(task)).size() == 0) {
-                            if (Objects.requireNonNull(nqFile).isFile()) {
-                                assertTrue(nqFile.exists());
-                            }
+                while (!(boolean) stop.get(task)) {
+                    if (((BlockingQueue<?>) serverInstances.get(task)).size() == 0) {
+                        if (Objects.requireNonNull(nqFile).isFile()) {
+                            assertTrue(nqFile.exists());
                         }
                     }
-                } catch (NoSuchFieldException | IllegalAccessException e) {
-                    fail();
                 }
-            }
-
-            public static void tearDown() {
-                if (Objects.requireNonNull(impFile).isFile()) {
-                    if (!impFile.delete()) {
-                        fail();
-                    }
-                }
-                if (Objects.requireNonNull(nqFile).isFile()) {
-                    if (!nqFile.delete()) {
-                        fail();
-                    }
-                }
-                if (Objects.requireNonNull(jnlFile).isFile()) {
-                    if (!jnlFile.delete()) {
-                        fail();
-                    }
-                }
-                if (Objects.requireNonNull(propFile).isFile()) {
-                    if (!propFile.delete()) {
-                        fail();
-                    }
-                }
-                if (Objects.requireNonNull(projFile).isFile()) {
-                    if (!projFile.delete()) {
-                        fail();
-                    }
-                }
-                if (Objects.requireNonNull(quadsDir).isDirectory()) {
-                    try {
-                        FileUtils.deleteDirectory(quadsDir);
-                    } catch (IOException e) {
-                        fail();
-                    }
-                }
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                fail();
             }
         }
 
-
+        public static void tearDown() {
+            if (Objects.requireNonNull(impFile).isFile()) {
+                if (!impFile.delete()) {
+                    fail();
+                }
+            }
+            if (Objects.requireNonNull(nqFile).isFile()) {
+                if (!nqFile.delete()) {
+                    fail();
+                }
+            }
+            if (Objects.requireNonNull(nqGzFile).isFile()) {
+                if (!nqGzFile.delete()) {
+                    fail();
+                }
+            }
+            if (Objects.requireNonNull(jnlFile).isFile()) {
+                if (!jnlFile.delete()) {
+                    fail();
+                }
+            }
+            if (Objects.requireNonNull(propFile).isFile()) {
+                if (!propFile.delete()) {
+                    fail();
+                }
+            }
+            if (Objects.requireNonNull(projFile).isFile()) {
+                if (!projFile.delete()) {
+                    fail();
+                }
+            }
+            if (Objects.requireNonNull(quadsDir).isDirectory()) {
+                try {
+                    FileUtils.deleteDirectory(quadsDir);
+                } catch (IOException e) {
+                    fail();
+                }
+            }
+        }
+    }
 
 }

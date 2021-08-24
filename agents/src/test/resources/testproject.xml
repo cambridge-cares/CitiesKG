@@ -12,7 +12,7 @@
             <connection id="UUID_a0e42784-5b0d-4dbd-9561-4f079cff6b57" loginTimeout="60" initialSize="0">
                 <description>New connection</description>
                 <type>Blaze</type>
-                <server>192.168.1.3</server>
+                <server>127.0.0.1</server>
                 <port>52066</port>
                 <sid>/blazegraph/namespace/tmpkb/sparql/</sid>
                 <schema>http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#</schema>
