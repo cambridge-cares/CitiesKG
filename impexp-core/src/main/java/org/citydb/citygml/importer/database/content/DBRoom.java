@@ -37,6 +37,7 @@ import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
 import org.citydb.config.Config;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
 import org.citygml4j.model.citygml.building.AbstractBoundarySurface;
@@ -52,6 +53,7 @@ import org.citygml4j.model.gml.geometry.primitives.SolidProperty;
 
 public class DBRoom implements DBImporter {
 	private final CityGMLImportManager importer;
+	private final Connection batchConn;
 
 	private PreparedStatement psRoom;
 	private DBCityObject cityObjectImporter;
@@ -64,17 +66,37 @@ public class DBRoom implements DBImporter {
 	private boolean hasObjectClassIdColumn;
 	private int batchCounter;
 
+	private boolean affineTransformation;
+	private int nullGeometryType;
+	private String nullGeometryTypeName;
+
+	private String PREFIX_ONTOCITYGML;
+	private String IRI_GRAPH_BASE;
+	private String IRI_GRAPH_OBJECT;
+	private static final String IRI_GRAPH_OBJECT_REL = "room/";
+
 	public DBRoom(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.importer = importer;
+		this.batchConn = batchConn;
 
+		affineTransformation = config.getProject().getImporter().getAffineTransformation().isEnabled();
+		nullGeometryType = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType();
+		nullGeometryTypeName = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName();
 		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
+//		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
 
-		String stmt = "insert into " + schema + ".room (id, class, class_codespace, function, function_codespace, usage, usage_codespace, building_id, " +
-				"lod4_multi_surface_id, lod4_solid_id" +
-				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
-				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
-				(hasObjectClassIdColumn ? ", ?)" : ")");
+		String stmt = "insert into " + schema + ".room (id, objectclass_id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
+				"building_id, lod4_multi_surface_id, lod4_solid_id)" +
+				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+		// Modification for SPARQL
+		if (importer.isBlazegraph()) {
+			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
+			IRI_GRAPH_BASE = importer.getGraphBaseIri();
+			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
+			stmt = getSPARQLStatement();
+		}
+
 		psRoom = batchConn.prepareStatement(stmt);
 
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
@@ -83,6 +105,29 @@ public class DBRoom implements DBImporter {
 		buildingFurnitureImporter = importer.getImporter(DBBuildingFurniture.class);
 		buildingInstallationImporter = importer.getImporter(DBBuildingInstallation.class);
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	private String getSPARQLStatement(){
+		String param = "  ?;";
+		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +  // add BASE by SYL
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? " + SchemaManagerAdapter.ONTO_ID + param +
+				SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param +
+				SchemaManagerAdapter.ONTO_CLASS + param +
+				SchemaManagerAdapter.ONTO_CLASS_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_FUNCTION + param +
+				SchemaManagerAdapter.ONTO_FUNCTION_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_USAGE + param +
+				SchemaManagerAdapter.ONTO_USAGE_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_BUILDING_ID + param +
+				SchemaManagerAdapter.ONTO_LOD4_MULTI_SURFACE_ID + param +
+				SchemaManagerAdapter.ONTO_LOD4_SOLID_ID + param +
+				".}" +
+				"}";
+
+		return stmt;
 	}
 
 	protected long doImport(Room room) throws CityGMLImportException, SQLException {
