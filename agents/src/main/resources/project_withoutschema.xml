@@ -26,6 +26,7 @@
                 <server>127.0.0.1</server>
                 <port>9999</port>
                 <sid>/blazegraph/namespace/berlin/sparql/</sid>
+                <schema></schema>
                 <user>changeme</user>
                 <password>changeme</password>
                 <savePassword>true</savePassword>
@@ -65,7 +66,7 @@
         <operation>
             <lastUsed>indexes</lastUsed>
             <boundingBoxTypeName xmlns:ns2="http://www.opengis.net/citygml/2.0">ns2:_CityObject</boundingBoxTypeName>
-            <boundingBoxSrs>UUID_b1a2e3f8-6fc5-4c31-80be-45109ecd5a8c</boundingBoxSrs>
+            <boundingBoxSrs>UUID_7f447c0d-d9c5-4990-a18d-c7324ce59f62</boundingBoxSrs>
             <spatialIndex>false</spatialIndex>
             <normalIndex>false</normalIndex>
         </operation>
@@ -111,7 +112,7 @@
             </attributes>
             <limit/>
             <bbox mode="overlap">
-                <extent srsRef="UUID_b1a2e3f8-6fc5-4c31-80be-45109ecd5a8c">
+                <extent srsRef="UUID_7f447c0d-d9c5-4990-a18d-c7324ce59f62">
                     <lowerCorner></lowerCorner>
                     <upperCorner></upperCorner>
                 </extent>
@@ -189,8 +190,8 @@
         </resources>
     </import>
     <export useSimpleQuery="true">
-        <query targetSrs="UUID_b1a2e3f8-6fc5-4c31-80be-45109ecd5a8c"/>
-        <simpleQuery version="2.0.0" targetSrs="UUID_b1a2e3f8-6fc5-4c31-80be-45109ecd5a8c" useTypeNames="false" useFeatureVersionFilter="false" useSelectionFilter="true" useCountFilter="false" useLodFilter="false" useBboxFilter="false">
+        <query targetSrs="UUID_7f447c0d-d9c5-4990-a18d-c7324ce59f62"/>
+        <simpleQuery version="2.0.0" targetSrs="UUID_7f447c0d-d9c5-4990-a18d-c7324ce59f62" useTypeNames="false" useFeatureVersionFilter="false" useSelectionFilter="true" useCountFilter="false" useLodFilter="false" useBboxFilter="false">
             <typeNames/>
             <featureVersion mode="latest"/>
             <selection useSQLFilter="false">
@@ -204,7 +205,7 @@
             <limit/>
             <lods mode="or" searchMode="depth" searchDepth="1"/>
             <bbox mode="overlap">
-                <extent srsRef="UUID_b1a2e3f8-6fc5-4c31-80be-45109ecd5a8c">
+                <extent srsRef="UUID_7f447c0d-d9c5-4990-a18d-c7324ce59f62">
                     <lowerCorner></lowerCorner>
                     <upperCorner></upperCorner>
                 </extent>
@@ -339,10 +340,10 @@
                 <typeName xmlns:ns2="http://www.opengis.net/citygml/waterbody/2.0">ns2:WaterBody</typeName>
             </typeNames>
             <gmlIds>
-                <id>BLDG_000300020011fab3</id>
+                <id>BLDG_000300000001c242</id>
             </gmlIds>
             <bbox mode="no_tiling">
-                <extent srsRef="UUID_b1a2e3f8-6fc5-4c31-80be-45109ecd5a8c">
+                <extent srsRef="UUID_7f447c0d-d9c5-4990-a18d-c7324ce59f62">
                     <lowerCorner>82730.094 455383.214</lowerCorner>
                     <upperCorner>81265.904 453688.574</upperCorner>
                 </extent>
@@ -376,7 +377,7 @@
             <displayForm>
                 <form>3</form>
                 <active>false</active>
-                <visibleFrom>0</visibleFrom>
+                <visibleFrom>-1</visibleFrom>
                 <rgba0>-926102324</rgba0>
                 <rgba1>-932813210</rgba1>
                 <rgba2>-922799309</rgba2>
@@ -453,7 +454,7 @@
             <displayForm>
                 <form>3</form>
                 <active>false</active>
-                <visibleFrom>0</visibleFrom>
+                <visibleFrom>-1</visibleFrom>
                 <rgba0>-926102324</rgba0>
                 <rgba1>-932813210</rgba1>
                 <rgba2>-1</rgba2>
@@ -530,7 +531,7 @@
             <displayForm>
                 <form>3</form>
                 <active>false</active>
-                <visibleFrom>0</visibleFrom>
+                <visibleFrom>-1</visibleFrom>
                 <rgba0>-926102324</rgba0>
                 <rgba1>-932813210</rgba1>
                 <rgba2>-1</rgba2>
@@ -607,7 +608,7 @@
             <displayForm>
                 <form>3</form>
                 <active>false</active>
-                <visibleFrom>0</visibleFrom>
+                <visibleFrom>-1</visibleFrom>
                 <rgba0>-926102324</rgba0>
                 <rgba1>-932813210</rgba1>
                 <rgba2>-1</rgba2>
@@ -684,7 +685,7 @@
             <displayForm>
                 <form>3</form>
                 <active>false</active>
-                <visibleFrom>0</visibleFrom>
+                <visibleFrom>-1</visibleFrom>
                 <rgba0>-926102324</rgba0>
                 <rgba1>-932813210</rgba1>
                 <rgba2>-1</rgba2>
@@ -761,7 +762,7 @@
             <displayForm>
                 <form>3</form>
                 <active>false</active>
-                <visibleFrom>0</visibleFrom>
+                <visibleFrom>-1</visibleFrom>
                 <rgba0>-926102324</rgba0>
                 <rgba1>-932813210</rgba1>
                 <rgba2>-1</rgba2>
@@ -838,7 +839,7 @@
             <displayForm>
                 <form>3</form>
                 <active>false</active>
-                <visibleFrom>0</visibleFrom>
+                <visibleFrom>-1</visibleFrom>
                 <rgba0>-926102324</rgba0>
                 <rgba1>-932813210</rgba1>
                 <rgba2>-1</rgba2>
@@ -915,7 +916,7 @@
             <displayForm>
                 <form>3</form>
                 <active>false</active>
-                <visibleFrom>0</visibleFrom>
+                <visibleFrom>-1</visibleFrom>
                 <rgba0>-926102324</rgba0>
                 <rgba1>-932813210</rgba1>
                 <rgba2>-1</rgba2>
@@ -1035,7 +1036,7 @@
             <displayForm>
                 <form>3</form>
                 <active>false</active>
-                <visibleFrom>0</visibleFrom>
+                <visibleFrom>-1</visibleFrom>
                 <rgba0>-1</rgba0>
                 <rgba1>-1</rgba1>
                 <rgba2>-1</rgba2>
@@ -1100,7 +1101,7 @@
             <displayForm>
                 <form>3</form>
                 <active>false</active>
-                <visibleFrom>0</visibleFrom>
+                <visibleFrom>-1</visibleFrom>
                 <rgba0>-926102324</rgba0>
                 <rgba1>-932813210</rgba1>
                 <rgba2>-922799309</rgba2>
@@ -1177,7 +1178,7 @@
             <displayForm>
                 <form>3</form>
                 <active>false</active>
-                <visibleFrom>0</visibleFrom>
+                <visibleFrom>-1</visibleFrom>
                 <rgba0>-926102324</rgba0>
                 <rgba1>-932813210</rgba1>
                 <rgba2>-922799309</rgba2>
@@ -1301,9 +1302,9 @@
         <language>en</language>
         <proxies useSingleProxy="false">
             <proxyList>
-                <proxy type="https" isEnabled="false">
+                <proxy type="socks" isEnabled="false">
                     <host></host>
-                    <port>443</port>
+                    <port>1080</port>
                     <username></username>
                     <password></password>
                     <savePassword>false</savePassword>
@@ -1315,9 +1316,9 @@
                     <password></password>
                     <savePassword>false</savePassword>
                 </proxy>
-                <proxy type="socks" isEnabled="false">
+                <proxy type="https" isEnabled="false">
                     <host></host>
-                    <port>1080</port>
+                    <port>443</port>
                     <username></username>
                     <password></password>
                     <savePassword>false</savePassword>
