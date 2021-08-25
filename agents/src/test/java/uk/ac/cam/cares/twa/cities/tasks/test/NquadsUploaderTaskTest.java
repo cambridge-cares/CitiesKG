@@ -1,14 +1,18 @@
 package uk.ac.cam.cares.twa.cities.tasks.test;
 
 import junit.framework.TestCase;
+import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.tasks.NquadsUploaderTask;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -85,7 +89,44 @@ public class NquadsUploaderTaskTest  extends TestCase {
     }
 
     public void testNewNquadsUploaderRunMethod() {
-        //@Todo: implementation
+        BlockingQueue<File> queue = new LinkedBlockingDeque<>();
+        File testNqFile = new File(Objects.requireNonNull(NquadsExporterTaskTest.NquadsExporterTaskTestHelper.class.getClassLoader().getResource("test.nq")).getFile());
+        File nqFile = new File(System.getProperty("java.io.tmpdir") + "test.nq");
+        URI uri;
+
+        try {
+            queue.put(nqFile);
+            uri = new URI("http://www.test.com/");
+            NquadsUploaderTask task = new NquadsUploaderTask(queue, uri);
+
+            try {
+                task.run();
+            } catch (Exception e) {
+                assertEquals(e.getClass(), JPSRuntimeException.class);
+            }
+
+            Files.copy(testNqFile.toPath(), nqFile.toPath());
+            queue.put(nqFile);
+            task = new NquadsUploaderTask(queue, uri);
+
+            try {
+                task.run();
+            } catch (Exception e) {
+                assertEquals(e.getClass(), JPSRuntimeException.class);
+            }
+
+            //@Todo: implementation
+
+        } catch (InterruptedException | URISyntaxException | IOException e) {
+            fail();
+        } finally {
+            if (Objects.requireNonNull(nqFile).isFile()) {
+                if (!nqFile.delete()) {
+                    fail();
+                }
+            }
+        }
+
     }
 
 }
