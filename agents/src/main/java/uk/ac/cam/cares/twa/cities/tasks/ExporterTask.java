@@ -6,7 +6,11 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ResourceBundle;
 
 public class ExporterTask implements Runnable {
@@ -30,7 +34,7 @@ public class ExporterTask implements Runnable {
     @Override
     public void run() {
         File cfgfile;
-        //System.out.println("look here 1");
+        System.out.println("look here 1");
         while (!stop) {
 
             try {
@@ -39,7 +43,7 @@ public class ExporterTask implements Runnable {
                         "-config=" + cfgfile.getAbsolutePath()};
                 ImpExp.main(args);
 
-            } catch (IOException e) {
+            } catch (IOException | URISyntaxException e) {
                 e.printStackTrace();
                 throw new JPSRuntimeException(e);
             } finally {
@@ -55,15 +59,18 @@ public class ExporterTask implements Runnable {
      * This method should overwrite the gmlId within the project setting to define what to extract. * for all
      *
      * */
-    private File setupConfig() throws IOException {
+    private File setupConfig() throws IOException, URISyntaxException {
         // config file is stored in system-default place
         ResourceBundle rd = ResourceBundle.getBundle("config");
-        String projectCfg = rd.getString("projectCfg");
+        String projectCfg = rd.getString("templateCfg");
+        Files.copy(Paths.get(getClass().getClassLoader().getResource(PROJECT_CONFIG).toURI()),
+                Paths.get(projectCfg), StandardCopyOption.REPLACE_EXISTING);   // This action will copy the template from target/agents-0.0.2/WEB-INF/project.xml
 
         File cfgFile = new File(projectCfg);
+
         String cfgData = FileUtils.readFileToString(cfgFile, String.valueOf(Charset.defaultCharset()));
         cfgData = cfgData.replace(PLACEHOLDER_GMLID, this.inputs);
-        FileUtils.writeStringToFile(cfgFile, cfgData, (Charset) null);
+        FileUtils.writeStringToFile(cfgFile, cfgData);
         return cfgFile;
     }
 }

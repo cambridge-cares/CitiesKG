@@ -29,15 +29,16 @@ public class CityExportAgent extends JPSAgent {
 
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
+        //System.out.println("Hello From processRequestParameters");
         if (validateInput(requestParams)) {
-            //TODO: after validation, the gmlId and outputpath should be retrieved
             String gmlids = requestParams.getString(KEY_GMLID);
             ResourceBundle rd = ResourceBundle.getBundle("config");
             String outputPath = rd.getString("outputPath");
-            exportKml(gmlids,outputPath);
+            requestParams = new JSONObject(exportKml(gmlids,outputPath));
         }
-        //TODO
-        return null;
+        // It will return the location of the exported file
+        System.out.println(requestParams);
+        return requestParams;
     }
 
     @Override
@@ -66,10 +67,10 @@ public class CityExportAgent extends JPSAgent {
         return !error;
     }
 
-    private ExporterTask exportKml (String gmlIds, String outputpath){
+    private String exportKml (String gmlIds, String outputpath){
         ExporterTask task = new ExporterTask(gmlIds, outputpath);
-        exporterExecutor.execute(task);  // Note: If no breakpoint is put here or in this script, the debugger can enter task scriptva
-        return task;
+        exporterExecutor.execute(task);
+        return outputpath;
     }
 
 }
