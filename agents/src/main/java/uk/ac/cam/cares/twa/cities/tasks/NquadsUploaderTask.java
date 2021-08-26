@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.tasks;
 
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
+import kong.unirest.UnirestException;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpException;
 import org.apache.http.protocol.HTTP;
@@ -48,11 +49,11 @@ public class NquadsUploaderTask implements Runnable {
                             .header(HTTP.CONTENT_TYPE, CTYPE_NQ)
                             .body(FileUtils.readFileToString(nqFile, String.valueOf(StandardCharsets.UTF_8)))
                             .asEmpty();
-
-                    if (response.getStatus() != HttpURLConnection.HTTP_OK) {
-                        throw new HttpException(endpointUri + " " + response.getStatus());
+                    int respStatus = response.getStatus();
+                    if (respStatus != HttpURLConnection.HTTP_OK) {
+                        throw new HttpException(endpointUri + " " + respStatus);
                     }
-                } catch (InterruptedException | IOException | HttpException e) {
+                } catch (InterruptedException | IOException | HttpException | UnirestException e) {
                     throw  new JPSRuntimeException(e);
                 } finally {
                     stop();
