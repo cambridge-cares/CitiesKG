@@ -27,11 +27,14 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
 import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
@@ -40,6 +43,7 @@ import org.citydb.config.Config;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
+import org.citydb.util.CoreConstants;
 import org.citygml4j.model.citygml.building.AbstractBoundarySurface;
 import org.citygml4j.model.citygml.building.BoundarySurfaceProperty;
 import org.citygml4j.model.citygml.building.BuildingFurniture;
@@ -142,9 +146,28 @@ public class DBRoom implements DBImporter {
 		// import city object information
 		long roomId = cityObjectImporter.doImport(room, featureType);
 
+		URL objectURL = null;
+		int index = 0;
+
 		// import room information
-		// primary id
-		psRoom.setLong(1, roomId);
+		if (importer.isBlazegraph()) {
+			try {
+				String uuid = room.getId();
+				if (uuid.isEmpty()) {
+					uuid = importer.generateNewGmlId();
+				}
+				objectURL = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+			} catch (MalformedURLException e) {
+				psRoom.setObject(++index, NodeFactory.createBlankNode());
+			}
+			psRoom.setURL(++index, objectURL);
+			// primary id
+			psRoom.setURL(++index, objectURL);
+			room.setLocalProperty(CoreConstants.OBJECT_URIID, objectURL);
+		} else {
+			// primary id
+			psRoom.setLong(++index, roomId);
+		}
 
 		// bldg:class
 		if (room.isSetClazz() && room.getClazz().isSetValue()) {
