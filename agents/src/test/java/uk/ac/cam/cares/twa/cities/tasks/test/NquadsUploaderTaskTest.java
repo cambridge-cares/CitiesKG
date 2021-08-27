@@ -132,13 +132,10 @@ public class NquadsUploaderTaskTest  extends TestCase {
                 Field serverF = serverTask.getClass().getDeclaredField("server");
                 serverF.setAccessible(true);
                 Server server = null;
-                while (server == null) {
-                    server = (Server) serverF.get(serverTask);
-                }
-
                 URI serverUri = null;
-                while (serverUri == null) {
-                    if (server.isStarted()) {
+                while (importQueue.size() == 0) {
+                    server = (Server) serverF.get(serverTask);
+                    if (server != null && Objects.requireNonNull(server).isStarted()) {
                         serverUri = server.getURI();
                     }
                 }
@@ -153,7 +150,7 @@ public class NquadsUploaderTaskTest  extends TestCase {
 
                 while (!(boolean) stop.get(task)) {
                     if (queue.size() == 0) {
-                        if (!server.isStopped()) {
+                        if (!Objects.requireNonNull(server).isStopped()) {
                             server.setStopAtShutdown(true);
                             server.setStopTimeout(7_000);
                             server.stop();
