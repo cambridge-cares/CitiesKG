@@ -282,23 +282,15 @@ public class CityImportAgentTest extends TestCase {
         //@Todo: implementation
     }
 
-    public void testStopBlazegraphInstance() {
-        //@Todo: implementation
-    }
-
-    public void testWriteErrorLog() {
-        //@Todo: implementation
-    }
-
     public void testExportToNquads() {
         //@Todo: implementation
     }
 
-    public void testChangeUrlsInNQuadsFile() {
+    public void testUploadNQuadsFileToBlazegraphInstance() {
         //@Todo: implementation
     }
 
-    public void testUploadNQuadsFileToBlazegraphInstance() {
+    public void testWriteErrorLog() {
         //@Todo: implementation
     }
 
