@@ -27,18 +27,23 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.GeometryObject;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
+import org.citydb.util.CoreConstants;
 import org.citygml4j.geometry.Matrix;
 import org.citygml4j.model.citygml.building.BuildingFurniture;
 import org.citygml4j.model.citygml.core.ImplicitGeometry;
@@ -62,6 +67,11 @@ public class DBBuildingFurniture implements DBImporter {
 	private boolean affineTransformation;
 	private boolean hasObjectClassIdColumn;
 
+	private String PREFIX_ONTOCITYGML;
+	private String IRI_GRAPH_BASE;
+	private String IRI_GRAPH_OBJECT;
+	private static final String IRI_GRAPH_OBJECT_REL = "buildingfurniture/";
+
 	public DBBuildingFurniture(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;
 		this.importer = importer;
@@ -76,6 +86,15 @@ public class DBBuildingFurniture implements DBImporter {
 				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
+
+		// Modification for SPARQL
+		if (importer.isBlazegraph()) {
+			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
+			IRI_GRAPH_BASE = importer.getGraphBaseIri();
+			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
+			stmt = getSPARQLStatement();
+		}
+
 		psBuildingFurniture = batchConn.prepareStatement(stmt);
 
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
@@ -83,6 +102,32 @@ public class DBBuildingFurniture implements DBImporter {
 		implicitGeometryImporter = importer.getImporter(DBImplicitGeometry.class);
 		geometryConverter = importer.getGeometryConverter();
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	private String getSPARQLStatement(){
+		String param = "  ?;";
+		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +  // add BASE by SYL
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? " + SchemaManagerAdapter.ONTO_ID + param +
+				SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param +
+				SchemaManagerAdapter.ONTO_CLASS + param +
+				SchemaManagerAdapter.ONTO_CLASS_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_FUNCTION + param +
+				SchemaManagerAdapter.ONTO_FUNCTION_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_USAGE + param +
+				SchemaManagerAdapter.ONTO_USAGE_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_ROOM_ID + param +
+				SchemaManagerAdapter.ONTO_LOD4_BREP_ID + param +
+				SchemaManagerAdapter.ONTO_LOD4_OTHER_GEOM + param +
+				SchemaManagerAdapter.ONTO_LOD4_IMPLICIT_REP_ID + param +
+				SchemaManagerAdapter.ONTO_LOD4_IMPLICIT_REF_POINT + param +
+				SchemaManagerAdapter.ONTO_LOD4_IMPLICIT_TRANSFORMATION + param +
+				".}" +
+				"}";
+
+		return stmt;
 	}
 
 	protected long doImport(BuildingFurniture buildingFurniture) throws CityGMLImportException, SQLException {
@@ -97,9 +142,27 @@ public class DBBuildingFurniture implements DBImporter {
 		// import city object information
 		long buildingFurnitureId = cityObjectImporter.doImport(buildingFurniture, featureType);
 
+		URL objectURL = null;
+		int index = 0;
 		// import building furniture information
-		// primary id
-		psBuildingFurniture.setLong(1, buildingFurnitureId);
+		if (importer.isBlazegraph()) {
+			try {
+				String uuid = buildingFurniture.getId();
+				if (uuid.isEmpty()) {
+					uuid = importer.generateNewGmlId();
+				}
+				objectURL = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+			} catch (MalformedURLException e) {
+				psBuildingFurniture.setObject(++index, NodeFactory.createBlankNode());
+			}
+			psBuildingFurniture.setURL(++index, objectURL);
+			// primary id
+			psBuildingFurniture.setURL(++index, objectURL);
+			buildingFurniture.setLocalProperty(CoreConstants.OBJECT_URIID, objectURL);
+		} else {
+			// primary id
+			psBuildingFurniture.setLong(++index, buildingFurnitureId);
+		}
 
 		// bldg:class
 		if (buildingFurniture.isSetClazz() && buildingFurniture.getClazz().isSetValue()) {
