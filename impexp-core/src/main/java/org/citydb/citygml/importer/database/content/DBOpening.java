@@ -88,7 +88,8 @@ public class DBOpening implements DBImporter {
 		nullGeometryTypeName = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName();
 		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
 
-		String stmt = "insert into " + schema + ".opening (id, objectclass_id, address_id, lod3_multi_surface_id, lod4_multi_surface_id, " +
+		String stmt = "insert into " + schema + ".opening (id, objectclass_id, address_id, " +
+				"lod3_multi_surface_id, lod4_multi_surface_id, " +
 				"lod3_implicit_rep_id, lod4_implicit_rep_id, " +
 				"lod3_implicit_ref_point, lod4_implicit_ref_point, " +
 				"lod3_implicit_transformation, lod4_implicit_transformation) values " +
@@ -121,12 +122,11 @@ public class DBOpening implements DBImporter {
 				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
 				"{ ? " + SchemaManagerAdapter.ONTO_ID + param +
 				SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param +
-				SchemaManagerAdapter.ONTO_CLASS + param +
-				SchemaManagerAdapter.ONTO_CLASS_CODESPACE + param +
-				SchemaManagerAdapter.ONTO_LOD3_IMPLICIT_REP_ID + param +
-				SchemaManagerAdapter.ONTO_LOD4_IMPLICIT_REP_ID + param +
+				SchemaManagerAdapter.ONTO_ADDRESS_ID + param +
 				SchemaManagerAdapter.ONTO_LOD3_MULTI_SURFACE_ID + param +
 				SchemaManagerAdapter.ONTO_LOD4_MULTI_SURFACE_ID + param +
+				SchemaManagerAdapter.ONTO_LOD3_IMPLICIT_REP_ID + param +
+				SchemaManagerAdapter.ONTO_LOD4_IMPLICIT_REP_ID + param +
 				SchemaManagerAdapter.ONTO_LOD3_IMPLICIT_REF_POINT + param +
 				SchemaManagerAdapter.ONTO_LOD4_IMPLICIT_REF_POINT + param +
 				SchemaManagerAdapter.ONTO_LOD3_IMPLICIT_TRANSFORMATION + param +
@@ -139,14 +139,6 @@ public class DBOpening implements DBImporter {
 
 	protected long doImport(AbstractOpening opening) throws CityGMLImportException, SQLException {
 		return doImport(opening, null, 0);
-	}
-
-	protected long doImport(Window window) throws CityGMLImportException, SQLException {
-		return doImport(window, null, 0);
-	}
-
-	protected long doImport(Door door) throws CityGMLImportException, SQLException {
-		return doImport(door, null, 0);
 	}
 
 	protected long doImport(AbstractOpening opening, AbstractCityObject parent, long parentId) throws CityGMLImportException, SQLException {
@@ -177,9 +169,10 @@ public class DBOpening implements DBImporter {
 		} else {
 			psOpening.setLong(++index, openingId);
 		}
-
+		// primary id
+		psOpening.setURL(++index, objectURL);
 		// objectclass id
-		psOpening.setInt(2, featureType.getObjectClassId());
+		psOpening.setInt(++index, featureType.getObjectClassId());
 
 		// core:address
 		long addressId = 0;
@@ -208,9 +201,9 @@ public class DBOpening implements DBImporter {
 		}
 
 		if (addressId != 0)
-			psOpening.setLong(3, addressId);
-		else
-			psOpening.setString(3, "");//null in sparql
+			psOpening.setLong(++index, addressId);
+//		else
+//			psOpening.setString(3, "");//null in sparql
 //			psOpening.setNull(3, Types.NULL);
 
 		// bldg:lodXMultiSurface
@@ -245,8 +238,8 @@ public class DBOpening implements DBImporter {
 
 			if (multiSurfaceId != 0)
 				psOpening.setLong(4 + i, multiSurfaceId);
-			else
-				psOpening.setString(4+i, "");//null in sparql
+//			else
+//				psOpening.setString(4 + i, "");//null in sparql
 //				psOpening.setNull(4 + i, Types.NULL);
 		}
 
@@ -290,21 +283,21 @@ public class DBOpening implements DBImporter {
 
 			if (implicitId != 0)
 				psOpening.setLong(6 + i, implicitId);
-			else
-				psOpening.setString(6+1, "");//sparql
+//			else
+//				psOpening.setString(6+1, "");//sparql
 //				psOpening.setNull(6 + i, Types.NULL);
 
 			if (pointGeom != null)
 				psOpening.setObject(8 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
-			else
-				psOpening.setString(8+i, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
+//			else
+//				psOpening.setString(8+i, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
 //				psOpening.setNull(8 + i, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 //						importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
 
 			if (matrixString != null)
 				psOpening.setString(10 + i, matrixString);
-			else
-				psOpening.setString(10+i, "");//sparql
+//			else
+//				psOpening.setString(10+i, "");//sparql
 //				psOpening.setNull(10 + i, Types.VARCHAR);
 		}
 
