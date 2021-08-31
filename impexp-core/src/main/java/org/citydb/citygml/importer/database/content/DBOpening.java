@@ -27,23 +27,29 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
 import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.GeometryObject;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
+import org.citydb.util.CoreConstants;
 import org.citygml4j.geometry.Matrix;
 import org.citygml4j.model.citygml.building.AbstractBoundarySurface;
 import org.citygml4j.model.citygml.building.AbstractOpening;
 import org.citygml4j.model.citygml.building.Door;
+import org.citygml4j.model.citygml.building.Window;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.Address;
 import org.citygml4j.model.citygml.core.AddressProperty;
@@ -64,21 +70,39 @@ public class DBOpening implements DBImporter {
 	private DBAddress addressImporter;
 	private AttributeValueJoiner valueJoiner;
 	private int batchCounter;
+	private int nullGeometryType;
+	private String nullGeometryTypeName;
 
 	private boolean affineTransformation;
+	private String PREFIX_ONTOCITYGML;
+	private String IRI_GRAPH_BASE;
+	private String IRI_GRAPH_OBJECT;
+	private static final String IRI_GRAPH_OBJECT_REL = "opening/";
 
 	public DBOpening(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;
 		this.importer = importer;
 
 		affineTransformation = config.getProject().getImporter().getAffineTransformation().isEnabled();
+		nullGeometryType = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType();
+		nullGeometryTypeName = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName();
 		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
 
-		String stmt = "insert into " + schema + ".opening (id, objectclass_id, address_id, lod3_multi_surface_id, lod4_multi_surface_id, " +
+		String stmt = "insert into " + schema + ".opening (id, objectclass_id, address_id, " +
+				"lod3_multi_surface_id, lod4_multi_surface_id, " +
 				"lod3_implicit_rep_id, lod4_implicit_rep_id, " +
 				"lod3_implicit_ref_point, lod4_implicit_ref_point, " +
 				"lod3_implicit_transformation, lod4_implicit_transformation) values " +
 				"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+
+		// Modification for SPARQL
+		if (importer.isBlazegraph()) {
+			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
+			IRI_GRAPH_BASE = importer.getGraphBaseIri();
+			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
+			stmt = getSPARQLStatement();
+		}
 		psOpening = batchConn.prepareStatement(stmt);
 
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
@@ -88,6 +112,29 @@ public class DBOpening implements DBImporter {
 		addressImporter = importer.getImporter(DBAddress.class);
 		geometryConverter = importer.getGeometryConverter();
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	private String getSPARQLStatement(){
+		String param = "  ?;";
+		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +  // add BASE by SYL
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? " + SchemaManagerAdapter.ONTO_ID + param +
+				SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param +
+				SchemaManagerAdapter.ONTO_ADDRESS_ID + param +
+				SchemaManagerAdapter.ONTO_LOD3_MULTI_SURFACE_ID + param +
+				SchemaManagerAdapter.ONTO_LOD4_MULTI_SURFACE_ID + param +
+				SchemaManagerAdapter.ONTO_LOD3_IMPLICIT_REP_ID + param +
+				SchemaManagerAdapter.ONTO_LOD4_IMPLICIT_REP_ID + param +
+				SchemaManagerAdapter.ONTO_LOD3_IMPLICIT_REF_POINT + param +
+				SchemaManagerAdapter.ONTO_LOD4_IMPLICIT_REF_POINT + param +
+				SchemaManagerAdapter.ONTO_LOD3_IMPLICIT_TRANSFORMATION + param +
+				SchemaManagerAdapter.ONTO_LOD4_IMPLICIT_TRANSFORMATION + param +
+				".}" +
+				"}";
+
+		return stmt;
 	}
 
 	protected long doImport(AbstractOpening opening) throws CityGMLImportException, SQLException {
@@ -102,12 +149,30 @@ public class DBOpening implements DBImporter {
 		// import city object information
 		long openingId = cityObjectImporter.doImport(opening, featureType);
 
+		URL objectURL = null;
+		int index = 0;
 		// import opening information
 		// primary id
-		psOpening.setLong(1, openingId);
-
+		if (importer.isBlazegraph()) {
+			try {
+				String uuid = opening.getId();
+				if (uuid.isEmpty()) {
+					uuid = importer.generateNewGmlId();
+				}
+				objectURL = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+			} catch (MalformedURLException e) {
+				psOpening.setObject(++index, NodeFactory.createBlankNode());
+			}
+			// primary id
+			psOpening.setURL(++index, objectURL);
+			opening.setLocalProperty(CoreConstants.OBJECT_URIID, objectURL);
+		} else {
+			psOpening.setLong(++index, openingId);
+		}
+		// primary id
+		psOpening.setURL(++index, objectURL);
 		// objectclass id
-		psOpening.setInt(2, featureType.getObjectClassId());
+		psOpening.setInt(++index, featureType.getObjectClassId());
 
 		// core:address
 		long addressId = 0;
@@ -136,9 +201,10 @@ public class DBOpening implements DBImporter {
 		}
 
 		if (addressId != 0)
-			psOpening.setLong(3, addressId);
-		else
-			psOpening.setNull(3, Types.NULL);
+			psOpening.setLong(++index, addressId);
+//		else
+//			psOpening.setString(3, "");//null in sparql
+//			psOpening.setNull(3, Types.NULL);
 
 		// bldg:lodXMultiSurface
 		for (int i = 0; i < 2; i++) {
@@ -172,8 +238,9 @@ public class DBOpening implements DBImporter {
 
 			if (multiSurfaceId != 0)
 				psOpening.setLong(4 + i, multiSurfaceId);
-			else
-				psOpening.setNull(4 + i, Types.NULL);
+//			else
+//				psOpening.setString(4 + i, "");//null in sparql
+//				psOpening.setNull(4 + i, Types.NULL);
 		}
 
 		// bldg:lodXImplicitRepresentation
@@ -216,19 +283,22 @@ public class DBOpening implements DBImporter {
 
 			if (implicitId != 0)
 				psOpening.setLong(6 + i, implicitId);
-			else
-				psOpening.setNull(6 + i, Types.NULL);
+//			else
+//				psOpening.setString(6+1, "");//sparql
+//				psOpening.setNull(6 + i, Types.NULL);
 
 			if (pointGeom != null)
 				psOpening.setObject(8 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
-			else
-				psOpening.setNull(8 + i, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
-						importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
+//			else
+//				psOpening.setString(8+i, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
+//				psOpening.setNull(8 + i, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
+//						importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
 
 			if (matrixString != null)
 				psOpening.setString(10 + i, matrixString);
-			else
-				psOpening.setNull(10 + i, Types.VARCHAR);
+//			else
+//				psOpening.setString(10+i, "");//sparql
+//				psOpening.setNull(10 + i, Types.VARCHAR);
 		}
 
 		psOpening.addBatch();
