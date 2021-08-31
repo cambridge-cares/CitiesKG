@@ -202,8 +202,8 @@ public class DBOpening implements DBImporter {
 
 		if (addressId != 0)
 			psOpening.setLong(++index, addressId);
-//		else
-//			psOpening.setString(3, "");//null in sparql
+		else
+			setBlankNode(psOpening, ++index);
 //			psOpening.setNull(3, Types.NULL);
 
 		// bldg:lodXMultiSurface
@@ -238,8 +238,8 @@ public class DBOpening implements DBImporter {
 
 			if (multiSurfaceId != 0)
 				psOpening.setLong(4 + i, multiSurfaceId);
-//			else
-//				psOpening.setString(4 + i, "");//null in sparql
+			else
+				setBlankNode(psOpening, 4 + i);
 //				psOpening.setNull(4 + i, Types.NULL);
 		}
 
@@ -283,21 +283,21 @@ public class DBOpening implements DBImporter {
 
 			if (implicitId != 0)
 				psOpening.setLong(6 + i, implicitId);
-//			else
-//				psOpening.setString(6+1, "");//sparql
+			else
+				setBlankNode(psOpening, 6 + i);
 //				psOpening.setNull(6 + i, Types.NULL);
 
 			if (pointGeom != null)
 				psOpening.setObject(8 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
-//			else
-//				psOpening.setString(8+i, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
+			else
+				setBlankNode(psOpening, 8 + i);
 //				psOpening.setNull(8 + i, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 //						importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
 
 			if (matrixString != null)
 				psOpening.setString(10 + i, matrixString);
-//			else
-//				psOpening.setString(10+i, "");//sparql
+			else
+				setBlankNode(psOpening, 10 + i);
 //				psOpening.setNull(10 + i, Types.VARCHAR);
 		}
 
@@ -328,4 +328,10 @@ public class DBOpening implements DBImporter {
 		psOpening.close();
 	}
 
+	/**
+	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
+	 */
+	private void setBlankNode(PreparedStatement smt, int index) throws CityGMLImportException {
+		importer.setBlankNode(smt, index);
+	}
 }
