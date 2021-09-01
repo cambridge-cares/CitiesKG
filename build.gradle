@@ -1,10 +1,16 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
+plugins {
+    id 'com.jfrog.artifactory' version '4.16.1'
+}
+
 apply from: 'properties.gradle'
 
 subprojects {
+    apply plugin: 'maven'
     apply plugin: 'java'
     apply plugin: 'maven-publish'
+    apply plugin: 'com.jfrog.artifactory'
 
     group 'org.citydb'
     version '4.2.3'
@@ -13,17 +19,14 @@ subprojects {
     compileJava.options.encoding = 'UTF-8'
 
     repositories {
-
         maven {
             url 'https://repo.osgeo.org/repository/release'
         }
         maven {
-            url 'https://dl.bintray.com/3dcitydb/maven'
+            url 'https://citydb.jfrog.io/artifactory/maven'
         }
-        maven {
-            url 'https://maven.scijava.org/content/repositories/public/'
-        }
-        jcenter()
+
+        mavenCentral()
 
     }
 
@@ -114,6 +117,21 @@ subprojects {
                         connection = 'scm:git:' + project.impexpGit
                     }
                 }
+            }
+        }
+    }
+
+    artifactory {
+        contextUrl = project.hasProperty('artifactory_contextUrl') ? project.property('artifactory_contextUrl') : System.getenv('artifactory_contextUrl')
+        publish {
+            repository {
+                repoKey = 'maven'
+                username = project.hasProperty('artifactory_user') ? project.property('artifactory_user') : System.getenv('artifactory_user')
+                password = project.hasProperty('artifactory_password') ? project.property('artifactory_password') : System.getenv('artifactory_password')
+                maven = true
+            }
+            defaults {
+                publications('mavenJava')
             }
         }
     }
