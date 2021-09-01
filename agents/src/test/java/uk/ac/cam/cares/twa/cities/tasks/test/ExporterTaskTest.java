@@ -21,13 +21,14 @@ class ExporterTaskTest extends TestCase {
 
     public String testgmlIds = "abc";
     public String outFileName = "/test.kml";
+    public String outTmpDir = "java.io.tmpdir";
 
     @Test
     public void testNewExporterTask() {
         ExporterTask task;
 
         String gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty("java.io.tmpdir") + outFileName);
+        File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
 
         try {
@@ -43,7 +44,7 @@ class ExporterTaskTest extends TestCase {
 
         // Setup of input parameters for the method
         String gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty("java.io.tmpdir") + outFileName);
+        File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath = outputFile.getAbsolutePath();
 
         ExporterTask task = new ExporterTask(gmlIds, outputPath);
@@ -88,7 +89,7 @@ class ExporterTaskTest extends TestCase {
     public void testNewExporterTaskMethods() {
 
         String gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty("java.io.tmpdir") + "/test.kml");
+        File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
 
         ExporterTask task = new ExporterTask(gmlIds, outputPath);
@@ -99,7 +100,7 @@ class ExporterTaskTest extends TestCase {
     public void testNewImporterTaskStopMethod() {
 
         String gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty("java.io.tmpdir") + outFileName);
+        File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
 
         ExporterTask task = new ExporterTask(gmlIds, outputPath);
@@ -123,12 +124,12 @@ class ExporterTaskTest extends TestCase {
 
         // Setup the CityExportAgent
         String gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty("java.io.tmpdir") + outFileName);
+        File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
         ExporterTask task = new ExporterTask(gmlIds, outputPath);
 
         // Working with tempFolder and tempFile
-        File configFile = new File(System.getProperty("java.io.tmpdir") + "/testproject.xml");  //initialize File object and passing path as argument but the file is not created yet
+        File configFile = new File(System.getProperty(outTmpDir) + "/testproject.xml");  //initialize File object and passing path as argument but the file is not created yet
         File modifiedConfigFile = null;
         String localhostUriStr = "http://localhost:8081/";
 
@@ -164,7 +165,7 @@ class ExporterTaskTest extends TestCase {
     public void testNewImporterTaskRunMethod() {
         // Setup the CityExportAgent
         String gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty("java.io.tmpdir") + outFileName);
+        File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
         ExporterTask task = new ExporterTask(gmlIds, outputPath);
 
@@ -173,6 +174,7 @@ class ExporterTaskTest extends TestCase {
         } catch (JPSRuntimeException e) {
             assertEquals(e.getClass(), JPSRuntimeException.class);
         }
+
 
     }
 

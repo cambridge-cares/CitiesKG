@@ -19,6 +19,7 @@ class CityExportAgentTest extends TestCase {
 
     public String testgmlIds = "abc";
     public String outFileName = "/test.kml";
+    public String outTmpDir = "java.io.tmpdir";
 
     @Test
     public void testNewCityExportAgent() {
@@ -129,7 +130,7 @@ class CityExportAgentTest extends TestCase {
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
-        requestParams.put(CityExportAgent.KEY_GMLID, "abc");
+        requestParams.put(CityExportAgent.KEY_GMLID, testgmlIds);
 
         try {
             assertTrue((Boolean) validateInput.invoke(agent, requestParams));
@@ -150,7 +151,7 @@ class CityExportAgentTest extends TestCase {
         }
 
         String gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty("java.io.tmpdir") + outFileName);
+        File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
 
         try {

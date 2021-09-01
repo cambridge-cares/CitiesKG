@@ -67,9 +67,10 @@ public class ExporterTask implements Runnable {
 
         // Copy the template to the location of output
         File outputFile = new File(outputpath);
+
         String configPath = outputFile.getAbsolutePath().replace(".kml", "project.xml");
         Files.copy(Paths.get(getClass().getClassLoader().getResource(PROJECT_CONFIG).toURI()),
-                Paths.get(configPath), StandardCopyOption.REPLACE_EXISTING);
+                    Paths.get(configPath), StandardCopyOption.REPLACE_EXISTING);
 
         File cfgFile = new File(configPath);
 
