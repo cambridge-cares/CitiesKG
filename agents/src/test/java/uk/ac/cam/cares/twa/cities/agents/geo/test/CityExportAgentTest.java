@@ -6,12 +6,14 @@ import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityExportAgent;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Assertions.*;
 
 class CityExportAgentTest extends TestCase {
 
@@ -34,13 +36,14 @@ class CityExportAgentTest extends TestCase {
 
         try {
             validateInput = agent.getClass().getDeclaredMethod("validateInput", JSONObject.class);
-        } catch (Exception e) {
+            validateInput.setAccessible(true);
+        } catch (NoSuchMethodException e) {
             fail();
         }
 
         JSONObject requestParams = new JSONObject();
         Set<String> keys = new HashSet<>();
-        String localhostURL = "http://localhost:8081/agents";
+        String localhostURL = "http://localhost";
 
         // General keys and value check
         try {
@@ -51,8 +54,29 @@ class CityExportAgentTest extends TestCase {
 
         // Add private attributes of the CityExportAgent class
         keys.add(CityExportAgent.URI_ACTION);
+
+        try {
+            validateInput.invoke(agent, requestParams);
+        } catch (Exception e) {
+            assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
+        }
+
         keys.add(CityExportAgent.KEY_GMLID);
+
+        try {
+            validateInput.invoke(agent, requestParams);
+        } catch (Exception e) {
+            assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
+        }
+
         keys.add(CityExportAgent.KEY_REQ_METHOD);
+
+        try {
+            validateInput.invoke(agent, requestParams);
+        } catch (Exception e) {
+            assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
+        }
+
         keys.add(CityExportAgent.KEY_REQ_URL);
 
         try {
@@ -62,9 +86,14 @@ class CityExportAgentTest extends TestCase {
         }
 
         // Create the HTTP request with a json body by the mean of the added keys
-        requestParams.put(CityExportAgent.KEY_REQ_METHOD, HttpMethod.POST);
         requestParams.put(CityExportAgent.KEY_REQ_METHOD, HttpMethod.GET);
-        requestParams.put(CityExportAgent.KEY_REQ_URL, "abc");
+
+        try {
+            validateInput.invoke(agent, requestParams);
+        } catch (Exception e) {
+            assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
+        }
+
         requestParams.put(CityExportAgent.KEY_REQ_URL, localhostURL);
 
         try {
@@ -74,8 +103,31 @@ class CityExportAgentTest extends TestCase {
         }
 
         //Action case:
+        requestParams.put(CityExportAgent.KEY_REQ_METHOD, HttpMethod.POST);
+
+        try {
+            validateInput.invoke(agent, requestParams);
+        } catch (Exception e) {
+            assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
+        }
+
         requestParams.put(CityExportAgent.KEY_REQ_URL, CityExportAgent.URI_ACTION);
+
+        try {
+            validateInput.invoke(agent, requestParams);
+        } catch (Exception e) {
+            assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
+        }
+
         requestParams.put(CityExportAgent.KEY_REQ_URL, localhostURL + CityExportAgent.URI_ACTION);
+
+        try {
+            validateInput.invoke(agent, requestParams);
+        } catch (Exception e) {
+            assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
+        }
+
+        requestParams.put(CityExportAgent.KEY_GMLID, "abc");
 
         try {
             assertTrue((Boolean) validateInput.invoke(agent, requestParams));
@@ -85,6 +137,26 @@ class CityExportAgentTest extends TestCase {
     }
 
     @Test
-    public void testexportKml() {}
+    public void testExportKml() {
+        CityExportAgent agent = new CityExportAgent();
+        Method exportKml = null;
+        try {
+            exportKml = agent.getClass().getDeclaredMethod("exportKml", String.class, String.class);
+            exportKml.setAccessible(true);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+
+        String gmlIds = "abc";
+        File outputfile = new File(Objects.requireNonNull(this.getClass().getResource("/testoutput.kml")).getFile());
+        String outputPath= outputfile.getAbsolutePath();
+
+        try {
+            assertEquals(exportKml.invoke(agent, gmlIds, outputPath), outputPath);
+        } catch (Exception e) {
+            fail();
+        }
+
+    }
 
 }

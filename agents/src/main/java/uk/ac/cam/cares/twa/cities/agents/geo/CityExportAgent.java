@@ -1,13 +1,11 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.twa.cities.tasks.ExporterTask;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
-import java.io.File;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -21,7 +19,10 @@ public class CityExportAgent extends JPSAgent {
         public static final String URI_ACTION = "/export/kml";
         public static final String KEY_GMLID = "gmlid";
         public static final String KEY_OUTPUTPATH = "outputpath";
+        public static final String KEY_REQ_URL = "requestUrl";
         public static final String KEY_REQ_METHOD = "method";
+        private String requestUrl;
+        private String gmlids;
 
         //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
         public final int NUM_IMPORTER_THREADS = 1;
@@ -29,11 +30,11 @@ public class CityExportAgent extends JPSAgent {
 
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
-        //System.out.println("Hello From processRequestParameters");
         if (validateInput(requestParams)) {
-            String gmlids = requestParams.getString(KEY_GMLID);
+            requestUrl = requestParams.getString(KEY_REQ_URL);
+            gmlids = requestParams.getString(KEY_GMLID);
             ResourceBundle rd = ResourceBundle.getBundle("config");
-            String outputPath = rd.getString("outputPath");
+            String outputPath = rd.getString(KEY_OUTPUTPATH);
             requestParams = new JSONObject(exportKml(gmlids,outputPath));
         }
         // It will return the location of the exported file
@@ -55,8 +56,8 @@ public class CityExportAgent extends JPSAgent {
                         if (!requestParams.getString(KEY_GMLID).isEmpty()){
                             error = false;
                         }
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+                    } catch (Exception e) {
+                        throw new BadRequestException();
                     }
                 }
             }
