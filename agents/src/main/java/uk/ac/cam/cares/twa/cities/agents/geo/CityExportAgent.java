@@ -6,6 +6,7 @@ import uk.ac.cam.cares.twa.cities.tasks.ExporterTask;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
+import java.io.File;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -18,11 +19,13 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class CityExportAgent extends JPSAgent {
         public static final String URI_ACTION = "/export/kml";
         public static final String KEY_GMLID = "gmlid";
-        public static final String KEY_OUTPUTPATH = "outputpath";
         public static final String KEY_REQ_URL = "requestUrl";
         public static final String KEY_REQ_METHOD = "method";
+        public String outFileName = "/test.kml";
+        public String outTmpDir = "java.io.tmpdir";
         private String requestUrl;
         private String gmlids;
+        public String propFileName = "config.properties";
 
         //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
         public final int NUM_IMPORTER_THREADS = 1;
@@ -30,16 +33,18 @@ public class CityExportAgent extends JPSAgent {
 
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
+        JSONObject result = new JSONObject();
+
         if (validateInput(requestParams)) {
             requestUrl = requestParams.getString(KEY_REQ_URL);
             gmlids = requestParams.getString(KEY_GMLID);
-            ResourceBundle rd = ResourceBundle.getBundle("config");
-            String outputPath = rd.getString(KEY_OUTPUTPATH);
-            requestParams = new JSONObject(exportKml(gmlids,outputPath));
+            ResourceBundle rb = ResourceBundle.getBundle("config");
+            String outputPath = rb.getString("outputDir") + outFileName;
+            result.put("outputPath", exportKml(gmlids, outputPath));
         }
         // It will return the location of the exported file
-        System.out.println(requestParams);
-        return requestParams;
+        System.out.println(result);
+        return result;
     }
 
     @Override
@@ -51,8 +56,7 @@ public class CityExportAgent extends JPSAgent {
             if (keys.contains(KEY_REQ_METHOD)) {
                 if (requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.POST)) {
                     try {
-                        // Check if GMLID and OUTPUTPATH is empty and if OUTPUTPATH exists
-                        //if (!requestParams.getString(KEY_GMLID).isEmpty() && !requestParams.getString(KEY_OUTPUTPATH).isEmpty()){
+                        // Check if gmlid is empty
                         if (!requestParams.getString(KEY_GMLID).isEmpty()){
                             error = false;
                         }
