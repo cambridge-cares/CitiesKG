@@ -340,7 +340,7 @@
                 <typeName xmlns:ns2="http://www.opengis.net/citygml/waterbody/2.0">ns2:WaterBody</typeName>
             </typeNames>
             <gmlIds>
-                <id>{{gmlid}}</id>
+                <id>BLDG_000300000001c242</id>
             </gmlIds>
             <bbox mode="no_tiling">
                 <extent srsRef="UUID_7f447c0d-d9c5-4990-a18d-c7324ce59f62">
