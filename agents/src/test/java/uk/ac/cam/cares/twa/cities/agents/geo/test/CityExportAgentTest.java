@@ -17,6 +17,8 @@ import org.junit.jupiter.api.Assertions.*;
 
 class CityExportAgentTest extends TestCase {
 
+    public String testgmlIds = "abc";
+    public String outFileName = "/test.kml";
 
     @Test
     public void testNewCityExportAgent() {
@@ -147,9 +149,9 @@ class CityExportAgentTest extends TestCase {
             e.printStackTrace();
         }
 
-        String gmlIds = "abc";
-        File outputfile = new File(Objects.requireNonNull(this.getClass().getResource("/testoutput.kml")).getFile());
-        String outputPath= outputfile.getAbsolutePath();
+        String gmlIds = testgmlIds;
+        File outputFile = new File(System.getProperty("java.io.tmpdir") + outFileName);
+        String outputPath= outputFile.getAbsolutePath();
 
         try {
             assertEquals(exportKml.invoke(agent, gmlIds, outputPath), outputPath);

@@ -1,22 +1,18 @@
 package uk.ac.cam.cares.twa.cities.tasks.test;
 
 import junit.framework.TestCase;
+import org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
+import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.tasks.ExporterTask;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.util.Objects;
-
-import org.junit.jupiter.api.Assertions.*;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -24,13 +20,14 @@ import javax.xml.parsers.ParserConfigurationException;
 class ExporterTaskTest extends TestCase {
 
     public String testgmlIds = "abc";
+    public String outFileName = "/test.kml";
 
     @Test
     public void testNewExporterTask() {
         ExporterTask task;
 
         String gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty("java.io.tmpdir") + "/test.kml");
+        File outputFile = new File(System.getProperty("java.io.tmpdir") + outFileName);
         String outputPath= outputFile.getAbsolutePath();
 
         try {
@@ -46,7 +43,7 @@ class ExporterTaskTest extends TestCase {
 
         // Setup of input parameters for the method
         String gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty("java.io.tmpdir") + "/test.kml");
+        File outputFile = new File(System.getProperty("java.io.tmpdir") + outFileName);
         String outputPath = outputFile.getAbsolutePath();
 
         ExporterTask task = new ExporterTask(gmlIds, outputPath);
@@ -102,7 +99,7 @@ class ExporterTaskTest extends TestCase {
     public void testNewImporterTaskStopMethod() {
 
         String gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty("java.io.tmpdir") + "/test.kml");
+        File outputFile = new File(System.getProperty("java.io.tmpdir") + outFileName);
         String outputPath= outputFile.getAbsolutePath();
 
         ExporterTask task = new ExporterTask(gmlIds, outputPath);
@@ -126,7 +123,7 @@ class ExporterTaskTest extends TestCase {
 
         // Setup the CityExportAgent
         String gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty("java.io.tmpdir") + "/test.kml");
+        File outputFile = new File(System.getProperty("java.io.tmpdir") + outFileName);
         String outputPath= outputFile.getAbsolutePath();
         ExporterTask task = new ExporterTask(gmlIds, outputPath);
 
@@ -167,10 +164,15 @@ class ExporterTaskTest extends TestCase {
     public void testNewImporterTaskRunMethod() {
         // Setup the CityExportAgent
         String gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty("java.io.tmpdir") + "/test.kml");
+        File outputFile = new File(System.getProperty("java.io.tmpdir") + outFileName);
         String outputPath= outputFile.getAbsolutePath();
         ExporterTask task = new ExporterTask(gmlIds, outputPath);
 
+        try {
+            task.run();
+        } catch (JPSRuntimeException e) {
+            assertEquals(e.getClass(), JPSRuntimeException.class);
+        }
 
     }
 
