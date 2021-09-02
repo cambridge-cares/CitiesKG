@@ -200,9 +200,10 @@ public class DBOpening implements DBImporter {
 
 		if (addressId != 0)
 			psOpening.setLong(++index, addressId);
-		else
+		else if (importer.isBlazegraph())
 			setBlankNode(psOpening, ++index);
-//			psOpening.setNull(3, Types.NULL);
+		else
+			psOpening.setNull(3, Types.NULL);
 
 		// bldg:lodXMultiSurface
 		for (int i = 0; i < 2; i++) {
@@ -235,10 +236,11 @@ public class DBOpening implements DBImporter {
 			}
 
 			if (multiSurfaceId != 0)
-				psOpening.setLong(4 + i, multiSurfaceId);
+				psOpening.setLong(++index, multiSurfaceId);
+			else if (importer.isBlazegraph())
+				setBlankNode(psOpening, ++index);
 			else
-				setBlankNode(psOpening, 4 + i);
-//				psOpening.setNull(4 + i, Types.NULL);
+				psOpening.setNull(4 + i, Types.NULL);
 		}
 
 		// bldg:lodXImplicitRepresentation
@@ -280,23 +282,26 @@ public class DBOpening implements DBImporter {
 			}
 
 			if (implicitId != 0)
-				psOpening.setLong(6 + i, implicitId);
+				psOpening.setLong(++index, implicitId);
+			else if (importer.isBlazegraph())
+				setBlankNode(psOpening, ++index);
 			else
-				setBlankNode(psOpening, 6 + i);
-//				psOpening.setNull(6 + i, Types.NULL);
+				psOpening.setNull(6 + i, Types.NULL);
 
 			if (pointGeom != null)
-				psOpening.setObject(8 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
+				psOpening.setObject(++index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
+			else if (importer.isBlazegraph())
+				setBlankNode(psOpening, ++index);
 			else
-				setBlankNode(psOpening, 8 + i);
-//				psOpening.setNull(8 + i, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
-//						importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
+				psOpening.setNull(8 + i, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
+						importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
 
 			if (matrixString != null)
-				psOpening.setString(10 + i, matrixString);
+				psOpening.setString(++index, matrixString);
+			else if (importer.isBlazegraph())
+				setBlankNode(psOpening, ++index);
 			else
-				setBlankNode(psOpening, 10 + i);
-//				psOpening.setNull(10 + i, Types.VARCHAR);
+				psOpening.setNull(10 + i, Types.VARCHAR);
 		}
 
 		psOpening.addBatch();
@@ -305,7 +310,7 @@ public class DBOpening implements DBImporter {
 
 		if (parent instanceof AbstractBoundarySurface)
 			if (importer.isBlazegraph()) {
-				openingToThemSurfaceImporter.doImport((URL )opening.getLocalProperty(CoreConstants.OBJECT_URIID),
+				openingToThemSurfaceImporter.doImport((URL)opening.getLocalProperty(CoreConstants.OBJECT_URIID),
 						(URL) ((AbstractGML) ((OpeningProperty) opening.getParent()).getParent())
 								.getLocalProperty(CoreConstants.OBJECT_URIID));
 			} else {
