@@ -46,15 +46,13 @@ import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
 import org.citydb.util.CoreConstants;
 import org.citygml4j.geometry.Matrix;
-import org.citygml4j.model.citygml.building.AbstractBoundarySurface;
-import org.citygml4j.model.citygml.building.AbstractOpening;
-import org.citygml4j.model.citygml.building.Door;
-import org.citygml4j.model.citygml.building.Window;
+import org.citygml4j.model.citygml.building.*;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.Address;
 import org.citygml4j.model.citygml.core.AddressProperty;
 import org.citygml4j.model.citygml.core.ImplicitGeometry;
 import org.citygml4j.model.citygml.core.ImplicitRepresentationProperty;
+import org.citygml4j.model.gml.base.AbstractGML;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
 
 public class DBOpening implements DBImporter {
@@ -306,8 +304,14 @@ public class DBOpening implements DBImporter {
 			importer.executeBatch(TableEnum.OPENING);
 
 		if (parent instanceof AbstractBoundarySurface)
-			openingToThemSurfaceImporter.doImport(openingId, parentId);
-		
+			if (importer.isBlazegraph()) {
+				openingToThemSurfaceImporter.doImport((URL )opening.getLocalProperty(CoreConstants.OBJECT_URIID),
+						(URL) ((AbstractGML) ((OpeningProperty) opening.getParent()).getParent())
+								.getLocalProperty(CoreConstants.OBJECT_URIID));
+			} else {
+				openingToThemSurfaceImporter.doImport(openingId, parentId);
+			}
+
 		// ADE-specific extensions
 		if (importer.hasADESupport())
 			importer.delegateToADEImporter(opening, openingId, featureType);
