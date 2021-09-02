@@ -87,7 +87,7 @@ public class DBRoom implements DBImporter {
 		nullGeometryType = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType();
 		nullGeometryTypeName = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName();
 		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-//		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
+		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
 
 		String stmt = "insert into " + schema + ".room (id, objectclass_id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
 				"building_id, lod4_multi_surface_id, lod4_solid_id)" +
