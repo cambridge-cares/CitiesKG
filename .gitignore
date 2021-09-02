@@ -26,4 +26,4 @@ db/vocabularies/target/
 db/*.gml
 db/appearance
 
-agents/target/
+*/target/

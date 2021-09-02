@@ -5,6 +5,38 @@
   <groupId>org.citydb</groupId>
   <artifactId>impexp-kml-collada-plugin</artifactId>
   <version>4.2.3</version>
+  <build>
+    <pluginManagement>
+      <plugins>
+
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.1</version>
+          <configuration>
+            <source>1.8</source>
+            <target>1.8</target>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+  <repositories>
+    <repository>
+      <id>jcenter</id>
+      <name>jcenter</name>
+      <url>https://jcenter.bintray.com/</url>
+    </repository>
+    <repository>
+      <id>osgeo</id>
+      <name>osgeo</name>
+      <url>https://repo.osgeo.org/repository/release/</url>
+    </repository>
+    <repository>
+      <id>scijava</id>
+      <name>scijava</name>
+      <url>https://maven.scijava.org/content/repositories/public/</url>
+    </repository>
+  </repositories>
   <dependencies>
     <dependency>
       <groupId>org.citydb</groupId>
