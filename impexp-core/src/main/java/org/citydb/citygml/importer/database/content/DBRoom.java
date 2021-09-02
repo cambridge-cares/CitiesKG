@@ -271,7 +271,7 @@ public class DBRoom implements DBImporter {
 
 		// objectclass id
 		if (hasObjectClassIdColumn)
-			psRoom.setLong(11, featureType.getObjectClassId());
+			psRoom.setLong(++index, featureType.getObjectClassId());
 
 		psRoom.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
