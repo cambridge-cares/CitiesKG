@@ -61,13 +61,14 @@ public class ImporterTask implements Runnable {
                     File cfgfile = setupFiles(server.getURI());
                     String[] args = {ARG_SHELL, ARG_IMPORT + importFile.getAbsolutePath(),
                             ARG_CFG + cfgfile.getAbsolutePath()};
+
                     ImpExp.main(args);
                     //Create temporary nq file indicating that import to the particular instance is finished
+                    server.stop();
                     File nqFile = new File(importFile.getAbsolutePath().replace(EXT_FILE_GML, EXT_FILE_NQUADS));
                     if (!nqFile.createNewFile()) {
                         throw new IOException();
                     }
-                    server.stop();
                } catch (Exception e) {
                     throw new JPSRuntimeException(e);
                 } finally {
