@@ -111,7 +111,6 @@ public class DBBuildingFurniture implements DBImporter {
 				"INSERT DATA" +
 				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
 				"{ ? " + SchemaManagerAdapter.ONTO_ID + param +
-				SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param +
 				SchemaManagerAdapter.ONTO_CLASS + param +
 				SchemaManagerAdapter.ONTO_CLASS_CODESPACE + param +
 				SchemaManagerAdapter.ONTO_FUNCTION + param +
@@ -124,6 +123,7 @@ public class DBBuildingFurniture implements DBImporter {
 				SchemaManagerAdapter.ONTO_LOD4_IMPLICIT_REP_ID + param +
 				SchemaManagerAdapter.ONTO_LOD4_IMPLICIT_REF_POINT + param +
 				SchemaManagerAdapter.ONTO_LOD4_IMPLICIT_TRANSFORMATION + param +
+				(hasObjectClassIdColumn ? SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param : "") +
 				".}" +
 				"}";
 
@@ -166,9 +166,12 @@ public class DBBuildingFurniture implements DBImporter {
 
 		// bldg:class
 		if (buildingFurniture.isSetClazz() && buildingFurniture.getClazz().isSetValue()) {
-			psBuildingFurniture.setString(2, buildingFurniture.getClazz().getValue());
-			psBuildingFurniture.setString(3, buildingFurniture.getClazz().getCodeSpace());
-		} else {
+			psBuildingFurniture.setString(++index, buildingFurniture.getClazz().getValue());
+			psBuildingFurniture.setString(++index, buildingFurniture.getClazz().getCodeSpace());
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psBuildingFurniture, ++index);
+			setBlankNode(psBuildingFurniture, ++index);
+		}else {
 			psBuildingFurniture.setNull(2, Types.VARCHAR);
 			psBuildingFurniture.setNull(3, Types.VARCHAR);
 		}
@@ -176,9 +179,12 @@ public class DBBuildingFurniture implements DBImporter {
 		// bldg:function
 		if (buildingFurniture.isSetFunction()) {
 			valueJoiner.join(buildingFurniture.getFunction(), Code::getValue, Code::getCodeSpace);
-			psBuildingFurniture.setString(4, valueJoiner.result(0));
-			psBuildingFurniture.setString(5, valueJoiner.result(1));
-		} else {
+			psBuildingFurniture.setString(++index, valueJoiner.result(0));
+			psBuildingFurniture.setString(++index, valueJoiner.result(1));
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psBuildingFurniture, ++index);
+			setBlankNode(psBuildingFurniture, ++index);
+		}else {
 			psBuildingFurniture.setNull(4, Types.VARCHAR);
 			psBuildingFurniture.setNull(5, Types.VARCHAR);
 		}
@@ -186,16 +192,21 @@ public class DBBuildingFurniture implements DBImporter {
 		// bldg:usage
 		if (buildingFurniture.isSetUsage()) {
 			valueJoiner.join(buildingFurniture.getUsage(), Code::getValue, Code::getCodeSpace);
-			psBuildingFurniture.setString(6, valueJoiner.result(0));
-			psBuildingFurniture.setString(7, valueJoiner.result(1));
-		} else {
+			psBuildingFurniture.setString(++index, valueJoiner.result(0));
+			psBuildingFurniture.setString(++index, valueJoiner.result(1));
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psBuildingFurniture, ++index);
+			setBlankNode(psBuildingFurniture, ++index);
+		}else {
 			psBuildingFurniture.setNull(6, Types.VARCHAR);
 			psBuildingFurniture.setNull(7, Types.VARCHAR);
 		}
 
 		// parent room id
 		if (roomId != 0)
-			psBuildingFurniture.setLong(8, roomId);
+			psBuildingFurniture.setLong(++index, roomId);
+		else if (importer.isBlazegraph())
+			setBlankNode(psBuildingFurniture, ++index);
 		else
 			psBuildingFurniture.setNull(8, Types.NULL);
 
@@ -229,12 +240,16 @@ public class DBBuildingFurniture implements DBImporter {
 		}
 
 		if (geometryId != 0)
-			psBuildingFurniture.setLong(9, geometryId);
+			psBuildingFurniture.setLong(++index, geometryId);
+		else if (importer.isBlazegraph())
+			setBlankNode(psBuildingFurniture, ++index);
 		else
 			psBuildingFurniture.setNull(9, Types.NULL);
 
 		if (geometryObject != null)
-			psBuildingFurniture.setObject(10, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
+			psBuildingFurniture.setObject(++index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
+		else if (importer.isBlazegraph())
+			setBlankNode(psBuildingFurniture, ++index);
 		else
 			psBuildingFurniture.setNull(10, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
@@ -269,24 +284,30 @@ public class DBBuildingFurniture implements DBImporter {
 		}
 
 		if (implicitId != 0)
-			psBuildingFurniture.setLong(11, implicitId);
+			psBuildingFurniture.setLong(++index, implicitId);
+		else if (importer.isBlazegraph())
+			setBlankNode(psBuildingFurniture, ++index);
 		else
 			psBuildingFurniture.setNull(11, Types.NULL);
 
 		if (pointGeom != null)
-			psBuildingFurniture.setObject(12, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
+			psBuildingFurniture.setObject(++index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
+		else if (importer.isBlazegraph())
+			setBlankNode(psBuildingFurniture, ++index);
 		else
 			psBuildingFurniture.setNull(12, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
 
 		if (matrixString != null)
-			psBuildingFurniture.setString(13, matrixString);
+			psBuildingFurniture.setString(++index, matrixString);
+		else if (importer.isBlazegraph())
+			setBlankNode(psBuildingFurniture, ++index);
 		else
 			psBuildingFurniture.setNull(13, Types.VARCHAR);
 
 		// objectclass id
 		if (hasObjectClassIdColumn)
-			psBuildingFurniture.setLong(14, featureType.getObjectClassId());
+			psBuildingFurniture.setLong(++index, featureType.getObjectClassId());
 
 		psBuildingFurniture.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
@@ -310,6 +331,13 @@ public class DBBuildingFurniture implements DBImporter {
 	@Override
 	public void close() throws CityGMLImportException, SQLException {
 		psBuildingFurniture.close();
+	}
+
+	/**
+	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
+	 */
+	private void setBlankNode(PreparedStatement smt, int index) throws CityGMLImportException {
+		importer.setBlankNode(smt, index);
 	}
 
 }
