@@ -118,7 +118,6 @@ public class DBRoom implements DBImporter {
 				"INSERT DATA" +
 				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
 				"{ ? " + SchemaManagerAdapter.ONTO_ID + param +
-				SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param +
 				SchemaManagerAdapter.ONTO_CLASS + param +
 				SchemaManagerAdapter.ONTO_CLASS_CODESPACE + param +
 				SchemaManagerAdapter.ONTO_FUNCTION + param +
@@ -128,6 +127,7 @@ public class DBRoom implements DBImporter {
 				SchemaManagerAdapter.ONTO_BUILDING_ID + param +
 				SchemaManagerAdapter.ONTO_LOD4_MULTI_SURFACE_ID + param +
 				SchemaManagerAdapter.ONTO_LOD4_SOLID_ID + param +
+				(hasObjectClassIdColumn ? SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param : "") +
 				".}" +
 				"}";
 
@@ -171,9 +171,12 @@ public class DBRoom implements DBImporter {
 
 		// bldg:class
 		if (room.isSetClazz() && room.getClazz().isSetValue()) {
-			psRoom.setString(2, room.getClazz().getValue());
-			psRoom.setString(3, room.getClazz().getCodeSpace());
-		} else {
+			psRoom.setString(++index, room.getClazz().getValue());
+			psRoom.setString(++index, room.getClazz().getCodeSpace());
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psRoom, ++index);
+			setBlankNode(psRoom, ++index);
+		}else {
 			psRoom.setNull(2, Types.VARCHAR);
 			psRoom.setNull(3, Types.VARCHAR);
 		}
@@ -181,9 +184,12 @@ public class DBRoom implements DBImporter {
 		// bldg:function
 		if (room.isSetFunction()) {
 			valueJoiner.join(room.getFunction(), Code::getValue, Code::getCodeSpace);
-			psRoom.setString(4, valueJoiner.result(0));
-			psRoom.setString(5, valueJoiner.result(1));
-		} else {
+			psRoom.setString(++index, valueJoiner.result(0));
+			psRoom.setString(++index, valueJoiner.result(1));
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psRoom, ++index);
+			setBlankNode(psRoom, ++index);
+		}else {
 			psRoom.setNull(4, Types.VARCHAR);
 			psRoom.setNull(5, Types.VARCHAR);
 		}
@@ -191,16 +197,21 @@ public class DBRoom implements DBImporter {
 		// bldg:usage
 		if (room.isSetUsage()) {
 			valueJoiner.join(room.getUsage(), Code::getValue, Code::getCodeSpace);
-			psRoom.setString(6, valueJoiner.result(0));
-			psRoom.setString(7, valueJoiner.result(1));
-		} else {
+			psRoom.setString(++index, valueJoiner.result(0));
+			psRoom.setString(++index, valueJoiner.result(1));
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psRoom, ++index);
+			setBlankNode(psRoom, ++index);
+		}else {
 			psRoom.setNull(6, Types.VARCHAR);
 			psRoom.setNull(7, Types.VARCHAR);
 		}
 
 		// parent building id
 		if (buildingId != 0)
-			psRoom.setLong(8, buildingId);
+			psRoom.setLong(++index, buildingId);
+		else if (importer.isBlazegraph())
+			setBlankNode(psRoom, ++index);
 		else
 			psRoom.setNull(8, Types.NULL);
 
@@ -225,7 +236,9 @@ public class DBRoom implements DBImporter {
 		} 
 
 		if (geometryId != 0)
-			psRoom.setLong(9, geometryId);
+			psRoom.setLong(++index, geometryId);
+		else if (importer.isBlazegraph())
+			setBlankNode(psRoom, ++index);
 		else
 			psRoom.setNull(9, Types.NULL);
 
@@ -250,7 +263,9 @@ public class DBRoom implements DBImporter {
 		} 
 
 		if (geometryId != 0)
-			psRoom.setLong(10, geometryId);
+			psRoom.setLong(++index, geometryId);
+		else if (importer.isBlazegraph())
+			setBlankNode(psRoom, ++index);
 		else
 			psRoom.setNull(10, Types.NULL);
 
@@ -343,6 +358,13 @@ public class DBRoom implements DBImporter {
 	@Override
 	public void close() throws CityGMLImportException, SQLException {
 		psRoom.close();
+	}
+
+	/**
+	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
+	 */
+	private void setBlankNode(PreparedStatement smt, int index) throws CityGMLImportException {
+		importer.setBlankNode(smt, index);
 	}
 
 }
