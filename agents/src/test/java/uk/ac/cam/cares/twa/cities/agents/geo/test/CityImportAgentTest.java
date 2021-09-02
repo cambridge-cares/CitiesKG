@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
+
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.io.File;
@@ -12,6 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 public class CityImportAgentTest extends TestCase {
 
@@ -25,6 +27,89 @@ public class CityImportAgentTest extends TestCase {
             fail();
         }
 
+    }
+
+    public void testNewCityImportAgentFields() {
+        CityImportAgent agent = new CityImportAgent();
+
+        assertEquals(19, agent.getClass().getDeclaredFields().length);
+
+        Field URI_LISTEN;
+        Field  URI_ACTION;
+        Field KEY_REQ_METHOD;
+        Field KEY_REQ_URL;
+        Field KEY_DIRECTORY;
+        Field KEY_SPLIT;
+        Field KEY_TARGET_URL;
+        Field FS;
+        Field CHUNK_SIZE;
+        Field NUM_SERVER_THREADS;
+        Field NUM_IMPORTER_THREADS;
+        Field requestUrl;
+        Field targetUrl;
+        Field importDir;
+        Field splitDir;
+        Field serverExecutor;
+        Field importerExecutor;
+        Field nqExportExecutor;
+        Field nqUploadExecutor;
+
+        try {
+            URI_LISTEN = agent.getClass().getDeclaredField("URI_LISTEN");
+            assertEquals(URI_LISTEN.get(agent),"/import/source");
+            URI_ACTION = agent.getClass().getDeclaredField("URI_ACTION");
+            assertEquals(URI_ACTION.get(agent),"/import/citygml");
+            KEY_REQ_METHOD = agent.getClass().getDeclaredField("KEY_REQ_METHOD");
+            assertEquals(KEY_REQ_METHOD.get(agent),"method");
+            KEY_REQ_URL = agent.getClass().getDeclaredField("KEY_REQ_URL");
+            assertEquals(KEY_REQ_URL.get(agent),"requestUrl");
+            KEY_DIRECTORY = agent.getClass().getDeclaredField("KEY_DIRECTORY");
+            assertEquals(KEY_DIRECTORY.get(agent),"directory");
+            KEY_SPLIT = agent.getClass().getDeclaredField("KEY_SPLIT");
+            assertEquals(KEY_SPLIT.get(agent),"split");
+            KEY_TARGET_URL = agent.getClass().getDeclaredField("KEY_TARGET_URL");
+            assertEquals(KEY_TARGET_URL.get(agent),"targetURL");
+            CHUNK_SIZE = agent.getClass().getDeclaredField("CHUNK_SIZE");
+            assertEquals(CHUNK_SIZE.get(agent),100);
+            NUM_SERVER_THREADS = agent.getClass().getDeclaredField("NUM_SERVER_THREADS");
+            assertEquals(NUM_SERVER_THREADS.get(agent),2);
+            NUM_IMPORTER_THREADS = agent.getClass().getDeclaredField("NUM_IMPORTER_THREADS");
+            assertEquals(NUM_IMPORTER_THREADS.get(agent),1);
+            FS = agent.getClass().getDeclaredField("FS");
+            FS.setAccessible(true);
+            assertEquals(FS.get(agent),System.getProperty("file.separator"));
+            requestUrl = agent.getClass().getDeclaredField("requestUrl");
+            requestUrl.setAccessible(true);
+            assertNull(requestUrl.get(agent));
+            targetUrl = agent.getClass().getDeclaredField("targetUrl");
+            targetUrl.setAccessible(true);
+            assertNull(targetUrl.get(agent));
+            importDir = agent.getClass().getDeclaredField("importDir");
+            importDir.setAccessible(true);
+            assertNull(importDir.get(agent));
+            splitDir = agent.getClass().getDeclaredField("splitDir");
+            splitDir.setAccessible(true);
+            assertNull(splitDir.get(agent));
+            serverExecutor = agent.getClass().getDeclaredField("serverExecutor");
+            serverExecutor.setAccessible(true);
+            assertFalse(((ExecutorService)serverExecutor.get(agent)).isTerminated());
+            importerExecutor = agent.getClass().getDeclaredField("importerExecutor");
+            importerExecutor.setAccessible(true);
+            assertFalse(((ExecutorService)importerExecutor.get(agent)).isTerminated());
+            nqExportExecutor = agent.getClass().getDeclaredField("nqExportExecutor");
+            nqExportExecutor.setAccessible(true);
+            assertFalse(((ExecutorService)nqExportExecutor.get(agent)).isTerminated());
+            nqUploadExecutor = agent.getClass().getDeclaredField("nqUploadExecutor");
+            nqUploadExecutor.setAccessible(true);
+            assertFalse(((ExecutorService)nqUploadExecutor.get(agent)).isTerminated());
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            fail();
+        }
+    }
+
+    public void testNewCityImportAgentMethods() {
+        CityImportAgent agent = new CityImportAgent();
+        assertEquals(14, agent.getClass().getDeclaredMethods().length);
     }
 
     public void testValidateListenInput()  {
@@ -107,6 +192,7 @@ public class CityImportAgentTest extends TestCase {
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
+            assert e instanceof InvocationTargetException;
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
@@ -115,6 +201,7 @@ public class CityImportAgentTest extends TestCase {
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
+            assert e instanceof InvocationTargetException;
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
@@ -123,6 +210,7 @@ public class CityImportAgentTest extends TestCase {
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
+            assert e instanceof InvocationTargetException;
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
@@ -131,6 +219,7 @@ public class CityImportAgentTest extends TestCase {
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
+            assert e instanceof InvocationTargetException;
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
@@ -139,6 +228,7 @@ public class CityImportAgentTest extends TestCase {
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
+            assert e instanceof InvocationTargetException;
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
@@ -147,6 +237,7 @@ public class CityImportAgentTest extends TestCase {
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
+            assert e instanceof InvocationTargetException;
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
@@ -155,6 +246,7 @@ public class CityImportAgentTest extends TestCase {
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
+            assert e instanceof InvocationTargetException;
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
@@ -163,6 +255,7 @@ public class CityImportAgentTest extends TestCase {
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
+            assert e instanceof InvocationTargetException;
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
@@ -175,6 +268,7 @@ public class CityImportAgentTest extends TestCase {
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
+            assert e instanceof InvocationTargetException;
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
@@ -183,6 +277,7 @@ public class CityImportAgentTest extends TestCase {
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
+            assert e instanceof InvocationTargetException;
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
@@ -191,6 +286,7 @@ public class CityImportAgentTest extends TestCase {
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
+            assert e instanceof InvocationTargetException;
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
@@ -209,6 +305,7 @@ public class CityImportAgentTest extends TestCase {
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
+            assert e instanceof InvocationTargetException;
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
@@ -217,6 +314,7 @@ public class CityImportAgentTest extends TestCase {
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
+            assert e instanceof InvocationTargetException;
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
@@ -225,6 +323,7 @@ public class CityImportAgentTest extends TestCase {
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
+            assert e instanceof InvocationTargetException;
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
