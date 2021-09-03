@@ -1,17 +1,22 @@
 package uk.ac.cam.cares.twa.cities.agents.geo.test;
 
 import junit.framework.TestCase;
+import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
+import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
@@ -362,7 +367,118 @@ public class CityImportAgentTest extends TestCase {
     }
 
     public void testImportFiles() {
-        //@Todo: implementation
+        CityImportAgent agent  = new CityImportAgent();
+        Field targetUrl = null;
+        Field importDir = null;
+        Method importFiles = null;
+        File testFile = new File(Objects.requireNonNull(this.getClass().getResource("/test.gml")).getFile());
+        File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
+        File impF = new File(impD.getAbsolutePath() + "/test.gml");
+
+        try {
+            targetUrl = agent.getClass().getDeclaredField("targetUrl");
+            targetUrl.setAccessible(true);
+            assertNull(targetUrl.get(agent));
+            importDir = agent.getClass().getDeclaredField("importDir");
+            importDir.setAccessible(true);
+            importFiles = agent.getClass().getDeclaredMethod("importFiles", File.class);
+            importFiles.setAccessible(true);
+        } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException e) {
+            fail();
+        }
+
+        try {
+            importDir.set(agent, impD);
+            importFiles.invoke(agent, impD);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            if (e.getClass() == InvocationTargetException.class) {
+                assertEquals(((InvocationTargetException) e).getTargetException().getClass(), JPSRuntimeException.class);
+            } else {
+                fail();
+            }
+        }
+
+        try {
+            if (impD.mkdirs()) {
+                importFiles.invoke(agent, impD);
+            }
+        } catch (InvocationTargetException | IllegalAccessException e) {
+            if (e.getClass() == InvocationTargetException.class) {
+                assertEquals(((InvocationTargetException) e).getTargetException().getClass(), JPSRuntimeException.class);
+            } else {
+                fail();
+            }
+        } finally {
+            if (impD.isDirectory() && !impD.delete()) {
+                try {
+                    FileUtils.deleteDirectory(impD);
+                } catch (IOException e) {
+                    fail();
+                }
+            }
+        }
+
+        try {
+            if (impD.mkdirs()) {
+                Files.copy(testFile.toPath(), impF.toPath());
+                importFiles.invoke(agent, impD);
+            }
+        } catch (InvocationTargetException | IllegalAccessException | IOException e) {
+            if (e.getClass() == InvocationTargetException.class) {
+                assertEquals(((InvocationTargetException) e).getTargetException().getClass(), JPSRuntimeException.class);
+            } else {
+                fail();
+            }
+        } finally {
+            if (impD.isDirectory() && !impD.delete()) {
+                try {
+                    FileUtils.deleteDirectory(impD);
+                } catch (IOException e) {
+                    fail();
+                }
+            }
+        }
+
+        try {
+            if (impD.mkdirs()) {
+                Files.copy(testFile.toPath(), impF.toPath());
+                targetUrl.set(agent, "test");
+                importFiles.invoke(agent, impD);
+            }
+        } catch (InvocationTargetException | IllegalAccessException | IOException e) {
+            if (e.getClass() == InvocationTargetException.class) {
+                assertEquals(((InvocationTargetException) e).getTargetException().getClass(), JPSRuntimeException.class);
+            } else {
+                fail();
+            }
+        } finally {
+            if (impD.isDirectory() && !impD.delete()) {
+                try {
+                    FileUtils.deleteDirectory(impD);
+                } catch (IOException e) {
+                    fail();
+                }
+            }
+        }
+
+        try {
+            if (impD.mkdirs()) {
+                Files.copy(testFile.toPath(), impF.toPath());
+                targetUrl.set(agent, "http://localhost/test");
+                assertEquals(importFiles.invoke(agent, impD), "file_part_1.gml \n");
+            }
+        } catch (InvocationTargetException | IllegalAccessException | IOException e) {
+            fail();
+        } finally {
+            if (impD.isDirectory() && !impD.delete()) {
+                try {
+                    FileUtils.deleteDirectory(impD);
+                } catch (IOException e) {
+                    fail();
+                }
+            }
+        }
+
     }
 
     public void testSplitFile() {

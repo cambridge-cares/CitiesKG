@@ -70,8 +70,8 @@ public class CityImportAgent extends JPSAgent {
     File splitDir;
     private final ExecutorService  serverExecutor = Executors.newFixedThreadPool(NUM_SERVER_THREADS);
     private final ExecutorService  importerExecutor = Executors.newFixedThreadPool(NUM_IMPORTER_THREADS);
-    private final ExecutorService nqExportExecutor = Executors.newFixedThreadPool(NUM_IMPORTER_THREADS);
-    private final ExecutorService nqUploadExecutor = Executors.newFixedThreadPool(NUM_IMPORTER_THREADS);
+    private final ExecutorService nqExportExecutor = Executors.newFixedThreadPool(NUM_SERVER_THREADS);
+    private final ExecutorService nqUploadExecutor = Executors.newFixedThreadPool(NUM_SERVER_THREADS);
 
 
     @Override
@@ -211,6 +211,7 @@ public class CityImportAgent extends JPSAgent {
                 for (File chunk : chunks) {
                     try {
                         importChunk(chunk);
+                        imported = imported + chunk.getName() + " \n";
                     } catch (Exception e) {
                         throw new JPSRuntimeException(e);
                     }
