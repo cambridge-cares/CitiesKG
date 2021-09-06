@@ -141,7 +141,7 @@ public class DistanceAgentTest extends TestCase {
         String valueUriMock = "123e4567-e89b-12d3-a456-556642441111";
         double distance = 10.0;
 
-        try (MockedStatic<UUID> randomUUID = Mockito.mockStatic(UUID.class)){
+        try (MockedStatic<UUID> randomUUID = Mockito.mockStatic(UUID.class, RETURNS_DEEP_STUBS)){
 
             randomUUID.when(() -> UUID.randomUUID().toString()).thenReturn(distanceUriMock, valueUriMock);
 

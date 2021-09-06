@@ -46,6 +46,12 @@
                         <warName>${project.artifactId}##${project.version}</warName>
                         <!--suppress UnresolvedMavenProperty -->
                         <outputDirectory>${tomcatPath}/webapps</outputDirectory>
+                        <webResources>
+                                <resource>
+                                    <directory>${basedir}/WEB-INF</directory>
+                                    <targetPath>WEB-INF</targetPath>
+                                </resource>
+                        </webResources>
                     </configuration>
                 </plugin>
 
@@ -135,10 +141,25 @@
             <version>25.1</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
+        </dependency>
+
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-epsg-hsql</artifactId>
             <version>25.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.blazegraph</groupId>
+            <artifactId>blazegraph-jar</artifactId>
+            <version>2.1.5</version>
+            <scope>provided</scope>
+
         </dependency>
 
     </dependencies>
