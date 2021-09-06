@@ -57,7 +57,7 @@ public class ExporterTask implements Runnable {
     }
 
     /**
-     * Set the GMLOD into Config file, @TODO: database setup, gmlId setup
+     * Set the GMLOD into Config file,
      * Assume LODx and displayForm are fixed : LOD2 and extruded
      * For bbox option, the parameters are more complex
      * This method should overwrite the gmlId within the project setting to define what to extract. * for all

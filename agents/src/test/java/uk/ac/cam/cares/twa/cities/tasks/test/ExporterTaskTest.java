@@ -1,18 +1,29 @@
 package uk.ac.cam.cares.twa.cities.tasks.test;
 
 import junit.framework.TestCase;
+import org.citydb.event.EventDispatcher;
 import org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.tasks.ExporterTask;
+
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -21,7 +32,10 @@ class ExporterTaskTest extends TestCase {
 
     public String testgmlIds = "abc";
     public String outFileName = "/test.kml";
-    public String outTmpDir = "java.io.tmpdir";
+    public String outTmpDir = "java.io.tmpdir"; // Note: this path is dependent on the PC, e.g., C:\Users\Shiying\AppData\Local\Temp\test_extruded.kml
+    //public final ExecutorService exporterExecutor = Executors.newFixedThreadPool(1);
+    //private final ThreadPoolExecutor exporterExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+
 
     @Test
     public void testNewExporterTask() {
@@ -97,7 +111,7 @@ class ExporterTaskTest extends TestCase {
     }
 
     @Test
-    public void testNewImporterTaskStopMethod() {
+    public void testNewExporterTaskStopMethod() {
 
         String gmlIds = testgmlIds;
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
@@ -120,7 +134,7 @@ class ExporterTaskTest extends TestCase {
     }
 
     @Test
-    public void testNewExporterTaskSetupFilesMethod() {
+    public void testNewExporterTaskSetupConfigMethod() {
 
         // Setup the CityExportAgent
         String gmlIds = testgmlIds;
@@ -131,7 +145,6 @@ class ExporterTaskTest extends TestCase {
         // Working with tempFolder and tempFile
         File configFile = new File(System.getProperty(outTmpDir) + "/testproject.xml");  //initialize File object and passing path as argument but the file is not created yet
         File modifiedConfigFile = null;
-        String localhostUriStr = "http://localhost:8081/";
 
         try {
             // test the modified gmlids with the expected gmlids
@@ -162,19 +175,44 @@ class ExporterTaskTest extends TestCase {
     }
 
     @Test
-    public void testNewImporterTaskRunMethod() {
+    public void testNewExporterTaskRunMethod() {
+
+        // Test with fake gmlId
+        String exampleGmlIds = "BLDG_000300000001c242";
+
         // Setup the CityExportAgent
-        String gmlIds = testgmlIds;
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
-        String outputPath= outputFile.getAbsolutePath();
-        ExporterTask task = new ExporterTask(gmlIds, outputPath);
+        String outputPath = outputFile.getAbsolutePath();
+
+        ExporterTask task = new ExporterTask(exampleGmlIds, outputPath);
+        String actualFilePath = outputPath.replace(".kml", "_extruded.kml");
+        File actualFile = new File(actualFilePath);
 
         try {
             task.run();
         } catch (JPSRuntimeException e) {
             assertEquals(e.getClass(), JPSRuntimeException.class);
+        } finally {
+            assertTrue(actualFile.exists());  // if the task is successfully executed, test_extruded.kml should be generated
         }
 
+        // After the runnable, the
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder;
+        Document cfg = null;
+
+        try {
+            builder = factory.newDocumentBuilder();
+            cfg = builder.parse(actualFile);
+            assertEquals(cfg.getElementsByTagName("coordinates").getLength(), 1);
+        } catch (ParserConfigurationException | IOException | SAXException e) {
+            fail();
+        } finally {
+            // delete the temporally generated file
+            if (Files.exists(Paths.get(actualFilePath))) {
+                actualFile.delete();
+            }
+        }
 
     }
 
