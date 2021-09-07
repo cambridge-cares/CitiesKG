@@ -1,13 +1,15 @@
 package uk.ac.cam.cares.twa.cities.agents.geo.test;
 
 import junit.framework.TestCase;
-import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
 import uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask;
 import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
+import uk.ac.cam.cares.twa.cities.tasks.NquadsExporterTask;
+import uk.ac.cam.cares.twa.cities.tasks.NquadsUploaderTask;
+import uk.ac.cam.cares.twa.cities.tasks.test.NquadsExporterTaskTest;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
@@ -16,6 +18,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.HashSet;
@@ -42,7 +45,7 @@ public class CityImportAgentTest extends TestCase {
     public void testNewCityImportAgentFields() {
         CityImportAgent agent = new CityImportAgent();
 
-        assertEquals(19, agent.getClass().getDeclaredFields().length);
+        assertEquals(20, agent.getClass().getDeclaredFields().length);
 
         Field URI_LISTEN;
         Field  URI_ACTION;
@@ -50,6 +53,7 @@ public class CityImportAgentTest extends TestCase {
         Field KEY_REQ_URL;
         Field KEY_DIRECTORY;
         Field KEY_SPLIT;
+        Field SPLIT_SCRIPT;
         Field KEY_TARGET_URL;
         Field FS;
         Field CHUNK_SIZE;
@@ -77,6 +81,9 @@ public class CityImportAgentTest extends TestCase {
             assertEquals(KEY_DIRECTORY.get(agent),"directory");
             KEY_SPLIT = agent.getClass().getDeclaredField("KEY_SPLIT");
             assertEquals(KEY_SPLIT.get(agent),"split");
+            SPLIT_SCRIPT = agent.getClass().getDeclaredField("SPLIT_SCRIPT");
+            SPLIT_SCRIPT.setAccessible(true);
+            assertEquals(SPLIT_SCRIPT.get(agent),"citygml_splitter.py");
             KEY_TARGET_URL = agent.getClass().getDeclaredField("KEY_TARGET_URL");
             assertEquals(KEY_TARGET_URL.get(agent),"targetURL");
             CHUNK_SIZE = agent.getClass().getDeclaredField("CHUNK_SIZE");
@@ -407,13 +414,7 @@ public class CityImportAgentTest extends TestCase {
                 fail();
             }
         } finally {
-            if (impD.isDirectory() && !impD.delete()) {
-                try {
-                    FileUtils.deleteDirectory(impD);
-                } catch (IOException e) {
-                    fail();
-                }
-            }
+            NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
         }
 
         try {
@@ -428,13 +429,7 @@ public class CityImportAgentTest extends TestCase {
                 fail();
             }
         } finally {
-            if (impD.isDirectory() && !impD.delete()) {
-                try {
-                    FileUtils.deleteDirectory(impD);
-                } catch (IOException e) {
-                    fail();
-                }
-            }
+            NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
         }
 
         try {
@@ -450,13 +445,7 @@ public class CityImportAgentTest extends TestCase {
                 fail();
             }
         } finally {
-            if (impD.isDirectory() && !impD.delete()) {
-                try {
-                    FileUtils.deleteDirectory(impD);
-                } catch (IOException e) {
-                    fail();
-                }
-            }
+            NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
         }
 
         try {
@@ -468,13 +457,7 @@ public class CityImportAgentTest extends TestCase {
         } catch (InvocationTargetException | IllegalAccessException | IOException e) {
             fail();
         } finally {
-            if (impD.isDirectory() && !impD.delete()) {
-                try {
-                    FileUtils.deleteDirectory(impD);
-                } catch (IOException e) {
-                    fail();
-                }
-            }
+            NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
         }
 
         //other import functionality already tested in the corresponding tasks' tests
@@ -482,6 +465,7 @@ public class CityImportAgentTest extends TestCase {
 
     public void testSplitFile() {
         //@Todo: implementation
+
     }
 
     public void testImportChunk() {
@@ -516,13 +500,7 @@ public class CityImportAgentTest extends TestCase {
                 fail();
             }
         } finally {
-            if (impD.isDirectory() && !impD.delete()) {
-                try {
-                    FileUtils.deleteDirectory(impD);
-                } catch (IOException e) {
-                    fail();
-                }
-            }
+            NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
         }
 
         try {
@@ -534,13 +512,7 @@ public class CityImportAgentTest extends TestCase {
         } catch (IllegalAccessException | InvocationTargetException| IOException e) {
                 fail();
         } finally {
-            if (impD.isDirectory() && !impD.delete()) {
-                try {
-                    FileUtils.deleteDirectory(impD);
-                } catch (IOException e) {
-                    fail();
-                }
-            }
+            NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
         }
 
         //other import functionality already tested in the corresponding tasks' tests
@@ -552,7 +524,7 @@ public class CityImportAgentTest extends TestCase {
         File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
         File impF = new File(impD.getAbsolutePath() + "/test.gml");
 
-        Method startBlazegraphInstance = null;
+        Method startBlazegraphInstance;
 
         try {
             if (impD.mkdirs()) {
@@ -567,15 +539,9 @@ public class CityImportAgentTest extends TestCase {
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IOException | NoSuchFieldException e) {
             fail();
         } finally {
-            if (impD.isDirectory() && !impD.delete()) {
-                try {
-                    FileUtils.deleteDirectory(impD);
-                } catch (IOException e) {
-                    fail();
-                }
-            }
+            NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
         }
-
+        //other functionality already tested in the corresponding task
     }
 
     public void testImportToLocalBlazegraphInstance() {
@@ -584,7 +550,7 @@ public class CityImportAgentTest extends TestCase {
         File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
         File impF = new File(impD.getAbsolutePath() + "/test.gml");
 
-        Method importToLocalBlazegraphInstance = null;
+        Method importToLocalBlazegraphInstance;
 
         try {
             if (impD.mkdirs()) {
@@ -599,22 +565,55 @@ public class CityImportAgentTest extends TestCase {
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IOException | NoSuchFieldException e) {
             fail();
         } finally {
-            if (impD.isDirectory() && !impD.delete()) {
-                try {
-                    FileUtils.deleteDirectory(impD);
-                } catch (IOException e) {
-                    fail();
-                }
-            }
+            NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
         }
+        //other functionality already tested in the corresponding task
     }
 
     public void testExportToNquads() {
-        //@Todo: implementation
+        CityImportAgent agent  = new CityImportAgent();
+        File testFile = new File(Objects.requireNonNull(this.getClass().getResource("/test.gml")).getFile());
+        File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
+        File impF = new File(impD.getAbsolutePath() + "/test.gml");
+
+        Method exportToNquads;
+
+        try {
+            if (impD.mkdirs()) {
+                Files.copy(testFile.toPath(), impF.toPath());
+            }
+            exportToNquads = agent.getClass().getDeclaredMethod("exportToNquads", BlockingQueue.class, File.class);
+            exportToNquads.setAccessible(true);
+            NquadsExporterTask task = (NquadsExporterTask) exportToNquads.invoke(agent, new LinkedBlockingDeque<>(), impF);
+            Field stopF = task.getClass().getDeclaredField("stop");
+            stopF.setAccessible(true);
+            assertFalse((Boolean) stopF.get(task));
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IOException | NoSuchFieldException e) {
+            fail();
+        } finally {
+            NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
+        }
+        //other functionality already tested in the corresponding task
     }
 
     public void testUploadNQuadsFileToBlazegraphInstance() {
-        //@Todo: implementation
+        CityImportAgent agent  = new CityImportAgent();
+        URI impUri;
+        Method uploadNQuadsFileToBlazegraphInstance;
+
+        try {
+            impUri = new URI("http://localhost/test");
+            uploadNQuadsFileToBlazegraphInstance = agent.getClass().getDeclaredMethod("uploadNQuadsFileToBlazegraphInstance", BlockingQueue.class, URI.class);
+            uploadNQuadsFileToBlazegraphInstance.setAccessible(true);
+            NquadsUploaderTask task = (NquadsUploaderTask) uploadNQuadsFileToBlazegraphInstance.invoke(agent, new LinkedBlockingDeque<>(), impUri);
+            Field stopF = task.getClass().getDeclaredField("stop");
+            stopF.setAccessible(true);
+            assertFalse((Boolean) stopF.get(task));
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException | URISyntaxException e) {
+            fail();
+        }
+
+        //other functionality already tested in the corresponding task
     }
 
     public void testWriteErrorLog() {

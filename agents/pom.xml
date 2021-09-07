@@ -13,6 +13,14 @@
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
         <testSourceDirectory>src/test/java</testSourceDirectory>
+        <testResources>
+            <testResource>
+                <directory>${project.basedir}/src/test/resources</directory>
+            </testResource>
+            <testResource>
+                <directory>${project.basedir}/../utils</directory>
+            </testResource>
+        </testResources>
 
         <pluginManagement>
             <plugins>
@@ -56,7 +64,7 @@
                             <configuration>
                                 <overwrite>true</overwrite>
                                 <outputDirectory>
-                                    ${project.build.directory}/${project.artifactId}-${project.version}/WEB-INF/
+                                    ${project.build.directory}/${project.artifactId}-${project.version}/WEB-INF/classes/
                                 </outputDirectory>
                                 <resources>
                                     <resource>

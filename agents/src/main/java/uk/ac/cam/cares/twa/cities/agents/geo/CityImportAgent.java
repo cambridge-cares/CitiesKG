@@ -60,6 +60,7 @@ public class CityImportAgent extends JPSAgent {
     public static final String KEY_SPLIT = "split";
     public static final String KEY_TARGET_URL = "targetURL";
     private final String FS = System.getProperty("file.separator");
+    private final String SPLIT_SCRIPT = "citygml_splitter.py";
     public final int CHUNK_SIZE = 100;
     public final int NUM_SERVER_THREADS = 2;
     //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
@@ -240,11 +241,10 @@ public class CityImportAgent extends JPSAgent {
         try {
             ArrayList<String> args = new ArrayList<>();
             args.add("python");
-            //@TODO: change path
-            args.add("/Users/arek/git/CARES/CitiesKG-git/utils/citygml_splitter.py");
+            args.add(getClass().getClassLoader().getResource(SPLIT_SCRIPT).getPath());
             args.add(fileDst);
             args.add(String.valueOf(CHUNK_SIZE));
-            Files.move(Paths.get(fileSrc), Paths.get(fileDst));
+            Files.move(Paths.get(fileSrc), Paths.get(fileDst)); //throws IOException
             CommandHelper.executeCommands(splitDir.getPath(), args);
             Iterator<File> files = Arrays.stream(splitDir.listFiles()).iterator();
 
