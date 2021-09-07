@@ -6,6 +6,8 @@ import org.json.JSONObject;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
+import uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask;
+import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
@@ -14,11 +16,14 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
 
 public class CityImportAgentTest extends TestCase {
 
@@ -189,7 +194,6 @@ public class CityImportAgentTest extends TestCase {
         }
 
         JSONObject requestParams = new JSONObject();
-        Set<String> keys = new HashSet<>();
         String localhostURL = "http://localhost";
 
         //General keys and values check
@@ -201,8 +205,6 @@ public class CityImportAgentTest extends TestCase {
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
-        keys.add(CityImportAgent.KEY_REQ_METHOD);
-
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
@@ -210,16 +212,12 @@ public class CityImportAgentTest extends TestCase {
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
 
-        keys.add(CityImportAgent.KEY_REQ_URL);
-
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
             assert e instanceof InvocationTargetException;
             assertEquals(((InvocationTargetException) e).getTargetException().getClass(), BadRequestException.class);
         }
-
-        keys.add(CityImportAgent.KEY_TARGET_URL);
 
         try {
             validateInput.invoke(agent, requestParams);
@@ -479,6 +477,7 @@ public class CityImportAgentTest extends TestCase {
             }
         }
 
+        //other import functionality already tested in the corresponding tasks' tests
     }
 
     public void testSplitFile() {
@@ -486,15 +485,128 @@ public class CityImportAgentTest extends TestCase {
     }
 
     public void testImportChunk() {
-        //@Todo: implementation
+        CityImportAgent agent  = new CityImportAgent();
+        File testFile = new File(Objects.requireNonNull(this.getClass().getResource("/test.gml")).getFile());
+        File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
+        File impF = new File(impD.getAbsolutePath() + "/test.gml");
+
+        Field targetUrl = null;
+        Method importChunk = null;
+
+        try {
+            targetUrl = agent.getClass().getDeclaredField("targetUrl");
+            targetUrl.setAccessible(true);
+            assertNull(targetUrl.get(agent));
+            importChunk = agent.getClass().getDeclaredMethod("importChunk", File.class);
+            importChunk.setAccessible(true);
+        } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException e) {
+            fail();
+        }
+
+        try {
+            if (impD.mkdirs()) {
+                Files.copy(testFile.toPath(), impF.toPath());
+            }
+            targetUrl.set(agent, "\\test");
+            importChunk.invoke(agent, impF);
+        } catch (IllegalAccessException | InvocationTargetException| IOException e) {
+            if (e.getClass() == InvocationTargetException.class) {
+                assertEquals(((InvocationTargetException) e).getTargetException().getClass(), URISyntaxException.class);
+            } else {
+                fail();
+            }
+        } finally {
+            if (impD.isDirectory() && !impD.delete()) {
+                try {
+                    FileUtils.deleteDirectory(impD);
+                } catch (IOException e) {
+                    fail();
+                }
+            }
+        }
+
+        try {
+            if (impD.mkdirs()) {
+                Files.copy(testFile.toPath(), impF.toPath());
+            }
+            targetUrl.set(agent, "http://localhost/test");
+            assertNull(importChunk.invoke(agent, impF));
+        } catch (IllegalAccessException | InvocationTargetException| IOException e) {
+                fail();
+        } finally {
+            if (impD.isDirectory() && !impD.delete()) {
+                try {
+                    FileUtils.deleteDirectory(impD);
+                } catch (IOException e) {
+                    fail();
+                }
+            }
+        }
+
+        //other import functionality already tested in the corresponding tasks' tests
     }
 
     public void testStartBlazegraphInstance() {
-        //@Todo: implementation
+        CityImportAgent agent  = new CityImportAgent();
+        File testFile = new File(Objects.requireNonNull(this.getClass().getResource("/test.gml")).getFile());
+        File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
+        File impF = new File(impD.getAbsolutePath() + "/test.gml");
+
+        Method startBlazegraphInstance = null;
+
+        try {
+            if (impD.mkdirs()) {
+                Files.copy(testFile.toPath(), impF.toPath());
+            }
+            startBlazegraphInstance = agent.getClass().getDeclaredMethod("startBlazegraphInstance", BlockingQueue.class, String.class);
+            startBlazegraphInstance.setAccessible(true);
+            BlazegraphServerTask task = (BlazegraphServerTask) startBlazegraphInstance.invoke(agent, new LinkedBlockingDeque<>(), impF.getAbsolutePath());
+            Field stopF = task.getClass().getDeclaredField("stop");
+            stopF.setAccessible(true);
+            assertFalse((Boolean) stopF.get(task));
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IOException | NoSuchFieldException e) {
+            fail();
+        } finally {
+            if (impD.isDirectory() && !impD.delete()) {
+                try {
+                    FileUtils.deleteDirectory(impD);
+                } catch (IOException e) {
+                    fail();
+                }
+            }
+        }
+
     }
 
     public void testImportToLocalBlazegraphInstance() {
-        //@Todo: implementation
+        CityImportAgent agent  = new CityImportAgent();
+        File testFile = new File(Objects.requireNonNull(this.getClass().getResource("/test.gml")).getFile());
+        File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
+        File impF = new File(impD.getAbsolutePath() + "/test.gml");
+
+        Method importToLocalBlazegraphInstance = null;
+
+        try {
+            if (impD.mkdirs()) {
+                Files.copy(testFile.toPath(), impF.toPath());
+            }
+            importToLocalBlazegraphInstance = agent.getClass().getDeclaredMethod("importToLocalBlazegraphInstance", BlockingQueue.class, File.class);
+            importToLocalBlazegraphInstance.setAccessible(true);
+            ImporterTask task = (ImporterTask) importToLocalBlazegraphInstance.invoke(agent, new LinkedBlockingDeque<>(), impF);
+            Field stopF = task.getClass().getDeclaredField("stop");
+            stopF.setAccessible(true);
+            assertFalse((Boolean) stopF.get(task));
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IOException | NoSuchFieldException e) {
+            fail();
+        } finally {
+            if (impD.isDirectory() && !impD.delete()) {
+                try {
+                    FileUtils.deleteDirectory(impD);
+                } catch (IOException e) {
+                    fail();
+                }
+            }
+        }
     }
 
     public void testExportToNquads() {

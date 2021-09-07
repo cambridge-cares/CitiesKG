@@ -281,7 +281,6 @@ public class CityImportAgent extends JPSAgent {
     /**
      * Starts local Blazegraph SPARQL server instance.
      *
-     * @return - URL of the SPARQL update endpoint
      */
     private BlazegraphServerTask startBlazegraphInstance(BlockingQueue<Server>  queue, String filepath) {
         BlazegraphServerTask task = new BlazegraphServerTask(queue,
@@ -305,6 +304,13 @@ public class CityImportAgent extends JPSAgent {
         return task;
     }
 
+    /**
+     * Imports Blazegraph's journal file N-Quads.
+     *
+     * @param queue queue for files
+     * @param file - file to export
+     * @return NquadsExporterTask - running task
+     */
     private NquadsExporterTask exportToNquads(BlockingQueue<File> queue, File file) {
         NquadsExporterTask task = new NquadsExporterTask(queue, file, targetUrl);
         nqExportExecutor.execute(task);
