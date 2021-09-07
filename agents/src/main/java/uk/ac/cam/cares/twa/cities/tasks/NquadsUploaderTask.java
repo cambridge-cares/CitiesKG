@@ -44,10 +44,10 @@ public class NquadsUploaderTask implements Runnable {
             while (!nqQueue.isEmpty()) {
                 try {
                     File nqFile = nqQueue.take();
-
                     HttpResponse<?> response = Unirest.post(endpointUri.toString())
                             .header(HTTP.CONTENT_TYPE, CTYPE_NQ)
                             .body(FileUtils.readFileToString(nqFile, String.valueOf(StandardCharsets.UTF_8)))
+                            .socketTimeout(300000)
                             .asEmpty();
                     int respStatus = response.getStatus();
                     if (respStatus != HttpURLConnection.HTTP_OK) {
