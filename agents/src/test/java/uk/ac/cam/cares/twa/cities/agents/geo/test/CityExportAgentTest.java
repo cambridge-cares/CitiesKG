@@ -10,10 +10,8 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
-import org.junit.jupiter.api.Assertions.*;
 
 class CityExportAgentTest extends TestCase {
 
