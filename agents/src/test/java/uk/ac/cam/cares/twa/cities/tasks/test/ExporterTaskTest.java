@@ -1,29 +1,19 @@
 package uk.ac.cam.cares.twa.cities.tasks.test;
 
 import junit.framework.TestCase;
-import org.citydb.event.EventDispatcher;
-import org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.tasks.ExporterTask;
-
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -33,8 +23,6 @@ class ExporterTaskTest extends TestCase {
     public String testgmlIds = "abc";
     public String outFileName = "/test.kml";
     public String outTmpDir = "java.io.tmpdir"; // Note: this path is dependent on the PC, e.g., C:\Users\Shiying\AppData\Local\Temp\test_extruded.kml
-    //public final ExecutorService exporterExecutor = Executors.newFixedThreadPool(1);
-    //private final ThreadPoolExecutor exporterExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
 
 
     @Test
@@ -204,7 +192,7 @@ class ExporterTaskTest extends TestCase {
         try {
             builder = factory.newDocumentBuilder();
             cfg = builder.parse(actualFile);
-            assertEquals(cfg.getElementsByTagName("coordinates").getLength(), 1);
+            assertEquals(cfg.getElementsByTagName("coordinates").getLength(), 1);   // if the request gmlId exists in the database, the exported kml should contain "coordinates" information. Otherwise not
         } catch (ParserConfigurationException | IOException | SAXException e) {
             fail();
         } finally {

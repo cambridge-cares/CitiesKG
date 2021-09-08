@@ -6,7 +6,6 @@ import uk.ac.cam.cares.twa.cities.tasks.ExporterTask;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
-import java.io.File;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -31,6 +30,7 @@ public class CityExportAgent extends JPSAgent {
         public final int NUM_IMPORTER_THREADS = 1;
         private final ThreadPoolExecutor exporterExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_IMPORTER_THREADS);
 
+
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
         JSONObject result = new JSONObject();
@@ -42,7 +42,7 @@ public class CityExportAgent extends JPSAgent {
             String outputPath = rb.getString("outputDir") + outFileName;
             result.put("outputPath", exportKml(gmlids, outputPath));
         }
-        // It will return the location of the exported file
+        // It will return the file path of the exported file
         System.out.println(result);
         return result;
     }
@@ -73,9 +73,10 @@ public class CityExportAgent extends JPSAgent {
     }
 
     private String exportKml (String gmlIds, String outputpath){
+        String actualPath = outputpath.replace(".kml", "project.xml");
         ExporterTask task = new ExporterTask(gmlIds, outputpath);
         exporterExecutor.execute(task);
-        return outputpath;
+        return actualPath;
     }
 
 }
