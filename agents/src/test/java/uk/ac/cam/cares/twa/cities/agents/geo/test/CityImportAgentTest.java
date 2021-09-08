@@ -126,7 +126,7 @@ public class CityImportAgentTest extends TestCase {
 
   public void testNewCityImportAgentMethods() {
     CityImportAgent agent = new CityImportAgent();
-    assertEquals(14, agent.getClass().getDeclaredMethods().length);
+    assertEquals(15, agent.getClass().getDeclaredMethods().length);
   }
 
   public void testValidateListenInput() {
@@ -688,10 +688,6 @@ public class CityImportAgentTest extends TestCase {
     }
 
     //other functionality already tested in the corresponding task
-  }
-
-  public void testWriteErrorLog() {
-    //@Todo: implementation
   }
 
   public void testArchiveImportFiles() {

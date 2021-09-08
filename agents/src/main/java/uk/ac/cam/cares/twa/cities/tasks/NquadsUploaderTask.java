@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
@@ -13,6 +14,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpException;
 import org.apache.http.protocol.HTTP;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
 
 /**
  * Runnable task uploading a data stored in an N-Quads format {@link
@@ -43,8 +45,9 @@ public class NquadsUploaderTask implements Runnable {
   public void run() {
     while (!stop) {
       while (!nqQueue.isEmpty()) {
+        File nqFile = null;
         try {
-          File nqFile = nqQueue.take();
+          nqFile = nqQueue.take();
           String nQuads = FileUtils.readFileToString(nqFile,
               String.valueOf(StandardCharsets.UTF_8));
           if (!nQuads.isEmpty()) {
@@ -58,12 +61,16 @@ public class NquadsUploaderTask implements Runnable {
               throw new HttpException(endpointUri + " " + respStatus);
             }
           }
+         
         } catch (InterruptedException | IOException | HttpException | UnirestException e) {
           throw new JPSRuntimeException(e);
         } finally {
+          CityImportAgent.archiveImportFiles(Objects.requireNonNull(nqFile));
           stop();
         }
       }
     }
   }
+
+
 }

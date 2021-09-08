@@ -134,5 +134,11 @@
             <artifactId>unirest-java</artifactId>
             <version>3.11.12</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/dev.jeka/jeka-core -->
+        <dependency>
+            <groupId>dev.jeka</groupId>
+            <artifactId>jeka-core</artifactId>
+            <version>0.9.11.RELEASE</version>
+        </dependency>
     </dependencies>
 </project>

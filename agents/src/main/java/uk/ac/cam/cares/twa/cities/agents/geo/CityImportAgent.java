@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
+import dev.jeka.core.api.file.JkPathTree;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -7,6 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,9 +19,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Server;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
@@ -64,15 +68,15 @@ public class CityImportAgent extends JPSAgent {
   public static final String KEY_TARGET_URL = "targetURL";
   public static final String SPLIT_SCRIPT = "citygml_splitter.py";
   public final int CHUNK_SIZE = 50;
-  public final int NUM_SERVER_THREADS = 2;
+  public static final int NUM_SERVER_THREADS = 2;
   //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
-  public final int NUM_IMPORTER_THREADS = 1;
+  public static final int NUM_IMPORTER_THREADS = 1;
   private final String FS = System.getProperty("file.separator");
-  private final ExecutorService serverExecutor = Executors.newFixedThreadPool(NUM_SERVER_THREADS);
-  private final ExecutorService importerExecutor = Executors.newFixedThreadPool(
+  private static final ExecutorService serverExecutor = Executors.newFixedThreadPool(NUM_SERVER_THREADS);
+  private static final ExecutorService importerExecutor = Executors.newFixedThreadPool(
       NUM_IMPORTER_THREADS);
-  private final ExecutorService nqExportExecutor = Executors.newFixedThreadPool(NUM_SERVER_THREADS);
-  private final ExecutorService nqUploadExecutor = Executors.newFixedThreadPool(NUM_SERVER_THREADS);
+  private static final ExecutorService nqExportExecutor = Executors.newFixedThreadPool(NUM_SERVER_THREADS);
+  private static final ExecutorService nqUploadExecutor = Executors.newFixedThreadPool(NUM_SERVER_THREADS);
   File splitDir;
   private String requestUrl;
   private String targetUrl;
@@ -335,22 +339,34 @@ public class CityImportAgent extends JPSAgent {
   }
 
   /**
-   * Writes error log to a file.
-   *
-   * @param errorLog - error contents.
-   */
-  private void writeErrorLog(String errorLog) {
-    //@Todo: implementation
-  }
-
-  /**
    * Creates an audit trail archive.
    *
    * @return - path to the audit trail archive.
    */
-  private String archiveImportFiles() {
-    //@Todo: implementation
+  public static String archiveImportFiles(File nqFile) {
     String archiveFilename = "";
+
+    File nqDir = nqFile.getParentFile();
+    File[] gmlFiles = nqDir.listFiles((dir, name) -> name.toLowerCase()
+        .endsWith(ImporterTask.EXT_FILE_GML));
+    File[] nqFiles = nqDir.listFiles((dir, name) -> name.toLowerCase()
+        .endsWith(ImporterTask.EXT_FILE_NQUADS));
+
+    if (nqFiles.length == (gmlFiles.length - 1)) {
+
+      if (((ThreadPoolExecutor)serverExecutor).getActiveCount() == 0) {
+        Path dirToZip = nqDir.toPath();
+        Path zipFile = Paths.get(nqDir.getParent() + nqDir.getName() +".zip");
+        JkPathTree.of(dirToZip).zipTo(zipFile);
+        archiveFilename = zipFile.toString();
+        try {
+          FileUtils.deleteDirectory(nqDir);
+        } catch (IOException e) {
+          throw new JPSRuntimeException(e);
+        }
+      }
+    }
+
     return archiveFilename;
   }
 
