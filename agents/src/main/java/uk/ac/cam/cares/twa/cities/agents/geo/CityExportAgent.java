@@ -73,7 +73,7 @@ public class CityExportAgent extends JPSAgent {
     }
 
     private String exportKml (String gmlIds, String outputpath){
-        String actualPath = outputpath.replace(".kml", "project.xml");
+        String actualPath = outputpath.replace(".kml", "_extruded.kml");
         ExporterTask task = new ExporterTask(gmlIds, outputpath);
         exporterExecutor.execute(task);
         return actualPath;
