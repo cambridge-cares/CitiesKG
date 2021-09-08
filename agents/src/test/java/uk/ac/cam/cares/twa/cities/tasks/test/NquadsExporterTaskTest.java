@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Server;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
 import uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask;
 import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
 import uk.ac.cam.cares.twa.cities.tasks.NquadsExporterTask;
@@ -292,6 +293,7 @@ public class NquadsExporterTaskTest  extends TestCase {
         public static final File propFile = new File(impFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_GML, BlazegraphServerTask.PROPERTY_FILE));
         public static final File projFile = new File(impFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_GML, ImporterTask.PROJECT_CONFIG));
         public static final File quadsDir = new File(System.getProperty("java.io.tmpdir") + NquadsExporterTask.NQ_OUTDIR);
+        public static final File splitDir = new File(System.getProperty("java.io.tmpdir") + CityImportAgent.KEY_SPLIT);
 
         public static void setUp() {
             assertTrue(testFile.exists());
@@ -360,6 +362,13 @@ public class NquadsExporterTaskTest  extends TestCase {
             if (Objects.requireNonNull(quadsDir).isDirectory()) {
                 try {
                     FileUtils.deleteDirectory(quadsDir);
+                } catch (IOException e) {
+                    fail();
+                }
+            }
+            if (Objects.requireNonNull(splitDir).isDirectory()) {
+                try {
+                    FileUtils.deleteDirectory(splitDir);
                 } catch (IOException e) {
                     fail();
                 }

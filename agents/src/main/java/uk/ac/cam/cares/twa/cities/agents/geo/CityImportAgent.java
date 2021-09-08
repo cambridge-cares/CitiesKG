@@ -59,9 +59,9 @@ public class CityImportAgent extends JPSAgent {
     public static final String KEY_DIRECTORY = "directory";
     public static final String KEY_SPLIT = "split";
     public static final String KEY_TARGET_URL = "targetURL";
+    public static final String SPLIT_SCRIPT = "citygml_splitter.py";
     private final String FS = System.getProperty("file.separator");
-    private final String SPLIT_SCRIPT = "citygml_splitter.py";
-    public final int CHUNK_SIZE = 100;
+    public final int CHUNK_SIZE = 50;
     public final int NUM_SERVER_THREADS = 2;
     //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
     public final int NUM_IMPORTER_THREADS = 1;
@@ -241,7 +241,7 @@ public class CityImportAgent extends JPSAgent {
         try {
             ArrayList<String> args = new ArrayList<>();
             args.add("python");
-            args.add(getClass().getClassLoader().getResource(SPLIT_SCRIPT).getPath());
+            args.add(new File(getClass().getClassLoader().getResource(SPLIT_SCRIPT).toURI()).getAbsolutePath());
             args.add(fileDst);
             args.add(String.valueOf(CHUNK_SIZE));
             Files.move(Paths.get(fileSrc), Paths.get(fileDst)); //throws IOException
@@ -254,7 +254,7 @@ public class CityImportAgent extends JPSAgent {
                     chunks.add(splitFile);
                  }
             }
-        } catch (IOException e) {
+        } catch (IOException | URISyntaxException e) {
             throw new JPSRuntimeException(e);
         }
 

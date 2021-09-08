@@ -21,6 +21,7 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -87,7 +88,7 @@ public class CityImportAgentTest extends TestCase {
             KEY_TARGET_URL = agent.getClass().getDeclaredField("KEY_TARGET_URL");
             assertEquals(KEY_TARGET_URL.get(agent),"targetURL");
             CHUNK_SIZE = agent.getClass().getDeclaredField("CHUNK_SIZE");
-            assertEquals(CHUNK_SIZE.get(agent),100);
+            assertEquals(CHUNK_SIZE.get(agent),50);
             NUM_SERVER_THREADS = agent.getClass().getDeclaredField("NUM_SERVER_THREADS");
             assertEquals(NUM_SERVER_THREADS.get(agent),2);
             NUM_IMPORTER_THREADS = agent.getClass().getDeclaredField("NUM_IMPORTER_THREADS");
@@ -372,13 +373,14 @@ public class CityImportAgentTest extends TestCase {
     }
 
     public void testImportFiles() {
+        String fs = System.getProperty("file.separator");
         CityImportAgent agent  = new CityImportAgent();
         Field targetUrl = null;
         Field importDir = null;
         Method importFiles = null;
-        File testFile = new File(Objects.requireNonNull(this.getClass().getResource("/test.gml")).getFile());
+        File testFile = new File(Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
         File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
-        File impF = new File(impD.getAbsolutePath() + "/test.gml");
+        File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
 
         try {
             targetUrl = agent.getClass().getDeclaredField("targetUrl");
@@ -464,15 +466,53 @@ public class CityImportAgentTest extends TestCase {
     }
 
     public void testSplitFile() {
+        String fs = System.getProperty("file.separator");
+        CityImportAgent agent  = new CityImportAgent();
+        File testFile = new File(Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
+        File impF = new File(System.getProperty("java.io.tmpdir") + fs + "test.gml");
+        Method splitFile;
+
+        try {
+            splitFile = agent.getClass().getDeclaredMethod("splitFile", File.class);
+            splitFile.setAccessible(true);
+
+            try {
+                splitFile.invoke(agent, impF);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                if (e.getClass() == InvocationTargetException.class) {
+                    assertEquals(((InvocationTargetException) e).getTargetException().getClass(), JPSRuntimeException.class);
+                } else {
+                    fail();
+                }
+            }
+
+            Files.copy(testFile.toPath(), impF.toPath());
+            try {
+                File splF = (File) ((ArrayList<?>)splitFile.invoke(agent, impF)).iterator().next();
+                File splD = new File(splF.getParent());
+                assertTrue(splF.exists());
+                assertEquals(splF.getName(), "file_part_1.gml");
+                assertTrue(splF.delete());
+                assertTrue(new File(splD.getAbsolutePath() + fs + "test.gml").delete());
+                assertTrue(splD.delete());
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                fail();
+            }
+
+        } catch (NoSuchMethodException | IOException e) {
+            fail();
+        }
+
         //@Todo: implementation
 
     }
 
     public void testImportChunk() {
+        String fs = System.getProperty("file.separator");
         CityImportAgent agent  = new CityImportAgent();
-        File testFile = new File(Objects.requireNonNull(this.getClass().getResource("/test.gml")).getFile());
+        File testFile = new File(Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
         File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
-        File impF = new File(impD.getAbsolutePath() + "/test.gml");
+        File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
 
         Field targetUrl = null;
         Method importChunk = null;
@@ -519,10 +559,11 @@ public class CityImportAgentTest extends TestCase {
     }
 
     public void testStartBlazegraphInstance() {
+        String fs = System.getProperty("file.separator");
         CityImportAgent agent  = new CityImportAgent();
-        File testFile = new File(Objects.requireNonNull(this.getClass().getResource("/test.gml")).getFile());
+        File testFile = new File(Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
         File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
-        File impF = new File(impD.getAbsolutePath() + "/test.gml");
+        File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
 
         Method startBlazegraphInstance;
 
@@ -545,10 +586,11 @@ public class CityImportAgentTest extends TestCase {
     }
 
     public void testImportToLocalBlazegraphInstance() {
+        String fs = System.getProperty("file.separator");
         CityImportAgent agent  = new CityImportAgent();
-        File testFile = new File(Objects.requireNonNull(this.getClass().getResource("/test.gml")).getFile());
+        File testFile = new File(Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
         File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
-        File impF = new File(impD.getAbsolutePath() + "/test.gml");
+        File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
 
         Method importToLocalBlazegraphInstance;
 
@@ -571,10 +613,11 @@ public class CityImportAgentTest extends TestCase {
     }
 
     public void testExportToNquads() {
+        String fs = System.getProperty("file.separator");
         CityImportAgent agent  = new CityImportAgent();
-        File testFile = new File(Objects.requireNonNull(this.getClass().getResource("/test.gml")).getFile());
+        File testFile = new File(Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
         File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
-        File impF = new File(impD.getAbsolutePath() + "/test.gml");
+        File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
 
         Method exportToNquads;
 
