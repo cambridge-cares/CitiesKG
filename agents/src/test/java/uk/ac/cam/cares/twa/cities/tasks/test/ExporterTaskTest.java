@@ -1,7 +1,6 @@
 package uk.ac.cam.cares.twa.cities.tasks.test;
 
 import junit.framework.TestCase;
-import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -11,21 +10,19 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Objects;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-class ExporterTaskTest extends TestCase {
+public class ExporterTaskTest extends TestCase {
 
     public String testgmlIds = "abc";
     public String outFileName = "/test.kml";
     public String outTmpDir = "java.io.tmpdir"; // Note: this path is dependent on the PC, e.g., C:\Users\Shiying\AppData\Local\Temp\test_extruded.kml
 
 
-    @Test
+
     public void testNewExporterTask() {
         ExporterTask task;
 
@@ -41,7 +38,6 @@ class ExporterTaskTest extends TestCase {
         }
     }
 
-    @Test
     public void testNewExporterTaskFields() {
 
         // Setup of input parameters for the method
@@ -63,21 +59,21 @@ class ExporterTaskTest extends TestCase {
 
         try {
             PROJECT_CONFIG = task.getClass().getDeclaredField("PROJECT_CONFIG");
-            assertEquals(PROJECT_CONFIG.get(task), "project.xml");
+            assertEquals("project.xml", PROJECT_CONFIG.get(task));
             PLACEHOLDER_GMLID = task.getClass().getDeclaredField("PLACEHOLDER_GMLID");
-            assertEquals(PLACEHOLDER_GMLID.get(task), "{{gmlid}}");
+            assertEquals("{{gmlid}}", PLACEHOLDER_GMLID.get(task));
             ARG_SHELL = task.getClass().getDeclaredField("ARG_SHELL");
-            assertEquals(ARG_SHELL.get(task), "-shell");
+            assertEquals("-shell", ARG_SHELL.get(task));
             ARG_KMLEXPORT = task.getClass().getDeclaredField("ARG_KMLEXPORT");
-            assertEquals(ARG_KMLEXPORT.get(task), "-kmlExport=");
+            assertEquals("-kmlExport=", ARG_KMLEXPORT.get(task));
             ARG_CFG = task.getClass().getDeclaredField("ARG_CFG");
-            assertEquals(ARG_CFG.get(task), "-config=");
+            assertEquals("-config=", ARG_CFG.get(task));
             inputs = task.getClass().getDeclaredField("inputs");
             inputs.setAccessible(true);
-            assertEquals(inputs.get(task), gmlIds);
+            assertEquals(gmlIds, inputs.get(task));
             outputpath = task.getClass().getDeclaredField("outputpath");
             outputpath.setAccessible(true);
-            assertEquals(outputpath.get(task), outputPath);
+            assertEquals(outputPath, outputpath.get(task));
             stop = task.getClass().getDeclaredField("stop");
             stop.setAccessible(true);
             assertFalse((boolean) stop.get(task));
@@ -87,7 +83,7 @@ class ExporterTaskTest extends TestCase {
 
     }
 
-    @Test
+
     public void testNewExporterTaskMethods() {
 
         String gmlIds = testgmlIds;
@@ -98,7 +94,7 @@ class ExporterTaskTest extends TestCase {
         assertEquals(3, task.getClass().getDeclaredMethods().length);
     }
 
-    @Test
+
     public void testNewExporterTaskStopMethod() {
 
         String gmlIds = testgmlIds;
@@ -121,7 +117,7 @@ class ExporterTaskTest extends TestCase {
 
     }
 
-    @Test
+
     public void testNewExporterTaskSetupConfigMethod() {
 
         // Setup the CityExportAgent
@@ -141,15 +137,16 @@ class ExporterTaskTest extends TestCase {
             try {
                 modifiedConfigFile = (File) setupConfig.invoke(task);
             } catch (InvocationTargetException e) {
-                assertEquals(e.getTargetException().getClass().getSuperclass().getSuperclass().getName(), IOException.class.getName());
+                assertEquals(IOException.class.getName(), e.getTargetException().getClass().getSuperclass().getSuperclass().getName());
             }
 
-            assertEquals(modifiedConfigFile.getName(), configFile.getName());
+            assert modifiedConfigFile != null;
+            assertEquals(configFile.getName(), modifiedConfigFile.getName());
 
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document cfg = builder.parse(modifiedConfigFile);
-            assertEquals(cfg.getElementsByTagName("id").item(1).getTextContent(), gmlIds);
+            assertEquals(gmlIds, cfg.getElementsByTagName("id").item(1).getTextContent());
 
         } catch (NoSuchMethodException | IllegalAccessException | SAXException | IOException | ParserConfigurationException e) {
             fail();
@@ -162,7 +159,7 @@ class ExporterTaskTest extends TestCase {
         }
     }
 
-    @Test
+
     public void testNewExporterTaskRunMethod() {
 
         // Test with fake gmlId
@@ -179,7 +176,7 @@ class ExporterTaskTest extends TestCase {
         try {
             task.run();
         } catch (JPSRuntimeException e) {
-            assertEquals(e.getClass(), JPSRuntimeException.class);
+            assertEquals(JPSRuntimeException.class, e.getClass());
         } finally {
             assertTrue(actualFile.exists());  // if the task is successfully executed, test_extruded.kml should be generated
         }
@@ -187,18 +184,17 @@ class ExporterTaskTest extends TestCase {
         // After the runnable, the
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder;
-        Document cfg = null;
+        Document cfg;
 
         try {
             builder = factory.newDocumentBuilder();
             cfg = builder.parse(actualFile);
-            assertEquals(cfg.getElementsByTagName("coordinates").getLength(), 1);   // if the request gmlId exists in the database, the exported kml should contain "coordinates" information. Otherwise not
+            assertEquals(1, cfg.getElementsByTagName("coordinates").getLength());   // if the request gmlId exists in the database, the exported kml should contain "coordinates" information. Otherwise not
         } catch (ParserConfigurationException | IOException | SAXException e) {
             fail();
         } finally {
-            // delete the temporally generated file
-            if (Files.exists(Paths.get(actualFilePath))) {
-                actualFile.delete();
+            if (!actualFile.delete()) { // If the actualFile is not generated, it means Runnable fails
+                fail();
             }
         }
 

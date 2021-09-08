@@ -3,16 +3,14 @@ package uk.ac.cam.cares.twa.cities.tasks;
 import org.apache.commons.io.FileUtils;
 import org.citydb.ImpExp;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ResourceBundle;
+
 
 public class ExporterTask implements Runnable {
 
