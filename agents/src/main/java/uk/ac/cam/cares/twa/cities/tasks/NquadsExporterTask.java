@@ -56,6 +56,10 @@ public class NquadsExporterTask implements Runnable {
     this.targetUrl = targetUrl;
   }
 
+  public boolean isRunning() {
+    return !stop;
+  }
+
   public void stop() {
     stop = true;
   }
@@ -64,7 +68,7 @@ public class NquadsExporterTask implements Runnable {
   public void run() {
     File nqFile = new File(importFile.getAbsolutePath()
         .replace(ImporterTask.EXT_FILE_GML, ImporterTask.EXT_FILE_NQUADS));
-    while (!stop) {
+    while (isRunning()) {
       if (nqFile.isFile()) {
         try {
           File targetGzNqFile = exportToNquadsFileFromJnlFile(nqFile);

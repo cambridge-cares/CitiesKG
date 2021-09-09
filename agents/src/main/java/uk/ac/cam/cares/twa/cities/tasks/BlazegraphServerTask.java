@@ -48,6 +48,9 @@ public class BlazegraphServerTask implements Runnable {
     this.journalPath = journalName;
   }
 
+  public boolean isRunning() {
+    return !stop;
+  }
 
   public void stop() {
     stop = true;
@@ -55,7 +58,7 @@ public class BlazegraphServerTask implements Runnable {
 
   @Override
   public void run() {
-    while (!stop) {
+    while (isRunning()) {
       if (server == null) {
         try {
           String propFileAbsPath = setupPaths();

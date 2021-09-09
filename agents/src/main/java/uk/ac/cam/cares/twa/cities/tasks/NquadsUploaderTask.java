@@ -37,13 +37,17 @@ public class NquadsUploaderTask implements Runnable {
     this.endpointUri = endpointUri;
   }
 
+  public boolean isRunning() {
+    return !stop;
+  }
+
   public void stop() {
     stop = true;
   }
 
   @Override
   public void run() {
-    while (!stop) {
+    while (isRunning()) {
       while (!nqQueue.isEmpty()) {
         File nqFile = null;
         try {

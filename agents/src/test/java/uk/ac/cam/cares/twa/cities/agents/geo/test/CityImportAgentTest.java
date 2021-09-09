@@ -696,18 +696,26 @@ public class CityImportAgentTest extends TestCase {
     File impFgmlPart = new File(archD.getAbsolutePath() + fs + "test1.gml");
     File impFnq = new File(archD.getAbsolutePath() + fs + "test.nq");
 
-
     assertEquals(CityImportAgent.archiveImportFiles(impFnq), "");
 
     if (archD.mkdirs()) {
       assertEquals(CityImportAgent.archiveImportFiles(impFnq), "");
       try {
-        impFgml.createNewFile();
-        assertEquals(CityImportAgent.archiveImportFiles(impFnq), "");
-        impFnq.createNewFile();
-        assertEquals(CityImportAgent.archiveImportFiles(impFnq), "");
-        impFgmlPart.createNewFile();
-        assertEquals(CityImportAgent.archiveImportFiles(impFnq), archD.getParentFile().getAbsolutePath() + fs + "tstdir.zip");
+        if (impFgml.createNewFile()) {
+          assertEquals(CityImportAgent.archiveImportFiles(impFnq), "");
+        } else {
+          fail();
+        }
+        if (impFnq.createNewFile()) {
+          assertEquals(CityImportAgent.archiveImportFiles(impFnq), "");
+        } else {
+          fail();
+        }
+        if (impFgmlPart.createNewFile()) {
+          assertEquals(CityImportAgent.archiveImportFiles(impFnq), archD.getParentFile().getAbsolutePath() + fs + "tstdir.zip");
+        } else {
+          fail();
+        }
         FileUtils.deleteDirectory(archD);
       } catch (IOException e) {
         fail();

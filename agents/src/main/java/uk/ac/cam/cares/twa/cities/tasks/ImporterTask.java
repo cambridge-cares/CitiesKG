@@ -47,6 +47,9 @@ public class ImporterTask implements Runnable {
     this.importFile = importFile;
   }
 
+  public boolean isRunning() {
+    return !stop;
+  }
 
   public void stop() {
     stop = true;
@@ -54,7 +57,7 @@ public class ImporterTask implements Runnable {
 
   @Override
   public void run() {
-    while (!stop) {
+    while (isRunning()) {
       while (!serverInstances.isEmpty()) {
         try {
           Server server = serverInstances.take();

@@ -91,8 +91,8 @@ public class CityImportAgent extends JPSAgent {
       if (requestUrl.contains(URI_LISTEN)) {
         importDir = listenToImport(requestParams.getString(KEY_DIRECTORY));
       } else if (requestUrl.contains(URI_ACTION)) {
-        importDir = new File(requestParams.getString(AsynchronousWatcherService.KEY_WATCH));
-        requestParams = new JSONObject(importFiles(importDir));
+        requestParams = new JSONObject(importFiles(
+            new File(requestParams.getString(AsynchronousWatcherService.KEY_WATCH))));
       }
     }
 
@@ -208,16 +208,19 @@ public class CityImportAgent extends JPSAgent {
    * @return - import summary
    */
   private String importFiles(File importDir) {
-    String imported = "";
-    File[] dirContent = importDir.listFiles();
+    StringBuilder imported = new StringBuilder();
+    File[] dirContent = new File[0];
+    if (importDir == this.importDir) {
+      dirContent = importDir.listFiles();
+    }
 
-    if (dirContent != null) {
+    if (Objects.requireNonNull(dirContent).length > 0) {
       for (File file : dirContent) {
         ArrayList<File> chunks = splitFile(file);
         for (File chunk : chunks) {
           try {
             importChunk(chunk);
-            imported = imported + chunk.getName() + " \n";
+            imported.append(chunk.getName()).append(" \n");
           } catch (Exception e) {
             throw new JPSRuntimeException(e);
           }
@@ -225,7 +228,7 @@ public class CityImportAgent extends JPSAgent {
       }
     }
 
-    return imported;
+    return imported.toString();
   }
 
   /**
@@ -239,7 +242,10 @@ public class CityImportAgent extends JPSAgent {
     ArrayList<File> chunks = new ArrayList<>();
 
     splitDir = new File(file.getParent() + FS + KEY_SPLIT + new Date().getTime());
-    splitDir.mkdir();
+    if (!splitDir.exists() && !splitDir.mkdir()) {
+      throw new JPSRuntimeException(new IOException(splitDir.getAbsolutePath()));
+    }
+
     String fileSrc = file.getPath();
     String fileDst = splitDir.getPath() + FS + file.getName();
 
@@ -247,12 +253,12 @@ public class CityImportAgent extends JPSAgent {
       ArrayList<String> args = new ArrayList<>();
       args.add("python");
       args.add(new File(
-          getClass().getClassLoader().getResource(SPLIT_SCRIPT).toURI()).getAbsolutePath());
+          Objects.requireNonNull(getClass().getClassLoader().getResource(SPLIT_SCRIPT)).toURI()).getAbsolutePath());
       args.add(fileDst);
       args.add(String.valueOf(CHUNK_SIZE));
       Files.move(Paths.get(fileSrc), Paths.get(fileDst)); //throws IOException
       CommandHelper.executeCommands(splitDir.getPath(), args);
-      Iterator<File> files = Arrays.stream(splitDir.listFiles()).iterator();
+      Iterator<File> files = Arrays.stream(Objects.requireNonNull(splitDir.listFiles())).iterator();
 
       while (files.hasNext()) {
         File splitFile = files.next();
@@ -272,15 +278,16 @@ public class CityImportAgent extends JPSAgent {
    * implemented in ImpExp tool in the chunk)
    *
    * @param file- chunk to import
-   * @return - information about local import success
    */
   private void importChunk(File file) throws URISyntaxException {
     BlockingQueue<Server> localImportQueue = new LinkedBlockingDeque<>();
     BlockingQueue<File> remoteImportQueue = new LinkedBlockingDeque<>();
-    startBlazegraphInstance(localImportQueue, file.getAbsolutePath());
-    importToLocalBlazegraphInstance(localImportQueue, file);
-    exportToNquads(remoteImportQueue, file);
-    uploadNQuadsFileToBlazegraphInstance(remoteImportQueue, new URI(targetUrl));
+    if (!startBlazegraphInstance(localImportQueue, file.getAbsolutePath()).isRunning() ||
+        !importToLocalBlazegraphInstance(localImportQueue, file).isRunning() ||
+        !exportToNquads(remoteImportQueue, file).isRunning() ||
+        !uploadNQuadsFileToBlazegraphInstance(remoteImportQueue, new URI(targetUrl)).isRunning()) {
+      throw new JPSRuntimeException(new Exception(CityImportAgent.class.getName()));
+    }
 
   }
 
@@ -301,7 +308,7 @@ public class CityImportAgent extends JPSAgent {
    *
    * @param queue - queue for instances of Blazegraph
    * @param file  - file to import
-   * @return
+   * @return ImporterTask - running task
    */
   private ImporterTask importToLocalBlazegraphInstance(BlockingQueue<Server> queue, File file) {
     ImporterTask task = new ImporterTask(queue, file);
@@ -354,7 +361,8 @@ public class CityImportAgent extends JPSAgent {
       File[] nqFiles = nqDir.listFiles((dir, name) -> name.toLowerCase()
           .endsWith(ImporterTask.EXT_FILE_NQUADS));
 
-      if (nqFiles.length > 0 && nqFiles.length == gmlFiles.length - 1) {
+      if (Objects.requireNonNull(nqFiles).length > 0 && nqFiles.length == Objects.requireNonNull(
+          gmlFiles).length - 1) {
 
         if (((ThreadPoolExecutor) serverExecutor).getActiveCount() == 0) {
           Path dirToZip = nqDir.toPath();
