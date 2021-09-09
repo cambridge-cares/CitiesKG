@@ -18,6 +18,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import junit.framework.TestCase;
+import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -520,8 +521,6 @@ public class CityImportAgentTest extends TestCase {
       fail();
     }
 
-    //@Todo: implementation
-
   }
 
   public void testImportChunk() {
@@ -691,7 +690,32 @@ public class CityImportAgentTest extends TestCase {
   }
 
   public void testArchiveImportFiles() {
-    //@Todo: implementation
+    String fs = System.getProperty("file.separator");
+    File archD = new File(System.getProperty("java.io.tmpdir") + "tstdir");
+    File impFgml = new File(archD.getAbsolutePath() + fs + "test.gml");
+    File impFgmlPart = new File(archD.getAbsolutePath() + fs + "test1.gml");
+    File impFnq = new File(archD.getAbsolutePath() + fs + "test.nq");
+
+
+    assertEquals(CityImportAgent.archiveImportFiles(impFnq), "");
+
+    if (archD.mkdirs()) {
+      assertEquals(CityImportAgent.archiveImportFiles(impFnq), "");
+      try {
+        impFgml.createNewFile();
+        assertEquals(CityImportAgent.archiveImportFiles(impFnq), "");
+        impFnq.createNewFile();
+        assertEquals(CityImportAgent.archiveImportFiles(impFnq), "");
+        impFgmlPart.createNewFile();
+        assertEquals(CityImportAgent.archiveImportFiles(impFnq), archD.getParentFile().getAbsolutePath() + fs + "tstdir.zip");
+        FileUtils.deleteDirectory(archD);
+      } catch (IOException e) {
+        fail();
+      }
+    } else {
+      fail();
+    }
+
   }
 
 

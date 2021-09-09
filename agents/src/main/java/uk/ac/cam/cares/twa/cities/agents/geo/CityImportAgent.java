@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -71,7 +72,7 @@ public class CityImportAgent extends JPSAgent {
   public static final int NUM_SERVER_THREADS = 2;
   //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
   public static final int NUM_IMPORTER_THREADS = 1;
-  private final String FS = System.getProperty("file.separator");
+  public static final String FS = System.getProperty("file.separator");
   private static final ExecutorService serverExecutor = Executors.newFixedThreadPool(NUM_SERVER_THREADS);
   private static final ExecutorService importerExecutor = Executors.newFixedThreadPool(
       NUM_IMPORTER_THREADS);
@@ -347,22 +348,24 @@ public class CityImportAgent extends JPSAgent {
     String archiveFilename = "";
 
     File nqDir = nqFile.getParentFile();
-    File[] gmlFiles = nqDir.listFiles((dir, name) -> name.toLowerCase()
-        .endsWith(ImporterTask.EXT_FILE_GML));
-    File[] nqFiles = nqDir.listFiles((dir, name) -> name.toLowerCase()
-        .endsWith(ImporterTask.EXT_FILE_NQUADS));
+    if (nqDir.exists()) {
+      File[] gmlFiles = nqDir.listFiles((dir, name) -> name.toLowerCase()
+          .endsWith(ImporterTask.EXT_FILE_GML));
+      File[] nqFiles = nqDir.listFiles((dir, name) -> name.toLowerCase()
+          .endsWith(ImporterTask.EXT_FILE_NQUADS));
 
-    if (nqFiles.length == (gmlFiles.length - 1)) {
+      if (nqFiles.length > 0 && nqFiles.length == gmlFiles.length - 1) {
 
-      if (((ThreadPoolExecutor)serverExecutor).getActiveCount() == 0) {
-        Path dirToZip = nqDir.toPath();
-        Path zipFile = Paths.get(nqDir.getParent() + nqDir.getName() +".zip");
-        JkPathTree.of(dirToZip).zipTo(zipFile);
-        archiveFilename = zipFile.toString();
-        try {
-          FileUtils.deleteDirectory(nqDir);
-        } catch (IOException e) {
-          throw new JPSRuntimeException(e);
+        if (((ThreadPoolExecutor) serverExecutor).getActiveCount() == 0) {
+          Path dirToZip = nqDir.toPath();
+          Path zipFile = Paths.get(nqDir.getParent() + FS +nqDir.getName() + ".zip");
+          JkPathTree.of(dirToZip).zipTo(zipFile);
+          archiveFilename = zipFile.toString();
+          try {
+            FileUtils.deleteDirectory(nqDir);
+          } catch (IOException e) {
+            throw new JPSRuntimeException(e);
+          }
         }
       }
     }
