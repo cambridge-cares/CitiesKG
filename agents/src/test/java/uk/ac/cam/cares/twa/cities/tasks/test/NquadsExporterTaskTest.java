@@ -105,7 +105,7 @@ public class NquadsExporterTaskTest extends TestCase {
   public void testNewNquadsExporterTaskMethods() {
     NquadsExporterTask task = new NquadsExporterTask(new LinkedBlockingDeque<>(),
         new File("test.gml"), "http://www.test.com/");
-    assertEquals(5, task.getClass().getDeclaredMethods().length);
+    assertEquals(6, task.getClass().getDeclaredMethods().length);
   }
 
   public void testNewNquadsExporterTaskStopMethod() {
@@ -120,6 +120,26 @@ public class NquadsExporterTaskTest extends TestCase {
       stopM.setAccessible(true);
       stopM.invoke(task);
       assertTrue((Boolean) stopF.get(task));
+    } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+      fail();
+    }
+
+  }
+
+  public void testNewNquadsExporterTaskIsRunningMethod() {
+    NquadsExporterTask task = new NquadsExporterTask(new LinkedBlockingDeque<>(),
+        new File("test.gml"), "http://www.test.com/");
+
+    try {
+      Method isRunning = task.getClass().getDeclaredMethod("isRunning");
+      isRunning.setAccessible(true);
+      Field stopF = task.getClass().getDeclaredField("stop");
+      stopF.setAccessible(true);
+      assertTrue((Boolean) isRunning.invoke(task));
+      Method stopM = task.getClass().getDeclaredMethod("stop");
+      stopM.setAccessible(true);
+      stopM.invoke(task);
+      assertFalse((Boolean) isRunning.invoke(task));
     } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       fail();
     }

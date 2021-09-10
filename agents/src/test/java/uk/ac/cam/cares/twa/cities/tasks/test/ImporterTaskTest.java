@@ -100,7 +100,7 @@ public class ImporterTaskTest extends TestCase {
 
   public void testNewImporterTaskMethods() {
     ImporterTask task = new ImporterTask(new LinkedBlockingDeque<>(), new File("test.gml"));
-    assertEquals(3, task.getClass().getDeclaredMethods().length);
+    assertEquals(4, task.getClass().getDeclaredMethods().length);
   }
 
   public void testNewImporterTaskStopMethod() {
@@ -114,6 +114,25 @@ public class ImporterTaskTest extends TestCase {
       stopM.setAccessible(true);
       stopM.invoke(task);
       assertTrue((Boolean) stopF.get(task));
+    } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+      fail();
+    }
+
+  }
+
+  public void testNewImporterTaskIsRunningMethod() {
+    ImporterTask task = new ImporterTask(new LinkedBlockingDeque<>(), new File("test.gml"));
+
+    try {
+      Method isRunning = task.getClass().getDeclaredMethod("isRunning");
+      isRunning.setAccessible(true);
+      Field stopF = task.getClass().getDeclaredField("stop");
+      stopF.setAccessible(true);
+      assertTrue((Boolean) isRunning.invoke(task));
+      Method stopM = task.getClass().getDeclaredMethod("stop");
+      stopM.setAccessible(true);
+      stopM.invoke(task);
+      assertFalse((Boolean) isRunning.invoke(task));
     } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       fail();
     }

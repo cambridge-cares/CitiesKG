@@ -94,7 +94,7 @@ public class BlazegraphServerTaskTest extends TestCase {
 
   public void testNewBlazegraphServerTaskMethods() {
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), "test.jnl");
-    assertEquals(6, task.getClass().getDeclaredMethods().length);
+    assertEquals(7, task.getClass().getDeclaredMethods().length);
   }
 
   public void testNewBlazegraphServerTaskStopMethod() {
@@ -108,6 +108,25 @@ public class BlazegraphServerTaskTest extends TestCase {
       stopM.setAccessible(true);
       stopM.invoke(task);
       assertTrue((Boolean) stopF.get(task));
+    } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+      fail();
+    }
+
+  }
+
+  public void testNewBlazegraphServerTaskIsRunningMethod() {
+    BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), "test.jnl");
+
+    try {
+      Method isRunning = task.getClass().getDeclaredMethod("isRunning");
+      isRunning.setAccessible(true);
+      Field stopF = task.getClass().getDeclaredField("stop");
+      stopF.setAccessible(true);
+      assertTrue((Boolean) isRunning.invoke(task));
+      Method stopM = task.getClass().getDeclaredMethod("stop");
+      stopM.setAccessible(true);
+      stopM.invoke(task);
+      assertFalse((Boolean) isRunning.invoke(task));
     } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       fail();
     }

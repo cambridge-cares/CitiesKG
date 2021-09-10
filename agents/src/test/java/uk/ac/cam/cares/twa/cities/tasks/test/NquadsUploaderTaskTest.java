@@ -72,7 +72,7 @@ public class NquadsUploaderTaskTest extends TestCase {
     try {
       NquadsUploaderTask task = new NquadsUploaderTask(new LinkedBlockingDeque<>(),
           new URI("http://127.0.0.0.1/sparql"));
-      assertEquals(2, task.getClass().getDeclaredMethods().length);
+      assertEquals(3, task.getClass().getDeclaredMethods().length);
     } catch (URISyntaxException e) {
       fail();
     }
@@ -90,6 +90,26 @@ public class NquadsUploaderTaskTest extends TestCase {
       stopM.invoke(task);
       assertTrue((Boolean) stopF.get(task));
     } catch (URISyntaxException | NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+      fail();
+    }
+
+  }
+
+  public void testNewNquadsExporterTaskIsRunningMethod() {
+    try {
+      NquadsUploaderTask task = new NquadsUploaderTask(new LinkedBlockingDeque<>(),
+        new URI("http://127.0.0.0.1/sparql"));
+
+      Method isRunning = task.getClass().getDeclaredMethod("isRunning");
+      isRunning.setAccessible(true);
+      Field stopF = task.getClass().getDeclaredField("stop");
+      stopF.setAccessible(true);
+      assertTrue((Boolean) isRunning.invoke(task));
+      Method stopM = task.getClass().getDeclaredMethod("stop");
+      stopM.setAccessible(true);
+      stopM.invoke(task);
+      assertFalse((Boolean) isRunning.invoke(task));
+    } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException | URISyntaxException e) {
       fail();
     }
 

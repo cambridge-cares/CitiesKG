@@ -364,7 +364,6 @@ public class CityImportAgent extends JPSAgent {
       if (Objects.requireNonNull(nqFiles).length > 0 && nqFiles.length == Objects.requireNonNull(
           gmlFiles).length - 1) {
 
-        if (((ThreadPoolExecutor) serverExecutor).getActiveCount() == 0) {
           Path dirToZip = nqDir.toPath();
           Path zipFile = Paths.get(nqDir.getParent() + FS +nqDir.getName() + ".zip");
           JkPathTree.of(dirToZip).zipTo(zipFile);
@@ -374,7 +373,6 @@ public class CityImportAgent extends JPSAgent {
           } catch (IOException e) {
             throw new JPSRuntimeException(e);
           }
-        }
       }
     }
 

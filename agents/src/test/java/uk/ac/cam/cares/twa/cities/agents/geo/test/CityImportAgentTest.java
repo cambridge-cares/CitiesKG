@@ -14,7 +14,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import junit.framework.TestCase;
@@ -692,6 +694,7 @@ public class CityImportAgentTest extends TestCase {
   public void testArchiveImportFiles() {
     String fs = System.getProperty("file.separator");
     File archD = new File(System.getProperty("java.io.tmpdir") + "tstdir");
+    File archF = new File(archD.getParentFile().getAbsolutePath() + fs + "tstdir.zip");
     File impFgml = new File(archD.getAbsolutePath() + fs + "test.gml");
     File impFgmlPart = new File(archD.getAbsolutePath() + fs + "test1.gml");
     File impFnq = new File(archD.getAbsolutePath() + fs + "test.nq");
@@ -712,13 +715,28 @@ public class CityImportAgentTest extends TestCase {
           fail();
         }
         if (impFgmlPart.createNewFile()) {
-          assertEquals(CityImportAgent.archiveImportFiles(impFnq), archD.getParentFile().getAbsolutePath() + fs + "tstdir.zip");
+          /*CityImportAgent agent = new CityImportAgent();
+          Field serverExecutor = agent.getClass().getDeclaredField("serverExecutor");
+          serverExecutor.setAccessible(true);
+          serverExecutor.set(agent, Executors.newFixedThreadPool(CityImportAgent.NUM_SERVER_THREADS)); */
+          assertEquals(CityImportAgent.archiveImportFiles(impFnq), archF.getAbsolutePath());
         } else {
           fail();
         }
-        FileUtils.deleteDirectory(archD);
-      } catch (IOException e) {
+
+      } catch (IOException  e) {
         fail();
+      } finally {
+        if (archF.exists() && !archF.delete()) {
+          fail();
+        }
+        if (archD.exists()) {
+          try {
+            FileUtils.deleteDirectory(archD);
+          } catch (IOException e) {
+            fail();
+          }
+        }
       }
     } else {
       fail();
