@@ -26,3 +26,4 @@ db/vocabularies/target/
 db/*.gml
 db/appearance
 
+*/target/
