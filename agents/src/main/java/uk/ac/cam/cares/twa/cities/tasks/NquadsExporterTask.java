@@ -41,6 +41,7 @@ public class NquadsExporterTask implements Runnable {
   public static final String NQ_FILENAME = "data.nq.gz";
   public static final String EX_PROP_FILENAME = "kb.properties";
   public static final String EXT_GZ = ".gz";
+  public static final String EXT_FILE_ZIP = ".zip";
   public static final String CFG_KEY_SERVER = "server";
   public static final String CFG_KEY_PORT = "port";
   public static final String CFG_KEY_SID = "sid";

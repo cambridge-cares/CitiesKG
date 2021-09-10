@@ -42,7 +42,7 @@ public class NquadsExporterTaskTest extends TestCase {
     File impFile = new File("test.gml");
     String url = "http://www.test.com/";
     NquadsExporterTask task = new NquadsExporterTask(queue, impFile, url);
-    assertEquals(15, task.getClass().getDeclaredFields().length);
+    assertEquals(16, task.getClass().getDeclaredFields().length);
 
     Field ARG_OUTDIR;
     Field ARG_FORMAT;
@@ -51,6 +51,7 @@ public class NquadsExporterTaskTest extends TestCase {
     Field NQ_FILENAME;
     Field EX_PROP_FILENAME;
     Field EXT_GZ;
+    Field EXT_FILE_ZIP;
     Field CFG_KEY_SERVER;
     Field CFG_KEY_PORT;
     Field CFG_KEY_SID;
@@ -75,6 +76,8 @@ public class NquadsExporterTaskTest extends TestCase {
       assertEquals(EX_PROP_FILENAME.get(task), "kb.properties");
       EXT_GZ = task.getClass().getDeclaredField("EXT_GZ");
       assertEquals(EXT_GZ.get(task), ".gz");
+      EXT_FILE_ZIP = task.getClass().getDeclaredField("EXT_FILE_ZIP");
+      assertEquals(EXT_FILE_ZIP.get(task), ".zip");
       CFG_KEY_SERVER = task.getClass().getDeclaredField("CFG_KEY_SERVER");
       assertEquals(CFG_KEY_SERVER.get(task), "server");
       CFG_KEY_PORT = task.getClass().getDeclaredField("CFG_KEY_PORT");

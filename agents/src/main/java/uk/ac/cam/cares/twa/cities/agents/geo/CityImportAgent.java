@@ -20,7 +20,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
@@ -292,7 +291,12 @@ public class CityImportAgent extends JPSAgent {
   }
 
   /**
-   * Starts local Blazegraph SPARQL server instance.
+   * Starts local Blazegraph NanoSparqlServer instance.
+   *
+   * @param queue - Blocking Queue to place the started server on so it can be picked up
+   *              by other tasks.
+   * @param filepath - path to target journal file for the server instance.
+   * @return - running BlazegraphServerTask
    */
   private BlazegraphServerTask startBlazegraphInstance(BlockingQueue<Server> queue,
       String filepath) {
@@ -306,7 +310,7 @@ public class CityImportAgent extends JPSAgent {
   /**
    * Imports CityGML file into local Blazegraph instance.
    *
-   * @param queue - queue for instances of Blazegraph
+   * @param queue - queue for instances of Blazegraph NanoSparqlServer
    * @param file  - file to import
    * @return ImporterTask - running task
    */
@@ -318,9 +322,9 @@ public class CityImportAgent extends JPSAgent {
   }
 
   /**
-   * Imports Blazegraph's journal file N-Quads.
+   * Exports Blazegraph's journal file to N-Quads.
    *
-   * @param queue queue for files
+   * @param queue queue for files to be picked up by other tasks.
    * @param file  - file to export
    * @return NquadsExporterTask - running task
    */
@@ -335,8 +339,8 @@ public class CityImportAgent extends JPSAgent {
    * Imports n-quads file into a running Blazegraph instance.
    *
    * @param queue               - n-quads file queue
-   * @param blazegraphImportUri - URI of the Blazegraph instance
-   * @return - NquadsUploaderTask
+   * @param blazegraphImportUri - URI of the target Blazegraph instance
+   * @return - running NquadsUploaderTask
    */
   private NquadsUploaderTask uploadNQuadsFileToBlazegraphInstance(BlockingQueue<File> queue,
       URI blazegraphImportUri) {
@@ -347,8 +351,9 @@ public class CityImportAgent extends JPSAgent {
   }
 
   /**
-   * Creates an audit trail archive.
+   * Creates an audit trail archive chunk .gml and .nq files generated during the import process.
    *
+   * @param nqFile - N-Quads file which is checked to be the last one of the currently imported chunks.
    * @return - path to the audit trail archive.
    */
   public static String archiveImportFiles(File nqFile) {
@@ -365,7 +370,8 @@ public class CityImportAgent extends JPSAgent {
           gmlFiles).length - 1) {
 
           Path dirToZip = nqDir.toPath();
-          Path zipFile = Paths.get(nqDir.getParent() + FS +nqDir.getName() + ".zip");
+          Path zipFile = Paths
+              .get(nqDir.getParent() + FS +nqDir.getName() + NquadsExporterTask.EXT_FILE_ZIP);
           JkPathTree.of(dirToZip).zipTo(zipFile);
           archiveFilename = zipFile.toString();
           try {
