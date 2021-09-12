@@ -29,3 +29,5 @@ db/appearance
 impexp-core/test_config.properties
 impexp-core/test_config.properties
 */target/
+
+impexp-core/lib/*.jar
