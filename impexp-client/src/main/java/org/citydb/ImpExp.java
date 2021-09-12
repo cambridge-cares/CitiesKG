@@ -300,12 +300,16 @@ public class ImpExp {
 		ObjectRegistry registry = ObjectRegistry.getInstance();
 
 		// create and register application-wide event dispatcher
-		EventDispatcher eventDispatcher = new EventDispatcher();		
-		registry.setEventDispatcher(eventDispatcher);
+		EventDispatcher eventDispatcher = new EventDispatcher();
+		if (registry.getEventDispatcher() == null) {
+			registry.setEventDispatcher(eventDispatcher);
+		}
 
 		// create and register database controller
 		DatabaseController databaseController = new DatabaseController(config);
-		registry.setDatabaseController(databaseController);
+		if (registry.getDatabaseController() == null) {
+			registry.setDatabaseController(databaseController);
+		}
 
 		// register illegal plugin event checker with event dispatcher
 		IllegalEventSourceChecker checker = IllegalEventSourceChecker.getInstance();
@@ -330,7 +334,9 @@ public class ImpExp {
 		SchemaMapping schemaMapping = null;
 		try {
 			schemaMapping = SchemaMappingUtil.getInstance().unmarshal(CoreConstants.CITYDB_SCHEMA_MAPPING_FILE);
-			registry.setSchemaMapping(schemaMapping);
+			if (registry.getSchemaMapping() == null) {
+				registry.setSchemaMapping(schemaMapping);
+			}
 		} catch (JAXBException | SchemaMappingException | SchemaMappingValidationException e) {
 			throw new ImpExpException("Failed to process 3DCityDB schema mapping file.", e);
 		}
@@ -369,8 +375,10 @@ public class ImpExp {
 				context.registerADEContext(adeContext);
 			
 			// create CityGML builder and register with object registry
-			CityGMLBuilder cityGMLBuilder = context.createCityGMLBuilder(externalLoader);			
-			registry.setCityGMLBuilder(cityGMLBuilder);
+			CityGMLBuilder cityGMLBuilder = context.createCityGMLBuilder(externalLoader);
+			if (registry.getCityGMLBuilder() == null) {
+				registry.setCityGMLBuilder(cityGMLBuilder);
+			}
 		} catch (CityGMLBuilderException | ADEException e) {
 			throw new ImpExpException("CityGML context could not be initialized.", e);
 		}

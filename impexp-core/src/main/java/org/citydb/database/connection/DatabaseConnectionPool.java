@@ -33,10 +33,7 @@ import org.citydb.ade.ADEExtension;
 import org.citydb.ade.ADEExtensionManager;
 import org.citydb.config.Config;
 import org.citydb.config.i18n.Language;
-import org.citydb.config.project.database.DBConnection;
-import org.citydb.config.project.database.Database;
-import org.citydb.config.project.database.DatabaseConfigurationException;
-import org.citydb.config.project.database.DatabaseSrs;
+import org.citydb.config.project.database.*;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.DatabaseAdapterFactory;
 import org.citydb.database.connection.DatabaseConnectionWarning.ConnectionWarningType;
@@ -166,9 +163,11 @@ public class DatabaseConnectionPool implements ConnectionManager {
 			// check for registered ADEs
 			List<ADEMetadata> ades = Collections.emptyList();
 			if (databaseAdapter.getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0) {
-				ades = databaseAdapter.getUtil().getADEInfo();
-				if (!ades.isEmpty())
-					databaseAdapter.getConnectionMetaData().setRegisteredADEs(ades);
+				if (databaseAdapter.getDatabaseType() != DatabaseType.BLAZE) {
+					ades = databaseAdapter.getUtil().getADEInfo();
+					if (!ades.isEmpty())
+						databaseAdapter.getConnectionMetaData().setRegisteredADEs(ades);
+				}
 			}
 
 			// check whether registered ADE are supported by ADE extensions

@@ -6,8 +6,7 @@
 
     <groupId>uk.ac.cam.cares.twa.cities.agents</groupId>
     <artifactId>agents</artifactId>
-    <version>0.0.2</version>
-
+    <version>0.1.0</version>
     <packaging>war</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -15,17 +14,19 @@
     </properties>
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <excludes>
-                    <exclude>**/*.java</exclude>
-                </excludes>
-            </resource>
-        </resources>
+        <testSourceDirectory>src/test/java</testSourceDirectory>
+        <testResources>
+            <testResource>
+                <directory>${project.basedir}/src/test/resources</directory>
+            </testResource>
+            <testResource>
+                <directory>${project.basedir}/../utils</directory>
+            </testResource>
+        </testResources>
 
         <pluginManagement>
             <plugins>
+
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.1</version>
@@ -65,7 +66,7 @@
                             <configuration>
                                 <overwrite>true</overwrite>
                                 <outputDirectory>
-                                    ${project.build.directory}/${project.artifactId}-${project.version}/WEB-INF/
+                                    ${project.build.directory}/${project.artifactId}-${project.version}/WEB-INF/classes/
                                 </outputDirectory>
                                 <resources>
                                     <resource>
@@ -94,7 +95,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20180813</version>
+            <version>20201115</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -108,26 +109,11 @@
             <version>3.1.0</version>
             <scope>compile</scope>
         </dependency>
-        <!--
-        <dependency>
-            <groupId>uk.ac.cam.cares.jps.aws</groupId>
-            <artifactId>JPS_AWS</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
-        </dependency>
-        -->
         <!-- https://mvnrepository.com/artifact/com.blazegraph/blazegraph-jar -->
         <dependency>
             <groupId>com.blazegraph</groupId>
             <artifactId>blazegraph-jar</artifactId>
             <version>2.1.5</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.core</groupId>
-            <artifactId>jersey-common</artifactId>
-            <version>2.22.2</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
@@ -139,6 +125,16 @@
             <artifactId>impexp-client</artifactId>
             <version>4.2.3</version>
         </dependency>
+        <dependency>
+            <groupId>com.konghq</groupId>
+            <artifactId>unirest-java</artifactId>
+            <version>3.11.12</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/dev.jeka/jeka-core -->
+        <dependency>
+            <groupId>dev.jeka</groupId>
+            <artifactId>jeka-core</artifactId>
+            <version>0.9.11.RELEASE</version>
+        </dependency>
     </dependencies>
-
 </project>

@@ -5,7 +5,6 @@
   <groupId>org.citydb</groupId>
   <artifactId>impexp-kml-collada-plugin</artifactId>
   <version>4.2.3</version>
-
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -43,10 +42,21 @@
     </plugins>
   </build>
   <repositories>
-      <repository>
-        <id>scijava.public</id>
-        <url>https://maven.scijava.org/content/groups/public</url>
-      </repository>
+    <repository>
+      <id>jcenter</id>
+      <name>jcenter</name>
+      <url>https://jcenter.bintray.com/</url>
+    </repository>
+    <repository>
+      <id>osgeo</id>
+      <name>osgeo</name>
+      <url>https://repo.osgeo.org/repository/release/</url>
+    </repository>
+    <repository>
+      <id>scijava</id>
+      <name>scijava</name>
+      <url>https://maven.scijava.org/content/repositories/public/</url>
+    </repository>
   </repositories>
 
   <dependencies>

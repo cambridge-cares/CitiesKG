@@ -105,9 +105,11 @@ class CityGMLProcessor(object):
                     file_count = file_count + 1
                     current_file = self.model_start
                     count = 0
+
         # write file with remaining cityObjectMember objects
-        with open(self.part_prefix + str(file_count) + self.part_ext, 'w') as split:
-            split.write(current_file)
+        if count > 0:
+            with open(self.part_prefix + str(file_count) + self.part_ext, 'w') as split:
+                split.write(current_file)
 
 
 def main(argv):

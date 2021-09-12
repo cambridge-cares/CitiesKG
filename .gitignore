@@ -26,10 +26,6 @@ db/vocabularies/target/
 db/*.gml
 db/appearance
 
-target/
-JPS-AWS-git/
-*.jar
-*.war
-
 impexp-core/test_config.properties
 impexp-core/test_config.properties
+*/target/

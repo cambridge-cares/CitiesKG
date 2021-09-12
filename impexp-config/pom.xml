@@ -5,7 +5,6 @@
   <groupId>org.citydb</groupId>
   <artifactId>impexp-config</artifactId>
   <version>4.2.3</version>
-
   <build>
     <pluginManagement>
       <plugins>
@@ -21,7 +20,6 @@
       </plugins>
     </pluginManagement>
   </build>
-
   <dependencies>
     <dependency>
       <groupId>org.citygml4j</groupId>
