@@ -51,7 +51,7 @@ public class DistanceAgent extends JPSAgent {
     private static final String DISTANCE_GRAPH_URI = KNOWLEDGE_GRAPH_URI + "distance/";
     private static final String ROUTE = "http://kb/singapore-local";
     private KnowledgeBaseClientInterface kgClient;
-    private static final String targetCRSstring = "EPSG:24500";
+    private static final String targetCRSstring = "EPSG:25833";
 
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
@@ -169,7 +169,7 @@ public class DistanceAgent extends JPSAgent {
      */
     public Envelope getEnvelope(String uriString) {
 
-        String coordinateSystem = "EPSG:4326";
+        String coordinateSystem = "EPSG:25833";
         Envelope envelope = new Envelope(coordinateSystem);
         String envelopeString = envelope.getEnvelopeString(uriString);
         envelope.extractEnvelopePoints(envelopeString);

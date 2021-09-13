@@ -19,9 +19,9 @@ public class Envelope {
     private Point centroid;
     private final GeometryBuilder factory = new GeometryBuilder();
     private final String crs;
-    private static final String ONTOLOGY_URI = "http://locahost/ontocitygml/";
-    private static final String ENVELOPE_GRAPH_URI = "http://localhost/berlin/cityobject/";
-    private static final String ROUTE = "http://kb/singapore-local";
+    private static final String ONTOLOGY_URI = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
+    private static final String ENVELOPE_GRAPH_URI = "http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/";
+    private static final String ROUTE = "http://kb/citieskg-berlin";
     private KnowledgeBaseClientInterface kgClient;
 
     public Envelope(String crs) {
@@ -80,14 +80,14 @@ public class Envelope {
      */
     public void extractEnvelopePoints(String envelopeString) {
 
-       if (envelopeString.equals("")) {
+        if (envelopeString.equals("")) {
            throw new IllegalArgumentException("empty String");
        }
        else if (!envelopeString.contains("#")){
            throw new IllegalArgumentException("Does not contain #");
        }
 
-      String[] pointsAsString = (envelopeString.split("#"));
+       String[] pointsAsString = (envelopeString.split("#"));
 
        int numberOfDimensions;
        if (pointsAsString.length % 3 == 0){
@@ -109,9 +109,7 @@ public class Envelope {
       for (int index = 0; index < pointsAsString.length; index++) {
           points[index]= Double.parseDouble(pointsAsString[index]);
       }
-
       double centroidZ = 0;
-
         Polygon boundary;
         if (numberOfDimensions == 3){
           boundary = factory.polygonZ(points);
@@ -119,13 +117,11 @@ public class Envelope {
           for (int z = 2; z < points.length-3; z +=3 ){
               centroidZ += points[z];
           }
-
           centroidZ = centroidZ/(numberOfPoints -1);
       }
       else {
           boundary = factory.polygon(points);
       }
-
       centroid = boundary.getCentroid();
       centroid.getCoordinateSequence().setOrdinate(0, 2, centroidZ);
       centroid.geometryChanged();
