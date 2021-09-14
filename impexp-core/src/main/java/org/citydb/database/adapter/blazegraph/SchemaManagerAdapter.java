@@ -159,6 +159,8 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_LOD4_IMPLICIT_TRANSFORMATION  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod4ImplicitTransformation";
     public static final String ONTO_OPENING_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "openingID";
     public static final String ONTO_THEMSURFACE_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "themSurfaceID";
+    public static final String ONTO_REFERENCE_TO_LIBRARY = ONTO_PREFIX_NAME_ONTOCITYGML + "referenceToLibrary";
+    public static final String ONTO_RELATIVE_BREP_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "relativeBrepId";
 
     //@TODO: NOT IN ONTOCITYGML - need to be added:
     //@END
