@@ -48,6 +48,7 @@ import java.sql.Types;
 
 public class DBThematicSurface implements DBImporter {
 	private final CityGMLImportManager importer;
+	private final Connection batchConn;
 
 	private PreparedStatement psThematicSurface;
 	private DBCityObject cityObjectImporter;
@@ -61,7 +62,7 @@ public class DBThematicSurface implements DBImporter {
 
 	public DBThematicSurface(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.importer = importer;
-
+		this.batchConn = batchConn;
 		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
 
 		String stmt = "insert into " + schema + ".thematic_surface (id, objectclass_id, building_id, room_id, building_installation_id, lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id) values " +
@@ -119,7 +120,7 @@ public class DBThematicSurface implements DBImporter {
 		int index = 0;
 
 		// import boundary surface information
-		// primary id
+
 		if (importer.isBlazegraph()) {
 			try {
 				objectURL = new URL(IRI_GRAPH_OBJECT + boundarySurface.getId() + "/");
@@ -131,9 +132,11 @@ public class DBThematicSurface implements DBImporter {
 				setBlankNode(psThematicSurface, ++index);
 			}
 			boundarySurface.setLocalProperty(CoreConstants.OBJECT_PARENT_URIID, parentURL);
-    } else {
-      psThematicSurface.setLong(++index, boundarySurfaceId);
+    	} else {
+      		psThematicSurface.setLong(++index, boundarySurfaceId);
 		}
+		// primary id
+//		psThematicSurface.setLong(++index, boundarySurfaceId);
 
 		// objectclass id
 		psThematicSurface.setInt(++index, featureType.getObjectClassId());
@@ -270,6 +273,7 @@ public class DBThematicSurface implements DBImporter {
 
 		return boundarySurfaceId;
 	}
+
 
 	@Override
 	public void executeBatch() throws CityGMLImportException, SQLException {

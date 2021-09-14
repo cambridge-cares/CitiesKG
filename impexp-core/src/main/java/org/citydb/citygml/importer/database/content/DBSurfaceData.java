@@ -130,7 +130,7 @@ public class DBSurfaceData implements DBImporter {
 		if (gmlIdCodespace != null)
 			gmlIdCodespace = "'" + gmlIdCodespace + "', ";
 
-		String sparqlStmtPart = getSPARQLStatement(gmlIdCodespace);
+		String sparqlStmtPart = null;
 
 		String x3dStmt = "insert into " + schema + ".surface_data (id, gmlid, " + (gmlIdCodespace != null ? "gmlid_codespace, " : "") + "name, name_codespace, description, is_front, objectclass_id, " +
 				"x3d_shininess, x3d_transparency, x3d_ambient_intensity, x3d_specular_color, x3d_diffuse_color, x3d_emissive_color, x3d_is_smooth) values " +
@@ -142,6 +142,7 @@ public class DBSurfaceData implements DBImporter {
 			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
 			IRI_GRAPH_BASE = importer.getGraphBaseIri();
 			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
+			sparqlStmtPart = getSPARQLStatement(gmlIdCodespace);
 			x3dStmt = getx3dStmt(sparqlStmtPart);
 		}
 
