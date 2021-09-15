@@ -11,6 +11,8 @@ import uk.ac.cam.cares.jps.base.query.KGRouter;
 import uk.ac.cam.cares.jps.base.query.RemoteKnowledgeBaseClient;
 import uk.ac.cam.cares.twa.cities.agents.geo.DistanceAgent;
 import uk.ac.cam.cares.twa.cities.model.geo.Envelope;
+
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.UUID;
@@ -86,9 +88,14 @@ public class DistanceAgentTest extends TestCase {
         }
     }
 
-    public void testComputeDistance(){
+    public void testComputeDistance() throws NoSuchFieldException, IllegalAccessException {
 
         DistanceAgent distanceAgent = new DistanceAgent();
+
+        // Set the target CRS of the distance agent to fixed value
+        Field targetCRSString = DistanceAgent.class.getDeclaredField("targetCRSstring");
+        targetCRSString.setAccessible(true);
+        targetCRSString.set(distanceAgent, "EPSG:24500");
 
         // test distance calculation without CRS conversion.
         String envelopeString1 = "1#1#0#1#2#0#2#2#0#2#1#0#1#1#0";
@@ -109,9 +116,14 @@ public class DistanceAgentTest extends TestCase {
         assertEquals(1.0034225353460755, distanceAgent.computeDistance(envelope1, envelope3));
     }
 
-    public void testSetUniformCRS(){
+    public void testSetUniformCRS() throws NoSuchFieldException, IllegalAccessException {
 
         DistanceAgent distanceAgent = new DistanceAgent();
+        // Set the target CRS of the distance agent to fixed value
+        Field targetCRSString = DistanceAgent.class.getDeclaredField("targetCRSstring");
+        targetCRSString.setAccessible(true);
+        targetCRSString.set(distanceAgent, "EPSG:24500");
+
         GeometryBuilder builder = new GeometryBuilder();
         Point point = builder.pointZ(1,1,0);
 
