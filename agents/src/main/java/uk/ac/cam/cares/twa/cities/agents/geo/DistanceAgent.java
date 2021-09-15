@@ -124,12 +124,13 @@ public class DistanceAgent extends JPSAgent {
         ResourceBundle config = ResourceBundle.getBundle("config");
 
         String schema = config.getString("uri.ckg.schema");
-        String distance_graph_host = config.getString("uri.ckg.distancehost");
+        String host = config.getString("uri.ckg.host.distance");
+        String port = config.getString("uri.ckg.port.distance");
+        String mainUrl = config.getString("uri.ckg.mainUrl.distance");
         String namespace = config.getString("uri.ckg.namespace.distance");
 
-        DISTANCE_GRAPH_URI = schema + distance_graph_host + namespace + "/" + "distance/";
+        DISTANCE_GRAPH_URI = schema + host + ":" + port + mainUrl + namespace + "/" + "distance/";
         ROUTE = config.getString("uri.route.distance");
-
         targetCRSstring = config.getString("uri.ckg.target.crs");
         sourceCRSstring = config.getString("uri.ckg.source.crs");
     }

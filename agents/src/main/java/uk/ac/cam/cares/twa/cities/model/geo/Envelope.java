@@ -42,12 +42,12 @@ public class Envelope {
         ROUTE = config.getString("uri.route.envelope");
 
         String schema = config.getString("uri.ckg.schema");
-        String host = config.getString("uri.ckg.host.envelope");;
-        String port = config.getString("uri.ckg.port.envelope");;
-        String mainurl = config.getString("uri.ckg.mainurl.envelope");;
-        String namespace = config.getString("uri.ckg.namespace.envelope");;
+        String host = config.getString("uri.ckg.host.envelope");
+        String port = config.getString("uri.ckg.port.envelope");
+        String mainUrl = config.getString("uri.ckg.mainUrl.envelope");
+        String namespace = config.getString("uri.ckg.namespace.envelope");
         String cityobject = config.getString("uri.ckg.cityobject");
-        ENVELOPE_GRAPH_URI = schema + host + ":" + port + mainurl + namespace + cityobject;
+        ENVELOPE_GRAPH_URI = schema + host + ":" + port + mainUrl + namespace + cityobject;
     }
 
     /**
