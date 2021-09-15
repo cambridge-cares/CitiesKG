@@ -9,6 +9,7 @@ import org.json.JSONArray;
 import org.locationtech.jts.geom.*;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.jps.base.query.KGRouter;
+import java.util.ResourceBundle;
 
 /**
  *  The class retrieves envelope string of a specific URI from the KG.
@@ -19,13 +20,34 @@ public class Envelope {
     private Point centroid;
     private final GeometryBuilder factory = new GeometryBuilder();
     private final String crs;
-    private static final String ONTOLOGY_URI = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
-    private static final String ENVELOPE_GRAPH_URI = "http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/";
-    private static final String ROUTE = "http://kb/citieskg-berlin";
+
+    private static String ROUTE;
+    private static String ONTOLOGY_URI;
+    private static String ENVELOPE_GRAPH_URI;
+
     private KnowledgeBaseClientInterface kgClient;
 
     public Envelope(String crs) {
         this.crs = crs;
+        readConfig();
+    }
+
+   /**
+   * reads variable values relevant for DistanceAgent class from config.properties file.
+   */
+    private void readConfig() {
+        ResourceBundle config = ResourceBundle.getBundle("config");
+
+        ONTOLOGY_URI = config.getString("uri.ontology.ontocitygml");
+        ROUTE = config.getString("uri.route.envelope");
+
+        String schema = config.getString("uri.ckg.schema");
+        String host = config.getString("uri.ckg.host.envelope");;
+        String port = config.getString("uri.ckg.port.envelope");;
+        String mainurl = config.getString("uri.ckg.mainurl.envelope");;
+        String namespace = config.getString("uri.ckg.namespace.envelope");;
+        String cityobject = config.getString("uri.ckg.cityobject");
+        ENVELOPE_GRAPH_URI = schema + host + ":" + port + mainurl + namespace + cityobject;
     }
 
     /**

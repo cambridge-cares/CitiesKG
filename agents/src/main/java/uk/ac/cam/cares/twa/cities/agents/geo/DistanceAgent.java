@@ -20,6 +20,7 @@ import org.json.JSONObject;
 import javax.ws.rs.BadRequestException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.UUID;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -43,15 +44,23 @@ public class DistanceAgent extends JPSAgent {
     public static final String URI_DISTANCE = "/distance";
     public static final String KEY_REQ_METHOD = "method";
     public static final String KEY_IRIS = "iris";
+
     private static final String UNIT_ONTOLOGY = "http://www.ontology-of-units-of-measure.org/resource/om-2/";
     private static final String RDF_PREFIX = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
     private static final String XML_SCHEMA = "http://www.w3.org/2001/XMLSchema#";
     private static final String OWL_SCHEMA = "http://www.w3.org/2002/07/owl#";
-    private static final String KNOWLEDGE_GRAPH_URI = "http://localhost/blazegraph/namespace/SLA/";
-    private static final String DISTANCE_GRAPH_URI = KNOWLEDGE_GRAPH_URI + "distance/";
-    private static final String ROUTE = "http://kb/singapore-local";
+
+    private String DISTANCE_GRAPH_URI;
+
+    private String targetCRSstring;
+    private String sourceCRSstring;
+
     private KnowledgeBaseClientInterface kgClient;
-    private static final String targetCRSstring = "EPSG:25833";
+    private static String ROUTE;
+
+    public DistanceAgent() {
+        readConfig();
+    }
 
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
@@ -106,6 +115,23 @@ public class DistanceAgent extends JPSAgent {
             }
         }
         throw new BadRequestException();
+    }
+
+    /**
+     * reads variable values relevant for DistanceAgent class from config.properties file.
+     */
+    private void readConfig() {
+        ResourceBundle config = ResourceBundle.getBundle("config");
+
+        String schema = config.getString("uri.ckg.schema");
+        String distance_graph_host = config.getString("uri.ckg.distancehost");
+        String namespace = config.getString("uri.ckg.namespace.distance");
+
+        DISTANCE_GRAPH_URI = schema + distance_graph_host + namespace + "/" + "distance/";
+        ROUTE = config.getString("uri.route.distance");
+
+        targetCRSstring = config.getString("uri.ckg.target.crs");
+        sourceCRSstring = config.getString("uri.ckg.source.crs");
     }
 
     /**
@@ -164,12 +190,12 @@ public class DistanceAgent extends JPSAgent {
 
     /**
      * returns object's envelope with its attributes.
-     * @param uriString  city object id
+     * @param uriString city object id
      * @return envelope
      */
     public Envelope getEnvelope(String uriString) {
 
-        String coordinateSystem = "EPSG:25833";
+        String coordinateSystem = sourceCRSstring;
         Envelope envelope = new Envelope(coordinateSystem);
         String envelopeString = envelope.getEnvelopeString(uriString);
         envelope.extractEnvelopePoints(envelopeString);
