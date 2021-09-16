@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.model.geo;
 
+import java.util.Arrays;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
@@ -21,9 +22,9 @@ public class Envelope {
     private final GeometryBuilder factory = new GeometryBuilder();
     private final String crs;
 
-    private static String ROUTE;
-    private static String ONTOLOGY_URI;
-    private static String ENVELOPE_GRAPH_URI;
+    private static String route;
+    private static String ontologyUri;
+    private String cityobjectURI;
 
     private KnowledgeBaseClientInterface kgClient;
 
@@ -38,16 +39,9 @@ public class Envelope {
     private void readConfig() {
         ResourceBundle config = ResourceBundle.getBundle("config");
 
-        ONTOLOGY_URI = config.getString("uri.ontology.ontocitygml");
-        ROUTE = config.getString("uri.route.envelope");
-
-        String schema = config.getString("uri.ckg.schema");
-        String host = config.getString("uri.ckg.host.envelope");
-        String port = config.getString("uri.ckg.port.envelope");
-        String mainUrl = config.getString("uri.ckg.mainUrl.envelope");
-        String namespace = config.getString("uri.ckg.namespace.envelope");
-        String cityobject = config.getString("uri.ckg.cityobject");
-        ENVELOPE_GRAPH_URI = schema + host + ":" + port + mainUrl + namespace + cityobject;
+        ontologyUri = config.getString("uri.ontology.ontocitygml");
+        route = config.getString("uri.route");
+        cityobjectURI = config.getString("uri.ckg.cityobject");
     }
 
     /**
@@ -57,10 +51,12 @@ public class Envelope {
      */
     private Query getEnvelopeQuery(String uriString) {
 
+        String envelopeGraphUri = getEnvelopeGraphUri(uriString);
+
         SelectBuilder sb = new SelectBuilder()
-                .addPrefix( "ocgml",  ONTOLOGY_URI )
+                .addPrefix( "ocgml", ontologyUri)
                 .addVar( "?Envelope" )
-                .addGraph(NodeFactory.createURI(ENVELOPE_GRAPH_URI), "?s", "ocgml:EnvelopeType", "?Envelope");
+                .addGraph(NodeFactory.createURI(envelopeGraphUri), "?s", "ocgml:EnvelopeType", "?Envelope");
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
 
         return sb.build();
@@ -71,9 +67,20 @@ public class Envelope {
      */
     private void setKGClient(){
 
-        this.kgClient = KGRouter.getKnowledgeBaseClient(Envelope.ROUTE,
+        this.kgClient = KGRouter.getKnowledgeBaseClient(Envelope.route,
                 true,
                 false);
+    }
+
+    /**
+    * returns the graph Uri of the city object.
+    * @param uriString city object id
+    * @return graph uri of the city object.
+    */
+    private String getEnvelopeGraphUri(String uriString) {
+      String[] splitUri = uriString.split("/");
+      String namespace = String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length-2));
+      return namespace + cityobjectURI;
     }
 
     /**
