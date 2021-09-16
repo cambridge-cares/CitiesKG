@@ -24,23 +24,79 @@ public class DistanceAgentTest extends TestCase {
     @Mock
     KnowledgeBaseClientInterface kgClientMock = Mockito.mock(RemoteKnowledgeBaseClient.class);
 
-    public void testGetDistanceQuery() {
+    public void testGetDistanceQuery()
+        throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         DistanceAgent distanceAgent = new DistanceAgent();
         String uri1 = "http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/";
         String uri2 = "http://localhost/berlin/cityobject/UUID_6cbfb096-5116-4962-9162-48b736768cd4/";
 
-        try {
-            assertNotNull(distanceAgent.getClass().getDeclaredMethod("getDistanceQuery", String.class, String.class));
-            Method getDistanceQuery = distanceAgent.getClass().getDeclaredMethod("getDistanceQuery", String.class, String.class);
-            getDistanceQuery.setAccessible(true);
 
-            Query q = (Query) getDistanceQuery.invoke(distanceAgent, uri1, uri2);
-            assertTrue(q.toString().contains("<http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/>"));
-            assertTrue(q.toString().contains("<http://localhost/berlin/cityobject/UUID_6cbfb096-5116-4962-9162-48b736768cd4/>"));
+        assertNotNull(distanceAgent.getClass().getDeclaredMethod("getDistanceQuery", String.class, String.class));
+        Method getDistanceQuery = distanceAgent.getClass().getDeclaredMethod("getDistanceQuery", String.class, String.class);
+        getDistanceQuery.setAccessible(true);
+
+        Query q = (Query) getDistanceQuery.invoke(distanceAgent, uri1, uri2);
+        assertTrue(q.toString().contains("<http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/>"));
+        assertTrue(q.toString().contains("<http://localhost/berlin/cityobject/UUID_6cbfb096-5116-4962-9162-48b736768cd4/>"));
+
+    }
+
+    public void testGetNamespace()
+        throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        DistanceAgent distanceAgent = new DistanceAgent();
+        Method getNamespace = distanceAgent.getClass().getDeclaredMethod("getNamespace", String.class);
+        getNamespace.setAccessible(true);
+
+        //test whether Uri is split  and assembled into a namespace correctly.
+        String uri = "http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/";
+        assertEquals("http://localhost/berlin", getNamespace.invoke(distanceAgent, uri));
+
+        //test whether Uri is split  and assembled into a namespace correctly.
+        String uri2 = "http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3";
+        assertEquals("http://localhost/berlin", getNamespace.invoke(distanceAgent, uri2));
+    }
+
+    public void testGetObjectSRSQuery()
+        throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+
+        DistanceAgent distanceAgent = new DistanceAgent();
+        String uri1 = "http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/";
+
+        assertNotNull(distanceAgent.getClass().getDeclaredMethod("getObjectSRSQuery", String.class));
+        Method getObjectSRSQuery = distanceAgent.getClass().getDeclaredMethod("getObjectSRSQuery", String.class);
+        getObjectSRSQuery.setAccessible(true);
+        Query q = (Query) getObjectSRSQuery.invoke(distanceAgent, uri1);
+        assertTrue(q.toString().contains("<http://localhost/berlin/sparql>"));
+    }
+
+    public void testGetObjectSrs() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+
+        DistanceAgent distanceAgent = new DistanceAgent();
+        String uri = "http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/";
+
+        //test with mocked kgClient and kgRouter when it returns a string.
+        String srs = "[{'srsName': 'EPSG:3414'}]";
+        when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(srs);
+        try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
+            kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
+                .thenReturn(kgClientMock);
+            assertNotNull(distanceAgent.getClass().getDeclaredMethod("getObjectSrs", String.class));
+            Method getObjectSrs = distanceAgent.getClass().getDeclaredMethod("getObjectSrs", String.class);
+            getObjectSrs.setAccessible(true);
+            assertEquals("EPSG:3414", getObjectSrs.invoke(distanceAgent,uri));
         }
-        catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-            fail();
+
+        //test with mocked kgClient and kgRouter when there is no string to return.
+        String srsEmpty = "[]";
+        when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(srsEmpty);
+        try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
+            kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
+                .thenReturn(kgClientMock);
+            Method getObjectSrs = distanceAgent.getClass().getDeclaredMethod("getObjectSrs", String.class);
+            getObjectSrs.setAccessible(true);
+
+            assertEquals("EPSG:4236",  getObjectSrs.invoke(distanceAgent,uri));
         }
     }
 
@@ -82,7 +138,7 @@ public class DistanceAgentTest extends TestCase {
 
         try (MockedConstruction<Envelope> ignored = mockConstruction(Envelope.class,
                 (mock, context)-> when(mock.getEnvelopeString(uri)).thenReturn(mockedEnvelopeString))) {
-            Envelope envelope = distanceAgent.getEnvelope(uri);
+            Envelope envelope = distanceAgent.getEnvelope(uri, "EPSG:25833");
             Mockito.verify(envelope).getEnvelopeString(uri);
             Mockito.verify(envelope).extractEnvelopePoints(mockedEnvelopeString);
         }

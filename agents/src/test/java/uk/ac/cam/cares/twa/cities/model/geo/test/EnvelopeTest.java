@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.model.geo.test;
 
+import java.lang.reflect.Field;
 import junit.framework.TestCase;
 import org.apache.jena.query.Query;
 import org.json.JSONException;
@@ -39,10 +40,26 @@ public class EnvelopeTest extends TestCase {
         }
     }
 
+    public void testGetEnvelopeGraphUri()
+        throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
+
+        Envelope envelope = new Envelope("EPSG:4236");
+
+        Method getEnvelopeGraphUri = envelope.getClass().getDeclaredMethod("getEnvelopeGraphUri", String.class);
+        getEnvelopeGraphUri.setAccessible(true);
+
+        Field cityObject = envelope.getClass().getDeclaredField("cityobjectURI");
+        cityObject.setAccessible(true);
+        cityObject.set(envelope, "/sparql/cityobject/");
+        //test whether Uri is split  and assembled into a namespace correctly.
+        String uri = "http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/";
+        assertEquals("http://localhost/berlin/sparql/cityobject/", getEnvelopeGraphUri.invoke(envelope, uri));
+    }
+
     public void testGetEnvelopeString(){
 
         Envelope envelope = new Envelope("EPSG:4326");
-
+        String uri = "http://localhost/berlin/cityobject/UUID_89f9a49d-e53b-4f59-beb5-748371d58c25/";
         //test with mocked kgClient and kgRouter when it returns a string.
         String json = "[{'Envelope': '1#2#0'}]";
         Mockito.when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(json);
@@ -50,7 +67,7 @@ public class EnvelopeTest extends TestCase {
         try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
             kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
                     .thenReturn(kgClientMock);
-            assertEquals("1#2#0", envelope.getEnvelopeString("test_uri"));
+            assertEquals("1#2#0", envelope.getEnvelopeString(uri));
         }
 
         //test with mocked kgClient and kgRouter when there is no string to return.
@@ -61,7 +78,7 @@ public class EnvelopeTest extends TestCase {
             kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
                     .thenReturn(kgClientMock);
             try {
-                envelope.getEnvelopeString("test_uri");
+                envelope.getEnvelopeString(uri);
                 Assert.fail();
             }
             catch (JSONException error){
