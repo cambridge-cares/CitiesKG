@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Written by 3D City Database Importer/Exporter, version "4.2.3" -->
+<!-- Chair of Geoinformatics, Technical University of Munich -->
+<kml xmlns:xal="urn:oasis:names:tc:ciq:xsdschema:xAL:2.0" xmlns="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:gx="http://www.google.com/kml/ext/2.2">
+  <Document>
+    <name>test</name>
+    <open>true</open>
+    <Placemark id="KMLExtr_DEB_LOD2_UUID_87fd0155-640d-4f63-8bee-e6869170d266">
+      <name>http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/DEB_LOD2_UUID_87fd0155-640d-4f63-8bee-e6869170d266/</name>
+      <styleUrl>#extrudedNormal</styleUrl>
+      <MultiGeometry>
+        <Polygon>
+          <extrude>true</extrude>
+          <tessellate>true</tessellate>
+          <altitudeMode>relativeToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>13.310044635470812,52.5474169700921,4.589999999999996 13.310030395948663,52.5473062117648,4.589999999999996 13.31002775029163,52.547285629242566,4.589999999999996 13.310178158938001,52.547278300113106,4.589999999999996 13.310194915350738,52.547409549188934,4.589999999999996 13.310044635470812,52.5474169700921,4.589999999999996</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </MultiGeometry>
+    </Placemark>
+    <Placemark id="KMLExtr_BLDG_0003000000a50c90">
+      <name>http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/BLDG_0003000000a50c90/</name>
+      <styleUrl>#extrudedNormal</styleUrl>
+      <MultiGeometry>
+        <Polygon>
+          <extrude>true</extrude>
+          <tessellate>true</tessellate>
+          <altitudeMode>relativeToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>13.319748423762235,52.54057669969226,10.63020548374 13.320233651201907,52.54041497455931,10.63020548374 13.319920259491415,52.540066056632156,10.63020548374 13.319988735111428,52.54004291492063,10.63020548374 13.32005721065936,52.540019773169384,10.63020548374 13.320370429424631,52.54036938613212,10.63020548374 13.320466604916737,52.54033733051634,10.63020548374 13.320503973508796,52.54037904059346,10.63020548374 13.32054134217151,52.54042075065869,10.63020548374 13.319823306656556,52.54066007142353,10.63020548374 13.319785865174007,52.54061838556393,10.63020548374 13.319748423762235,52.54057669969226,10.63020548374</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </MultiGeometry>
+    </Placemark>
+    <Placemark id="KMLExtr_BLDG_000300000009599c">
+      <name>http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/BLDG_000300000009599c/</name>
+      <styleUrl>#extrudedNormal</styleUrl>
+      <MultiGeometry>
+        <Polygon>
+          <extrude>true</extrude>
+          <tessellate>true</tessellate>
+          <altitudeMode>relativeToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>13.32561137333304,52.54081869063748,6.108779430389404 13.325630236592307,52.5408320286013,6.108779430389404 13.325652870141601,52.54082024421091,6.108779430389404 13.325702181577578,52.54085509472408,6.108779430389404 13.325680022504118,52.540867214916354,6.108779430389404 13.32569856243763,52.54088048074788,6.108779430389404 13.325620913250551,52.5409219358029,6.108779430389404 13.325534091832179,52.54086031659601,6.108779430389404 13.32561137333304,52.54081869063748,6.108779430389404</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </MultiGeometry>
+    </Placemark>
+    <Style id="extrudedNormal">
+      <LineStyle>
+        <color>C83366FF</color>
+        <width>1.5</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>C800CCFF</color>
+      </PolyStyle>
+      <BalloonStyle>
+        <text>$[description]</text>
+      </BalloonStyle>
+    </Style>
+  </Document>
+</kml>
