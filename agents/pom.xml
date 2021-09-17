@@ -7,6 +7,10 @@
     <groupId>uk.ac.cam.cares.twa.cities.agents</groupId>
     <artifactId>agents</artifactId>
     <version>0.1.0</version>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
 
     <packaging>war</packaging>
 
