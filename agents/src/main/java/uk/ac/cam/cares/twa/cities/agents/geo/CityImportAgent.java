@@ -23,7 +23,6 @@ import java.util.concurrent.LinkedBlockingDeque;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Server;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
@@ -208,10 +207,12 @@ public class CityImportAgent extends JPSAgent {
    */
   private String importFiles(File importDir) {
     StringBuilder imported = new StringBuilder();
-    File[] dirContent = new File[0];
-    if (importDir == this.importDir) {
-      dirContent = importDir.listFiles();
+
+    if (importDir != this.importDir) {
+      this.importDir = importDir;
     }
+
+    File[] dirContent = importDir.listFiles();
 
     if (Objects.requireNonNull(dirContent).length > 0) {
       for (File file : dirContent) {
@@ -374,11 +375,6 @@ public class CityImportAgent extends JPSAgent {
               .get(nqDir.getParent() + FS +nqDir.getName() + NquadsExporterTask.EXT_FILE_ZIP);
           JkPathTree.of(dirToZip).zipTo(zipFile);
           archiveFilename = zipFile.toString();
-          try {
-            FileUtils.deleteDirectory(nqDir);
-          } catch (IOException e) {
-            throw new JPSRuntimeException(e);
-          }
       }
     }
 
