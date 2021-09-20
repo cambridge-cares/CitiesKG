@@ -1,4 +1,4 @@
-POST http://localhost:8081/agents/export/kml
+POST http://localhost:8080/agents/export/kml
 Content-Type: application/json
 
 {"gmlid":  "BLDG_000300000001c242"}
