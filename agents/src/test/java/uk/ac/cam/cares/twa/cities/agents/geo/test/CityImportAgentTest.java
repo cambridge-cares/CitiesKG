@@ -7,6 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -387,12 +388,12 @@ public class CityImportAgentTest extends TestCase {
 
   public void testImportFiles() {
     String fs = System.getProperty("file.separator");
+    //fs = "/";
     CityImportAgent agent = new CityImportAgent();
     Field targetUrl = null;
     Field importDir = null;
     Method importFiles = null;
-    File testFile = new File(
-        Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
+    File testFile = new File(Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
     File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
     File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
 
