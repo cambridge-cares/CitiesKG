@@ -1,6 +1,14 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.UUID;
+import javax.servlet.annotation.WebServlet;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.HttpMethod;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
@@ -11,26 +19,18 @@ import org.apache.jena.update.UpdateRequest;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.operation.distance3d.Distance3DOp;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
-import org.json.JSONObject;
-import javax.ws.rs.BadRequestException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.UUID;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.jps.base.query.KGRouter;
 import uk.ac.cam.cares.twa.cities.model.geo.Envelope;
-import org.locationtech.jts.operation.distance3d.Distance3DOp;
-import javax.servlet.annotation.WebServlet;
-import javax.ws.rs.HttpMethod;
 
 /**
  * DistanceAgent class retrieves existing distance between the centroids of two objects envelopes
@@ -51,11 +51,11 @@ public class DistanceAgent extends JPSAgent {
   private static final String OWL_SCHEMA = "http://www.w3.org/2002/07/owl#";
   private static final String DISTANCE_GRAPH = "/distance/";
   public static final String DEFAULT_SRS = "EPSG:4236";
+  public static final String DEFAULT_TARGET_SRS = "EPSG:4236";
 
   private String ocgmlUri;
   private KnowledgeBaseClientInterface kgClient;
   private static String route;
-  private String targetCRSstring;
   private String distanceGraphUri = "http://localhost" + DISTANCE_GRAPH;
 
   public DistanceAgent() {
@@ -86,11 +86,13 @@ public class DistanceAgent extends JPSAgent {
         double distance = getDistance(firstObjectUri, secondObjectUri);
 
         if (distance < 0) {
-          String firstSrs = getObjectSrs(firstObjectUri);
-          String secondSrs = getObjectSrs(secondObjectUri);
+          String firstSrs = getObjectSrs(firstObjectUri, true);
+          String secondSrs = getObjectSrs(secondObjectUri, true);
+          String targetSrs = getObjectSrs(firstObjectUri, false);
           distance =
               computeDistance(
-                  getEnvelope(firstObjectUri, firstSrs), getEnvelope(secondObjectUri, secondSrs));
+                  getEnvelope(firstObjectUri, firstSrs), getEnvelope(secondObjectUri, secondSrs),
+                  targetSrs);
           setDistance(firstObjectUri, secondObjectUri, distance);
         }
         distances.add(distance);
@@ -122,12 +124,13 @@ public class DistanceAgent extends JPSAgent {
     throw new BadRequestException();
   }
 
-  /** reads variable values relevant for DistanceAgent class from config.properties file. */
+  /**
+   * reads variable values relevant for DistanceAgent class from config.properties file.
+   */
   private void readConfig() {
     ResourceBundle config = ResourceBundle.getBundle("config");
     route = config.getString("uri.route");
     ocgmlUri = config.getString("uri.ontology.ontocitygml");
-    targetCRSstring = config.getString("ckg.target.crs");
   }
 
   /**
@@ -212,12 +215,19 @@ public class DistanceAgent extends JPSAgent {
    * @param uriString city object Uri as string.
    * @return sparql query.
    */
-  private Query getObjectSRSQuery(String uriString) {
+  private Query getObjectSRSQuery(String uriString, boolean source) {
+    String predicate;
+    if(source){
+      predicate = "ocgml:srsname";
+    }
+    else{
+      predicate = "ocgml:metricSrsName";
+    }
     SelectBuilder sb =
         new SelectBuilder()
             .addPrefix("ocgml", ocgmlUri)
             .addVar("?srsName")
-            .addWhere("?s", "ocgml:srsname", "?srsName");
+            .addWhere("?s", predicate, "?srsName");
     sb.setVar(Var.alloc("s"), NodeFactory.createURI(getNamespace(uriString) + "/sparql"));
     return sb.build();
   }
@@ -228,11 +238,17 @@ public class DistanceAgent extends JPSAgent {
    * @param uriString object's Uri as string.
    * @return object's namespace srs.
    */
-  private String getObjectSrs(String uriString) {
-    String srs = DEFAULT_SRS;
+  private String getObjectSrs(String uriString, boolean source) {
+    String srs;
+    if (source){
+      srs = DEFAULT_SRS;
+    }
+    else{
+      srs = DEFAULT_TARGET_SRS;
+    }
     setKGClient(true);
 
-    Query q = getObjectSRSQuery(uriString);
+    Query q = getObjectSRSQuery(uriString, source);
     String queryResultString = kgClient.execute(q.toString());
     JSONArray queryResult = new JSONArray(queryResultString);
 
@@ -263,14 +279,14 @@ public class DistanceAgent extends JPSAgent {
    * @param envelope2 city object 2 envelope
    * @return distance
    */
-  public double computeDistance(Envelope envelope1, Envelope envelope2) {
+  public double computeDistance(Envelope envelope1, Envelope envelope2, String targetCrs) {
 
     Point centroid1 = envelope1.getCentroid();
     Point centroid2 = envelope2.getCentroid();
     String crs1 = envelope1.getCRS();
     String crs2 = envelope2.getCRS();
-    centroid1 = setUniformCRS(centroid1, crs1);
-    centroid2 = setUniformCRS(centroid2, crs2);
+    centroid1 = setUniformCRS(centroid1, crs1, targetCrs);
+    centroid2 = setUniformCRS(centroid2, crs2, targetCrs);
 
     return Distance3DOp.distance(centroid1, centroid2);
   }
@@ -282,7 +298,7 @@ public class DistanceAgent extends JPSAgent {
    * @param sourceCRSstring source CRS
    * @return points
    */
-  private Point setUniformCRS(Point point, String sourceCRSstring) {
+  private Point setUniformCRS(Point point, String sourceCRSstring, String targetCRSstring) {
 
     try {
       CoordinateReferenceSystem sourceCRS = CRS.decode(sourceCRSstring);
