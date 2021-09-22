@@ -388,7 +388,6 @@ public class CityImportAgentTest extends TestCase {
 
   public void testImportFiles() {
     String fs = System.getProperty("file.separator");
-    //fs = "/";
     CityImportAgent agent = new CityImportAgent();
     Field targetUrl = null;
     Field importDir = null;
