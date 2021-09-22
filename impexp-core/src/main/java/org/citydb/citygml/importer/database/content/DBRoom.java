@@ -27,18 +27,23 @@
  */
 package org.citydb.citygml.importer.database.content;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
 import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
 import org.citydb.config.Config;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
+import org.citydb.util.CoreConstants;
 import org.citygml4j.model.citygml.building.AbstractBoundarySurface;
 import org.citygml4j.model.citygml.building.BoundarySurfaceProperty;
 import org.citygml4j.model.citygml.building.BuildingFurniture;
@@ -52,6 +57,7 @@ import org.citygml4j.model.gml.geometry.primitives.SolidProperty;
 
 public class DBRoom implements DBImporter {
 	private final CityGMLImportManager importer;
+	private final Connection batchConn;
 
 	private PreparedStatement psRoom;
 	private DBCityObject cityObjectImporter;
@@ -64,17 +70,37 @@ public class DBRoom implements DBImporter {
 	private boolean hasObjectClassIdColumn;
 	private int batchCounter;
 
+	private boolean affineTransformation;
+	private int nullGeometryType;
+	private String nullGeometryTypeName;
+
+	private String PREFIX_ONTOCITYGML;
+	private String IRI_GRAPH_BASE;
+	private String IRI_GRAPH_OBJECT;
+	private static final String IRI_GRAPH_OBJECT_REL = "room/";
+
 	public DBRoom(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.importer = importer;
+		this.batchConn = batchConn;
 
+		affineTransformation = config.getProject().getImporter().getAffineTransformation().isEnabled();
+		nullGeometryType = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType();
+		nullGeometryTypeName = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName();
 		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
 		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
 
-		String stmt = "insert into " + schema + ".room (id, class, class_codespace, function, function_codespace, usage, usage_codespace, building_id, " +
-				"lod4_multi_surface_id, lod4_solid_id" +
-				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
-				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
-				(hasObjectClassIdColumn ? ", ?)" : ")");
+		String stmt = "insert into " + schema + ".room (id, objectclass_id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
+				"building_id, lod4_multi_surface_id, lod4_solid_id)" +
+				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+		// Modification for SPARQL
+		if (importer.isBlazegraph()) {
+			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
+			IRI_GRAPH_BASE = importer.getGraphBaseIri();
+			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
+			stmt = getSPARQLStatement();
+		}
+
 		psRoom = batchConn.prepareStatement(stmt);
 
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
@@ -83,6 +109,29 @@ public class DBRoom implements DBImporter {
 		buildingFurnitureImporter = importer.getImporter(DBBuildingFurniture.class);
 		buildingInstallationImporter = importer.getImporter(DBBuildingInstallation.class);
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	private String getSPARQLStatement(){
+		String param = "  ?;";
+		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +  // add BASE by SYL
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? " + SchemaManagerAdapter.ONTO_ID + param +
+				SchemaManagerAdapter.ONTO_CLASS + param +
+				SchemaManagerAdapter.ONTO_CLASS_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_FUNCTION + param +
+				SchemaManagerAdapter.ONTO_FUNCTION_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_USAGE + param +
+				SchemaManagerAdapter.ONTO_USAGE_CODESPACE + param +
+				SchemaManagerAdapter.ONTO_BUILDING_ID + param +
+				SchemaManagerAdapter.ONTO_LOD4_MULTI_SURFACE_ID + param +
+				SchemaManagerAdapter.ONTO_LOD4_SOLID_ID + param +
+				(hasObjectClassIdColumn ? SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param : "") +
+				".}" +
+				"}";
+
+		return stmt;
 	}
 
 	protected long doImport(Room room) throws CityGMLImportException, SQLException {
@@ -97,15 +146,37 @@ public class DBRoom implements DBImporter {
 		// import city object information
 		long roomId = cityObjectImporter.doImport(room, featureType);
 
+		URL objectURL = null;
+		int index = 0;
+
 		// import room information
-		// primary id
-		psRoom.setLong(1, roomId);
+		if (importer.isBlazegraph()) {
+			try {
+				String uuid = room.getId();
+				if (uuid.isEmpty()) {
+					uuid = importer.generateNewGmlId();
+				}
+				objectURL = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+			} catch (MalformedURLException e) {
+				psRoom.setObject(++index, NodeFactory.createBlankNode());
+			}
+			psRoom.setURL(++index, objectURL);
+			// primary id
+			psRoom.setURL(++index, objectURL);
+			room.setLocalProperty(CoreConstants.OBJECT_URIID, objectURL);
+		} else {
+			// primary id
+			psRoom.setLong(++index, roomId);
+		}
 
 		// bldg:class
 		if (room.isSetClazz() && room.getClazz().isSetValue()) {
-			psRoom.setString(2, room.getClazz().getValue());
-			psRoom.setString(3, room.getClazz().getCodeSpace());
-		} else {
+			psRoom.setString(++index, room.getClazz().getValue());
+			psRoom.setString(++index, room.getClazz().getCodeSpace());
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psRoom, ++index);
+			setBlankNode(psRoom, ++index);
+		}else {
 			psRoom.setNull(2, Types.VARCHAR);
 			psRoom.setNull(3, Types.VARCHAR);
 		}
@@ -113,9 +184,12 @@ public class DBRoom implements DBImporter {
 		// bldg:function
 		if (room.isSetFunction()) {
 			valueJoiner.join(room.getFunction(), Code::getValue, Code::getCodeSpace);
-			psRoom.setString(4, valueJoiner.result(0));
-			psRoom.setString(5, valueJoiner.result(1));
-		} else {
+			psRoom.setString(++index, valueJoiner.result(0));
+			psRoom.setString(++index, valueJoiner.result(1));
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psRoom, ++index);
+			setBlankNode(psRoom, ++index);
+		}else {
 			psRoom.setNull(4, Types.VARCHAR);
 			psRoom.setNull(5, Types.VARCHAR);
 		}
@@ -123,16 +197,21 @@ public class DBRoom implements DBImporter {
 		// bldg:usage
 		if (room.isSetUsage()) {
 			valueJoiner.join(room.getUsage(), Code::getValue, Code::getCodeSpace);
-			psRoom.setString(6, valueJoiner.result(0));
-			psRoom.setString(7, valueJoiner.result(1));
-		} else {
+			psRoom.setString(++index, valueJoiner.result(0));
+			psRoom.setString(++index, valueJoiner.result(1));
+		} else if (importer.isBlazegraph()) {
+			setBlankNode(psRoom, ++index);
+			setBlankNode(psRoom, ++index);
+		}else {
 			psRoom.setNull(6, Types.VARCHAR);
 			psRoom.setNull(7, Types.VARCHAR);
 		}
 
 		// parent building id
 		if (buildingId != 0)
-			psRoom.setLong(8, buildingId);
+			psRoom.setLong(++index, buildingId);
+		else if (importer.isBlazegraph())
+			setBlankNode(psRoom, ++index);
 		else
 			psRoom.setNull(8, Types.NULL);
 
@@ -157,7 +236,9 @@ public class DBRoom implements DBImporter {
 		} 
 
 		if (geometryId != 0)
-			psRoom.setLong(9, geometryId);
+			psRoom.setLong(++index, geometryId);
+		else if (importer.isBlazegraph())
+			setBlankNode(psRoom, ++index);
 		else
 			psRoom.setNull(9, Types.NULL);
 
@@ -182,13 +263,15 @@ public class DBRoom implements DBImporter {
 		} 
 
 		if (geometryId != 0)
-			psRoom.setLong(10, geometryId);
+			psRoom.setLong(++index, geometryId);
+		else if (importer.isBlazegraph())
+			setBlankNode(psRoom, ++index);
 		else
 			psRoom.setNull(10, Types.NULL);
 
 		// objectclass id
 		if (hasObjectClassIdColumn)
-			psRoom.setLong(11, featureType.getObjectClassId());
+			psRoom.setLong(++index, featureType.getObjectClassId());
 
 		psRoom.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
@@ -275,6 +358,13 @@ public class DBRoom implements DBImporter {
 	@Override
 	public void close() throws CityGMLImportException, SQLException {
 		psRoom.close();
+	}
+
+	/**
+	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
+	 */
+	private void setBlankNode(PreparedStatement smt, int index) throws CityGMLImportException {
+		importer.setBlankNode(smt, index);
 	}
 
 }
