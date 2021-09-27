@@ -25,8 +25,10 @@ public class Envelope {
     private static String route;
     private static String ontologyUri;
     private String cityobjectURI;
-    private static final String envelopeObject = "Envelope";
-    private static final String ocgmlPrefix = "ocgml";
+    private static final String ENVELOPE_OBJECT = "Envelope";
+    private static final String OCGML_PREFIX = "ocgml";
+    private static final String QST_MARK = "?";
+    private static final String COLON = ":";
 
     private KnowledgeBaseClientInterface kgClient;
 
@@ -56,9 +58,9 @@ public class Envelope {
         String envelopeGraphUri = getEnvelopeGraphUri(uriString);
 
         SelectBuilder sb = new SelectBuilder()
-                .addPrefix( ocgmlPrefix, ontologyUri)
-                .addVar( "?" + envelopeObject )
-                .addGraph(NodeFactory.createURI(envelopeGraphUri), "?s", ocgmlPrefix + ":" + "EnvelopeType", "?" + envelopeObject);
+                .addPrefix(OCGML_PREFIX, ontologyUri)
+                .addVar( QST_MARK + ENVELOPE_OBJECT)
+                .addGraph(NodeFactory.createURI(envelopeGraphUri), QST_MARK +"s", OCGML_PREFIX + COLON + "EnvelopeType", QST_MARK + ENVELOPE_OBJECT);
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
 
         return sb.build();
@@ -100,7 +102,7 @@ public class Envelope {
         String queryResultString = kgClient.execute(q.toString());
 
         JSONArray queryResult = new JSONArray(queryResultString);
-        envelopeString = queryResult.getJSONObject(0).get(envelopeObject).toString();
+        envelopeString = queryResult.getJSONObject(0).get(ENVELOPE_OBJECT).toString();
 
         return envelopeString;
     }
