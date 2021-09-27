@@ -25,6 +25,8 @@ public class Envelope {
     private static String route;
     private static String ontologyUri;
     private String cityobjectURI;
+    private static final String envelopeObject = "Envelope";
+    private static final String ocgmlPrefix = "ocgml";
 
     private KnowledgeBaseClientInterface kgClient;
 
@@ -54,9 +56,9 @@ public class Envelope {
         String envelopeGraphUri = getEnvelopeGraphUri(uriString);
 
         SelectBuilder sb = new SelectBuilder()
-                .addPrefix( "ocgml", ontologyUri)
-                .addVar( "?Envelope" )
-                .addGraph(NodeFactory.createURI(envelopeGraphUri), "?s", "ocgml:EnvelopeType", "?Envelope");
+                .addPrefix( ocgmlPrefix, ontologyUri)
+                .addVar( "?" + envelopeObject )
+                .addGraph(NodeFactory.createURI(envelopeGraphUri), "?s", ocgmlPrefix + ":" + "EnvelopeType", "?" + envelopeObject);
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
 
         return sb.build();
@@ -98,7 +100,7 @@ public class Envelope {
         String queryResultString = kgClient.execute(q.toString());
 
         JSONArray queryResult = new JSONArray(queryResultString);
-        envelopeString = queryResult.getJSONObject(0).get("Envelope").toString();
+        envelopeString = queryResult.getJSONObject(0).get(envelopeObject).toString();
 
         return envelopeString;
     }

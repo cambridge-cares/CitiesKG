@@ -9,6 +9,7 @@ import java.util.UUID;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
+
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
@@ -43,20 +44,36 @@ public class DistanceAgent extends JPSAgent {
   public static final String URI_DISTANCE = "/distance";
   public static final String KEY_REQ_METHOD = "method";
   public static final String KEY_IRIS = "iris";
+  public static final String KEY_DISTANCES = "distances";
 
-  private static final String UNIT_ONTOLOGY =
-      "http://www.ontology-of-units-of-measure.org/resource/om-2/";
   private static final String RDF_PREFIX = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
   private static final String XML_SCHEMA = "http://www.w3.org/2001/XMLSchema#";
   private static final String OWL_SCHEMA = "http://www.w3.org/2002/07/owl#";
   private static final String DISTANCE_GRAPH = "/distance/";
   public static final String DEFAULT_SRS = "EPSG:4236";
-  public static final String DEFAULT_TARGET_SRS = "EPSG:4236";
+  public static final String DEFAULT_TARGET_SRS = "EPSG:24500";
 
+  // Repeating variables in SPARQL queries
+  private static final String distanceUri = "distanceUri";
+  private static final String omPrefix = "om";
+  private static final String phenomenonPredicate = "hasPhenomenon";
+  private static final String distanceObject = "distance";
+  private static final String distanceValueUri = "valueUri";
+  private static final String ocgmlPrefix = "ocgml";
+  private static final String srsPredicate = "srsname";
+  private static final String metricSrsPredicate = "metricSrsName";
+  private static final String srsNameObject = "srsName";
+  private static final String graphName = "graph";
+  private static final String rdfPredicate = "rdf:type";
+  private static final String owlClass =  "owl:NamedIndividual";
+  private static final String numericPredicate = "hasNumericValue";
+  private static final String valuePredicate = "hasValue";
+
+  // Variables fetched from config.properties file.
   private String ocgmlUri;
+  private static String unitOntology;
   private KnowledgeBaseClientInterface kgClient;
   private static String route;
-  private String distanceGraphUri = "http://localhost" + DISTANCE_GRAPH;
 
   public DistanceAgent() {
     super();
@@ -82,7 +99,6 @@ public class DistanceAgent extends JPSAgent {
       for (int secondURI = firstURI + 1; secondURI < uris.size(); secondURI++) {
         String secondObjectUri = uris.get(secondURI);
 
-        distanceGraphUri = getDistanceGraphUri(firstObjectUri);
         double distance = getDistance(firstObjectUri, secondObjectUri);
 
         if (distance < 0) {
@@ -91,14 +107,15 @@ public class DistanceAgent extends JPSAgent {
           String targetSrs = getObjectSrs(firstObjectUri, false);
           distance =
               computeDistance(
-                  getEnvelope(firstObjectUri, firstSrs), getEnvelope(secondObjectUri, secondSrs),
+                  getEnvelope(firstObjectUri, firstSrs),
+                  getEnvelope(secondObjectUri, secondSrs),
                   targetSrs);
           setDistance(firstObjectUri, secondObjectUri, distance);
         }
         distances.add(distance);
       }
     }
-    requestParams.append("distances", distances);
+    requestParams.append(KEY_DISTANCES, distances);
     return requestParams;
   }
 
@@ -124,13 +141,12 @@ public class DistanceAgent extends JPSAgent {
     throw new BadRequestException();
   }
 
-  /**
-   * reads variable values relevant for DistanceAgent class from config.properties file.
-   */
+  /** reads variable values relevant for DistanceAgent class from config.properties file. */
   private void readConfig() {
     ResourceBundle config = ResourceBundle.getBundle("config");
     route = config.getString("uri.route");
     ocgmlUri = config.getString("uri.ontology.ontocitygml");
+    unitOntology = config.getString("uri.ontology.om");
   }
 
   /**
@@ -143,15 +159,14 @@ public class DistanceAgent extends JPSAgent {
   private Query getDistanceQuery(String firstUriString, String secondUriString) {
     WhereBuilder wb =
         new WhereBuilder()
-            .addPrefix("om", UNIT_ONTOLOGY)
-            .addWhere("?distanceUri", "om:hasPhenomenon", NodeFactory.createURI(firstUriString))
-            .addWhere("?distanceUri", "om:hasPhenomenon", NodeFactory.createURI(secondUriString))
-            .addWhere("?distanceUri", "om:hasValue", "?valueUri")
-            .addWhere("?valueUri", "om:hasNumericValue", "?distance");
-    SelectBuilder sb =
-        new SelectBuilder()
-            .addVar("?distance")
-            .addGraph(NodeFactory.createURI(distanceGraphUri), wb);
+            .addPrefix(omPrefix, unitOntology)
+            .addWhere("?" + distanceUri, omPrefix + ":" + phenomenonPredicate, NodeFactory.createURI(firstUriString))
+            .addWhere("?" + distanceUri, omPrefix + ":" + phenomenonPredicate, NodeFactory.createURI(secondUriString))
+            .addWhere("?" + distanceUri, omPrefix + ":" + valuePredicate, "?" + distanceValueUri)
+            .addWhere("?" + distanceValueUri, omPrefix + ":" + numericPredicate, "?" + distanceObject);
+    SelectBuilder sb = new SelectBuilder()
+            .addVar("?" + distanceObject)
+            .addGraph(NodeFactory.createURI(getDistanceGraphUri(firstUriString)), wb);
     return sb.build();
   }
 
@@ -194,7 +209,7 @@ public class DistanceAgent extends JPSAgent {
     JSONArray queryResult = new JSONArray(queryResultString);
 
     if (!queryResult.isEmpty()) {
-      distance = Double.parseDouble(queryResult.getJSONObject(0).get("distance").toString());
+      distance = Double.parseDouble(queryResult.getJSONObject(0).get(distanceObject).toString());
     }
     return distance;
   }
@@ -217,18 +232,16 @@ public class DistanceAgent extends JPSAgent {
    */
   private Query getObjectSRSQuery(String uriString, boolean source) {
     String predicate;
-    if(source){
-      predicate = "ocgml:srsname";
-    }
-    else{
-      predicate = "ocgml:metricSrsName";
-    }
+    if (source) { predicate = ocgmlPrefix + ":" + srsPredicate; }
+    else { predicate = ocgmlPrefix + ":" + metricSrsPredicate; }
+
     SelectBuilder sb =
         new SelectBuilder()
-            .addPrefix("ocgml", ocgmlUri)
-            .addVar("?srsName")
-            .addWhere("?s", predicate, "?srsName");
+            .addPrefix(ocgmlPrefix, ocgmlUri)
+            .addVar("?" + srsNameObject)
+            .addWhere("?s", predicate, "?" + srsNameObject);
     sb.setVar(Var.alloc("s"), NodeFactory.createURI(getNamespace(uriString) + "/sparql"));
+
     return sb.build();
   }
 
@@ -240,12 +253,9 @@ public class DistanceAgent extends JPSAgent {
    */
   private String getObjectSrs(String uriString, boolean source) {
     String srs;
-    if (source){
-      srs = DEFAULT_SRS;
-    }
-    else{
-      srs = DEFAULT_TARGET_SRS;
-    }
+    if (source) { srs = DEFAULT_SRS; }
+    else { srs = DEFAULT_TARGET_SRS; }
+
     setKGClient(true);
 
     Query q = getObjectSRSQuery(uriString, source);
@@ -253,7 +263,7 @@ public class DistanceAgent extends JPSAgent {
     JSONArray queryResult = new JSONArray(queryResultString);
 
     if (!queryResult.isEmpty()) {
-      srs = queryResult.getJSONObject(0).get("srsName").toString();
+      srs = queryResult.getJSONObject(0).get(srsNameObject).toString();
     }
     return srs;
   }
@@ -320,47 +330,27 @@ public class DistanceAgent extends JPSAgent {
    * @return update query
    */
   private UpdateRequest getSetDistanceQuery(String firstUri, String secondUri, double distance) {
+      String distanceGraphUri = getDistanceGraphUri(firstUri);
     String distanceUri = distanceGraphUri + "DIST_" + UUID.randomUUID() + "/";
     String valueUri = distanceGraphUri + "VAL_" + UUID.randomUUID() + "/";
 
     UpdateBuilder ib =
         new UpdateBuilder()
-            .addPrefix("om", UNIT_ONTOLOGY)
-            .addPrefix("rdf", RDF_PREFIX)
+            .addPrefix( omPrefix, unitOntology)
+            .addPrefix(rdfPredicate, RDF_PREFIX)
             .addPrefix("xsd", XML_SCHEMA)
-            .addPrefix("owl", OWL_SCHEMA)
-            .addInsert(
-                "?graph",
-                NodeFactory.createURI(distanceUri),
-                "rdf:type",
-                "om:Total3DStartEndDistance")
-            .addInsert(
-                "?graph", NodeFactory.createURI(distanceUri), "rdf:type", "owl:NamedIndividual")
-            .addInsert(
-                "?graph",
-                NodeFactory.createURI(distanceUri),
-                "om:hasPhenomenon",
-                NodeFactory.createURI(firstUri))
-            .addInsert(
-                "?graph",
-                NodeFactory.createURI(distanceUri),
-                "om:hasPhenomenon",
-                NodeFactory.createURI(secondUri))
-            .addInsert(
-                "?graph",
-                NodeFactory.createURI(distanceUri),
-                "om:hasDimension",
-                "om:lengthDimension")
-            .addInsert(
-                "?graph",
-                NodeFactory.createURI(distanceUri),
-                "om:hasValue",
-                NodeFactory.createURI(valueUri))
-            .addInsert("?graph", NodeFactory.createURI(valueUri), "rdf:type", "owl:NamedIndividual")
-            .addInsert("?graph", NodeFactory.createURI(valueUri), "rdf:type", "om:Measure")
-            .addInsert("?graph", NodeFactory.createURI(valueUri), "om:hasNumericValue", distance)
-            .addInsert("?graph", NodeFactory.createURI(valueUri), "om:hasUnit", "om:metre");
-    ib.setVar(Var.alloc("graph"), NodeFactory.createURI(distanceGraphUri));
+            .addPrefix(owlClass, OWL_SCHEMA)
+            .addInsert("?" + graphName, NodeFactory.createURI(distanceUri), rdfPredicate, omPrefix + ":Total3DStartEndDistance")
+            .addInsert("?" + graphName, NodeFactory.createURI(distanceUri), rdfPredicate, owlClass)
+            .addInsert("?" + graphName, NodeFactory.createURI(distanceUri), omPrefix + ":" + phenomenonPredicate, NodeFactory.createURI(firstUri))
+            .addInsert("?" + graphName, NodeFactory.createURI(distanceUri), omPrefix + ":" + phenomenonPredicate, NodeFactory.createURI(secondUri))
+            .addInsert("?" + graphName, NodeFactory.createURI(distanceUri), omPrefix + ":" + "hasDimension", omPrefix + ":" + "lengthDimension")
+            .addInsert("?" + graphName, NodeFactory.createURI(distanceUri), omPrefix + ":" + valuePredicate, NodeFactory.createURI(valueUri))
+            .addInsert("?" + graphName, NodeFactory.createURI(valueUri),  rdfPredicate, owlClass)
+            .addInsert("?" + graphName, NodeFactory.createURI(valueUri), rdfPredicate, omPrefix + ":" + "Measure")
+            .addInsert("?" + graphName, NodeFactory.createURI(valueUri), omPrefix + ":" + numericPredicate, distance)
+            .addInsert("?" + graphName, NodeFactory.createURI(valueUri), omPrefix + ":" + "hasUnit", omPrefix + ":" + "metre");
+    ib.setVar(Var.alloc(graphName), NodeFactory.createURI(distanceGraphUri));
 
     return ib.buildRequest();
   }

@@ -133,7 +133,7 @@ public class DistanceAgentTest extends TestCase {
             assertNotNull(distanceAgent.getClass().getDeclaredMethod("getDistance", String.class, String.class));
             Method getDistance = distanceAgent.getClass().getDeclaredMethod("getDistance", String.class, String.class);
             getDistance.setAccessible(true);
-            assertEquals(10.0, getDistance.invoke(distanceAgent,"firstUri", "secondUri" ));
+            assertEquals(10.0, getDistance.invoke(distanceAgent,"http://localhost/berlin/cityobject/UUID_1/", "http://localhost/berlin/cityobject/UUID_2/" ));
         }
 
         //test with mocked kgClient and kgRouter when there is no string to return.
@@ -146,7 +146,7 @@ public class DistanceAgentTest extends TestCase {
             Method getDistance = distanceAgent.getClass().getDeclaredMethod("getDistance", String.class, String.class);
             getDistance.setAccessible(true);
 
-            assertEquals(-1.0,  getDistance.invoke(distanceAgent,"firstUri", "secondUri"));
+            assertEquals(-1.0,  getDistance.invoke(distanceAgent,"http://localhost/berlin/cityobject/UUID_1/", "http://localhost/berlin/cityobject/UUID_2/"));
         }
     }
 
@@ -252,7 +252,7 @@ public class DistanceAgentTest extends TestCase {
             assertNotNull(distanceAgent.getClass().getDeclaredMethod("setDistance", String.class, String.class, double.class));
             Method setDistance = distanceAgent.getClass().getDeclaredMethod("setDistance", String.class, String.class, double.class);
             setDistance.setAccessible(true);
-            assertEquals(0, setDistance.invoke(distanceAgent,"firstUri", "secondUri", 10.0 ));
+            assertEquals(0, setDistance.invoke(distanceAgent,"http://localhost/berlin/cityobject/UUID_1/", "http://localhost/berlin/cityobject/UUID_2", 10.0 ));
         }
     }
 }
