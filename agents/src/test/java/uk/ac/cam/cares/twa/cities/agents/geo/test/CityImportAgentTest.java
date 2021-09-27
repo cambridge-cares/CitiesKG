@@ -467,7 +467,11 @@ public class CityImportAgentTest extends TestCase {
       }
     } finally {
       NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
-      impD.delete();
+      try {
+        FileUtils.deleteDirectory(impD);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
     }
 
     try {
@@ -485,25 +489,36 @@ public class CityImportAgentTest extends TestCase {
       }
     } finally {
       NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
+      try {
+        FileUtils.deleteDirectory(impD);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
     }
 
     try {
       if (impD.mkdirs()) {
         Files.copy(testFile.toPath(), impF.toPath());
         targetUrl.set(agent, "http://localhost/test");
-        assertEquals(importFiles.invoke(agent, impD), "file_part_1.gml \n");
+        assertEquals(importFiles.invoke(agent, impD), "");    // Initial code: Splitfiles returns null, chunks = null, assume the file is small
       }
     } catch (InvocationTargetException | IllegalAccessException | IOException e) {
       fail();
     } finally {
       NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
+      try {
+        FileUtils.deleteDirectory(impD);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
     }
 
     //other import functionality already tested in the corresponding tasks' tests
   }
 
   public void testSplitFile() {
-    String fs = System.getProperty("file.separator");
+    //String fs = System.getProperty("file.separator");
+    String fs = "/";
     CityImportAgent agent = new CityImportAgent();
     File testFile = new File(
         Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
@@ -545,7 +560,8 @@ public class CityImportAgentTest extends TestCase {
   }
 
   public void testImportChunk() {
-    String fs = System.getProperty("file.separator");
+    //String fs = System.getProperty("file.separator");
+    String fs = "/";
     CityImportAgent agent = new CityImportAgent();
     File testFile = new File(
         Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
@@ -598,7 +614,8 @@ public class CityImportAgentTest extends TestCase {
   }
 
   public void testStartBlazegraphInstance() {
-    String fs = System.getProperty("file.separator");
+    //String fs = System.getProperty("file.separator");
+    String fs = "/";
     CityImportAgent agent = new CityImportAgent();
     File testFile = new File(
         Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
@@ -628,7 +645,8 @@ public class CityImportAgentTest extends TestCase {
   }
 
   public void testImportToLocalBlazegraphInstance() {
-    String fs = System.getProperty("file.separator");
+    //String fs = System.getProperty("file.separator");
+    String fs = "/";
     CityImportAgent agent = new CityImportAgent();
     File testFile = new File(
         Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
@@ -658,7 +676,8 @@ public class CityImportAgentTest extends TestCase {
   }
 
   public void testExportToNquads() {
-    String fs = System.getProperty("file.separator");
+    //String fs = System.getProperty("file.separator");
+    String fs = "/";
     CityImportAgent agent = new CityImportAgent();
     File testFile = new File(
         Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
