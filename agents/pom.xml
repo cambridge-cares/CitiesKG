@@ -7,11 +7,20 @@
     <groupId>uk.ac.cam.cares.twa.cities.agents</groupId>
     <artifactId>agents</artifactId>
     <version>0.1.0</version>
-    <packaging>war</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
+
+    <packaging>war</packaging>
+    <repositories>
+    <repository>
+        <id>wikimedia</id>
+        <name>wikimedia</name>
+        <url>https://archiva.wikimedia.org/repository/releases/</url>
+    </repository>
+    </repositories>
+
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
         <testSourceDirectory>src/test/java</testSourceDirectory>
@@ -85,7 +94,6 @@
         </pluginManagement>
 
     </build>
-
     <dependencies>
         <dependency>
             <groupId>uk.ac.cam.cares.jps</groupId>
@@ -116,6 +124,11 @@
             <version>2.1.5</version>
             <scope>provided</scope>
         </dependency>
+        <!--<dependency>
+            <groupId>com.blazegraph</groupId>
+            <artifactId>blazegraph-jar</artifactId>
+            <version>2.1.6-wmf.1</version>
+        </dependency>-->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
@@ -126,10 +139,15 @@
             <artifactId>impexp-client</artifactId>
             <version>4.2.3</version>
         </dependency>
+        <!--<dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
+        </dependency>-->
         <dependency>
             <groupId>com.konghq</groupId>
             <artifactId>unirest-java</artifactId>
-            <version>3.11.12</version>
+            <version>3.12.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/dev.jeka/jeka-core -->
         <dependency>

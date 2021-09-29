@@ -290,7 +290,7 @@ public class DBBuildingInstallation implements DBImporter {
 						importer.logOrThrowUnsupportedGeometryMessage(buildingInstallation, abstractGeometry);
 					try {
 						psBuildingInstallation.setURL(
-								++index,
+								++index - i,
 								new URL(DBSurfaceGeometry.IRI_GRAPH_OBJECT + geometryProperty.getGeometry().getId()));
 					} catch (MalformedURLException e) {
 						new CityGMLImportException(e);
