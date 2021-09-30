@@ -11,6 +11,7 @@
     <modules>
         <module>impexp-config</module>
         <module>impexp-plugin-api</module>
+        <module>impexp-kml-collada-plugin</module>
         <module>impexp-core</module>
         <module>impexp-client-common</module>
         <module>impexp-client</module>

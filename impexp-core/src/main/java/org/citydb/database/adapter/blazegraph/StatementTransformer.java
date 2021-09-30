@@ -8,6 +8,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
+import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.sqlbuilder.SQLStatement;
 import org.citydb.sqlbuilder.expression.PlaceHolder;
 import org.citydb.sqlbuilder.schema.Column;
@@ -24,17 +25,31 @@ import java.util.*;
 public class StatementTransformer {
     //private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
     //private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-    private static final String IRI_GRAPH_BASE = "http://127.0.0.1:9999/blazegraph/namespace/berlin/";
-    private static final String PREFIX_ONTOCITYGML = "file:///C:/Users/Shiying/Documents/CKG/CitiesKG-git/ontocitygml";
-    private static final String IRI_OBJECT_BASE = "http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql";
-    private static final String IRI_GRAPH_OBJECT_REL = "cityobject/";
-    //private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
+    //private static final String IRI_GRAPH_BASE = "http://127.0.0.1:9999/blazegraph/namespace/berlin/";
+    //private static final String PREFIX_ONTOCITYGML = "file:///C:/Users/Shiying/Documents/CKG/CitiesKG-git/ontocitygml";
+    //private static final String IRI_OBJECT_BASE = "http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql";
+    private static String IRI_GRAPH_BASE;
+    private static String PREFIX_ONTOCITYGML;
+    private static String IRI_GRAPH_OBJECT_REL = "cityobject/";
+    private static String IRI_GRAPH_OBJECT;
 
     public String sqlStatement;
     public String sparqlStatement;
+    private final AbstractDatabaseAdapter databaseAdapter;
+
+    public StatementTransformer(AbstractDatabaseAdapter databaseAdapter) {
+        this.databaseAdapter = databaseAdapter;
+
+        // Note: Read the database connection information from the database GUI setting
+        PREFIX_ONTOCITYGML  = databaseAdapter.getConnectionDetails().getSchema();
+        IRI_GRAPH_BASE = "http://" + databaseAdapter.getConnectionDetails().getServer() +
+                ":" + databaseAdapter.getConnectionDetails().getPort() +
+                databaseAdapter.getConnectionDetails().getSid();
+        IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
+    }
 
     public static String getIriObjectBase(){
-        return IRI_OBJECT_BASE;
+        return IRI_GRAPH_BASE;
     }
 
     public static String getExtrusionHeight(){
@@ -44,12 +59,14 @@ public class StatementTransformer {
                         "WHERE { ?s ocgml:EnvelopeType ?envelope ; ocgml:id ? . }";
         return sparql;
     }
+
     // getBuildingPartsFromBuilding() in Building.java
     /* "PREFIX  ocgml: <http://locahost/ontocitygml/> " +
                 "SELECT * WHERE { " +
                 "GRAPH <http://localhost/berlin/building/>{ " +
                 "?id ocgml:buildingRootId ? . } }";
     */
+
     // Input is String, can not use the statementAnalyzer to retrieve the component
     public static String getSPARQLStatement_BuildingParts (String sqlQuery) {
         String sparql = "PREFIX  ocgml: <" + PREFIX_ONTOCITYGML + "> " +

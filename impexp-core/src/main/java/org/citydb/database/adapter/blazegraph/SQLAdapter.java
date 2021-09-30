@@ -181,14 +181,14 @@ public class SQLAdapter extends AbstractSQLAdapter {
         return preparedStatement;
     }
 
+    // Note: implement SQLPreparedStatement into SPARQLPreparedStatement transformer
     public PreparedStatement transformStatement(SQLStatement statement, Connection connection) throws SQLException {
-        // @TODO: implement SQLPreparedStatement into SPARQLPreparedStatement transformer
         String SPARQLStatement = null;
-        // Query SPARQLStatement = null;
         PreparedStatement preparedStatement = null;
-        //SPARQLStatement = StatementTransformer.queryObject_transformer(statement);
+
+        StatementTransformer querytransformer = new StatementTransformer(databaseAdapter);
         try {
-            SPARQLStatement = StatementTransformer.getTopFeatureId(statement);
+            SPARQLStatement = querytransformer.getTopFeatureId(statement);
         } catch (ParseException e) {
             e.printStackTrace();
         }

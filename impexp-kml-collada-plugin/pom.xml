@@ -5,6 +5,10 @@
   <groupId>org.citydb</groupId>
   <artifactId>impexp-kml-collada-plugin</artifactId>
   <version>4.2.3</version>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  </properties>
   <build>
       <plugins>
         <plugin>
@@ -54,6 +58,7 @@
       <url>https://maven.scijava.org/content/repositories/public/</url>
     </repository>
   </repositories>
+
   <dependencies>
     <dependency>
       <groupId>org.citydb</groupId>
