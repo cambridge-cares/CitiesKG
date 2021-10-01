@@ -23,11 +23,6 @@ import java.util.*;
 
 
 public class StatementTransformer {
-    //private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
-    //private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
-    //private static final String IRI_GRAPH_BASE = "http://127.0.0.1:9999/blazegraph/namespace/berlin/";
-    //private static final String PREFIX_ONTOCITYGML = "file:///C:/Users/Shiying/Documents/CKG/CitiesKG-git/ontocitygml";
-    //private static final String IRI_OBJECT_BASE = "http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql";
     private static String IRI_GRAPH_BASE;
     private static String PREFIX_ONTOCITYGML;
     private static String IRI_GRAPH_OBJECT_REL = "cityobject/";
@@ -60,13 +55,6 @@ public class StatementTransformer {
         return sparql;
     }
 
-    // getBuildingPartsFromBuilding() in Building.java
-    /* "PREFIX  ocgml: <http://locahost/ontocitygml/> " +
-                "SELECT * WHERE { " +
-                "GRAPH <http://localhost/berlin/building/>{ " +
-                "?id ocgml:buildingRootId ? . } }";
-    */
-
     // Input is String, can not use the statementAnalyzer to retrieve the component
     public static String getSPARQLStatement_BuildingParts (String sqlQuery) {
         String sparql = "PREFIX  ocgml: <" + PREFIX_ONTOCITYGML + "> " +
@@ -74,29 +62,11 @@ public class StatementTransformer {
                         "FROM  <" + IRI_GRAPH_BASE + "building/" + "> " +
                         "WHERE { " +
                         "?id ocgml:buildingRootId ? .}";
-        String SparqlString;
-        SelectBuilder sb = new SelectBuilder();
-        sb.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML);
-        sb.addVar("*").from(IRI_GRAPH_BASE + "building/");
-        sb.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "buildingRootId", " ? ");
-        SparqlString = sb.build().toString();
+
         return sparql;
     }
 
 
-    //getBuildingPartQuery() in Building.java
-    /* PREFIX  ocgml: <http://locahost/ontocitygml/>
-       SELECT ?geomtype (datatype(?geomtype) AS ?type)
-       WHERE {
-          GRAPH <http://localhost/berlin/thematicsurface/> {
-          ?ts_id ocgml:objectClassId 35 ;
-                 ocgml:buildingId ? ;
-                 ocgml:lod2MultiSurfaceId ?lod2MSid .}
-          GRAPH <http://localhost/berlin/surfacegeometry/> {
-          ?sg_id ocgml:rootId ?lod2MSid;
-                 ocgml:GeometryType ?geomtype .
-          FILTER(!isBlank(?geomtype))} }
-    */
     public static String getSPARQLStatement_BuildingPartQuery_bak (String sqlQuery) {
         String sparql = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
                         "SELECT ?geomtype (datatype(?geomtype) AS ?type)" +
@@ -140,15 +110,6 @@ public class StatementTransformer {
 
 
     // Analyze SQL statement and transform it to a SPARQL query (Normal usuage: single gmlid or multiple gmlid or *)
-    /* PREFIX  ocgml: <http://locahost/ontocitygml/>
-       SELECT  ?id ?objectclass_id ?gmlid
-       FROM <http://localhost/berlin/cityobject/>
-       WHERE  { ?id ocgml:objectClassId  ?objectclass_id .
-                ?id ocgml:gmlId ?gmlid
-                FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )." +
-                FILTER ( ?gmlid IN ( ? , ? ))  }";   // FILTER ( ?gmlid = ? ) // ...
-     */
-
     public static String getTopFeatureId (SQLStatement sqlStatement) throws ParseException {
         Select select = (Select) sqlStatement;
         List<ProjectionToken> projectionTokens = select.getProjection();
