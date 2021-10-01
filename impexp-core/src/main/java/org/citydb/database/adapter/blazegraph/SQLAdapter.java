@@ -166,17 +166,8 @@ public class SQLAdapter extends AbstractSQLAdapter {
 
     @Override
     public PreparedStatement prepareStatement(SQLStatement statement, Connection connection) throws SQLException{
-        // Original:
-        //PreparedStatement preparedStatement = connection.prepareStatement(statement);  // same as importer
-        //fillPlaceHolders(statement, preparedStatement, connection);
 
-
-        // @TODO: implement SQLStatement (template) into SPARQLStatement (with injected value) translator
         PreparedStatement preparedStatement = transformStatement(statement, connection);
-
-        //preparedStatement.setString(1, "ID_0518100000225439");
-        //preparedStatement = transformStatement(preparedStatement);
-        // this will find placeholder"?" symbol and replace it with corresponding ID
 
         return preparedStatement;
     }

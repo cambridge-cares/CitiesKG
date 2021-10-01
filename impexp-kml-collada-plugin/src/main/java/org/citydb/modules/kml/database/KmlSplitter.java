@@ -122,8 +122,7 @@ public class KmlSplitter {
 		// create query statement: Top-level Feature ID Queue
 		Select select = builder.buildQuery(query);
 
-		// Added by Shiying
-		boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value()); //@TODO: Try with KMLExporterManager
+		boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value());
 
 		try (PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
 			 ResultSet rs = stmt.executeQuery()) {
@@ -144,7 +143,7 @@ public class KmlSplitter {
 							envelope = databaseAdapter.getGeometryConverter().getEnvelope(geomObj);
 					}
 
-					// Should go to the implementation for Blazegraph
+					// Note: This will lead to the implementation for Blazegraph in the same class
 					addWorkToQueue(id_str, gmlId, objectClassId, envelope, activeTile, false);
 					objectCount++;
 
@@ -185,6 +184,10 @@ public class KmlSplitter {
 		shouldRun = false;
 	}
 
+	/**
+	 * Method only applies to Blazegraph: Add the query work with the TopFeatureID result for the geometry extraction (multi-threading)
+	 *
+	 */
 	// For Blazegraph, "String id" instead of "long id"
 	private void addWorkToQueue(String id, String gmlId, int objectClassId, GeometryObject envelope, Tile activeTile, boolean isCityObjectGroupMember) throws SQLException, FilterException {
 		FeatureType featureType = schemaMapping.getFeatureType(objectClassId);
