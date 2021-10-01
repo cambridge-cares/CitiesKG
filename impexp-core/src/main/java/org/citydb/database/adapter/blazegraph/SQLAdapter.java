@@ -185,8 +185,6 @@ public class SQLAdapter extends AbstractSQLAdapter {
         }
 
         preparedStatement = connection.prepareStatement(SPARQLStatement.toString());
-        //preparedStatement = connection.prepareStatement(StatementTransformer.getObjectId());
-        //List<PlaceHolder<?>> placeHolders = statement.getInvolvedPlaceHolders();
 
         return preparedStatement;
     }
