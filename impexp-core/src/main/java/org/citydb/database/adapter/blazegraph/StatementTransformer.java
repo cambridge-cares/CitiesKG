@@ -67,7 +67,7 @@ public class StatementTransformer {
     }
 
 
-    public static String getSPARQLStatement_BuildingPartQuery_bak (String sqlQuery) {
+    public static String getSPARQLStatement_BuildingPartQuery (String sqlQuery) {
         String sparql = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
                         "SELECT ?geomtype (datatype(?geomtype) AS ?type)" +
                         "WHERE {" +
@@ -75,10 +75,23 @@ public class StatementTransformer {
                         "?ts_id ocgml:objectClassId 35 ; ocgml:buildingId ? ;ocgml:lod2MultiSurfaceId ?lod2MSid .}" +
                         "GRAPH " + IRI_GRAPH_BASE + "surfacegeometry/> {" +
                         "?sg_id ocgml:rootId ?lod2MSid; ocgml:GeometryType ?geomtype . FILTER(!isBlank(?geomtype))} }";
+
+        String sparqlString;
+        if (IRI_GRAPH_BASE.contains("theworldavatar")){
+            sparqlString = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+                    "SELECT ?geomtype (datatype(?geomtype) AS ?type)" +
+                    "WHERE {" +
+                    "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> {" +
+                    "?ts_id ocgml:objectClassId 35 ; ocgml:buildingId ? ;ocgml:lod2MultiSurfaceId ?lod2MSid .}" +
+                    "BIND(IRI(CONCAT(STR(?lod2MSid), '/')) AS ?fixedlod2MSid)" +
+                    "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> {" +
+                    "?sg_id ocgml:rootId ?fixedlod2MSid; ocgml:GeometryType ?geomtype . FILTER(!isBlank(?geomtype))} }";
+            sparql = sparqlString;
+        }
         return sparql;
     }
 
-    public static String getSPARQLStatement_BuildingPartQuery (String sqlQuery) {
+    public static String getSPARQLStatement_BuildingPartQuery_bak (String sqlQuery) {
         String SparqlString = null;
         SelectBuilder sb = new SelectBuilder();
         ExprFactory exprF1 = sb.getExprFactory();
