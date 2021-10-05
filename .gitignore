@@ -28,3 +28,5 @@ db/appearance
 
 # Web-Map-Client node modules
 node_modules/*
+
+*/target/
