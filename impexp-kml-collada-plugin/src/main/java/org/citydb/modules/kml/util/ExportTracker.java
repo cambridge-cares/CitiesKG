@@ -30,20 +30,20 @@ package org.citydb.modules.kml.util;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ExportTracker {
+public class ExportTracker<T> {
 	
-	private final ConcurrentHashMap<Long, CityObject4JSON> map;
+	private final ConcurrentHashMap<T, CityObject4JSON> map;  // All Long has been changed to general type T
 	private String currentWorkingDirectoryPath;
 	
 	public ExportTracker() {
-		map = new ConcurrentHashMap<Long, CityObject4JSON>();
+		map = new ConcurrentHashMap<T, CityObject4JSON>();
 	}
 	
-	public void put(long id, CityObject4JSON json) {
+	public void put(T id, CityObject4JSON json) {
 		map.putIfAbsent(id, json);
 	}
 	
-	public CityObject4JSON get(long id) {
+	public CityObject4JSON get(T id) {
 		return map.get(id);
 	}
 	

@@ -36,6 +36,7 @@ import org.citydb.config.project.kmlExporter.DisplayForm;
 import org.citydb.config.project.kmlExporter.Lod0FootprintMode;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.BlobExportAdapter;
+import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.database.connection.DatabaseConnectionPool;
 import org.citydb.event.EventDispatcher;
 import org.citydb.log.Logger;
@@ -45,17 +46,21 @@ import org.citydb.query.Query;
 
 import javax.vecmath.Point3d;
 import javax.xml.bind.JAXBException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Building extends KmlGenericObject{
 	private final Logger log = Logger.getInstance();
 
 	public static final String STYLE_BASIS_NAME = ""; // "Building"
+	public boolean isBlazegraph = kmlExporterManager.isBlazegraph();
 
 	public Building(Connection connection,
 			Query query,
@@ -100,17 +105,44 @@ public class Building extends KmlGenericObject{
 		List<PlacemarkType> placemarks = new ArrayList<>();
 		PreparedStatement psQuery = null;
 		ResultSet rs = null;
-		
+
 		try {
 			String query = queries.getBuildingPartsFromBuilding();
-			psQuery = connection.prepareStatement(query);
-			for (int i = 1; i <= getParameterCount(query); i++)
-				psQuery.setLong(i, work.getId());
 
+			// TODO: Translate the query
+			if (isBlazegraph) {
+				query = StatementTransformer.getSPARQLStatement_BuildingParts(query);
+			}
+			psQuery = connection.prepareStatement(query);
+
+			// Modified by Shiying
+			if (isBlazegraph) {
+				String baseURL = StatementTransformer.getIriObjectBase() + "building/";
+				URL url = null;
+				try {
+					url = new URL(baseURL + work.getGmlId()+"/");
+				} catch (MalformedURLException e) {
+					e.printStackTrace(); // @TODO:
+				}
+				psQuery.setURL(1, url);   // setURL will add <> around the URL
+			} else {
+				for (int i = 1; i <= getParameterCount(query); i++) {
+					psQuery.setLong(i, Long.class.cast(work.getId()));
+				}
+			}
 			rs = psQuery.executeQuery();
+
+			List<PlacemarkType> placemarkBPart = null;
 			while (rs.next()) {
-				long buildingPartId = rs.getLong(1);
-				List<PlacemarkType> placemarkBPart = readBuildingPart(buildingPartId, work);
+
+				if (isBlazegraph){
+					String buildingPartId = rs.getString(1);
+					placemarkBPart = readBuildingPart(buildingPartId, work);
+				}else{
+					long buildingPartId = rs.getLong(1);
+					placemarkBPart = readBuildingPart(buildingPartId, work);
+				}
+
 				if (placemarkBPart != null)
 					placemarks.addAll(placemarkBPart);
 			}
@@ -161,10 +193,12 @@ public class Building extends KmlGenericObject{
 		}
 	}
 
-	private List<PlacemarkType> readBuildingPart(long buildingPartId, KmlSplittingResult work) {
+	private <T> List<PlacemarkType> readBuildingPart(T buildingPartId, KmlSplittingResult work) {
 		PreparedStatement psQuery = null;
 		ResultSet rs = null;
 		boolean reversePointOrder = false;
+		// Shiying: we need to add a variable to differentiate two different cases in FOOTPRINT/EXTRUDED, if GroundSurface exists
+		boolean existGS = false;
 
 		try {
 			currentLod = config.getProject().getKmlExporter().getLodToExportFrom();
@@ -186,7 +220,7 @@ public class Building extends KmlGenericObject{
 							String query = queries.getBuildingPartQuery(currentLod, lod0FootprintMode, work.getDisplayForm(), true);
 							psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 							for (int i = 1; i <= getParameterCount(query); i++)
-								psQuery.setLong(i, buildingPartId);
+								psQuery.setLong(i, Long.class.cast(buildingPartId));
 
 							rs = psQuery.executeQuery();
 							if (rs.isBeforeFirst())
@@ -209,7 +243,7 @@ public class Building extends KmlGenericObject{
 						String query = queries.getBuildingPartQuery(currentLod, lod0FootprintMode, work.getDisplayForm(), false);
 						psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 						for (int i = 1; i <= getParameterCount(query); i++)
-							psQuery.setLong(i, buildingPartId);
+							psQuery.setLong(i, Long.class.cast(buildingPartId));
 
 						rs = psQuery.executeQuery();
 					} catch (SQLException e) {
@@ -235,13 +269,34 @@ public class Building extends KmlGenericObject{
 					try {
 						// first, check whether we have an LOD0 geometry or a GroundSurface
 						String query = queries.getBuildingPartQuery(currentLod, lod0FootprintMode, work.getDisplayForm(), false);
+						if (isBlazegraph) {
+							query = StatementTransformer.getSPARQLStatement_BuildingPartQuery(query);
+						}
 						psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-						for (int i = 1; i <= getParameterCount(query); i++)
-							psQuery.setLong(i, buildingPartId);
+						if (isBlazegraph) {
+							URL url = null;
+							try {
+								url = new URL((String)buildingPartId);
+							} catch (MalformedURLException e) {
+								e.printStackTrace();
+							}
+							psQuery.setURL(1, url);
+						}else{
+							for (int i = 1; i <= getParameterCount(query); i++)
+								psQuery.setLong(i, Long.class.cast(buildingPartId));
+						}
 
 						rs = psQuery.executeQuery();
-						if (rs.isBeforeFirst())
+						//if (rs.isBeforeFirst()){
+							// Shiying
+						//	existGS = true;
+						//	break;}
+						//@TODO: (Shiying) isBeforeFirst() returns different results between Blazegraph and PostGIS for emptySet
+						if (rs.next()){
+							existGS = true;
+							rs.beforeFirst(); // reset the cursor to avoid missing first row
 							break;
+						}
 
 						try { rs.close(); } catch (SQLException sqle) {} 
 						try { psQuery.close(); } catch (SQLException sqle) {}
@@ -257,21 +312,36 @@ public class Building extends KmlGenericObject{
 						reversePointOrder = true;
 						int groupBasis = 4;
 
-						try {
+						try { // @TODO: query to modify, the complex sql query
 							String query = queries.getBuildingPartAggregateGeometries(0.001,
 									DatabaseConnectionPool.getInstance().getActiveDatabaseAdapter().getUtil().get2DSrid(dbSrs),
 									currentLod,
 									Math.pow(groupBasis, 4),
 									Math.pow(groupBasis, 3),
 									Math.pow(groupBasis, 2));
-
 							psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-							for (int i = 1; i <= getParameterCount(query); i++)
-								psQuery.setLong(i, buildingPartId);
+
+							if (isBlazegraph) {
+								URL url = null;
+								try {
+									url = new URL((String)buildingPartId);
+								} catch (MalformedURLException e) {
+									e.printStackTrace();
+								}
+								psQuery.setURL(1, url);
+								psQuery.setURL(2, url);
+								psQuery.setURL(3, url);
+							}
+							else {
+								for (int i = 1; i <= getParameterCount(query); i++)
+									psQuery.setLong(i, Long.class.cast(buildingPartId));
+							}
 
 							rs = psQuery.executeQuery();
+
 							if (rs.isBeforeFirst()) {
 								rs.next();
+								existGS = false;
 								if (rs.getObject(1) != null) {
 									rs.beforeFirst();
 									break;
@@ -282,6 +352,7 @@ public class Building extends KmlGenericObject{
 							try { psQuery.close(); } catch (SQLException sqle) {}
 							rs = null;
 						} catch (SQLException e) {
+							log.error("Error at : " + buildingPartId);
 							log.error("SQL error while aggregating geometries in LOD " + currentLod + ": " + e.getMessage());
 							try { if (rs != null) rs.close(); } catch (SQLException sqle) {} 
 							try { if (psQuery != null) psQuery.close(); } catch (SQLException sqle) {}
@@ -295,27 +366,46 @@ public class Building extends KmlGenericObject{
 				}
 			}
 
-			if (rs != null && rs.isBeforeFirst()) { // result not empty
+			if (rs != null && rs.isBeforeFirst()) { // if result of Line 334 or287 is not empty. This step will process the result.
 
 				switch (work.getDisplayForm().getForm()) {
 				case DisplayForm.FOOTPRINT:
 					return createPlacemarksForFootprint(rs, work);
 
-				case DisplayForm.EXTRUDED:
+				case DisplayForm.EXTRUDED:  // @TODO: process the data
 					PreparedStatement psQuery2 = null;
 					ResultSet rs2 = null;
 
 					try {
 						String query = queries.getExtrusionHeight();
-						psQuery2 = connection.prepareStatement(query);
-						for (int i = 1; i <= getParameterCount(query); i++)
-							psQuery2.setLong(i, buildingPartId);
 
+						psQuery2 = connection.prepareStatement(query);
+						if (isBlazegraph){
+							URL url = null;
+							try {
+								url = new URL(StatementTransformer.getIriObjectBase() + "cityobject/" + work.getGmlId()+"/");
+							} catch (MalformedURLException e) {
+								e.printStackTrace();
+							}
+							psQuery2.setURL(1, url);
+						} else {
+							for (int i = 1; i <= getParameterCount(query); i++)
+								psQuery2.setLong(i, Long.class.cast(buildingPartId));
+						}
 						rs2 = psQuery2.executeQuery();
 						rs2.next();
 
-						double measuredHeight = rs2.getDouble("envelope_measured_height");
-						return createPlacemarksForExtruded(rs, work, measuredHeight, reversePointOrder);
+						double measuredHeight = 0;
+						if (isBlazegraph) {
+							//log.info("Processing : " + buildingPartId);
+							String envelop = rs2.getString(1);
+							measuredHeight = extractHeight(envelop);
+							return createPlacemarksForExtruded_geospatial(rs, work, measuredHeight, reversePointOrder, existGS, null);
+						} else {
+							measuredHeight = rs2.getDouble("envelope_measured_height");
+							return createPlacemarksForExtruded(rs, work, measuredHeight, reversePointOrder);
+						}
+
 					} finally {
 						try { if (rs2 != null) rs2.close(); } catch (SQLException e) {}
 						try { if (psQuery2 != null) psQuery2.close(); } catch (SQLException e) {}
@@ -323,7 +413,7 @@ public class Building extends KmlGenericObject{
 
 				case DisplayForm.GEOMETRY:
 					setGmlId(work.getGmlId());
-					setId(work.getId());
+					//setId(work.getId());
 					if (work.getDisplayForm().isHighlightingEnabled()) {
 						if (query.isSetTiling()) { // region
 							List<PlacemarkType> hlPlacemarks = createPlacemarksForHighlighting(rs, work, true);
@@ -342,15 +432,15 @@ public class Building extends KmlGenericObject{
 					fillGenericObjectForCollada(rs, config.getProject().getKmlExporter().getBuildingColladaOptions().isGenerateTextureAtlases(), true); // fill and refill
 					String currentgmlId = getGmlId();
 					setGmlId(work.getGmlId());
-					setId(work.getId());
+					//setId(work.getId());
 
 					if (currentgmlId != null && !currentgmlId.equals(work.getGmlId()) && getGeometryAmount() > GEOMETRY_AMOUNT_WARNING)
 						log.info("Object " + work.getGmlId() + " has more than " + GEOMETRY_AMOUNT_WARNING + " geometries. This may take a while to process...");
 
 					List<Point3d> anchorCandidates = getOrigins(); // setOrigins() called mainly for the side-effect
-					double zOffset = getZOffsetFromConfigOrDB(work.getId());
+					double zOffset = getZOffsetFromConfigOrDB(Long.class.cast(work.getId()));
 					if (zOffset == Double.MAX_VALUE) {
-						zOffset = getZOffsetFromGEService(work.getId(), anchorCandidates);
+						zOffset = getZOffsetFromGEService(Long.class.cast(work.getId()), anchorCandidates);
 					}
 					setZOffset(zOffset);
 
@@ -392,6 +482,22 @@ public class Building extends KmlGenericObject{
 				reducePrecisionForZ(originInWGS84[2]));
 
 		return super.createPlacemarkForColladaModel();
+	}
+	// Created by Shiying for Blazegraph
+	public double extractHeight (String envelop){
+		String[] arrOfStr = envelop.split("#");
+		//double[] heights = new double[5];
+
+		ArrayList<Double> heights = new ArrayList<Double>();
+		for (int k = 1; k <= 5; k++){
+			//System.out.println(arrOfStr[(k*3)-1]);
+			//heights[k-1] = Double.valueOf(arrOfStr[(k*3)-1]);
+			heights.add(Double.valueOf(arrOfStr[(k*3)-1]));
+		}
+		double max = Collections.max(heights);
+		double min = Collections.min(heights);
+
+		return max-min;
 	}
 
 }

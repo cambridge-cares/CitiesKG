@@ -6,24 +6,44 @@
 
     <groupId>uk.ac.cam.cares.twa.cities.agents</groupId>
     <artifactId>agents</artifactId>
-    <version>1.0-SNAPSHOT</version>
+
+    <version>0.1.0</version>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
 
     <packaging>war</packaging>
+    <repositories>
+        <repository>
+            <id>wikimedia</id>
+            <name>wikimedia</name>
+            <url>https://archiva.wikimedia.org/repository/releases/</url>
+        </repository>
+        <repository>
+            <id>official-maven-repo</id>
+            <url>https://repo.maven.apache.org/maven2/</url>
+        </repository>
 
+        <repository>
+            <id>osgeo-repo</id>
+            <url>https://repo.osgeo.org/repository/release/</url>
+        </repository>
+    </repositories>
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
         <testSourceDirectory>src/test/java</testSourceDirectory>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <excludes>
-                    <exclude>**/*.java</exclude>
-                </excludes>
-            </resource>
-        </resources>
+        <testResources>
+            <testResource>
+                <directory>${project.basedir}/src/test/resources</directory>
+            </testResource>
+            <testResource>
+                <directory>${project.basedir}/../utils</directory>
+            </testResource>
+        </testResources>
+
         <pluginManagement>
             <plugins>
-
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.1</version>
@@ -46,15 +66,9 @@
                         <warName>${project.artifactId}##${project.version}</warName>
                         <!--suppress UnresolvedMavenProperty -->
                         <outputDirectory>${tomcatPath}/webapps</outputDirectory>
-                        <webResources>
-                                <resource>
-                                    <directory>${basedir}/WEB-INF</directory>
-                                    <targetPath>WEB-INF</targetPath>
-                                </resource>
-                        </webResources>
+
                     </configuration>
                 </plugin>
-
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -63,18 +77,21 @@
                     <executions>
                         <execution>
                             <id>default-copy-resources</id>
-                            <phase>process-resources</phase>
+                            <phase>generate-sources</phase>
                             <goals>
                                 <goal>copy-resources</goal>
                             </goals>
                             <configuration>
                                 <overwrite>true</overwrite>
                                 <outputDirectory>
-                                    ${project.build.directory}/${project.artifactId}-${project.version}/WEB-INF/
+                                    ${project.build.directory}/${project.artifactId}-${project.version}/WEB-INF/classes/
                                 </outputDirectory>
                                 <resources>
                                     <resource>
                                         <directory>${project.basedir}/src/main/resources</directory>
+                                    </resource>
+                                    <resource>
+                                        <directory>${project.basedir}/../utils</directory>
                                     </resource>
                                 </resources>
                             </configuration>
@@ -86,21 +103,7 @@
         </pluginManagement>
     </build>
 
-    <repositories>
-        <repository>
-            <id>official-maven-repo</id>
-            <url>https://repo.maven.apache.org/maven2/</url>
-        </repository>
-
-        <repository>
-            <id>osgeo-repo</id>
-            <url>https://repo.osgeo.org/repository/release/</url>
-        </repository>
-    </repositories>
-
-
     <dependencies>
-
         <dependency>
             <groupId>uk.ac.cam.cares.jps</groupId>
             <artifactId>jps-base-lib</artifactId>
@@ -111,6 +114,12 @@
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
             <version>3.1.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20201115</version>
         </dependency>
 
         <dependency>
@@ -159,11 +168,57 @@
             <artifactId>blazegraph-jar</artifactId>
             <version>2.1.5</version>
             <scope>provided</scope>
-
         </dependency>
 
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>uk.ac.cam.cares.jps.aws</groupId>
+            <artifactId>JPS_AWS</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.blazegraph/blazegraph-jar -->
+        <dependency>
+            <groupId>com.blazegraph</groupId>
+            <artifactId>blazegraph-jar</artifactId>
+            <version>2.1.5</version>
+        </dependency>
+        <!--<dependency>
+            <groupId>com.blazegraph</groupId>
+            <artifactId>blazegraph-jar</artifactId>
+            <version>2.1.6-wmf.1</version>
+        </dependency>-->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.citydb</groupId>
+            <artifactId>impexp-client</artifactId>
+            <version>4.2.3</version>
+        </dependency>
+        <!--<dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
+        </dependency>-->
+        <dependency>
+            <groupId>com.konghq</groupId>
+            <artifactId>unirest-java</artifactId>
+            <version>3.12.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/dev.jeka/jeka-core -->
+        <dependency>
+            <groupId>dev.jeka</groupId>
+            <artifactId>jeka-core</artifactId>
+            <version>0.9.11.RELEASE</version>
+        </dependency>
     </dependencies>
-
-
-
 </project>
+

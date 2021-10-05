@@ -112,11 +112,10 @@ public class DBSurfaceGeometry implements DBImporter {
 	private String nullGeometryTypeName;
 	private LocalAppearanceHandler localAppearanceHandler;
 	private RingValidator ringValidator;
-	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
-	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
+	private String PREFIX_ONTOCITYGML;
+	private String IRI_GRAPH_BASE;
+	public static String IRI_GRAPH_OBJECT;
 	private static final String IRI_GRAPH_OBJECT_REL = "surfacegeometry/";
-	public static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBSurfaceGeometry(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.batchConn = batchConn;
@@ -151,6 +150,9 @@ public class DBSurfaceGeometry implements DBImporter {
 		stmt.append("?, ?)");
 
 		if (importer.isBlazegraph()) {
+			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
+			IRI_GRAPH_BASE = importer.getGraphBaseIri();
+			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 			stmt = getSPARQLStatement(stmt);
 		}
 
@@ -462,8 +464,10 @@ public class DBSurfaceGeometry implements DBImporter {
 					}
 
 					if (cityObjectId != 0) {
+
 						if (importer.isBlazegraph()) { psGeomElem.setURL(++index, cityobjectURL);}	// SPARQL = 14
 						else { psGeomElem.setLong(++index, cityObjectId); }		// SQL = 13
+
 					} else {
 						if (importer.isBlazegraph()) {setBlankNode(psGeomElem, ++index); }
 						else { psGeomElem.setNull(++index, Types.NULL); }

@@ -7,6 +7,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.AbstractGeometryConverterAdapter;
+import org.postgis.*;
 
 
 import java.net.URI;
@@ -124,6 +125,73 @@ public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
         return null;
     }
 
+    private GeometryObject getPolygon(Polygon polygon) {
+        return GeometryObject.createPolygon(getPolygonCoordinates(polygon), polygon.getDimension(), polygon.getSrid());
+    }
+
+
+    private GeometryObject getMultiPolygon(MultiPolygon multiPolygon) {
+        int numRings = 0;
+        for (Polygon polygon : multiPolygon.getPolygons())
+            numRings += polygon.numRings();
+
+        int[] exteriorRings = new int[multiPolygon.numPolygons()];
+        double[][] coordinates = new double[numRings][];
+        int dimension = multiPolygon.getDimension();
+
+        int ringNo = 0;
+        for (int i = 0; i < multiPolygon.numPolygons(); i++) {
+            Polygon polygon = multiPolygon.getPolygon(i);
+            exteriorRings[i] = ringNo;
+
+            for (int j = 0; j < polygon.numRings(); j++, ringNo++) {
+                LinearRing ring = polygon.getRing(j);
+                coordinates[ringNo] = new double[ring.numPoints() * dimension];
+                int element = 0;
+
+                if (dimension == 3) {
+                    for (Point point : ring.getPoints()) {
+                        coordinates[ringNo][element++] = point.x;
+                        coordinates[ringNo][element++] = point.y;
+                        coordinates[ringNo][element++] = point.z;
+                    }
+                } else {
+                    for (Point point : ring.getPoints()) {
+                        coordinates[ringNo][element++] = point.x;
+                        coordinates[ringNo][element++] = point.y;
+                    }
+                }
+            }
+        }
+
+        return GeometryObject.createMultiPolygon(coordinates, exteriorRings, dimension, multiPolygon.getSrid());
+    }
+    private double[][] getPolygonCoordinates(Polygon polygon) {
+        double[][] coordinates = new double[polygon.numRings()][];
+        int dimension = polygon.getDimension();
+
+        for (int i = 0; i < polygon.numRings(); i++) {
+            LinearRing ring = polygon.getRing(i);
+            coordinates[i] = new double[ring.numPoints() * dimension];
+            int element = 0;
+
+            if (dimension == 3) {
+                for (Point point : ring.getPoints()) {
+                    coordinates[i][element++] = point.x;
+                    coordinates[i][element++] = point.y;
+                    coordinates[i][element++] = point.z;
+                }
+            } else {
+                for (Point point : ring.getPoints()) {
+                    coordinates[i][element++] = point.x;
+                    coordinates[i][element++] = point.y;
+                }
+            }
+        }
+
+        return coordinates;
+    }
+
     /**
      * Stub method, does nothing for now.
      *
@@ -150,6 +218,28 @@ public class GeometryConverterAdapter extends AbstractGeometryConverterAdapter {
     public GeometryObject getGeometry(Object geomObj) throws SQLException {
         if (geomObj == null) {
             throw new SQLException();
+        }
+        // geomObj should be a string with "POLYGON()", JTS geometry can be converted to PGgeometry
+        PGgeometry newGeom = new PGgeometry(geomObj.toString());
+
+        if (newGeom instanceof PGgeometry) {
+            Geometry geometry = ((PGgeometry)newGeom).getGeometry();
+            switch (geometry.getType()) {
+                case Geometry.POINT:
+                    return getPoint((Point)geometry);
+                case Geometry.MULTIPOINT:
+                    return getMultiPoint((MultiPoint)geometry);
+                case Geometry.LINESTRING:
+                    return getCurve((LineString)geometry);
+                case Geometry.MULTILINESTRING:
+                    return getMultiCurve((MultiLineString)geometry);
+                case Geometry.POLYGON:
+                    return getPolygon((Polygon)geometry);
+                case Geometry.MULTIPOLYGON:
+                    return getMultiPolygon((MultiPolygon)geometry);
+                default:
+                    throw new SQLException("Cannot convert PostGIS geometry type '" + geometry.getType() + "' to internal representation: Unsupported type.");
+            }
         }
         return null;
     }

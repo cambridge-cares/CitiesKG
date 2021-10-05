@@ -75,7 +75,7 @@ public class PredicateBuilder {
 			comparisonBuilder.buildComparisonOperator((AbstractComparisonOperator)predicate, queryContext, negate, useLeftJoins);
 			break;
 		case SPATIAL_OPERATOR:
-			spatialBuilder.buildSpatialOperator((AbstractSpatialOperator)predicate, queryContext, negate, useLeftJoins);
+			spatialBuilder.buildSpatialOperator((AbstractSpatialOperator)predicate, queryContext, negate, useLeftJoins);  // bbox
 			break;
 		case LOGICAL_OPERATOR:
 			buildLogicalOperator((AbstractLogicalOperator)predicate, queryContext, negate, useLeftJoins);

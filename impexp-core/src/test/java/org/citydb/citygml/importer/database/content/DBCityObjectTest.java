@@ -9,14 +9,13 @@ public class DBCityObjectTest extends DBTest{
     @Test
     public void getSPARQLStatementTest() {
         // SYL: this is actually the preparedStatement of psCityObject
-        String expected = "PREFIX ocgml: <http://locahost/ontocitygml/> " +
-                "BASE <http://localhost/berlin/> " +
-                "INSERT DATA " +
-                "{ GRAPH <cityobject/> " +
-                "{ ? ocgml:id  ?;ocgml:objectClassId  ?;ocgml:gmlId  ?;ocgml:name  ?;ocgml:nameCodespace  ?;" +
-                "ocgml:description  ?;ocgml:EnvelopeType  ?;ocgml:creationDate  ?;ocgml:terminationDate  ?;" +
-                "ocgml:relativeToTerrain  ?;ocgml:relativeToWater  ?;ocgml:lastModificationDate  ?;" +
-                "ocgml:updatingPerson  ?;ocgml:reasonForUpdate  ?;ocgml:lineage  ?;.}}";
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
+                "BASE <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> " +
+                "INSERT DATA { GRAPH <cityobject/> { ? ocgml:id  ?;ocgml:objectClassId  ?;ocgml:gmlId  ?;" +
+                "ocgml:name  ?;ocgml:nameCodespace  ?;ocgml:description  ?;ocgml:EnvelopeType  ?;" +
+                "ocgml:creationDate  ?;ocgml:terminationDate  ?;ocgml:relativeToTerrain  ?;" +
+                "ocgml:relativeToWater  ?;ocgml:lastModificationDate  ?;ocgml:updatingPerson  ?;" +
+                "ocgml:reasonForUpdate  ?;ocgml:lineage  ?;.}}";
         String generated;
 
         try {

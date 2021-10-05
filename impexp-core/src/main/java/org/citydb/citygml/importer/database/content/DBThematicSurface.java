@@ -27,14 +27,6 @@
  */
 package org.citydb.citygml.importer.database.content;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Types;
-
-import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
 import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
@@ -43,39 +35,43 @@ import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
 import org.citydb.util.CoreConstants;
-import org.citygml4j.model.citygml.building.AbstractBoundarySurface;
-import org.citygml4j.model.citygml.building.AbstractBuilding;
-import org.citygml4j.model.citygml.building.AbstractOpening;
-import org.citygml4j.model.citygml.building.BuildingInstallation;
-import org.citygml4j.model.citygml.building.IntBuildingInstallation;
-import org.citygml4j.model.citygml.building.OpeningProperty;
-import org.citygml4j.model.citygml.building.Room;
+import org.citygml4j.model.citygml.building.*;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Types;
+
 public class DBThematicSurface implements DBImporter {
 	private final CityGMLImportManager importer;
+	private final Connection batchConn;
 
 	private PreparedStatement psThematicSurface;
 	private DBCityObject cityObjectImporter;
 	private DBSurfaceGeometry surfaceGeometryImporter;
 	private DBOpening openingImporter;
 	private int batchCounter;
-	//@todo Replace graph IRI and OntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
-	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
+	private String PREFIX_ONTOCITYGML;
+	private String IRI_GRAPH_BASE;
+	private String IRI_GRAPH_OBJECT;
 	private static final String IRI_GRAPH_OBJECT_REL = "thematicsurface/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBThematicSurface(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		this.importer = importer;
-
+		this.batchConn = batchConn;
 		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
 
 		String stmt = "insert into " + schema + ".thematic_surface (id, objectclass_id, building_id, room_id, building_installation_id, lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id) values " +
 				"(?, ?, ?, ?, ?, ?, ?, ?)";
 
 		if (importer.isBlazegraph()) {
+			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
+			IRI_GRAPH_BASE = importer.getGraphBaseIri();
+			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 			stmt = getSPARQLStatement();
 		}
 
@@ -85,6 +81,7 @@ public class DBThematicSurface implements DBImporter {
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
 		openingImporter = importer.getImporter(DBOpening.class);
 	}
+
 	private String getSPARQLStatement(){
 		String param = "  ?;";
 		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
@@ -123,7 +120,7 @@ public class DBThematicSurface implements DBImporter {
 		int index = 0;
 
 		// import boundary surface information
-		// primary id
+
 		if (importer.isBlazegraph()) {
 			try {
 				objectURL = new URL(IRI_GRAPH_OBJECT + boundarySurface.getId() + "/");
@@ -135,9 +132,11 @@ public class DBThematicSurface implements DBImporter {
 				setBlankNode(psThematicSurface, ++index);
 			}
 			boundarySurface.setLocalProperty(CoreConstants.OBJECT_PARENT_URIID, parentURL);
-    } else {
-      psThematicSurface.setLong(++index, boundarySurfaceId);
+    	} else {
+      		psThematicSurface.setLong(++index, boundarySurfaceId);
 		}
+		// primary id
+//		psThematicSurface.setLong(++index, boundarySurfaceId);
 
 		// objectclass id
 		psThematicSurface.setInt(++index, featureType.getObjectClassId());
@@ -214,7 +213,7 @@ public class DBThematicSurface implements DBImporter {
 							try {
 								psThematicSurface.setURL(
 										++index,
-										new URL(DBSurfaceGeometry.IRI_GRAPH_OBJECT + multiSurfaceProperty.getMultiSurface().getId()));
+										new URL(DBSurfaceGeometry.IRI_GRAPH_OBJECT + multiSurfaceProperty.getMultiSurface().getId() + "/"));
 							} catch (MalformedURLException e) {
 								new CityGMLImportException(e);
 							}
@@ -274,6 +273,7 @@ public class DBThematicSurface implements DBImporter {
 
 		return boundarySurfaceId;
 	}
+
 
 	@Override
 	public void executeBatch() throws CityGMLImportException, SQLException {

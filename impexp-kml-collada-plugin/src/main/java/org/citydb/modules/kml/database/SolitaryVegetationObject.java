@@ -111,7 +111,7 @@ public class SolitaryVegetationObject extends KmlGenericObject{
 					String query = queries.getSolitaryVegetationObjectBasisData(currentLod);
 					psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 					for (int i = 1; i <= getParameterCount(query); i++)
-						psQuery.setLong(i, work.getId());
+						psQuery.setLong(i, (long)work.getId());
 
 					rs = psQuery.executeQuery();
 					if (rs.isBeforeFirst()) {
@@ -188,7 +188,7 @@ public class SolitaryVegetationObject extends KmlGenericObject{
 						query = queries.getExtrusionHeight();
 						psQuery2 = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 						for (int i = 1; i <= getParameterCount(query); i++)
-							psQuery2.setLong(i, work.getId());
+							psQuery2.setLong(i, (long)work.getId());
 
 						rs2 = psQuery2.executeQuery();
 						rs2.next();
@@ -227,9 +227,9 @@ public class SolitaryVegetationObject extends KmlGenericObject{
 						log.info("Object " + work.getGmlId() + " has more than " + GEOMETRY_AMOUNT_WARNING + " geometries. This may take a while to process...");
 
 					List<Point3d> anchorCandidates = getOrigins();
-					double zOffset = getZOffsetFromConfigOrDB(work.getId());
+					double zOffset = getZOffsetFromConfigOrDB((long)work.getId());
 					if (zOffset == Double.MAX_VALUE) {
-						zOffset = getZOffsetFromGEService(work.getId(), anchorCandidates);
+						zOffset = getZOffsetFromGEService((long)work.getId(), anchorCandidates);
 					}
 					setZOffset(zOffset);
 

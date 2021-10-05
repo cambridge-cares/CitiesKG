@@ -104,7 +104,7 @@ public class Bridge extends KmlGenericObject{
 			String query = queries.getBridgePartsFromBridge();
 			psQuery = connection.prepareStatement(query);
 			for (int i = 1; i <= getParameterCount(query); i++)
-				psQuery.setLong(i, work.getId());
+				psQuery.setLong(i, (long)work.getId());
 
 			rs = psQuery.executeQuery();
 
@@ -349,9 +349,9 @@ public class Bridge extends KmlGenericObject{
 						log.info("Object " + work.getGmlId() + " has more than " + GEOMETRY_AMOUNT_WARNING + " geometries. This may take a while to process...");
 
 					List<Point3d> anchorCandidates = getOrigins(); // setOrigins() called mainly for the side-effect
-					double zOffset = getZOffsetFromConfigOrDB(work.getId());
+					double zOffset = getZOffsetFromConfigOrDB((long)work.getId());
 					if (zOffset == Double.MAX_VALUE) {
-						zOffset = getZOffsetFromGEService(work.getId(), anchorCandidates);
+						zOffset = getZOffsetFromGEService((long)work.getId(), anchorCandidates);
 					}
 					setZOffset(zOffset);
 

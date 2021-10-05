@@ -27,9 +27,12 @@
  */
 package org.citydb.modules.kml.database;
 
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
+import org.citydb.config.project.database.DatabaseType;
 import org.citydb.config.project.kmlExporter.DisplayForm;
 import org.citydb.config.project.kmlExporter.Lod0FootprintMode;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
+import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.database.schema.SequenceEnum;
 
 public class Queries {
@@ -107,18 +110,20 @@ public class Queries {
 
 	public String getExtrusionHeight() {
 		switch (databaseAdapter.getDatabaseType()) {
-		case ORACLE:
-			return new StringBuilder("SELECT ")
-			.append("SDO_GEOM.SDO_MAX_MBR_ORDINATE(co.envelope, 3) - SDO_GEOM.SDO_MIN_MBR_ORDINATE(co.envelope, 3) AS envelope_measured_height ")
-			.append("FROM ").append(schema).append(".CITYOBJECT co ")
-			.append("WHERE co.id = ?").toString();
-		case POSTGIS:
-			return new StringBuilder("SELECT ")
-			.append("ST_ZMax(Box3D(co.envelope)) - ST_ZMin(Box3D(co.envelope)) AS envelope_measured_height ")
-			.append("FROM ").append(schema).append(".CITYOBJECT co ")
-			.append("WHERE co.id = ?").toString();
-		default:
-			return null;
+			case BLAZE:
+				return StatementTransformer.getExtrusionHeight();
+			case ORACLE:
+				return new StringBuilder("SELECT ")
+						.append("SDO_GEOM.SDO_MAX_MBR_ORDINATE(co.envelope, 3) - SDO_GEOM.SDO_MIN_MBR_ORDINATE(co.envelope, 3) AS envelope_measured_height ")
+						.append("FROM ").append(schema).append(".CITYOBJECT co ")
+						.append("WHERE co.id = ?").toString();
+			case POSTGIS:
+				return new StringBuilder("SELECT ")
+						.append("ST_ZMax(Box3D(co.envelope)) - ST_ZMin(Box3D(co.envelope)) AS envelope_measured_height ")
+						.append("FROM ").append(schema).append(".CITYOBJECT co ")
+						.append("WHERE co.id = ?").toString();
+			default:
+				return null;
 		}
 	}
 
@@ -583,6 +588,18 @@ public class Queries {
 
 	public String getBuildingPartAggregateGeometries(double tolerance, int srid2D, int lodToExportFrom, double groupBy1, double groupBy2, double groupBy3) {
 		if (lodToExportFrom > 1) {
+			// For SPARQL: the replacement of the string can raise error for the predicate. Need to be handled separately
+			if (databaseAdapter.getDatabaseType() == DatabaseType.BLAZE){
+
+				String sqlquery = "";
+				String sparqlquery = "";
+				try {
+					sparqlquery = StatementTransformer.getSPARQLqueryStage2(sqlquery, String.valueOf(lodToExportFrom));
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+				return sparqlquery;
+			}
 			return getBuildingPartAggregateGeometriesForLOD2OrHigher().replace("<TOLERANCE>", String.valueOf(tolerance))
 					.replace("<2D_SRID>", String.valueOf(srid2D))
 					.replace("<LoD>", String.valueOf(lodToExportFrom))

@@ -215,12 +215,15 @@ public class KmlExporter implements EventHandler {
 
 		// check whether spatial indexes are enabled
 		log.info("Checking for spatial indexes on geometry columns of involved tables...");
+
+
 		try {
 			if (!databaseAdapter.getUtil().isIndexEnabled("CITYOBJECT", "ENVELOPE") ||
 					!databaseAdapter.getUtil().isIndexEnabled("SURFACE_GEOMETRY", "GEOMETRY")) {
 				log.error("Spatial indexes are not activated.");
 				log.error("Please use the database tab to activate the spatial indexes.");
 				return false;
+
 			}
 		} catch (SQLException e) {
 			throw new KmlExportException("Failed to retrieve status of spatial indexes.", e);

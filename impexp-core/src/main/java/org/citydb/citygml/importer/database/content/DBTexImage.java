@@ -60,11 +60,10 @@ public class DBTexImage implements DBImporter {
 	private MessageDigest md5;
 	private boolean importTextureImage;
 	private int batchCounter;
-	//@todo Replace graph IRI and OOntocityGML prefix with variables set on the GUI
-	private static final String IRI_GRAPH_BASE = "http://localhost/berlin/";
-	private static final String PREFIX_ONTOCITYGML = "http://locahost/ontocitygml/";
+	private String PREFIX_ONTOCITYGML;
+	private String IRI_GRAPH_BASE;
+	private String IRI_GRAPH_OBJECT;
 	private static final String IRI_GRAPH_OBJECT_REL = "teximage/";
-	private static final String IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
 	public DBTexImage(Connection connection, Config config, CityGMLImportManager importer) throws SQLException {
 		this.importer = importer;
@@ -83,6 +82,9 @@ public class DBTexImage implements DBImporter {
 				"(?, ?, ?, ?)";
 
 		if (importer.isBlazegraph()) {
+			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
+			IRI_GRAPH_BASE = importer.getGraphBaseIri();
+			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 			stmt = getSPARQLStatement();
 		}
 

@@ -4,6 +4,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.AbstractSchemaManagerAdapter;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -152,6 +157,11 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_LOD2_IMPLICIT_TRANSFORMATION  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod2ImplicitTransformation";
     public static final String ONTO_LOD3_IMPLICIT_TRANSFORMATION  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod3ImplicitTransformation";
     public static final String ONTO_LOD4_IMPLICIT_TRANSFORMATION  = ONTO_PREFIX_NAME_ONTOCITYGML + "lod4ImplicitTransformation";
+    public static final String ONTO_OPENING_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "openingID";
+    public static final String ONTO_THEMSURFACE_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "themSurfaceID";
+    public static final String ONTO_REFERENCE_TO_LIBRARY = ONTO_PREFIX_NAME_ONTOCITYGML + "referenceToLibrary";
+    public static final String ONTO_RELATIVE_BREP_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "relativeBrepId";
+
     //@TODO: NOT IN ONTOCITYGML - need to be added:
     //@END
 
@@ -171,7 +181,19 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
 
     @Override
     public boolean existsSchema(Connection connection, String schema) {
-        return false;
+        boolean exists = true;
+        try {
+            URL myURL = new URL(schema);
+            HttpURLConnection myURLConnection = (HttpURLConnection) myURL.openConnection();
+            myURLConnection.connect();
+            if (myURLConnection.getResponseCode() != 200) {
+                exists = false;
+            }
+        }
+        catch (IOException e){
+            exists = false;
+        }
+        return exists;
     }
 
     @Override
@@ -181,6 +203,6 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
 
     @Override
     public String formatSchema(String schema) {
-        return null;
+        return schema != null ? schema.trim() : null;
     }
 }

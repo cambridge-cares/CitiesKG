@@ -10,9 +10,9 @@ dependencies {
     compile 'org.citydb:sqlbuilder:2.2.1'
     compile 'org.citydb:3dcitydb-ade-citygml4j:1.1.1'
     compile 'org.citygml4j:citygml4j:2.10.5'
-    compile 'org.geotools:gt-epsg-extension:20.1'
+    compile 'org.geotools:gt-epsg-extension:20.1' // can not be excluded as the postgis class needs it
     compile 'org.geotools:gt-epsg-hsql:20.1'
-    compile 'org.geotools:gt-referencing:20.1'
+    compile 'org.geotools:gt-referencing:20.1' // for imp-exp but cause conflict with geosparql-jena which uses sis-referencing
     compile 'com.h2database:h2:1.4.200'
     compile 'org.locationtech.jts:jts-core:1.16.1'
     compile 'org.postgresql:postgresql:42.2.10'
@@ -25,6 +25,8 @@ dependencies {
     compile 'org.apache.jena:jena-querybuilder:3.16.0'
     compile group: 'org.json', name: 'json', version: '20201115'
     compile fileTree(dir: 'lib', include: '*.jar')
+
+    implementation ('org.geotools:gt-main:20.1')  // utility class, transform
 }
 
 javadoc {
