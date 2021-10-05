@@ -287,10 +287,7 @@ public class Building extends KmlGenericObject{
 						}
 
 						rs = psQuery.executeQuery();
-						//if (rs.isBeforeFirst()){
-							// Shiying
-						//	existGS = true;
-						//	break;}
+
 						//@TODO: (Shiying) isBeforeFirst() returns different results between Blazegraph and PostGIS for emptySet
 						if (rs.next()){
 							existGS = true;
