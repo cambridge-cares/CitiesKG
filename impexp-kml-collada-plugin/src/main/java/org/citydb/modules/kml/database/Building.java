@@ -288,7 +288,26 @@ public class Building extends KmlGenericObject{
 
 						rs = psQuery.executeQuery();
 
-						//@TODO: (Shiying) isBeforeFirst() returns different results between Blazegraph and PostGIS for emptySet
+						// Temporary solution for TWA's bad performance of querying two different graph in one query. ~ 3min
+						boolean TWA = databaseAdapter.getConnectionDetails().getServer().contains("theworldavatar");
+						if (isBlazegraph && TWA) {
+							String fixedlod2MSid = null;
+							if (rs.next()) {
+								fixedlod2MSid = rs.getString(1);
+							}
+							String query2 = StatementTransformer.getSPARQLStatement_BuildingPartQuery_part2();
+							psQuery = connection.prepareStatement(query2, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+							URL url = null;
+							try {
+								url = new URL(fixedlod2MSid);
+							} catch (MalformedURLException e) {
+								e.printStackTrace();
+							}
+							psQuery.setURL(1, url);
+							rs = psQuery.executeQuery();
+						}
+						///////////////////// End of Temporary solution
+						//@Note: (Shiying) isBeforeFirst() returns different results between Blazegraph and PostGIS for emptySet
 						if (rs.next()){
 							existGS = true;
 							rs.beforeFirst(); // reset the cursor to avoid missing first row

@@ -19,6 +19,8 @@ import org.citydb.sqlbuilder.select.Select;
 import org.citydb.sqlbuilder.select.operator.comparison.BinaryComparisonOperator;
 import org.citydb.sqlbuilder.select.operator.comparison.InOperator;
 import org.locationtech.jts.geom.*;
+
+import java.sql.Connection;
 import java.util.*;
 
 
@@ -69,21 +71,36 @@ public class StatementTransformer {
 
     public static String getSPARQLStatement_BuildingPartQuery (String sqlQuery) {
         StringBuilder sparqlString = new StringBuilder();
-        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-                "SELECT ?geomtype (datatype(?geomtype) AS ?type)" +
-                "WHERE {" +
-                "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> {" +
-                "?ts_id ocgml:objectClassId 35 ; ocgml:buildingId ? ;ocgml:lod2MultiSurfaceId ?lod2MSid .}" );
 
         if (IRI_GRAPH_BASE.contains("theworldavatar")){
-            sparqlString.append("BIND(IRI(CONCAT(STR(?lod2MSid), '/')) AS ?fixedlod2MSid)" +
-                    "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> {" +
-                    "?sg_id ocgml:rootId ?fixedlod2MSid; ocgml:GeometryType ?geomtype . FILTER(!isBlank(?geomtype))} }");
+            sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+                    "SELECT ?fixedlod2MSid " +
+                    "WHERE {" +
+                    "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> {" +
+                    "?ts_id ocgml:objectClassId 35 ; ocgml:buildingId ? ;ocgml:lod2MultiSurfaceId ?lod2MSid .}" +
+                    "BIND(IRI(CONCAT(STR(?lod2MSid), '/')) AS ?fixedlod2MSid) }");
+
         }else {
-            sparqlString.append("GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> {" +
+            sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+                    "SELECT ?geomtype (datatype(?geomtype) AS ?type)" +
+                    "WHERE {" +
+                    "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> {" +
+                    "?ts_id ocgml:objectClassId 35 ; ocgml:buildingId ? ;ocgml:lod2MultiSurfaceId ?lod2MSid .}" +
+                    "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> {" +
                     "?sg_id ocgml:rootId ?lod2MSid; ocgml:GeometryType ?geomtype . FILTER(!isBlank(?geomtype))} }");
         }
 
+        return sparqlString.toString();
+    }
+
+    // Temporary solution for TWA:
+    public static String getSPARQLStatement_BuildingPartQuery_part2 () {
+        StringBuilder sparqlString = new StringBuilder();
+        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+                "SELECT ?geomtype (datatype(?geomtype) AS ?type)" +
+                "WHERE {" +
+                "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> {" +
+                "?sg_id ocgml:rootId ?; ocgml:GeometryType ?geomtype . FILTER(!isBlank(?geomtype))} }");
         return sparqlString.toString();
     }
 
