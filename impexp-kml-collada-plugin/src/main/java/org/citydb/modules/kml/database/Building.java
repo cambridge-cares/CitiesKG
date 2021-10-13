@@ -46,6 +46,9 @@ import org.citydb.query.Query;
 
 import javax.vecmath.Point3d;
 import javax.xml.bind.JAXBException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
@@ -122,7 +125,7 @@ public class Building extends KmlGenericObject{
 				try {
 					url = new URL(baseURL + work.getGmlId()+"/");
 				} catch (MalformedURLException e) {
-					e.printStackTrace(); // @TODO:
+					e.printStackTrace();
 				}
 				psQuery.setURL(1, url);   // setURL will add <> around the URL
 			} else {
@@ -254,7 +257,7 @@ public class Building extends KmlGenericObject{
 					}
 				}
 			}
-
+			// DisplayForm: FOOTPRINT/EXTRUDED
 			else {
 				int minLod = currentLod;
 				if (currentLod == 5) {
@@ -288,7 +291,7 @@ public class Building extends KmlGenericObject{
 
 						rs = psQuery.executeQuery();
 
-						// Temporary solution for TWA's bad performance of querying two different graph in one query. ~ 3min
+						///// Temporary solution for TWA's bad performance of querying two different graph in one query. ~ 3min
 						boolean TWA = databaseAdapter.getConnectionDetails().getServer().contains("theworldavatar");
 						if (isBlazegraph && TWA) {
 							String fixedlod2MSid = null;
@@ -298,16 +301,21 @@ public class Building extends KmlGenericObject{
 							String query2 = StatementTransformer.getSPARQLStatement_BuildingPartQuery_part2();
 							psQuery = connection.prepareStatement(query2, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 							URL url = null;
-							try {
-								url = new URL(fixedlod2MSid);
-							} catch (MalformedURLException e) {
-								e.printStackTrace();
+
+							if (fixedlod2MSid !=null){
+								try {
+									url = new URL(fixedlod2MSid);
+									psQuery.setURL(1, url);
+									rs = psQuery.executeQuery();
+								} catch (MalformedURLException e) {
+									e.printStackTrace();
+								}
 							}
-							psQuery.setURL(1, url);
-							rs = psQuery.executeQuery();
+
 						}
 						///////////////////// End of Temporary solution
 						//@Note: (Shiying) isBeforeFirst() returns different results between Blazegraph and PostGIS for emptySet
+						//@Note: If the resultset is not empty, it will jump to extraction
 						if (rs.next()){
 							existGS = true;
 							rs.beforeFirst(); // reset the cursor to avoid missing first row
