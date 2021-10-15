@@ -301,10 +301,11 @@ public class DBSurfaceData implements DBImporter {
 		if (surfaceData.isSetName()) {
 			valueJoiner.join(surfaceData.getName(), Code::getValue, Code::getCodeSpace);
 			psSurfaceData.setString(++index, valueJoiner.result(0));
-			if (valueJoiner.result(1) == null && importer.isBlazegraph()) {
+			String codespace = valueJoiner.result(1);
+			if (codespace == null && importer.isBlazegraph()) {
 				setBlankNode(psSurfaceData, ++index);
 			} else {
-				psSurfaceData.setString(++index, valueJoiner.result(1));
+				psSurfaceData.setString(++index, codespace);
 			}
 		} else if (importer.isBlazegraph()) {
 			setBlankNode(psSurfaceData, ++index);
