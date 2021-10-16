@@ -29,3 +29,7 @@ db/appearance
 impexp-core/test_config.properties
 impexp-core/test_config.properties
 */target/
+
+db/RWStore.properties
+db/vocabularies/src/main/resources/config.properties
+agents/${tomcatPath}/
