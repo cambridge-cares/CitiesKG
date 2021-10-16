@@ -27,3 +27,7 @@ db/*.gml
 db/appearance
 
 */target/
+
+db/vocabularies/src/main/resources/config.properties
+db/RWStore.properties
+agents/${tomcatPath}/
