@@ -89,8 +89,10 @@ public class CityImportAgent extends JPSAgent {
       if (requestUrl.contains(URI_LISTEN)) {
         importDir = listenToImport(requestParams.getString(KEY_DIRECTORY));
       } else if (requestUrl.contains(URI_ACTION)) {
-        requestParams = new JSONObject(importFiles(
-            new File(requestParams.getString(AsynchronousWatcherService.KEY_WATCH))));
+        String importedFiles = importFiles(new File(requestParams.getString(AsynchronousWatcherService.KEY_WATCH)));
+        JSONObject jsonMessage = new JSONObject();
+        jsonMessage.put("Imported Files", importedFiles);
+        requestParams = jsonMessage;
       }
     }
 
