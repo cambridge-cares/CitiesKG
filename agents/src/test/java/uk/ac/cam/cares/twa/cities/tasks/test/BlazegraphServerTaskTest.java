@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
@@ -142,7 +143,7 @@ public class BlazegraphServerTaskTest extends TestCase {
       PROPERTY_FILE.setAccessible(true);
       Method setupPaths = task.getClass().getDeclaredMethod("setupPaths");
       setupPaths.setAccessible(true);
-      assertEquals(setupPaths.invoke(task), "/test/test" + PROPERTY_FILE.get(task));
+      assertEquals(setupPaths.invoke(task), "/test/test" + PROPERTY_FILE.get(task));   // Note: Difference of path between windows and mac
 
     } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       fail();
@@ -169,9 +170,13 @@ public class BlazegraphServerTaskTest extends TestCase {
       propFile = (File) setupFiles.invoke(task, propFilePath);
       assertEquals(propFile.getAbsolutePath(), propFilePath);
       Properties prop = new Properties();
-      prop.load(new FileInputStream(propFile));
+      FileInputStream fin = new FileInputStream(propFile);
+      prop.load(fin);
+      fin.close();
+
+      String expected = new File(journalPath.get(task).toString()).getAbsolutePath();
       assertEquals(prop.getProperty("com.bigdata.journal.AbstractJournal.file"),
-          journalPath.get(task));
+          expected);
 
       try {
         setupFiles.invoke(task, propFilePath + fs + propFile.getName());
