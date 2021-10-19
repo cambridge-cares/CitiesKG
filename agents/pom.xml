@@ -151,11 +151,11 @@
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
-        <!--<dependency>
+        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>4.5.13</version>
-        </dependency>-->
+        </dependency>
 
         <dependency>
             <groupId>org.geotools</groupId>
@@ -183,16 +183,6 @@
             <scope>compile</scope>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.blazegraph/blazegraph-jar -->
-        <dependency>
-            <groupId>com.blazegraph</groupId>
-            <artifactId>blazegraph-jar</artifactId>
-            <version>2.1.5</version>
-        </dependency>
-        <!--<dependency>
-            <groupId>com.blazegraph</groupId>
-            <artifactId>blazegraph-jar</artifactId>
-            <version>2.1.6-wmf.1</version>
-        </dependency>-->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
