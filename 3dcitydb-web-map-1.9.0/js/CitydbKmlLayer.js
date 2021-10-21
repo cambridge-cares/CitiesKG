@@ -72,8 +72,8 @@
         this._urlSuffix = undefined;
         this._viewChangedEvent = new Cesium.Event();
 
-        this._highlightColor = new Cesium.Color(0.4, 0.4, 0.0, 1.0);
-        this._mouseOverhighlightColor = new Cesium.Color(0.0, 0.3, 0.0, 1.0);
+        this._highlightColor = new Cesium.Color(16/255, 77/255, 151/255, 1.0);
+        this._mouseOverhighlightColor = new Cesium.Color(61/255, 141/255, 239/255, 1.0);
 
         this._layerDataType = options.layerDataType;
         this._layerProxy = options.layerProxy;

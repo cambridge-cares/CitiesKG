@@ -434,8 +434,8 @@ function computeDistance() {
 			positions: centroids,
 			width: 2,
 			material: new Cesium.PolylineDashMaterialProperty({
-            color: Cesium.Color.WHITE,
-			dashLength: 20,
+            color: Cesium.Color.GOLD,
+			dashLength: 15,
           }),
 			cmalpToGround: true,
 		}
@@ -446,14 +446,14 @@ function computeDistance() {
         name: 'Distance label',
         position: getMidpoint(centroids[0], centroids[1]),
         label: {
-    font : 'bold 18px arial',
+    font : 'bold 22px arial',
     showBackground : false,
     horizontalOrigin : Cesium.HorizontalOrigin.CENTER,
     verticalOrigin : Cesium.VerticalOrigin.CENTER,
     pixelOffset : new Cesium.Cartesian2(0, 20),
     eyeOffset: new Cesium.Cartesian3(0,0,-50),
 	text: labelText,
-	fillColor : Cesium.Color.WHITE,
+	fillColor : Cesium.Color.GOLD,
 	}
     });
 
@@ -471,34 +471,6 @@ function computeDistance() {
 			label.label.text = distance.toString() + " " + "m";
 		}
     });	
-
-// FETCH.
-	
-//	(async () => {
-//		const rawResponse = await fetch('http://localhost:8080/agents/distance', {
-//			method: 'POST',
-//			//mode: 'cors',
-//			headers: {'Content-Type':'application/json'},
-//			body: JSON.stringify({iris: webMap.getAllHighlightedObjects()})
-//		});
-//	const content = await rawResponse;
-
-//	console.log(content.json());
-//	})();
-
-//	(async () => {
-//		var xmlHttp = new XMLHttpRequest();
-//		xmlHttp.open("POST", 'http://localhost:8080/agents/distance', true);
-//		xmlHttp.onerror = function(e) {
-//          console.log("Error");
-//			console.log(e);
-//        };
-//		xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-//		//xmlHttp.setRequestHeader('Origin', 'http://localhost:8000/3dwebclient');
-//		//xmlHttp.setRequestHeader('Access-Control-Allow-Origin', '*');
-//		const rawResponse = await xmlHttp.send(JSON.stringify({iris: webMap.getAllHighlightedObjects()}));
-//		console.log(xmlHttp.response);
-//	})();
 
 }
 
