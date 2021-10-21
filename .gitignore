@@ -28,3 +28,4 @@ db/appearance
 
 # Web-Map-Client node modules
 node_modules/*
+3dwebclient/test/*
