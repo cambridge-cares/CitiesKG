@@ -30,6 +30,7 @@
             <url>https://repo.osgeo.org/repository/release/</url>
         </repository>
     </repositories>
+
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
         <testSourceDirectory>src/test/java</testSourceDirectory>
@@ -164,25 +165,18 @@
         </dependency>
 
         <dependency>
-            <groupId>com.blazegraph</groupId>
-            <artifactId>blazegraph-jar</artifactId>
-            <version>2.1.5</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
             <version>3.1.0</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>uk.ac.cam.cares.jps.aws</groupId>
-            <artifactId>JPS_AWS</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
-        </dependency>
         <!-- https://mvnrepository.com/artifact/com.blazegraph/blazegraph-jar -->
+        <dependency>
+            <groupId>com.blazegraph</groupId>
+            <artifactId>blazegraph-jar</artifactId>
+            <version>2.1.5</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
