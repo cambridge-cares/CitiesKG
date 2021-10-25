@@ -25,8 +25,8 @@
                 <type>Blaze</type>
                 <server>127.0.0.1</server>
                 <port>9999</port>
-                <sid>/blazegraph/namespace/berlin/sparql/</sid>
-                <schema></schema>
+                <sid>/blazegraph/namespace/charlottenberg/sparql/</sid>
+                <schema>http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#</schema>
                 <user>changeme</user>
                 <password>changeme</password>
                 <savePassword>true</savePassword>

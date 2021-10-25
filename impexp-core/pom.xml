@@ -116,12 +116,6 @@
      </dependency>
      <dependency>
        <groupId>org.geotools</groupId>
-       <artifactId>gt-main</artifactId>
-       <version>20.1</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.geotools</groupId>
        <artifactId>gt-epsg-extension</artifactId>
        <version>20.1</version>
        <scope>compile</scope>
@@ -135,12 +129,6 @@
      <dependency>
        <groupId>org.geotools</groupId>
        <artifactId>gt-referencing</artifactId>
-       <version>20.1</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.geotools</groupId>
-       <artifactId>gt-main</artifactId>
        <version>20.1</version>
        <scope>compile</scope>
      </dependency>
@@ -231,10 +219,10 @@
         <groupId>com.oracle.spatial</groupId>
         <artifactId>sdoapi</artifactId>
         <version>19.3.0.0</version>
-       <scope>system</scope>
+       <!--<scope>system</scope>
        <systemPath>${project.basedir}/lib/sdoapi-19.3.0.0.jar</systemPath>
        <type>jar</type>
-       <optional>true</optional>
+       <optional>true</optional>-->
       </dependency>
    </dependencies>
 
