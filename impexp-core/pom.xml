@@ -133,11 +133,11 @@
        <scope>compile</scope>
      </dependency>
      <!-- https://mvnrepository.com/artifact/tec.uom/uom-se -->
-     <dependency>
+     <!--<dependency>
        <groupId>tec.uom</groupId>
        <artifactId>uom-se</artifactId>
        <version>1.0.10</version>
-     </dependency>
+     </dependency>-->
      <dependency>
        <groupId>com.h2database</groupId>
        <artifactId>h2</artifactId>
