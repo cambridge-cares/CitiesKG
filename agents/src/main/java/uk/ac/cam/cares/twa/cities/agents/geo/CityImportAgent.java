@@ -254,11 +254,17 @@ public class CityImportAgent extends JPSAgent {
     try {
       ArrayList<String> args = new ArrayList<>();
       args.add("python");
+      //args.add("-V");
+      //args.add("C:\\Users\\Shiying\\AppData\\Local\\Programs\\Python\\Python38\\python.exe");
       args.add(new File(
           Objects.requireNonNull(getClass().getClassLoader().getResource(SPLIT_SCRIPT)).toURI()).getAbsolutePath());
       args.add(fileDst);
       args.add(String.valueOf(CHUNK_SIZE));
       Files.move(Paths.get(fileSrc), Paths.get(fileDst)); //throws IOException
+      //String test = new File(Objects.requireNonNull(getClass().getClassLoader().getResource(SPLIT_SCRIPT)).toURI()).getAbsolutePath();
+      //System.out.println(System.getenv().get("Path"));
+      //System.out.println(Runtime.getRuntime());
+      System.out.println(args);
       CommandHelper.executeCommands(splitDir.getPath(), args);
       Iterator<File> files = Arrays.stream(Objects.requireNonNull(splitDir.listFiles())).iterator();
 
