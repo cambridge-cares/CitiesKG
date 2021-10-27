@@ -6,6 +6,7 @@ import uk.ac.cam.cares.twa.cities.tasks.ExporterTask;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
+import java.io.File;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -39,7 +40,13 @@ public class CityExportAgent extends JPSAgent {
             requestUrl = requestParams.getString(KEY_REQ_URL);
             gmlids = requestParams.getString(KEY_GMLID);
             ResourceBundle rb = ResourceBundle.getBundle("config");
-            String outputPath = rb.getString("outputDir") + outFileName;
+            String outputDir = rb.getString("outputDir") + "export";
+            File outputdir = new File (outputDir);
+            if (!outputdir.exists()){
+                outputdir.mkdirs();
+            }
+            String outputPath = outputDir + outFileName;
+
             result.put("outputPath", exportKml(gmlids, outputPath));
         }
         // It will return the file path of the exported file
