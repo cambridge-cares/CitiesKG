@@ -203,4 +203,23 @@ public class UtilAdapter extends AbstractUtilAdapter {
 
         return isIndexed;
     }
+
+    private DatabaseSrsType getSrsType(String srsType) {
+        if ("PROJCS".equals(srsType))
+            return DatabaseSrsType.PROJECTED;
+        else if ("GEOGCS".equals(srsType))
+            return DatabaseSrsType.GEOGRAPHIC2D;
+        else if ("GEOCCS".equals(srsType))
+            return DatabaseSrsType.GEOCENTRIC;
+        else if ("VERT_CS".equals(srsType))
+            return DatabaseSrsType.VERTICAL;
+        else if ("LOCAL_CS".equals(srsType))
+            return DatabaseSrsType.ENGINEERING;
+        else if ("COMPD_CS".equals(srsType))
+            return DatabaseSrsType.COMPOUND;
+        else if ("GEOGCS3D".equals(srsType))
+            return DatabaseSrsType.GEOGRAPHIC3D;
+        else
+            return DatabaseSrsType.UNKNOWN;
+    }
 }
