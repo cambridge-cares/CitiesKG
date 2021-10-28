@@ -1,13 +1,16 @@
 package org.citydb.database.adapter.blazegraph;
 
+import org.apache.jena.jdbc.remote.RemoteEndpointDriver;
 import org.citydb.config.geometry.BoundingBox;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.config.geometry.GeometryType;
 import org.citydb.config.geometry.MultiPolygon;
 import org.citydb.config.project.database.DatabaseSrs;
+import org.citydb.config.project.database.DatabaseSrsType;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.AbstractUtilAdapter;
 import org.citydb.database.adapter.IndexStatusInfo;
+import org.citydb.database.connection.DatabaseConnectionDetails;
 import org.citydb.database.connection.DatabaseMetaData;
 import org.citydb.database.version.DatabaseVersion;
 import org.locationtech.jts.geom.Coordinate;
@@ -43,7 +46,51 @@ public class UtilAdapter extends AbstractUtilAdapter {
 
     @Override
     protected void getSrsInfo(DatabaseSrs srs, Connection connection) throws SQLException {
+        getSrsInfo(srs);
+    }
 
+    @Override
+    public void getSrsInfo(DatabaseSrs srs) throws SQLException {
+        String prefix = RemoteEndpointDriver.DRIVER_PREFIX.concat(RemoteEndpointDriver.REMOTE_DRIVER_PREFIX).concat(RemoteEndpointDriver.PARAM_QUERY_ENDPOINT).concat("=");
+
+        DatabaseConnectionDetails details = databaseAdapter.getConnectionDetails();
+        String server = details.getServer();
+        String port = String.valueOf(details.getPort());
+        String sid = details.getSid().replaceFirst("(namespace/)\\S*(/sparql)", "$1public$2");
+        String endpoint = "http://".concat(server).concat(":").concat(port).concat(sid);
+        Connection conn = DriverManager.getConnection(prefix.concat(endpoint));
+
+        String schema = details.getSchema();
+
+        try (Statement statement = conn.createStatement();
+             //Change prefix and predicate to variable
+             ResultSet rs = statement.executeQuery("PREFIX ocgml: <" + schema + ">\n" +
+                     "SELECT ?name ?type ?srtext WHERE {\n" +
+                     "        ?s ocgml:srtext ?srtext\n" +
+                     "        BIND(strbefore((strafter(?srtext, \"\\\"\")), \"\\\"\") as ?name)\n" +
+                     "        BIND(strbefore(?srtext, \"[\") as ?type)\n" +
+                     "        ?s ocgml:srid " + srs.getSrid() +
+                     "}")) {
+
+            if (rs.next()) {
+                srs.setSupported(true);
+                if ((rs.getString(1)==null)&&(rs.getString(2)==null)) { //srs is supported but no wktext
+                    srs.setDatabaseSrsName("");
+                    srs.setType(getSrsType(""));
+                    srs.setWkText("");
+                } else { //srs is supported and has wktext
+                    srs.setDatabaseSrsName(rs.getString(1));
+                    srs.setType(getSrsType(rs.getString(2)));
+                    srs.setWkText(rs.getString(3));
+                }
+            } else { //srs is not supported
+                DatabaseSrs tmp = DatabaseSrs.createDefaultSrs();
+                srs.setDatabaseSrsName(tmp.getDatabaseSrsName());
+                srs.setType(tmp.getType());
+                srs.setSupported(false);
+            }
+            srsInfoMap.put(srs.getSrid(), srs);
+        }
     }
 
     @Override
