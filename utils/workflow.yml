@@ -1,0 +1,47 @@
+- script: create-new-scenario
+  parameters:
+    project: testProject1
+    scenario: testScenario
+    output-path: C:\Users\ELLO01\Documents\testProject
+    zone: C:\Users\ELLO01\Documents\testProject\zone.shp
+    terrain:
+    streets:
+- script: weather-helper
+  parameters:
+    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+    weather: Singapore-Changi_1990_2010_TMY
+- script: surroundings-helper
+  parameters:
+    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+    buffer: 250.
+- script: terrain-helper
+  parameters:
+    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+- script: data-initializer
+  parameters:
+    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+    databases-path: C:\Users\ELLO01\Documents\GitHub\CityEnergyAnalyst\cea\databases\SG
+- script: archetypes-mapper
+  parameters:
+    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+    buildings: ['B001']
+- script: radiation
+  parameters:
+    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+    buildings: ['B001']
+    daysim-bin-directory: C:\Users\ELLO01\Documents\GitHub\CityEnergyAnalyst\setup\Dependencies\Daysim
+- script: schedule-maker
+  parameters:
+    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+    buildings: ['B001']
+- script: demand
+  parameters:
+    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+    buildings: ['B001']
+    loads-output: ['GRID', 'QH_sys', 'QC_sys']
+    massflows-output: []
+    temperatures-output: []
+- script: photovoltaic-thermal
+  parameters:
+    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+    buildings: ['B001']

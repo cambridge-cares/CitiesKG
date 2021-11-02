@@ -37,14 +37,7 @@ public class RunCEATask implements Runnable {
         // starting the process
         try {
             Process process = builder.start();
-            process.waitFor(10, TimeUnit.SECONDS);
-            process.destroy();                     // tell the process to stop
-            process.waitFor(10, TimeUnit.SECONDS); // give it a chance to stop
-            if (process.isAlive()) {
-                process.destroyForcibly();             // tell the OS to kill the process
-                process.waitFor();                     // the process is now dead
-            }
-        } catch ( InterruptedException | IOException  e) {
+        } catch ( IOException  e) {
             e.printStackTrace();
             throw new JPSRuntimeException(e);
         }
@@ -60,7 +53,6 @@ public class RunCEATask implements Runnable {
 
                 result.geometry = inputs.get(0);
                 result.floors_ag = inputs.get(1);
-                double height_ag = Integer.parseInt(result.floors_ag)*3.5;
 
                 //Parse data to JSON
                 String dataString = new Gson().toJson(result);
@@ -76,28 +68,9 @@ public class RunCEATask implements Runnable {
                 // starting the process
                 build.start();
 
-                // Create a new scenario and run CEA scripts
-                String createNewScenarioArgs = "cea create_new_scenario --project testProject1 --scenario testScenario --output-path  C:\\Users\\ELLO01\\Documents\\testProject --zone C:\\Users\\ELLO01\\Documents\\testProject\\zone.shp";
-                runCEAScript(createNewScenarioArgs);
-                String weatherHelperArgs = "cea weather-helper --scenario C:\\Users\\ELLO01\\Documents\\testProject\\testProject1\\testScenario";
-                runCEAScript(weatherHelperArgs);
-                String surroundingsHelperArgs = "cea surroundings-helper --scenario C:\\Users\\ELLO01\\Documents\\testProject\\testProject1\\testScenario --buffer 250 --height-ag --floors-ag ";
-                runCEAScript(surroundingsHelperArgs);
-                String terrainHelperArgs = "cea terrain-helper --scenario C:\\Users\\ELLO01\\Documents\\testProject\\testProject1\\testScenario";
-                runCEAScript(terrainHelperArgs);
-                String databaseInitializerArgs = "cea data-initializer --scenario C:\\Users\\ELLO01\\Documents\\testProject\\testProject1\\testScenario --databases-path C:\\Users\\ELLO01\\Documents\\cityenergyanalyst\\cityenergyanalyst\\cea\\databases\\SG";
-                runCEAScript(databaseInitializerArgs);
-                String archetypesMapperArgs = "cea archetypes-mapper --scenario C:\\Users\\ELLO01\\Documents\\testProject\\testProject1\\testScenario --buildings ['B001']";
-                runCEAScript(archetypesMapperArgs);
-                String radiationArgs = "cea radiation --scenario C:\\Users\\ELLO01\\Documents\\testProject\\testProject1\\testScenario --buildings ['B001']";
-                runCEAScript(radiationArgs);
-                String scheduleMakerArgs = "cea schedule-maker --scenario C:\\Users\\ELLO01\\Documents\\testProject\\testProject1\\testScenario --buildings ['B001']";
-                runCEAScript(scheduleMakerArgs);
-                String demandArgs = "cea demand --scenario C:\\Users\\ELLO01\\Documents\\testProject\\testProject1\\testScenario --buildings ['B001'] --loads-output ['GRID', 'QH_sys', 'QC_sys']";
-                runCEAScript(demandArgs);
-                String PVArgs = "cea photovoltaic-thermal --scenario C:\\Users\\ELLO01\\Documents\\testProject\\testProject1\\testScenario --buildings ['B001']";
-                runCEAScript(PVArgs);
-
+                // Run a workflow that runs all CEA scripts
+                String workflowArgs = "cea workflow --workflow C:\\Users\\ELLO01\\Documents\\CitiesKG\\utils\\workflow.yml";
+                runCEAScript(workflowArgs);
 
             } catch (  IOException | NullPointerException e) {
                 e.printStackTrace();
