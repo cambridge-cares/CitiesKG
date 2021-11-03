@@ -17,7 +17,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 public class ExporterTaskTest extends TestCase {
 
-    public String testgmlIds = "abc";
+    public String[] testgmlIds = {"abc"};
     public String outFileName = "/test.kml";
     public String outTmpDir = "java.io.tmpdir"; // Note: this path is dependent on the PC, e.g., C:\Users\Shiying\AppData\Local\Temp\test_extruded.kml
 
@@ -26,7 +26,7 @@ public class ExporterTaskTest extends TestCase {
     public void testNewExporterTask() {
         ExporterTask task;
 
-        String gmlIds = testgmlIds;
+        String[] gmlIds = testgmlIds;
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
 
@@ -41,7 +41,7 @@ public class ExporterTaskTest extends TestCase {
     public void testNewExporterTaskFields() {
 
         // Setup of input parameters for the method
-        String gmlIds = testgmlIds;
+        String[] gmlIds = testgmlIds;
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath = outputFile.getAbsolutePath();
 
@@ -86,7 +86,7 @@ public class ExporterTaskTest extends TestCase {
 
     public void testNewExporterTaskMethods() {
 
-        String gmlIds = testgmlIds;
+        String[] gmlIds = testgmlIds;
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
 
@@ -97,7 +97,7 @@ public class ExporterTaskTest extends TestCase {
 
     public void testNewExporterTaskStopMethod() {
 
-        String gmlIds = testgmlIds;
+        String[] gmlIds = testgmlIds;
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
 
@@ -121,7 +121,7 @@ public class ExporterTaskTest extends TestCase {
     public void testNewExporterTaskSetupConfigMethod() {
 
         // Setup the CityExportAgent
-        String gmlIds = testgmlIds;
+        String[] gmlIds = testgmlIds;
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
         ExporterTask task = new ExporterTask(gmlIds, outputPath);
@@ -163,7 +163,7 @@ public class ExporterTaskTest extends TestCase {
     public void testNewExporterTaskRunMethod() {
 
         // Test with fake gmlId
-        String exampleGmlIds = "BLDG_000300000001c242";
+        String[] exampleGmlIds = {"BLDG_000300000001c242"};
 
         // Setup the CityExportAgent
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);

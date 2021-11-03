@@ -20,12 +20,12 @@ public class ExporterTask implements Runnable {
     public static final String ARG_KMLEXPORT = "-kmlExport=";
     public static final String ARG_CFG = "-config=";
 
-    private final String inputs;
+    private final String[] inputs;
     private final String outputpath;
     private Boolean stop = false;
 
 
-    public ExporterTask(String gmlIds, String outputpath) {
+    public ExporterTask(String[] gmlIds, String outputpath) {
         this.inputs = gmlIds;
         this.outputpath = outputpath;
     }
@@ -55,11 +55,14 @@ public class ExporterTask implements Runnable {
     }
 
     /**
-     * Set the GMLOD into Config file,
+     * Replaces placeholder values in Importer/Exporter project config file with the gmlids
+     *
      * Assume LODx and displayForm are fixed : LOD2 and extruded
      * For bbox option, the parameters are more complex
      * This method should overwrite the gmlId within the project setting to define what to extract. * for all
-     *
+     * @return - config file with changed values
+     * @throws URISyntaxException - when the project path could not be converted to URI
+     * @throws IOException        - when copy/read/write operations on files fail
      * */
     private File setupConfig() throws IOException, URISyntaxException {
 
@@ -73,7 +76,8 @@ public class ExporterTask implements Runnable {
         File cfgFile = new File(configPath);
 
         String cfgData = FileUtils.readFileToString(cfgFile, String.valueOf(Charset.defaultCharset()));
-        cfgData = cfgData.replace(PLACEHOLDER_GMLID, this.inputs);
+        String inputs2replace = String.join(",", this.inputs);
+        cfgData = cfgData.replace(PLACEHOLDER_GMLID, inputs2replace);
         FileUtils.writeStringToFile(cfgFile, cfgData);
         return cfgFile;
     }
