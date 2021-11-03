@@ -1,6 +1,7 @@
 package uk.ac.cam.cares.twa.cities.tasks.test;
 
 import junit.framework.TestCase;
+import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -20,7 +21,15 @@ public class ExporterTaskTest extends TestCase {
     public String[] testgmlIds = {"abc"};
     public String outFileName = "/test.kml";
     public String outTmpDir = "java.io.tmpdir"; // Note: this path is dependent on the PC, e.g., C:\Users\Shiying\AppData\Local\Temp\test_extruded.kml
+    public JSONObject testServerInfo = initialServerInfo();
 
+    public JSONObject initialServerInfo() {
+        JSONObject serverInfo = new JSONObject();
+        serverInfo.put("host", "127.0.0.1");
+        serverInfo.put("port", "9999");
+        serverInfo.put("namespace", "/blazegraph/namespace/testdata/sparql");
+        return serverInfo;
+    }
 
 
     public void testNewExporterTask() {
@@ -31,7 +40,7 @@ public class ExporterTaskTest extends TestCase {
         String outputPath= outputFile.getAbsolutePath();
 
         try {
-            task = new ExporterTask(gmlIds, outputPath);
+            task = new ExporterTask(gmlIds, outputPath, testServerInfo);
             assertNotNull(task);
         }  catch (Exception e) {
             fail();
@@ -45,7 +54,7 @@ public class ExporterTaskTest extends TestCase {
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath = outputFile.getAbsolutePath();
 
-        ExporterTask task = new ExporterTask(gmlIds, outputPath);
+        ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo);
         assertEquals(8, task.getClass().getDeclaredFields().length);
 
         Field PROJECT_CONFIG;
@@ -90,7 +99,7 @@ public class ExporterTaskTest extends TestCase {
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
 
-        ExporterTask task = new ExporterTask(gmlIds, outputPath);
+        ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo);
         assertEquals(3, task.getClass().getDeclaredMethods().length);
     }
 
@@ -101,7 +110,7 @@ public class ExporterTaskTest extends TestCase {
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
 
-        ExporterTask task = new ExporterTask(gmlIds, outputPath);
+        ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo);
 
         try {
             Field stopF = task.getClass().getDeclaredField("stop");
@@ -124,7 +133,7 @@ public class ExporterTaskTest extends TestCase {
         String[] gmlIds = testgmlIds;
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
-        ExporterTask task = new ExporterTask(gmlIds, outputPath);
+        ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo);
 
         // Working with tempFolder and tempFile
         File configFile = new File(System.getProperty(outTmpDir) + "/testproject.xml");  //initialize File object and passing path as argument but the file is not created yet
@@ -169,7 +178,7 @@ public class ExporterTaskTest extends TestCase {
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath = outputFile.getAbsolutePath();
 
-        ExporterTask task = new ExporterTask(exampleGmlIds, outputPath);
+        ExporterTask task = new ExporterTask(exampleGmlIds, outputPath, testServerInfo);
         String actualFilePath = outputPath.replace(".kml", "_extruded.kml");
         File actualFile = new File(actualFilePath);
 

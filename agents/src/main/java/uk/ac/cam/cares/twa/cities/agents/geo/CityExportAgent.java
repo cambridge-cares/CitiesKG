@@ -9,10 +9,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -29,6 +26,8 @@ public class CityExportAgent extends JPSAgent {
         public String outTmpDir;
         private String requestUrl;
         private String[] gmlids;
+        private String sourceUrl;
+        private JSONObject serverInfo;
 
 
         //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
@@ -43,7 +42,8 @@ public class CityExportAgent extends JPSAgent {
         if (validateInput(requestParams)) {
             requestUrl = requestParams.getString(KEY_REQ_URL);
             gmlids = getInputGmlids(requestParams);
-            result.put("outputPath", exportKml(gmlids, getOutputPath()));
+            serverInfo = getServerInfo(requestParams);
+            result.put("outputPath", exportKml(gmlids, getOutputPath(), serverInfo));
         }
         // It will return the file path of the exported file
         System.out.println(result);
@@ -73,6 +73,42 @@ public class CityExportAgent extends JPSAgent {
             throw new BadRequestException();
         }
         return !error;
+    }
+
+    /**
+     * retrieves the server information from the endpointUri -- host, port, namespace
+     *
+     * @param  - requestParams sent to the agent
+     * @return - JSONObject with key/value: host, port, namespace
+     */
+
+    private JSONObject getServerInfo (JSONObject requestParams) {
+
+        JSONObject serverInfo = new JSONObject();
+        JSONArray uriGmlids = requestParams.getJSONArray(KEY_GMLID);
+        String endpointUri = uriGmlids.get(0).toString();
+
+        String[] splitstr = endpointUri.split("/");
+
+        String url = splitstr[2];
+        String server = null;
+        String port = null;
+        if (url.contains(":")){
+            String[] serverport = url.split(":");
+            server = serverport[0];
+            port = serverport[1];
+        }
+
+        String[] subarray = Arrays.copyOfRange(splitstr, 3, 7);
+        String namespace = "/" + String.join("/", subarray) + "/";
+
+        if (server.isEmpty() || port.isEmpty() || namespace.isEmpty()) {
+            return null;
+        }
+        serverInfo.put ("host", server);
+        serverInfo.put ("port", port);
+        serverInfo.put ("namespace", namespace);
+        return serverInfo;
     }
 
     /**
@@ -121,9 +157,9 @@ public class CityExportAgent extends JPSAgent {
         return outputPath;
     }
 
-    private String exportKml (String[] gmlIds, String outputpath){
+    private String exportKml (String[] gmlIds, String outputpath, JSONObject serverInfo){
         String actualPath = outputpath.replace(".kml", "_extruded.kml");
-        ExporterTask task = new ExporterTask(gmlIds, outputpath);
+        ExporterTask task = new ExporterTask(gmlIds, outputpath, serverInfo);
         exporterExecutor.execute(task);
         return actualPath;
     }

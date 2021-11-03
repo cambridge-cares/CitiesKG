@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.tasks;
 
 import org.apache.commons.io.FileUtils;
 import org.citydb.ImpExp;
+import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import java.io.File;
 import java.io.IOException;
@@ -10,24 +11,31 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Objects;
 
 
 public class ExporterTask implements Runnable {
 
     public static final String PROJECT_CONFIG = "project.xml";  // project config template
+    public static final String EXT_FILE_KML = ".kml";
     public static final String PLACEHOLDER_GMLID = "{{gmlid}}";
+    public static final String PLACEHOLDER_HOST = "{{host}}";
+    public static final String PLACEHOLDER_PORT = "{{port}}";
+    public static final String PLACEHOLDER_NS = "{{namespace}}";
     public static final String ARG_SHELL = "-shell";
     public static final String ARG_KMLEXPORT = "-kmlExport=";
     public static final String ARG_CFG = "-config=";
 
     private final String[] inputs;
     private final String outputpath;
+    private final JSONObject serverinfo;
     private Boolean stop = false;
 
 
-    public ExporterTask(String[] gmlIds, String outputpath) {
+    public ExporterTask(String[] gmlIds, String outputpath, JSONObject serverInfo) {
         this.inputs = gmlIds;
         this.outputpath = outputpath;
+        this.serverinfo = serverInfo;
     }
 
     public void stop() {
@@ -67,17 +75,20 @@ public class ExporterTask implements Runnable {
     private File setupConfig() throws IOException, URISyntaxException {
 
         // Copy the template to the location of output
-        File outputFile = new File(outputpath);
+        File exportFile = new File(outputpath);
 
-        String configPath = outputFile.getAbsolutePath().replace(".kml", "project.xml");
-        Files.copy(Paths.get(getClass().getClassLoader().getResource(PROJECT_CONFIG).toURI()),
-                    Paths.get(configPath), StandardCopyOption.REPLACE_EXISTING);
+        String projectCfg = exportFile.getAbsolutePath().replace(EXT_FILE_KML, PROJECT_CONFIG);
+        Files.copy(Paths.get(Objects.requireNonNull(getClass().getClassLoader().getResource(PROJECT_CONFIG)).toURI()),
+                    Paths.get(projectCfg), StandardCopyOption.REPLACE_EXISTING);
 
-        File cfgFile = new File(configPath);
+        File cfgFile = new File(projectCfg);
 
         String cfgData = FileUtils.readFileToString(cfgFile, String.valueOf(Charset.defaultCharset()));
-        String inputs2replace = String.join(",", this.inputs);
-        cfgData = cfgData.replace(PLACEHOLDER_GMLID, inputs2replace);
+        cfgData = cfgData.replace(PLACEHOLDER_GMLID, String.join(",", this.inputs));
+        cfgData = cfgData.replace(PLACEHOLDER_HOST, String.valueOf(serverinfo.get("host")));
+        cfgData = cfgData.replace(PLACEHOLDER_PORT, String.valueOf(serverinfo.get("port")));
+        cfgData = cfgData.replace(PLACEHOLDER_NS, String.valueOf(serverinfo.get("namespace")));
+
         FileUtils.writeStringToFile(cfgFile, cfgData);
         return cfgFile;
     }
