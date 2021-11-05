@@ -1,5 +1,4 @@
 POST http://localhost:8080/agents/import/source
 Content-Type: application/json
 
-{"directory":"C:\\import\\",
-  "targetURL": "http://localhost:8080/citieskg/namespace/berlin/sparql"}
+{"directory":"C:\\import\\", "targetURL": "http://localhost:8080/citieskg/namespace/berlin/sparql"}
