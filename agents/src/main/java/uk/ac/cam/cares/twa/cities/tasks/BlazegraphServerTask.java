@@ -19,6 +19,8 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Server;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 /**
  * Runnable task instantiating Blazegraph's {@link StandaloneNanoSparqlServer} and placing the
  * running instance in the {@link BlockingQueue} fot the other tasks to pick up when it is ready to
@@ -104,12 +106,15 @@ public class BlazegraphServerTask implements Runnable {
   private File setupFiles(String propFileAbsPath) throws URISyntaxException, IOException {
     Files.copy(Paths.get(
             Objects.requireNonNull(getClass().getResource(PROPERTY_FILE_PATH + PROPERTY_FILE)).toURI()),
-        Paths.get(propFileAbsPath));
+        Paths.get(propFileAbsPath), REPLACE_EXISTING);  // Note Files.copy raises errors when the file on the destination exists
     Properties properties = new Properties();
-    properties.load(new FileInputStream(propFileAbsPath));
+    FileInputStream fin = new FileInputStream(propFileAbsPath);  // Save the filestream in a variable and close it properly after usage
+    properties.load(fin);
+    fin.close();
     properties.setProperty("com.bigdata.journal.AbstractJournal.file", new File(journalPath).getAbsolutePath());
-    properties.store(new FileOutputStream(propFileAbsPath), null);
-
+    FileOutputStream fout = new FileOutputStream(propFileAbsPath);
+    properties.store(fout, null);
+    fout.close();
     File propFile = new File(propFileAbsPath);
     /*String data = FileUtils.readFileToString(propFile, String.valueOf(Charset.defaultCharset()));
     data = data.replace(DEF_JOURNAL_NAME, journalPath);

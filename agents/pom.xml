@@ -7,19 +7,24 @@
     <groupId>uk.ac.cam.cares.twa.cities.agents</groupId>
     <artifactId>agents</artifactId>
     <version>0.1.0</version>
+    <packaging>war</packaging>
+
+    <repositories>
+        <repository>
+            <id>wikimedia</id>
+            <name>wikimedia</name>
+            <url>https://archiva.wikimedia.org/repository/releases/</url>
+        </repository>
+        <repository>
+            <id>official-maven-repo</id>
+            <url>https://repo.maven.apache.org/maven2/</url>
+        </repository>
+    </repositories>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
-
-    <packaging>war</packaging>
-    <repositories>
-    <repository>
-        <id>wikimedia</id>
-        <name>wikimedia</name>
-        <url>https://archiva.wikimedia.org/repository/releases/</url>
-    </repository>
-    </repositories>
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
         <testSourceDirectory>src/test/java</testSourceDirectory>
@@ -34,7 +39,6 @@
 
         <pluginManagement>
             <plugins>
-
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.1</version>
@@ -91,8 +95,8 @@
 
             </plugins>
         </pluginManagement>
-
     </build>
+
     <dependencies>
         <dependency>
             <groupId>uk.ac.cam.cares.jps</groupId>
@@ -116,23 +120,18 @@
             <version>3.1.0</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>uk.ac.cam.cares.jps.aws</groupId>
-            <artifactId>JPS_AWS</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
-        </dependency>
+        <!--<dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
+        </dependency>-->
         <!-- https://mvnrepository.com/artifact/com.blazegraph/blazegraph-jar -->
         <dependency>
             <groupId>com.blazegraph</groupId>
             <artifactId>blazegraph-jar</artifactId>
             <version>2.1.5</version>
+            <scope>provided</scope>
         </dependency>
-        <!--<dependency>
-            <groupId>com.blazegraph</groupId>
-            <artifactId>blazegraph-jar</artifactId>
-            <version>2.1.6-wmf.1</version>
-        </dependency>-->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
@@ -143,15 +142,11 @@
             <artifactId>impexp-client</artifactId>
             <version>4.2.3</version>
         </dependency>
-        <!--<dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.13</version>
-        </dependency>-->
         <dependency>
             <groupId>com.konghq</groupId>
             <artifactId>unirest-java</artifactId>
             <version>3.12.0</version>
+            <classifier>standalone</classifier>
         </dependency>
         <!-- https://mvnrepository.com/artifact/dev.jeka/jeka-core -->
         <dependency>
@@ -159,5 +154,24 @@
             <artifactId>jeka-core</artifactId>
             <version>0.9.11.RELEASE</version>
         </dependency>
+        <dependency>
+            <groupId>uk.ac.cam.cares.jps.aws</groupId>
+            <artifactId>JPS_AWS</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>3.11.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-inline</artifactId>
+            <version>3.11.2</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>
+

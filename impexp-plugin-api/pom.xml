@@ -5,6 +5,10 @@
   <groupId>org.citydb</groupId>
   <artifactId>impexp-plugin-api</artifactId>
   <version>4.2.3</version>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  </properties>
   <build>
     <pluginManagement>
       <plugins>
