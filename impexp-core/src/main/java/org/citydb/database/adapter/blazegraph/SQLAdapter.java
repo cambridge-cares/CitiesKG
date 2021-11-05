@@ -168,7 +168,7 @@ public class SQLAdapter extends AbstractSQLAdapter {
     public PreparedStatement prepareStatement(SQLStatement statement, Connection connection) throws SQLException{
 
         PreparedStatement preparedStatement = transformStatement(statement, connection);
-
+        System.out.println(preparedStatement);
         return preparedStatement;
     }
 

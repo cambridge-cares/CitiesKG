@@ -84,7 +84,7 @@ public class ExporterTask implements Runnable {
         File cfgFile = new File(projectCfg);
 
         String cfgData = FileUtils.readFileToString(cfgFile, String.valueOf(Charset.defaultCharset()));
-        cfgData = cfgData.replace(PLACEHOLDER_GMLID, String.join(",", this.inputs));
+        cfgData = cfgData.replace(PLACEHOLDER_GMLID, createGmlids(this.inputs));
         cfgData = cfgData.replace(PLACEHOLDER_HOST, String.valueOf(serverinfo.get("host")));
         cfgData = cfgData.replace(PLACEHOLDER_PORT, String.valueOf(serverinfo.get("port")));
         cfgData = cfgData.replace(PLACEHOLDER_NS, String.valueOf(serverinfo.get("namespace")));
@@ -92,4 +92,16 @@ public class ExporterTask implements Runnable {
         FileUtils.writeStringToFile(cfgFile, cfgData);
         return cfgFile;
     }
+
+    private String createGmlids (String[] gmlids) {
+
+        StringBuilder sb = new StringBuilder();
+        for (String gmlid : gmlids){
+            sb.append("<id>");
+            sb.append(gmlid);
+            sb.append("</id>");
+        }
+        return sb.toString();
+    }
+
 }
