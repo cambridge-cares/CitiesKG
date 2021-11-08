@@ -16,10 +16,10 @@ import uk.ac.cam.cares.jps.base.agent.JPSAgent;
  */
 
 
-@WebServlet(urlPatterns = {CityInformationAgent.URI_DISTANCE})
+@WebServlet(urlPatterns = {CityInformationAgent.URI_CITY_INFORMATION})
 public class CityInformationAgent extends JPSAgent {
 
-  public static final String URI_DISTANCE = "/attributes";
+  public static final String URI_CITY_INFORMATION = "/cityinformation";
   public static final String KEY_REQ_METHOD = "method";
   public static final String KEY_IRIS = "iris";
   public static final String KEY_ATTRIBUTES = "attributes";
