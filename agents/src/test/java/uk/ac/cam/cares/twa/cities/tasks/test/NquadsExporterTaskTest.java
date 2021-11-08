@@ -331,16 +331,16 @@ public class NquadsExporterTaskTest extends TestCase {
 
     public static final File impFile = new File(System.getProperty("java.io.tmpdir") + "test.gml");
     public static final File testFile = new File(Objects.requireNonNull(
-        NquadsExporterTaskTest.NquadsExporterTaskTestHelper.class.getClassLoader()
+        NquadsExporterTaskTestHelper.class.getClassLoader()
             .getResource("test.gml")).getFile());
     public static final File testNqFile = new File(Objects.requireNonNull(
-        NquadsExporterTaskTest.NquadsExporterTaskTestHelper.class.getClassLoader()
+        NquadsExporterTaskTestHelper.class.getClassLoader()
             .getResource("test.nq")).getFile());
     public static final File testProjFile = new File(Objects.requireNonNull(
-        NquadsExporterTaskTest.NquadsExporterTaskTestHelper.class.getClassLoader()
+        NquadsExporterTaskTestHelper.class.getClassLoader()
             .getResource("testproject.xml")).getFile());
     public static final File testPropFile = new File(Objects.requireNonNull(
-        NquadsExporterTaskTest.NquadsExporterTaskTestHelper.class.getClassLoader()
+        NquadsExporterTaskTestHelper.class.getClassLoader()
             .getResource("RWStore.properties")).getFile());
     public static final File nqFile = new File(
         impFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_GML, ImporterTask.EXT_FILE_NQUADS));
