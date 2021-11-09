@@ -65,7 +65,7 @@ public class GenericAttribute {
    * @param iriName IRI of the generic attribute instance.
    * @return uri of the generic attributes graph.
    */
-  private String getGenericAttributeGraphUri(String iriName) {
+  public String getGenericAttributeGraphUri(String iriName) {
     String[] splitUri = iriName.split("/");
     String namespace = String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length-2));
     return namespace + GENERIC_ATTRIBUTE_GRAPH_URI;
