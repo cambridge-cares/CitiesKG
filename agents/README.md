@@ -3,23 +3,32 @@
 The Semantic City Agents is an intelligent automation for Dynamic Geospatial Knowledge Graphs. 
 It contains 3 agents: CityImportAgent, CityExportAgent and DistanceAgent. All 3 agnets works with the semantic cities database - [Cities Knowledge Graphs](http://www.theworldavatar.com:83/citieskg/#query).
 
-System requirements
--------------------
-* Windows 10
+## System requirements
+
+* Windows 10 or Mac
 * Java JRE or JDK >= 1.8
 * IntelliJ IDE Ultimate version (for the developers)
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system. 
+These detailed instructions describes the setup on a windows machine, for Mac OS it is equivalent.  
+
 
 ### Prerequisites
 
 * Java JRE or JDK >= 1.8
-* Tomcat 9 
-* Maven build system
+* [Tomcat 9](https://www.liquidweb.com/kb/installing-tomcat-9-on-windows/)
+* [Maven](https://maven.apache.org/) - Dependency Management
+* Python 3
 
-If Java and Maven are installed correctly and set as system variables, you should be able to check the version information using the following commands on the IDE terminal or CMD window.
+JDK or JRE will need to be installed on the Windows Server before you can configure Tomcat 9 on the server.
+If Java and Maven are installed correctly and set as [environment variables](https://docs.oracle.com/en/database/oracle/machine-learning/oml4r/1.5.1/oread/creating-and-modifying-environment-variables-on-windows.html#GUID-DD6F9982-60D5-48F6-8270-A27EC53807D0), you should be able to check the version information using the following commands on the IDE terminal or CMD window.
+
+In order to use those commands via CLI (Command Line Interface), Maven, Java, Tomcat and Python should be added to *Path* in system variable. And additionally JAVA_HOME should also be configured.
+
+
+For checking Java version, type this command on CMD:
 ```
 java -version
 ```
@@ -29,7 +38,7 @@ java version "1.8.0_291"
 Java(TM) SE Runtime Environment (build 1.8.0_291-b10)
 Java HotSpot(TM) 64-Bit Server VM (build 25.291-b10, mixed mode)
 ```
-
+For checking Maven version, type this command on CMD:
 ```
 mvn -version
 ```
@@ -42,9 +51,17 @@ Default locale: en_SG, platform encoding: Cp1252
 OS name: "windows 10", version: "10.0", arch: "amd64", family: "windows"
 ```
 
+
+For [Tomcat 9]((https://www.liquidweb.com/kb/installing-tomcat-9-on-windows/)), check the link and learn how to deploy the artifact to tomcat server.
+
+After the tomcat installation, you can find the folder "C:\Program Files\Apache Software Foundation\Tomcat 9.0". 
+This folder is by default not accessible, in order to make it executable, you need to click on the folder and open the folder to view once.  
+
+
+
 ### Install and Build
 
-1. The build requires two dependencies, which are provided through the installation of two local jars to the local .m2 repoistory:
+1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory:
 
 ```
 cd <project directory>
@@ -58,35 +75,62 @@ mvn initialize
 mvn clean install -DskipTests
 ```
 
-If the build is successful, you should be able to find the war package under ${projectDir}/${tomcatPath}/webapps/agents##0.1.0.war
-
-## Running the tests
-
-Explain how to run the automated tests for this system
-
-### Break down into end to end tests
-
-Explain what these tests test and why
+3. There is one dependency *blazegraph-jar-2.1.5.jar* need to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
+```
+    <dependency>
+      <groupId>com.blazegraph</groupId>
+      <artifactId>blazegraph-jar</artifactId>
+      <version>2.1.5</version>
+      <scope>provided</scope>
+    </dependency>
 
 ```
-Give an example
+
+This dependency can be either found in your .m2 repository or downloaded from this [website](https://search.maven.org/search?q=g:com.blazegraph%20AND%20a:blazegraph-jar&core=gav).
+Make sure that you download the correct version 2.1.5, otherwise the POM file of the agents need to be adjusted.
+
+After you get the correct artifact *blazegraph-jar-2.1.5.jar*, you can place it into the folder on your server in *C:\Program Files\Apache Software Foundation\Tomcat 9.0\lib*, 
+this folder contains all the libraries provided by the server. 
+
+If this step has not been done, the CityImportAgent might not work. 
+
+### Deployment (for users)
+
+If the build is successful, you should be able to find the war artifact under ${projectDir}/${tomcatPath}/webapps/agents##0.1.0.war
+
+Start the tomcat service by clicking on the executable *C:\Program Files\Apache Software Foundation\Tomcat 9.0\bin\Tomcat9w.exe*
+and click on *Start*. After that, you can see the login page on the browser under *localhost:8080*.
+
+As CityImportAgent will execute a python script from java program, it requires the access to the system variable.
+The tomcat server needs to be configured as following:
+
+On the logOn tab of the Tomcat properties windows, select *Log on as: Local System account* and check the box *Allow service to interact with destop*
+
+After starting the tomcat server, you can place the agent war artifact into the directory *C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps*.
+
+### Deployment (for developers)
+
+Configure a Run/Debug Configuration on IntelliJ IDE with *tomcat local server*. Choose the correct parameter
+
+If Maven has been installed and recognized by IDE correctly, on the *Deployment* tab, 
+you can add an artifact and choose *agents:war exploded* . Make sure the *Application context* is */agents*
+
+After that, you can start the tomcat server and deploy the artifact directly from the IDE
+
+### Run the tests (for users and developers)
+
+You can send the HTTPrequest via IDE or PostMan. You can find the examples of HTTPRequest for each agent in the directory *src\main\resources*
+
+HTTPRequest for CityImportAgent:
+
+```
+POST http://localhost:8080/agents/import/source
+Content-Type: application/json
+
+{"directory":"C:\\tmp\\import",
+  "targetURL": "http://192.168.10.111:9999/blazegraph/namespace/testdata/sparql"}
 ```
 
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
-
-## Built With
-
-* [Maven](https://maven.apache.org/) - Dependency Management
 
 ## Contributing
 
