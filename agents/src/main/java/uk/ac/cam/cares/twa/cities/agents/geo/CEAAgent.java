@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.agents.geo;
 
 import org.apache.jena.sparql.core.Var;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
+import uk.ac.cam.cares.twa.cities.tasks.CEAOutputData;
 import uk.ac.cam.cares.twa.cities.tasks.RunCEATask;
 import org.json.JSONObject;
 import javax.ws.rs.BadRequestException;
@@ -37,7 +38,6 @@ public class CEAAgent extends JPSAgent {
 
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
-        JSONObject result = new JSONObject();
 
         if (validateInput(requestParams)) {
             String uri = requestParams.getString("iri");
@@ -46,7 +46,8 @@ public class CEAAgent extends JPSAgent {
             String floors_ag = "5";
             testData.add(geometry);
             testData.add(floors_ag);
-            result.put("outputPath", runCEA(testData, "test"));
+            CEAOutputData outputs = new CEAOutputData();
+            runCEA(testData, outputs);
         }
 
         return requestParams;
@@ -77,10 +78,9 @@ public class CEAAgent extends JPSAgent {
         return true;
     }
 
-    private String runCEA(ArrayList<String> buildingData, String outputpath) {
-        RunCEATask task = new RunCEATask(buildingData, outputpath);
+    private void runCEA(ArrayList<String> buildingData, CEAOutputData output) {
+        RunCEATask task = new RunCEATask(buildingData, output);
         CEAExecutor.execute(task);
-        return outputpath;
     }
 
     /**
