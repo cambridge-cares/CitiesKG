@@ -219,10 +219,6 @@
         <groupId>com.oracle.spatial</groupId>
         <artifactId>sdoapi</artifactId>
         <version>19.3.0.0</version>
-       <!--<scope>system</scope>
-       <systemPath>${project.basedir}/lib/sdoapi-19.3.0.0.jar</systemPath>
-       <type>jar</type>
-       <optional>true</optional>-->
       </dependency>
    </dependencies>
 
