@@ -94,6 +94,15 @@ this folder contains all the libraries provided by the server.
 
 If this step has not been done, the CityImportAgent might not work. 
 
+4. Additional dependencies used by agents are JPS_BASE_LIB and JPS_AWS are provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository.
+
+Clone the TWA project from the [TWA repository](https://github.com/cambridge-cares/TheWorldAvatar) and checkout to develop and master branches
+
+Run the command *mvn clean install -DskipTests* on the corresponding directories where the POM file is found.
+* JPS_BASE_LIB project can be found in the [JPS_BASE_LIB directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/JPS_BASE_LIB) from the *master* branch (stable version)
+* JPS_AWS project can be found in the [AsynchronousWatcherService](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/AsynchronousWatcherService) directory from the *develop* branch. Before run the install command, please comment out the JPS_BASE dependency in the POM file. 
+
+
 ### Deployment (for users)
 
 If the build is successful, you should be able to find the war artifact under ${projectDir}/${tomcatPath}/webapps/agents##0.1.0.war
