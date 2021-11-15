@@ -3,6 +3,9 @@ package uk.ac.cam.cares.twa.cities.model.geo;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.arq.querybuilder.WhereBuilder;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.json.JSONArray;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
@@ -65,10 +68,14 @@ public class CityObject {
   private Query getFetchScalarsQuery(String iriName){
     String cityObjectGraphUri = getCityObjectGraphUri(iriName);
 
-    //placeholder to not throw an error but query building needs to be written here//
-
-    Query query = new Query();
-    return query;
+    WhereBuilder wb = new WhereBuilder()
+            .addPrefix("ocgml", "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#")
+            .addWhere(NodeFactory.createURI(iriName), "?predicates", "?values");
+    SelectBuilder sb = new SelectBuilder()
+        .addVar("?predicates")
+        .addVar("?values")
+        .addGraph(NodeFactory.createURI(cityObjectGraphUri), wb);
+    return sb.build();
   }
 
   /**
@@ -159,7 +166,15 @@ public class CityObject {
 
     if(queryType==QueryType.GENERIC_ATTR){
 
-      //placeholder to not throw an error but query building needs to be written here//
+      String cityObjectGraphUri = getCityObjectGraphUri(iriName);
+
+      WhereBuilder wb = new WhereBuilder()
+          .addPrefix("ocgml", "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#")
+          .addWhere("?GenericAttributeIris", "ocgml:cityObjectId", NodeFactory.createURI(iriName));
+      SelectBuilder sb = new SelectBuilder()
+          .addVar("?GenericAttributeIris")
+          .addGraph(NodeFactory.createURI(cityObjectGraphUri), wb);
+      return sb.build();
     }
     else if(queryType==QueryType.EXTERNAL_REF){
 
