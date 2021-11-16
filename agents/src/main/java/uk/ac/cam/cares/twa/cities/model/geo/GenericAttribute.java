@@ -7,6 +7,7 @@ import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 
 /**
@@ -44,6 +45,9 @@ public class GenericAttribute {
   private static final String DATA_TYPE = "dataType";
   private static final String CITY_OBJECT_ID = "cityObjectId";
 
+  private static final String VALUE = "value";
+  private static final String PREDICATE = "predicate";
+
   /**
    * constructs an empty generic city attribute instance and fills in the attribute IRI field.
    * @param iriName
@@ -60,10 +64,10 @@ public class GenericAttribute {
 
     WhereBuilder wb = new WhereBuilder()
         .addPrefix("ocgml", "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#")
-        .addWhere(NodeFactory.createURI(iriName), "?predicates", "?values");
+        .addWhere(NodeFactory.createURI(iriName), "?" + PREDICATE, "?" + VALUE);
     SelectBuilder sb = new SelectBuilder()
-        .addVar("?predicates")
-        .addVar("?values")
+        .addVar("?" + PREDICATE)
+        .addVar("?" + VALUE)
         .addGraph(NodeFactory.createURI(genericAttributeGraphUri), wb);
     return sb.build();
   }
@@ -91,18 +95,58 @@ public class GenericAttribute {
 
     JSONArray queryResult = new JSONArray(queryResultString);
 
-    attrName = queryResult.getJSONObject(0).getString(ATTR_NAME);
-    uriVal = queryResult.getJSONObject(0).getString(URI_VAL);
-    strVal = queryResult.getJSONObject(0).getString(STR_VAL);
-    unit = queryResult.getJSONObject(0).getString(UNIT);
-    rootGenattribId = queryResult.getJSONObject(0).getString(ROOT_GENATTRIB_ID);
-    realVal = queryResult.getJSONObject(0).getString(REAL_VAL);
-    parentGenattribId = queryResult.getJSONObject(0).getString(PARENT_GENATTRIB_ID);
-    intVal = queryResult.getJSONObject(0).getString(INT_VAL);
-    dateVal = queryResult.getJSONObject(0).getString(DATE_VAL);
-    id = URI.create(queryResult.getJSONObject(0).getString(ID));
-    dataType = queryResult.getJSONObject(0).getInt(DATA_TYPE);
-    cityObjectId = URI.create(queryResult.getJSONObject(0).getString(CITY_OBJECT_ID));
+    if(!queryResult.isEmpty()){
+      for (int index = 0; index < queryResult.length(); index++){
+        JSONObject row = queryResult.getJSONObject(index);
+        String predicate = row.getString(PREDICATE);
+        String[] predicateArray = predicate.split("#");
+        predicate = predicateArray[predicateArray.length-1];
+
+        switch (predicate){
+
+          case ATTR_NAME:
+            attrName = row.getString(VALUE);
+            break;
+          case URI_VAL:
+            uriVal = row.getString(VALUE);
+            break;
+          case STR_VAL:
+            strVal = row.getString(VALUE);
+            break;
+          case UNIT:
+            unit = row.getString(VALUE);
+            break;
+          case  ROOT_GENATTRIB_ID:
+            rootGenattribId = row.getString(VALUE);
+            break;
+          case REAL_VAL:
+            realVal = row.getString(VALUE);
+            break;
+          case PARENT_GENATTRIB_ID:
+            parentGenattribId = row.getString(VALUE);
+            break;
+          case INT_VAL:
+            intVal = row.getString(VALUE);
+            break;
+          case DATE_VAL:
+            dateVal = row.getString(VALUE);
+            break;
+          case ID:
+            id = URI.create(row.getString(VALUE));
+            break;
+          case DATA_TYPE:
+            dataType = row.getInt(VALUE);
+            break;
+          case CITY_OBJECT_ID:
+            cityObjectId = URI.create(row.getString(VALUE));
+            break;
+          default:
+            break;
+        }
+      }
+    }
   }
+
+
 
 }
