@@ -8,6 +8,7 @@ import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 
 
@@ -18,7 +19,7 @@ import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 public class CityObject {
   private final String iriName;
 
-  private String creatingDate;
+  private String creationDate;
   private String description;
   private String EnvelopeType;
   private String gmlId;
@@ -39,7 +40,7 @@ public class CityObject {
   private String CITY_OBJECT_GRAPH_URI = "/cityobject/";
   private static final String COLLECTION_ELEMENT_IRI = "CollectionElementIri";
 
-  private static final String CREATION_DATE = "creatingDate";
+  private static final String CREATION_DATE = "creationDate";
   private static final String DESCRIPTION = "description";
   private static final String ENVELOPE_TYPE = "EnvelopeType";
   private static final String GMLID = "gmlId";
@@ -53,6 +54,9 @@ public class CityObject {
   private static final String RELATIVE_TO_WATER = "relativeToWater";
   private static final String TERMINATION_DATE = "terminationDate";
   private static final String UPDATING_PERSON = "updatingPerson";
+
+  private static final String PREDICATE = "predicate";
+  private static final String VALUE =  "value";
 
   /**
    * constructs an empty city object instance and fills in the attribute IRI field.
@@ -70,10 +74,10 @@ public class CityObject {
 
     WhereBuilder wb = new WhereBuilder()
             .addPrefix("ocgml", "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#")
-            .addWhere(NodeFactory.createURI(iriName), "?predicates", "?values");
+            .addWhere(NodeFactory.createURI(iriName), "?" + PREDICATE, "?" + VALUE);
     SelectBuilder sb = new SelectBuilder()
-        .addVar("?predicates")
-        .addVar("?values")
+        .addVar("?" + PREDICATE)
+        .addVar("?" + VALUE)
         .addGraph(NodeFactory.createURI(cityObjectGraphUri), wb);
     return sb.build();
   }
@@ -101,20 +105,62 @@ public class CityObject {
 
     JSONArray queryResult = new JSONArray(queryResultString);
 
-    creatingDate = queryResult.getJSONObject(0).getString(CREATION_DATE);
-    description = queryResult.getJSONObject(0).getString(DESCRIPTION);
-    EnvelopeType = queryResult.getJSONObject(0).getString(ENVELOPE_TYPE);
-    gmlId = queryResult.getJSONObject(0).getString(GMLID);
-    id = URI.create(queryResult.getJSONObject(0).getString(ID));
-    name = queryResult.getJSONObject(0).getString(NAME);
-    lineage = queryResult.getJSONObject(0).getString(LINEAGE);
-    NameCodespace = queryResult.getJSONObject(0).getString(NAME_CODESPACE);
-    objectClassId = queryResult.getJSONObject(0).getInt(OBJECT_CLASS_ID);
-    reasonForUpdate = queryResult.getJSONObject(0).getString(REASON_FOR_UPDATE);
-    relativeToTerrain = queryResult.getJSONObject(0).getString(RELATIVE_TO_TERRAIN);
-    relativeToWater = queryResult.getJSONObject(0).getString(RELATIVE_TO_WATER);
-    terminationDate = queryResult.getJSONObject(0).getString(TERMINATION_DATE);
-    updatingPerson = queryResult.getJSONObject(0).getString(UPDATING_PERSON);
+    if(!queryResult.isEmpty()){
+      for (int index = 0; index < queryResult.length(); index++){
+        JSONObject row = queryResult.getJSONObject(index);
+        String predicate = row.getString(PREDICATE);
+        String[] predicateArray = predicate.split("#");
+        predicate = predicateArray[predicateArray.length-1];
+
+        switch (predicate){
+
+          case CREATION_DATE:
+            creationDate = row.getString(VALUE);
+            break;
+          case DESCRIPTION:
+            description = row.getString(VALUE);
+            break;
+          case ENVELOPE_TYPE:
+            EnvelopeType = row.getString(VALUE);
+            break;
+          case GMLID:
+            gmlId = row.getString(VALUE);
+            break;
+          case ID:
+            id = URI.create(row.getString(VALUE));
+            break;
+          case NAME:
+            name = row.getString(VALUE);
+            break;
+          case LINEAGE:
+            lineage = row.getString(VALUE);
+            break;
+          case NAME_CODESPACE:
+            NameCodespace = row.getString(VALUE);
+            break;
+          case OBJECT_CLASS_ID:
+            objectClassId = row.getInt(VALUE);
+            break;
+          case REASON_FOR_UPDATE:
+            reasonForUpdate = row.getString(VALUE);
+            break;
+          case RELATIVE_TO_TERRAIN:
+            relativeToTerrain = row.getString(VALUE);
+            break;
+          case RELATIVE_TO_WATER:
+            relativeToWater = row.getString(VALUE);
+            break;
+          case TERMINATION_DATE:
+            terminationDate = row.getString(VALUE);
+            break;
+          case UPDATING_PERSON:
+            updatingPerson = row.getString(VALUE);
+            break;
+          default:
+            break;
+        }
+      }
+    }
   }
 
   /**
@@ -166,22 +212,20 @@ public class CityObject {
 
     if(queryType==QueryType.GENERIC_ATTR){
 
-      String cityObjectGraphUri = getCityObjectGraphUri(iriName);
+      String genericAttrGraphUri = GenericAttribute.getGenericAttributeGraphUri(iriName);
 
       WhereBuilder wb = new WhereBuilder()
           .addPrefix("ocgml", "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#")
-          .addWhere("?GenericAttributeIris", "ocgml:cityObjectId", NodeFactory.createURI(iriName));
+          .addWhere("?" + COLLECTION_ELEMENT_IRI, "ocgml:cityObjectId", NodeFactory.createURI(iriName));
       SelectBuilder sb = new SelectBuilder()
-          .addVar("?GenericAttributeIris")
-          .addGraph(NodeFactory.createURI(cityObjectGraphUri), wb);
+          .addVar("?" + COLLECTION_ELEMENT_IRI)
+          .addGraph(NodeFactory.createURI(genericAttrGraphUri), wb);
       return sb.build();
     }
     else if(queryType==QueryType.EXTERNAL_REF){
 
       //placeholder to not throw an error but query building needs to be written here//
-
     }
-
     Query query = new Query();
     return query;
   }

@@ -30,7 +30,7 @@ public class GenericAttribute {
   private int dataType;
   private URI cityObjectId;
 
-  private String GENERIC_ATTRIBUTE_GRAPH_URI = "/cityobjectgenericattrib/";
+  private static String GENERIC_ATTRIBUTE_GRAPH_URI = "/cityobjectgenericattrib/";
 
   private static final String ATTR_NAME = "attrName";
   private static final String URI_VAL = "uriVal";
@@ -77,7 +77,7 @@ public class GenericAttribute {
    * @param iriName IRI of the generic attribute instance.
    * @return uri of the generic attributes graph.
    */
-  public String getGenericAttributeGraphUri(String iriName) {
+  public static String getGenericAttributeGraphUri(String iriName) {
     String[] splitUri = iriName.split("/");
     String namespace = String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length-2));
     return namespace + GENERIC_ATTRIBUTE_GRAPH_URI;
@@ -146,7 +146,4 @@ public class GenericAttribute {
       }
     }
   }
-
-
-
 }
