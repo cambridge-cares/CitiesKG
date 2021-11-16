@@ -38,7 +38,7 @@ public class CityObject {
   //private ArrayList<ExternalReference>;
 
   private String CITY_OBJECT_GRAPH_URI = "/cityobject/";
-  private static final String COLLECTION_ELEMENT_IRI = "CollectionElementIri";
+  private static final String ONTO_CITY_GML = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
 
   private static final String CREATION_DATE = "creationDate";
   private static final String DESCRIPTION = "description";
@@ -57,6 +57,7 @@ public class CityObject {
 
   private static final String PREDICATE = "predicate";
   private static final String VALUE =  "value";
+  private static final String COLLECTION_ELEMENT_IRI = "CollectionElementIri";
 
   /**
    * constructs an empty city object instance and fills in the attribute IRI field.
@@ -73,7 +74,7 @@ public class CityObject {
     String cityObjectGraphUri = getCityObjectGraphUri(iriName);
 
     WhereBuilder wb = new WhereBuilder()
-            .addPrefix("ocgml", "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#")
+            .addPrefix("ocgml", ONTO_CITY_GML)
             .addWhere(NodeFactory.createURI(iriName), "?" + PREDICATE, "?" + VALUE);
     SelectBuilder sb = new SelectBuilder()
         .addVar("?" + PREDICATE)
@@ -215,7 +216,7 @@ public class CityObject {
       String genericAttrGraphUri = GenericAttribute.getGenericAttributeGraphUri(iriName);
 
       WhereBuilder wb = new WhereBuilder()
-          .addPrefix("ocgml", "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#")
+          .addPrefix("ocgml", ONTO_CITY_GML)
           .addWhere("?" + COLLECTION_ELEMENT_IRI, "ocgml:cityObjectId", NodeFactory.createURI(iriName));
       SelectBuilder sb = new SelectBuilder()
           .addVar("?" + COLLECTION_ELEMENT_IRI)
