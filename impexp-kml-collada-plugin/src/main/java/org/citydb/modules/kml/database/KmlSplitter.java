@@ -27,6 +27,8 @@
  */
 package org.citydb.modules.kml.database;
 
+import com.github.jsonldjava.utils.Obj;
+import java.util.List;
 import org.citydb.concurrent.WorkerPool;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.BoundingBox;
@@ -124,14 +126,22 @@ public class KmlSplitter {
 
 		boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value());
 
-		try (PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
-			 ResultSet rs = stmt.executeQuery()) {
+		if (is_Blazegraph) {
+			//////////// For Blazegraph
+			List<PlaceHolder<?>> placeHolders = select.getInvolvedPlaceHolders();
+			int objectCount_sparql = 0;
 
-			int objectCount = 0;
+			// for each gmlid, a sparql query will be executed and resultset will be extracted
+			for (int i  = 0; i < placeHolders.size(); ++i) {
+				Object gmlidUri = placeHolders.get(i).getValue();
+				PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
+				// Assign one gmlid, the predicateTokens
+				stmt.setString(1, (String)gmlidUri);
+				stmt.setString(2, (String)gmlidUri);
+				System.out.println(stmt);
+				ResultSet rs = stmt.executeQuery();
 
-			while (rs.next() && shouldRun) {
-
-				if (is_Blazegraph) {
+				while (rs.next() && shouldRun) {
 					String id_str = rs.getString(MappingConstants.ID);
 					String gmlId = rs.getString(MappingConstants.GMLID);
 					int objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
@@ -145,9 +155,21 @@ public class KmlSplitter {
 
 					// Note: This will lead to the implementation for Blazegraph in the same class
 					addWorkToQueue(id_str, gmlId, objectClassId, envelope, activeTile, false);
-					objectCount++;
+					objectCount_sparql++;
+				}
 
-				}else {
+				if (query.isSetTiling())
+					Logger.getInstance().debug(
+							objectCount_sparql + " candidate objects found for Tile_" + activeTile.getX() + "_"
+									+ activeTile.getY() + ".");
+			}
+		} else {
+			// For SQL
+			try (PreparedStatement stmt = databaseAdapter.getSQLAdapter()
+					.prepareStatement(select, connection);
+					ResultSet rs = stmt.executeQuery()) {
+				int objectCount = 0;
+				while (rs.next() && shouldRun) {
 					long id = rs.getLong(MappingConstants.ID);
 					String gmlId = rs.getString(MappingConstants.GMLID);
 					int objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
@@ -163,11 +185,11 @@ public class KmlSplitter {
 					objectCount++;
 				}
 
-
+				if (query.isSetTiling())
+					Logger.getInstance().debug(
+							objectCount + " candidate objects found for Tile_" + activeTile.getX() + "_"
+									+ activeTile.getY() + ".");
 			}
-
-			if (query.isSetTiling())
-				Logger.getInstance().debug(objectCount + " candidate objects found for Tile_" + activeTile.getX() + "_" + activeTile.getY() + ".");
 		}
 	}
 

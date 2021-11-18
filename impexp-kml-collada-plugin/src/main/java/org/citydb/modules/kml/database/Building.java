@@ -336,14 +336,27 @@ public class Building extends KmlGenericObject{
 						reversePointOrder = true;
 						int groupBasis = 4;
 
-						try { // @TODO: query to modify, the complex sql query
-							String query = queries.getBuildingPartAggregateGeometries(0.001,
-									DatabaseConnectionPool.getInstance().getActiveDatabaseAdapter().getUtil().get2DSrid(dbSrs),
-									currentLod,
-									Math.pow(groupBasis, 4),
-									Math.pow(groupBasis, 3),
-									Math.pow(groupBasis, 2));
-							psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+						try { // Two cases: Blazegraph or Postgres
+							String query;
+
+							if (isBlazegraph){
+								//@TODO: StatementTransformer with optimized SPARQL query including value assignment for TWA
+								String subquery = StatementTransformer.getSPARQLAggregateGeometriesForLOD2OrHigher(psQuery, connection, currentLod, (String)buildingPartId);
+
+							}else{
+								// Initial implementation for SQL including value assignment
+								query = queries.getBuildingPartAggregateGeometries(0.001,
+										DatabaseConnectionPool.getInstance().getActiveDatabaseAdapter().getUtil().get2DSrid(dbSrs),
+										currentLod,
+										Math.pow(groupBasis, 4),
+										Math.pow(groupBasis, 3),
+										Math.pow(groupBasis, 2));
+								psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
+								for (int i = 1; i <= getParameterCount(query); i++)
+									psQuery.setLong(i, Long.class.cast(buildingPartId));
+							}
+
 
 							if (isBlazegraph) {
 								URL url = null;
@@ -357,10 +370,10 @@ public class Building extends KmlGenericObject{
 								psQuery.setURL(3, url);
 							}
 							else {
-								for (int i = 1; i <= getParameterCount(query); i++)
-									psQuery.setLong(i, Long.class.cast(buildingPartId));
+
 							}
 
+							// ???Execution of SQL query and the last stage of SPARQL query
 							rs = psQuery.executeQuery();
 
 							if (rs.isBeforeFirst()) {

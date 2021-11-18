@@ -1,22 +1,18 @@
 package org.citydb.database.adapter.blazegraph;
 
-import org.apache.jena.query.Query;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.adapter.*;
 import org.citydb.query.filter.selection.operator.spatial.SpatialOperatorName;
 import org.citydb.sqlbuilder.SQLStatement;
-import org.citydb.sqlbuilder.expression.PlaceHolder;
 import org.citydb.sqlbuilder.schema.Column;
 import org.citydb.sqlbuilder.select.PredicateToken;
 import org.citydb.sqlbuilder.select.projection.Function;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.List;
+
 
 public class SQLAdapter extends AbstractSQLAdapter {
 
@@ -168,25 +164,25 @@ public class SQLAdapter extends AbstractSQLAdapter {
     public PreparedStatement prepareStatement(SQLStatement statement, Connection connection) throws SQLException{
 
         PreparedStatement preparedStatement = transformStatement(statement, connection);
-        System.out.println(preparedStatement);
+
         return preparedStatement;
     }
 
     // Note: implement SQLPreparedStatement into SPARQLPreparedStatement transformer
+    @Override
     public PreparedStatement transformStatement(SQLStatement statement, Connection connection) throws SQLException {
-        String SPARQLStatement = null;
-        PreparedStatement preparedStatement = null;
+        String sparqlQuery = null;
+        PreparedStatement psQuery = null;
 
         StatementTransformer querytransformer = new StatementTransformer(databaseAdapter);
         try {
-            SPARQLStatement = querytransformer.getTopFeatureId(statement);
+            sparqlQuery = querytransformer.getTopFeatureId(statement);
         } catch (ParseException e) {
             e.printStackTrace();
         }
+        psQuery = connection.prepareStatement(sparqlQuery.toString());
 
-        preparedStatement = connection.prepareStatement(SPARQLStatement.toString());
-
-        return preparedStatement;
+        return psQuery;
     }
 
 }
