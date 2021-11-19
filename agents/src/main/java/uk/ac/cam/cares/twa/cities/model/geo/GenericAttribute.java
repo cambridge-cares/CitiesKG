@@ -48,12 +48,28 @@ public class GenericAttribute {
   private static final String VALUE = "value";
   private static final String PREDICATE = "predicate";
 
+  private boolean fieldsFilled = false;
+
   /**
    * constructs an empty generic city attribute instance and fills in the attribute IRI field.
    * @param iriName
    */
   public GenericAttribute(String iriName) {
     this.iriName = iriName;
+  }
+
+  /**
+   * marks that scalar fields of the object has been set with the information from the KG.
+   */
+  private void setIsFilled(){
+    fieldsFilled = true;
+  }
+
+  /**
+   * @return status whether scalar fields of the object has been set with the information from the KG.
+   */
+  public boolean isFilled(){
+    return fieldsFilled;
   }
 
   /**
@@ -144,6 +160,22 @@ public class GenericAttribute {
             break;
         }
       }
+    }
+
+    setIsFilled();
+  }
+
+  /**
+   * gets the value of generic attribute field attrName after checking if scalars are filled.
+   * @return value of attrName field
+   * @throws IllegalAccessException
+   */
+  public String getAttrName() throws IllegalAccessException {
+    if (isFilled()){
+      return attrName;
+    }
+    else {
+      throw new IllegalAccessException("Scalars not filled"); //Ask Arek if this is the right error to throw.
     }
   }
 }
