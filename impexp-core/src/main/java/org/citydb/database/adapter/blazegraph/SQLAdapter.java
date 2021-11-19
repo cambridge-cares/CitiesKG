@@ -160,28 +160,17 @@ public class SQLAdapter extends AbstractSQLAdapter {
         return null;
     }
 
-    @Override
     public PreparedStatement prepareStatement(SQLStatement statement, Connection connection) throws SQLException{
-
-        PreparedStatement preparedStatement = transformStatement(statement, connection);
-
-        return preparedStatement;
-    }
-
-    // Note: implement SQLPreparedStatement into SPARQLPreparedStatement transformer
-    @Override
-    public PreparedStatement transformStatement(SQLStatement statement, Connection connection) throws SQLException {
         String sparqlQuery = null;
-        PreparedStatement psQuery = null;
+        PreparedStatement psQuery;
+        StatementTransformer queryTransformer = new StatementTransformer(databaseAdapter);
 
-        StatementTransformer querytransformer = new StatementTransformer(databaseAdapter);
         try {
-            sparqlQuery = querytransformer.getTopFeatureId(statement);
+            sparqlQuery = queryTransformer.getTopFeatureId(statement);
         } catch (ParseException e) {
             e.printStackTrace();
         }
         psQuery = connection.prepareStatement(sparqlQuery.toString());
-
         return psQuery;
     }
 
