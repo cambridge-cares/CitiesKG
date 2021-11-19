@@ -59,12 +59,28 @@ public class CityObject {
   private static final String VALUE =  "value";
   private static final String COLLECTION_ELEMENT_IRI = "CollectionElementIri";
 
+  private boolean fieldsFilled = false;
+
   /**
    * constructs an empty city object instance and fills in the attribute IRI field.
    * @param iriName
    */
   public CityObject(String iriName) {
     this.iriName = iriName;
+  }
+
+  /**
+   * marks that scalar fields of the object has been set with the information from the KG.
+   */
+  private void setIsFilled(){
+    fieldsFilled = true;
+  }
+
+  /**
+   * @return status whether scalar fields of the object has been set with the information from the KG.
+   */
+  public boolean isFilled(){
+    return fieldsFilled;
   }
 
   /**
@@ -162,6 +178,7 @@ public class CityObject {
         }
       }
     }
+    setIsFilled();
   }
 
   /**
@@ -170,6 +187,33 @@ public class CityObject {
   private enum QueryType {
     GENERIC_ATTR,
     EXTERNAL_REF
+  }
+
+  /**
+   * a general query that based on the query type builds queries either for generic attribute or external reference IRIs.
+   * @param iriName cityObject IRI.
+   * @return query
+   */
+  private Query getFetchIrisQuery(String iriName, QueryType queryType){
+
+    if(queryType==QueryType.GENERIC_ATTR){
+
+      String genericAttrGraphUri = GenericAttribute.getGenericAttributeGraphUri(iriName);
+
+      WhereBuilder wb = new WhereBuilder()
+          .addPrefix("ocgml", ONTO_CITY_GML)
+          .addWhere("?" + COLLECTION_ELEMENT_IRI, "ocgml:cityObjectId", NodeFactory.createURI(iriName));
+      SelectBuilder sb = new SelectBuilder()
+          .addVar("?" + COLLECTION_ELEMENT_IRI)
+          .addGraph(NodeFactory.createURI(genericAttrGraphUri), wb);
+      return sb.build();
+    }
+    else if(queryType==QueryType.EXTERNAL_REF){
+
+      //placeholder to not throw an error but query building needs to be written here//
+    }
+    Query query = new Query();
+    return query;
   }
 
   /**
@@ -205,31 +249,17 @@ public class CityObject {
   }
 
   /**
-   * a general query that based on the query type builds queries either for generic attribute or external reference IRIs.
-   * @param iriName cityObject IRI.
-   * @return query
+   * gets the value of city object field creationDate after checking if scalars are filled.
+   * @return value of city object field creationDate after checking if scalars are filled.
+   * @throws IllegalAccessException
    */
-  private Query getFetchIrisQuery(String iriName, QueryType queryType){
-
-    if(queryType==QueryType.GENERIC_ATTR){
-
-      String genericAttrGraphUri = GenericAttribute.getGenericAttributeGraphUri(iriName);
-
-      WhereBuilder wb = new WhereBuilder()
-          .addPrefix("ocgml", ONTO_CITY_GML)
-          .addWhere("?" + COLLECTION_ELEMENT_IRI, "ocgml:cityObjectId", NodeFactory.createURI(iriName));
-      SelectBuilder sb = new SelectBuilder()
-          .addVar("?" + COLLECTION_ELEMENT_IRI)
-          .addGraph(NodeFactory.createURI(genericAttrGraphUri), wb);
-      return sb.build();
+  public String getCreationDate() throws IllegalAccessException {
+    if(isFilled()){
+      return creationDate;
     }
-    else if(queryType==QueryType.EXTERNAL_REF){
-
-      //placeholder to not throw an error but query building needs to be written here//
+    else {
+      throw new IllegalAccessException("Scalars not filled");
     }
-    Query query = new Query();
-    return query;
   }
-
 
 }
