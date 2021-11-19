@@ -36,6 +36,7 @@ import org.citydb.config.project.kmlExporter.DisplayForm;
 import org.citydb.config.project.kmlExporter.Lod0FootprintMode;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.BlobExportAdapter;
+import org.citydb.database.adapter.blazegraph.OptimizedSparqlQuery;
 import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.database.connection.DatabaseConnectionPool;
 import org.citydb.event.EventDispatcher;
@@ -341,7 +342,8 @@ public class Building extends KmlGenericObject{
 
 							if (isBlazegraph){
 								//@TODO: StatementTransformer with optimized SPARQL query including value assignment for TWA
-								//String subquery = StatementTransformer.getSPARQLqueryStage2(query, (String)currentLod);
+								OptimizedSparqlQuery optquery = new OptimizedSparqlQuery(databaseAdapter);
+								ArrayList<ResultSet> resultgeom = optquery.getSPARQLAggregateGeometriesForLOD2OrHigher(psQuery, connection, currentLod, (String)buildingPartId);
 
 							}else{
 								// Initial implementation for SQL including value assignment

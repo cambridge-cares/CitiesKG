@@ -271,10 +271,10 @@ public class StatementTransformer {
     /* Optimized SPARQL query for TWA
      * Purpose: Get AggregateGeometries to create groundsurface for the extraction
      * alternative solution of getSPARQLqueryStage2
-     *
+     * This part will include the value assignment and execution
      */
 
-    public static String getSPARQLAggregateGeometriesForLOD2OrHigher(PreparedStatement psQuery, Connection connection, int lodToExportFrom, String buildingPartId) {
+    public static ArrayList<ResultSet> getSPARQLAggregateGeometriesForLOD2OrHigher(PreparedStatement psQuery, Connection connection, int lodToExportFrom, String buildingPartId) {
 
         StringBuilder sparqlString = new StringBuilder();
         ResultSet rs = null;
@@ -283,17 +283,38 @@ public class StatementTransformer {
         // subquery 1.1
         sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
             "SELECT (?lod2MultiSurfaceId AS ?rootId) " +
-            "WHERE { " +
-                "GRAPH <" + IRI_GRAPH_BASE + "building/> {" +
-            " ?id ocgml:buildingId " +  QST_MARK + " ;  ocgml:lod2MultiSurfaceId ?lod2MultiSurfaceId " +
+            "\nWHERE\n { " +
+                "GRAPH <" + IRI_GRAPH_BASE + "building/> { \n" +
+            " ?id ocgml:buildingId " +  QST_MARK + " ;\n  ocgml:lod2MultiSurfaceId ?lod2MultiSurfaceId " +
             "FILTER (!isBlank(?lod2MultiSurfaceId)) }}");
-        rootIds.addAll(executeQuery(psQuery, connection, sparqlString.toString(), buildingPartId));
+        rootIds.addAll(executeQuery(connection, sparqlString.toString(), buildingPartId));
 
         // subquery 1.2
+        sparqlString.setLength(0);
+        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+            "SELECT (?lod2SolidId AS ?rootId) " +
+            "\nWHERE\n { " +
+            "GRAPH <" + IRI_GRAPH_BASE + "building/> { \n" +
+            " ?id ocgml:buildingId " +  QST_MARK + " ;  \n ocgml:lod2SolidId  ?lod2SolidId\n" +
+            "FILTER (!isBlank(?lod2SolidId)) }}");
+        rootIds.addAll(executeQuery(connection, sparqlString.toString(), buildingPartId));
+
+        // subquery 1.3
+        sparqlString.setLength(0);
+        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+            "SELECT (?lod2MultiSurfaceId AS ?rootId) " +
+            "\nWHERE\n { " +
+            "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> { \n" +
+            " ?id ocgml:buildingId " +  QST_MARK + " ;  \n ocgml:lod2MultiSurfaceId  ?lod2MultiSurfaceId\n" +
+            "FILTER (!isBlank(?lod2MultiSurfaceId)) }}");
+        rootIds.addAll(executeQuery(connection, sparqlString.toString(), buildingPartId));
+
+        // query stage 2 for extractig the aggregated geometries
+        System.out.println(rootIds.size());
         return null;
     }
 
-    public static ArrayList<String> executeQuery(PreparedStatement psQuery, Connection connection, String querystr, String buildingPartId){
+    public static ArrayList<String> executeQuery(Connection connection, String querystr, String buildingPartId){
 
         URL url = null;
         ResultSet rs = null;
@@ -305,7 +326,7 @@ public class StatementTransformer {
         }
 
         try {
-            psQuery = connection.prepareStatement(querystr, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            PreparedStatement psQuery = connection.prepareStatement(querystr, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             psQuery.setURL(1, url);
             rs = psQuery.executeQuery();
 
