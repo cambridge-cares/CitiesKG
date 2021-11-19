@@ -166,9 +166,6 @@ public class StatementTransformer {
         return sparqlString.toString();
     }
 
-
-
-
     // Analyze SQL statement and transform it to a SPARQL query (Normal usuage: single gmlid or multiple gmlid or *)
     public static String getTopFeatureId_bak(SQLStatement sqlStatement) throws ParseException {
         Select select = (Select) sqlStatement;
@@ -273,7 +270,7 @@ public class StatementTransformer {
 
     /* Optimized SPARQL query for TWA
      * Purpose: Get AggregateGeometries to create groundsurface for the extraction
-     *
+     * alternative solution of getSPARQLqueryStage2
      *
      */
 

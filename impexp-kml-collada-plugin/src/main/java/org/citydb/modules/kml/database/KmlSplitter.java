@@ -127,7 +127,8 @@ public class KmlSplitter {
 		boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value());
 
 		if (is_Blazegraph) {
-			//////////// For Blazegraph
+			//For Blazegraph
+
 			List<PlaceHolder<?>> placeHolders = select.getInvolvedPlaceHolders();
 			int objectCount_sparql = 0;
 
@@ -136,9 +137,14 @@ public class KmlSplitter {
 				Object gmlidUri = placeHolders.get(i).getValue();
 				PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
 				// Assign one gmlid, the predicateTokens
-				stmt.setString(1, (String)gmlidUri);
-				stmt.setString(2, (String)gmlidUri);
-				System.out.println(stmt);
+				if (((String)gmlidUri).contains("*")){
+						// @TODO: as the preparedstatement will create different query for particular gmlid or *
+				} else {
+					stmt.setString(1, (String)gmlidUri);
+					stmt.setString(2, (String)gmlidUri);
+				}
+
+				//System.out.println(stmt);  // only the parameterized query
 				ResultSet rs = stmt.executeQuery();
 
 				while (rs.next() && shouldRun) {

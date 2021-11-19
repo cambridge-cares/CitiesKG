@@ -337,11 +337,11 @@ public class Building extends KmlGenericObject{
 						int groupBasis = 4;
 
 						try { // Two cases: Blazegraph or Postgres
-							String query;
+							String query = null;
 
 							if (isBlazegraph){
 								//@TODO: StatementTransformer with optimized SPARQL query including value assignment for TWA
-								String subquery = StatementTransformer.getSPARQLAggregateGeometriesForLOD2OrHigher(psQuery, connection, currentLod, (String)buildingPartId);
+								String subquery = StatementTransformer.getSPARQLqueryStage2(query, (String)currentLod);
 
 							}else{
 								// Initial implementation for SQL including value assignment
@@ -373,7 +373,7 @@ public class Building extends KmlGenericObject{
 
 							}
 
-							// ???Execution of SQL query and the last stage of SPARQL query
+							// Execution of SQL query and the last stage of SPARQL query
 							rs = psQuery.executeQuery();
 
 							if (rs.isBeforeFirst()) {
