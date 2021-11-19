@@ -341,7 +341,7 @@ public class Building extends KmlGenericObject{
 
 							if (isBlazegraph){
 								//@TODO: StatementTransformer with optimized SPARQL query including value assignment for TWA
-								String subquery = StatementTransformer.getSPARQLqueryStage2(query, (String)currentLod);
+								//String subquery = StatementTransformer.getSPARQLqueryStage2(query, (String)currentLod);
 
 							}else{
 								// Initial implementation for SQL including value assignment
