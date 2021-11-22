@@ -34,7 +34,7 @@ public class OptimizedSparqlQuery {
 
   /* Execution of the complex query and return a list of ResultSet
   * */
-  public static ArrayList<ResultSet> getSPARQLAggregateGeometriesForLOD2OrHigher(
+  public static ArrayList<String> getSPARQLAggregateGeometriesForLOD2OrHigher(
       PreparedStatement psQuery, Connection connection, int lodToExportFrom, String buildingPartId) {
 
     StringBuilder sparqlStr = new StringBuilder();
@@ -49,7 +49,7 @@ public class OptimizedSparqlQuery {
         "GRAPH <" + IRI_GRAPH_BASE + "building/> {" +
         " ?id ocgml:buildingId " +  QST_MARK + " ;  ocgml:lod2MultiSurfaceId ?lod2MultiSurfaceId " +
         "FILTER (!isBlank(?lod2MultiSurfaceId)) }}");
-    rootIds.addAll(executeQuery(connection, sparqlStr.toString(), buildingPartId));
+    rootIds.addAll(executeQuery(connection, sparqlStr.toString(), buildingPartId, "rootId"));
 
     // subquery 1.2
     sparqlStr.setLength(0);
@@ -59,7 +59,7 @@ public class OptimizedSparqlQuery {
         "GRAPH <" + IRI_GRAPH_BASE + "building/> { \n" +
         " ?id ocgml:buildingId " +  QST_MARK + " ;  \n ocgml:lod2SolidId  ?lod2SolidId\n" +
         "FILTER (!isBlank(?lod2SolidId)) }}");
-    rootIds.addAll(executeQuery(connection, sparqlStr.toString(), buildingPartId));
+    rootIds.addAll(executeQuery(connection, sparqlStr.toString(), buildingPartId, "rootId"));
 
     // subquery 1.3
     sparqlStr.setLength(0);
@@ -69,17 +69,29 @@ public class OptimizedSparqlQuery {
         "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> { \n" +
         " ?id ocgml:buildingId " +  QST_MARK + " ;  \n ocgml:lod2MultiSurfaceId  ?lod2MultiSurfaceId\n" +
         "FILTER (!isBlank(?lod2MultiSurfaceId)) }}");
-    rootIds.addAll(executeQuery(connection, sparqlStr.toString(), buildingPartId));
+    rootIds.addAll(executeQuery(connection, sparqlStr.toString(), buildingPartId, "rootId"));
 
     // query stage 2 for extractig the aggregated geometries
     System.out.println("OptimizedSparqlQuery, size of the rootId: " + rootIds.size());
-    // @TODO
+    // return a list of geometry with # separator
+    sparqlStr.setLength(0);
+    ArrayList<String> geometries = new ArrayList<String>();
 
+    sparqlStr.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+        "SELECT ?geometry " +
+        "\nWHERE\n { " +
+        "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> { \n" +
+        " ?id ocgml:rootId " +  QST_MARK + " ;  \n ocgml:GeometryType    ?geometry\n" +
+        "FILTER (!isBlank(?geometry)) }}");
+    for (String rootid : rootIds){
+      ArrayList<String> results = executeQuery(connection, sparqlStr.toString(), rootid, "geometry");
+      geometries.addAll(results);
+    }
 
-    return null;
+    return geometries;
   }
 
-  public static ArrayList<String> executeQuery(Connection connection, String querystr, String buildingPartId){
+  public static ArrayList<String> executeQuery(Connection connection, String querystr, String buildingPartId, String selectToken){
 
     URL url = null;
     ResultSet rs = null;
@@ -96,7 +108,7 @@ public class OptimizedSparqlQuery {
       rs = psQuery.executeQuery();
 
       while (rs.next()) {
-        results.add(rs.getString("rootId"));
+        results.add(rs.getString(selectToken));
       }
     } catch (SQLException e) {
       e.printStackTrace();  //@TODO: to define how to handle

@@ -203,6 +203,7 @@ public class Building extends KmlGenericObject{
 		boolean reversePointOrder = false;
 		// Shiying: we need to add a variable to differentiate two different cases in FOOTPRINT/EXTRUDED, if GroundSurface exists
 		boolean existGS = false;
+		ArrayList<String> sparqlGeom = new ArrayList<>();
 
 		try {
 			currentLod = config.getProject().getKmlExporter().getLodToExportFrom();
@@ -343,8 +344,8 @@ public class Building extends KmlGenericObject{
 							if (isBlazegraph){
 								//@TODO: StatementTransformer with optimized SPARQL query including value assignment for TWA
 								OptimizedSparqlQuery optquery = new OptimizedSparqlQuery(databaseAdapter);
-								ArrayList<ResultSet> resultgeom = optquery.getSPARQLAggregateGeometriesForLOD2OrHigher(psQuery, connection, currentLod, (String)buildingPartId);
-
+								sparqlGeom = optquery.getSPARQLAggregateGeometriesForLOD2OrHigher(psQuery, connection, currentLod, (String)buildingPartId);
+								rs = null;  // TODO: necessary?
 							}else{
 								// Initial implementation for SQL including value assignment
 								query = queries.getBuildingPartAggregateGeometries(0.001,
@@ -355,41 +356,25 @@ public class Building extends KmlGenericObject{
 										Math.pow(groupBasis, 2));
 								psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
-								for (int i = 1; i <= getParameterCount(query); i++)
-									psQuery.setLong(i, Long.class.cast(buildingPartId));
-							}
+								for (int i = 1; i <= getParameterCount(query); i++){
+									psQuery.setLong(i, Long.class.cast(buildingPartId));}
 
+								// Execution of SQL query and the last stage of SPARQL query
+								rs = psQuery.executeQuery();
 
-							if (isBlazegraph) {
-								URL url = null;
-								try {
-									url = new URL((String)buildingPartId);
-								} catch (MalformedURLException e) {
-									e.printStackTrace();
-								}
-								psQuery.setURL(1, url);
-								psQuery.setURL(2, url);
-								psQuery.setURL(3, url);
-							}
-							else {
-
-							}
-
-							// Execution of SQL query and the last stage of SPARQL query
-							rs = psQuery.executeQuery();
-
-							if (rs.isBeforeFirst()) {
-								rs.next();
-								existGS = false;
-								if (rs.getObject(1) != null) {
-									rs.beforeFirst();
-									break;
+								if (rs.isBeforeFirst()) {
+									rs.next();
+									existGS = false;
+									if (rs.getObject(1) != null) {  // If the rs is not empty, break
+										rs.beforeFirst();
+										break;
+									}
+									try { rs.close(); } catch (SQLException sqle) {}
+									try { psQuery.close(); } catch (SQLException sqle) {}
+									rs = null;
 								}
 							}
 
-							try { rs.close(); } catch (SQLException sqle) {} 
-							try { psQuery.close(); } catch (SQLException sqle) {}
-							rs = null;
 						} catch (SQLException e) {
 							log.error("Error at : " + buildingPartId);
 							log.error("SQL error while aggregating geometries in LOD " + currentLod + ": " + e.getMessage());
@@ -405,8 +390,8 @@ public class Building extends KmlGenericObject{
 				}
 			}
 
-			if (rs != null && rs.isBeforeFirst()) { // if result of Line 334 or287 is not empty. This step will process the result.
-
+			if ((!sparqlGeom.isEmpty() && isBlazegraph) || (rs != null && rs.isBeforeFirst()) ) { // if result of Line 334 or287 is not empty. This step will process the result.
+			// this IF-condition order is important, as rs.isBeforeFirst can raise error about closed ResultSet. In the case of blazegraph, it should not be evaluated at all
 				switch (work.getDisplayForm().getForm()) {
 				case DisplayForm.FOOTPRINT:
 					return createPlacemarksForFootprint(rs, work);
