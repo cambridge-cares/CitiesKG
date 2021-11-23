@@ -95,7 +95,31 @@ public class UtilAdapter extends AbstractUtilAdapter {
 
     @Override
     protected void changeSrs(DatabaseSrs srs, boolean doTransform, String schema, Connection connection) throws SQLException {
+        DatabaseSrs checkSrs = DatabaseSrs.createDefaultSrs();
+        checkSrs.setSrid(srs.getSrid());
+        getSrsInfo(checkSrs);
 
+        String endpoint = "http://".concat(databaseAdapter.getConnectionDetails().getServer()).concat(":").concat(String.valueOf(databaseAdapter.getConnectionDetails().getPort())).concat(databaseAdapter.getConnectionDetails().getSid());
+
+        if (checkSrs.isSupported()) {
+            try (Statement stmt = connection.createStatement()) {
+                stmt.executeUpdate(getChangeSrsUpdateStatement(schema, endpoint, srs));
+            }
+        } else {
+            throw new SQLException("Graph spatialrefsys does not contain the SRID " + srs.getSrid() + ". Insert commands for missing SRIDs can be found at spatialreference.org");
+        }
+    }
+
+    protected String getChangeSrsUpdateStatement(String schema, String endpoint, DatabaseSrs srs) {
+        String updateStatement = "PREFIX " + SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + " <" + schema + ">\n" +
+                "WITH <" + endpoint + "databasesrs/>\n" +
+                "DELETE { ?srid " + SchemaManagerAdapter.ONTO_SRID + " ?currentSrid .\n" +
+                "?srsname " + SchemaManagerAdapter.ONTO_SRSNAME + " ?currentSrsname }\n" +
+                "INSERT { <" + endpoint + "> " + SchemaManagerAdapter.ONTO_SRID + " " + srs.getSrid() + ";\n" +
+                SchemaManagerAdapter.ONTO_SRSNAME + " \"" + srs.getGMLSrsName() + "\" }\n" +
+                "WHERE { OPTIONAL { ?srid " + SchemaManagerAdapter.ONTO_SRID + " ?currentSrid }\n" +
+                "OPTIONAL { ?srsname " + SchemaManagerAdapter.ONTO_SRSNAME + " ?currentSrsname } }";
+        return updateStatement;
     }
 
     @Override
