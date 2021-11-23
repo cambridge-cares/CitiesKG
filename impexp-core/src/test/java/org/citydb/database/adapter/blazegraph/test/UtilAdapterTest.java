@@ -157,7 +157,29 @@ public class UtilAdapterTest extends TestCase {
         }
     }
 
+    @Test
+    public void testGetChangeSrsUpdateStatement() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        UtilAdapter utilAdapter = createNewUtilAdapter();
+        String schema = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
+        String endpoint = "http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/";
+        DatabaseSrs srs = DatabaseSrs.createDefaultSrs();
+        srs.setSrid(123);
+        srs.setGMLSrsName("test");
 
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>\n" +
+                "WITH <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/databasesrs/>\n" +
+                "DELETE { ?srid ocgml:srid ?currentSrid .\n" +
+                "?srsname ocgml:srsname ?currentSrsname }\n" +
+                "INSERT { <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/> ocgml:srid 123;\n" +
+                "ocgml:srsname \"test\" }\n" +
+                "WHERE { OPTIONAL { ?srid ocgml:srid ?currentSrid }\n" +
+                "OPTIONAL { ?srsname ocgml:srsname ?currentSrsname } }";
+
+        Method changeSrsUpdateStatement = UtilAdapter.class.getDeclaredMethod("getChangeSrsUpdateStatement", String.class, String.class, DatabaseSrs.class);
+        changeSrsUpdateStatement.setAccessible(true);
+
+        assertEquals(expected, changeSrsUpdateStatement.invoke(utilAdapter, schema, endpoint, srs));
+    }
 
         @Test
         public void testGetSrsType () throws
