@@ -9,6 +9,7 @@ import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.blazegraph.UtilAdapter;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
+import org.mockito.stubbing.Answer;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -111,6 +112,52 @@ public class UtilAdapterTest extends TestCase {
             assertFalse(srs.isSupported());
         }
     }
+
+
+    @Test //test case when srs is supported
+    public void testChangeSrsSupported() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, SQLException {
+        UtilAdapter spy = Mockito.spy(createNewUtilAdapter());
+        DatabaseSrs srs = DatabaseSrs.createDefaultSrs();
+        Boolean doTransform = false;
+        String schema = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
+
+        Mockito.doAnswer((Answer<Void>) invocation -> {
+                    DatabaseSrs checkSrs = invocation.getArgument(0);
+                    checkSrs.setSupported(true);
+                    return null;
+                }
+        ).when(spy).getSrsInfo(ArgumentMatchers.any(DatabaseSrs.class));
+        when(conn.createStatement()).thenReturn(statement);
+        when(statement.executeUpdate(anyString())).thenReturn(0);
+
+        Method changeSrs = UtilAdapter.class.getDeclaredMethod("changeSrs", DatabaseSrs.class, boolean.class, String.class, Connection.class);
+        changeSrs.setAccessible(true);
+        changeSrs.invoke(spy, srs, doTransform, schema, conn);
+
+        verify(statement).executeUpdate(anyString());
+    }
+
+    @Test //test case when srs is not supported
+    public void testChangeSrsNotSupported() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, SQLException {
+        UtilAdapter spy = Mockito.spy(createNewUtilAdapter());
+        DatabaseSrs srs = DatabaseSrs.createDefaultSrs();
+        Boolean doTransform = false;
+        String schema = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
+
+        Mockito.doNothing().when(spy).getSrsInfo(ArgumentMatchers.any(DatabaseSrs.class));
+
+        Method changeSrs = UtilAdapter.class.getDeclaredMethod("changeSrs", DatabaseSrs.class, boolean.class, String.class, Connection.class);
+        changeSrs.setAccessible(true);
+
+        try {
+            changeSrs.invoke(spy, srs, doTransform, schema, conn);
+        } catch (InvocationTargetException e) {
+            assertEquals(SQLException.class, e.getCause().getClass());
+            assertEquals("Graph spatialrefsys does not contain the SRID 0. Insert commands for missing SRIDs can be found at spatialreference.org", e.getCause().getMessage());
+        }
+    }
+
+
 
         @Test
         public void testGetSrsType () throws
