@@ -8,13 +8,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.io.FileReader;
+import java.lang.Process;
 
 public class RunCEATask implements Runnable {
-    private final ArrayList<String> inputs;
+    private final CEAInputData inputs;
     private final CEAOutputData result;
     private Boolean stop = false;
 
-    public RunCEATask(ArrayList<String> buildingData, CEAOutputData output) {
+    public RunCEATask(CEAInputData buildingData, CEAOutputData output) {
         this.inputs = buildingData;
         this.result = output;
     }
@@ -97,14 +98,8 @@ public class RunCEATask implements Runnable {
         while (!stop) {
 
             try {
-                // Extract input data
-                CEAInputData result = new CEAInputData();
-
-                result.geometry = inputs.get(0);
-                result.floors_ag = inputs.get(1);
-
-                //Parse data to JSON
-                String dataString = new Gson().toJson(result);
+                //Parse input data to JSON
+                String dataString = new Gson().toJson(inputs);
                 String FilePath = new File("C:\\Users\\ELLO01\\Documents\\CitiesKG\\utils", "create_shapefile.py").getAbsolutePath();
 
                 ArrayList<String> args2 = new ArrayList<>();
@@ -115,7 +110,7 @@ public class RunCEATask implements Runnable {
                 // creating the process
                 ProcessBuilder build = new ProcessBuilder(args2);
                 // starting the process
-                build.start();
+                build.start().waitFor();
 
                 // Run a workflow that runs all CEA scripts
                 String workflowArgs = "cea workflow --workflow C:\\Users\\ELLO01\\Documents\\CitiesKG\\utils\\workflow.yml";
@@ -123,7 +118,7 @@ public class RunCEATask implements Runnable {
 
                 CEAOutputData results = extractOutputs();
 
-            } catch (  IOException | NullPointerException e) {
+            } catch (  InterruptedException | IOException | NullPointerException e) {
                 e.printStackTrace();
                 throw new JPSRuntimeException(e);
             } finally {

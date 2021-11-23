@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.agents.geo;
 
 import org.apache.jena.sparql.core.Var;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
+import uk.ac.cam.cares.twa.cities.tasks.CEAInputData;
 import uk.ac.cam.cares.twa.cities.tasks.CEAOutputData;
 import uk.ac.cam.cares.twa.cities.tasks.RunCEATask;
 import org.json.JSONObject;
@@ -12,6 +13,7 @@ import java.util.Set;
 import javax.servlet.annotation.WebServlet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
@@ -41,11 +43,9 @@ public class CEAAgent extends JPSAgent {
 
         if (validateInput(requestParams)) {
             String uri = requestParams.getString("iri");
-            ArrayList<String> testData =  new ArrayList<>();
-            String geometry = getGeometry(uri);
-            String floors_ag = "5";
-            testData.add(geometry);
-            testData.add(floors_ag);
+            CEAInputData testData = new CEAInputData();
+            testData.geometry = getValue(uri, "Envelope");
+            testData.height = getValue(uri, "Height");
             CEAOutputData outputs = new CEAOutputData();
             runCEA(testData, outputs);
         }
@@ -78,9 +78,46 @@ public class CEAAgent extends JPSAgent {
         return true;
     }
 
-    private void runCEA(ArrayList<String> buildingData, CEAOutputData output) {
+    private void runCEA(CEAInputData buildingData, CEAOutputData output) {
         RunCEATask task = new RunCEATask(buildingData, output);
         CEAExecutor.execute(task);
+    }
+
+    /**
+     * executes query on SPARQL endpoint and retrieves requested value of building
+     * @param uriString city object id
+     * @param value building value requested
+     * @return geometry as string
+     */
+    private String getValue(String uriString, String value){
+
+        String result = "";
+        setKGClient();
+
+        Query q = getQuery(uriString, value);
+        String queryResultString = kgClient.execute(q.toString());
+        JSONArray queryResult = new JSONArray(queryResultString);
+
+        if(!queryResult.isEmpty()){
+            result = queryResult.getJSONObject(0).get(value).toString();
+        }
+        return result;
+    }
+
+    /**
+     * calls a SPARQL query for a specific URI for height or geometry.
+     * @param uriString city object id
+     * @param value building value requested
+     * @return returns a query string
+     */
+    private Query getQuery(String uriString, String value) {
+        switch(value) {
+            case "Envelope":
+                return getGeometryQuery(uriString);
+            case "Height":
+                return getHeightQuery(uriString);
+        }
+        return null;
     }
 
     /**
@@ -100,23 +137,23 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * executes query on SPARQL endpoint and retrieves envelope of building
+     * builds a SPARQL query for a specific URI to retrieve the building height.
      * @param uriString city object id
-     * @return geometry as string
+     * @return returns a query string
      */
-    private String getGeometry(String uriString){
+    private Query getHeightQuery(String uriString) {
+        WhereBuilder wb =
+                new WhereBuilder()
+                        .addPrefix("ocgml", "http://locahost/ontocitygml/")
+                        .addWhere("?o", "ocgml:attrName", "height")
+                        .addWhere("?o", "ocgml:realVal", "?Height")
+                        .addWhere("?o", "ocgml:cityObjectId", "?s");
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?Height")
+                .addGraph(NodeFactory.createURI("http://localhost/berlin/cityobjectgenericattrib/"), wb);
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
 
-        String geometry = "";
-        setKGClient();
-
-        Query q = getGeometryQuery(uriString);
-        String queryResultString = kgClient.execute(q.toString());
-        JSONArray queryResult = new JSONArray(queryResultString);
-
-        if(!queryResult.isEmpty()){
-            geometry = queryResult.getJSONObject(0).get("Envelope").toString();
-        }
-        return geometry;
+        return sb.build();
     }
 
     /**
