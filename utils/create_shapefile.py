@@ -9,6 +9,7 @@ import geopandas as gpd
 import argparse
 import json
 import math
+from pyproj import CRS
 
 
 def create_shapefile(geometry, height, shapefile):
@@ -53,8 +54,7 @@ def create_shapefile(geometry, height, shapefile):
     geometry = [shapely.geometry.polygon.Polygon(json.loads(g)) for g in df.geometry]
     df.drop('geometry', axis=1)
 
-    crs = {"lon_0": 7.439583333333333, "k_0": 1, "ellps": "bessel", "y_0": 200000, "no_defs": True, "proj": "somerc",
-           "x_0": 600000, "units": "m", "lat_0": 46.95240555555556}
+    crs = CRS.from_user_input(24500)
     gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
     gdf.to_file(shapefile, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
