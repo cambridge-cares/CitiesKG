@@ -181,20 +181,20 @@ public class UtilAdapterTest extends TestCase {
         assertEquals(expected, changeSrsUpdateStatement.invoke(utilAdapter, schema, endpoint, srs));
     }
 
-        @Test
-        public void testGetSrsType () throws
-        InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-            UtilAdapter utilAdapter = createNewUtilAdapter();
-            Method getSrsType = UtilAdapter.class.getDeclaredMethod("getSrsType", String.class);
-            getSrsType.setAccessible(true);
+    @Test
+    public void testGetSrsType() throws
+            InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        UtilAdapter utilAdapter = createNewUtilAdapter();
+        Method getSrsType = UtilAdapter.class.getDeclaredMethod("getSrsType", String.class);
+        getSrsType.setAccessible(true);
 
-            assertEquals(DatabaseSrsType.PROJECTED, getSrsType.invoke(utilAdapter, "PROJCS"));
-            assertEquals(DatabaseSrsType.GEOGRAPHIC2D, getSrsType.invoke(utilAdapter, "GEOGCS"));
-            assertEquals(DatabaseSrsType.GEOCENTRIC, getSrsType.invoke(utilAdapter, "GEOCCS"));
-            assertEquals(DatabaseSrsType.VERTICAL, getSrsType.invoke(utilAdapter, "VERT_CS"));
-            assertEquals(DatabaseSrsType.ENGINEERING, getSrsType.invoke(utilAdapter, "LOCAL_CS"));
-            assertEquals(DatabaseSrsType.COMPOUND, getSrsType.invoke(utilAdapter, "COMPD_CS"));
-            assertEquals(DatabaseSrsType.GEOGRAPHIC3D, getSrsType.invoke(utilAdapter, "GEOGCS3D"));
-            assertEquals(DatabaseSrsType.UNKNOWN, getSrsType.invoke(utilAdapter, "unknown"));
-        }
+        assertEquals(DatabaseSrsType.PROJECTED, getSrsType.invoke(utilAdapter, "PROJCS"));
+        assertEquals(DatabaseSrsType.GEOGRAPHIC2D, getSrsType.invoke(utilAdapter, "GEOGCS"));
+        assertEquals(DatabaseSrsType.GEOCENTRIC, getSrsType.invoke(utilAdapter, "GEOCCS"));
+        assertEquals(DatabaseSrsType.VERTICAL, getSrsType.invoke(utilAdapter, "VERT_CS"));
+        assertEquals(DatabaseSrsType.ENGINEERING, getSrsType.invoke(utilAdapter, "LOCAL_CS"));
+        assertEquals(DatabaseSrsType.COMPOUND, getSrsType.invoke(utilAdapter, "COMPD_CS"));
+        assertEquals(DatabaseSrsType.GEOGRAPHIC3D, getSrsType.invoke(utilAdapter, "GEOGCS3D"));
+        assertEquals(DatabaseSrsType.UNKNOWN, getSrsType.invoke(utilAdapter, "unknown"));
     }
+}
