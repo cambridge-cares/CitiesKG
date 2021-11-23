@@ -47,7 +47,7 @@ public class UtilAdapterTest extends TestCase {
     @Test
     public void testNewUtilAdapterMethods() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         UtilAdapter utilAdapter = createNewUtilAdapter();
-        assertEquals(18, utilAdapter.getClass().getDeclaredMethods().length);
+        assertEquals(20, utilAdapter.getClass().getDeclaredMethods().length);
     }
 
     @Test //test case when srs is supported
