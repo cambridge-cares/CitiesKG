@@ -94,6 +94,14 @@ public class UtilAdapter extends AbstractUtilAdapter {
     }
 
     @Override
+    public void changeSrs(DatabaseSrs srs, boolean doTransform, String schema) throws SQLException {
+        String connectionStr = databaseAdapter.getJDBCUrl(databaseAdapter.getConnectionDetails().getServer(), databaseAdapter.getConnectionDetails().getPort(), databaseAdapter.getConnectionDetails().getSid());
+        Connection connection = DriverManager.getConnection(connectionStr);
+        changeSrs(srs, doTransform, schema, connection);
+    }
+
+    //the postgis implementation is to call citydb_pkg.change_schema_srid
+    @Override
     protected void changeSrs(DatabaseSrs srs, boolean doTransform, String schema, Connection connection) throws SQLException {
         DatabaseSrs checkSrs = DatabaseSrs.createDefaultSrs();
         checkSrs.setSrid(srs.getSrid());
