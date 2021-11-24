@@ -63,13 +63,12 @@ public class UtilAdapter extends AbstractUtilAdapter {
         String schema = details.getSchema();
 
         try (Statement statement = conn.createStatement();
-             //Change prefix and predicate to variable
-             ResultSet rs = statement.executeQuery("PREFIX ocgml: <" + schema + ">\n" +
+             ResultSet rs = statement.executeQuery("PREFIX " + SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + " <" + schema + ">\n" +
                      "SELECT ?name ?type ?srtext WHERE {\n" +
-                     "        ?s ocgml:srtext ?srtext\n" +
+                     "        ?s " + SchemaManagerAdapter.ONTO_SRTEXT + " ?srtext\n" +
                      "        BIND(strbefore((strafter(?srtext, \"\\\"\")), \"\\\"\") as ?name)\n" +
                      "        BIND(strbefore(?srtext, \"[\") as ?type)\n" +
-                     "        ?s ocgml:srid " + srs.getSrid() +
+                     "        ?s " + SchemaManagerAdapter.ONTO_SRID + " " + srs.getSrid() +
                      "}")) {
 
             if (rs.next()) {
