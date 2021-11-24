@@ -50,6 +50,14 @@ public class UtilAdapterTest extends TestCase {
         assertEquals(20, utilAdapter.getClass().getDeclaredMethods().length);
     }
 
+    @Test
+    public void testProtectedGetSrsInfo() {
+        /*
+         * This method calls public void getSrsInfo(DatabaseSrs srs) which is tested below
+         * Hence this test is intentionally left blank
+         */
+    }
+
     @Test //test case when srs is supported
     public void testGetSrsInfoSupported() throws SQLException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         UtilAdapter utilAdapter = createNewUtilAdapter();
@@ -113,6 +121,14 @@ public class UtilAdapterTest extends TestCase {
         }
     }
 
+    @Test
+    public void testPublicChangeSrs() {
+        /*
+         * This method calls protected void changeSrs(DatabaseSrs srs, boolean doTransform, String schema, Connection connection)
+         * which is tested below
+         * Hence this test is intentionally left blank
+         */
+    }
 
     @Test //test case when srs is supported
     public void testChangeSrsSupported() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, SQLException {
