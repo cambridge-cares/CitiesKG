@@ -1,6 +1,5 @@
 package org.citydb.database.adapter.blazegraph;
 
-import org.apache.jena.jdbc.remote.RemoteEndpointDriver;
 import org.citydb.config.geometry.BoundingBox;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.config.geometry.GeometryType;
@@ -10,7 +9,6 @@ import org.citydb.config.project.database.DatabaseSrsType;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.AbstractUtilAdapter;
 import org.citydb.database.adapter.IndexStatusInfo;
-import org.citydb.database.connection.DatabaseConnectionDetails;
 import org.citydb.database.connection.DatabaseMetaData;
 import org.citydb.database.version.DatabaseVersion;
 import org.locationtech.jts.geom.Coordinate;
@@ -51,16 +49,10 @@ public class UtilAdapter extends AbstractUtilAdapter {
 
     @Override
     public void getSrsInfo(DatabaseSrs srs) throws SQLException {
-        String prefix = RemoteEndpointDriver.DRIVER_PREFIX.concat(RemoteEndpointDriver.REMOTE_DRIVER_PREFIX).concat(RemoteEndpointDriver.PARAM_QUERY_ENDPOINT).concat("=");
+        String connectionStr = databaseAdapter.getJDBCUrl(databaseAdapter.getConnectionDetails().getServer(), databaseAdapter.getConnectionDetails().getPort(), databaseAdapter.getConnectionDetails().getSid().replaceFirst("(namespace/)\\S*(/sparql)", "$1public$2"));
+        Connection conn = DriverManager.getConnection(connectionStr);
 
-        DatabaseConnectionDetails details = databaseAdapter.getConnectionDetails();
-        String server = details.getServer();
-        String port = String.valueOf(details.getPort());
-        String sid = details.getSid().replaceFirst("(namespace/)\\S*(/sparql)", "$1public$2");
-        String endpoint = "http://".concat(server).concat(":").concat(port).concat(sid);
-        Connection conn = DriverManager.getConnection(prefix.concat(endpoint));
-
-        String schema = details.getSchema();
+        String schema = databaseAdapter.getConnectionDetails().getSchema();
 
         try (Statement statement = conn.createStatement();
              ResultSet rs = statement.executeQuery("PREFIX " + SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + " <" + schema + ">\n" +
