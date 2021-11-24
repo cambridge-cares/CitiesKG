@@ -65,7 +65,7 @@ public class UtilAdapter extends AbstractUtilAdapter {
 
             if (rs.next()) {
                 srs.setSupported(true);
-                if ((rs.getString(1)==null)&&(rs.getString(2)==null)) { //srs is supported but no wktext
+                if ((rs.getString(1) == null) && (rs.getString(2) == null)) { //srs is supported but no wktext
                     srs.setDatabaseSrsName("");
                     srs.setType(getSrsType(""));
                     srs.setWkText("");
