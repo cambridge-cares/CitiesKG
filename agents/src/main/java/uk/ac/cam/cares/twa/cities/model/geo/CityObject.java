@@ -1,19 +1,17 @@
 package uk.ac.cam.cares.twa.cities.model.geo;
 
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import javax.print.attribute.standard.MediaSize.NA;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
-import org.citygml4j.model.gml.GML;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
-
 
 /**
  * CityObject class represent a java model of CityObject module of CityGML.
@@ -36,15 +34,23 @@ public class CityObject {
   private String terminationDate;
   private String updatingPerson;
 
+  private static final String PREDICATE = "predicate";
+  private static final String VALUE =  "value";
+  private static final String COLLECTION_ELEMENT_IRI = "CollectionElementIri";
+  private static final String CITY_OBJECT_GRAPH_URI = "/cityobject/";
+  private static final String ONTO_CITY_GML = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
+  private static final String OCGML = "ocgml";
+  private static final String QM = "?";
+
   private ArrayList<GenericAttribute> genericAttributes;
   private ArrayList<String> genericAttributeIris;
-
-  //private ArrayList<ExternalReference>;
+  private ArrayList<ExternalReference> externalReferences;
+  private ArrayList<String> externalReferencesIris;
 
   private static final String CREATION_DATE = "creationDate";
   private static final String DESCRIPTION = "description";
   private static final String ENVELOPE_TYPE = "EnvelopeType";
-  private static final String GMLID = "gmlId";
+  private static final String GML_ID = "gmlId";
   private static final String ID = "id";
   private static final String NAME = "name";
   private static final String LINEAGE = "lineage";
@@ -56,27 +62,17 @@ public class CityObject {
   private static final String TERMINATION_DATE = "terminationDate";
   private static final String UPDATING_PERSON = "updatingPerson";
 
-  private static final String PREDICATE = "predicate";
-  private static final String VALUE =  "value";
-  private static final String COLLECTION_ELEMENT_IRI = "CollectionElementIri";
-  private String CITY_OBJECT_GRAPH_URI = "/cityobject/";
-  private static final String ONTO_CITY_GML = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
+  private static final ArrayList<String> FIELD_CONSTANTS = new ArrayList<>
+      (Arrays.asList(CREATION_DATE, DESCRIPTION, ENVELOPE_TYPE, GML_ID, ID, NAME, LINEAGE, NAME_CODESPACE, OBJECT_CLASS_ID,
+          REASON_FOR_UPDATE, RELATIVE_TO_TERRAIN, RELATIVE_TO_WATER, TERMINATION_DATE, UPDATING_PERSON));
+  public HashMap<String, Field> fieldMap = new HashMap<String, Field>();
 
-  private final HashMap<String, Object> fieldName = new HashMap<String, Object>(){{
-    put(CREATION_DATE, creationDate);
-    put(DESCRIPTION, description);
-    put(ENVELOPE_TYPE, getEnvelopeType());
-    put(GMLID, gmlId);
-    put(ID, id);
-    put(NAME, name);
-    put(LINEAGE, lineage);
-    put(NAME_CODESPACE, NameCodespace);
-    put(REASON_FOR_UPDATE, reasonForUpdate);
-    put(RELATIVE_TO_TERRAIN, relativeToTerrain);
-    put(RELATIVE_TO_WATER, relativeToWater);
-    put(TERMINATION_DATE, terminationDate);
-    put(UPDATING_PERSON, updatingPerson);
-  }};
+  public CityObject() throws NoSuchFieldException {
+    for (String field: FIELD_CONSTANTS){
+      fieldMap.put(field, CityObject.class.getDeclaredField(field));
+    }
+  }
+
 
   /**
    * builds a query to get all city object's scalars.
@@ -85,25 +81,27 @@ public class CityObject {
     String cityObjectGraphUri = getCityObjectGraphUri(iriName);
 
     WhereBuilder wb = new WhereBuilder()
-            .addPrefix("ocgml", ONTO_CITY_GML)
-            .addWhere(NodeFactory.createURI(iriName), "?" + PREDICATE, "?" + VALUE);
+            .addPrefix(OCGML, ONTO_CITY_GML)
+            .addWhere(NodeFactory.createURI(iriName), QM + PREDICATE, QM + VALUE);
     SelectBuilder sb = new SelectBuilder()
-        .addVar("?" + PREDICATE)
-        .addVar("?" + VALUE)
+        .addVar(QM + PREDICATE)
+        .addVar(QM + VALUE)
         .addGraph(NodeFactory.createURI(cityObjectGraphUri), wb);
     return sb.build();
   }
+
 
   /**
    * returns the graph Uri of the city object.
    * @param iriName city object id
    * @return graph uri of the city object.
    */
-  private String getCityObjectGraphUri(String iriName) {
+  public String getCityObjectGraphUri(String iriName) {
     String[] splitUri = iriName.split("/");
     String namespace = String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length-2));
     return namespace + CITY_OBJECT_GRAPH_URI;
   }
+
 
   /**
    * fills in the scalar fields of a generic attribute instance.
@@ -111,11 +109,10 @@ public class CityObject {
    * @param kgClient sends the query to the right endpoint.
    */
   public void fillScalars(String iriName, KnowledgeBaseClientInterface kgClient)
-      throws NoSuchFieldException, IllegalAccessException {
+      throws IllegalAccessException {
 
     Query q = getFetchScalarsQuery(iriName);
     String queryResultString = kgClient.execute(q.toString());
-
     JSONArray queryResult = new JSONArray(queryResultString);
 
     if(!queryResult.isEmpty()){
@@ -125,21 +122,19 @@ public class CityObject {
         String[] predicateArray = predicate.split("#");
         predicate = predicateArray[predicateArray.length-1];
 
-        if (predicate.equals(OBJECT_CLASS_ID)){
-          //fieldName.get(predicate) = row.getInt(VALUE);
-          GenericAttribute.class.getField(predicate).set(this, row.getInt(VALUE));
+       if (predicate.equals(OBJECT_CLASS_ID)){
+          fieldMap.get(predicate).set(this, row.getInt(VALUE));
         }
         else if (predicate.equals(ID)){
-          //fieldName.get(predicate) = URI.create(row.getString(VALUE));
-          GenericAttribute.class.getField(predicate).set(this, URI.create(row.getString(VALUE)));
+          fieldMap.get(predicate).set(this, URI.create(row.getString(VALUE)));
         }
         else {
-          //fieldName.get(predicate) = row.getString(VALUE);
-          GenericAttribute.class.getField(predicate).set(this, row.getString(VALUE));
+          fieldMap.get(predicate).set(this, row.getString(VALUE));
         }
       }
     }
   }
+
 
   /**
    * enumerator for distinguishing different collection queries.
@@ -149,41 +144,41 @@ public class CityObject {
     EXTERNAL_REF
   }
 
+
   /**
-   * a general query that based on the query type builds queries either for generic attribute or external reference IRIs.
+   * builds query to retrieve  either genericAttribute or externalReference IRIs.
    * @param iriName cityObject IRI.
    * @return query
    */
   private Query getFetchIrisQuery(String iriName, QueryType queryType){
-
     String graphUri = new String();
 
     if(queryType==QueryType.GENERIC_ATTR){
       graphUri = GenericAttribute.getGenericAttributeGraphUri(iriName);
     }
     else if(queryType==QueryType.EXTERNAL_REF){
-      // graphUri = ExternalReference.getGetExternalReferenceGraphUri(iriName); --> code does not exist yet
+      //graphUri = ExternalReference.getGetExternalReferenceGraphUri(iriName); --> code does not exist yet
     }
     WhereBuilder wb = new WhereBuilder()
-        .addPrefix("ocgml", ONTO_CITY_GML)
-        .addWhere("?" + COLLECTION_ELEMENT_IRI, "ocgml:cityObjectId", NodeFactory.createURI(iriName));
+        .addPrefix(OCGML, ONTO_CITY_GML)
+        .addWhere(QM + COLLECTION_ELEMENT_IRI, OCGML + ":cityObjectId", NodeFactory.createURI(iriName));
     SelectBuilder sb = new SelectBuilder()
-        .addVar("?" + COLLECTION_ELEMENT_IRI)
+        .addVar(QM + COLLECTION_ELEMENT_IRI)
         .addGraph(NodeFactory.createURI(graphUri), wb);
 
     return sb.build();
   }
 
+
   /**
-   * fills cityObject fields that are collections either with lazyload or fully.
-   * @param iriName CityObject IRI.
-   * @param kgClient connection to specific KG endpoint.
-   * @param lazyload defines whether models have full representations or only iri.
+   * fills in generic attributes linked to the city object.
+   * @param iriName cityObject IRI
+   * @param kgClient sends the query to the right endpoint.
+   * @param lazyLoad if true only fills genericAttributesIris field; if false also fills genericAttributes field.
    */
-  public void fillCollections(String iriName, KnowledgeBaseClientInterface kgClient, Boolean lazyload)
+  public void fillGenericAttributes(String iriName, KnowledgeBaseClientInterface kgClient, Boolean lazyLoad)
       throws NoSuchFieldException, IllegalAccessException {
 
-    //genericAttributeIris
     Query q = getFetchIrisQuery(iriName, QueryType.GENERIC_ATTR);
     genericAttributes = new ArrayList<>();
     genericAttributeIris = new ArrayList<>();
@@ -191,23 +186,23 @@ public class CityObject {
     String queryResultString = kgClient.execute(q.toString());
     JSONArray queryResult = new JSONArray(queryResultString);
 
-    if(!queryResult.isEmpty()){
-      for (int index = 0; index < queryResult.length(); index++){
+    if (!queryResult.isEmpty()) {
+      for (int index = 0; index < queryResult.length(); index++) {
         String elementIri = queryResult.getJSONObject(index).getString(COLLECTION_ELEMENT_IRI);
         genericAttributeIris.add(elementIri);
 
-        //genericAttributes collection
-        if(!lazyload){
+        if (!lazyLoad) {
           GenericAttribute genericAttribute = new GenericAttribute();
           genericAttribute.fillScalars(elementIri, kgClient);
           genericAttributes.add(genericAttribute);
         }
       }
-
-      //externalReference collection
-      // here comes the same code for external references
     }
   }
+
+
+  //here comes fillExternalReferences method.-->
+
 
   /**
    * gets the value of city object field creationDate.
@@ -217,6 +212,7 @@ public class CityObject {
       return creationDate;
   }
 
+
   /**
    * gets the value of city object field description.
    * @return value of city object field description.
@@ -224,6 +220,7 @@ public class CityObject {
   public String getDescription(){
     return description;
   }
+
 
   /**
    * gets the value of city object field EnvelopeType.
@@ -233,6 +230,7 @@ public class CityObject {
     return EnvelopeType;
   }
 
+
   /**
    * gets the value of city object field gmlId.
    * @return value of city object field gmlId.
@@ -240,6 +238,7 @@ public class CityObject {
   public String getGmlId(){
     return gmlId;
   }
+
 
   /**
    * gets the value of city object field id.
@@ -249,6 +248,7 @@ public class CityObject {
     return id;
   }
 
+
   /**
    * gets the value of city object field name.
    * @return value of city object field name.
@@ -256,6 +256,7 @@ public class CityObject {
   public String getName(){
     return name;
   }
+
 
   /**
    * gets the value of city object field lineage.
@@ -265,6 +266,7 @@ public class CityObject {
     return lineage;
   }
 
+
   /**
    * gets the value of city object field NameCodespace.
    * @return value of city object field NameCodespace.
@@ -272,6 +274,7 @@ public class CityObject {
   public String getNameCodespace(){
     return NameCodespace;
   }
+
 
   /**
    * gets the value of city object field objectClassId.
@@ -281,6 +284,7 @@ public class CityObject {
     return objectClassId;
   }
 
+
   /**
    * gets the value of city object field reasonForUpdate.
    * @return value of city object field reasonForUpdate.
@@ -288,6 +292,7 @@ public class CityObject {
   public String getReasonForUpdate(){
     return reasonForUpdate;
   }
+
 
   /**
    * gets the value of city object field relativeToTerrain.
@@ -297,6 +302,7 @@ public class CityObject {
     return relativeToTerrain;
   }
 
+
   /**
    * gets the value of city object field relativeToWater.
    * @return value of city object field relativeToWater.
@@ -304,6 +310,7 @@ public class CityObject {
   public String getRelativeToWater(){
     return relativeToWater;
   }
+
 
   /**
    * gets the value of city object field terminationDate.
@@ -313,6 +320,7 @@ public class CityObject {
     return terminationDate;
   }
 
+
   /**
    * gets the value of city object field updatingPerson.
    * @return value of city object field updatingPerson.
@@ -320,5 +328,26 @@ public class CityObject {
   public String getUpdatingPerson(){
     return updatingPerson;
   }
+
+
+  /**
+   * gets the value of city object field genericAttributesIris.
+   * @return value of city object field genericAttributesIris.
+   */
+  public ArrayList<String> getGenericAttributesIris(){
+    return genericAttributeIris;
+  }
+
+
+  /**
+   * gets the value of city object field genericAttributes.
+   * @return value of city object field genericAttributes.
+   */
+  public ArrayList<GenericAttribute> getGenericAttributes(){
+    return genericAttributes;
+  }
+
+
+  //here comes getters for external reference fields -->
 
 }
