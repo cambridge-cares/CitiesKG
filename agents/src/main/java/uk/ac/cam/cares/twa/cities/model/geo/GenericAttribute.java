@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.model.geo;
 
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
@@ -31,7 +32,13 @@ public class GenericAttribute {
   private int dataType;
   private URI cityObjectId;
 
-  // field names.
+  private static final String GENERIC_ATTRIBUTE_GRAPH_URI = "/cityobjectgenericattrib/";
+  private static final String VALUE = "value";
+  private static final String PREDICATE = "predicate";
+  private static final String ONTO_CITY_GML = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
+  private static final String OCGML = "ocgml";
+  private static final String QM = "?";
+
   private static final String ATTR_NAME = "attrName";
   private static final String URI_VAL = "uriVal";
   private static final String STR_VAL = "strVal";
@@ -45,44 +52,37 @@ public class GenericAttribute {
   private static final String DATA_TYPE = "dataType";
   private static final String CITY_OBJECT_ID = "cityObjectId";
 
-  private final HashMap<String, Object> fieldName = new HashMap<String, Object>(){{
-    put(ATTR_NAME, attrName);
-    put(URI_VAL, uriVal);
-    put(STR_VAL, strVal);
-    put(UNIT, unit);
-    put(ROOT_GENATTRIB_ID, rootGenattribId);
-    put(REAL_VAL, realVal);
-    put(PARENT_GENATTRIB_ID, parentGenattribId);
-    put(INT_VAL, intVal);
-    put(DATE_VAL, dateVal);
-    put(ID, id);
-    put(DATA_TYPE, dataType);
-    put(CITY_OBJECT_ID, cityObjectId);
-  }};
+  private static final ArrayList<String> FIELD_CONSTANTS = new ArrayList<>
+      (Arrays.asList(ATTR_NAME, URI_VAL, STR_VAL, UNIT, ROOT_GENATTRIB_ID, REAL_VAL, PARENT_GENATTRIB_ID, INT_VAL, DATE_VAL, ID, DATA_TYPE, CITY_OBJECT_ID ));
+  private HashMap<String, Field> fieldMap = new HashMap<String, Field>();
 
-  private static String GENERIC_ATTRIBUTE_GRAPH_URI = "/cityobjectgenericattrib/";
-  private static final String VALUE = "value";
-  private static final String PREDICATE = "predicate";
-  private static final String ONTO_CITY_GML = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
 
-   /**
-   * builds a query to get all generic attribute instance scalars.
+  public GenericAttribute() throws NoSuchFieldException {
+    for (String field: FIELD_CONSTANTS){
+      fieldMap.put(field, GenericAttribute.class.getDeclaredField(field));
+    }
+  }
+
+
+  /**
+   * * builds a query to get genericAttribute instance scalars.
    */
   private Query getFetchGenAttrScalarsQuery(String iriName){
     String genericAttributeGraphUri = getGenericAttributeGraphUri(iriName);
 
     WhereBuilder wb = new WhereBuilder()
-        .addPrefix("ocgml", ONTO_CITY_GML)
-        .addWhere(NodeFactory.createURI(iriName), "?" + PREDICATE, "?" + VALUE);
+        .addPrefix(OCGML, ONTO_CITY_GML)
+        .addWhere(NodeFactory.createURI(iriName), QM + PREDICATE, QM + VALUE);
     SelectBuilder sb = new SelectBuilder()
-        .addVar("?" + PREDICATE)
-        .addVar("?" + VALUE)
+        .addVar(QM + PREDICATE)
+        .addVar(QM + VALUE)
         .addGraph(NodeFactory.createURI(genericAttributeGraphUri), wb);
     return sb.build();
   }
 
+
   /**
-   * returns the graph Uri of the generic city object attributes.
+   * builds graph Uri of the genericCityObjectAttributes.
    * @param iriName IRI of the generic attribute instance.
    * @return uri of the generic attributes graph.
    */
@@ -92,43 +92,38 @@ public class GenericAttribute {
     return namespace + GENERIC_ATTRIBUTE_GRAPH_URI;
   }
 
+
   /**
    * fills in the scalar fields of a generic attribute instance.
    * @param iriName IRI of the generic attribute instance.
    * @param kgClient sends the query to the right endpoint.
    */
-  public void fillScalars(String iriName, KnowledgeBaseClientInterface kgClient)
-      throws NoSuchFieldException, IllegalAccessException {
+  public void fillScalars(String iriName, KnowledgeBaseClientInterface kgClient) throws IllegalAccessException {
 
     Query q = getFetchGenAttrScalarsQuery(iriName);
     String queryResultString = kgClient.execute(q.toString());
-
     JSONArray queryResult = new JSONArray(queryResultString);
 
     if(!queryResult.isEmpty()){
       for (int index = 0; index < queryResult.length(); index++){
         JSONObject row = queryResult.getJSONObject(index);
         String predicate = row.getString(PREDICATE);
-        // is whole uri http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#attrName
         String[] predicateArray = predicate.split("#");
         predicate = predicateArray[predicateArray.length-1];
-        //at this point predicate is only attrName
 
         if (predicate.equals(INT_VAL) || predicate.equals(DATA_TYPE)){
-          //fieldName.get(predicate) = row.getInt(VALUE);
-          GenericAttribute.class.getField(predicate).set(this, row.getInt(VALUE));
+          fieldMap.get(predicate).set(this, row.getInt(VALUE));
         }
         else if (predicate.equals(ID) || predicate.equals(CITY_OBJECT_ID)){
-          //fieldName.get(predicate) = URI.create(row.getString(VALUE));
-          GenericAttribute.class.getField(predicate).set(this, URI.create(row.getString(VALUE)));
+          fieldMap.get(predicate).set(this, URI.create(row.getString(VALUE)));
         }
         else {
-          //fieldName.get(predicate) = row.getString(VALUE);
-          GenericAttribute.class.getField(predicate).set(this, row.getString(VALUE));
+          fieldMap.get(predicate).set(this, row.getString(VALUE));
         }
       }
     }
   }
+
 
   /**
    * gets the value of generic attribute field attrName.
@@ -138,6 +133,7 @@ public class GenericAttribute {
       return attrName;
   }
 
+
   /**
    * gets the value of generic attribute field uriVal.
    * @return value of uriVal field
@@ -145,6 +141,7 @@ public class GenericAttribute {
   public String getUriVal() {
     return uriVal;
   }
+
 
   /**
    * gets the value of generic attribute field strVal.
@@ -154,6 +151,7 @@ public class GenericAttribute {
     return strVal;
   }
 
+
   /**
    * gets the value of generic attribute field unit.
    * @return value of unit field
@@ -161,6 +159,7 @@ public class GenericAttribute {
   public String getUnit() {
     return unit;
   }
+
 
   /**
    * gets the value of generic attribute field rootGenattribId.
@@ -170,6 +169,7 @@ public class GenericAttribute {
     return rootGenattribId;
   }
 
+
   /**
    * gets the value of generic attribute field realVal.
    * @return value of realVal field
@@ -177,6 +177,7 @@ public class GenericAttribute {
   public String getRealVal() {
     return realVal;
   }
+
 
   /**
    * gets the value of generic attribute field parentGenattribId.
@@ -186,6 +187,7 @@ public class GenericAttribute {
     return parentGenattribId;
   }
 
+
   /**
    * gets the value of generic attribute field intVal.
    * @return value of intVal field
@@ -193,6 +195,7 @@ public class GenericAttribute {
   public int getIntVal() {
     return intVal;
   }
+
 
   /**
    * gets the value of generic attribute field dateVal.
@@ -202,6 +205,7 @@ public class GenericAttribute {
     return dateVal;
   }
 
+
   /**
    * gets the value of generic attribute field id.
    * @return value of id field
@@ -210,6 +214,7 @@ public class GenericAttribute {
     return id;
   }
 
+
   /**
    * gets the value of generic attribute field dataType.
    * @return value of dataType field
@@ -217,6 +222,7 @@ public class GenericAttribute {
   public int getDataType() {
     return dataType;
   }
+
 
   /**
    * gets the value of generic attribute field cityObjectId.
