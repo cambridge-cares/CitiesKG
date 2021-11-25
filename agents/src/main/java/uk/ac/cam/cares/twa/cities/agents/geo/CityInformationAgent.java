@@ -17,8 +17,6 @@ import uk.ac.cam.cares.twa.cities.model.geo.CityObject;
 /**
  * CityInformationAgent is about something good.
  */
-
-
 @WebServlet(urlPatterns = {CityInformationAgent.URI_CITY_OBJECT_INFORMATION})
 public class CityInformationAgent extends JPSAgent {
 
@@ -29,6 +27,7 @@ public class CityInformationAgent extends JPSAgent {
 
   private KnowledgeBaseClientInterface kgClient;
   private static String route = "http://kb/citieskg-berlin";
+  private boolean lazyload = true;
 
   @Override
   public JSONObject processRequestParameters(JSONObject requestParams) {
@@ -40,21 +39,27 @@ public class CityInformationAgent extends JPSAgent {
     for (Object iri : iris) {
       uris.add(iri.toString());
     }
-    JSONArray cityInformation = new JSONArray(); // ask Arek
+    JSONArray cityObjectInformation = new JSONArray(); // ask Arek if JSON Array is the right entity
 
     setKGClient(true);
 
     for (int iri = 0; iri < uris.size(); iri++) {
       String cityObjectIri= uris.get(iri);
-      CityObject cityObject =  new CityObject(cityObjectIri);
+      try {
+        CityObject cityObject = new CityObject();
 
-      cityObject.fillScalars(cityObjectIri, kgClient);
-      cityObject.fillCollections(cityObjectIri,kgClient, false);
+        cityObject.fillScalars(cityObjectIri, kgClient);
+        cityObject.fillGenericAttributes(cityObjectIri,kgClient, lazyload);
 
-      //getters to extract info and put it to JSONArray.
-      //Ask Arek how to package every in JSON Object
+        cityObjectInformation.put(cityObject.getId());
+        cityObjectInformation.put(cityObject.getGenericAttributesIris());
+      }
+      catch (NoSuchFieldException | IllegalAccessException e) {
+        e.printStackTrace();
+      }
+      //cityObject.fillExternalReferences(cityObjectIri,kgClient, lazyload);
     }
-    requestParams.append(KEY_ATTRIBUTES, cityInformation);
+    requestParams.append(KEY_ATTRIBUTES, cityObjectInformation);
     return requestParams;
   }
 
@@ -80,14 +85,12 @@ public class CityInformationAgent extends JPSAgent {
     throw new BadRequestException();
   }
 
+
   /**
    * sets KG Client for specific endpoint.
-   *
    * @param isQuery boolean
    */
   private void setKGClient(boolean isQuery) {
-
     this.kgClient = KGRouter.getKnowledgeBaseClient(route, isQuery, !isQuery);
   }
-
 }
