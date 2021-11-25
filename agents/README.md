@@ -61,19 +61,20 @@ This folder is by default not accessible, in order to make it executable, you ne
 
 ### Install and Build
 
-1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory:
+1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
 
 ```
-cd <project directory>
+cd <main project directory>
 
 mvn initialize
 ```
 
-2. If the build is successful, you should be able to run the following to create the war package
+2. If the initialization is done successful, you should be able to run the following to create the war package
 
 ```
 mvn clean install -DskipTests
 ```
+
 
 3. There is one dependency *blazegraph-jar-2.1.5.jar* need to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
 ```
