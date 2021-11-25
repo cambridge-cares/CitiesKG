@@ -24,9 +24,10 @@ public class CityObject {
   private String EnvelopeType;
   private String gmlId;
   private URI id;
-  private String name;
+  private String lastModificationDate;
   private String lineage;
-  private String NameCodespace;
+  private String name;
+  private String nameCodespace;
   private int objectClassId;
   private String reasonForUpdate;
   private String relativeToTerrain;
@@ -52,9 +53,10 @@ public class CityObject {
   private static final String ENVELOPE_TYPE = "EnvelopeType";
   private static final String GML_ID = "gmlId";
   private static final String ID = "id";
-  private static final String NAME = "name";
+  private static final String LAST_MODIFICATION_DATE = "lastModificationDate";
   private static final String LINEAGE = "lineage";
-  private static final String NAME_CODESPACE = "NameCodespace";
+  private static final String NAME = "name";
+  private static final String NAME_CODESPACE = "nameCodespace";
   private static final String OBJECT_CLASS_ID = "objectClassId";
   private static final String REASON_FOR_UPDATE = "reasonForUpdate";
   private static final String RELATIVE_TO_TERRAIN = "relativeToTerrain";
@@ -63,7 +65,7 @@ public class CityObject {
   private static final String UPDATING_PERSON = "updatingPerson";
 
   private static final ArrayList<String> FIELD_CONSTANTS = new ArrayList<>
-      (Arrays.asList(CREATION_DATE, DESCRIPTION, ENVELOPE_TYPE, GML_ID, ID, NAME, LINEAGE, NAME_CODESPACE, OBJECT_CLASS_ID,
+      (Arrays.asList(CREATION_DATE, DESCRIPTION, ENVELOPE_TYPE, GML_ID, ID, LAST_MODIFICATION_DATE, LINEAGE, NAME, NAME_CODESPACE, OBJECT_CLASS_ID,
           REASON_FOR_UPDATE, RELATIVE_TO_TERRAIN, RELATIVE_TO_WATER, TERMINATION_DATE, UPDATING_PERSON));
   public HashMap<String, Field> fieldMap = new HashMap<String, Field>();
 
@@ -272,7 +274,7 @@ public class CityObject {
    * @return value of city object field NameCodespace.
    */
   public String getNameCodespace(){
-    return NameCodespace;
+    return nameCodespace;
   }
 
 
