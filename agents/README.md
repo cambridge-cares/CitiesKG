@@ -69,7 +69,7 @@ cd <main project directory>
 mvn initialize
 ```
 
-2. If the build is successful, you should be able to run the following to create the war package
+2. If the initialization is done successful, you should be able to run the following to create the war package
 
 ```
 mvn clean install -DskipTests
