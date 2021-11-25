@@ -61,10 +61,10 @@ This folder is by default not accessible, in order to make it executable, you ne
 
 ### Install and Build
 
-1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory:
+1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
 
 ```
-cd <project directory>
+cd <main project directory>
 
 mvn initialize
 ```
