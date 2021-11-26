@@ -26,7 +26,7 @@ public class GenericAttribute {
   private String rootGenattribId;
   private String realVal;
   private String parentGenattribId;
-  private int intVal;
+  private String intVal;
   private String dateVal;
   private URI id;
   private int dataType;
@@ -111,7 +111,7 @@ public class GenericAttribute {
         String[] predicateArray = predicate.split("#");
         predicate = predicateArray[predicateArray.length-1];
 
-        if (predicate.equals(INT_VAL) || predicate.equals(DATA_TYPE)){
+        if (predicate.equals(DATA_TYPE)){
           fieldMap.get(predicate).set(this, row.getInt(VALUE));
         }
         else if (predicate.equals(ID) || predicate.equals(CITY_OBJECT_ID)){
@@ -192,7 +192,7 @@ public class GenericAttribute {
    * gets the value of generic attribute field intVal.
    * @return value of intVal field
    */
-  public int getIntVal() {
+  public String getIntVal() {
     return intVal;
   }
 

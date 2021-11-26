@@ -27,7 +27,7 @@ public class CityInformationAgent extends JPSAgent {
 
   private KnowledgeBaseClientInterface kgClient;
   private static String route = "http://kb/citieskg-berlin";
-  private boolean lazyload = true;
+  private boolean lazyload = false;
 
   @Override
   public JSONObject processRequestParameters(JSONObject requestParams) {
@@ -53,6 +53,7 @@ public class CityInformationAgent extends JPSAgent {
 
         cityObjectInformation.put(cityObject.getId());
         cityObjectInformation.put(cityObject.getGenericAttributesIris());
+        cityObjectInformation.put(cityObject.getGenericAttributes());
       }
       catch (NoSuchFieldException | IllegalAccessException e) {
         e.printStackTrace();
