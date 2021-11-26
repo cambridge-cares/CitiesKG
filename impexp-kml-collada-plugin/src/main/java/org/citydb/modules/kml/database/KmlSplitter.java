@@ -143,10 +143,12 @@ public class KmlSplitter {
 					stmt.setString(1, (String)gmlidUri);
 					stmt.setString(2, (String)gmlidUri);
 				}
-
+				long startTime = System.currentTimeMillis();
 				//System.out.println(stmt);  // only the parameterized query
 				ResultSet rs = stmt.executeQuery();
+				long endTime = System.currentTimeMillis();
 
+				System.out.println("The first query getTopFeatureId takes: " + String.valueOf(endTime - startTime) + " milliseconds");
 				while (rs.next() && shouldRun) {
 					String id_str = rs.getString(MappingConstants.ID);
 					String gmlId = rs.getString(MappingConstants.GMLID);

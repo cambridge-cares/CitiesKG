@@ -75,8 +75,12 @@ public class StatementTransformer {
         return sparql;
     }
 
-
-    public static String getSPARQLStatement_BuildingPartQuery (String sqlQuery) {
+    /*
+    * Retrieve the existing GroundSurface from the database
+    * Note: The data in the TWA contains some missing "/" in the graph, it requires a temporary solution before the fix in the TWA
+    * For the TWA, query across different graphs need to be divided.
+    * */
+    public static String getSPARQLStatement_BuildingPartQuery_part1 (String sqlQuery) {
         StringBuilder sparqlString = new StringBuilder();
 
         if (IRI_GRAPH_BASE.contains("theworldavatar")){
@@ -154,14 +158,28 @@ public class StatementTransformer {
       * */
     public static String getTopFeatureId(SQLStatement sqlStatement) throws ParseException {
         StringBuilder sparqlString = new StringBuilder();
+        List<PlaceHolder<?>> placeHolders = sqlStatement.getInvolvedPlaceHolders();
+        Object gmlidInput = placeHolders.get(0).getValue();
 
-        // for single object
-        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
-            "SELECT ?id ?objectclass_id (" + QST_MARK + " AS ?gmlid) \n" +
-            "FROM <" + IRI_GRAPH_BASE + "cityobject/> \n" +
-            "\nWHERE\n " +
-            "{ ?id ocgml:objectClassId  ?objectclass_id ;\n ocgml:gmlId " + QST_MARK + "\n" +
-            "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )\n }");
+        if (placeHolders.size() == 1 && ((String)gmlidInput).contains("*")){
+            sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
+                "SELECT ?id ?objectclass_id ?gmlid \n" +
+                "FROM <" + IRI_GRAPH_BASE + "cityobject/> \n" +
+                "\nWHERE\n " +
+                "{ ?id ocgml:objectClassId  ?objectclass_id ;\n ocgml:gmlId ?gmlid .\n" +
+                "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) ) }");
+
+
+        } else {
+            // for single object
+            sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
+                "SELECT ?id ?objectclass_id (" + QST_MARK + " AS ?gmlid) \n" +
+                "FROM <" + IRI_GRAPH_BASE + "cityobject/> \n" +
+                "\nWHERE\n " +
+                "{ ?id ocgml:objectClassId  ?objectclass_id ;\n ocgml:gmlId " + QST_MARK + "\n" +
+                "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )\n }");
+        }
+
 
         return sparqlString.toString();
     }
