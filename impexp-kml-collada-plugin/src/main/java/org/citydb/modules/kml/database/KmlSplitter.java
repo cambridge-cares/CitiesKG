@@ -28,6 +28,7 @@
 package org.citydb.modules.kml.database;
 
 import com.github.jsonldjava.utils.Obj;
+import java.util.Arrays;
 import java.util.List;
 import org.citydb.concurrent.WorkerPool;
 import org.citydb.config.Config;
@@ -150,9 +151,16 @@ public class KmlSplitter {
 
 				System.out.println("The first query getTopFeatureId takes: " + String.valueOf(endTime - startTime) + " milliseconds");
 				while (rs.next() && shouldRun) {
-					String id_str = rs.getString(MappingConstants.ID);
-					String gmlId = rs.getString(MappingConstants.GMLID);
+
 					int objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
+					int[] candidates = {64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26};
+					List candidatesList = Arrays.asList(candidates);
+					if (candidatesList.contains(objectClassId)){
+						String id_str = rs.getString(MappingConstants.ID);
+						String[] elements = id_str.split("/");
+						String gmlId = elements[elements.length-2];
+						//String gmlId = rs.getString(MappingConstants.GMLID);
+
 
 					GeometryObject envelope = null;
 					if (query.isSetTiling()) {
@@ -164,6 +172,7 @@ public class KmlSplitter {
 					// Note: This will lead to the implementation for Blazegraph in the same class
 					addWorkToQueue(id_str, gmlId, objectClassId, envelope, activeTile, false);
 					objectCount_sparql++;
+					}
 				}
 
 				if (query.isSetTiling())

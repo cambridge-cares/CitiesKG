@@ -163,11 +163,10 @@ public class StatementTransformer {
 
         if (placeHolders.size() == 1 && ((String)gmlidInput).contains("*")){
             sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
-                "SELECT ?id ?objectclass_id ?gmlid \n" +
-                "FROM <" + IRI_GRAPH_BASE + "cityobject/> \n" +
+                "SELECT ?id ?objectclass_id\n" +
+                "FROM <" + IRI_GRAPH_BASE + "building/> \n" +
                 "\nWHERE\n " +
-                "{ ?id ocgml:objectClassId  ?objectclass_id ;\n ocgml:gmlId ?gmlid .\n" +
-                "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) ) }");
+                "{ ?id ocgml:objectClassId  ?objectclass_id . }");
 
 
         } else {
