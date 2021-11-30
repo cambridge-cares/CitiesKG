@@ -1,4 +1,4 @@
-package uk.ac.cam.cares.twa.cities.tasks.test;
+package uk.ac.cam.cares.twa.cities.tasks.geo.test;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,9 +21,9 @@ import org.eclipse.jetty.server.Server;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask;
-import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
-import uk.ac.cam.cares.twa.cities.tasks.NquadsExporterTask;
+import uk.ac.cam.cares.twa.cities.tasks.geo.BlazegraphServerTask;
+import uk.ac.cam.cares.twa.cities.tasks.geo.ImporterTask;
+import uk.ac.cam.cares.twa.cities.tasks.geo.NquadsExporterTask;
 
 public class ImporterTaskTest extends TestCase {
 

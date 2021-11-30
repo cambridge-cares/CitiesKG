@@ -1,4 +1,4 @@
-package uk.ac.cam.cares.twa.cities.model.geo;
+package uk.ac.cam.cares.twa.cities.models.geo;
 
 import java.util.Arrays;
 import org.apache.jena.arq.querybuilder.SelectBuilder;

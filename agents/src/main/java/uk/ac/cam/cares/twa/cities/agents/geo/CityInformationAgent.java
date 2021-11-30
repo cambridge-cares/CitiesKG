@@ -11,7 +11,7 @@ import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.jps.base.query.KGRouter;
-import uk.ac.cam.cares.twa.cities.model.geo.CityObject;
+import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 
 
 /**

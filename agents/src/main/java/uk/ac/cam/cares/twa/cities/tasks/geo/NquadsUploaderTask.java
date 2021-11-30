@@ -1,4 +1,4 @@
-package uk.ac.cam.cares.twa.cities.tasks;
+package uk.ac.cam.cares.twa.cities.tasks.geo;
 
 import java.io.File;
 import java.io.IOException;

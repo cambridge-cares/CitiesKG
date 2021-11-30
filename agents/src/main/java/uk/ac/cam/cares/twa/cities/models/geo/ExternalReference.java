@@ -1,4 +1,4 @@
-package uk.ac.cam.cares.twa.cities.model.geo;
+package uk.ac.cam.cares.twa.cities.models.geo;
 
 import java.net.URI;
 import java.util.Arrays;

@@ -31,7 +31,7 @@ import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.jps.base.query.KGRouter;
-import uk.ac.cam.cares.twa.cities.model.geo.Envelope;
+import uk.ac.cam.cares.twa.cities.models.geo.Envelope;
 
 /**
  * DistanceAgent class retrieves existing distance between the centroids of two objects envelopes

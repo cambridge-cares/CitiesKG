@@ -1,4 +1,4 @@
-package uk.ac.cam.cares.twa.cities.model.geo.test;
+package uk.ac.cam.cares.twa.cities.models.geo.test;
 
 import java.lang.reflect.Field;
 import junit.framework.TestCase;
@@ -13,7 +13,7 @@ import org.mockito.Mockito;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.jps.base.query.KGRouter;
 import uk.ac.cam.cares.jps.base.query.RemoteKnowledgeBaseClient;
-import uk.ac.cam.cares.twa.cities.model.geo.Envelope;
+import uk.ac.cam.cares.twa.cities.models.geo.Envelope;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
