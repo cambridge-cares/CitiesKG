@@ -27,7 +27,6 @@
  */
 package org.citydb.modules.kml.database;
 
-import com.github.jsonldjava.utils.Obj;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
 import net.opengis.kml._2.AltitudeModeEnumType;
@@ -40,8 +39,6 @@ import net.opengis.kml._2.MultiGeometryType;
 import net.opengis.kml._2.OrientationType;
 import net.opengis.kml._2.PlacemarkType;
 import net.opengis.kml._2.PolygonType;
-import org.apache.jena.graph.Node_Literal;
-import org.apache.jena.jdbc.results.MaterializedSelectResults;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.ElementType;
 import org.citydb.config.geometry.GeometryObject;

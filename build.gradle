@@ -25,7 +25,9 @@ subprojects {
         maven {
             url 'https://citydb.jfrog.io/artifactory/maven'
         }
+
         mavenCentral()
+
     }
 
     task processLicense(type: Copy) {

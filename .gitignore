@@ -26,4 +26,18 @@ db/vocabularies/target/
 db/*.gml
 db/appearance
 
+
+# Web-Map-Client node modules
+node_modules/*
+
+impexp-core/test_config.properties
+impexp-core/test_config.properties
+
 */target/
+
+db/RWStore.properties
+db/vocabularies/src/main/resources/config.properties
+agents/${tomcatPath}/
+
+3dwebclient/test/*
+
