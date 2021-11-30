@@ -28,6 +28,7 @@
 package org.citydb.modules.kml.database;
 
 import com.github.jsonldjava.utils.Obj;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.citydb.concurrent.WorkerPool;
@@ -144,18 +145,21 @@ public class KmlSplitter {
 					stmt.setString(1, (String)gmlidUri);
 					stmt.setString(2, (String)gmlidUri);
 				}
+
 				long startTime = System.currentTimeMillis();
 				//System.out.println(stmt);  // only the parameterized query
 				ResultSet rs = stmt.executeQuery();
 				long endTime = System.currentTimeMillis();
 
 				System.out.println("The first query getTopFeatureId takes: " + String.valueOf(endTime - startTime) + " milliseconds");
+
+				ArrayList<Integer> numbers = new ArrayList<>(Arrays.asList(64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26)); // correct solution
+
 				while (rs.next() && shouldRun) {
 
 					int objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
-					int[] candidates = {64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26};
-					List candidatesList = Arrays.asList(candidates);
-					if (candidatesList.contains(objectClassId)){
+
+					if (numbers.contains(objectClassId)){
 						String id_str = rs.getString(MappingConstants.ID);
 						String[] elements = id_str.split("/");
 						String gmlId = elements[elements.length-2];
