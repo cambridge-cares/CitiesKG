@@ -19,6 +19,10 @@
             <id>official-maven-repo</id>
             <url>https://repo.maven.apache.org/maven2/</url>
         </repository>
+        <repository>
+            <id>osgeo-repo</id>
+            <url>https://repo.osgeo.org/repository/release/</url>
+        </repository>
     </repositories>
 
     <properties>
@@ -171,6 +175,17 @@
             <artifactId>mockito-inline</artifactId>
             <version>3.11.2</version>
             <scope>test</scope>
+        </dependency>
+        <!-- https://repo.osgeo.org/repository/release/org.geotools/gt-main -->
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-main</artifactId>
+            <version>25.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-epsg-hsql</artifactId>
+            <version>25.1</version>
         </dependency>
     </dependencies>
 </project>
