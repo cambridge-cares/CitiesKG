@@ -84,5 +84,20 @@ public class Model {
     //to implement in subclasses
   }
 
+  /**
+   * builds query to retrieve  cpllection IRIs.
+   * @param iriName cityObject IRI.
+   * @return query
+   */
+  protected Query getFetchIrisQuery(String iriName, String wherePredicate){
+    WhereBuilder wb = new WhereBuilder()
+        .addPrefix(OCGML, ONTO_CITY_GML)
+        .addWhere(QM + COLLECTION_ELEMENT_IRI, wherePredicate, NodeFactory.createURI(iriName));
+    SelectBuilder sb = new SelectBuilder()
+        .addVar(QM + COLLECTION_ELEMENT_IRI)
+        .addGraph(NodeFactory.createURI(getGraphUri(iriName)), wb);
+
+    return sb.build();
+  }
 
 }

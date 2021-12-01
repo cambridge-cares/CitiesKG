@@ -5,8 +5,15 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.arq.querybuilder.WhereBuilder;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.Query;
+import org.checkerframework.checker.units.qual.A;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
+import org.json.JSONArray;
 import org.json.JSONObject;
+import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.twa.cities.Model;
 
 
@@ -98,13 +105,43 @@ public class Building extends Model {
         predicate.equals(SchemaManagerAdapter.ONTO_BUILDING_ROOT_ID
             .replace(OCGML + ":", ""))){
       fieldMap.get(predicate).set(this, URI.create(row.getString(VALUE)));
-    }
-    else {
+    } else {
       if (predicate.equals(SchemaManagerAdapter.ONTO_CLASS
           .replace(OCGML + ":", ""))) {
         predicate = predicate + "ID";
       }
       fieldMap.get(predicate).set(this, row.getString(VALUE));
+    }
+  }
+
+
+  /**
+   * fills in generic attributes linked to the city object.
+   * @param iriName cityObject IRI
+   * @param kgClient sends the query to the right endpoint.
+   * @param lazyLoad if true only fills genericAttributesIris field; if false also fills genericAttributes field.
+   */
+  public void fillThematicSurfaces(String iriName, KnowledgeBaseClientInterface kgClient, Boolean lazyLoad)
+      throws NoSuchFieldException, IllegalAccessException {
+
+    Query q = getFetchIrisQuery(iriName, SchemaManagerAdapter.ONTO_BUILDING_ID);
+    String queryResultString = kgClient.execute(q.toString());
+    JSONArray queryResult = new JSONArray(queryResultString);
+
+    if (!queryResult.isEmpty()) {
+      thematicSurfaces = new ArrayList<>();
+      thematicSurfacesIris = new ArrayList<>();
+
+      for (int index = 0; index < queryResult.length(); index++) {
+        String elementIri = queryResult.getJSONObject(index).getString(COLLECTION_ELEMENT_IRI);
+        thematicSurfacesIris.add(elementIri);
+
+        if (!lazyLoad) {
+          ThematicSurface thematicSurface = new ThematicSurface();
+          thematicSurface.fillScalars(elementIri, kgClient);
+          thematicSurfaces.add(thematicSurface);
+        }
+      }
     }
   }
 
