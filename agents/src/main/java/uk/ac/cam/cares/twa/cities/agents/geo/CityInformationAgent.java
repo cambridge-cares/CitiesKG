@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.agents.geo;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.ResourceBundle;
 import java.util.Set;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
@@ -26,8 +27,15 @@ public class CityInformationAgent extends JPSAgent {
   public static final String KEY_ATTRIBUTES = "attributes";
 
   private KnowledgeBaseClientInterface kgClient;
-  private static String route = "http://kb/citieskg-berlin";
-  private boolean lazyload = false;
+  private static String route;
+  private boolean lazyload;
+
+
+  public CityInformationAgent() {
+    super();
+    readConfig();
+  }
+
 
   @Override
   public JSONObject processRequestParameters(JSONObject requestParams) {
@@ -39,7 +47,7 @@ public class CityInformationAgent extends JPSAgent {
     for (Object iri : iris) {
       uris.add(iri.toString());
     }
-    JSONArray cityObjectInformation = new JSONArray(); // ask Arek if JSON Array is the right entity
+    JSONArray cityObjectInformation = new JSONArray();
 
     setKGClient(true);
 
@@ -55,10 +63,6 @@ public class CityInformationAgent extends JPSAgent {
         ArrayList<CityObject> cityObjectList = new ArrayList<>();
         cityObjectList.add(cityObject);
         cityObjectInformation.put(cityObjectList);
-        /*
-        cityObjectInformation.put(cityObject.getId());
-        cityObjectInformation.put(cityObject.getGenericAttributesIris());
-        cityObjectInformation.put(cityObject.getGenericAttributes()); */
       }
       catch (NoSuchFieldException | IllegalAccessException e) {
         e.printStackTrace();
@@ -91,6 +95,15 @@ public class CityInformationAgent extends JPSAgent {
     throw new BadRequestException();
   }
 
+
+  /**
+   * reads variable values relevant for CityInformationAgent class from config.properties file.
+   */
+  private void readConfig() {
+    ResourceBundle config = ResourceBundle.getBundle("config");
+    lazyload = Boolean.getBoolean(config.getString("loading.status"));
+    route = config.getString("uri.route");
+  }
 
   /**
    * sets KG Client for specific endpoint.

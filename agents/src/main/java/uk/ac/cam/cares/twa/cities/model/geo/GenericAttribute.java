@@ -5,6 +5,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.ResourceBundle;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
@@ -32,10 +33,10 @@ public class GenericAttribute {
   private int dataType;
   private URI cityObjectId;
 
-  private static final String GENERIC_ATTRIBUTE_GRAPH_URI = "/cityobjectgenericattrib/";
+  private String ONTO_CITY_GML;
+  private static String GENERIC_ATTRIBUTE_GRAPH_URI = "/cityobjectgenericattrib/";
   private static final String VALUE = "value";
   private static final String PREDICATE = "predicate";
-  private static final String ONTO_CITY_GML = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
   private static final String OCGML = "ocgml";
   private static final String QM = "?";
 
@@ -54,6 +55,7 @@ public class GenericAttribute {
 
   private static final ArrayList<String> FIELD_CONSTANTS = new ArrayList<>
       (Arrays.asList(ATTR_NAME, URI_VAL, STR_VAL, UNIT, ROOT_GENATTRIB_ID, REAL_VAL, PARENT_GENATTRIB_ID, INT_VAL, DATE_VAL, ID, DATA_TYPE, CITY_OBJECT_ID ));
+
   private HashMap<String, Field> fieldMap = new HashMap<String, Field>();
 
 
@@ -61,11 +63,23 @@ public class GenericAttribute {
     for (String field: FIELD_CONSTANTS){
       fieldMap.put(field, GenericAttribute.class.getDeclaredField(field));
     }
+    readConfig();
   }
 
 
   /**
-   * * builds a query to get genericAttribute instance scalars.
+   * reads variable values relevant for GenericAttribute class from config.properties file.
+   */
+  private void readConfig() {
+    ResourceBundle config = ResourceBundle.getBundle("config");
+    ONTO_CITY_GML = config.getString("uri.ontology.ontocitygml");
+  }
+
+
+  /**
+   * builds a query to get genericAttribute instance scalars.
+   * @param iriName genericAttribute IRI.
+   * @return Query object for retrieving all genericAttribute attribute values.
    */
   private Query getFetchGenAttrScalarsQuery(String iriName){
     String genericAttributeGraphUri = getGenericAttributeGraphUri(iriName);

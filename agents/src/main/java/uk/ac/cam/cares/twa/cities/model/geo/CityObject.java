@@ -5,6 +5,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.ResourceBundle;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
@@ -35,11 +36,11 @@ public class CityObject {
   private String terminationDate;
   private String updatingPerson;
 
+  private static String CITY_OBJECT_GRAPH_URI = "/cityobject/";
+  private String ONTO_CITY_GML;
   private static final String PREDICATE = "predicate";
   private static final String VALUE =  "value";
-  private static final String COLLECTION_ELEMENT_IRI = "CollectionElementIri"; //query returns all iris of generic attrs or ext refs .
-  private static final String CITY_OBJECT_GRAPH_URI = "/cityobject/";
-  private static final String ONTO_CITY_GML = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
+  private static final String COLLECTION_ELEMENT_IRI = "CollectionElementIri";
   private static final String OCGML = "ocgml";
   private static final String QM = "?";
 
@@ -67,12 +68,24 @@ public class CityObject {
   private static final ArrayList<String> FIELD_CONSTANTS = new ArrayList<>
       (Arrays.asList(CREATION_DATE, DESCRIPTION, ENVELOPE_TYPE, GML_ID, ID, LAST_MODIFICATION_DATE, LINEAGE, NAME, NAME_CODESPACE, OBJECT_CLASS_ID,
           REASON_FOR_UPDATE, RELATIVE_TO_TERRAIN, RELATIVE_TO_WATER, TERMINATION_DATE, UPDATING_PERSON));
+
   public HashMap<String, Field> fieldMap = new HashMap<String, Field>();
+
 
   public CityObject() throws NoSuchFieldException {
     for (String field: FIELD_CONSTANTS){
       fieldMap.put(field, CityObject.class.getDeclaredField(field));
     }
+    readConfig();
+  }
+
+
+  /**
+   * reads variable values relevant for CityObject class from config.properties file.
+   */
+  private void readConfig() {
+    ResourceBundle config = ResourceBundle.getBundle("config");
+    ONTO_CITY_GML = config.getString("uri.ontology.ontocitygml");
   }
 
 
@@ -202,6 +215,7 @@ public class CityObject {
     }
   }
 
+
   /**
    * fills in external refs linked to the city object.
    * @param iriName cityObject IRI
@@ -211,19 +225,19 @@ public class CityObject {
   public void fillExternalReferences(String iriName, KnowledgeBaseClientInterface kgClient, Boolean lazyLoad)
           throws NoSuchFieldException, IllegalAccessException {
 
-    Query q = getFetchIrisQuery(iriName, QueryType.EXTERNAL_REF); //create query to fetch external ref iri
-    externalReferences = new ArrayList<>(); //fill in extRef field with empty array
-    externalReferencesIris = new ArrayList<>(); //fill in extRefIris field with empty array
+    Query q = getFetchIrisQuery(iriName, QueryType.EXTERNAL_REF);
+    externalReferences = new ArrayList<>();
+    externalReferencesIris = new ArrayList<>();
 
     String queryResultString = kgClient.execute(q.toString());
-    JSONArray queryResult = new JSONArray(queryResultString); //transform query result into jsonarray
+    JSONArray queryResult = new JSONArray(queryResultString);
 
-    if (!queryResult.isEmpty()) { // Add each external ref iri in query result to the extRefIri array
+    if (!queryResult.isEmpty()) {
       for (int index = 0; index < queryResult.length(); index++) {
-        String elementIri = queryResult.getJSONObject(index).getString(COLLECTION_ELEMENT_IRI); //go through every row in collection element iri column
+        String elementIri = queryResult.getJSONObject(index).getString(COLLECTION_ELEMENT_IRI);
         externalReferencesIris.add(elementIri);
 
-        if (!lazyLoad) { // Add each external ref in query result to the extRef array
+        if (!lazyLoad) {
           ExternalReference externalReference = new ExternalReference();
           externalReference.fillScalars(elementIri, kgClient);
           externalReferences.add(externalReference);
@@ -231,7 +245,6 @@ public class CityObject {
       }
     }
   }
-
 
 
   /**
@@ -379,10 +392,11 @@ public class CityObject {
 
 
   /**
-   * gets the value of city object field ext ref iris.
-   * @return value of city object field ext ref iris.
+   * gets the value of city object field external ref iris.
+   * @return value of city object field external ref iris.
    */
-  public ArrayList<String> getExternalReferencesIris(){return externalReferencesIris;}
+  public ArrayList<String> getExternalReferencesIris(){
+    return externalReferencesIris;}
 
 
   /**
@@ -392,7 +406,4 @@ public class CityObject {
   public ArrayList<ExternalReference> getExternalReferences(){
     return externalReferences;
   }
-
-
-
 }
