@@ -37,7 +37,7 @@ public class CityObject {
 
   private static final String PREDICATE = "predicate";
   private static final String VALUE =  "value";
-  private static final String COLLECTION_ELEMENT_IRI = "CollectionElementIri";
+  private static final String COLLECTION_ELEMENT_IRI = "CollectionElementIri"; //query returns all iris of generic attrs or ext refs .
   private static final String CITY_OBJECT_GRAPH_URI = "/cityobject/";
   private static final String ONTO_CITY_GML = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
   private static final String OCGML = "ocgml";
@@ -159,7 +159,7 @@ public class CityObject {
       graphUri = GenericAttribute.getGenericAttributeGraphUri(iriName);
     }
     else if(queryType==QueryType.EXTERNAL_REF){
-      //graphUri = ExternalReference.getGetExternalReferenceGraphUri(iriName); --> code does not exist yet
+      graphUri = ExternalReference.getFetchExternalReferencesGraphUri(iriName);
     }
     WhereBuilder wb = new WhereBuilder()
         .addPrefix(OCGML, ONTO_CITY_GML)
@@ -202,8 +202,36 @@ public class CityObject {
     }
   }
 
+  /**
+   * fills in external refs linked to the city object.
+   * @param iriName cityObject IRI
+   * @param kgClient sends the query to the right endpoint.
+   * @param lazyLoad if true only fills externalReferencesIris field; if false also fills externalReferences field.
+   */
+  public void fillExternalReferences(String iriName, KnowledgeBaseClientInterface kgClient, Boolean lazyLoad)
+          throws NoSuchFieldException, IllegalAccessException {
 
-  //here comes fillExternalReferences method.-->
+    Query q = getFetchIrisQuery(iriName, QueryType.EXTERNAL_REF); //create query to fetch external ref iri
+    externalReferences = new ArrayList<>(); //fill in extRef field with empty array
+    externalReferencesIris = new ArrayList<>(); //fill in extRefIris field with empty array
+
+    String queryResultString = kgClient.execute(q.toString());
+    JSONArray queryResult = new JSONArray(queryResultString); //transform query result into jsonarray
+
+    if (!queryResult.isEmpty()) { // Add each external ref iri in query result to the extRefIri array
+      for (int index = 0; index < queryResult.length(); index++) {
+        String elementIri = queryResult.getJSONObject(index).getString(COLLECTION_ELEMENT_IRI); //go through every row in collection element iri column
+        externalReferencesIris.add(elementIri);
+
+        if (!lazyLoad) { // Add each external ref in query result to the extRef array
+          ExternalReference externalReference = new ExternalReference();
+          externalReference.fillScalars(elementIri, kgClient);
+          externalReferences.add(externalReference);
+        }
+      }
+    }
+  }
+
 
 
   /**
@@ -350,6 +378,21 @@ public class CityObject {
   }
 
 
-  //here comes getters for external reference fields -->
+  /**
+   * gets the value of city object field ext ref iris.
+   * @return value of city object field ext ref iris.
+   */
+  public ArrayList<String> getExternalReferencesIris(){return externalReferencesIris;}
+
+
+  /**
+   * gets the value of city object field external refs.
+   * @return value of city object field external refs.
+   */
+  public ArrayList<ExternalReference> getExternalReferences(){
+    return externalReferences;
+  }
+
+
 
 }

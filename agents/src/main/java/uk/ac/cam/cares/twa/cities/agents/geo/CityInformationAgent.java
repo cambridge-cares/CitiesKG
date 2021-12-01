@@ -50,15 +50,20 @@ public class CityInformationAgent extends JPSAgent {
 
         cityObject.fillScalars(cityObjectIri, kgClient);
         cityObject.fillGenericAttributes(cityObjectIri,kgClient, lazyload);
+        cityObject.fillExternalReferences(cityObjectIri,kgClient, lazyload);
 
+        ArrayList<CityObject> cityObjectList = new ArrayList<>();
+        cityObjectList.add(cityObject);
+        cityObjectInformation.put(cityObjectList);
+        /*
         cityObjectInformation.put(cityObject.getId());
         cityObjectInformation.put(cityObject.getGenericAttributesIris());
-        cityObjectInformation.put(cityObject.getGenericAttributes());
+        cityObjectInformation.put(cityObject.getGenericAttributes()); */
       }
       catch (NoSuchFieldException | IllegalAccessException e) {
         e.printStackTrace();
       }
-      //cityObject.fillExternalReferences(cityObjectIri,kgClient, lazyload);
+
     }
     requestParams.append(KEY_ATTRIBUTES, cityObjectInformation);
     return requestParams;
