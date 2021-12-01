@@ -5,11 +5,8 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import org.apache.jena.query.Query;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import org.json.JSONArray;
 import org.json.JSONObject;
-import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.twa.cities.Model;
 
 
@@ -82,47 +79,34 @@ public class Building extends Model {
           SchemaManagerAdapter.ONTO_USAGE, SchemaManagerAdapter.ONTO_USAGE_CODESPACE,
           SchemaManagerAdapter.ONTO_YEAR_CONSTRUCTION, SchemaManagerAdapter.ONTO_YEAR_DEMOLITION));
 
-  public HashMap<String, Field> fieldMap = new HashMap<String, Field>();
+  protected HashMap<String, Field> fieldMap = new HashMap<>();
 
   public Building() throws NoSuchFieldException {
     assignFieldValues(FIELD_CONSTANTS, fieldMap);
   }
 
-
-  /**
-   * fills in the scalar fields of a generic attribute instance.
-   * @param iriName IRI of the generic attribute instance.
-   * @param kgClient sends the query to the right endpoint.
-   */
-  public void fillScalars(String iriName, KnowledgeBaseClientInterface kgClient)
+  protected void assignScalarValueByRow(JSONObject row, HashMap<String, Field> fieldMap, String predicate)
       throws IllegalAccessException {
-
-    Query q = getFetchScalarsQuery(iriName);
-    String queryResultString = kgClient.execute(q.toString());
-    JSONArray queryResult = new JSONArray(queryResultString);
-
-    if(!queryResult.isEmpty()){
-      for (int index = 0; index < queryResult.length(); index++){
-        JSONObject row = queryResult.getJSONObject(index);
-        String predicate = row.getString(PREDICATE);
-        String[] predicateArray = predicate.split("#");
-        predicate = predicateArray[predicateArray.length-1];
-
-        if (predicate.equals(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID)) {
-          fieldMap.get(predicate).set(this, row.getInt(VALUE));
-        }
-        else if (predicate.equals(SchemaManagerAdapter.ONTO_BUILDING_PARENT_ID) |
-            predicate.equals(SchemaManagerAdapter.ONTO_BUILDING_ROOT_ID)){
-          fieldMap.get(predicate).set(this, URI.create(row.getString(VALUE)));
-        }
-        else {
-          fieldMap.get(predicate).set(this, row.getString(VALUE));
-        }
+    if (predicate.equals(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID
+        .replace(OCGML + ":", ""))) {
+      fieldMap.get(predicate).set(this, row.getInt(VALUE));
+    } else if (predicate.equals(SchemaManagerAdapter.ONTO_MEASURED_HEIGHT
+        .replace(OCGML + ":", ""))) {
+      fieldMap.get(predicate).set(this, row.getDouble(VALUE));
+    } else if (predicate.equals(SchemaManagerAdapter.ONTO_BUILDING_PARENT_ID
+        .replace(OCGML + ":", "")) ||
+        predicate.equals(SchemaManagerAdapter.ONTO_BUILDING_ROOT_ID
+            .replace(OCGML + ":", ""))){
+      fieldMap.get(predicate).set(this, URI.create(row.getString(VALUE)));
+    }
+    else {
+      if (predicate.equals(SchemaManagerAdapter.ONTO_CLASS
+          .replace(OCGML + ":", ""))) {
+        predicate = predicate + "ID";
       }
+      fieldMap.get(predicate).set(this, row.getString(VALUE));
     }
   }
 
-
 }
 
-}
