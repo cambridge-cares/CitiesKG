@@ -159,11 +159,11 @@ public class KmlSplitter {
 
 					int objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
 
-					if (numbers.contains(objectClassId)){
+					//if (numbers.contains(objectClassId)){
 						String id_str = rs.getString(MappingConstants.ID);
-						String[] elements = id_str.split("/");
-						String gmlId = elements[elements.length-2];
-						//String gmlId = rs.getString(MappingConstants.GMLID);
+					//	String[] elements = id_str.split("/");
+					//	String gmlId = elements[elements.length-2];
+						String gmlId = rs.getString(MappingConstants.GMLID);
 
 
 					GeometryObject envelope = null;
@@ -176,7 +176,7 @@ public class KmlSplitter {
 					// Note: This will lead to the implementation for Blazegraph in the same class
 					addWorkToQueue(id_str, gmlId, objectClassId, envelope, activeTile, false);
 					objectCount_sparql++;
-					}
+					//}
 				}
 
 				if (query.isSetTiling())

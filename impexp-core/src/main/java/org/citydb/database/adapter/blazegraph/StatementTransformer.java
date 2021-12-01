@@ -168,11 +168,11 @@ public class StatementTransformer {
                 "\nWHERE\n " +
                 "{ ?id ocgml:objectClassId  ?objectclass_id ; ocgml:gmlId ?gmlid ."
                 + "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )}"
-                + "LIMIT 10000");
+                + "LIMIT 50000");
 
 
         } else {
-            // for single object
+            // for single object also multiple objects
             sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
                 "SELECT ?id ?objectclass_id (" + QST_MARK + " AS ?gmlid) \n" +
                 "FROM <" + IRI_GRAPH_BASE + "cityobject/> \n" +
