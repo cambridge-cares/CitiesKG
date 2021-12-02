@@ -51,20 +51,18 @@ public class CityInformationAgent extends JPSAgent {
 
     setKGClient(true);
 
-    for (int iri = 0; iri < uris.size(); iri++) {
-      String cityObjectIri= uris.get(iri);
+    for (String cityObjectIri : uris) {
       try {
         CityObject cityObject = new CityObject();
 
         cityObject.fillScalars(cityObjectIri, kgClient);
-        cityObject.fillGenericAttributes(cityObjectIri,kgClient, lazyload);
-        cityObject.fillExternalReferences(cityObjectIri,kgClient, lazyload);
+        cityObject.fillGenericAttributes(cityObjectIri, kgClient, lazyload);
+        cityObject.fillExternalReferences(cityObjectIri, kgClient, lazyload);
 
         ArrayList<CityObject> cityObjectList = new ArrayList<>();
         cityObjectList.add(cityObject);
         cityObjectInformation.put(cityObjectList);
-      }
-      catch (NoSuchFieldException | IllegalAccessException e) {
+      } catch (NoSuchFieldException | IllegalAccessException e) {
         e.printStackTrace();
       }
 

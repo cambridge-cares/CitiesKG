@@ -33,7 +33,7 @@ public class ExternalReference {
     private static final String URI_VAL = "URI";
 
     private String ONTO_CITY_GML;
-    private static String EXTERNAL_REFERENCES_GRAPH_URI = "/externalreference/";
+    private static final String EXTERNAL_REFERENCES_GRAPH_URI = "/externalreference/";
     private static final String VALUE = "value";
     private static final String PREDICATE = "predicate";
     private static final String OCGML = "ocgml";
@@ -42,7 +42,7 @@ public class ExternalReference {
     private static final ArrayList<String> FIELD_CONSTANTS = new ArrayList<>
             (Arrays.asList(NAME, URI_VAL, INFO_SYS, ID, CITY_OBJECT_ID));
 
-    private HashMap<String, Field> fieldMap = new HashMap<String, Field>();
+    private HashMap<String, Field> fieldMap = new HashMap<>();
 
 
     public ExternalReference() throws NoSuchFieldException {

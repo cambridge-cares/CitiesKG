@@ -69,7 +69,7 @@ public class CityObject {
       (Arrays.asList(CREATION_DATE, DESCRIPTION, ENVELOPE_TYPE, GML_ID, ID, LAST_MODIFICATION_DATE, LINEAGE, NAME, NAME_CODESPACE, OBJECT_CLASS_ID,
           REASON_FOR_UPDATE, RELATIVE_TO_TERRAIN, RELATIVE_TO_WATER, TERMINATION_DATE, UPDATING_PERSON));
 
-  public HashMap<String, Field> fieldMap = new HashMap<String, Field>();
+  private HashMap<String, Field> fieldMap = new HashMap<>();
 
 
   public CityObject() throws NoSuchFieldException {
@@ -166,7 +166,7 @@ public class CityObject {
    * @return query
    */
   private Query getFetchIrisQuery(String iriName, QueryType queryType){
-    String graphUri = new String();
+    String graphUri = "";
 
     if(queryType==QueryType.GENERIC_ATTR){
       graphUri = GenericAttribute.getGenericAttributeGraphUri(iriName);

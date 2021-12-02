@@ -34,7 +34,7 @@ public class GenericAttribute {
   private URI cityObjectId;
 
   private String ONTO_CITY_GML;
-  private static String GENERIC_ATTRIBUTE_GRAPH_URI = "/cityobjectgenericattrib/";
+  private static final String GENERIC_ATTRIBUTE_GRAPH_URI = "/cityobjectgenericattrib/";
   private static final String VALUE = "value";
   private static final String PREDICATE = "predicate";
   private static final String OCGML = "ocgml";
@@ -56,7 +56,7 @@ public class GenericAttribute {
   private static final ArrayList<String> FIELD_CONSTANTS = new ArrayList<>
       (Arrays.asList(ATTR_NAME, URI_VAL, STR_VAL, UNIT, ROOT_GENATTRIB_ID, REAL_VAL, PARENT_GENATTRIB_ID, INT_VAL, DATE_VAL, ID, DATA_TYPE, CITY_OBJECT_ID ));
 
-  private HashMap<String, Field> fieldMap = new HashMap<String, Field>();
+  private HashMap<String, Field> fieldMap = new HashMap<>();
 
 
   public GenericAttribute() throws NoSuchFieldException {
