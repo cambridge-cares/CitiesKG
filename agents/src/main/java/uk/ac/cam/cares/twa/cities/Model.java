@@ -36,7 +36,7 @@ public class Model {
    */
   protected String getGraphUri(String iriName) {
     String[] splitUri = iriName.split("/");
-    return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length-1));
+    return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length-1)) + "/";
   }
 
   /**
@@ -51,6 +51,22 @@ public class Model {
         .addVar(QM + PREDICATE)
         .addVar(QM + VALUE)
         .addGraph(NodeFactory.createURI(getGraphUri(iriName)), wb);
+    return sb.build();
+  }
+
+  /**
+   * builds query to retrieve  cpllection IRIs.
+   * @param iriName cityObject IRI.
+   * @return query
+   */
+  protected Query getFetchIrisQuery(String iriName, String wherePredicate, String graphIri){
+    WhereBuilder wb = new WhereBuilder()
+        .addPrefix(OCGML, ONTO_CITY_GML)
+        .addWhere(QM + COLLECTION_ELEMENT_IRI, wherePredicate, NodeFactory.createURI(iriName));
+    SelectBuilder sb = new SelectBuilder()
+        .addVar(QM + COLLECTION_ELEMENT_IRI)
+        .addGraph(NodeFactory.createURI(graphIri), wb);
+
     return sb.build();
   }
 
@@ -86,8 +102,9 @@ public class Model {
       for (int index = 0; index < queryResult.length(); index++){
         JSONObject row = queryResult.getJSONObject(index);
         String predicate = row.getString(PREDICATE);
-        String[] predicateArray = predicate.split("#");
-        predicate = predicateArray[predicateArray.length-1];
+        //String[] predicateArray = predicate.split("#");
+        //predicate = predicateArray[predicateArray.length-1];
+        predicate = predicate.replace(ONTO_CITY_GML,OCGML + ":");
         assignScalarValueByRow(row, fieldMap, predicate);
       }
     }

@@ -5,183 +5,71 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.ResourceBundle;
-import org.apache.jena.arq.querybuilder.SelectBuilder;
-import org.apache.jena.arq.querybuilder.WhereBuilder;
-import org.apache.jena.graph.NodeFactory;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.jena.query.Query;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
+import uk.ac.cam.cares.twa.cities.Model;
 
 /**
  * CityObject class represent a java model of CityObject module of CityGML.
  * It retrieves CityObject attributes and fills equivalent fields in the java model.
  */
-public class CityObject {
+public class CityObject extends Model {
 
-  private String creationDate;
-  private String description;
-  private String EnvelopeType;
-  private String gmlId;
-  private URI id;
-  private String lastModificationDate;
-  private String lineage;
-  private String name;
-  private String nameCodespace;
-  private int objectClassId;
-  private String reasonForUpdate;
-  private String relativeToTerrain;
-  private String relativeToWater;
-  private String terminationDate;
-  private String updatingPerson;
+  @Getter @Setter private String creationDate;
+  @Getter @Setter private String description;
+  @Getter @Setter private String EnvelopeType;
+  @Getter @Setter private String gmlId;
+  @Getter @Setter private URI id;
+  @Getter @Setter private String lastModificationDate;
+  @Getter @Setter private String lineage;
+  @Getter @Setter private String name;
+  @Getter @Setter private String nameCodespace;
+  @Getter @Setter private int objectClassId;
+  @Getter @Setter private String reasonForUpdate;
+  @Getter @Setter private String relativeToTerrain;
+  @Getter @Setter private String relativeToWater;
+  @Getter @Setter private String terminationDate;
+  @Getter @Setter private String updatingPerson;
+  @Getter @Setter private ArrayList<GenericAttribute> genericAttributes;
+  @Getter @Setter private ArrayList<String> genericAttributeIris;
+  @Getter @Setter private ArrayList<ExternalReference> externalReferences;
+  @Getter @Setter private ArrayList<String> externalReferencesIris;
 
-  private static String CITY_OBJECT_GRAPH_URI = "/cityobject/";
-  private String ONTO_CITY_GML;
-  private static final String PREDICATE = "predicate";
-  private static final String VALUE =  "value";
-  private static final String COLLECTION_ELEMENT_IRI = "CollectionElementIri";
-  private static final String OCGML = "ocgml";
-  private static final String QM = "?";
-
-  private ArrayList<GenericAttribute> genericAttributes;
-  private ArrayList<String> genericAttributeIris;
-  private ArrayList<ExternalReference> externalReferences;
-  private ArrayList<String> externalReferencesIris;
-
-  private static final String CREATION_DATE = "creationDate";
-  private static final String DESCRIPTION = "description";
-  private static final String ENVELOPE_TYPE = "EnvelopeType";
-  private static final String GML_ID = "gmlId";
-  private static final String ID = "id";
-  private static final String LAST_MODIFICATION_DATE = "lastModificationDate";
-  private static final String LINEAGE = "lineage";
-  private static final String NAME = "name";
-  private static final String NAME_CODESPACE = "nameCodespace";
-  private static final String OBJECT_CLASS_ID = "objectClassId";
-  private static final String REASON_FOR_UPDATE = "reasonForUpdate";
-  private static final String RELATIVE_TO_TERRAIN = "relativeToTerrain";
-  private static final String RELATIVE_TO_WATER = "relativeToWater";
-  private static final String TERMINATION_DATE = "terminationDate";
-  private static final String UPDATING_PERSON = "updatingPerson";
 
   private static final ArrayList<String> FIELD_CONSTANTS = new ArrayList<>
-      (Arrays.asList(CREATION_DATE, DESCRIPTION, ENVELOPE_TYPE, GML_ID, ID, LAST_MODIFICATION_DATE, LINEAGE, NAME, NAME_CODESPACE, OBJECT_CLASS_ID,
-          REASON_FOR_UPDATE, RELATIVE_TO_TERRAIN, RELATIVE_TO_WATER, TERMINATION_DATE, UPDATING_PERSON));
+      (Arrays.asList(SchemaManagerAdapter.ONTO_CREATION_DATE, SchemaManagerAdapter.ONTO_DESCRIPTION,
+          SchemaManagerAdapter.ONTO_ENVELOPE_TYPE, SchemaManagerAdapter.ONTO_GML_ID, SchemaManagerAdapter.ONTO_ID,
+          SchemaManagerAdapter.ONTO_LAST_MODIFICATION_DATE, SchemaManagerAdapter.ONTO_LINEAGE,
+          SchemaManagerAdapter.ONTO_NAME, SchemaManagerAdapter.ONTO_NAME_CODESPACE, SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID,
+          SchemaManagerAdapter.ONTO_REASON_FOR_UPDATE, SchemaManagerAdapter.ONTO_RELATIVE_TO_TERRAIN,
+          SchemaManagerAdapter.ONTO_RELATIVE_TO_WATER, SchemaManagerAdapter.ONTO_TERMINATION_DATE, SchemaManagerAdapter.ONTO_UPDATING_PERSON));
 
-  private HashMap<String, Field> fieldMap = new HashMap<>();
+  //protected HashMap<String, Field> fieldMap = new HashMap<>();
 
 
   public CityObject() throws NoSuchFieldException {
-    for (String field: FIELD_CONSTANTS){
-      fieldMap.put(field, CityObject.class.getDeclaredField(field));
-    }
-    readConfig();
-  }
-
-
-  /**
-   * reads variable values relevant for CityObject class from config.properties file.
-   */
-  private void readConfig() {
-    ResourceBundle config = ResourceBundle.getBundle("config");
-    ONTO_CITY_GML = config.getString("uri.ontology.ontocitygml");
-  }
-
-
-  /**
-   * builds a query to get all city object's scalars.
-   */
-  private Query getFetchScalarsQuery(String iriName){
-    String cityObjectGraphUri = getCityObjectGraphUri(iriName);
-
-    WhereBuilder wb = new WhereBuilder()
-            .addPrefix(OCGML, ONTO_CITY_GML)
-            .addWhere(NodeFactory.createURI(iriName), QM + PREDICATE, QM + VALUE);
-    SelectBuilder sb = new SelectBuilder()
-        .addVar(QM + PREDICATE)
-        .addVar(QM + VALUE)
-        .addGraph(NodeFactory.createURI(cityObjectGraphUri), wb);
-    return sb.build();
-  }
-
-
-  /**
-   * returns the graph Uri of the city object.
-   * @param iriName city object id
-   * @return graph uri of the city object.
-   */
-  public String getCityObjectGraphUri(String iriName) {
-    String[] splitUri = iriName.split("/");
-    String namespace = String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length-2));
-    return namespace + CITY_OBJECT_GRAPH_URI;
+    assignFieldValues(FIELD_CONSTANTS, fieldMap);
   }
 
 
   /**
    * fills in the scalar fields of a generic attribute instance.
-   * @param iriName IRI of the generic attribute instance.
-   * @param kgClient sends the query to the right endpoint.
    */
-  public void fillScalars(String iriName, KnowledgeBaseClientInterface kgClient)
+  protected void assignScalarValueByRow(JSONObject row, HashMap<String, Field> fieldMap, String predicate)
       throws IllegalAccessException {
-
-    Query q = getFetchScalarsQuery(iriName);
-    String queryResultString = kgClient.execute(q.toString());
-    JSONArray queryResult = new JSONArray(queryResultString);
-
-    if(!queryResult.isEmpty()){
-      for (int index = 0; index < queryResult.length(); index++){
-        JSONObject row = queryResult.getJSONObject(index);
-        String predicate = row.getString(PREDICATE);
-        String[] predicateArray = predicate.split("#");
-        predicate = predicateArray[predicateArray.length-1];
-
-       if (predicate.equals(OBJECT_CLASS_ID)){
-          fieldMap.get(predicate).set(this, row.getInt(VALUE));
-        }
-        else if (predicate.equals(ID)){
-          fieldMap.get(predicate).set(this, URI.create(row.getString(VALUE)));
-        }
-        else {
-          fieldMap.get(predicate).set(this, row.getString(VALUE));
-        }
-      }
+    if (predicate.equals(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID)){
+      fieldMap.get(predicate).set(this, row.getInt(VALUE));
     }
-  }
-
-
-  /**
-   * enumerator for distinguishing different collection queries.
-   */
-  private enum QueryType {
-    GENERIC_ATTR,
-    EXTERNAL_REF
-  }
-
-
-  /**
-   * builds query to retrieve  either genericAttribute or externalReference IRIs.
-   * @param iriName cityObject IRI.
-   * @return query
-   */
-  private Query getFetchIrisQuery(String iriName, QueryType queryType){
-    String graphUri = "";
-
-    if(queryType==QueryType.GENERIC_ATTR){
-      graphUri = GenericAttribute.getGenericAttributeGraphUri(iriName);
+    else if (predicate.equals(SchemaManagerAdapter.ONTO_ID)){
+      fieldMap.get(predicate).set(this, URI.create(row.getString(VALUE)));
+    } else {
+      fieldMap.get(predicate).set(this, row.getString(VALUE));
     }
-    else if(queryType==QueryType.EXTERNAL_REF){
-      graphUri = ExternalReference.getFetchExternalReferencesGraphUri(iriName);
-    }
-    WhereBuilder wb = new WhereBuilder()
-        .addPrefix(OCGML, ONTO_CITY_GML)
-        .addWhere(QM + COLLECTION_ELEMENT_IRI, OCGML + ":cityObjectId", NodeFactory.createURI(iriName));
-    SelectBuilder sb = new SelectBuilder()
-        .addVar(QM + COLLECTION_ELEMENT_IRI)
-        .addGraph(NodeFactory.createURI(graphUri), wb);
-
-    return sb.build();
   }
 
 
@@ -194,14 +82,17 @@ public class CityObject {
   public void fillGenericAttributes(String iriName, KnowledgeBaseClientInterface kgClient, Boolean lazyLoad)
       throws NoSuchFieldException, IllegalAccessException {
 
-    Query q = getFetchIrisQuery(iriName, QueryType.GENERIC_ATTR);
-    genericAttributes = new ArrayList<>();
-    genericAttributeIris = new ArrayList<>();
+    String[] splitUri = iriName.split("/");
+    String genericAttGraphIri = String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length-2)) + "/cityobjectgenericattrib/";
 
+    Query q = getFetchIrisQuery(iriName, SchemaManagerAdapter.ONTO_CITY_OBJECT_ID, genericAttGraphIri);
     String queryResultString = kgClient.execute(q.toString());
     JSONArray queryResult = new JSONArray(queryResultString);
 
     if (!queryResult.isEmpty()) {
+      genericAttributes = new ArrayList<>();
+      genericAttributeIris = new ArrayList<>();
+
       for (int index = 0; index < queryResult.length(); index++) {
         String elementIri = queryResult.getJSONObject(index).getString(COLLECTION_ELEMENT_IRI);
         genericAttributeIris.add(elementIri);
@@ -225,14 +116,14 @@ public class CityObject {
   public void fillExternalReferences(String iriName, KnowledgeBaseClientInterface kgClient, Boolean lazyLoad)
           throws NoSuchFieldException, IllegalAccessException {
 
-    Query q = getFetchIrisQuery(iriName, QueryType.EXTERNAL_REF);
-    externalReferences = new ArrayList<>();
-    externalReferencesIris = new ArrayList<>();
-
+    Query q = getFetchIrisQuery(iriName, SchemaManagerAdapter.ONTO_CITY_OBJECT_ID, "placeholder"); //replaced with proper graph Iri.
     String queryResultString = kgClient.execute(q.toString());
     JSONArray queryResult = new JSONArray(queryResultString);
 
     if (!queryResult.isEmpty()) {
+      externalReferences = new ArrayList<>();
+      externalReferencesIris = new ArrayList<>();
+
       for (int index = 0; index < queryResult.length(); index++) {
         String elementIri = queryResult.getJSONObject(index).getString(COLLECTION_ELEMENT_IRI);
         externalReferencesIris.add(elementIri);
@@ -244,166 +135,5 @@ public class CityObject {
         }
       }
     }
-  }
-
-
-  /**
-   * gets the value of city object field creationDate.
-   * @return value of city object field creationDate.
-   */
-  public String getCreationDate(){
-      return creationDate;
-  }
-
-
-  /**
-   * gets the value of city object field description.
-   * @return value of city object field description.
-   */
-  public String getDescription(){
-    return description;
-  }
-
-
-  /**
-   * gets the value of city object field EnvelopeType.
-   * @return value of city object field EnvelopeType.
-   */
-  public String getEnvelopeType(){
-    return EnvelopeType;
-  }
-
-
-  /**
-   * gets the value of city object field gmlId.
-   * @return value of city object field gmlId.
-   */
-  public String getGmlId(){
-    return gmlId;
-  }
-
-
-  /**
-   * gets the value of city object field id.
-   * @return value of city object field id.
-   */
-  public URI getId(){
-    return id;
-  }
-
-
-  /**
-   * gets the value of city object field name.
-   * @return value of city object field name.
-   */
-  public String getName(){
-    return name;
-  }
-
-
-  /**
-   * gets the value of city object field lineage.
-   * @return value of city object field lineage.
-   */
-  public String getLineage(){
-    return lineage;
-  }
-
-
-  /**
-   * gets the value of city object field NameCodespace.
-   * @return value of city object field NameCodespace.
-   */
-  public String getNameCodespace(){
-    return nameCodespace;
-  }
-
-
-  /**
-   * gets the value of city object field objectClassId.
-   * @return value of city object field objectClassId.
-   */
-  public int getObjectClassId(){
-    return objectClassId;
-  }
-
-
-  /**
-   * gets the value of city object field reasonForUpdate.
-   * @return value of city object field reasonForUpdate.
-   */
-  public String getReasonForUpdate(){
-    return reasonForUpdate;
-  }
-
-
-  /**
-   * gets the value of city object field relativeToTerrain.
-   * @return value of city object field relativeToTerrain.
-   */
-  public String getRelativeToTerrain(){
-    return relativeToTerrain;
-  }
-
-
-  /**
-   * gets the value of city object field relativeToWater.
-   * @return value of city object field relativeToWater.
-   */
-  public String getRelativeToWater(){
-    return relativeToWater;
-  }
-
-
-  /**
-   * gets the value of city object field terminationDate.
-   * @return value of city object field terminationDate.
-   */
-  public String getTerminationDate(){
-    return terminationDate;
-  }
-
-
-  /**
-   * gets the value of city object field updatingPerson.
-   * @return value of city object field updatingPerson.
-   */
-  public String getUpdatingPerson(){
-    return updatingPerson;
-  }
-
-
-  /**
-   * gets the value of city object field genericAttributesIris.
-   * @return value of city object field genericAttributesIris.
-   */
-  public ArrayList<String> getGenericAttributesIris(){
-    return genericAttributeIris;
-  }
-
-
-  /**
-   * gets the value of city object field genericAttributes.
-   * @return value of city object field genericAttributes.
-   */
-  public ArrayList<GenericAttribute> getGenericAttributes(){
-    return genericAttributes;
-  }
-
-
-  /**
-   * gets the value of city object field external ref iris.
-   * @return value of city object field external ref iris.
-   */
-  public ArrayList<String> getExternalReferencesIris(){
-    return externalReferencesIris;}
-
-
-  /**
-   * gets the value of city object field external refs.
-   * @return value of city object field external refs.
-   */
-  public ArrayList<ExternalReference> getExternalReferences(){
-    return externalReferences;
   }
 }

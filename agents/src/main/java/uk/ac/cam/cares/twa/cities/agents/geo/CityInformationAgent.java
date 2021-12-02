@@ -57,7 +57,7 @@ public class CityInformationAgent extends JPSAgent {
 
         cityObject.fillScalars(cityObjectIri, kgClient);
         cityObject.fillGenericAttributes(cityObjectIri, kgClient, lazyload);
-        cityObject.fillExternalReferences(cityObjectIri, kgClient, lazyload);
+        //cityObject.fillExternalReferences(cityObjectIri, kgClient, lazyload);
 
         ArrayList<CityObject> cityObjectList = new ArrayList<>();
         cityObjectList.add(cityObject);
