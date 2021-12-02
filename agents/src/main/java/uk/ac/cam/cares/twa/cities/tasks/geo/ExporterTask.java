@@ -1,4 +1,4 @@
-package uk.ac.cam.cares.twa.cities.tasks;
+package uk.ac.cam.cares.twa.cities.tasks.geo;
 
 import org.apache.commons.io.FileUtils;
 import org.citydb.ImpExp;

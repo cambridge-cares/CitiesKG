@@ -1,4 +1,4 @@
-package uk.ac.cam.cares.twa.cities.tasks;
+package uk.ac.cam.cares.twa.cities.tasks.geo;
 
 import com.bigdata.rdf.sail.webapp.ConfigParams;
 import com.bigdata.rdf.sail.webapp.NanoSparqlServer;

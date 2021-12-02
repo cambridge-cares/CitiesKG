@@ -1,4 +1,4 @@
-package uk.ac.cam.cares.twa.cities.tasks.test;
+package uk.ac.cam.cares.twa.cities.tasks.geo.test;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,9 +16,9 @@ import java.util.concurrent.LinkedBlockingDeque;
 import junit.framework.TestCase;
 import org.eclipse.jetty.server.Server;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask;
-import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
-import uk.ac.cam.cares.twa.cities.tasks.NquadsUploaderTask;
+import uk.ac.cam.cares.twa.cities.tasks.geo.BlazegraphServerTask;
+import uk.ac.cam.cares.twa.cities.tasks.geo.ImporterTask;
+import uk.ac.cam.cares.twa.cities.tasks.geo.NquadsUploaderTask;
 
 public class NquadsUploaderTaskTest extends TestCase {
 

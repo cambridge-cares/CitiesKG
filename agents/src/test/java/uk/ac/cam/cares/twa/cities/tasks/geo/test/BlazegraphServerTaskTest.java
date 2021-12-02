@@ -1,4 +1,4 @@
-package uk.ac.cam.cares.twa.cities.tasks.test;
+package uk.ac.cam.cares.twa.cities.tasks.geo.test;
 
 import com.bigdata.rdf.sail.webapp.NanoSparqlServer;
 import java.io.File;
@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
@@ -15,8 +14,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 import junit.framework.TestCase;
 import org.eclipse.jetty.server.Server;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask;
-import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
+import uk.ac.cam.cares.twa.cities.tasks.geo.BlazegraphServerTask;
+import uk.ac.cam.cares.twa.cities.tasks.geo.ImporterTask;
 
 public class BlazegraphServerTaskTest extends TestCase {
 
