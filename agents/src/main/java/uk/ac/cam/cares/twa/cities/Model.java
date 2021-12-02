@@ -1,7 +1,6 @@
 package uk.ac.cam.cares.twa.cities;
 
 import java.lang.reflect.Field;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -9,7 +8,6 @@ import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
-import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
@@ -57,6 +55,22 @@ public class Model {
   }
 
   /**
+   * builds query to retrieve  cpllection IRIs.
+   * @param iriName cityObject IRI.
+   * @return query
+   */
+  protected Query getFetchIrisQuery(String iriName, String wherePredicate){
+    WhereBuilder wb = new WhereBuilder()
+        .addPrefix(OCGML, ONTO_CITY_GML)
+        .addWhere(QM + COLLECTION_ELEMENT_IRI, wherePredicate, NodeFactory.createURI(iriName));
+    SelectBuilder sb = new SelectBuilder()
+        .addVar(QM + COLLECTION_ELEMENT_IRI)
+        .addGraph(NodeFactory.createURI(getGraphUri(iriName)), wb);
+
+    return sb.build();
+  }
+
+  /**
    * fills in the scalar fields of a generic attribute instance.
    * @param iriName IRI of the generic attribute instance.
    * @param kgClient sends the query to the right endpoint.
@@ -84,20 +98,6 @@ public class Model {
     //to implement in subclasses
   }
 
-  /**
-   * builds query to retrieve  cpllection IRIs.
-   * @param iriName cityObject IRI.
-   * @return query
-   */
-  protected Query getFetchIrisQuery(String iriName, String wherePredicate){
-    WhereBuilder wb = new WhereBuilder()
-        .addPrefix(OCGML, ONTO_CITY_GML)
-        .addWhere(QM + COLLECTION_ELEMENT_IRI, wherePredicate, NodeFactory.createURI(iriName));
-    SelectBuilder sb = new SelectBuilder()
-        .addVar(QM + COLLECTION_ELEMENT_IRI)
-        .addGraph(NodeFactory.createURI(getGraphUri(iriName)), wb);
 
-    return sb.build();
-  }
 
 }

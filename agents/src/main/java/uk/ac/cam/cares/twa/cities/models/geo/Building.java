@@ -5,62 +5,100 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import org.apache.jena.arq.querybuilder.SelectBuilder;
-import org.apache.jena.arq.querybuilder.WhereBuilder;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
-import org.checkerframework.checker.units.qual.A;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.twa.cities.Model;
+import lombok.Getter;
+import lombok.Setter;
 
 
 public class Building extends Model {
 
+  @Getter @Setter
   private String function;
+  @Getter @Setter
   private String roofType;
+  @Getter @Setter
   private URI buildingParentId;
+  @Getter @Setter
   private URI buildingRootId;
+  @Getter @Setter
   private String classID; //check-type
+  @Getter @Setter
   private String classCodespace; //check-type
+  @Getter @Setter
   private String functionCodespace; //check-type
+  @Getter @Setter
   private URI id;
+  @Getter @Setter
   private String lod0FootprintId; //check-type
+  @Getter @Setter
   private String lod0RoofprintId; //check-type
+  @Getter @Setter
   private String lod1MultiSurfaceId; //check-type
+  @Getter @Setter
   private String lod1SolidId; //check-type
+  @Getter @Setter
   private String lod1TerrainIntersection; //check-type
+  @Getter @Setter
   private String lod2MultiCurve; //check-type
+  @Getter @Setter
   private String lod2MultiSurfaceId; //check-type
+  @Getter @Setter
   private String lod2SolidId; //check-type
+  @Getter @Setter
   private String lod2TerrainIntersection; //check-type
+  @Getter @Setter
   private String lod3MultiCurve; //check-type
+  @Getter @Setter
   private String lod3MultiSurfaceId; //check-type
+  @Getter @Setter
   private String lod3SolidId; //check-type
+  @Getter @Setter
   private String lod3TerrainIntersection; //check-type
+  @Getter @Setter
   private String lod4MultiCurve; //check-type
+  @Getter @Setter
   private String lod4MultiSurfaceId; //check-type
+  @Getter @Setter
   private String lod4SolidId; //check-type
+  @Getter @Setter
   private String lod4TerrainIntersection; //check-type
+  @Getter @Setter
   private double measuredHeigh;
+  @Getter @Setter
   private String measuredHeightUnit; //check-type
+  @Getter @Setter
   private int objectClassId;
+  @Getter @Setter
   private String roofTypeCodespace; //check-type
+  @Getter @Setter
   private String storeyHeightsAboveGround; //check-type
+  @Getter @Setter
   private String storeyHeightsAgUnit; //check-type
+  @Getter @Setter
   private String storeyHeightsBelowGround; //check-type
+  @Getter @Setter
   private String storeyHeightsBgUnit; //check-type
+  @Getter @Setter
   private String storeysAboveGround; //check-type
+  @Getter @Setter
   private String storeysBelowGround; //check-type
+  @Getter @Setter
   private String usage; //check-type
+  @Getter @Setter
   private String usageCodespace; //check-type
+  @Getter @Setter
   private String yearOfConstruction; //check-type
+  @Getter @Setter
   private String yearOfDemolition; //check-type
 
-
+  @Getter @Setter
   private ArrayList<ThematicSurface> thematicSurfaces;
+  @Getter @Setter
   private ArrayList<String> thematicSurfacesIris;
 
 
@@ -144,6 +182,7 @@ public class Building extends Model {
       }
     }
   }
+
 
 }
 
