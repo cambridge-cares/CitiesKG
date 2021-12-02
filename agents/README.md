@@ -61,21 +61,26 @@ This folder is by default not accessible, in order to make it executable, you ne
 
 ### Install and Build
 
-1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory:
+1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repository. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
 
 ```
-cd <project directory>
+cd <main project directory>
 
 mvn initialize
 ```
 
-2. If the build is successful, you should be able to run the following to create the war package
+2. If the initialization is done successful, you should be able to run the following to create the .war package
 
 ```
 mvn clean install -DskipTests
 ```
 
-3. There is one dependency *blazegraph-jar-2.1.5.jar* need to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
+In case building the .war file fails due to the missing `JPS_AWS.jar`, please build this locally first via running the following command within the [JPS_AWS] repository:
+```
+mvn clean install -DskipTests
+```
+
+3. There is one dependency `blazegraph-jar-2.1.5.jar` which needs to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
 ```
     <dependency>
       <groupId>com.blazegraph</groupId>
@@ -94,35 +99,45 @@ this folder contains all the libraries provided by the server.
 
 If this step has not been done, the CityImportAgent might not work. 
 
+4. Additional dependencies used by agents are JPS_BASE_LIB and JPS_AWS are provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository.
+
+Clone the TWA project from the [TWA repository](https://github.com/cambridge-cares/TheWorldAvatar) and checkout to develop and master branches
+
+Run the command *mvn clean install -DskipTests* on the corresponding directories where the POM file is found.
+* JPS_BASE_LIB project can be found in the [JPS_BASE_LIB directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/JPS_BASE_LIB) from the *master* branch (stable version)
+* JPS_AWS project can be found in the [AsynchronousWatcherService](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/AsynchronousWatcherService) directory from the *develop* branch. Before run the install command, please comment out the JPS_BASE dependency in the POM file. 
+
+
 ### Deployment (for users)
 
 If the build is successful, you should be able to find the war artifact under ${projectDir}/${tomcatPath}/webapps/agents##0.1.0.war
 
 Start the tomcat service by clicking on the executable *C:\Program Files\Apache Software Foundation\Tomcat 9.0\bin\Tomcat9w.exe*
-and click on *Start*. After that, you can see the login page on the browser under *localhost:8080*.
+and click on *Start*. After that, you can see the startup page on the browser under [http://localhost:8080].
 
 As CityImportAgent will execute a python script from java program, it requires the access to the system variable.
 The tomcat server needs to be configured as following:
 
-On the logOn tab of the Tomcat properties windows, select *Log on as: Local System account* and check the box *Allow service to interact with destop*
+On the logOn tab of the Tomcat properties windows, select *Log on as: Local System account* and check the box *Allow service to interact with Desktop*
 
-After starting the tomcat server, you can place the agent war artifact into the directory *C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps*.
+After starting the tomcat server, you can place the agent .war artifact into the directory *C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps*.
 
 ### Deployment (for developers)
 
-Configure a Run/Debug Configuration on IntelliJ IDE with *tomcat local server*. Choose the correct parameter
+Import the `agents` module as Maven project into IntelliJ IDE. Configure a Run/Debug Configuration on IntelliJ IDE with *tomcat local server* and choose the correct parameter.
 
 If Maven has been installed and recognized by IDE correctly, on the *Deployment* tab, 
 you can add an artifact and choose *agents:war exploded* . Make sure the *Application context* is */agents*
 
-After that, you can start the tomcat server and deploy the artifact directly from the IDE
+After that, you can start the tomcat server and deploy the artifact directly from the IDE.
 
 ### Run the tests (for users and developers)
 
-You can send the HTTPrequest via IDE or PostMan. You can find the examples of HTTPRequest for each agent in the directory *src\main\resources*
+You can send the HTTP request via IDE or PostMan. You can find examples HTTP requests for each agent in the directory *src\main\resources*
+
+Please make sure that the specified target namespace is available, i.e. for local deployment/testing Blazegraph needs to be started and the specified namespace potentially to be created beforehand.
 
 HTTPRequest for CityImportAgent:
-
 ```
 POST http://localhost:8080/agents/import/source
 Content-Type: application/json
@@ -131,6 +146,9 @@ Content-Type: application/json
   "targetURL": "http://192.168.10.111:9999/blazegraph/namespace/testdata/sparql"}
 ```
 
+Executing this request, will create a directory at the specified location. When placing any `.gml` file into this folder, this file will automatically be imported into the specified triple store. For further details, please see the "Semantic 3D City Agents - an intelligent automation for Dynamic Geospatial Knowledge Graphs" [preprint].
+
+Please note that splitting of large files into smaller chunks to improve performance will not work if the `.gml` file contains the `core:` namespace tag in front of CityGML features. Please remove those manually beforehand.
 
 ## Contributing
 
@@ -151,3 +169,8 @@ See also the list of [contributors](https://www.theworldavatar.com/citieskg/cont
 ## License
 
 This project is licensed under the XYZ  License - see the [LICENSE.md](LICENSE.md) file for details
+
+
+[JPS_AWS]: https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/AsynchronousWatcherService
+[http://localhost:8080]: http://localhost:8080
+[Preprint]: https://como.ceb.cam.ac.uk/preprints/283/
