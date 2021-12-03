@@ -80,6 +80,11 @@ The Importer/Exporter uses [Gradle](https://gradle.org/) as build system. To bui
     
 The script automatically downloads all required dependencies for building and running the Importer/Exporter. So make sure you are connected to the internet. The build process runs on all major operating systems and only requires a Java 8 JDK or higher to run.
 
+In case building fails (e.g. due to "Error: Could not find or load main class org.gradle.wrapper.GradleWrapperMain"), try downgrading gradle to version 6.9.1. Therefore, install gradle 6.9.1 following this [guide] and subsequently run:
+
+    > gradle wrapper
+    > gradlew installDist
+
 If the build was successful, you will find the Importer/Exporter package under `impexp-client/build/install`. To launch the application, simply use the starter scripts in the `bin` subfolder.
 
 You may also choose to build an installer for the Importer/Exporter with the following command.
@@ -191,3 +196,6 @@ This project is licensed under the XYZ  License - see the [LICENSE.md](LICENSE.m
 * A great city is not to be confounded with a populous one. *- Aristotle*
 * This project is funded by the National Research Foundation (NRF), Prime Ministers Office, Singapore under its Campus for Research Excellence and Technological Enterprise (CREATE) programme. 
 
+
+
+[guide]: https://gradle.org/install/
