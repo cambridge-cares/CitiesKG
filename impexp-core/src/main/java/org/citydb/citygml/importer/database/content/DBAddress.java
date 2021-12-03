@@ -90,11 +90,9 @@ public class DBAddress implements DBImporter {
 				gmlIdCodespace = "'" + gmlIdCodespace + "', ";
 		}
 
-		String stmtSQL = "insert into " + schema + ".address (id, " + (hasGmlIdColumn ? "gmlid, " : "") + (gmlIdCodespace != null ? "gmlid_codespace, " : "") +
+		String stmt = "insert into " + schema + ".address (id, " + (hasGmlIdColumn ? "gmlid, " : "") + (gmlIdCodespace != null ? "gmlid_codespace, " : "") +
 				"street, house_number, po_box, zip_code, city, country, multi_point, xal_source) values " +
 				"(?, " + (hasGmlIdColumn ? "?, " : "") + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?, ?, ?)";
-
-		String stmt = "";
 
 		if (importer.isBlazegraph()) {
 			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
@@ -104,8 +102,6 @@ public class DBAddress implements DBImporter {
 		}
 
 		psAddress = batchConn.prepareStatement(stmt);
-
-		PreparedStatement AddressSQL = batchConn.prepareStatement(stmtSQL);
 
 		addressToBuildingImporter = importer.getImporter(DBAddressToBuilding.class);
 		addressToBridgeImporter = importer.getImporter(DBAddressToBridge.class);
@@ -183,8 +179,8 @@ public class DBAddress implements DBImporter {
 			} catch (MalformedURLException e) {
 				psAddress.setObject(index++, NodeFactory.createBlankNode());
 			}
-    } else {
-      psAddress.setLong(index++, addressId);
+    	} else {
+      		psAddress.setLong(index++, addressId);
 		}
 
 		if (hasGmlIdColumn)
