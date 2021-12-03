@@ -269,38 +269,37 @@ public class DBCityObject implements DBImporter {
 		// object class id
 		psCityObject.setInt(++index, objectType.getObjectClassId());
 
+		// gmlid
 		psCityObject.setString(++index, object.getId());
 
 		// gml:name
 		if (object.isSetName()) {
-			valueJoiner.join(object.getName(), Code::getValue, Code::getCodeSpace);
-			try {
-				if (valueJoiner.result(0) == null & isBlazegraph) {
-					psCityObject.setObject(++index, NodeFactory.createBlankNode());
-				} else {
-					psCityObject.setString(++index, valueJoiner.result(0));
-				}
-			} catch (NullPointerException e) {
-				if (isBlazegraph) {
-					psCityObject.setObject(index, NodeFactory.createBlankNode());
-				}
-			}
 
-			try {
-				if (valueJoiner.result(1) == null & isBlazegraph) {
-					psCityObject.setObject(++index, NodeFactory.createBlankNode());
-				} else {
-					psCityObject.setString(++index, valueJoiner.result(1));
-				}
-			} catch (NullPointerException e) {
-				if (isBlazegraph) {
-					psCityObject.setObject(index, NodeFactory.createBlankNode());
-				}
-			}
+			 if (isBlazegraph){
+				 valueJoiner.join(object.getName(), Code::getValue, Code::getCodeSpace);
+				 String name = valueJoiner.result(0);
+				 String codespace = valueJoiner.result(1);
+
+				 if (name != null) {
+				 	psCityObject.setString(++index, name);
+				 }else{
+				 	setBlankNode(psCityObject, ++index);
+				 }
+				 if (codespace != null) {
+				 	psCityObject.setString(++index, codespace);
+				 }else{
+				 	setBlankNode(psCityObject, ++index);
+				 }
+
+			 }else{  // PostGIS
+				 valueJoiner.join(object.getName(), Code::getValue, Code::getCodeSpace);
+				 psCityObject.setString(++index, valueJoiner.result(0));
+				 psCityObject.setString(++index, valueJoiner.result(1));
+			 }
 
 		} else if (isBlazegraph) {
-			psCityObject.setObject(++index, NodeFactory.createBlankNode());
-			psCityObject.setObject(++index, NodeFactory.createBlankNode());
+			setBlankNode(psCityObject, ++index);
+			setBlankNode(psCityObject, ++index);
 		} else {
 			psCityObject.setNull(++index, Types.VARCHAR);
 			psCityObject.setNull(++index, Types.VARCHAR);
@@ -524,6 +523,13 @@ public class DBCityObject implements DBImporter {
 	@Override
 	public void close() throws CityGMLImportException, SQLException {
 		psCityObject.close();
+	}
+
+	/**
+	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
+	 */
+	private void setBlankNode(PreparedStatement smt, int index) throws CityGMLImportException {
+		importer.setBlankNode(smt, index);
 	}
 
 }

@@ -217,8 +217,20 @@ public class DBGenericCityObject implements DBImporter {
 		// gen:function
 		if (genericCityObject.isSetFunction()) {
 			valueJoiner.join(genericCityObject.getFunction(), Code::getValue, Code::getCodeSpace);
-			psGenericCityObject.setString(++index, valueJoiner.result(0));
-			psGenericCityObject.setString(++index, valueJoiner.result(1));
+			String code = valueJoiner.result(0);
+			String codespace = valueJoiner.result(1);
+
+			if (code == null && importer.isBlazegraph()){
+				setBlankNode(psGenericCityObject, ++index);
+			} else {
+				psGenericCityObject.setString(++index, code);
+			}
+
+			if (codespace == null && importer.isBlazegraph()){
+				setBlankNode(psGenericCityObject, ++index);
+			} else {
+				psGenericCityObject.setString(++index, codespace);
+			}
 		} else if (importer.isBlazegraph()) {
 			setBlankNode(psGenericCityObject, ++index);
 			setBlankNode(psGenericCityObject, ++index);
@@ -230,8 +242,22 @@ public class DBGenericCityObject implements DBImporter {
 		// gen:usage
 		if (genericCityObject.isSetUsage()) {
 			valueJoiner.join(genericCityObject.getUsage(), Code::getValue, Code::getCodeSpace);
-			psGenericCityObject.setString(++index, valueJoiner.result(0));   // index = 6
-			psGenericCityObject.setString(++index, valueJoiner.result(1));
+			String code = valueJoiner.result(0);
+			String codespace = valueJoiner.result(1);
+
+			if (code == null && importer.isBlazegraph()){
+				setBlankNode(psGenericCityObject, ++index);
+			} else {
+				psGenericCityObject.setString(++index, code);
+			}
+
+			if (codespace == null && importer.isBlazegraph()){
+				setBlankNode(psGenericCityObject, ++index);
+			} else {
+				psGenericCityObject.setString(++index, codespace);
+			}
+			psGenericCityObject.setString(++index, code);   // index = 6
+			psGenericCityObject.setString(++index, codespace);
 		} else if (importer.isBlazegraph()) {
 			setBlankNode(psGenericCityObject, ++index);
 			setBlankNode(psGenericCityObject, ++index);

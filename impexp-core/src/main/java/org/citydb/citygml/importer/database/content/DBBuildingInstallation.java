@@ -50,7 +50,6 @@ import org.citygml4j.model.citygml.building.*;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.ImplicitGeometry;
 import org.citygml4j.model.citygml.core.ImplicitRepresentationProperty;
-import org.citygml4j.model.gml.base.AbstractGML;
 import org.citygml4j.model.gml.basicTypes.Code;
 import org.citygml4j.model.gml.geometry.AbstractGeometry;
 import org.citygml4j.model.gml.geometry.GeometryProperty;
@@ -209,11 +208,19 @@ public class DBBuildingInstallation implements DBImporter {
 		// bldg:function
 		if (buildingInstallation.isSetFunction()) {
 			valueJoiner.join(buildingInstallation.getFunction(), Code::getValue, Code::getCodeSpace);
-			psBuildingInstallation.setString(++index, valueJoiner.result(0));
-			if (valueJoiner.result(1) == null && importer.isBlazegraph()) {
+			String code = valueJoiner.result(0);
+			String codespace = valueJoiner.result(1);
+
+			if (code == null && importer.isBlazegraph()){
 				setBlankNode(psBuildingInstallation, ++index);
 			} else {
-				psBuildingInstallation.setString(++index, valueJoiner.result(1));
+				psBuildingInstallation.setString(++index, code);
+			}
+
+			if (codespace == null && importer.isBlazegraph()) {
+				setBlankNode(psBuildingInstallation, ++index);
+			} else {
+				psBuildingInstallation.setString(++index, codespace);
 			}
 		} else if (importer.isBlazegraph()) {
 			setBlankNode(psBuildingInstallation, ++index);
@@ -226,8 +233,20 @@ public class DBBuildingInstallation implements DBImporter {
 		// bldg:usage
 		if (buildingInstallation.isSetUsage()) {
 			valueJoiner.join(buildingInstallation.getUsage(), Code::getValue, Code::getCodeSpace);
-			psBuildingInstallation.setString(++index, valueJoiner.result(0));
-			psBuildingInstallation.setString(++index, valueJoiner.result(1));
+			String code = valueJoiner.result(0);
+			String codespace = valueJoiner.result(1);
+
+			if (code == null && importer.isBlazegraph()){
+				setBlankNode(psBuildingInstallation, ++index);
+			} else {
+				psBuildingInstallation.setString(++index, code);
+			}
+
+			if (codespace == null && importer.isBlazegraph()) {
+				setBlankNode(psBuildingInstallation, ++index);
+			} else {
+				psBuildingInstallation.setString(++index, codespace);
+			}
 		} else if (importer.isBlazegraph()) {
 			setBlankNode(psBuildingInstallation, ++index);
 			setBlankNode(psBuildingInstallation, ++index);
@@ -474,11 +493,19 @@ public class DBBuildingInstallation implements DBImporter {
 		// bldg:function
 		if (intBuildingInstallation.isSetFunction()) {
 			valueJoiner.join(intBuildingInstallation.getFunction(), Code::getValue, Code::getCodeSpace);
-			psBuildingInstallation.setString(++index, valueJoiner.result(0));
-			if (valueJoiner.result(1) == null && importer.isBlazegraph()) {
+			String code = valueJoiner.result(0);
+			String codespace = valueJoiner.result(1);
+
+			if (code == null && importer.isBlazegraph()) {
 				setBlankNode(psBuildingInstallation, ++index);
 			} else {
-				psBuildingInstallation.setString(++index, valueJoiner.result(1));
+				psBuildingInstallation.setString(++index, code);
+			}
+
+			if (codespace == null && importer.isBlazegraph()) {
+				setBlankNode(psBuildingInstallation, ++index);
+			} else {
+				psBuildingInstallation.setString(++index, codespace);
 			}
 		} else if (importer.isBlazegraph()) {
 			setBlankNode(psBuildingInstallation, ++index);
@@ -491,8 +518,20 @@ public class DBBuildingInstallation implements DBImporter {
 		// bldg:usage
 		if (intBuildingInstallation.isSetUsage()) {
 			valueJoiner.join(intBuildingInstallation.getUsage(), Code::getValue, Code::getCodeSpace);
-			psBuildingInstallation.setString(++index, valueJoiner.result(0));
-			psBuildingInstallation.setString(++index, valueJoiner.result(1));
+			String code = valueJoiner.result(0);
+			String codespace = valueJoiner.result(1);
+
+			if (code == null && importer.isBlazegraph()) {
+				setBlankNode(psBuildingInstallation, ++index);
+			} else {
+				psBuildingInstallation.setString(++index, code);
+			}
+
+			if (codespace == null && importer.isBlazegraph()) {
+				setBlankNode(psBuildingInstallation, ++index);
+			} else {
+				psBuildingInstallation.setString(++index, codespace);
+			}
 		} else if (importer.isBlazegraph()) {
 			setBlankNode(psBuildingInstallation, ++index);
 			setBlankNode(psBuildingInstallation, ++index);
