@@ -1,5 +1,11 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.stream.Stream;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.openrdf.query.algebra.Str;
@@ -39,11 +45,35 @@ public class CityExportAgent extends JPSAgent {
     public JSONObject processRequestParameters(JSONObject requestParams) {
         JSONObject result = new JSONObject();
 
+
         if (validateInput(requestParams)) {
             requestUrl = requestParams.getString(KEY_REQ_URL);
             gmlids = getInputGmlids(requestParams);
             serverInfo = getServerInfo(requestParams);
-            result.put("outputPath", exportKml(gmlids, getOutputPath(), serverInfo));
+
+            if (gmlids[0].contains("*")){ // need to extract the whole database
+                String rootDir = "C:\\Users\\Shiying\\Documents\\CKG\\Imported_data\\testfolder";
+                ArrayList<Path> fileList = new ArrayList<>();
+                try (Stream<Path> paths = Files.walk(Paths.get(rootDir))) {
+                    paths
+                        .filter(Files::isRegularFile)
+                        .forEach(fileList::add);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                for (Path gmlidFile : fileList) {
+                    String[] gmlidArray = getGmlidFromFile(gmlidFile);
+                    String outputFileName = getOutputPath(gmlidFile);
+                    result.put("outputPath", exportKml(gmlidArray, outputFileName, serverInfo));
+                }
+
+            }else{
+                result.put("outputPath", exportKml(gmlids, getOutputPath(), serverInfo));
+            }
+
+
+
         }
         // It will return the file path of the exported file
         System.out.println(result);
@@ -75,6 +105,36 @@ public class CityExportAgent extends JPSAgent {
         return !error;
     }
 
+
+    private String[] getGmlidFromFile(Path gmlidFile){
+        List<String> gmlidsList =  new ArrayList<>();
+        try {
+            gmlidsList = Files.readAllLines(Paths.get(gmlidFile.toString()), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String[] gmlidsArray = new String[gmlidsList.size()];
+
+        for (int i = 0; i < gmlidsList.size(); ++i){
+            String[] elemnets = gmlidsList.get(i).split("/");
+            gmlidsArray[i] = elemnets[elemnets.length-1];
+        }
+        return gmlidsArray;
+    }
+
+    private String getOutputPath (Path gmlidFile) {
+        ResourceBundle rb = ResourceBundle.getBundle("config");
+        outTmpDir = rb.getString("outputDir") + "export";
+        File outputdir = new File (outTmpDir);
+        if (!outputdir.exists()){
+            outputdir.mkdirs();
+        }
+        String path = gmlidFile.toString().replace("\\", "/");
+        String[] elem = path.split("/");
+        String index = elem[elem.length-1].replaceAll("[^0-9]", "");
+        String outputPath = outTmpDir + "/test_" + index + ".kml";
+        return outputPath;
+    }
     /**
      * retrieves the server information from the endpointUri -- host, port, namespace
      *
