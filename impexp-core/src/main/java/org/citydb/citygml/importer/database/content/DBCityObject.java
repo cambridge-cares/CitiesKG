@@ -264,38 +264,37 @@ public class DBCityObject extends AbstractDBImporter {
 		// object class id
 		preparedStatement.setInt(++index, objectType.getObjectClassId());
 
+		// gmlid
 		preparedStatement.setString(++index, object.getId());
 
 		// gml:name
 		if (object.isSetName()) {
-			valueJoiner.join(object.getName(), Code::getValue, Code::getCodeSpace);
-			try {
-				if (valueJoiner.result(0) == null & isBlazegraph) {
-					preparedStatement.setObject(++index, NodeFactory.createBlankNode());
-				} else {
-					preparedStatement.setString(++index, valueJoiner.result(0));
-				}
-			} catch (NullPointerException e) {
-				if (isBlazegraph) {
-					preparedStatement.setObject(index, NodeFactory.createBlankNode());
-				}
-			}
 
-			try {
-				if (valueJoiner.result(1) == null & isBlazegraph) {
-					preparedStatement.setObject(++index, NodeFactory.createBlankNode());
-				} else {
-					preparedStatement.setString(++index, valueJoiner.result(1));
-				}
-			} catch (NullPointerException e) {
-				if (isBlazegraph) {
-					preparedStatement.setObject(index, NodeFactory.createBlankNode());
-				}
-			}
+			 if (isBlazegraph){
+				 valueJoiner.join(object.getName(), Code::getValue, Code::getCodeSpace);
+				 String name = valueJoiner.result(0);
+				 String codespace = valueJoiner.result(1);
+
+				 if (name != null) {
+				 	preparedStatement.setString(++index, name);
+				 }else{
+				 	setBlankNode(preparedStatement, ++index);
+				 }
+				 if (codespace != null) {
+				 	preparedStatement.setString(++index, codespace);
+				 }else{
+				 	setBlankNode(preparedStatement, ++index);
+				 }
+
+			 }else{  // PostGIS
+				 valueJoiner.join(object.getName(), Code::getValue, Code::getCodeSpace);
+				 preparedStatement.setString(++index, valueJoiner.result(0));
+				 preparedStatement.setString(++index, valueJoiner.result(1));
+			 }
 
 		} else if (isBlazegraph) {
-			preparedStatement.setObject(++index, NodeFactory.createBlankNode());
-			preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+			setBlankNode(preparedStatement, ++index);
+			setBlankNode(preparedStatement, ++index);
 		} else {
 			preparedStatement.setNull(++index, Types.VARCHAR);
 			preparedStatement.setNull(++index, Types.VARCHAR);

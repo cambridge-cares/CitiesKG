@@ -176,8 +176,8 @@ public class DBAddress extends AbstractDBImporter {
 			} catch (MalformedURLException e) {
 				preparedStatement.setObject(index++, NodeFactory.createBlankNode());
 			}
-    } else {
-      preparedStatement.setLong(index++, addressId);
+		} else {
+		  preparedStatement.setLong(index++, addressId);
 		}
 
 		if (hasGmlIdColumn)

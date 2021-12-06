@@ -202,8 +202,20 @@ public class DBGenericCityObject extends AbstractDBImporter {
 		// gen:function
 		if (genericCityObject.isSetFunction()) {
 			valueJoiner.join(genericCityObject.getFunction(), Code::getValue, Code::getCodeSpace);
-			preparedStatement.setString(++index, valueJoiner.result(0));
-			preparedStatement.setString(++index, valueJoiner.result(1));
+			String code = valueJoiner.result(0);
+			String codespace = valueJoiner.result(1);
+
+			if (code == null && importer.isBlazegraph()){
+				setBlankNode(preparedStatement, ++index);
+			} else {
+				preparedStatement.setString(++index, code);
+			}
+
+			if (codespace == null && importer.isBlazegraph()){
+				setBlankNode(preparedStatement, ++index);
+			} else {
+				preparedStatement.setString(++index, codespace);
+			}
 		} else if (importer.isBlazegraph()) {
 			setBlankNode(preparedStatement, ++index);
 			setBlankNode(preparedStatement, ++index);
@@ -215,8 +227,22 @@ public class DBGenericCityObject extends AbstractDBImporter {
 		// gen:usage
 		if (genericCityObject.isSetUsage()) {
 			valueJoiner.join(genericCityObject.getUsage(), Code::getValue, Code::getCodeSpace);
-			preparedStatement.setString(++index, valueJoiner.result(0));   // index = 6
-			preparedStatement.setString(++index, valueJoiner.result(1));
+			String code = valueJoiner.result(0);
+			String codespace = valueJoiner.result(1);
+
+			if (code == null && importer.isBlazegraph()){
+				setBlankNode(preparedStatement, ++index);
+			} else {
+				preparedStatement.setString(++index, code);
+			}
+
+			if (codespace == null && importer.isBlazegraph()){
+				setBlankNode(preparedStatement, ++index);
+			} else {
+				preparedStatement.setString(++index, codespace);
+			}
+			preparedStatement.setString(++index, code);   // index = 6
+			preparedStatement.setString(++index, codespace);
 		} else if (importer.isBlazegraph()) {
 			setBlankNode(preparedStatement, ++index);
 			setBlankNode(preparedStatement, ++index);

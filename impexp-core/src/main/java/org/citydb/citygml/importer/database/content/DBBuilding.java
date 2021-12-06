@@ -253,10 +253,11 @@ public class DBBuilding extends AbstractDBImporter {
 		if (building.isSetFunction()) {
 			valueJoiner.join(building.getFunction(), Code::getValue, Code::getCodeSpace);
 			preparedStatement.setString(++index, valueJoiner.result(0));
-			if (valueJoiner.result(1) == null && importer.isBlazegraph()) {
+			String codespace = valueJoiner.result(1);
+			if (importer.isBlazegraph() &&  codespace == null) { // psBuilding setString for jenastatement requires non-Null and pgstatement doesn't require
 				setBlankNode(preparedStatement, ++index);
 			} else {
-				preparedStatement.setString(++index, valueJoiner.result(1));
+				preparedStatement.setString(++index, codespace);
 			}
 		} else if (importer.isBlazegraph()) {
 			setBlankNode(preparedStatement, ++index);
