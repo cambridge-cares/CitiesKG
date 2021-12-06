@@ -43,28 +43,37 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
-public class DBWaterBoundarySurface implements DBImporter {
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psWaterBoundarySurface;
+public class DBWaterBoundarySurface extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
-	private DBSurfaceGeometry surfaceGeometryImporter;
 	private DBWaterBodToWaterBndSrf bodyToSurfaceImporter;
-	private int batchCounter;
 
 	public DBWaterBoundarySurface(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.importer = importer;
-
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-
-		String stmt = "insert into " + schema + ".waterboundary_surface (id, objectclass_id, water_level, water_level_codespace, " +
-				"lod2_surface_id, lod3_surface_id, lod4_surface_id) values " +
-				"(?, ?, ?, ?, ?, ?, ?)";
-		psWaterBoundarySurface = batchConn.prepareStatement(stmt);
-
+		super(batchConn, config, importer);
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
 		bodyToSurfaceImporter = importer.getImporter(DBWaterBodToWaterBndSrf.class);
+	}
+
+	@Override
+	protected String getTableName() {
+		return TableEnum.WATERBOUNDARY_SURFACE.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "waterboundarysurface/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".waterboundary_surface (id, objectclass_id, water_level, water_level_codespace, " +
+				"lod2_surface_id, lod3_surface_id, lod4_surface_id) values " +
+				"(?, ?, ?, ?, ?, ?, ?)";
+	}
+
+	@Override
+	protected String getSPARQLStatement() {
+		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(AbstractWaterBoundarySurface waterBoundarySurface) throws CityGMLImportException, SQLException {
@@ -81,61 +90,29 @@ public class DBWaterBoundarySurface implements DBImporter {
 
 		// import boundary surface information
 		// primary id
-		psWaterBoundarySurface.setLong(1, waterBoundarySurfaceId);
+		preparedStatement.setLong(1, waterBoundarySurfaceId);
 
 		// objectclass id
-		psWaterBoundarySurface.setLong(2, featureType.getObjectClassId());
+		preparedStatement.setLong(2, featureType.getObjectClassId());
 
 		// wtr:waterLevel
 		if (waterBoundarySurface instanceof WaterSurface 
 				&& ((WaterSurface)waterBoundarySurface).isSetWaterLevel() && ((WaterSurface)waterBoundarySurface).getWaterLevel().isSetValue()) {
-			psWaterBoundarySurface.setString(3, ((WaterSurface)waterBoundarySurface).getWaterLevel().getValue());
-			psWaterBoundarySurface.setString(4, ((WaterSurface)waterBoundarySurface).getWaterLevel().getCodeSpace());
+			preparedStatement.setString(3, ((WaterSurface)waterBoundarySurface).getWaterLevel().getValue());
+			preparedStatement.setString(4, ((WaterSurface)waterBoundarySurface).getWaterLevel().getCodeSpace());
 		} else {
-			psWaterBoundarySurface.setNull(3, Types.NULL);
-			psWaterBoundarySurface.setNull(4, Types.VARCHAR);
+			preparedStatement.setNull(3, Types.NULL);
+			preparedStatement.setNull(4, Types.VARCHAR);
 		}
 
 		// wtr:lodXMultiSurface
-		for (int i = 0; i < 3; i++) {
-			SurfaceProperty surfaceProperty = null;
-			long surfaceGeometryId = 0;
+		importSurfaceGeometryProperties(new SurfaceProperty[]{
+				waterBoundarySurface.getLod2Surface(),
+				waterBoundarySurface.getLod3Surface(),
+				waterBoundarySurface.getLod4Surface()
+		}, new int[]{2, 3, 4}, "_surface_id", 5);
 
-			switch (i) {
-			case 0:
-				surfaceProperty = waterBoundarySurface.getLod2Surface();
-				break;
-			case 1:
-				surfaceProperty = waterBoundarySurface.getLod3Surface();
-				break;
-			case 2:
-				surfaceProperty = waterBoundarySurface.getLod4Surface();
-				break;
-			}
-
-			if (surfaceProperty != null) {
-				if (surfaceProperty.isSetSurface()) {
-					surfaceGeometryId = surfaceGeometryImporter.doImport(surfaceProperty.getSurface(), waterBoundarySurfaceId);
-					surfaceProperty.unsetSurface();
-				} else {
-					String href = surfaceProperty.getHref();
-					if (href != null && href.length() != 0) {
-						importer.propagateXlink(new DBXlinkSurfaceGeometry(
-								TableEnum.WATERBOUNDARY_SURFACE.getName(),
-								waterBoundarySurfaceId, 
-								href, 
-								"lod" + (i + 2) + "_surface_id"));
-					}
-				}
-			}
-
-			if (surfaceGeometryId != 0)
-				psWaterBoundarySurface.setLong(5 + i, surfaceGeometryId);
-			else
-				psWaterBoundarySurface.setNull(5 + i, Types.NULL);
-		}
-
-		psWaterBoundarySurface.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.WATERBOUNDARY_SURFACE);
 
@@ -148,19 +125,6 @@ public class DBWaterBoundarySurface implements DBImporter {
 			importer.delegateToADEImporter(waterBoundarySurface, waterBoundarySurfaceId, featureType);
 
 		return waterBoundarySurfaceId;
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psWaterBoundarySurface.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psWaterBoundarySurface.close();
 	}
 
 }

@@ -46,37 +46,48 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
-public class DBCityObjectGroup implements DBImporter {
-	private final Connection batchConn;
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psCityObjectGroup;
+public class DBCityObjectGroup extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
-	private DBSurfaceGeometry surfaceGeometryImporter;
 	private GeometryConverter geometryConverter;
 	private AttributeValueJoiner valueJoiner;
 
 	private boolean hasObjectClassIdColumn;
-	private int batchCounter;
 
 	public DBCityObjectGroup(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.batchConn = batchConn;
-		this.importer = importer;
-
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
-
-		String stmt = "insert into " + schema + ".cityobjectgroup (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
-				"brep_id, other_geom" +
-				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
-				"values (?, ?, ?, ?, ?, ?, ?, ?, ?" +
-				(hasObjectClassIdColumn ? ", ?)" : ")");
-		psCityObjectGroup = batchConn.prepareStatement(stmt);
-
+		super(batchConn, config, importer);
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
 		geometryConverter = importer.getGeometryConverter();
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	@Override
+	protected void preconstructor(Config config) {
+		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
+	}
+
+	@Override
+	protected String getTableName() {
+		return TableEnum.CITYOBJECTGROUP.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "cityobjectgroup/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".cityobjectgroup (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
+				"brep_id, other_geom" +
+				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
+				"values (?, ?, ?, ?, ?, ?, ?, ?, ?" +
+				(hasObjectClassIdColumn ? ", ?)" : ")");
+	}
+
+	@Override
+	protected String getSPARQLStatement() {
+		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(CityObjectGroup cityObjectGroup) throws CityGMLImportException, SQLException {
@@ -89,35 +100,35 @@ public class DBCityObjectGroup implements DBImporter {
 
 		// CityObjectGroup
 		// ID
-		psCityObjectGroup.setLong(1, cityObjectGroupId);
+		preparedStatement.setLong(1, cityObjectGroupId);
 
 		// grp:class
 		if (cityObjectGroup.isSetClazz() && cityObjectGroup.getClazz().isSetValue()) {
-			psCityObjectGroup.setString(2, cityObjectGroup.getClazz().getValue());
-			psCityObjectGroup.setString(3, cityObjectGroup.getClazz().getCodeSpace());
+			preparedStatement.setString(2, cityObjectGroup.getClazz().getValue());
+			preparedStatement.setString(3, cityObjectGroup.getClazz().getCodeSpace());
 		} else {
-			psCityObjectGroup.setNull(2, Types.VARCHAR);
-			psCityObjectGroup.setNull(3, Types.VARCHAR);
+			preparedStatement.setNull(2, Types.VARCHAR);
+			preparedStatement.setNull(3, Types.VARCHAR);
 		}
 
 		// grp:function
 		if (cityObjectGroup.isSetFunction()) {
 			valueJoiner.join(cityObjectGroup.getFunction(), Code::getValue, Code::getCodeSpace);
-			psCityObjectGroup.setString(4, valueJoiner.result(0));
-			psCityObjectGroup.setString(5, valueJoiner.result(1));
+			preparedStatement.setString(4, valueJoiner.result(0));
+			preparedStatement.setString(5, valueJoiner.result(1));
 		} else {
-			psCityObjectGroup.setNull(4, Types.VARCHAR);
-			psCityObjectGroup.setNull(5, Types.VARCHAR);
+			preparedStatement.setNull(4, Types.VARCHAR);
+			preparedStatement.setNull(5, Types.VARCHAR);
 		}
 
 		// grp:usage
 		if (cityObjectGroup.isSetUsage()) {
 			valueJoiner.join(cityObjectGroup.getUsage(), Code::getValue, Code::getCodeSpace);
-			psCityObjectGroup.setString(6, valueJoiner.result(0));
-			psCityObjectGroup.setString(7, valueJoiner.result(1));
+			preparedStatement.setString(6, valueJoiner.result(0));
+			preparedStatement.setString(7, valueJoiner.result(1));
 		} else {
-			psCityObjectGroup.setNull(6, Types.VARCHAR);
-			psCityObjectGroup.setNull(7, Types.VARCHAR);
+			preparedStatement.setNull(6, Types.VARCHAR);
+			preparedStatement.setNull(7, Types.VARCHAR);
 		}
 
 		// grp:geometry
@@ -150,21 +161,21 @@ public class DBCityObjectGroup implements DBImporter {
 		}
 
 		if (geometryId != 0)
-			psCityObjectGroup.setLong(8, geometryId);
+			preparedStatement.setLong(8, geometryId);
 		else
-			psCityObjectGroup.setNull(8, Types.NULL);
+			preparedStatement.setNull(8, Types.NULL);
 
 		if (geometryObject != null)
-			psCityObjectGroup.setObject(9, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
+			preparedStatement.setObject(9, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
 		else
-			psCityObjectGroup.setNull(9, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
+			preparedStatement.setNull(9, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
 
 		// objectclass id
 		if (hasObjectClassIdColumn)
-			psCityObjectGroup.setLong(10, featureType.getObjectClassId());
+			preparedStatement.setLong(10, featureType.getObjectClassId());
 
-		psCityObjectGroup.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.CITYOBJECTGROUP);		
 
@@ -210,19 +221,6 @@ public class DBCityObjectGroup implements DBImporter {
 			importer.delegateToADEImporter(cityObjectGroup, cityObjectGroupId, featureType);
 
 		return cityObjectGroupId;
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psCityObjectGroup.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psCityObjectGroup.close();
 	}
 
 }

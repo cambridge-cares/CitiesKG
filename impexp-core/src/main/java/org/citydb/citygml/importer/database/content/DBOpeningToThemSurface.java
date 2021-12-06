@@ -42,38 +42,30 @@ import org.citydb.util.CoreConstants;
 import org.citygml4j.model.citygml.building.AbstractOpening;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 
-public class DBOpeningToThemSurface implements DBImporter {
-	private final CityGMLImportManager importer;
-	private final Connection batchConn;
-
-	private PreparedStatement psOpeningToThemSurface;
-	private int batchCounter;
-
-	private String PREFIX_ONTOCITYGML;
-	private String IRI_GRAPH_BASE;
-	private String IRI_GRAPH_OBJECT;
-	private static final String IRI_GRAPH_OBJECT_REL = "openingtothemsurface/";
+public class DBOpeningToThemSurface extends AbstractDBImporter {
 
 	public DBOpeningToThemSurface(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
-		this.importer = importer;
-		this.batchConn = batchConn;
-
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-
-		String stmt = "insert into " + schema + ".opening_to_them_surface (opening_id, thematic_surface_id) values " +
-				"(?, ?)";
-
-		// Modification for SPARQL
-		if (importer.isBlazegraph()) {
-			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
-			IRI_GRAPH_BASE = importer.getGraphBaseIri();
-			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
-			stmt = getSPARQLStatement();
-		}
-		psOpeningToThemSurface = batchConn.prepareStatement(stmt);
+		super(batchConn, config, importer);
 	}
 
-	private String getSPARQLStatement(){
+	@Override
+	protected String getTableName() {
+		return TableEnum.OPENING_TO_THEM_SURFACE.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "openingtothemsurface/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".opening_to_them_surface (opening_id, thematic_surface_id) values " +
+				"(?, ?)";
+	}
+
+	@Override
+	protected String getSPARQLStatement() {
 		String param = "  ?;";
 		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
 				"BASE <" + IRI_GRAPH_BASE + ">" +
@@ -88,10 +80,10 @@ public class DBOpeningToThemSurface implements DBImporter {
 
 	protected void doImport(long openingId, long thematicSurfaceId) throws CityGMLImportException, SQLException {
 
-		psOpeningToThemSurface.setLong(1, openingId);
-		psOpeningToThemSurface.setLong(2, thematicSurfaceId);
+		preparedStatement.setLong(1, openingId);
+		preparedStatement.setLong(2, thematicSurfaceId);
 
-		psOpeningToThemSurface.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.OPENING_TO_THEM_SURFACE);
 	}
@@ -100,26 +92,13 @@ public class DBOpeningToThemSurface implements DBImporter {
 
 		int index = 0;
 
-		psOpeningToThemSurface.setURL(++index, openingURL);
-		psOpeningToThemSurface.setURL(++index, thematicSurfaceURL);
-		psOpeningToThemSurface.setURL(++index, openingURL);
-		psOpeningToThemSurface.addBatch();
+		preparedStatement.setURL(++index, openingURL);
+		preparedStatement.setURL(++index, thematicSurfaceURL);
+		preparedStatement.setURL(++index, openingURL);
+		preparedStatement.addBatch();
 
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.OPENING_TO_THEM_SURFACE);
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psOpeningToThemSurface.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psOpeningToThemSurface.close();
 	}
 
 }

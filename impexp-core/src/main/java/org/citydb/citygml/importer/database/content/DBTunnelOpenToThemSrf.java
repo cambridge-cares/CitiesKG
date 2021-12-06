@@ -35,42 +35,40 @@ import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
 import org.citydb.database.schema.TableEnum;
 
-public class DBTunnelOpenToThemSrf implements DBImporter {
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psTunnelOpenToThemSrf;
-	private int batchCounter;
+public class DBTunnelOpenToThemSrf extends AbstractDBImporter {
 
 	public DBTunnelOpenToThemSrf(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
-		this.importer = importer;
+		super(batchConn, config, importer);
+	}
 
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
+	@Override
+	protected String getTableName() {
+		return TableEnum.TUNNEL_OPEN_TO_THEM_SRF.getName();
+	}
 
-		String stmt = "insert into " + schema + ".tunnel_open_to_them_srf (tunnel_opening_id, tunnel_thematic_surface_id) values " +
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "tunnelopentothemsrf/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".tunnel_open_to_them_srf (tunnel_opening_id, tunnel_thematic_surface_id) values " +
 				"(?, ?)";
-		psTunnelOpenToThemSrf = batchConn.prepareStatement(stmt);
+	}
+
+	@Override
+	protected String getSPARQLStatement() {
+		return "NOT IMPLEMENTED.";
 	}
 
 	protected void doImport(long openingId, long thematicSurfaceId) throws CityGMLImportException, SQLException {
-		psTunnelOpenToThemSrf.setLong(1, openingId);
-		psTunnelOpenToThemSrf.setLong(2, thematicSurfaceId);
+		preparedStatement.setLong(1, openingId);
+		preparedStatement.setLong(2, thematicSurfaceId);
 
-		psTunnelOpenToThemSrf.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.TUNNEL_OPEN_TO_THEM_SRF);
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psTunnelOpenToThemSrf.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psTunnelOpenToThemSrf.close();
 	}
 
 }

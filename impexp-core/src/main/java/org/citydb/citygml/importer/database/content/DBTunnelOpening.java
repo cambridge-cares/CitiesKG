@@ -47,41 +47,47 @@ import org.citygml4j.model.citygml.tunnel.AbstractBoundarySurface;
 import org.citygml4j.model.citygml.tunnel.AbstractOpening;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
 
-public class DBTunnelOpening implements DBImporter {
-	private final Connection batchConn;
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psOpening;
+public class DBTunnelOpening extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
-	private DBSurfaceGeometry surfaceGeometryImporter;
 	private GeometryConverter geometryConverter;
 	private DBImplicitGeometry implicitGeometryImporter;
 	private DBTunnelOpenToThemSrf openingToThemSurfaceImporter;
 	private AttributeValueJoiner valueJoiner;
-	private int batchCounter;
-
 	private boolean affineTransformation;
 
 	public DBTunnelOpening(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.batchConn = batchConn;
-		this.importer = importer;
-
+		super(batchConn, config, importer);
 		affineTransformation = config.getProject().getImporter().getAffineTransformation().isEnabled();
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-
-		String stmt = "insert into " + schema + ".tunnel_opening (id, objectclass_id, lod3_multi_surface_id, lod4_multi_surface_id, " +
-				"lod3_implicit_rep_id, lod4_implicit_rep_id, " +
-				"lod3_implicit_ref_point, lod4_implicit_ref_point, " +
-				"lod3_implicit_transformation, lod4_implicit_transformation) values " +
-				"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-		psOpening = batchConn.prepareStatement(stmt);
-
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
 		implicitGeometryImporter = importer.getImporter(DBImplicitGeometry.class);
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
 		openingToThemSurfaceImporter = importer.getImporter(DBTunnelOpenToThemSrf.class);
 		geometryConverter = importer.getGeometryConverter();
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	@Override
+	protected String getTableName() {
+		return TableEnum.TUNNEL_OPENING.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "tunnelopening/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".tunnel_opening (id, objectclass_id, lod3_multi_surface_id, lod4_multi_surface_id, " +
+				"lod3_implicit_rep_id, lod4_implicit_rep_id, " +
+				"lod3_implicit_ref_point, lod4_implicit_ref_point, " +
+				"lod3_implicit_transformation, lod4_implicit_transformation) values " +
+				"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	}
+
+	@Override
+	protected String getSPARQLStatement() {
+		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(AbstractOpening opening) throws CityGMLImportException, SQLException {
@@ -98,46 +104,16 @@ public class DBTunnelOpening implements DBImporter {
 
 		// import opening information
 		// primary id
-		psOpening.setLong(1, openingId);
+		preparedStatement.setLong(1, openingId);
 
 		// objectclass id
-		psOpening.setInt(2, featureType.getObjectClassId());
+		preparedStatement.setInt(2, featureType.getObjectClassId());
 
 		// tun:lodXMultiSurface
-		for (int i = 0; i < 2; i++) {
-			MultiSurfaceProperty multiSurfaceProperty = null;
-			long multiSurfaceId = 0;
-
-			switch (i) {
-			case 0:
-				multiSurfaceProperty = opening.getLod3MultiSurface();
-				break;
-			case 1:
-				multiSurfaceProperty = opening.getLod4MultiSurface();
-				break;
-			}
-
-			if (multiSurfaceProperty != null) {
-				if (multiSurfaceProperty.isSetMultiSurface()) {
-					multiSurfaceId = surfaceGeometryImporter.doImport(multiSurfaceProperty.getMultiSurface(), openingId);
-					multiSurfaceProperty.unsetMultiSurface();
-				} else {
-					String href = multiSurfaceProperty.getHref();
-					if (href != null && href.length() != 0) {
-						importer.propagateXlink(new DBXlinkSurfaceGeometry(
-								TableEnum.TUNNEL_OPENING.getName(),
-								openingId, 
-								href, 
-								"lod" + (i + 3) + "_multi_surface_id"));
-					}
-				}
-			}
-
-			if (multiSurfaceId != 0)
-				psOpening.setLong(3 + i, multiSurfaceId);
-			else
-				psOpening.setNull(3 + i, Types.NULL);
-		}
+		importSurfaceGeometryProperties(new MultiSurfaceProperty[]{
+				opening.getLod3MultiSurface(),
+				opening.getLod4MultiSurface()
+		}, new int[]{3, 4}, "_multi_surface_id", 3);
 
 		// tun:lodXImplicitRepresentation
 		for (int i = 0; i < 2; i++) {
@@ -178,23 +154,23 @@ public class DBTunnelOpening implements DBImporter {
 			}
 
 			if (implicitId != 0)
-				psOpening.setLong(5 + i, implicitId);
+				preparedStatement.setLong(5 + i, implicitId);
 			else
-				psOpening.setNull(5 + i, Types.NULL);
+				preparedStatement.setNull(5 + i, Types.NULL);
 
 			if (pointGeom != null)
-				psOpening.setObject(7 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
+				preparedStatement.setObject(7 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
 			else
-				psOpening.setNull(7 + i, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
+				preparedStatement.setNull(7 + i, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 						importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
 
 			if (matrixString != null)
-				psOpening.setString(9 + i, matrixString);
+				preparedStatement.setString(9 + i, matrixString);
 			else
-				psOpening.setNull(9 + i, Types.VARCHAR);
+				preparedStatement.setNull(9 + i, Types.VARCHAR);
 		}
 
-		psOpening.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.TUNNEL_OPENING);
 
@@ -206,19 +182,6 @@ public class DBTunnelOpening implements DBImporter {
 			importer.delegateToADEImporter(opening, openingId, featureType);
 
 		return openingId;
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psOpening.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psOpening.close();
 	}
 
 }

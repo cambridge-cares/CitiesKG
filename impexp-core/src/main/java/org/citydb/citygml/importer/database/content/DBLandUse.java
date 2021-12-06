@@ -28,11 +28,9 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
 import org.citydb.config.Config;
@@ -42,35 +40,48 @@ import org.citygml4j.model.citygml.landuse.LandUse;
 import org.citygml4j.model.gml.basicTypes.Code;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
 
-public class DBLandUse implements DBImporter {
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psLandUse;
+public class DBLandUse extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
-	private DBSurfaceGeometry surfaceGeometryImporter;
 	private AttributeValueJoiner valueJoiner;
 
 	private boolean hasObjectClassIdColumn;
-	private int batchCounter;
 
 	public DBLandUse(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.importer = importer;
-
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
-
-		String stmt = "insert into " + schema + ".land_use (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
-				"lod0_multi_surface_id, lod1_multi_surface_id, lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id" +
-				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
-				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
-				(hasObjectClassIdColumn ? ", ?)" : ")");
-		psLandUse = batchConn.prepareStatement(stmt);
-
+		super(batchConn, config, importer);
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
 		valueJoiner = importer.getAttributeValueJoiner();
 	}
 
+	@Override
+	protected void preconstructor(Config config) {
+		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
+	}
+
+	@Override
+	protected String getTableName() {
+		return TableEnum.LAND_USE.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "landuse/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".land_use (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
+				"lod0_multi_surface_id, lod1_multi_surface_id, lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id" +
+				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
+				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
+				(hasObjectClassIdColumn ? ", ?)" : ")");
+	}
+
+	@Override
+	protected String getSPARQLStatement() {
+		return "NOT IMPLEMENTED.";
+	}
+	
 	protected long doImport(LandUse landUse) throws CityGMLImportException, SQLException {
 		FeatureType featureType = importer.getFeatureType(landUse);
 		if (featureType == null)
@@ -81,87 +92,51 @@ public class DBLandUse implements DBImporter {
 
 		// import land use information
 		// primary id
-		psLandUse.setLong(1, landUseId);
+		preparedStatement.setLong(1, landUseId);
 
 		// luse:class
 		if (landUse.isSetClazz() && landUse.getClazz().isSetValue()) {
-			psLandUse.setString(2, landUse.getClazz().getValue());
-			psLandUse.setString(3, landUse.getClazz().getCodeSpace());
+			preparedStatement.setString(2, landUse.getClazz().getValue());
+			preparedStatement.setString(3, landUse.getClazz().getCodeSpace());
 		} else {
-			psLandUse.setNull(2, Types.VARCHAR);
-			psLandUse.setNull(3, Types.VARCHAR);
+			preparedStatement.setNull(2, Types.VARCHAR);
+			preparedStatement.setNull(3, Types.VARCHAR);
 		}
 
 		// luse:function
 		if (landUse.isSetFunction()) {
 			valueJoiner.join(landUse.getFunction(), Code::getValue, Code::getCodeSpace);
-			psLandUse.setString(4, valueJoiner.result(0));
-			psLandUse.setString(5, valueJoiner.result(1));
+			preparedStatement.setString(4, valueJoiner.result(0));
+			preparedStatement.setString(5, valueJoiner.result(1));
 		} else {
-			psLandUse.setNull(4, Types.VARCHAR);
-			psLandUse.setNull(5, Types.VARCHAR);
+			preparedStatement.setNull(4, Types.VARCHAR);
+			preparedStatement.setNull(5, Types.VARCHAR);
 		}
 
 		// luse:usage
 		if (landUse.isSetUsage()) {
 			valueJoiner.join(landUse.getUsage(), Code::getValue, Code::getCodeSpace);
-			psLandUse.setString(6, valueJoiner.result(0));
-			psLandUse.setString(7, valueJoiner.result(1));
+			preparedStatement.setString(6, valueJoiner.result(0));
+			preparedStatement.setString(7, valueJoiner.result(1));
 		} else {
-			psLandUse.setNull(6, Types.VARCHAR);
-			psLandUse.setNull(7, Types.VARCHAR);
+			preparedStatement.setNull(6, Types.VARCHAR);
+			preparedStatement.setNull(7, Types.VARCHAR);
 		}
 
-		// luse:lodXMultiSurface
-		for (int i = 0; i < 5; i++) {
-			MultiSurfaceProperty multiSurfaceProperty = null;
-			long multiGeometryId = 0;
-
-			switch (i) {
-			case 0:
-				multiSurfaceProperty = landUse.getLod0MultiSurface();
-				break;
-			case 1:
-				multiSurfaceProperty = landUse.getLod1MultiSurface();
-				break;
-			case 2:
-				multiSurfaceProperty = landUse.getLod2MultiSurface();
-				break;
-			case 3:
-				multiSurfaceProperty = landUse.getLod3MultiSurface();
-				break;
-			case 4:
-				multiSurfaceProperty = landUse.getLod4MultiSurface();
-				break;
-			}
-
-			if (multiSurfaceProperty != null) {
-				if (multiSurfaceProperty.isSetMultiSurface()) {
-					multiGeometryId = surfaceGeometryImporter.doImport(multiSurfaceProperty.getMultiSurface(), landUseId);
-					multiSurfaceProperty.unsetMultiSurface();
-				} else {
-					String href = multiSurfaceProperty.getHref();
-					if (href != null && href.length() != 0) {
-						importer.propagateXlink(new DBXlinkSurfaceGeometry(
-								TableEnum.LAND_USE.getName(),
-								landUseId, 
-								href, 
-								"lod" + i + "_multi_surface_id"));
-					}
-				}
-			}
-
-			if (multiGeometryId != 0)
-				psLandUse.setLong(8 + i, multiGeometryId);
-			else
-				psLandUse.setNull(8 + i, Types.NULL);
-		}
+		// brid:lodXMultiSurface
+		importSurfaceGeometryProperties(new MultiSurfaceProperty[]{
+				landUse.getLod0MultiSurface(),
+				landUse.getLod1MultiSurface(),
+				landUse.getLod2MultiSurface(),
+				landUse.getLod3MultiSurface(),
+				landUse.getLod4MultiSurface()
+		}, new int[]{0, 1, 2, 3, 4}, "_multi_surface_id", 8);
 
 		// objectclass id
 		if (hasObjectClassIdColumn)
-			psLandUse.setLong(13, featureType.getObjectClassId());
+			preparedStatement.setLong(13, featureType.getObjectClassId());
 
-		psLandUse.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.LAND_USE);
 		
@@ -170,20 +145,6 @@ public class DBLandUse implements DBImporter {
 			importer.delegateToADEImporter(landUse, landUseId, featureType);
 
 		return landUseId;
-	}
-
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psLandUse.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psLandUse.close();
 	}
 
 }

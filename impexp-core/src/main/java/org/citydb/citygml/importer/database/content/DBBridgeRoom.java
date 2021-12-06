@@ -28,12 +28,10 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
-import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
 import org.citydb.config.Config;
@@ -47,41 +45,52 @@ import org.citygml4j.model.citygml.bridge.IntBridgeInstallation;
 import org.citygml4j.model.citygml.bridge.IntBridgeInstallationProperty;
 import org.citygml4j.model.citygml.bridge.InteriorFurnitureProperty;
 import org.citygml4j.model.gml.basicTypes.Code;
-import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
-import org.citygml4j.model.gml.geometry.primitives.SolidProperty;
 
-public class DBBridgeRoom implements DBImporter {
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psRoom;
+public class DBBridgeRoom extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
-	private DBSurfaceGeometry surfaceGeometryImporter;
 	private DBBridgeThematicSurface thematicSurfaceImporter;
 	private DBBridgeFurniture bridgeFurnitureImporter;
 	private DBBridgeInstallation bridgeInstallationImporter;
 	private AttributeValueJoiner valueJoiner;
 	private boolean hasObjectClassIdColumn;
-	private int batchCounter;
 
 	public DBBridgeRoom(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.importer = importer;
-
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
-
-		String stmt = "insert into " + schema + ".bridge_room (id, class, class_codespace, function, function_codespace, usage, usage_codespace, bridge_id, " +
-				"lod4_multi_surface_id, lod4_solid_id" +
-				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
-				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
-				(hasObjectClassIdColumn ? ", ?)" : ")");
-		psRoom = batchConn.prepareStatement(stmt);
-
+		super(batchConn, config, importer);
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
 		thematicSurfaceImporter = importer.getImporter(DBBridgeThematicSurface.class);
 		bridgeFurnitureImporter = importer.getImporter(DBBridgeFurniture.class);
 		bridgeInstallationImporter = importer.getImporter(DBBridgeInstallation.class);
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	@Override
+	protected void preconstructor(Config config) {
+		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
+	}
+	
+	@Override
+	protected String getTableName() {
+		return TableEnum.BRIDGE_ROOM.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "bridgeroom/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".bridge_room (id, class, class_codespace, function, function_codespace, usage, usage_codespace, bridge_id, " +
+				"lod4_multi_surface_id, lod4_solid_id" +
+				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
+				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
+				(hasObjectClassIdColumn ? ", ?)" : ")");
+	}
+
+	@Override
+	protected String getSPARQLStatement() {
+		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(BridgeRoom bridgeRoom) throws CityGMLImportException, SQLException {
@@ -98,100 +107,54 @@ public class DBBridgeRoom implements DBImporter {
 
 		// import bridge room information
 		// primary id
-		psRoom.setLong(1, bridgeRoomId);
+		preparedStatement.setLong(1, bridgeRoomId);
 
 		// brid:class
 		if (bridgeRoom.isSetClazz() && bridgeRoom.getClazz().isSetValue()) {
-			psRoom.setString(2, bridgeRoom.getClazz().getValue());
-			psRoom.setString(3, bridgeRoom.getClazz().getCodeSpace());
+			preparedStatement.setString(2, bridgeRoom.getClazz().getValue());
+			preparedStatement.setString(3, bridgeRoom.getClazz().getCodeSpace());
 		} else {
-			psRoom.setNull(2, Types.VARCHAR);
-			psRoom.setNull(3, Types.VARCHAR);
+			preparedStatement.setNull(2, Types.VARCHAR);
+			preparedStatement.setNull(3, Types.VARCHAR);
 		}
 
 		// brid:function
 		if (bridgeRoom.isSetFunction()) {
 			valueJoiner.join(bridgeRoom.getFunction(), Code::getValue, Code::getCodeSpace);
-			psRoom.setString(4, valueJoiner.result(0));
-			psRoom.setString(5, valueJoiner.result(1));
+			preparedStatement.setString(4, valueJoiner.result(0));
+			preparedStatement.setString(5, valueJoiner.result(1));
 		} else {
-			psRoom.setNull(4, Types.VARCHAR);
-			psRoom.setNull(5, Types.VARCHAR);
+			preparedStatement.setNull(4, Types.VARCHAR);
+			preparedStatement.setNull(5, Types.VARCHAR);
 		}
 
 		// brid:usage
 		if (bridgeRoom.isSetUsage()) {
 			valueJoiner.join(bridgeRoom.getUsage(), Code::getValue, Code::getCodeSpace);
-			psRoom.setString(6, valueJoiner.result(0));
-			psRoom.setString(7, valueJoiner.result(1));
+			preparedStatement.setString(6, valueJoiner.result(0));
+			preparedStatement.setString(7, valueJoiner.result(1));
 		} else {
-			psRoom.setNull(6, Types.VARCHAR);
-			psRoom.setNull(7, Types.VARCHAR);
+			preparedStatement.setNull(6, Types.VARCHAR);
+			preparedStatement.setNull(7, Types.VARCHAR);
 		}
 
 		// parent bridge id
 		if (bridgeId != 0)
-			psRoom.setLong(8, bridgeId);
+			preparedStatement.setLong(8, bridgeId);
 		else
-			psRoom.setNull(8, Types.NULL);
+			preparedStatement.setNull(8, Types.NULL);
 
 		// brid:lod4MultiSurface
-		long geometryId = 0;
-
-		if (bridgeRoom.isSetLod4MultiSurface()) {
-			MultiSurfaceProperty multiSurfacePropery = bridgeRoom.getLod4MultiSurface();
-
-			if (multiSurfacePropery.isSetMultiSurface()) {
-				geometryId = surfaceGeometryImporter.doImport(multiSurfacePropery.getMultiSurface(), bridgeRoomId);
-				multiSurfacePropery.unsetMultiSurface();
-			} else {
-				String href = multiSurfacePropery.getHref();
-				if (href != null && href.length() != 0) {
-					importer.propagateXlink(new DBXlinkSurfaceGeometry(
-							TableEnum.BRIDGE_ROOM.getName(),
-							bridgeRoomId, 
-							href, 
-							"lod4_multi_surface_id"));
-				}
-			}
-		} 
-
-		if (geometryId != 0)
-			psRoom.setLong(9, geometryId);
-		else
-			psRoom.setNull(9, Types.NULL);
+		importSurfaceGeometryProperty(bridgeRoom.getLod4MultiSurface(), 4, "_multi_surface_id", 9);
 
 		// brid:lod4Solid
-		geometryId = 0;
-
-		if (bridgeRoom.isSetLod4Solid()) {
-			SolidProperty solidProperty = bridgeRoom.getLod4Solid();
-
-			if (solidProperty.isSetSolid()) {
-				geometryId = surfaceGeometryImporter.doImport(solidProperty.getSolid(), bridgeRoomId);
-				solidProperty.unsetSolid();
-			} else {
-				String href = solidProperty.getHref();
-				if (href != null && href.length() != 0) {
-					importer.propagateXlink(new DBXlinkSurfaceGeometry(
-							TableEnum.BRIDGE_ROOM.getName(),
-							bridgeRoomId, 
-							href, 
-							"lod4_solid_id"));
-				}
-			}
-		} 
-
-		if (geometryId != 0)
-			psRoom.setLong(10, geometryId);
-		else
-			psRoom.setNull(10, Types.NULL);
+		importSurfaceGeometryProperty(bridgeRoom.getLod4Solid(), 4, "_solid_id", 10);
 
 		// objectclass id
 		if (hasObjectClassIdColumn)
-			psRoom.setLong(11, featureType.getObjectClassId());
+			preparedStatement.setLong(11, featureType.getObjectClassId());
 
-		psRoom.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.BRIDGE_ROOM);
 
@@ -263,19 +226,6 @@ public class DBBridgeRoom implements DBImporter {
 			importer.delegateToADEImporter(bridgeRoom, bridgeRoomId, featureType);
 		
 		return bridgeRoomId;
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psRoom.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psRoom.close();
 	}
 
 }

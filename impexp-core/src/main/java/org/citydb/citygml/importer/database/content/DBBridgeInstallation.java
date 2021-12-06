@@ -54,46 +54,48 @@ import org.citygml4j.model.gml.basicTypes.Code;
 import org.citygml4j.model.gml.geometry.AbstractGeometry;
 import org.citygml4j.model.gml.geometry.GeometryProperty;
 
-public class DBBridgeInstallation implements DBImporter {
-	private final Connection batchConn;
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psBridgeInstallation;
+public class DBBridgeInstallation extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
 	private DBBridgeThematicSurface thematicSurfaceImporter;
-	private DBSurfaceGeometry surfaceGeometryImporter;
 	private GeometryConverter geometryConverter;
 	private DBImplicitGeometry implicitGeometryImporter;
 	private AttributeValueJoiner valueJoiner;
-	private int batchCounter;
-
 	private boolean affineTransformation;
-	private int nullGeometryType;
-	private String nullGeometryTypeName;
 
 	public DBBridgeInstallation(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.batchConn = batchConn;
-		this.importer = importer;
-
+		super(batchConn, config, importer);
 		affineTransformation = config.getProject().getImporter().getAffineTransformation().isEnabled();
-		nullGeometryType = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType();
-		nullGeometryTypeName = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName();
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-
-		String stmt = "insert into " + schema + ".bridge_installation (id, objectclass_id, class, class_codespace, function, function_codespace, usage, usage_codespace, bridge_id, bridge_room_id, " +
-				"lod2_brep_id, lod3_brep_id, lod4_brep_id, lod2_other_geom, lod3_other_geom, lod4_other_geom, " +
-				"lod2_implicit_rep_id, lod3_implicit_rep_id, lod4_implicit_rep_id, " +
-				"lod2_implicit_ref_point, lod3_implicit_ref_point, lod4_implicit_ref_point, " +
-				"lod2_implicit_transformation, lod3_implicit_transformation, lod4_implicit_transformation) values " +
-				"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-		psBridgeInstallation = batchConn.prepareStatement(stmt);
-
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
 		implicitGeometryImporter = importer.getImporter(DBImplicitGeometry.class);
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
 		thematicSurfaceImporter = importer.getImporter(DBBridgeThematicSurface.class);
 		geometryConverter = importer.getGeometryConverter();
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	@Override
+	protected String getTableName() {
+		return TableEnum.BRIDGE_INSTALLATION.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "bridgeinstallation/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".bridge_installation (id, objectclass_id, class, class_codespace, function, function_codespace, usage, usage_codespace, bridge_id, bridge_room_id, " +
+				"lod2_brep_id, lod3_brep_id, lod4_brep_id, lod2_other_geom, lod3_other_geom, lod4_other_geom, " +
+				"lod2_implicit_rep_id, lod3_implicit_rep_id, lod4_implicit_rep_id, " +
+				"lod2_implicit_ref_point, lod3_implicit_ref_point, lod4_implicit_ref_point, " +
+				"lod2_implicit_transformation, lod3_implicit_transformation, lod4_implicit_transformation) values " +
+				"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	}
+
+	@Override
+	protected String getSPARQLStatement() {
+		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(BridgeInstallation bridgeInstallation) throws CityGMLImportException, SQLException {
@@ -114,50 +116,50 @@ public class DBBridgeInstallation implements DBImporter {
 
 		// import bridge installation information
 		// primary id
-		psBridgeInstallation.setLong(1, bridgeInstallationId);
+		preparedStatement.setLong(1, bridgeInstallationId);
 
 		// objectclass id
-		psBridgeInstallation.setLong(2, featureType.getObjectClassId());
+		preparedStatement.setLong(2, featureType.getObjectClassId());
 
 		// brid:class
 		if (bridgeInstallation.isSetClazz() && bridgeInstallation.getClazz().isSetValue()) {
-			psBridgeInstallation.setString(3, bridgeInstallation.getClazz().getValue());
-			psBridgeInstallation.setString(4, bridgeInstallation.getClazz().getCodeSpace());
+			preparedStatement.setString(3, bridgeInstallation.getClazz().getValue());
+			preparedStatement.setString(4, bridgeInstallation.getClazz().getCodeSpace());
 		} else {
-			psBridgeInstallation.setNull(3, Types.VARCHAR);
-			psBridgeInstallation.setNull(4, Types.VARCHAR);
+			preparedStatement.setNull(3, Types.VARCHAR);
+			preparedStatement.setNull(4, Types.VARCHAR);
 		}
 
 		// brid:function
 		if (bridgeInstallation.isSetFunction()) {
 			valueJoiner.join(bridgeInstallation.getFunction(), Code::getValue, Code::getCodeSpace);
-			psBridgeInstallation.setString(5, valueJoiner.result(0));
-			psBridgeInstallation.setString(6, valueJoiner.result(1));
+			preparedStatement.setString(5, valueJoiner.result(0));
+			preparedStatement.setString(6, valueJoiner.result(1));
 		} else {
-			psBridgeInstallation.setNull(5, Types.VARCHAR);
-			psBridgeInstallation.setNull(6, Types.VARCHAR);
+			preparedStatement.setNull(5, Types.VARCHAR);
+			preparedStatement.setNull(6, Types.VARCHAR);
 		}
 
 		// brid:usage
 		if (bridgeInstallation.isSetUsage()) {
 			valueJoiner.join(bridgeInstallation.getUsage(), Code::getValue, Code::getCodeSpace);
-			psBridgeInstallation.setString(7, valueJoiner.result(0));
-			psBridgeInstallation.setString(8, valueJoiner.result(1));
+			preparedStatement.setString(7, valueJoiner.result(0));
+			preparedStatement.setString(8, valueJoiner.result(1));
 		} else {
-			psBridgeInstallation.setNull(7, Types.VARCHAR);
-			psBridgeInstallation.setNull(8, Types.VARCHAR);
+			preparedStatement.setNull(7, Types.VARCHAR);
+			preparedStatement.setNull(8, Types.VARCHAR);
 		}
 
 		// parentId
 		if (parent instanceof AbstractBridge) {
-			psBridgeInstallation.setLong(9, parentId);
-			psBridgeInstallation.setNull(10, Types.NULL);
+			preparedStatement.setLong(9, parentId);
+			preparedStatement.setNull(10, Types.NULL);
 		} else if (parent instanceof BridgeRoom) {
-			psBridgeInstallation.setNull(9, Types.NULL);
-			psBridgeInstallation.setLong(10, parentId);
+			preparedStatement.setNull(9, Types.NULL);
+			preparedStatement.setLong(10, parentId);
 		} else {
-			psBridgeInstallation.setNull(9, Types.NULL);
-			psBridgeInstallation.setNull(10, Types.NULL);
+			preparedStatement.setNull(9, Types.NULL);
+			preparedStatement.setNull(10, Types.NULL);
 		}
 
 		// brid:lodXGeometry
@@ -202,14 +204,14 @@ public class DBBridgeInstallation implements DBImporter {
 			}
 
 			if (geometryId != 0)
-				psBridgeInstallation.setLong(11 + i, geometryId);
+				preparedStatement.setLong(11 + i, geometryId);
 			else
-				psBridgeInstallation.setNull(11 + i, Types.NULL);
+				preparedStatement.setNull(11 + i, Types.NULL);
 
 			if (geometryObject != null)
-				psBridgeInstallation.setObject(14 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
+				preparedStatement.setObject(14 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
 			else
-				psBridgeInstallation.setNull(14 + i, nullGeometryType, nullGeometryTypeName);
+				preparedStatement.setNull(14 + i, nullGeometryType, nullGeometryTypeName);
 		}
 
 		// brid:lodXImplicitRepresentation
@@ -254,22 +256,22 @@ public class DBBridgeInstallation implements DBImporter {
 			}
 
 			if (implicitId != 0)
-				psBridgeInstallation.setLong(17 + i, implicitId);
+				preparedStatement.setLong(17 + i, implicitId);
 			else
-				psBridgeInstallation.setNull(17 + i, Types.NULL);
+				preparedStatement.setNull(17 + i, Types.NULL);
 
 			if (pointGeom != null)
-				psBridgeInstallation.setObject(20 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
+				preparedStatement.setObject(20 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
 			else
-				psBridgeInstallation.setNull(20 + i, nullGeometryType, nullGeometryTypeName);
+				preparedStatement.setNull(20 + i, nullGeometryType, nullGeometryTypeName);
 
 			if (matrixString != null)
-				psBridgeInstallation.setString(23 + i, matrixString);
+				preparedStatement.setString(23 + i, matrixString);
 			else
-				psBridgeInstallation.setNull(23 + i, Types.VARCHAR);
+				preparedStatement.setNull(23 + i, Types.VARCHAR);
 		}
 
-		psBridgeInstallation.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.BRIDGE_INSTALLATION);
 
@@ -311,57 +313,57 @@ public class DBBridgeInstallation implements DBImporter {
 
 		// import interior bridge installation information
 		// primary id
-		psBridgeInstallation.setLong(1, intBridgeInstallationId);
+		preparedStatement.setLong(1, intBridgeInstallationId);
 
 		// objectclass id
-		psBridgeInstallation.setLong(2, featureType.getObjectClassId());
+		preparedStatement.setLong(2, featureType.getObjectClassId());
 
 		// brid:class
 		if (intBridgeInstallation.isSetClazz() && intBridgeInstallation.getClazz().isSetValue()) {
-			psBridgeInstallation.setString(3, intBridgeInstallation.getClazz().getValue());
-			psBridgeInstallation.setString(4, intBridgeInstallation.getClazz().getCodeSpace());
+			preparedStatement.setString(3, intBridgeInstallation.getClazz().getValue());
+			preparedStatement.setString(4, intBridgeInstallation.getClazz().getCodeSpace());
 		} else {
-			psBridgeInstallation.setNull(3, Types.VARCHAR);
-			psBridgeInstallation.setNull(4, Types.VARCHAR);
+			preparedStatement.setNull(3, Types.VARCHAR);
+			preparedStatement.setNull(4, Types.VARCHAR);
 		}
 
 		// brid:function
 		if (intBridgeInstallation.isSetFunction()) {
 			valueJoiner.join(intBridgeInstallation.getFunction(), Code::getValue, Code::getCodeSpace);
-			psBridgeInstallation.setString(5, valueJoiner.result(0));
-			psBridgeInstallation.setString(6, valueJoiner.result(1));
+			preparedStatement.setString(5, valueJoiner.result(0));
+			preparedStatement.setString(6, valueJoiner.result(1));
 		} else {
-			psBridgeInstallation.setNull(5, Types.VARCHAR);
-			psBridgeInstallation.setNull(6, Types.VARCHAR);
+			preparedStatement.setNull(5, Types.VARCHAR);
+			preparedStatement.setNull(6, Types.VARCHAR);
 		}
 
 		// brid:usage
 		if (intBridgeInstallation.isSetUsage()) {
 			valueJoiner.join(intBridgeInstallation.getUsage(), Code::getValue, Code::getCodeSpace);
-			psBridgeInstallation.setString(7, valueJoiner.result(0));
-			psBridgeInstallation.setString(8, valueJoiner.result(1));
+			preparedStatement.setString(7, valueJoiner.result(0));
+			preparedStatement.setString(8, valueJoiner.result(1));
 		} else {
-			psBridgeInstallation.setNull(7, Types.VARCHAR);
-			psBridgeInstallation.setNull(8, Types.VARCHAR);
+			preparedStatement.setNull(7, Types.VARCHAR);
+			preparedStatement.setNull(8, Types.VARCHAR);
 		}
 
 		// parentId
 		if (parent instanceof AbstractBridge) {
-			psBridgeInstallation.setLong(9, parentId);
-			psBridgeInstallation.setNull(10, Types.NULL);
+			preparedStatement.setLong(9, parentId);
+			preparedStatement.setNull(10, Types.NULL);
 		} else if (parent instanceof BridgeRoom) {
-			psBridgeInstallation.setNull(9, Types.NULL);
-			psBridgeInstallation.setLong(10, parentId);
+			preparedStatement.setNull(9, Types.NULL);
+			preparedStatement.setLong(10, parentId);
 		} else {
-			psBridgeInstallation.setNull(9, Types.NULL);
-			psBridgeInstallation.setNull(10, Types.NULL);
+			preparedStatement.setNull(9, Types.NULL);
+			preparedStatement.setNull(10, Types.NULL);
 		}	
 
 		// brid:lod4Geometry
-		psBridgeInstallation.setNull(11, Types.NULL);
-		psBridgeInstallation.setNull(12, Types.NULL);
-		psBridgeInstallation.setNull(14, nullGeometryType, nullGeometryTypeName);
-		psBridgeInstallation.setNull(15, nullGeometryType, nullGeometryTypeName);
+		preparedStatement.setNull(11, Types.NULL);
+		preparedStatement.setNull(12, Types.NULL);
+		preparedStatement.setNull(14, nullGeometryType, nullGeometryTypeName);
+		preparedStatement.setNull(15, nullGeometryType, nullGeometryTypeName);
 
 		long geometryId = 0;
 		GeometryObject geometryObject = null;
@@ -392,22 +394,22 @@ public class DBBridgeInstallation implements DBImporter {
 		}
 
 		if (geometryId != 0)
-			psBridgeInstallation.setLong(13, geometryId);
+			preparedStatement.setLong(13, geometryId);
 		else
-			psBridgeInstallation.setNull(13, Types.NULL);
+			preparedStatement.setNull(13, Types.NULL);
 
 		if (geometryObject != null)
-			psBridgeInstallation.setObject(16, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
+			preparedStatement.setObject(16, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
 		else
-			psBridgeInstallation.setNull(16, nullGeometryType, nullGeometryTypeName);
+			preparedStatement.setNull(16, nullGeometryType, nullGeometryTypeName);
 
 		// brid:lod4ImplicitRepresentation
-		psBridgeInstallation.setNull(17, Types.NULL);
-		psBridgeInstallation.setNull(18, Types.NULL);
-		psBridgeInstallation.setNull(20, nullGeometryType, nullGeometryTypeName);
-		psBridgeInstallation.setNull(21, nullGeometryType, nullGeometryTypeName);
-		psBridgeInstallation.setNull(23, Types.VARCHAR);
-		psBridgeInstallation.setNull(24, Types.VARCHAR);
+		preparedStatement.setNull(17, Types.NULL);
+		preparedStatement.setNull(18, Types.NULL);
+		preparedStatement.setNull(20, nullGeometryType, nullGeometryTypeName);
+		preparedStatement.setNull(21, nullGeometryType, nullGeometryTypeName);
+		preparedStatement.setNull(23, Types.VARCHAR);
+		preparedStatement.setNull(24, Types.VARCHAR);
 
 		GeometryObject pointGeom = null;
 		String matrixString = null;
@@ -438,21 +440,21 @@ public class DBBridgeInstallation implements DBImporter {
 		}
 
 		if (implicitId != 0)
-			psBridgeInstallation.setLong(19, implicitId);
+			preparedStatement.setLong(19, implicitId);
 		else
-			psBridgeInstallation.setNull(19, Types.NULL);
+			preparedStatement.setNull(19, Types.NULL);
 
 		if (pointGeom != null)
-			psBridgeInstallation.setObject(22, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
+			preparedStatement.setObject(22, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
 		else
-			psBridgeInstallation.setNull(22, nullGeometryType, nullGeometryTypeName);
+			preparedStatement.setNull(22, nullGeometryType, nullGeometryTypeName);
 
 		if (matrixString != null)
-			psBridgeInstallation.setString(25, matrixString);
+			preparedStatement.setString(25, matrixString);
 		else
-			psBridgeInstallation.setNull(25, Types.VARCHAR);
+			preparedStatement.setNull(25, Types.VARCHAR);
 
-		psBridgeInstallation.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.BRIDGE_INSTALLATION);
 
@@ -482,19 +484,6 @@ public class DBBridgeInstallation implements DBImporter {
 			importer.delegateToADEImporter(intBridgeInstallation, intBridgeInstallationId, featureType);
 
 		return intBridgeInstallationId;
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psBridgeInstallation.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psBridgeInstallation.close();
 	}
 
 }

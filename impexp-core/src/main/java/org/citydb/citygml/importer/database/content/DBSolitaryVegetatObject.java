@@ -47,34 +47,43 @@ import org.citygml4j.model.gml.basicTypes.Code;
 import org.citygml4j.model.gml.geometry.AbstractGeometry;
 import org.citygml4j.model.gml.geometry.GeometryProperty;
 
-public class DBSolitaryVegetatObject implements DBImporter {
-	private final Connection batchConn;
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psSolitVegObject;
+public class DBSolitaryVegetatObject extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
-	private DBSurfaceGeometry surfaceGeometryImporter;
 	private GeometryConverter geometryConverter;
 	private DBImplicitGeometry implicitGeometryImporter;
 	private AttributeValueJoiner valueJoiner;
-	private int batchCounter;
 
 	private boolean hasObjectClassIdColumn;
 	private boolean affineTransformation;
-	private int nullGeometryType;
-	private String nullGeometryTypeName;
 
 	public DBSolitaryVegetatObject(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.batchConn = batchConn;
-		this.importer = importer;
-
+		super(batchConn, config, importer);
 		affineTransformation = config.getProject().getImporter().getAffineTransformation().isEnabled();
-		nullGeometryType = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType();
-		nullGeometryTypeName = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName();
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
+		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
+		cityObjectImporter = importer.getImporter(DBCityObject.class);
+		implicitGeometryImporter = importer.getImporter(DBImplicitGeometry.class);
+		geometryConverter = importer.getGeometryConverter();
+		valueJoiner = importer.getAttributeValueJoiner();
+	}
 
-		String stmt = "insert into " + schema + ".solitary_vegetat_object (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
+	@Override
+	protected void preconstructor(Config config) {
+		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
+	}
+	
+	@Override
+	protected String getTableName() {
+		return TableEnum.SOLITARY_VEGETAT_OBJECT.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "solitaryvegetatobject/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".solitary_vegetat_object (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
 				"species, species_codespace, height, height_unit, trunk_diameter, trunk_diameter_unit, crown_diameter, crown_diameter_unit, " +
 				"lod1_brep_id, lod2_brep_id, lod3_brep_id, lod4_brep_id, " +
 				"lod1_other_geom, lod2_other_geom, lod3_other_geom, lod4_other_geom, " +
@@ -84,13 +93,11 @@ public class DBSolitaryVegetatObject implements DBImporter {
 				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
-		psSolitVegObject = batchConn.prepareStatement(stmt);
+	}
 
-		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
-		cityObjectImporter = importer.getImporter(DBCityObject.class);
-		implicitGeometryImporter = importer.getImporter(DBImplicitGeometry.class);
-		geometryConverter = importer.getGeometryConverter();
-		valueJoiner = importer.getAttributeValueJoiner();
+	@Override
+	protected String getSPARQLStatement() {
+		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(SolitaryVegetationObject vegetationObject) throws CityGMLImportException, SQLException {
@@ -103,71 +110,71 @@ public class DBSolitaryVegetatObject implements DBImporter {
 
 		// import solitary vegetation object information
 		// primary id
-		psSolitVegObject.setLong(1, vegetationObjectId);
+		preparedStatement.setLong(1, vegetationObjectId);
 
 		// veg:class
 		if (vegetationObject.isSetClazz() && vegetationObject.getClazz().isSetValue()) {
-			psSolitVegObject.setString(2, vegetationObject.getClazz().getValue());
-			psSolitVegObject.setString(3, vegetationObject.getClazz().getCodeSpace());
+			preparedStatement.setString(2, vegetationObject.getClazz().getValue());
+			preparedStatement.setString(3, vegetationObject.getClazz().getCodeSpace());
 		} else {
-			psSolitVegObject.setNull(2, Types.VARCHAR);
-			psSolitVegObject.setNull(3, Types.VARCHAR);
+			preparedStatement.setNull(2, Types.VARCHAR);
+			preparedStatement.setNull(3, Types.VARCHAR);
 		}
 
 		// veg:function
 		if (vegetationObject.isSetFunction()) {
 			valueJoiner.join(vegetationObject.getFunction(), Code::getValue, Code::getCodeSpace);
-			psSolitVegObject.setString(4, valueJoiner.result(0));
-			psSolitVegObject.setString(5, valueJoiner.result(1));
+			preparedStatement.setString(4, valueJoiner.result(0));
+			preparedStatement.setString(5, valueJoiner.result(1));
 		} else {
-			psSolitVegObject.setNull(4, Types.VARCHAR);
-			psSolitVegObject.setNull(5, Types.VARCHAR);
+			preparedStatement.setNull(4, Types.VARCHAR);
+			preparedStatement.setNull(5, Types.VARCHAR);
 		}
 
 		// veg:usage
 		if (vegetationObject.isSetUsage()) {
 			valueJoiner.join(vegetationObject.getUsage(), Code::getValue, Code::getCodeSpace);
-			psSolitVegObject.setString(6, valueJoiner.result(0));
-			psSolitVegObject.setString(7, valueJoiner.result(1));
+			preparedStatement.setString(6, valueJoiner.result(0));
+			preparedStatement.setString(7, valueJoiner.result(1));
 		} else {
-			psSolitVegObject.setNull(6, Types.VARCHAR);
-			psSolitVegObject.setNull(7, Types.VARCHAR);
+			preparedStatement.setNull(6, Types.VARCHAR);
+			preparedStatement.setNull(7, Types.VARCHAR);
 		}
 
 		// veg:species
 		if (vegetationObject.isSetSpecies() && vegetationObject.getSpecies().isSetValue()) {
-			psSolitVegObject.setString(8, vegetationObject.getSpecies().getValue());
-			psSolitVegObject.setString(9, vegetationObject.getSpecies().getCodeSpace());
+			preparedStatement.setString(8, vegetationObject.getSpecies().getValue());
+			preparedStatement.setString(9, vegetationObject.getSpecies().getCodeSpace());
 		} else {
-			psSolitVegObject.setNull(8, Types.VARCHAR);
-			psSolitVegObject.setNull(9, Types.VARCHAR);
+			preparedStatement.setNull(8, Types.VARCHAR);
+			preparedStatement.setNull(9, Types.VARCHAR);
 		}
 
 		// veg:height
 		if (vegetationObject.isSetHeight() && vegetationObject.getHeight().isSetValue()) {
-			psSolitVegObject.setDouble(10, vegetationObject.getHeight().getValue());
-			psSolitVegObject.setString(11, vegetationObject.getHeight().getUom());
+			preparedStatement.setDouble(10, vegetationObject.getHeight().getValue());
+			preparedStatement.setString(11, vegetationObject.getHeight().getUom());
 		} else {
-			psSolitVegObject.setNull(10, Types.NULL);
-			psSolitVegObject.setNull(11, Types.VARCHAR);
+			preparedStatement.setNull(10, Types.NULL);
+			preparedStatement.setNull(11, Types.VARCHAR);
 		}
 
 		// veg:trunkDiameter
 		if (vegetationObject.isSetTrunkDiameter() && vegetationObject.getTrunkDiameter().isSetValue()) {
-			psSolitVegObject.setDouble(12, vegetationObject.getTrunkDiameter().getValue());
-			psSolitVegObject.setString(13, vegetationObject.getTrunkDiameter().getUom());
+			preparedStatement.setDouble(12, vegetationObject.getTrunkDiameter().getValue());
+			preparedStatement.setString(13, vegetationObject.getTrunkDiameter().getUom());
 		} else {
-			psSolitVegObject.setNull(12, Types.NULL);
-			psSolitVegObject.setNull(13, Types.VARCHAR);
+			preparedStatement.setNull(12, Types.NULL);
+			preparedStatement.setNull(13, Types.VARCHAR);
 		}
 
 		// veg:crownDiameter
 		if (vegetationObject.isSetCrownDiameter() && vegetationObject.getCrownDiameter().isSetValue()) {
-			psSolitVegObject.setDouble(14, vegetationObject.getCrownDiameter().getValue());
-			psSolitVegObject.setString(15, vegetationObject.getCrownDiameter().getUom());
+			preparedStatement.setDouble(14, vegetationObject.getCrownDiameter().getValue());
+			preparedStatement.setString(15, vegetationObject.getCrownDiameter().getUom());
 		} else {
-			psSolitVegObject.setNull(14, Types.NULL);
-			psSolitVegObject.setNull(15, Types.VARCHAR);
+			preparedStatement.setNull(14, Types.NULL);
+			preparedStatement.setNull(15, Types.VARCHAR);
 		}
 
 		// veg:lodXGeometry
@@ -215,14 +222,14 @@ public class DBSolitaryVegetatObject implements DBImporter {
 			}
 
 			if (geometryId != 0)
-				psSolitVegObject.setLong(16 + i, geometryId);
+				preparedStatement.setLong(16 + i, geometryId);
 			else
-				psSolitVegObject.setNull(16 + i, Types.NULL);
+				preparedStatement.setNull(16 + i, Types.NULL);
 
 			if (geometryObject != null)
-				psSolitVegObject.setObject(20 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
+				preparedStatement.setObject(20 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
 			else
-				psSolitVegObject.setNull(20 + i, nullGeometryType, nullGeometryTypeName);
+				preparedStatement.setNull(20 + i, nullGeometryType, nullGeometryTypeName);
 		}
 
 		// veg:lodXImplicitRepresentation
@@ -270,26 +277,26 @@ public class DBSolitaryVegetatObject implements DBImporter {
 			}
 
 			if (implicitId != 0)
-				psSolitVegObject.setLong(24 + i, implicitId);
+				preparedStatement.setLong(24 + i, implicitId);
 			else
-				psSolitVegObject.setNull(24 + i, Types.NULL);
+				preparedStatement.setNull(24 + i, Types.NULL);
 
 			if (pointGeom != null)
-				psSolitVegObject.setObject(28 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
+				preparedStatement.setObject(28 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
 			else
-				psSolitVegObject.setNull(28 + i, nullGeometryType, nullGeometryTypeName);
+				preparedStatement.setNull(28 + i, nullGeometryType, nullGeometryTypeName);
 
 			if (matrixString != null)
-				psSolitVegObject.setString(32 + i, matrixString);
+				preparedStatement.setString(32 + i, matrixString);
 			else
-				psSolitVegObject.setNull(32 + i, Types.VARCHAR);
+				preparedStatement.setNull(32 + i, Types.VARCHAR);
 		}
 
 		// objectclass id
 		if (hasObjectClassIdColumn)
-			psSolitVegObject.setLong(36, featureType.getObjectClassId());
+			preparedStatement.setLong(36, featureType.getObjectClassId());
 
-		psSolitVegObject.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.SOLITARY_VEGETAT_OBJECT);
 		
@@ -298,19 +305,6 @@ public class DBSolitaryVegetatObject implements DBImporter {
 			importer.delegateToADEImporter(vegetationObject, vegetationObjectId, featureType);
 
 		return vegetationObjectId;
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psSolitVegObject.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psSolitVegObject.close();
 	}
 
 }

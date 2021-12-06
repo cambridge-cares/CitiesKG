@@ -39,36 +39,30 @@ import org.citydb.config.Config;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 
-public class DBAppearToSurfaceData implements DBImporter {
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psAppearToSurfaceData;
-	private int batchCounter;
-	private String PREFIX_ONTOCITYGML;
-	private String IRI_GRAPH_BASE;
-	private String IRI_GRAPH_OBJECT;
-	private static final String IRI_GRAPH_OBJECT_REL = "appeartosurfacedata/";
-
+public class DBAppearToSurfaceData extends AbstractDBImporter {
 
 	public DBAppearToSurfaceData(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
-		this.importer = importer;
-
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-
-		String stmt = "insert into " + schema + ".appear_to_surface_data (surface_data_id, appearance_id) values " +
-				"(?, ?)";
-
-		if (importer.isBlazegraph()) {
-			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
-			IRI_GRAPH_BASE = importer.getGraphBaseIri();
-			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
-			stmt = getSPARQLStatement();
-		}
-
-		psAppearToSurfaceData = batchConn.prepareStatement(stmt);
+		super(batchConn,config,importer);
 	}
 
-	private String getSPARQLStatement(){
+	@Override
+	protected String getTableName() {
+		return TableEnum.APPEAR_TO_SURFACE_DATA.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "appeartosurfacedata/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".appear_to_surface_data (surface_data_id, appearance_id) values " +
+				"(?, ?)";
+	}
+
+	@Override
+	protected String getSPARQLStatement(){
 		String param = "  ?;";
 		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
 				"BASE <" + IRI_GRAPH_BASE + "> " +
@@ -82,7 +76,6 @@ public class DBAppearToSurfaceData implements DBImporter {
 		return stmt;
 	}
 
-
 	public void doImport(Object surfaceDataId, Object appearanceId) throws CityGMLImportException, SQLException {
 
 		int index = 0;
@@ -91,34 +84,21 @@ public class DBAppearToSurfaceData implements DBImporter {
 			try {
 				String uuid = importer.generateNewGmlId();
 				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
-				psAppearToSurfaceData.setURL(++index, url);
-				psAppearToSurfaceData.setURL(++index, (URL) surfaceDataId);
-				psAppearToSurfaceData.setURL(++index, (URL) appearanceId);
+				preparedStatement.setURL(++index, url);
+				preparedStatement.setURL(++index, (URL) surfaceDataId);
+				preparedStatement.setURL(++index, (URL) appearanceId);
 			} catch (MalformedURLException e) {
-				psAppearToSurfaceData.setObject(++index, NodeFactory.createBlankNode());
+				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
 			}
-    } else {
-      psAppearToSurfaceData.setLong(++index, (long) surfaceDataId);
-      psAppearToSurfaceData.setLong(++index, (long) appearanceId);
+		} else {
+			preparedStatement.setLong(++index, (long) surfaceDataId);
+			preparedStatement.setLong(++index, (long) appearanceId);
 		}
 
-
-		psAppearToSurfaceData.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.APPEAR_TO_SURFACE_DATA);
-	}
 
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psAppearToSurfaceData.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psAppearToSurfaceData.close();
 	}
 
 }

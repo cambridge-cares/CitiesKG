@@ -48,44 +48,51 @@ import org.citygml4j.model.gml.geometry.aggregates.MultiCurveProperty;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
 import org.citygml4j.model.gml.geometry.primitives.SolidProperty;
 
-public class DBWaterBody implements DBImporter {
-	private final Connection batchConn;
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psWaterBody;
+public class DBWaterBody extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
-	private DBSurfaceGeometry surfaceGeometryImporter;
 	private DBWaterBoundarySurface boundarySurfaceImporter;
 	private GeometryConverter geometryConverter;
 	private AttributeValueJoiner valueJoiner;
 
-	private int batchCounter;
 	private boolean hasObjectClassIdColumn;
-	private int nullGeometryType;
-	private String nullGeometryTypeName;
 
 	public DBWaterBody(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.batchConn = batchConn;
-		this.importer = importer;
-
-		nullGeometryType = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType();
-		nullGeometryTypeName = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName();
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
-
-		String stmt = "insert into " + schema + ".waterbody (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
-				"lod0_multi_curve, lod1_multi_curve, lod0_multi_surface_id, lod1_multi_surface_id, " +
-				"lod1_solid_id, lod2_solid_id, lod3_solid_id, lod4_solid_id" +
-				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
-				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
-				(hasObjectClassIdColumn ? ", ?)" : ")");
-		psWaterBody = batchConn.prepareStatement(stmt);
-
+		super(batchConn, config, importer);
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
 		boundarySurfaceImporter = importer.getImporter(DBWaterBoundarySurface.class);
 		geometryConverter = importer.getGeometryConverter();
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	@Override
+	protected void preconstructor(Config config) {
+		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
+	}
+	
+	@Override
+	protected String getTableName() {
+		return TableEnum.WATERBODY.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "waterbody/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".waterbody (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
+				"lod0_multi_curve, lod1_multi_curve, lod0_multi_surface_id, lod1_multi_surface_id, " +
+				"lod1_solid_id, lod2_solid_id, lod3_solid_id, lod4_solid_id" +
+				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
+				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
+				(hasObjectClassIdColumn ? ", ?)" : ")");
+	}
+
+	@Override
+	protected String getSPARQLStatement() {
+		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(WaterBody waterBody) throws CityGMLImportException, SQLException {
@@ -98,146 +105,62 @@ public class DBWaterBody implements DBImporter {
 
 		// import water body information
 		// primary id
-		psWaterBody.setLong(1, waterBodyId);
+		preparedStatement.setLong(1, waterBodyId);
 
 		// wtr:class
 		if (waterBody.isSetClazz() && waterBody.getClazz().isSetValue()) {
-			psWaterBody.setString(2, waterBody.getClazz().getValue());
-			psWaterBody.setString(3, waterBody.getClazz().getCodeSpace());
+			preparedStatement.setString(2, waterBody.getClazz().getValue());
+			preparedStatement.setString(3, waterBody.getClazz().getCodeSpace());
 		} else {
-			psWaterBody.setNull(2, Types.VARCHAR);
-			psWaterBody.setNull(3, Types.VARCHAR);
+			preparedStatement.setNull(2, Types.VARCHAR);
+			preparedStatement.setNull(3, Types.VARCHAR);
 		}
 
 		// wtr:function
 		if (waterBody.isSetFunction()) {
 			valueJoiner.join(waterBody.getFunction(), Code::getValue, Code::getCodeSpace);
-			psWaterBody.setString(4, valueJoiner.result(0));
-			psWaterBody.setString(5, valueJoiner.result(1));
+			preparedStatement.setString(4, valueJoiner.result(0));
+			preparedStatement.setString(5, valueJoiner.result(1));
 		} else {
-			psWaterBody.setNull(4, Types.VARCHAR);
-			psWaterBody.setNull(5, Types.VARCHAR);
+			preparedStatement.setNull(4, Types.VARCHAR);
+			preparedStatement.setNull(5, Types.VARCHAR);
 		}
 
 		// wtr:usage
 		if (waterBody.isSetUsage()) {
 			valueJoiner.join(waterBody.getUsage(), Code::getValue, Code::getCodeSpace);
-			psWaterBody.setString(6, valueJoiner.result(0));
-			psWaterBody.setString(7, valueJoiner.result(1));
+			preparedStatement.setString(6, valueJoiner.result(0));
+			preparedStatement.setString(7, valueJoiner.result(1));
 		} else {
-			psWaterBody.setNull(6, Types.VARCHAR);
-			psWaterBody.setNull(7, Types.VARCHAR);
+			preparedStatement.setNull(6, Types.VARCHAR);
+			preparedStatement.setNull(7, Types.VARCHAR);
 		}
 
 		// wtr:lodXMultiCurve
-		for (int i = 0; i < 2; i++) {
-			MultiCurveProperty multiCurveProperty = null;
-			GeometryObject multiLine = null;
-
-			switch (i) {
-			case 0:
-				multiCurveProperty = waterBody.getLod0MultiCurve();
-				break;
-			case 1:
-				multiCurveProperty = waterBody.getLod1MultiCurve();
-				break;
-			}
-
-			if (multiCurveProperty != null) {
-				multiLine = geometryConverter.getMultiCurve(multiCurveProperty);
-				multiCurveProperty.unsetMultiCurve();
-			}
-
-			if (multiLine != null) {
-				Object multiLineObj = importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(multiLine, batchConn);
-				psWaterBody.setObject(8 + i, multiLineObj);
-			} else
-				psWaterBody.setNull(8 + i, nullGeometryType, nullGeometryTypeName);
-		}
+		importGeometryObjectProperties(new MultiCurveProperty[]{
+				waterBody.getLod0MultiCurve(),
+				waterBody.getLod1MultiCurve(),
+		}, geometryConverter::getMultiCurve, 8);
 
 		// wtr:lodXMultiSurface
-		for (int i = 0; i < 2; i++) {
-			MultiSurfaceProperty multiSurfaceProperty = null;
-			long multiGeometryId = 0;
-
-			switch (i) {
-			case 0:
-				multiSurfaceProperty = waterBody.getLod0MultiSurface();
-				break;
-			case 1:
-				multiSurfaceProperty = waterBody.getLod1MultiSurface();
-				break;
-			}
-
-			if (multiSurfaceProperty != null) {
-				if (multiSurfaceProperty.isSetMultiSurface()) {
-					multiGeometryId = surfaceGeometryImporter.doImport(multiSurfaceProperty.getMultiSurface(), waterBodyId);
-					multiSurfaceProperty.unsetMultiSurface();
-				} else {
-					String href = multiSurfaceProperty.getHref();
-					if (href != null && href.length() != 0) {
-						importer.propagateXlink(new DBXlinkSurfaceGeometry(
-								TableEnum.WATERBODY.getName(),
-								waterBodyId, 
-								href, 
-								"lod" + i + "_multi_surface_id"));
-					}
-				}
-			}
-
-			if (multiGeometryId != 0)
-				psWaterBody.setLong(10 + i, multiGeometryId);
-			else
-				psWaterBody.setNull(10 + i, Types.NULL);
-		}
+		importSurfaceGeometryProperties(new MultiSurfaceProperty[]{
+				waterBody.getLod0MultiSurface(),
+				waterBody.getLod1MultiSurface()
+		}, new int[]{0, 1}, "_multi_surface_id", 10);
 
 		// wtr:lodXSolid
-		for (int i = 0; i < 4; i++) {
-			SolidProperty solidProperty = null;
-			long solidGeometryId = 0;
-
-			switch (i) {
-			case 0:
-				solidProperty = waterBody.getLod1Solid();
-				break;
-			case 1:
-				solidProperty = waterBody.getLod2Solid();
-				break;
-			case 2:
-				solidProperty = waterBody.getLod3Solid();
-				break;
-			case 3:
-				solidProperty = waterBody.getLod4Solid();
-				break;
-			}
-
-			if (solidProperty != null) {
-				if (solidProperty.isSetSolid()) {
-					solidGeometryId = surfaceGeometryImporter.doImport(solidProperty.getSolid(), waterBodyId);
-					solidProperty.unsetSolid();
-				} else {
-					String href = solidProperty.getHref();
-					if (href != null && href.length() != 0) {
-						importer.propagateXlink(new DBXlinkSurfaceGeometry(
-								TableEnum.WATERBODY.getName(),
-								waterBodyId, 
-								href, 
-								"lod" + (i + 1) + "_solid_id"));
-					}
-				}
-			}
-
-			if (solidGeometryId != 0)
-				psWaterBody.setLong(12 + i, solidGeometryId);
-			else
-				psWaterBody.setNull(12 + i, Types.NULL);
-		}
+		importSurfaceGeometryProperties(new SolidProperty[]{
+				waterBody.getLod1Solid(),
+				waterBody.getLod2Solid(),
+				waterBody.getLod3Solid(),
+				waterBody.getLod4Solid()
+		}, new int[]{1, 2, 3, 4}, "_solid_id", 12);
 
 		// objectclass id
 		if (hasObjectClassIdColumn)
-			psWaterBody.setLong(16, featureType.getObjectClassId());
+			preparedStatement.setLong(16, featureType.getObjectClassId());
 
-		psWaterBody.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.WATERBODY);
 
@@ -268,19 +191,6 @@ public class DBWaterBody implements DBImporter {
 			importer.delegateToADEImporter(waterBody, waterBodyId, featureType);
 
 		return waterBodyId;
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psWaterBody.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psWaterBody.close();
 	}
 
 }

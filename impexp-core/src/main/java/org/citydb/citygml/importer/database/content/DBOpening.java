@@ -55,11 +55,8 @@ import org.citygml4j.model.citygml.core.ImplicitRepresentationProperty;
 import org.citygml4j.model.gml.base.AbstractGML;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
 
-public class DBOpening implements DBImporter {
-	private final Connection batchConn;
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psOpening;
+public class DBOpening extends AbstractDBImporter {
+	private boolean affineTransformation;
 	private DBCityObject cityObjectImporter;
 	private DBSurfaceGeometry surfaceGeometryImporter;
 	private GeometryConverter geometryConverter;
@@ -67,42 +64,10 @@ public class DBOpening implements DBImporter {
 	private DBOpeningToThemSurface openingToThemSurfaceImporter;
 	private DBAddress addressImporter;
 	private AttributeValueJoiner valueJoiner;
-	private int batchCounter;
-	private int nullGeometryType;
-	private String nullGeometryTypeName;
-
-	private boolean affineTransformation;
-	private String PREFIX_ONTOCITYGML;
-	private String IRI_GRAPH_BASE;
-	private String IRI_GRAPH_OBJECT;
-	private static final String IRI_GRAPH_OBJECT_REL = "opening/";
 
 	public DBOpening(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.batchConn = batchConn;
-		this.importer = importer;
-
+		super(batchConn, config, importer);
 		affineTransformation = config.getProject().getImporter().getAffineTransformation().isEnabled();
-		nullGeometryType = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType();
-		nullGeometryTypeName = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName();
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-
-		String stmt = "insert into " + schema + ".opening (id, objectclass_id, address_id, " +
-				"lod3_multi_surface_id, lod4_multi_surface_id, " +
-				"lod3_implicit_rep_id, lod4_implicit_rep_id, " +
-				"lod3_implicit_ref_point, lod4_implicit_ref_point, " +
-				"lod3_implicit_transformation, lod4_implicit_transformation) values " +
-				"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-
-		// Modification for SPARQL
-		if (importer.isBlazegraph()) {
-			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
-			IRI_GRAPH_BASE = importer.getGraphBaseIri();
-			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
-			stmt = getSPARQLStatement();
-		}
-		psOpening = batchConn.prepareStatement(stmt);
-
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
 		implicitGeometryImporter = importer.getImporter(DBImplicitGeometry.class);
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
@@ -112,7 +77,28 @@ public class DBOpening implements DBImporter {
 		valueJoiner = importer.getAttributeValueJoiner();
 	}
 
-	private String getSPARQLStatement(){
+	@Override
+	protected String getTableName() {
+		return TableEnum.OPENING.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "opening/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".opening (id, objectclass_id, address_id, " +
+				"lod3_multi_surface_id, lod4_multi_surface_id, " +
+				"lod3_implicit_rep_id, lod4_implicit_rep_id, " +
+				"lod3_implicit_ref_point, lod4_implicit_ref_point, " +
+				"lod3_implicit_transformation, lod4_implicit_transformation) values " +
+				"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	}
+
+	@Override
+	protected String getSPARQLStatement() {
 		String param = "  ?;";
 		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
 				"BASE <" + IRI_GRAPH_BASE + "> " +  // add BASE by SYL
@@ -159,18 +145,18 @@ public class DBOpening implements DBImporter {
 				}
 				objectURL = new URL(IRI_GRAPH_OBJECT + uuid + "/");
 			} catch (MalformedURLException e) {
-				psOpening.setObject(++index, NodeFactory.createBlankNode());
+				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
 			}
 			// primary id
-			psOpening.setURL(++index, objectURL);
+			preparedStatement.setURL(++index, objectURL);
 			opening.setLocalProperty(CoreConstants.OBJECT_URIID, objectURL);
 		} else {
-			psOpening.setLong(++index, openingId);
+			preparedStatement.setLong(++index, openingId);
 		}
 		// primary id
-		psOpening.setURL(++index, objectURL);
+		preparedStatement.setURL(++index, objectURL);
 		// objectclass id
-		psOpening.setInt(++index, featureType.getObjectClassId());
+		preparedStatement.setInt(++index, featureType.getObjectClassId());
 
 		// core:address
 		long addressId = 0;
@@ -199,49 +185,17 @@ public class DBOpening implements DBImporter {
 		}
 
 		if (addressId != 0)
-			psOpening.setLong(++index, addressId);
+			preparedStatement.setLong(++index, addressId);
 		else if (importer.isBlazegraph())
-			setBlankNode(psOpening, ++index);
+			setBlankNode(preparedStatement, ++index);
 		else
-			psOpening.setNull(3, Types.NULL);
+			preparedStatement.setNull(3, Types.NULL);
 
-		// bldg:lodXMultiSurface
-		for (int i = 0; i < 2; i++) {
-			MultiSurfaceProperty multiSurfaceProperty = null;
-			long multiSurfaceId = 0;
-
-			switch (i) {
-			case 0:
-				multiSurfaceProperty = opening.getLod3MultiSurface();
-				break;
-			case 1:
-				multiSurfaceProperty = opening.getLod4MultiSurface();
-				break;
-			}
-
-			if (multiSurfaceProperty != null) {
-				if (multiSurfaceProperty.isSetMultiSurface()) {
-					multiSurfaceId = surfaceGeometryImporter.doImport(multiSurfaceProperty.getMultiSurface(), openingId);
-					multiSurfaceProperty.unsetMultiSurface();
-				} else {
-					String href = multiSurfaceProperty.getHref();
-					if (href != null && href.length() != 0) {
-						importer.propagateXlink(new DBXlinkSurfaceGeometry(
-								TableEnum.OPENING.getName(),
-								openingId, 
-								href, 
-								"lod" + (i + 3) + "_multi_surface_id"));
-					}
-				}
-			}
-
-			if (multiSurfaceId != 0)
-				psOpening.setLong(++index, multiSurfaceId);
-			else if (importer.isBlazegraph())
-				setBlankNode(psOpening, ++index);
-			else
-				psOpening.setNull(4 + i, Types.NULL);
-		}
+		// brid:lodXMultiSurface
+		importSurfaceGeometryProperties(new MultiSurfaceProperty[]{
+				opening.getLod3MultiSurface(),
+				opening.getLod4MultiSurface()
+		}, new int[]{3, 4}, "_multi_surface_id", 4);
 
 		// bldg:lodXImplicitRepresentation
 		for (int i = 0; i < 2; i++) {
@@ -282,29 +236,29 @@ public class DBOpening implements DBImporter {
 			}
 
 			if (implicitId != 0)
-				psOpening.setLong(++index, implicitId);
+				preparedStatement.setLong(++index, implicitId);
 			else if (importer.isBlazegraph())
-				setBlankNode(psOpening, ++index);
+				setBlankNode(preparedStatement, ++index);
 			else
-				psOpening.setNull(6 + i, Types.NULL);
+				preparedStatement.setNull(6 + i, Types.NULL);
 
 			if (pointGeom != null)
-				psOpening.setObject(++index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
+				preparedStatement.setObject(++index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
 			else if (importer.isBlazegraph())
-				setBlankNode(psOpening, ++index);
+				setBlankNode(preparedStatement, ++index);
 			else
-				psOpening.setNull(8 + i, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
+				preparedStatement.setNull(8 + i, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 						importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
 
 			if (matrixString != null)
-				psOpening.setString(++index, matrixString);
+				preparedStatement.setString(++index, matrixString);
 			else if (importer.isBlazegraph())
-				setBlankNode(psOpening, ++index);
+				setBlankNode(preparedStatement, ++index);
 			else
-				psOpening.setNull(10 + i, Types.VARCHAR);
+				preparedStatement.setNull(10 + i, Types.VARCHAR);
 		}
 
-		psOpening.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.OPENING);
 
@@ -324,23 +278,4 @@ public class DBOpening implements DBImporter {
 		return openingId;
 	}
 
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psOpening.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psOpening.close();
-	}
-
-	/**
-	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
-	 */
-	private void setBlankNode(PreparedStatement smt, int index) throws CityGMLImportException {
-		importer.setBlankNode(smt, index);
-	}
 }

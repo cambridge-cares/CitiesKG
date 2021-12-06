@@ -32,7 +32,6 @@ import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
 import org.citydb.config.Config;
-import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
@@ -52,7 +51,6 @@ import org.citygml4j.model.citygml.core.Address;
 import org.citygml4j.model.citygml.core.AddressProperty;
 import org.citygml4j.model.gml.base.AbstractGML;
 import org.citygml4j.model.gml.basicTypes.Code;
-import org.citygml4j.model.gml.geometry.aggregates.MultiCurve;
 import org.citygml4j.model.gml.geometry.aggregates.MultiCurveProperty;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
 import org.citygml4j.model.gml.geometry.primitives.SolidProperty;
@@ -77,8 +75,6 @@ public class DBBuilding extends AbstractDBImporter {
 
 	public DBBuilding(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
 		super(batchConn, config, importer);
-		nullGeometryType = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType();
-		nullGeometryTypeName = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName();
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
 		thematicSurfaceImporter = importer.getImporter(DBThematicSurface.class);
@@ -90,7 +86,7 @@ public class DBBuilding extends AbstractDBImporter {
 	}
 
 	@Override
-	protected void preconstructor() {
+	protected void preconstructor(Config config) {
 		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
 	}
 
@@ -401,7 +397,7 @@ public class DBBuilding extends AbstractDBImporter {
 		index = importSurfaceGeometryProperty(building.getLod0RoofEdge(), 0, "_roofprint_id", index);
 
 		// bldg:lodXMultiSurface
-		index = importSurfaceGeometryProperty(new MultiSurfaceProperty[]{
+		index = importSurfaceGeometryProperties(new MultiSurfaceProperty[]{
 				building.getLod1MultiSurface(),
 				building.getLod2MultiSurface(),
 				building.getLod3MultiSurface(),
@@ -409,7 +405,7 @@ public class DBBuilding extends AbstractDBImporter {
 		}, new int[]{1, 2, 3, 4}, "_multi_surface_id", index);
 
 		// bldg:lodXSolid
-		index = importSurfaceGeometryProperty(new SolidProperty[]{
+		index = importSurfaceGeometryProperties(new SolidProperty[]{
 				building.getLod1Solid(),
 				building.getLod2Solid(),
 				building.getLod3Solid(),

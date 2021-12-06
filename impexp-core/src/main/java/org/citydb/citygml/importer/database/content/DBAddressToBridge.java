@@ -35,42 +35,40 @@ import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
 import org.citydb.database.schema.TableEnum;
 
-public class DBAddressToBridge implements DBImporter {
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psAddressToBridge;
-	private int batchCounter;
+public class DBAddressToBridge extends AbstractDBImporter {
 
 	public DBAddressToBridge(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
-		this.importer = importer;
+		super(batchConn, config, importer);
+	}
 
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
+	@Override
+	protected String getTableName() {
+		return TableEnum.ADDRESS_TO_BRIDGE.getName();
+	}
 
-		String stmt = "insert into " + schema + ".address_to_bridge (bridge_id, address_id) values " +
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "addresstobridge/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".address_to_bridge (bridge_id, address_id) values " +
 				"(?, ?)";
-		psAddressToBridge = batchConn.prepareStatement(stmt);
+	}
+
+	@Override
+	protected String getSPARQLStatement() {
+		return "NOT IMPLEMENTED.";
 	}
 
 	protected void doImport(long addressId, long bridgeId) throws CityGMLImportException, SQLException {
-		psAddressToBridge.setLong(1, bridgeId);
-		psAddressToBridge.setLong(2, addressId);
+		preparedStatement.setLong(1, bridgeId);
+		preparedStatement.setLong(2, addressId);
 
-		psAddressToBridge.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.ADDRESS_TO_BRIDGE);
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psAddressToBridge.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psAddressToBridge.close();
 	}
 
 }

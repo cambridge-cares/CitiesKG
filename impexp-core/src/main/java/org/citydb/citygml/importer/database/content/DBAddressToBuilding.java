@@ -39,35 +39,30 @@ import org.citydb.config.Config;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 
-public class DBAddressToBuilding implements DBImporter {
-	private final CityGMLImportManager importer;
+public class DBAddressToBuilding extends AbstractDBImporter {
 
-	private PreparedStatement psAddressToBuilding;
-	private int batchCounter;
-	private String PREFIX_ONTOCITYGML;
-	private String IRI_GRAPH_BASE;
-	private String IRI_GRAPH_OBJECT;
-	private static final String IRI_GRAPH_OBJECT_REL = "addresstobuilding/";
-	
 	public DBAddressToBuilding(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
-		this.importer = importer;
-
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-
-		String stmt = "insert into " + schema + ".address_to_building (building_id, address_id) values " +
-				"(?, ?)";
-
-		if (importer.isBlazegraph()) {
-			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
-			IRI_GRAPH_BASE = importer.getGraphBaseIri();
-			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
-			stmt = getSPARQLStatement();
-		}
-
-		psAddressToBuilding = batchConn.prepareStatement(stmt);
+		super(batchConn, config, importer);
 	}
 
-	private String getSPARQLStatement(){
+	@Override
+	protected String getTableName() {
+		return TableEnum.ADDRESS_TO_BUILDING.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "addresstobuilding/";
+	}
+
+	@Override
+	protected String getSQLStatement(){
+		return "insert into " + SQL_SCHEMA + ".address_to_building (building_id, address_id) values " +
+				"(?, ?)";
+	}
+
+	@Override
+	protected String getSPARQLStatement(){
 		String param = "  ?;";
 		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
 				"BASE <" + IRI_GRAPH_BASE + ">" +
@@ -80,7 +75,6 @@ public class DBAddressToBuilding implements DBImporter {
 		return stmt;
 	}
 
-
 	protected void doImport(long addressId, long buildingId) throws CityGMLImportException, SQLException {
 
 		int index = 0;
@@ -89,16 +83,16 @@ public class DBAddressToBuilding implements DBImporter {
 			try {
 				String uuid = importer.generateNewGmlId();
 				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
-				psAddressToBuilding.setURL(++index, url);
+				preparedStatement.setURL(++index, url);
 			} catch (MalformedURLException e) {
-				psAddressToBuilding.setObject(++index, NodeFactory.createBlankNode());
+				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
 			}
 		}
 
-		psAddressToBuilding.setLong(++index, buildingId);
-		psAddressToBuilding.setLong(++index, addressId);
+		preparedStatement.setLong(++index, buildingId);
+		preparedStatement.setLong(++index, addressId);
 
-		psAddressToBuilding.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.ADDRESS_TO_BUILDING);
 	}
@@ -107,26 +101,13 @@ public class DBAddressToBuilding implements DBImporter {
 
 		int index = 0;
 
-		psAddressToBuilding.setURL(++index, addressURL);
-		psAddressToBuilding.setURL(++index, buildingURL);
-		psAddressToBuilding.setURL(++index, addressURL);
-		psAddressToBuilding.addBatch();
+		preparedStatement.setURL(++index, addressURL);
+		preparedStatement.setURL(++index, buildingURL);
+		preparedStatement.setURL(++index, addressURL);
+		preparedStatement.addBatch();
 
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.ADDRESS_TO_BUILDING);
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psAddressToBuilding.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psAddressToBuilding.close();
 	}
 
 }

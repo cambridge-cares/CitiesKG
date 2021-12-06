@@ -43,29 +43,38 @@ import org.citygml4j.model.citygml.transportation.TrafficArea;
 import org.citygml4j.model.gml.basicTypes.Code;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
 
-public class DBTrafficArea implements DBImporter {
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psTrafficArea;
+public class DBTrafficArea extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
-	private DBSurfaceGeometry surfaceGeometryImporter;
 	private AttributeValueJoiner valueJoiner;
-	private int batchCounter;
 
 	public DBTrafficArea(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.importer = importer;
-
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-
-		String stmt = "insert into " + schema + ".traffic_area (id, objectclass_id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
-				"surface_material, surface_material_codespace, lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id, " +
-				"transportation_complex_id) values " +
-				"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-		psTrafficArea = batchConn.prepareStatement(stmt);
-
+		super(batchConn, config, importer);
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	@Override
+	protected String getTableName() {
+		return TableEnum.TRAFFIC_AREA.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "trafficarea/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".traffic_area (id, objectclass_id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
+				"surface_material, surface_material_codespace, lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id, " +
+				"transportation_complex_id) values " +
+				"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	}
+
+	@Override
+	protected String getSPARQLStatement() {
+		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(TrafficArea trafficArea) throws CityGMLImportException, SQLException {
@@ -86,95 +95,63 @@ public class DBTrafficArea implements DBImporter {
 
 		// import traffic area information
 		// primary id
-		psTrafficArea.setLong(1, trafficAreaId);
+		preparedStatement.setLong(1, trafficAreaId);
 
 		// objectclass id
-		psTrafficArea.setLong(2, featureType.getObjectClassId());
+		preparedStatement.setLong(2, featureType.getObjectClassId());
 
 		// tran:class
 		if (trafficArea.isSetClazz() && trafficArea.getClazz().isSetValue()) {
-			psTrafficArea.setString(3, trafficArea.getClazz().getValue());
-			psTrafficArea.setString(4, trafficArea.getClazz().getCodeSpace());
+			preparedStatement.setString(3, trafficArea.getClazz().getValue());
+			preparedStatement.setString(4, trafficArea.getClazz().getCodeSpace());
 		} else {
-			psTrafficArea.setNull(3, Types.VARCHAR);
-			psTrafficArea.setNull(4, Types.VARCHAR);
+			preparedStatement.setNull(3, Types.VARCHAR);
+			preparedStatement.setNull(4, Types.VARCHAR);
 		}
 
 		// tran:function
 		if (trafficArea.isSetFunction()) {
 			valueJoiner.join(trafficArea.getFunction(), Code::getValue, Code::getCodeSpace);
-			psTrafficArea.setString(5, valueJoiner.result(0));
-			psTrafficArea.setString(6, valueJoiner.result(1));
+			preparedStatement.setString(5, valueJoiner.result(0));
+			preparedStatement.setString(6, valueJoiner.result(1));
 		} else {
-			psTrafficArea.setNull(5, Types.VARCHAR);
-			psTrafficArea.setNull(6, Types.VARCHAR);
+			preparedStatement.setNull(5, Types.VARCHAR);
+			preparedStatement.setNull(6, Types.VARCHAR);
 		}
 
 		// tran:usage
 		if (trafficArea.isSetUsage()) {
 			valueJoiner.join(trafficArea.getUsage(), Code::getValue, Code::getCodeSpace);
-			psTrafficArea.setString(7, valueJoiner.result(0));
-			psTrafficArea.setString(8, valueJoiner.result(1));
+			preparedStatement.setString(7, valueJoiner.result(0));
+			preparedStatement.setString(8, valueJoiner.result(1));
 		} else {
-			psTrafficArea.setNull(7, Types.VARCHAR);
-			psTrafficArea.setNull(8, Types.VARCHAR);
+			preparedStatement.setNull(7, Types.VARCHAR);
+			preparedStatement.setNull(8, Types.VARCHAR);
 		}
 
 		// tran:surface material
 		if (trafficArea.isSetSurfaceMaterial() && trafficArea.getSurfaceMaterial().isSetValue()) {
-			psTrafficArea.setString(9, trafficArea.getSurfaceMaterial().getValue());
-			psTrafficArea.setString(10, trafficArea.getSurfaceMaterial().getCodeSpace());
+			preparedStatement.setString(9, trafficArea.getSurfaceMaterial().getValue());
+			preparedStatement.setString(10, trafficArea.getSurfaceMaterial().getCodeSpace());
 		} else {
-			psTrafficArea.setNull(9, Types.VARCHAR);
-			psTrafficArea.setNull(10, Types.VARCHAR);
+			preparedStatement.setNull(9, Types.VARCHAR);
+			preparedStatement.setNull(10, Types.VARCHAR);
 		}
 
 		// tran:lodXMultiSurface
-		for (int i = 0; i < 3; i++) {
-			MultiSurfaceProperty multiSurfaceProperty = null;
-			long multiGeometryId = 0;
-
-			switch (i) {
-			case 0:
-				multiSurfaceProperty = trafficArea.getLod2MultiSurface();
-				break;
-			case 1:
-				multiSurfaceProperty = trafficArea.getLod3MultiSurface();
-				break;
-			case 2:
-				multiSurfaceProperty = trafficArea.getLod4MultiSurface();
-				break;
-			}
-
-			if (multiSurfaceProperty != null) {
-				if (multiSurfaceProperty.isSetMultiSurface()) {
-					multiGeometryId = surfaceGeometryImporter.doImport(multiSurfaceProperty.getMultiSurface(), trafficAreaId);
-					multiSurfaceProperty.unsetMultiSurface();
-				} else {
-					String href = multiSurfaceProperty.getHref();
-					if (href != null && href.length() != 0) {
-						importer.propagateXlink(new DBXlinkSurfaceGeometry(
-								TableEnum.TRAFFIC_AREA.getName(),
-								trafficAreaId, 
-								href, 
-								"lod" + (i + 2) + "_multi_surface_id"));
-					}
-				}
-			}
-
-			if (multiGeometryId != 0)
-				psTrafficArea.setLong(11 + i, multiGeometryId);
-			else
-				psTrafficArea.setNull(11 + i, Types.NULL);
-		}
+		importSurfaceGeometryProperties(new MultiSurfaceProperty[]{
+				trafficArea.getLod2MultiSurface(),
+				trafficArea.getLod3MultiSurface(),
+				trafficArea.getLod4MultiSurface()
+		}, new int[]{2, 3, 4}, "_multi_surface_id", 11);
 
 		// reference to transportation complex
 		if (parentId != 0)
-			psTrafficArea.setLong(14, parentId);
+			preparedStatement.setLong(14, parentId);
 		else 
-			psTrafficArea.setNull(14, Types.NULL);
+			preparedStatement.setNull(14, Types.NULL);
 
-		psTrafficArea.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.TRAFFIC_AREA);
 		
@@ -195,95 +172,63 @@ public class DBTrafficArea implements DBImporter {
 
 		// import auxiliary traffic area information
 		// primary id
-		psTrafficArea.setLong(1, auxiliaryTrafficAreaId);
+		preparedStatement.setLong(1, auxiliaryTrafficAreaId);
 
 		// objectclass id
-		psTrafficArea.setLong(2, featureType.getObjectClassId());
+		preparedStatement.setLong(2, featureType.getObjectClassId());
 
 		// tran:class
 		if (auxiliaryTrafficArea.isSetClazz() && auxiliaryTrafficArea.getClazz().isSetValue()) {
-			psTrafficArea.setString(3, auxiliaryTrafficArea.getClazz().getValue());
-			psTrafficArea.setString(4, auxiliaryTrafficArea.getClazz().getCodeSpace());
+			preparedStatement.setString(3, auxiliaryTrafficArea.getClazz().getValue());
+			preparedStatement.setString(4, auxiliaryTrafficArea.getClazz().getCodeSpace());
 		} else {
-			psTrafficArea.setNull(3, Types.VARCHAR);
-			psTrafficArea.setNull(4, Types.VARCHAR);
+			preparedStatement.setNull(3, Types.VARCHAR);
+			preparedStatement.setNull(4, Types.VARCHAR);
 		}
 
 		// tran:function
 		if (auxiliaryTrafficArea.isSetFunction()) {
 			valueJoiner.join(auxiliaryTrafficArea.getFunction(), Code::getValue, Code::getCodeSpace);
-			psTrafficArea.setString(5, valueJoiner.result(0));
-			psTrafficArea.setString(6, valueJoiner.result(1));
+			preparedStatement.setString(5, valueJoiner.result(0));
+			preparedStatement.setString(6, valueJoiner.result(1));
 		} else {
-			psTrafficArea.setNull(5, Types.VARCHAR);
-			psTrafficArea.setNull(6, Types.VARCHAR);
+			preparedStatement.setNull(5, Types.VARCHAR);
+			preparedStatement.setNull(6, Types.VARCHAR);
 		}
 
 		// tran:usage
 		if (auxiliaryTrafficArea.isSetUsage()) {
 			valueJoiner.join(auxiliaryTrafficArea.getUsage(), Code::getValue, Code::getCodeSpace);
-			psTrafficArea.setString(7, valueJoiner.result(0));
-			psTrafficArea.setString(8, valueJoiner.result(1));
+			preparedStatement.setString(7, valueJoiner.result(0));
+			preparedStatement.setString(8, valueJoiner.result(1));
 		} else {
-			psTrafficArea.setNull(7, Types.VARCHAR);
-			psTrafficArea.setNull(8, Types.VARCHAR);
+			preparedStatement.setNull(7, Types.VARCHAR);
+			preparedStatement.setNull(8, Types.VARCHAR);
 		}
 
 		// tran:surface material
 		if (auxiliaryTrafficArea.isSetSurfaceMaterial() && auxiliaryTrafficArea.getSurfaceMaterial().isSetValue()) {
-			psTrafficArea.setString(9, auxiliaryTrafficArea.getSurfaceMaterial().getValue());
-			psTrafficArea.setString(10, auxiliaryTrafficArea.getSurfaceMaterial().getCodeSpace());
+			preparedStatement.setString(9, auxiliaryTrafficArea.getSurfaceMaterial().getValue());
+			preparedStatement.setString(10, auxiliaryTrafficArea.getSurfaceMaterial().getCodeSpace());
 		} else {
-			psTrafficArea.setNull(9, Types.VARCHAR);
-			psTrafficArea.setNull(10, Types.VARCHAR);
+			preparedStatement.setNull(9, Types.VARCHAR);
+			preparedStatement.setNull(10, Types.VARCHAR);
 		}
 
 		// tran:lodXMultiSurface
-		for (int i = 0; i < 3; i++) {
-			MultiSurfaceProperty multiSurfaceProperty = null;
-			long multiGeometryId = 0;
-
-			switch (i) {
-			case 0:
-				multiSurfaceProperty = auxiliaryTrafficArea.getLod2MultiSurface();
-				break;
-			case 1:
-				multiSurfaceProperty = auxiliaryTrafficArea.getLod3MultiSurface();
-				break;
-			case 2:
-				multiSurfaceProperty = auxiliaryTrafficArea.getLod4MultiSurface();
-				break;
-			}
-
-			if (multiSurfaceProperty != null) {
-				if (multiSurfaceProperty.isSetMultiSurface()) {
-					multiGeometryId = surfaceGeometryImporter.doImport(multiSurfaceProperty.getMultiSurface(), auxiliaryTrafficAreaId);
-					multiSurfaceProperty.unsetMultiSurface();
-				} else {
-					String href = multiSurfaceProperty.getHref();
-					if (href != null && href.length() != 0) {
-						importer.propagateXlink(new DBXlinkSurfaceGeometry(
-								TableEnum.TRAFFIC_AREA.getName(),
-								auxiliaryTrafficAreaId, 
-								href, 
-								"lod" + (i + 2) + "_multi_surface_id"));
-					}
-				}
-			}
-
-			if (multiGeometryId != 0)
-				psTrafficArea.setLong(11 + i, multiGeometryId);
-			else
-				psTrafficArea.setNull(11 + i, Types.NULL);
-		}
+		importSurfaceGeometryProperties(new MultiSurfaceProperty[]{
+				auxiliaryTrafficArea.getLod2MultiSurface(),
+				auxiliaryTrafficArea.getLod3MultiSurface(),
+				auxiliaryTrafficArea.getLod4MultiSurface()
+		}, new int[]{2, 3, 4}, "_multi_surface_id", 11);
 
 		// reference to transportation complex
 		if (parentId != 0)
-			psTrafficArea.setLong(14, parentId);
+			preparedStatement.setLong(14, parentId);
 		else
-			psTrafficArea.setNull(14, Types.NULL);
+			preparedStatement.setNull(14, Types.NULL);
 
-		psTrafficArea.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.TRAFFIC_AREA);
 		
@@ -292,19 +237,6 @@ public class DBTrafficArea implements DBImporter {
 			importer.delegateToADEImporter(auxiliaryTrafficArea, auxiliaryTrafficAreaId, featureType);
 
 		return auxiliaryTrafficAreaId;
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psTrafficArea.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psTrafficArea.close();
 	}
 
 }

@@ -37,7 +37,8 @@ public abstract class AbstractDBImporter implements DBImporter {
 
 	// It is somewhat inelegant to have only some resources declared in the abstract class
 	// but it is less unwieldy than passing them with each importGeometryProperty call.
-	// I think it might be a good idea to have all importers declared here? But I will not do that yet.
+	// I think it might be a good idea to have all importers declared here? But I will not do that
+	// yet.
 	protected DBSurfaceGeometry surfaceGeometryImporter;
 	protected int nullGeometryType;
 	protected String nullGeometryTypeName;
@@ -46,10 +47,14 @@ public abstract class AbstractDBImporter implements DBImporter {
 	protected long objectId;
 
 	// Constructs preparedStatement and sets importer and batchConn variables.
-	public AbstractDBImporter(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
+	public AbstractDBImporter(Connection batchConn, Config config, CityGMLImportManager importer)
+			throws SQLException {
 		this.importer = importer;
 		this.batchConn = batchConn;
-		preconstructor();
+		preconstructor(config);
+		nullGeometryType = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType();
+		nullGeometryTypeName =
+				importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName();
 		TABLE_NAME = getTableName();
 		SQL_SCHEMA = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
 		PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
@@ -60,8 +65,7 @@ public abstract class AbstractDBImporter implements DBImporter {
 		preparedStatement = batchConn.prepareStatement(stmt);
 	}
 
-	protected void preconstructor() {
-	}
+	protected void preconstructor(Config config) {}
 
 	// Generator functions for preparedStatement
 	protected abstract String getSQLStatement();
@@ -83,23 +87,32 @@ public abstract class AbstractDBImporter implements DBImporter {
 		importer.setBlankNode(smt, index);
 	}
 
-	protected <T extends AbstractGeometry> int importSurfaceGeometryProperty(GeometryProperty<T>[] geometryProperties, int[] lods, String columnSuffix, int index) throws CityGMLImportException, SQLException {
+	protected <T extends AbstractGeometry> int importSurfaceGeometryProperties(
+			GeometryProperty<T>[] geometryProperties, int[] lods, String columnSuffix, int index)
+			throws CityGMLImportException, SQLException {
 		for (int i = 0; i < lods.length; i++)
 			index = importSurfaceGeometryProperty(geometryProperties[i], lods[i], columnSuffix, index);
 		return index;
 	}
 
-	protected <T extends AbstractGeometry> int importSurfaceGeometryProperty(GeometryProperty<T> geometryProperty, int lod, String columnSuffix, int index) throws CityGMLImportException, SQLException {
+	protected <T extends AbstractGeometry> int importSurfaceGeometryProperty(
+			GeometryProperty<T> geometryProperty, int lod, String columnSuffix, int index)
+			throws CityGMLImportException, SQLException {
 		if (geometryProperty == null) {
-			if (importer.isBlazegraph())
-				setBlankNode(preparedStatement, ++index);
+			if (importer.isBlazegraph()) setBlankNode(preparedStatement, ++index);
 			else preparedStatement.setNull(++index, Types.NULL);
 		} else if (geometryProperty.isSetObject()) {
-			long solidGeometryId = surfaceGeometryImporter.doImport(geometryProperty.getObject(), objectId);
+			long solidGeometryId =
+					surfaceGeometryImporter.doImport(geometryProperty.getObject(), objectId);
 			if (solidGeometryId != 0) {
 				if (importer.isBlazegraph()) {
 					try {
-						preparedStatement.setURL(++index, new URL(surfaceGeometryImporter.IRI_GRAPH_OBJECT + geometryProperty.getObject().getId() + "/"));
+						preparedStatement.setURL(
+								++index,
+								new URL(
+										surfaceGeometryImporter.IRI_GRAPH_OBJECT
+												+ geometryProperty.getObject().getId()
+												+ "/"));
 					} catch (MalformedURLException e) {
 						new CityGMLImportException(e);
 					}
@@ -107,27 +120,31 @@ public abstract class AbstractDBImporter implements DBImporter {
 					preparedStatement.setLong(++index, solidGeometryId);
 				}
 			} else {
-				if (importer.isBlazegraph())
-					setBlankNode(preparedStatement, ++index);
+				if (importer.isBlazegraph()) setBlankNode(preparedStatement, ++index);
 				else preparedStatement.setNull(++index, Types.NULL);
 			}
 			geometryProperty.unsetGeometry();
 		} else {
 			String href = geometryProperty.getHref();
 			if (href != null && href.length() != 0) {
-				importer.propagateXlink(new DBXlinkSurfaceGeometry(TABLE_NAME, objectId, href, "lod" + lod + columnSuffix));
+				importer.propagateXlink(
+						new DBXlinkSurfaceGeometry(TABLE_NAME, objectId, href, "lod" + lod + columnSuffix));
 			}
 		}
 		return index;
 	}
 
-	protected <T extends GeometryProperty> int importGeometryObjectProperties(T[] geometryProperties, Function<T, GeometryObject> converter, int index) throws CityGMLImportException, SQLException {
+	protected <T extends GeometryProperty> int importGeometryObjectProperties(
+			T[] geometryProperties, Function<T, GeometryObject> converter, int index)
+			throws CityGMLImportException, SQLException {
 		for (int i = 0; i < geometryProperties.length; i++)
 			index = importGeometryObjectProperty(geometryProperties[i], converter, index);
 		return index;
 	}
 
-	protected <T extends GeometryProperty> int importGeometryObjectProperty(T geometryProperty, Function<T, GeometryObject> converter, int index) throws CityGMLImportException, SQLException {
+	protected <T extends GeometryProperty> int importGeometryObjectProperty(
+			T geometryProperty, Function<T, GeometryObject> converter, int index)
+			throws CityGMLImportException, SQLException {
 
 		GeometryObject geometryObj = null;
 
@@ -137,7 +154,11 @@ public abstract class AbstractDBImporter implements DBImporter {
 		}
 
 		if (geometryObj != null) {
-			Object multiLineObj = importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObj, batchConn);
+			Object multiLineObj =
+					importer
+							.getDatabaseAdapter()
+							.getGeometryConverter()
+							.getDatabaseObject(geometryObj, batchConn);
 			preparedStatement.setObject(++index, multiLineObj);
 		} else {
 			if (importer.isBlazegraph()) {

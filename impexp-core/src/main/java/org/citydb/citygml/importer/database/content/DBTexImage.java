@@ -50,25 +50,17 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class DBTexImage implements DBImporter {
+public class DBTexImage extends AbstractDBImporter {
 	private final ConcurrentLockManager lockManager = ConcurrentLockManager.getInstance(DBTexImage.class);
 	private final Logger log = Logger.getInstance();
-	private final CityGMLImportManager importer;
-	private PreparedStatement psInsertStmt;	
 
 	private ExternalFileChecker externalFileChecker;
 	private MessageDigest md5;
 	private boolean importTextureImage;
-	private int batchCounter;
-	private String PREFIX_ONTOCITYGML;
-	private String IRI_GRAPH_BASE;
-	private String IRI_GRAPH_OBJECT;
-	private static final String IRI_GRAPH_OBJECT_REL = "teximage/";
 
 	public DBTexImage(Connection connection, Config config, CityGMLImportManager importer) throws SQLException {
-		this.importer = importer;
+		super(connection, config, importer);
 
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
 		importTextureImage = config.getProject().getImporter().getAppearances().isSetImportTextureFiles();
 		externalFileChecker = importer.getExternalFileChecker();
 
@@ -78,20 +70,26 @@ public class DBTexImage implements DBImporter {
 			throw new SQLException(e);
 		}
 
-		String stmt = "insert into " + schema + ".tex_image (id, tex_image_uri, tex_mime_type, tex_mime_type_codespace) values " +
-				"(?, ?, ?, ?)";
-
-		if (importer.isBlazegraph()) {
-			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
-			IRI_GRAPH_BASE = importer.getGraphBaseIri();
-			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
-			stmt = getSPARQLStatement();
-		}
-
-		psInsertStmt = connection.prepareStatement(stmt);
 	}
 
-	private String getSPARQLStatement(){
+	@Override
+	protected String getTableName() {
+		return TableEnum.TEX_IMAGE.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "teximage/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".tex_image (id, tex_image_uri, tex_mime_type, tex_mime_type_codespace) values " +
+				"(?, ?, ?, ?)";
+	}
+
+	@Override
+	protected String getSPARQLStatement() {
 		String param = "  ?;";
 		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
 				"BASE <" + IRI_GRAPH_BASE + "> " +
@@ -160,25 +158,25 @@ public class DBTexImage implements DBImporter {
 						uuid = importer.generateNewGmlId();
 					}
 					URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
-					psInsertStmt.setURL(++index, url);
+					preparedStatement.setURL(++index, url);
 				} catch (MalformedURLException e) {
-					psInsertStmt.setObject(++index, NodeFactory.createBlankNode());
+					preparedStatement.setObject(++index, NodeFactory.createBlankNode());
 				}
 			}
 
-			psInsertStmt.setLong(++index, texImageId);
-			psInsertStmt.setString(++index, fileName);
-			psInsertStmt.setString(++index, mimeType);
+			preparedStatement.setLong(++index, texImageId);
+			preparedStatement.setString(++index, fileName);
+			preparedStatement.setString(++index, mimeType);
 
 			if (codeSpace == null && importer.isBlazegraph()) {
-				psInsertStmt.setObject(++index, NodeFactory.createBlankNode());
+				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
 			} else {
-				psInsertStmt.setString(++index, codeSpace);
+				preparedStatement.setString(++index, codeSpace);
 			}
 
 
 
-			psInsertStmt.addBatch();
+			preparedStatement.addBatch();
 			if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 				importer.executeBatch(TableEnum.TEX_IMAGE);
 
@@ -199,26 +197,6 @@ public class DBTexImage implements DBImporter {
 			hexString.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
 
 		return hexString.toString();
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psInsertStmt.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psInsertStmt.close();
-	}
-
-	/**
-	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
-	 */
-	private void setBlankNode(PreparedStatement smt, int index) throws CityGMLImportException {
-		importer.setBlankNode(smt, index);
 	}
 
 }

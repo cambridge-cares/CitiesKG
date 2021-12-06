@@ -35,42 +35,40 @@ import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
 import org.citydb.database.schema.TableEnum;
 
-public class DBReliefFeatToRelComp implements DBImporter {
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psReliefFeatToRelComp;
-	private int batchCounter;
+public class DBReliefFeatToRelComp extends AbstractDBImporter {
 
 	public DBReliefFeatToRelComp(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
-		this.importer = importer;
+		super(batchConn, config, importer);
+	}
+	
+	@Override
+	protected String getTableName() {
+		return TableEnum.RELIEF_FEAT_TO_REL_COMP.getName();
+	}
 
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "relieffeattorelcomp/";
+	}
 
-		String stmt = "insert into " + schema + ".relief_feat_to_rel_comp (relief_component_id, relief_feature_id) values " +
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".relief_feat_to_rel_comp (relief_component_id, relief_feature_id) values " +
 				"(?, ?)";
-		psReliefFeatToRelComp = batchConn.prepareStatement(stmt);
+	}
+
+	@Override
+	protected String getSPARQLStatement() {
+		return "NOT IMPLEMENTED.";
 	}
 
 	protected void doImport(long reliefComponentId, long reliefFeatureId) throws CityGMLImportException, SQLException {
-		psReliefFeatToRelComp.setLong(1, reliefComponentId);
-		psReliefFeatToRelComp.setLong(2, reliefFeatureId);
+		preparedStatement.setLong(1, reliefComponentId);
+		preparedStatement.setLong(2, reliefFeatureId);
 
-		psReliefFeatToRelComp.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.RELIEF_FEAT_TO_REL_COMP);
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psReliefFeatToRelComp.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psReliefFeatToRelComp.close();
 	}
 
 }

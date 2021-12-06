@@ -178,7 +178,7 @@ public class DBThematicSurface extends AbstractDBImporter {
 		}
 
 		// bldg:lodXMultiSurface
-		index = importSurfaceGeometryProperty(new MultiSurfaceProperty[]{
+		index = importSurfaceGeometryProperties(new MultiSurfaceProperty[]{
 				boundarySurface.getLod2MultiSurface(),
 				boundarySurface.getLod3MultiSurface(),
 				boundarySurface.getLod4MultiSurface()

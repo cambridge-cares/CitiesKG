@@ -56,13 +56,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
-public class DBTunnel implements DBImporter {
-	private final Connection batchConn;
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psTunnel;
+public class DBTunnel extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
-	private DBSurfaceGeometry surfaceGeometryImporter;
 	private DBTunnelThematicSurface thematicSurfaceImporter;
 	private DBTunnelInstallation tunnelInstallationImporter;
 	private DBTunnelHollowSpace hollowSpaceImporter;
@@ -70,28 +65,9 @@ public class DBTunnel implements DBImporter {
 	private AttributeValueJoiner valueJoiner;
 
 	private boolean hasObjectClassIdColumn;
-	private int batchCounter;	
-	private int nullGeometryType;
-	private String nullGeometryTypeName;	
 
 	public DBTunnel(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.batchConn = batchConn;
-		this.importer = importer;
-
-		nullGeometryType = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType();
-		nullGeometryTypeName = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName();
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
-
-		String stmt = "insert into " + schema + ".tunnel (id, tunnel_parent_id, tunnel_root_id, class, class_codespace, function, function_codespace, usage, usage_codespace, year_of_construction, year_of_demolition, " +
-				"lod1_terrain_intersection, lod2_terrain_intersection, lod3_terrain_intersection, lod4_terrain_intersection, lod2_multi_curve, lod3_multi_curve, lod4_multi_curve, " +
-				"lod1_multi_surface_id, lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id, " +
-				"lod1_solid_id, lod2_solid_id, lod3_solid_id, lod4_solid_id" +
-				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
-				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
-				(hasObjectClassIdColumn ? ", ?)" : ")");
-		psTunnel = batchConn.prepareStatement(stmt);
-
+		super(batchConn, config, importer);
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
 		thematicSurfaceImporter = importer.getImporter(DBTunnelThematicSurface.class);
@@ -99,6 +75,37 @@ public class DBTunnel implements DBImporter {
 		hollowSpaceImporter = importer.getImporter(DBTunnelHollowSpace.class);
 		geometryConverter = importer.getGeometryConverter();
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	@Override
+	protected void preconstructor(Config config) {
+		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
+	}
+
+	@Override
+	protected String getTableName() {
+		return TableEnum.TUNNEL.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "tunnel/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + SQL_SCHEMA + ".tunnel (id, tunnel_parent_id, tunnel_root_id, class, class_codespace, function, function_codespace, usage, usage_codespace, year_of_construction, year_of_demolition, " +
+				"lod1_terrain_intersection, lod2_terrain_intersection, lod3_terrain_intersection, lod4_terrain_intersection, lod2_multi_curve, lod3_multi_curve, lod4_multi_curve, " +
+				"lod1_multi_surface_id, lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id, " +
+				"lod1_solid_id, lod2_solid_id, lod3_solid_id, lod4_solid_id" +
+				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
+				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
+				(hasObjectClassIdColumn ? ", ?)" : ")");
+	}
+
+	@Override
+	protected String getSPARQLStatement() {
+		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(AbstractTunnel tunnel) throws CityGMLImportException, SQLException {
@@ -117,210 +124,96 @@ public class DBTunnel implements DBImporter {
 
 		// import tunnel information
 		// primary id
-		psTunnel.setLong(1, tunnelId);
+		preparedStatement.setLong(1, tunnelId);
 
 		// parent tunnel id
 		if (parentId != 0)
-			psTunnel.setLong(2, parentId);
+			preparedStatement.setLong(2, parentId);
 		else
-			psTunnel.setNull(2, Types.NULL);
+			preparedStatement.setNull(2, Types.NULL);
 
 		// root tunnel id
-		psTunnel.setLong(3, rootId);
+		preparedStatement.setLong(3, rootId);
 
 		// tun:class
 		if (tunnel.isSetClazz() && tunnel.getClazz().isSetValue()) {
-			psTunnel.setString(4, tunnel.getClazz().getValue());
-			psTunnel.setString(5, tunnel.getClazz().getCodeSpace());
+			preparedStatement.setString(4, tunnel.getClazz().getValue());
+			preparedStatement.setString(5, tunnel.getClazz().getCodeSpace());
 		} else {
-			psTunnel.setNull(4, Types.VARCHAR);
-			psTunnel.setNull(5, Types.VARCHAR);
+			preparedStatement.setNull(4, Types.VARCHAR);
+			preparedStatement.setNull(5, Types.VARCHAR);
 		}
 
 		// tun:function
 		if (tunnel.isSetFunction()) {
 			valueJoiner.join(tunnel.getFunction(), Code::getValue, Code::getCodeSpace);
-			psTunnel.setString(6, valueJoiner.result(0));
-			psTunnel.setString(7, valueJoiner.result(1));
+			preparedStatement.setString(6, valueJoiner.result(0));
+			preparedStatement.setString(7, valueJoiner.result(1));
 		} else {
-			psTunnel.setNull(6, Types.VARCHAR);
-			psTunnel.setNull(7, Types.VARCHAR);
+			preparedStatement.setNull(6, Types.VARCHAR);
+			preparedStatement.setNull(7, Types.VARCHAR);
 		}
 
 		// tun:usage
 		if (tunnel.isSetUsage()) {
 			valueJoiner.join(tunnel.getUsage(), Code::getValue, Code::getCodeSpace);
-			psTunnel.setString(8, valueJoiner.result(0));
-			psTunnel.setString(9, valueJoiner.result(1));
+			preparedStatement.setString(8, valueJoiner.result(0));
+			preparedStatement.setString(9, valueJoiner.result(1));
 		} else {
-			psTunnel.setNull(8, Types.VARCHAR);
-			psTunnel.setNull(9, Types.VARCHAR);
+			preparedStatement.setNull(8, Types.VARCHAR);
+			preparedStatement.setNull(9, Types.VARCHAR);
 		}
 
 		// tun:yearOfConstruction
 		if (tunnel.isSetYearOfConstruction()) {
-			psTunnel.setObject(10, tunnel.getYearOfConstruction());
+			preparedStatement.setObject(10, tunnel.getYearOfConstruction());
 		} else {
-			psTunnel.setNull(10, Types.DATE);
+			preparedStatement.setNull(10, Types.DATE);
 		}
 
 		// tun:yearOfDemolition
 		if (tunnel.isSetYearOfDemolition()) {
-			psTunnel.setObject(11, tunnel.getYearOfDemolition());
+			preparedStatement.setObject(11, tunnel.getYearOfDemolition());
 		} else {
-			psTunnel.setNull(11, Types.DATE);
+			preparedStatement.setNull(11, Types.DATE);
 		}
 
 		// tun:lodXTerrainIntersectionCurve
-		for (int i = 0; i < 4; i++) {
-			MultiCurveProperty multiCurveProperty = null;
-			GeometryObject multiLine = null;
-
-			switch (i) {
-			case 0:
-				multiCurveProperty = tunnel.getLod1TerrainIntersection();
-				break;
-			case 1:
-				multiCurveProperty = tunnel.getLod2TerrainIntersection();
-				break;
-			case 2:
-				multiCurveProperty = tunnel.getLod3TerrainIntersection();
-				break;
-			case 3:
-				multiCurveProperty = tunnel.getLod4TerrainIntersection();
-				break;
-			}
-
-			if (multiCurveProperty != null) {
-				multiLine = geometryConverter.getMultiCurve(multiCurveProperty);
-				multiCurveProperty.unsetMultiCurve();
-			}
-
-			if (multiLine != null) {
-				Object multiLineObj = importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(multiLine, batchConn);
-				psTunnel.setObject(12 + i, multiLineObj);
-			} else
-				psTunnel.setNull(12 + i, nullGeometryType, nullGeometryTypeName);
-		}
+		importGeometryObjectProperties(new MultiCurveProperty[]{
+				tunnel.getLod1TerrainIntersection(),
+				tunnel.getLod2TerrainIntersection(),
+				tunnel.getLod3TerrainIntersection(),
+				tunnel.getLod4TerrainIntersection()
+		}, geometryConverter::getMultiCurve, 12);
 
 		// tun:lodXMultiCurve
-		for (int i = 0; i < 3; i++) {
-			MultiCurveProperty multiCurveProperty = null;
-			GeometryObject multiLine = null;
-
-			switch (i) {
-			case 0:
-				multiCurveProperty = tunnel.getLod2MultiCurve();
-				break;
-			case 1:
-				multiCurveProperty = tunnel.getLod3MultiCurve();
-				break;
-			case 2:
-				multiCurveProperty = tunnel.getLod4MultiCurve();
-				break;
-			}
-
-			if (multiCurveProperty != null) {
-				multiLine = geometryConverter.getMultiCurve(multiCurveProperty);
-				multiCurveProperty.unsetMultiCurve();
-			}
-
-			if (multiLine != null) {
-				Object multiLineObj = importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(multiLine, batchConn);
-				psTunnel.setObject(16 + i, multiLineObj);
-			} else
-				psTunnel.setNull(16 + i, nullGeometryType, nullGeometryTypeName);
-		}
+		importGeometryObjectProperties(new MultiCurveProperty[]{
+				tunnel.getLod2MultiCurve(),
+				tunnel.getLod3MultiCurve(),
+				tunnel.getLod4MultiCurve()
+		}, geometryConverter::getMultiCurve, 16);
 
 		// tun:lodXMultiSurface
-		for (int i = 0; i < 4; i++) {
-			MultiSurfaceProperty multiSurfaceProperty = null;
-			long multiGeometryId = 0;
-
-			switch (i) {
-			case 0:
-				multiSurfaceProperty = tunnel.getLod1MultiSurface();
-				break;
-			case 1:
-				multiSurfaceProperty = tunnel.getLod2MultiSurface();
-				break;
-			case 2:
-				multiSurfaceProperty = tunnel.getLod3MultiSurface();
-				break;
-			case 3:
-				multiSurfaceProperty = tunnel.getLod4MultiSurface();
-				break;
-			}
-
-			if (multiSurfaceProperty != null) {
-				if (multiSurfaceProperty.isSetMultiSurface()) {
-					multiGeometryId = surfaceGeometryImporter.doImport(multiSurfaceProperty.getMultiSurface(), tunnelId);
-					multiSurfaceProperty.unsetMultiSurface();
-				} else {
-					String href = multiSurfaceProperty.getHref();
-					if (href != null && href.length() != 0) {
-						importer.propagateXlink(new DBXlinkSurfaceGeometry(
-								TableEnum.TUNNEL.getName(),
-								tunnelId, 
-								href, 
-								"lod" + (i + 1) + "_multi_surface_id"));
-					}
-				}
-			}
-
-			if (multiGeometryId != 0)
-				psTunnel.setLong(19 + i, multiGeometryId);
-			else
-				psTunnel.setNull(19 + i, Types.NULL);
-		}
+		importSurfaceGeometryProperties(new MultiSurfaceProperty[]{
+				tunnel.getLod1MultiSurface(),
+				tunnel.getLod2MultiSurface(),
+				tunnel.getLod3MultiSurface(),
+				tunnel.getLod4MultiSurface()
+		}, new int[]{1, 2, 3, 4}, "_multi_surface_id", 19);
 
 		// tun:lodXSolid
-		for (int i = 0; i < 4; i++) {
-			SolidProperty solidProperty = null;
-			long solidGeometryId = 0;
-
-			switch (i) {
-			case 0:
-				solidProperty = tunnel.getLod1Solid();
-				break;
-			case 1:
-				solidProperty = tunnel.getLod2Solid();
-				break;
-			case 2:
-				solidProperty = tunnel.getLod3Solid();
-				break;
-			case 3:
-				solidProperty = tunnel.getLod4Solid();
-				break;
-			}
-
-			if (solidProperty != null) {
-				if (solidProperty.isSetSolid()) {
-					solidGeometryId = surfaceGeometryImporter.doImport(solidProperty.getSolid(), tunnelId);
-					solidProperty.unsetSolid();
-				} else {
-					String href = solidProperty.getHref();
-					if (href != null && href.length() != 0) {
-						importer.propagateXlink(new DBXlinkSurfaceGeometry(
-								TableEnum.TUNNEL.getName(),
-								tunnelId, 
-								href, 
-								"lod" + (i + 1) + "_solid_id"));
-					}
-				}
-			}
-
-			if (solidGeometryId != 0)
-				psTunnel.setLong(23 + i, solidGeometryId);
-			else
-				psTunnel.setNull(23 + i, Types.NULL);
-		}
+		importSurfaceGeometryProperties(new SolidProperty[]{
+				tunnel.getLod1Solid(),
+				tunnel.getLod2Solid(),
+				tunnel.getLod3Solid(),
+				tunnel.getLod4Solid()
+		}, new int[]{1, 2, 3, 4}, "_solid_id", 23);
 
 		// objectclass id
 		if (hasObjectClassIdColumn)
-			psTunnel.setLong(27, featureType.getObjectClassId());
+			preparedStatement.setLong(27, featureType.getObjectClassId());
 
-		psTunnel.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.TUNNEL);
 
@@ -430,19 +323,6 @@ public class DBTunnel implements DBImporter {
 			importer.delegateToADEImporter(tunnel, tunnelId, featureType);
 
 		return tunnelId;
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psTunnel.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psTunnel.close();
 	}
 
 }
