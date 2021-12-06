@@ -40,14 +40,25 @@ public class CityObject extends Model {
   @Getter @Setter private ArrayList<ExternalReference> externalReferences;
   @Getter @Setter private ArrayList<String> externalReferencesIris;
 
+  private static final String GENERIC_ATTRIB_GRAPH = "/cityobjectgenericattrib/";
+  private static final String EXTERNAL_REFERENCE_GRAPH = "/externalreferences/";
 
   private static final ArrayList<String> FIELD_CONSTANTS = new ArrayList<>
-      (Arrays.asList(SchemaManagerAdapter.ONTO_CREATION_DATE, SchemaManagerAdapter.ONTO_DESCRIPTION,
-          SchemaManagerAdapter.ONTO_ENVELOPE_TYPE, SchemaManagerAdapter.ONTO_GML_ID, SchemaManagerAdapter.ONTO_ID,
-          SchemaManagerAdapter.ONTO_LAST_MODIFICATION_DATE, SchemaManagerAdapter.ONTO_LINEAGE,
-          SchemaManagerAdapter.ONTO_NAME, SchemaManagerAdapter.ONTO_NAME_CODESPACE, SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID,
-          SchemaManagerAdapter.ONTO_REASON_FOR_UPDATE, SchemaManagerAdapter.ONTO_RELATIVE_TO_TERRAIN,
-          SchemaManagerAdapter.ONTO_RELATIVE_TO_WATER, SchemaManagerAdapter.ONTO_TERMINATION_DATE, SchemaManagerAdapter.ONTO_UPDATING_PERSON));
+      (Arrays.asList(SchemaManagerAdapter.ONTO_CREATION_DATE,
+          SchemaManagerAdapter.ONTO_DESCRIPTION,
+          SchemaManagerAdapter.ONTO_ENVELOPE_TYPE,
+          SchemaManagerAdapter.ONTO_GML_ID,
+          SchemaManagerAdapter.ONTO_ID,
+          SchemaManagerAdapter.ONTO_LAST_MODIFICATION_DATE,
+          SchemaManagerAdapter.ONTO_LINEAGE,
+          SchemaManagerAdapter.ONTO_NAME,
+          SchemaManagerAdapter.ONTO_NAME_CODESPACE,
+          SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID,
+          SchemaManagerAdapter.ONTO_REASON_FOR_UPDATE,
+          SchemaManagerAdapter.ONTO_RELATIVE_TO_TERRAIN,
+          SchemaManagerAdapter.ONTO_RELATIVE_TO_WATER,
+          SchemaManagerAdapter.ONTO_TERMINATION_DATE,
+          SchemaManagerAdapter.ONTO_UPDATING_PERSON));
 
   //protected HashMap<String, Field> fieldMap = new HashMap<>();
 
@@ -58,7 +69,7 @@ public class CityObject extends Model {
 
 
   /**
-   * fills in the scalar fields of a generic attribute instance.
+   * fills in the scalar fields of a city object instance.
    */
   protected void assignScalarValueByRow(JSONObject row, HashMap<String, Field> fieldMap, String predicate)
       throws IllegalAccessException {
@@ -82,8 +93,7 @@ public class CityObject extends Model {
   public void fillGenericAttributes(String iriName, KnowledgeBaseClientInterface kgClient, Boolean lazyLoad)
       throws NoSuchFieldException, IllegalAccessException {
 
-    String[] splitUri = iriName.split("/");
-    String genericAttGraphIri = String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length-2)) + "/cityobjectgenericattrib/";
+    String genericAttGraphIri = getNamespace(iriName) + GENERIC_ATTRIB_GRAPH;
 
     Query q = getFetchIrisQuery(iriName, SchemaManagerAdapter.ONTO_CITY_OBJECT_ID, genericAttGraphIri);
     String queryResultString = kgClient.execute(q.toString());

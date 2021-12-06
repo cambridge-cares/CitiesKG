@@ -40,6 +40,16 @@ public class Model {
   }
 
   /**
+   * returns the namespace object is in.
+   * @param iriName object id
+   * @return namespace as string.
+   */
+  protected String getNamespace(String iriName) {
+    String[] splitUri = iriName.split("/");
+    return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length-2)) + "/";
+  }
+
+  /**
    * builds a query to get all city object's scalars.
    */
   protected Query getFetchScalarsQuery(String iriName){
@@ -55,40 +65,34 @@ public class Model {
   }
 
   /**
-   * builds query to retrieve  cpllection IRIs.
+   * builds query to retrieve collection IRIs when graph is provided.
    * @param iriName cityObject IRI.
    * @return query
    */
-  protected Query getFetchIrisQuery(String iriName, String wherePredicate, String graphIri){
+  protected Query getFetchIrisQuery(String iriName, String wherePredicate, String whereGraph){
     WhereBuilder wb = new WhereBuilder()
         .addPrefix(OCGML, ONTO_CITY_GML)
         .addWhere(QM + COLLECTION_ELEMENT_IRI, wherePredicate, NodeFactory.createURI(iriName));
     SelectBuilder sb = new SelectBuilder()
         .addVar(QM + COLLECTION_ELEMENT_IRI)
-        .addGraph(NodeFactory.createURI(graphIri), wb);
+        .addGraph(NodeFactory.createURI(whereGraph), wb);
 
     return sb.build();
   }
 
   /**
-   * builds query to retrieve  cpllection IRIs.
+   * builds query to retrieve  collection IRIs when graph is not provided.
    * @param iriName cityObject IRI.
    * @return query
    */
   protected Query getFetchIrisQuery(String iriName, String wherePredicate){
-    WhereBuilder wb = new WhereBuilder()
-        .addPrefix(OCGML, ONTO_CITY_GML)
-        .addWhere(QM + COLLECTION_ELEMENT_IRI, wherePredicate, NodeFactory.createURI(iriName));
-    SelectBuilder sb = new SelectBuilder()
-        .addVar(QM + COLLECTION_ELEMENT_IRI)
-        .addGraph(NodeFactory.createURI(getGraphUri(iriName)), wb);
 
-    return sb.build();
+    return getFetchIrisQuery(iriName, wherePredicate,getGraphUri(iriName));
   }
 
   /**
-   * fills in the scalar fields of a generic attribute instance.
-   * @param iriName IRI of the generic attribute instance.
+   * fills in the scalar fields of a CityGML model instance.
+   * @param iriName IRI of the model instance.
    * @param kgClient sends the query to the right endpoint.
    */
   public void fillScalars(String iriName, KnowledgeBaseClientInterface kgClient)
@@ -102,8 +106,6 @@ public class Model {
       for (int index = 0; index < queryResult.length(); index++){
         JSONObject row = queryResult.getJSONObject(index);
         String predicate = row.getString(PREDICATE);
-        //String[] predicateArray = predicate.split("#");
-        //predicate = predicateArray[predicateArray.length-1];
         predicate = predicate.replace(ONTO_CITY_GML,OCGML + ":");
         assignScalarValueByRow(row, fieldMap, predicate);
       }
