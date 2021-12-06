@@ -40,9 +40,6 @@ public class CityObject extends Model {
   @Getter @Setter private ArrayList<ExternalReference> externalReferences;
   @Getter @Setter private ArrayList<String> externalReferencesIris;
 
-  private static final String GENERIC_ATTRIB_GRAPH = "/cityobjectgenericattrib/";
-  private static final String EXTERNAL_REFERENCE_GRAPH = "/externalreferences/";
-
   private static final ArrayList<String> FIELD_CONSTANTS = new ArrayList<>
       (Arrays.asList(SchemaManagerAdapter.ONTO_CREATION_DATE,
           SchemaManagerAdapter.ONTO_DESCRIPTION,
@@ -93,7 +90,7 @@ public class CityObject extends Model {
   public void fillGenericAttributes(String iriName, KnowledgeBaseClientInterface kgClient, Boolean lazyLoad)
       throws NoSuchFieldException, IllegalAccessException {
 
-    String genericAttGraphIri = getNamespace(iriName) + GENERIC_ATTRIB_GRAPH;
+    String genericAttGraphIri = getNamespace(iriName) + SchemaManagerAdapter.GENERIC_ATTRIB_GARPH + "/";
 
     Query q = getFetchIrisQuery(iriName, SchemaManagerAdapter.ONTO_CITY_OBJECT_ID, genericAttGraphIri);
     String queryResultString = kgClient.execute(q.toString());

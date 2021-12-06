@@ -162,6 +162,17 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_REFERENCE_TO_LIBRARY = ONTO_PREFIX_NAME_ONTOCITYGML + "referenceToLibrary";
     public static final String ONTO_RELATIVE_BREP_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "relativeBrepId";
 
+    public static final String CITY_OBJECT_GRAPH = "cityobject";
+    public static final String GENERIC_ATTRIB_GARPH = "cityobjectgenericattrib";
+    public static final String EXTERNAL_REFERENCES_GRAPH = "externalreference";
+    public static final String BUILDING_GRAPH = "building";
+    public static final String ADDRESS_GRAPH = "address";
+    public static final String ADDRESS_TO_BUILDING_GRAPH = "addresstobuilding";
+    public static final String SURFACE_GEOMETRY_GRAPH = "surfacegeometry";
+    public static final String THEMATIC_SURFACE_GRAPH = "thematicsurface";
+    public static final String BUILDING_INSTALLATION_GRAPH = "buildinginstallation";
+
+
     //@TODO: NOT IN ONTOCITYGML - need to be added:
     //@END
 
