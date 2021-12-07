@@ -99,7 +99,22 @@ var KMLDataSource = /** @class */ (function (_super) {
         return null;
     };
     KMLDataSource.prototype.queryUsingId = function (id, callback, limit, clickedObject) {
-        if (this._thirdPartyHandler) {
+		console.log(id);
+		console.log(clickedObject);
+		$.ajax({
+			url:"http://localhost:8080/agents/cityobjectinformation",
+			type: 'POST',
+			data: JSON.stringify({iris: [clickedObject._name]}),
+			dataType: 'json',
+			contentType: 'application/json',
+			success: function(data, status_message, xhr){
+				console.log(data["cityobjectinformation"]);
+				callback(JSON.parse(data["cityobjectinformation"]));
+		}
+    });		
+       
+		/*
+	   if (this._thirdPartyHandler) {
             // prioritize the implementation of the provided 3rd-party handler
             switch (this._thirdPartyHandler.type) {
                 case ThirdPartyHandler.Cesium: {
@@ -129,7 +144,9 @@ var KMLDataSource = /** @class */ (function (_super) {
             // using own implementation
             this.queryUsingIdCustom(id, callback);
         }
+		*/
     };
+
     KMLDataSource.prototype.queryUsingIdCustom = function (id, callback, limit, clickedObject) {
         this._useOwnKmlParser = true;
         // read KML file

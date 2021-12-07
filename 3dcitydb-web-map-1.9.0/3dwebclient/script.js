@@ -412,6 +412,8 @@ function listHighlightedObjects() {
     });
 }
 
+//---Extended Web-Map-Client part---//
+
 function computeDistance() {
 	var highlightedObjects = webMap.getAllHighlighted3DObjects();
 	var centroids = [];
@@ -425,8 +427,6 @@ function computeDistance() {
 		
 	};
 	console.log(centroids );
-	
-	// DRAWING LINE BETWEEN TWO OBJECTS.
 	
 	var redLine = cesiumViewer.entities.add({
 		name: "Distance line",
@@ -456,8 +456,6 @@ function computeDistance() {
 	fillColor : Cesium.Color.GOLD,
 	}
     });
-
-// AJAX POST REQUEST.
 	
 	$.ajax({
 		url:"http://localhost:8080/agents/distance",
@@ -486,7 +484,15 @@ function getMidpoint(point1, point2) {
     return Cesium.Cartesian3.fromRadians(midpointCartographic.longitude, midpointCartographic.latitude);
 	
 }
+
+
+function getObjectInformtaion(){
 	
+	//something comes in here.
+
+}
+
+	//---Extended Web-Map-Client part---//
 
 function listHiddenObjects() {
     var hidddenListElement = document.getElementById("citydb_hiddenlist");
