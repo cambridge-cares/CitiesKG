@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.ResourceBundle;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
@@ -17,10 +18,15 @@ public class Model {
   protected static final String PREDICATE = "predicate";
   protected static final String VALUE =  "value";
   protected static final String COLLECTION_ELEMENT_IRI = "CollectionElementIri";
-  protected static final String ONTO_CITY_GML = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
+  protected static String ONTO_CITY_GML;
   protected static final String OCGML = "ocgml";
   protected static final String QM = "?";
   protected HashMap<String, Field> fieldMap = new HashMap<>();
+
+  public Model() {
+    ResourceBundle config = ResourceBundle.getBundle("config");
+    ONTO_CITY_GML = config.getString("uri.ontology.ontocitygml");
+  }
 
   protected void assignFieldValues(ArrayList<String>  fieldList, HashMap<String, Field> fieldMap) throws NoSuchFieldException {
     for (String field: fieldList){
