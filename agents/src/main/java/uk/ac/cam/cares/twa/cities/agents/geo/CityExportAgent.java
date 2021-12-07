@@ -131,7 +131,9 @@ public class CityExportAgent extends JPSAgent {
         }
         String path = gmlidFile.toString().replace("\\", "/");
         String[] elem = path.split("/");
-        String index = elem[elem.length-1].replaceAll("[^0-9]", "");
+        //String index = elem[elem.length-1].replaceAll("[^0-9]", "");
+        String filename = elem[elem.length-1];
+        String index = filename.substring(filename.indexOf("_") + 1, filename.indexOf("."));
         String outputPath = outTmpDir + "/test_" + index + ".kml";
         return outputPath;
     }
