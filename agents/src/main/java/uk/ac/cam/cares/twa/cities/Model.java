@@ -20,10 +20,10 @@ public class Model {
   protected static final String ONTO_CITY_GML = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
   protected static final String OCGML = "ocgml";
   protected static final String QM = "?";
-  protected HashMap<String, Field> fieldMap = new HashMap<String, Field>();
+  protected HashMap<String, Field> fieldMap = new HashMap<>();
 
-  protected void assignFieldValues(ArrayList fieldList, HashMap fieldMap) throws NoSuchFieldException {
-    for (Object field: fieldList){
+  protected void assignFieldValues(ArrayList<String>  fieldList, HashMap<String, Field> fieldMap) throws NoSuchFieldException {
+    for (String field: fieldList){
       fieldMap.put(field, this.getClass().getDeclaredField(String.valueOf(field)
           .replace(OCGML + ":", "")));
     }
