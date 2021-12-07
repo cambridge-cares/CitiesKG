@@ -24,11 +24,12 @@ public class CityInformationAgent extends JPSAgent {
   public static final String URI_CITY_OBJECT_INFORMATION = "/cityobjectinformation";
   public static final String KEY_REQ_METHOD = "method";
   public static final String KEY_IRIS = "iris";
-  public static final String KEY_ATTRIBUTES = "attributes";
+  public static final String KEY_CITY_OBJECT_INFORMATION = "cityobjectinformation";
 
   private KnowledgeBaseClientInterface kgClient;
   private static String route;
   private boolean lazyload;
+
 
 
   public CityInformationAgent() {
@@ -67,7 +68,7 @@ public class CityInformationAgent extends JPSAgent {
       }
 
     }
-    requestParams.append(KEY_ATTRIBUTES, cityObjectInformation);
+    requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
     return requestParams;
   }
 
