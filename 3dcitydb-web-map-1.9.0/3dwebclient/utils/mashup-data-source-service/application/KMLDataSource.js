@@ -37,26 +37,49 @@ var KMLDataSource = /** @class */ (function (_super) {
             }
         }
     };
+	
+	//---Extended Web-Map-Client version---//
+	
+	
     KMLDataSource.prototype.responseCesiumToKvp = function (response) {
         // response is a list of JSON elements
-        // only support Data https://cesium.com/docs/cesiumjs-ref-doc/KmlFeatureData.html
         var result = new Map();
-        /*  <Data name="">
-                <displayName></displayName>
-                <value></value>
-            </Data
-         */
-        for (var key in response) {
-            // if no displayName is available -> use attribute name instead
-            if (response[key] && response[key].displayName) {
-                result[response[key].displayName] = response[key].value;
-            }
-            else {
-                result[key] = response[key].value;
-            }
-        }
+        
+		if ($.isArray(response) && response.length > 0) {
+			if ($.isArray(response[0]) && response[0].length > 0) {
+				if ($.isArray(response[0][0]) && response[0][0].length > 0) {
+					var data = response[0][0][0];
+					for (var key in data) {
+						result[key] = data[key];
+					}
+				}
+			}
+		}
+		
         return result;
     };
+	
+		KMLDataSource.prototype.queryUsingId = function (id, callback, limit, clickedObject) {
+		console.log(clickedObject);
+		
+		// REQUEST FOR CityInformationAgent.
+		
+		$.ajax({
+			url:"http://localhost:8080/agents/cityobjectinformation",
+			type: 'POST',
+			data: JSON.stringify({iris: [clickedObject._name]}),
+			dataType: 'json',
+			contentType: 'application/json',
+			success: function(data, status_message, xhr){
+				console.log(data["cityobjectinformation"]);
+				callback(data["cityobjectinformation"]);
+		}});		
+    };
+	
+	
+	//---Extended Web-Map-Client version---//
+	
+	
     KMLDataSource.prototype.responseOwnToKvp = function (response) {
         // response is a list of XML DOM element
         var result = new Map();
@@ -75,6 +98,7 @@ var KMLDataSource = /** @class */ (function (_super) {
         }
         return result;
     };
+	
     KMLDataSource.prototype.countFromResult = function (res) {
         return res.getSize();
     };
@@ -98,55 +122,7 @@ var KMLDataSource = /** @class */ (function (_super) {
         // TODO
         return null;
     };
-    KMLDataSource.prototype.queryUsingId = function (id, callback, limit, clickedObject) {
-		console.log(id);
-		console.log(clickedObject);
-		$.ajax({
-			url:"http://localhost:8080/agents/cityobjectinformation",
-			type: 'POST',
-			data: JSON.stringify({iris: [clickedObject._name]}),
-			dataType: 'json',
-			contentType: 'application/json',
-			success: function(data, status_message, xhr){
-				console.log(data["cityobjectinformation"]);
-				callback(JSON.parse(data["cityobjectinformation"]));
-		}
-    });		
-       
-		/*
-	   if (this._thirdPartyHandler) {
-            // prioritize the implementation of the provided 3rd-party handler
-            switch (this._thirdPartyHandler.type) {
-                case ThirdPartyHandler.Cesium: {
-                    // the handler is Cesium.KMLDataSource
-                    var entities = this._thirdPartyHandler.handler.entities;
-                    var entity = entities.getById(id);
-                    // entity is Cesium.KMLFeatureData
-                    var extendedData = entity.kml.extendedData;
-                    if (typeof extendedData === "undefined"
-                        || (Object.keys(extendedData).length === 0 && extendedData.constructor === Object)) {
-                        // empty response -> use custom implementation
-                        this.queryUsingIdCustom(id, callback, limit, clickedObject);
-                    }
-                    else {
-                        callback(extendedData);
-                    }
-                    break;
-                }
-                default: {
-                    // no valid handler found
-                    callback(null);
-                    break;
-                }
-            }
-        }
-        else {
-            // using own implementation
-            this.queryUsingIdCustom(id, callback);
-        }
-		*/
-    };
-
+	
     KMLDataSource.prototype.queryUsingIdCustom = function (id, callback, limit, clickedObject) {
         this._useOwnKmlParser = true;
         // read KML file
