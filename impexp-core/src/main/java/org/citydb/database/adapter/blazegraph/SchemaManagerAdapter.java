@@ -182,6 +182,7 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     @Override
     public boolean existsSchema(Connection connection, String schema) {
         boolean exists = true;
+        /**
         try {
             URL myURL = new URL(schema);
             HttpURLConnection myURLConnection = (HttpURLConnection) myURL.openConnection();
@@ -192,7 +193,7 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
         }
         catch (IOException e){
             exists = false;
-        }
+        }**/
         return exists;
     }
 

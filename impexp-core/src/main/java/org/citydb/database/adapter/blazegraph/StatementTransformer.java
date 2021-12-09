@@ -93,7 +93,7 @@ public class StatementTransformer {
                     .append("sd.tex_image_id, ti.tex_image_uri, tp.texture_coordinates, coalesce(a.theme, '<unknown>') theme ");
         }
         */
-        query.append("FROM ").append(schema).append(".surface_geometry sg ");
+        //query.append("FROM ").append(schema).append(".surface_geometry sg ");
         /*
         if (exportAppearance) {
             query.append("LEFT JOIN ").append(schema).append(".textureparam tp ON tp.surface_geometry_id = sg.id ")
@@ -102,12 +102,12 @@ public class StatementTransformer {
                     .append("LEFT JOIN ").append(schema).append(".appear_to_surface_data a2sd ON a2sd.surface_data_id = sd.id ")
                     .append("LEFT JOIN ").append(schema).append(".appearance a ON a2sd.appearance_id = a.id ");
         }
-        *
+        */
         query.append("WHERE sg.root_id = ? ")
                 .append("ORDER BY sg.id");
 
         return query.toString();
-        return null;
+
     }
 
 
