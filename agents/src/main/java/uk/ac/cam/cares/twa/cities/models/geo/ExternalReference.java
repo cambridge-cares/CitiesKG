@@ -1,93 +1,62 @@
 package uk.ac.cam.cares.twa.cities.models.geo;
 
+import java.lang.reflect.Field;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.jena.query.Query;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
+import uk.ac.cam.cares.twa.cities.Model;
 
 /**
  * ExternalReference class represent a java model of ExternalReference module of CityGML.
  * It retrieves ExternalReference values and fills equivalent fields in the java model.
- * Returns an arrayList with these values
  */
-public class ExternalReference {
-    private String iriName = "iriName";
-    private URI cityObjectId;
-    private URI id;
-    private String infoSys;
-    private String name;
-    private String uriVal;
 
-    /**
-     * External references graph name is now hardcoded,
-     * but in the future will be retrieved by a GetGraphURI method
-     */
-    private String EXTERNAL_REFERENCES_GRAPH_URI = "/cityobjectgenericattrib/";
+public class ExternalReference extends Model {
 
-    private static final String EXT_REF_NAME = "extRefName";
-    private static final String URI_VAL = "uriVal";
-    private static final String INFO_SYS = "infoSys";
-    private static final String ID = "id";
-    private static final String CITY_OBJECT_ID = "cityObjectId";
-
-    /**
-     * constructs an empty external reference instance and fills in the external reference IRI field.
-     * @param iriName
-     * @return - nothing - just fills in the field
-     */
-    public void GenericAttribute(String iriName) {
-        this.iriName = iriName;
-    }
-
-    /**
-     * Creates a query to find the external ref values for a given CityObject
-     * [In the future]: calls the getFetchExternalReferenceGraphURI method to find the correct graph
-     * @param iriName IRI of the external reference instance.
-     * @return QueryType object
-     */
-
-    private Query getFetchExtRefScalarsQuery(String iriName){
-        String graphUri = EXTERNAL_REFERENCES_GRAPH_URI;
-
-        //placeholder to not throw an error but query building needs to be written here
-        Query query = new Query();
-        return query;
-    }
+    @Getter @Setter private String infoSys;
+    @Getter @Setter private String name;
+    @Getter @Setter private String URI;
+    @Getter @Setter private URI id;
+    @Getter @Setter private URI cityObjectId;
 
 
-    /**
-     * Extracts the graph URI from the external reference IRI.
-     * @param iriName IRI of the external reference instance.
-     * @return uri of the external references graph.
-     */
-    public String getFetchExternalReferencesGraphUri(String iriName) {
-        String[] splitUri = iriName.split("/");
-        String namespace = String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length-2));
-        return namespace + EXTERNAL_REFERENCES_GRAPH_URI;
-    }
+private static final ArrayList<String> FIELD_CONSTANTS =
+        new ArrayList<>(
+                Arrays.asList(
+                        SchemaManagerAdapter.ONTO_INFO_SYS,
+                        SchemaManagerAdapter.ONTO_NAME,
+                        SchemaManagerAdapter.ONTO_URI,
+                        SchemaManagerAdapter.ONTO_ID,
+                        SchemaManagerAdapter.ONTO_CITY_OBJECT_ID));
 
+//protected HashMap<String, Field> fieldMap = new HashMap<>();
+
+public ExternalReference() throws NoSuchFieldException {
+    assignFieldValues(FIELD_CONSTANTS, fieldMap);
+}
 
     /**
      * fills in the scalar fields of an external reference instance.
-     * @param iriName IRI of the external reference instance.
-     * @param kgClient sends the query to the right endpoint.
-     * @return nothing - just fills in fields
      */
-    public void fillScalars(String iriName, KnowledgeBaseClientInterface kgClient) {
+protected void assignScalarValueByRow(JSONObject row, HashMap<String, Field> fieldMap, String predicate)
+        throws IllegalAccessException {
 
-        Query q = getFetchExtRefScalarsQuery(iriName);
-        String queryResultString = kgClient.execute(q.toString());
 
-        JSONArray queryResult = new JSONArray(queryResultString);
-
-        uriVal = queryResult.getJSONObject(0).getString(URI_VAL);
-        name = queryResult.getJSONObject(0).getString(EXT_REF_NAME);
-        infoSys = queryResult.getJSONObject(0).getString(INFO_SYS);
-        id = URI.create(queryResult.getJSONObject(0).getString(ID));
-        cityObjectId = URI.create(queryResult.getJSONObject(0).getString(CITY_OBJECT_ID));
-
+      if (predicate.equals(SchemaManagerAdapter.ONTO_ID)
+            || predicate.equals(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID)) {
+        fieldMap.get(predicate).set(this, java.net.URI.create(row.getString(VALUE)));
+    } else {
+        fieldMap.get(predicate).set(this, row.getString(VALUE));
     }
 
-
+}
 }

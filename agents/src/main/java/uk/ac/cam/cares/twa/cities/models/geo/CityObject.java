@@ -19,7 +19,6 @@ import uk.ac.cam.cares.twa.cities.Model;
  * It retrieves CityObject attributes and fills equivalent fields in the java model.
  */
 public class CityObject extends Model {
-
   @Getter @Setter private String creationDate;
   @Getter @Setter private String description;
   @Getter @Setter private String EnvelopeType;
@@ -80,7 +79,6 @@ public class CityObject extends Model {
     }
   }
 
-
   /**
    * fills in generic attributes linked to the city object.
    * @param iriName cityObject IRI
@@ -123,7 +121,8 @@ public class CityObject extends Model {
   public void fillExternalReferences(String iriName, KnowledgeBaseClientInterface kgClient, Boolean lazyLoad)
           throws NoSuchFieldException, IllegalAccessException {
 
-    Query q = getFetchIrisQuery(iriName, SchemaManagerAdapter.ONTO_CITY_OBJECT_ID, "placeholder"); //replaced with proper graph Iri.
+    String extRefGraphIri = getNamespace(iriName) + SchemaManagerAdapter.EXTERNAL_REFERENCES_GRAPH + "/";
+    Query q = getFetchIrisQuery(iriName, SchemaManagerAdapter.ONTO_CITY_OBJECT_ID,  extRefGraphIri); //
     String queryResultString = kgClient.execute(q.toString());
     JSONArray queryResult = new JSONArray(queryResultString);
 
