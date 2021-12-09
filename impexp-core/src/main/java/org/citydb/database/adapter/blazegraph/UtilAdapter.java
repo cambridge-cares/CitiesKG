@@ -80,8 +80,13 @@ public class UtilAdapter extends AbstractUtilAdapter {
                 srs.setType(tmp.getType());
                 srs.setSupported(false);
             }
-            srsInfoMap.put(srs.getSrid(), srs);
+        } catch (Exception e) {
+            DatabaseSrs tmp = DatabaseSrs.createDefaultSrs();
+            srs.setDatabaseSrsName(tmp.getDatabaseSrsName());
+            srs.setType(tmp.getType());
+            srs.setSupported(false);
         }
+        srsInfoMap.put(srs.getSrid(), srs);
     }
 
     @Override
