@@ -8,6 +8,8 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
+import org.citydb.config.project.kmlExporter.DisplayForm;
+import org.citydb.config.project.kmlExporter.KmlExporter;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.sqlbuilder.SQLStatement;
 import org.citydb.sqlbuilder.expression.PlaceHolder;
@@ -32,7 +34,7 @@ public class StatementTransformer {
 
     public String sqlStatement;
     public String sparqlStatement;
-    private final AbstractDatabaseAdapter databaseAdapter;
+    private static AbstractDatabaseAdapter databaseAdapter;
 
     public StatementTransformer(AbstractDatabaseAdapter databaseAdapter) {
         this.databaseAdapter = databaseAdapter;
@@ -44,6 +46,70 @@ public class StatementTransformer {
                 databaseAdapter.getConnectionDetails().getSid();
         IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
     }
+
+    /* GenericCityObject */
+    public static String getGenericCityObjectBasisData(int lodToExportFrom){
+        String sparql = "PREFIX  ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
+                "SELECT ?id ?lod1ImplicitRefPoint ?lod1ImplicitTransformation ?lod1BrepId \n" +
+                "FROM <" + IRI_GRAPH_BASE + "genericcityobject/" + "> \n" +
+                "WHERE { ?id ocgml:lod1ImplicitRefPoint ?lod1ImplicitRefPoint;\n" +
+                "ocgml:lod1ImplicitTransformation ?lod1ImplicitTransformation;\n" +
+                "ocgml:lod1BrepId ?lod1BrepId;\n" +
+                "ocgml:id ? . }";
+        return sparql;
+    }
+
+    public static String getGenericCityObjectQuery(int lodToExportFrom, DisplayForm displayForm, boolean isImplicit, boolean exportAppearance){
+        String query = null;
+
+        switch (displayForm.getForm()) {
+            case DisplayForm.FOOTPRINT:
+            case DisplayForm.EXTRUDED:
+                query = getSurfaceGeometries(exportAppearance, isImplicit);
+                break;
+            default:
+                StringBuilder tmp = new StringBuilder().append("PREFIX  ocgml: <" + PREFIX_ONTOCITYGML + "> \n")
+                        .append("SELECT ?, '5' as ?objectclass_id "); // dummy
+                if (databaseAdapter.getSQLAdapter().requiresPseudoTableInSelect())
+                    tmp.append(" FROM ")
+                            .append(databaseAdapter.getSQLAdapter().getPseudoTableName());
+
+                query = tmp.toString();
+        }
+
+        return query;
+    }
+
+    public static String getSurfaceGeometries(boolean exportAppearance, boolean isImplicit){
+        //TODO: translate the SQL query to SPARQL
+        StringBuilder query = new StringBuilder()
+                .append("select ")
+                .append(isImplicit ? "sg.implicit_geometry" : "sg.geometry")
+                .append(", sg.id, sg.parent_id, sg.root_id, sg.gmlid, sg.is_xlink ");
+        /*
+        if (exportAppearance) {
+            query.append(", sd.x3d_shininess, sd.x3d_transparency, sd.x3d_ambient_intensity, ")
+                    .append("sd.x3d_specular_color, sd.x3d_diffuse_color, sd.x3d_emissive_color, sd.x3d_is_smooth, ")
+                    .append("sd.tex_image_id, ti.tex_image_uri, tp.texture_coordinates, coalesce(a.theme, '<unknown>') theme ");
+        }
+        */
+        query.append("FROM ").append(schema).append(".surface_geometry sg ");
+        /*
+        if (exportAppearance) {
+            query.append("LEFT JOIN ").append(schema).append(".textureparam tp ON tp.surface_geometry_id = sg.id ")
+                    .append("LEFT JOIN ").append(schema).append(".surface_data sd ON sd.id = tp.surface_data_id ")
+                    .append("LEFT JOIN ").append(schema).append(".tex_image ti ON ti.id = sd.tex_image_id ")
+                    .append("LEFT JOIN ").append(schema).append(".appear_to_surface_data a2sd ON a2sd.surface_data_id = sd.id ")
+                    .append("LEFT JOIN ").append(schema).append(".appearance a ON a2sd.appearance_id = a.id ");
+        }
+        *
+        query.append("WHERE sg.root_id = ? ")
+                .append("ORDER BY sg.id");
+
+        return query.toString();
+        return null;
+    }
+
 
     public static String getIriObjectBase(){
         return IRI_GRAPH_BASE;
