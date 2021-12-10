@@ -203,6 +203,9 @@ public abstract class KmlGenericObject<T> {
 	private SimpleDateFormat dateFormatter;
 	private final ImageReader imageReader;
 
+	// Added by Shiying
+	public boolean isBlazegraph = kmlExporterManager.isBlazegraph();
+
 	protected KmlGenericObject(Connection connection,
 			Query query,
 			KmlExporterManager kmlExporterManager,
@@ -1384,11 +1387,21 @@ public abstract class KmlGenericObject<T> {
 		placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
 
 		PolygonType polygon = null; 
-		while (rs.next()) {
-			Object buildingGeometryObj = rs.getObject(1); 
+		while (rs.next()) {  // @TODO: ..
+			Object buildingGeometryObj = rs.getObject(1);
+			String datatype = null;
+			if (isBlazegraph){
+				datatype = rs.getString("datatype");  // Added by Shiying
+			}
 
 			if (!rs.wasNull() && buildingGeometryObj != null) {
 				eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
+
+				// Added by Shiying: convert the # string to geometry, it has to be 3D?
+				if (isBlazegraph){
+					buildingGeometryObj = StatementTransformer.Str2Geometry(buildingGeometryObj.toString(), datatype);
+				}
+
 
 				GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
 				if (unconvertedGeom == null || (unconvertedGeom.getGeometryType() != GeometryType.POLYGON && unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON))

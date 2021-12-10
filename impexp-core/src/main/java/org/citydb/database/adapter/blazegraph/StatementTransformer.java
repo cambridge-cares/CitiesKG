@@ -50,12 +50,14 @@ public class StatementTransformer {
     /* GenericCityObject */
     public static String getGenericCityObjectBasisData(int lodToExportFrom){
         String sparql = "PREFIX  ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
-                "SELECT ?id ?lod1ImplicitRefPoint ?lod1ImplicitTransformation ?lod1BrepId \n" +
-                "FROM <" + IRI_GRAPH_BASE + "genericcityobject/" + "> \n" +
-                "WHERE { ?id ocgml:lod1ImplicitRefPoint ?lod1ImplicitRefPoint;\n" +
+                "SELECT ?id ?lod1ImplicitRefPoint ?lod1ImplicitTransformation ?cityObjectId \n" +
+                "WHERE { " +
+                "GRAPH <" + IRI_GRAPH_BASE + "genericcityobject/" + "> \n" +
+                "{ ?id ocgml:lod1ImplicitRefPoint ?lod1ImplicitRefPoint;\n" +
                 "ocgml:lod1ImplicitTransformation ?lod1ImplicitTransformation;\n" +
-                "ocgml:lod1BrepId ?lod1BrepId;\n" +
-                "ocgml:id ? . }";
+                "ocgml:id ? . } \n" +
+                "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/" + "> \n" +
+                " { ?cityObjectId ocgml:cityObjectId ? . } }";
         return sparql;
     }
 
@@ -82,10 +84,10 @@ public class StatementTransformer {
 
     public static String getSurfaceGeometries(boolean exportAppearance, boolean isImplicit){
         //TODO: translate the SQL query to SPARQL
-        StringBuilder query = new StringBuilder()
-                .append("select ")
-                .append(isImplicit ? "sg.implicit_geometry" : "sg.geometry")
-                .append(", sg.id, sg.parent_id, sg.root_id, sg.gmlid, sg.is_xlink ");
+        StringBuilder query = new StringBuilder().append("PREFIX  ocgml: <" + PREFIX_ONTOCITYGML + "> \n")
+                .append("SELECT ")
+                .append(isImplicit ? "?ImplicitGeometryType" : "?GeometryType")
+                .append(" ?id ?parentId (? AS ?rootId) ?gmlId ?isXlink (datatype(?GeometryType) AS ?datatype)\n");
         /*
         if (exportAppearance) {
             query.append(", sd.x3d_shininess, sd.x3d_transparency, sd.x3d_ambient_intensity, ")
@@ -93,7 +95,7 @@ public class StatementTransformer {
                     .append("sd.tex_image_id, ti.tex_image_uri, tp.texture_coordinates, coalesce(a.theme, '<unknown>') theme ");
         }
         */
-        //query.append("FROM ").append(schema).append(".surface_geometry sg ");
+        query.append("FROM ").append("<" + IRI_GRAPH_BASE + "surfacegeometry/" + ">");
         /*
         if (exportAppearance) {
             query.append("LEFT JOIN ").append(schema).append(".textureparam tp ON tp.surface_geometry_id = sg.id ")
@@ -103,8 +105,8 @@ public class StatementTransformer {
                     .append("LEFT JOIN ").append(schema).append(".appearance a ON a2sd.appearance_id = a.id ");
         }
         */
-        query.append("WHERE sg.root_id = ? ")
-                .append("ORDER BY sg.id");
+        query.append("WHERE {?id ocgml:GeometryType ?GeometryType; ocgml:parentId ?parentId; ocgml:gmlId ?gmlId; ocgml:isXlink ?isXlink; ocgml:rootId ? . } \n")
+                .append("ORDER BY ?id");
 
         return query.toString();
 
@@ -364,6 +366,8 @@ public class StatementTransformer {
 
         return query2.toString();
     }
+
+    /* Convert # String to Geometry object*/
 
     public static Geometry Str2Geometry (String extracted, String datatypeURI){
         GeoSpatialProcessor geospatial = new GeoSpatialProcessor();

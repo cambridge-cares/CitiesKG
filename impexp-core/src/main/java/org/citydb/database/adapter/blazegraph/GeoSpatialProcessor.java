@@ -1,10 +1,13 @@
 package org.citydb.database.adapter.blazegraph;
 
+import static org.junit.Assert.assertTrue;
+
 import org.apache.jena.datatypes.DatatypeFormatException;
 import org.apache.jena.shacl.lib.G;
 import org.apache.jena.sparql.expr.ExprEvalException;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.registry.ObjectRegistry;
+import org.geotools.geometry.jts.GeometryBuilder;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.*;
@@ -238,5 +241,17 @@ public class GeoSpatialProcessor {
         }
 
         return reversed;
+    }
+
+
+    /* Todo */
+    public GeometryObject create3dPolygon(String coordlist, String geomtype, int dimension, int[] dimOfRings){
+        GeometryFactory fac = new GeometryFactory();
+        Coordinate[] coordinates = str2coords(coordlist).toArray(new Coordinate[0]);
+        if (dimOfRings.length == 1) {
+            LinearRing shell = fac.createLinearRing(coordinates);
+            //geom = fac.createPolygon(shell);
+        }
+        return null;
     }
 }

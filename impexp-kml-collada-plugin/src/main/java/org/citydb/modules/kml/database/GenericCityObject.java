@@ -157,11 +157,13 @@ public class GenericCityObject extends KmlGenericObject{
 						}
 
 						psQuery.setURL(1, url);
-
+						psQuery.setURL(2, url);
 						rs = psQuery.executeQuery();
+
 						if (rs.isBeforeFirst()) {
 							rs.next();
-							if (rs.getLong(4) != 0 || rs.getLong(1) != 0)
+							//if (rs.getLong(4) != 0 || rs.getLong(1) != 0)
+							if (rs.getString(4) != null || rs.getString(1) != null)
 								break; // result set not empty
 						}
 
@@ -233,30 +235,43 @@ public class GenericCityObject extends KmlGenericObject{
 				else {					
 					// decide whether explicit or implicit geometry
 					AffineTransformer transformer = null;
-					long sgRootId = rs.getLong(4);
-					if (sgRootId == 0) {
-						sgRootId = rs.getLong(1);
-						transformer = getAffineTransformer(rs, 2, 3);
-					}
-
-					try { rs.close(); } catch (SQLException sqle) {} 
-					try { psQuery.close(); } catch (SQLException sqle) {}
-					rs = null;
-
 					String query = null;
-					if (isBlazegraph) {
-						/*
+					if (isBlazegraph){
+						String cityObjectId = rs.getString(4);
+
+						try { rs.close(); } catch (SQLException sqle) {}
+						try { psQuery.close(); } catch (SQLException sqle) {}
+						rs = null;
+
 						query = StatementTransformer.getGenericCityObjectQuery(currentLod,
 								work.getDisplayForm(),
 								transformer != null,
 								work.getDisplayForm().getForm() == DisplayForm.COLLADA && !config.getProject().getKmlExporter().getAppearanceTheme().equals(KmlExporter.THEME_NONE));
-						*/
-						query = queries.getGenericCityObjectQuery(currentLod,
-								work.getDisplayForm(),
-								transformer != null,
-								work.getDisplayForm().getForm() == DisplayForm.COLLADA && !config.getProject().getKmlExporter().getAppearanceTheme().equals(KmlExporter.THEME_NONE));
+						psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
+						URL url = null;
+						try {
+							url = new URL(cityObjectId);
+						} catch (MalformedURLException e) {
+							e.printStackTrace();
+						}
+						psQuery.setURL(1, url);  // set sgRootId
+						psQuery.setURL(2, url);
+						rs = psQuery.executeQuery();
 
 					} else {
+
+						long sgRootId = rs.getLong(4);
+
+						// @TODO: Need to understand what 0 means //
+						if (sgRootId == 0) {
+							sgRootId = rs.getLong(1);
+							transformer = getAffineTransformer(rs, 2, 3);
+						}
+						try { rs.close(); } catch (SQLException sqle) {}
+						try { psQuery.close(); } catch (SQLException sqle) {}
+						rs = null;
+
 						query = queries.getGenericCityObjectQuery(currentLod,
 								work.getDisplayForm(),
 								transformer != null,
@@ -264,9 +279,8 @@ public class GenericCityObject extends KmlGenericObject{
 						psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 						psQuery.setLong(1, sgRootId);
 						rs = psQuery.executeQuery();
+
 					}
-
-
 
 
 					// get the proper displayForm (for highlighting)
