@@ -15,6 +15,9 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,37 +53,49 @@ public class UtilAdapter extends AbstractUtilAdapter {
     @Override
     public void getSrsInfo(DatabaseSrs srs) throws SQLException {
         String connectionStr = databaseAdapter.getJDBCUrl(databaseAdapter.getConnectionDetails().getServer(), databaseAdapter.getConnectionDetails().getPort(), databaseAdapter.getConnectionDetails().getSid().replaceFirst("(namespace/)\\S*(/sparql)", "$1public$2"));
-        Connection conn = DriverManager.getConnection(connectionStr);
-
+        String endpointUrl = connectionStr.substring(23, connectionStr.indexOf("&"));
+        if (endpointUrl.endsWith("/")) {
+            endpointUrl = endpointUrl.substring(0, endpointUrl.length() - 1);
+        }
         String schema = databaseAdapter.getConnectionDetails().getSchema();
+        String query = "PREFIX " + SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + " <" + schema + ">\n" +
+                "SELECT ?name ?type ?srtext WHERE {\n" +
+                "        ?s " + SchemaManagerAdapter.ONTO_SRTEXT + " ?srtext\n" +
+                "        BIND(strbefore((strafter(?srtext, \"\\\"\")), \"\\\"\") as ?name)\n" +
+                "        BIND(strbefore(?srtext, \"[\") as ?type)\n" +
+                "        ?s " + SchemaManagerAdapter.ONTO_SRID + " " + srs.getSrid() +
+                "}";
+        Boolean exists = true;
 
-        try (Statement statement = conn.createStatement();
-             ResultSet rs = statement.executeQuery("PREFIX " + SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + " <" + schema + ">\n" +
-                     "SELECT ?name ?type ?srtext WHERE {\n" +
-                     "        ?s " + SchemaManagerAdapter.ONTO_SRTEXT + " ?srtext\n" +
-                     "        BIND(strbefore((strafter(?srtext, \"\\\"\")), \"\\\"\") as ?name)\n" +
-                     "        BIND(strbefore(?srtext, \"[\") as ?type)\n" +
-                     "        ?s " + SchemaManagerAdapter.ONTO_SRID + " " + srs.getSrid() +
-                     "}")) {
-
-            if (rs.next()) {
-                srs.setSupported(true);
-                if ((rs.getString(1) == null) && (rs.getString(2) == null)) { //srs is supported but no wktext
-                    srs.setDatabaseSrsName("");
-                    srs.setType(getSrsType(""));
-                    srs.setWkText("");
-                } else { //srs is supported and has wktext
-                    srs.setDatabaseSrsName(rs.getString(1));
-                    srs.setType(getSrsType(rs.getString(2)));
-                    srs.setWkText(rs.getString(3));
-                }
-            } else { //srs is not supported
-                DatabaseSrs tmp = DatabaseSrs.createDefaultSrs();
-                srs.setDatabaseSrsName(tmp.getDatabaseSrsName());
-                srs.setType(tmp.getType());
-                srs.setSupported(false);
+        try {
+            URL url = new URL(endpointUrl);
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("HEAD");
+            if (con.getResponseCode() != 200) {
+                exists = false;
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
+            exists = false;
+        }
+
+        if (exists) {
+            try (Connection conn = DriverManager.getConnection(connectionStr);
+                 Statement statement = conn.createStatement();
+                 ResultSet rs = statement.executeQuery(query)) {
+                if (rs.next()) {
+                    srs.setSupported(true);
+                    if ((rs.getString(1) == null) && (rs.getString(2) == null)) { //srs is supported but no wktext
+                        srs.setDatabaseSrsName("");
+                        srs.setType(getSrsType(""));
+                        srs.setWkText("");
+                    } else { //srs is supported and has wktext
+                        srs.setDatabaseSrsName(rs.getString(1));
+                        srs.setType(getSrsType(rs.getString(2)));
+                        srs.setWkText(rs.getString(3));
+                    }
+                }
+            }
+        } else { //srs is not supported or spatialrefsys graph is not available at endpoint
             DatabaseSrs tmp = DatabaseSrs.createDefaultSrs();
             srs.setDatabaseSrsName(tmp.getDatabaseSrsName());
             srs.setType(tmp.getType());
