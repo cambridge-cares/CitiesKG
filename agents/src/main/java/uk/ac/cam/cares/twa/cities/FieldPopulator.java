@@ -7,25 +7,30 @@ import java.io.InvalidClassException;
 import java.lang.reflect.*;
 import java.net.URI;
 import java.util.List;
-import java.util.function.*;
 
-class InstantiationParameters {
-  public final KnowledgeBaseClientInterface kgClient;
-  public final int recursiveInstantiationDepth;
+@FunctionalInterface
+interface Parser {
+  Object parse(JSONObject row, KnowledgeBaseClientInterface kgClient, int recursiveInstantiationDepth) throws Exception;
+}
 
-  public InstantiationParameters(KnowledgeBaseClientInterface kgClient, int recursiveInstantiationDepth) {
-    this.kgClient = kgClient;
-    this.recursiveInstantiationDepth = recursiveInstantiationDepth;
-  }
+@FunctionalInterface
+interface Pusher {
+  void push(Object object, Object value) throws Exception;
+}
+
+@FunctionalInterface
+interface DefaultConstructor {
+  Object get() throws Exception;
 }
 
 public class FieldPopulator {
   public final Field field;
   public final Method getter;
   public final Method setter;
-  private final BiFunction<JSONObject, InstantiationParameters, Object> parser;
-  private final BiConsumer<Object, Object> pusher;
-  private final Supplier<Object> defaultConstructor;
+  private Parser parser;
+  private Pusher pusher;
+  private DefaultConstructor defaultConstructor;
+
   public FieldPopulator(Field field) throws NoSuchMethodException, InvalidClassException {
     this.field = field;
     // Determine characteristics of field
@@ -39,36 +44,30 @@ public class FieldPopulator {
     fieldName = fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
     getter = parentType.getMethod("get" + fieldName);
     setter = parentType.getMethod("set" + fieldName, outerType);
-    Supplier<Object> tentativeDefaultConstructor;
     // Generate parser
     if (isModel) {
       Constructor<?> constructor = innerType.getConstructor();
-      parser = (JSONObject row, InstantiationParameters params) -> {
-        try {
-          Model model = (Model) constructor.newInstance();
-          if (params.recursiveInstantiationDepth > 0)
-            model.populateAll(row.getString(Model.VALUE), params.kgClient, params.recursiveInstantiationDepth - 1);
-          else
-            model.setIri(URI.create(row.getString(Model.VALUE)));
-          return model;
-        } catch (Exception e) {
-          e.printStackTrace();
-          return null;
-        }
+      parser = (JSONObject row, KnowledgeBaseClientInterface kgClient, int recursiveInstantiationDepth) -> {
+        Model model = (Model) constructor.newInstance();
+        if (recursiveInstantiationDepth > 0)
+          model.populateAll(row.getString(Model.VALUE), kgClient, recursiveInstantiationDepth - 1);
+        else
+          model.setIri(URI.create(row.getString(Model.VALUE)));
+        return model;
       };
-      tentativeDefaultConstructor = () -> null;
+      defaultConstructor = () -> null;
     } else if (innerType == int.class) {
-      parser = (JSONObject row, InstantiationParameters instantiationParams) -> row.getInt(Model.VALUE);
-      tentativeDefaultConstructor = () -> 0;
+      parser = (JSONObject row, KnowledgeBaseClientInterface kgc, int rid) -> row.getInt(Model.VALUE);
+      defaultConstructor = () -> 0;
     } else if (innerType == double.class) {
-      parser = (JSONObject row, InstantiationParameters instantiationParams) -> row.getDouble(Model.VALUE);
-      tentativeDefaultConstructor = () -> 0;
+      parser = (JSONObject row, KnowledgeBaseClientInterface kgc, int rid) -> row.getDouble(Model.VALUE);
+      defaultConstructor = () -> 0;
     } else if (innerType == String.class) {
-      parser = (JSONObject row, InstantiationParameters instantiationParams) -> row.getString(Model.VALUE);
-      tentativeDefaultConstructor = () -> null;
+      parser = (JSONObject row, KnowledgeBaseClientInterface kgc, int rid) -> row.getString(Model.VALUE);
+      defaultConstructor = () -> null;
     } else if (innerType == URI.class) {
-      parser = (JSONObject row, InstantiationParameters instantiationParams) -> URI.create(row.getString(Model.VALUE));
-      tentativeDefaultConstructor = () -> null;
+      parser = (JSONObject row, KnowledgeBaseClientInterface kgc, int rid) -> URI.create(row.getString(Model.VALUE));
+      defaultConstructor = () -> null;
     } else {
       throw new InvalidClassException(innerType.toString(), "Class not supported.");
     }
@@ -76,34 +75,12 @@ public class FieldPopulator {
     if (isList) {
       // Due to type erasure, ArrayLists accept Objects, not innerTypes.
       Method adder = outerType.getMethod("add", Object.class);
-      pusher = (Object object, Object value) -> {
-        try {
-          Object list = getter.invoke(object);
-          adder.invoke(list, value);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-          e.printStackTrace();
-        }
-      };
+      pusher = (Object object, Object value) -> adder.invoke(getter.invoke(object), value);
       // Override previously assigned default constructor, which was for innerType
-      Constructor<?> constructor = outerType.getConstructor();
-      tentativeDefaultConstructor = () -> {
-        try {
-          return constructor.newInstance();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-          e.printStackTrace();
-          return null;
-        }
-      };
+      defaultConstructor = outerType.getConstructor()::newInstance;
     } else {
-      pusher = (Object object, Object value) -> {
-        try {
-          setter.invoke(object, value);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-          e.printStackTrace();
-        }
-      };
+      pusher = (Object object, Object value) -> setter.invoke(object, value);
     }
-    defaultConstructor = tentativeDefaultConstructor;
     System.err.println("innerType: " + innerType + ", outerType: " + outerType + ", isList: " + isList + ", isModel: " + isModel);
   }
 
@@ -111,7 +88,11 @@ public class FieldPopulator {
    * Populates the associated field of the object with the value in the row.
    */
   public void populate(Object object, JSONObject row, KnowledgeBaseClientInterface kgClient, int recursiveInstantiationDepth) {
-    pusher.accept(object, parser.apply(row, new InstantiationParameters(kgClient, recursiveInstantiationDepth)));
+    try {
+      pusher.push(object, parser.parse(row, kgClient, recursiveInstantiationDepth));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   /**
@@ -120,7 +101,7 @@ public class FieldPopulator {
   public void clear(Object object) {
     try {
       setter.invoke(object, defaultConstructor.get());
-    } catch (IllegalAccessException | InvocationTargetException e) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }

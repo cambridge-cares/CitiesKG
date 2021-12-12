@@ -49,7 +49,7 @@ public abstract class Model {
       do {
         fields.addAll(Arrays.asList(currentClass.getDeclaredFields()));
         currentClass = currentClass.getSuperclass();
-      } while(currentClass != null);
+      } while (currentClass != null);
       // Build fieldMap
       ModelMetadata metadata = this.getClass().getAnnotation(ModelMetadata.class);
       for (Field field : fields) {
@@ -57,7 +57,7 @@ public abstract class Model {
         if (annotation != null) {
           String predicate = annotation.value().replace(OCGML + ":", "");
           String graph = annotation.graphName();
-          if(graph.equals("")) graph = metadata.defaultGraph();
+          if (graph.equals("")) graph = metadata.defaultGraph();
           boolean backward = annotation.backward();
           try {
             fieldMap.put(graph + "/" + predicate + "/" + backward, new FieldPopulator(field));
@@ -71,22 +71,24 @@ public abstract class Model {
 
   /**
    * populates all fields of a CityGML model instance.
-   * @param kgClient sends the query to the right endpoint.
+   * @param kgClient                    sends the query to the right endpoint.
    * @param recursiveInstantiationDepth the number of levels into the model hierarchy below this to instantiate.
    */
-  public void populateAll(String iriName, KnowledgeBaseClientInterface kgClient, int recursiveInstantiationDepth) {
-    for(FieldPopulator populator: fieldMap.values()) populator.clear(this);
+  public void populateAll(String iriName, KnowledgeBaseClientInterface kgClient, int recursiveInstantiationDepth)
+      throws InvocationTargetException, IllegalAccessException {
+    for (FieldPopulator populator : fieldMap.values()) populator.clear(this);
     populateFieldsInDirection(iriName, kgClient, true, recursiveInstantiationDepth);
     populateFieldsInDirection(iriName, kgClient, false, recursiveInstantiationDepth);
   }
 
   /**
    * populates all fields of a CityGML model instance in one direction
-   * @param kgClient  sends the query to the right endpoint.
-   * @param backward whether iriName is the object or subject in the rows retrieved.
+   * @param kgClient                    sends the query to the right endpoint.
+   * @param backward                    whether iriName is the object or subject in the rows retrieved.
    * @param recursiveInstantiationDepth the number of levels into the model hierarchy below this to instantiate.
    */
-  private void populateFieldsInDirection(String iriName, KnowledgeBaseClientInterface kgClient, boolean backward, int recursiveInstantiationDepth) {
+  private void populateFieldsInDirection(String iriName, KnowledgeBaseClientInterface kgClient, boolean backward, int recursiveInstantiationDepth)
+      throws InvocationTargetException, IllegalAccessException {
     Query q = getPopulateQuery(iriName, backward);
     String queryResultString = kgClient.execute(q.toString());
     JSONArray queryResult = new JSONArray(queryResultString);
@@ -96,13 +98,9 @@ public abstract class Model {
       String graph = pop(row.getString(GRAPH), 1);
       String key = graph + "/" + predicate + "/" + backward;
       System.err.println("Reading row: " + graph + "/" + predicate + "/" + backward);
-      if (fieldMap.containsKey(key)){
+      if (fieldMap.containsKey(key)) {
         fieldMap.get(key).populate(this, row, kgClient, recursiveInstantiationDepth);
-        try {
-          System.err.println(fieldMap.get(key).getter.invoke(this));
-        } catch (IllegalAccessException | InvocationTargetException e) {
-          e.printStackTrace();
-        }
+        System.err.println(fieldMap.get(key).getter.invoke(this));
       } else {
         System.err.println("Key not found: " + key);
       }
@@ -112,12 +110,12 @@ public abstract class Model {
   /**
    * returns the nth from the last part of the iri.
    * @param iriName object id
-   * @param n the index counting from the back to return
+   * @param n       the index counting from the back to return
    * @return the nth-from-last part of the provided iri.
    */
   protected static String pop(String iriName, int n) {
     String[] splitIri = iriName.split("/");
-    if(splitIri[splitIri.length-1].equals("")) n++;
+    if (splitIri[splitIri.length - 1].equals("")) n++;
     return splitIri[splitIri.length - n];
   }
 
