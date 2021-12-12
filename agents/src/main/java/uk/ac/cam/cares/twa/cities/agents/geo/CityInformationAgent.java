@@ -1,5 +1,7 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
+import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
@@ -49,23 +51,17 @@ public class CityInformationAgent extends JPSAgent {
     }
     JSONArray cityObjectInformation = new JSONArray();
 
+    System.err.println(iris);
+
     setKGClient(true);
 
     for (String cityObjectIri : uris) {
-      try {
-        CityObject cityObject = new CityObject();
+      CityObject cityObject = new CityObject();
+      cityObject.populateAll(cityObjectIri, kgClient, 1);
 
-        cityObject.fillScalars(cityObjectIri, kgClient);
-        cityObject.fillGenericAttributes(cityObjectIri, kgClient, lazyload);
-        //cityObject.fillExternalReferences(cityObjectIri, kgClient, lazyload);
-
-        ArrayList<CityObject> cityObjectList = new ArrayList<>();
-        cityObjectList.add(cityObject);
-        cityObjectInformation.put(cityObjectList);
-      } catch (NoSuchFieldException | IllegalAccessException e) {
-        e.printStackTrace();
-      }
-
+      ArrayList<CityObject> cityObjectList = new ArrayList<>();
+      cityObjectList.add(cityObject);
+      cityObjectInformation.put(cityObjectList);
     }
     requestParams.append(KEY_ATTRIBUTES, cityObjectInformation);
     return requestParams;

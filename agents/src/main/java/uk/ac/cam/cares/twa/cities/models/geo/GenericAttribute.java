@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.models.geo;
 
+import java.io.InvalidClassException;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.ArrayList;
@@ -10,63 +11,26 @@ import lombok.Getter;
 import lombok.Setter;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import uk.ac.cam.cares.twa.cities.Model;
+import uk.ac.cam.cares.twa.cities.ModelField;
+import uk.ac.cam.cares.twa.cities.ModelMetadata;
 
 /**
  * GenericAttribute class represent a java model of GenericCityAttribute module of CityGML. It
  * retrieves GenericCityAttribute attributes and fills equivalent fields in the java model.
  */
+@ModelMetadata(defaultGraph = SchemaManagerAdapter.GENERIC_ATTRIB_GARPH)
 public class GenericAttribute extends Model {
 
-  @Getter @Setter private String attrName;
-  @Getter @Setter private String uriVal;
-  @Getter @Setter private String strVal;
-  @Getter @Setter private String unit;
-  @Getter @Setter private String rootGenattribId;
-  @Getter @Setter private String realVal;
-  @Getter @Setter private String parentGenattribId;
-  @Getter @Setter private String intVal;
-  @Getter @Setter private String dateVal;
-  @Getter @Setter private URI id;
-  @Getter @Setter private int dataType;
-  @Getter @Setter private URI cityObjectId;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_ATTR_NAME) protected String attrName;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_URI_VAL) protected String uriVal;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_STR_VAL) protected String strVal;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_UNIT) protected String unit;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_ROOT_GENATTRIB_ID) protected String rootGenattribId;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_REAL_VAL) protected String realVal;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_PARRENT_GENATTRIB_ID) protected String parentGenattribId;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_INT_VAL) protected String intVal;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_DATE_VAL) protected String dateVal;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_DATA_TYPE) protected int dataType;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID) protected URI cityObjectId;
 
-
-  private static final ArrayList<String> FIELD_CONSTANTS =
-      new ArrayList<>(
-          Arrays.asList(
-              SchemaManagerAdapter.ONTO_ATTR_NAME,
-              SchemaManagerAdapter.ONTO_URI_VAL,
-              SchemaManagerAdapter.ONTO_STR_VAL,
-              SchemaManagerAdapter.ONTO_UNIT,
-              SchemaManagerAdapter.ONTO_ROOT_GENATTRIB_ID,
-              SchemaManagerAdapter.ONTO_REAL_VAL,
-              SchemaManagerAdapter.ONTO_PARRENT_GENATTRIB_ID,
-              SchemaManagerAdapter.ONTO_INT_VAL,
-              SchemaManagerAdapter.ONTO_DATE_VAL,
-              SchemaManagerAdapter.ONTO_ID,
-              SchemaManagerAdapter.ONTO_DATA_TYPE,
-              SchemaManagerAdapter.ONTO_CITY_OBJECT_ID));
-
-  //protected HashMap<String, Field> fieldMap = new HashMap<>();
-
-  public GenericAttribute() throws NoSuchFieldException {
-    assignFieldValues(FIELD_CONSTANTS, fieldMap);
-  }
-
-  /**
-   * fills in the scalar fields of a generic attribute instance.
-   */
-  protected void assignScalarValueByRow(JSONObject row, HashMap<String, Field> fieldMap, String predicate)
-      throws IllegalAccessException {
-
-    if (predicate.equals(SchemaManagerAdapter.ONTO_DATA_TYPE)) {
-      fieldMap.get(predicate).set(this, row.getInt(VALUE));
-    } else if (predicate.equals(SchemaManagerAdapter.ONTO_ID)
-        || predicate.equals(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID)) {
-      fieldMap.get(predicate).set(this, URI.create(row.getString(VALUE)));
-    } else {
-      fieldMap.get(predicate).set(this, row.getString(VALUE));
-    }
-
-  }
 }

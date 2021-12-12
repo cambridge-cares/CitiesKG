@@ -36,7 +36,7 @@ public class ExternalReference {
      * @param iriName
      * @return - nothing - just fills in the field
      */
-    public void GenericAttribute(String iriName) {
+    public void ExternalReference(String iriName) {
         this.iriName = iriName;
     }
 
