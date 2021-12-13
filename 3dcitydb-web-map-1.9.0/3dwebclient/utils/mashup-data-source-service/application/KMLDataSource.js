@@ -44,20 +44,66 @@ var KMLDataSource = /** @class */ (function (_super) {
     KMLDataSource.prototype.responseCesiumToKvp = function (response) {
         // response is a list of JSON elements
         var result = new Map();
-        
-		if ($.isArray(response) && response.length > 0) {
-			if ($.isArray(response[0]) && response[0].length > 0) {
-				if ($.isArray(response[0][0]) && response[0][0].length > 0) {
-					var data = response[0][0][0];
-					for (var key in data) {
-						result[key] = data[key];
-					}
-				}
-			}
-		}
-		
-        return result;
+
+        if ($.isArray(response) && response.length > 0) {
+            if ($.isArray(response[0]) && response[0].length > 0) {
+                if ($.isArray(response[0][0]) && response[0][0].length > 0) {
+                    var data = response[0][0][0];
+                    for (var key in data) {
+                        if (key == null) {
+                            continue;
+                        }
+                        else if (key === "genericAttributeIris" || key === "externalReferencesIris"){
+                            continue;
+                        }
+                        else if (key === "genericAttributes"){
+                            this.genAttrKeysManager(data[key],result);
+                        }
+                        else if (key === "externalReferences"){
+                            this.extRefKeysManager(data[key], result);
+
+                        }
+                        else {
+                            result[key] = data[key];
+                        }
+
+                    }
+                }
+            }
+        }
+		return result;
+		};
+
+    KMLDataSource.prototype.genAttrKeysManager = function (data, result) {
+        for (var index in data) {
+            var object = data[index];
+            var name = object["attrName"];
+            var value;
+            var data_type = object["dataType"];
+            switch (data_type) {
+                case 2:
+                    value = object["intVal"];
+                    break;
+                case 3:
+                    value = object["realVal"];
+                    break;
+                default:
+                    value = object["strVal"];
+            }
+            result["GenAttr: " + name] = value;
+        }
+
     };
+
+    KMLDataSource.prototype.extRefKeysManager = function (data, result) {
+        for (var index in data){
+            var object = data[index];
+            var name = object["infoSys"];
+            var value = object["URI"];
+            result["ExtRef: " + name] = value;
+        }
+    };
+
 	
 		KMLDataSource.prototype.queryUsingId = function (id, callback, limit, clickedObject) {
 		console.log(clickedObject);

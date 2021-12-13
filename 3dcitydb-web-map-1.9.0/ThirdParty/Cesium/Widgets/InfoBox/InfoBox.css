@@ -2,13 +2,13 @@
     display: block;
     position: absolute;
     top: 50px;
-    right: 0;
-    width: 40%;
-    max-width: 480px;
+    right: 10px;
+    width: 50%;
+    max-width: 520px;
     background: rgba(38, 38, 38, 0.95);
     color: #edffff;
     border: 1px solid #444;
-    border-right: none;
+    border-right: 1px solid #444;
     border-top-left-radius: 7px;
     border-bottom-left-radius: 7px;
     box-shadow: 0 0 10px 1px #000;
@@ -27,8 +27,8 @@
 
 .cesium-infoBox-title {
     display: block;
-    height: 20px;
-    padding: 5px 30px 5px 25px;
+    height: 10px;
+    padding: 5px 30px 5px 30px;
     background: rgba(84, 84, 84, 1.0);
     border-top-left-radius: 7px;
     text-align: center;
