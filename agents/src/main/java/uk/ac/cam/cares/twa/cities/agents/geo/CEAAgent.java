@@ -34,7 +34,8 @@ public class CEAAgent extends JPSAgent {
     public static final String URI_ACTION = "/cea";
     public static final String KEY_IRI = "iri";
     private StoreClientInterface kgClient;
-    private static final String ROUTE = "http://kb/singapore-local";
+    private static final String ROUTE1 = "http://kb/singapore-local";
+    private static final String ROUTE2 = "http://kb/singaporeEPSG24500";
 
     public final int NUM_IMPORTER_THREADS = 1;
     private final ThreadPoolExecutor CEAExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_IMPORTER_THREADS);
@@ -139,9 +140,11 @@ public class CEAAgent extends JPSAgent {
     private Query getGeometryQuery(String uriString) {
 
         SelectBuilder sb = new SelectBuilder()
-                .addPrefix( "ocgml", "http://locahost/ontocitygml/" )
+                //.addPrefix( "ocgml", "http://locahost/ontocitygml/" )
+                .addPrefix( "ocgml", "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#" )
                 .addVar("?Envelope")
-                .addGraph(NodeFactory.createURI("http://localhost/berlin/cityobject/"), "?s", "ocgml:EnvelopeType", "?Envelope");
+                //.addGraph(NodeFactory.createURI("http://localhost/berlin/cityobject/"), "?s", "ocgml:EnvelopeType", "?Envelope");
+                .addGraph(NodeFactory.createURI("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/cityobject/"), "?s", "ocgml:EnvelopeType", "?Envelope");
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
 
         return sb.build();
@@ -155,13 +158,15 @@ public class CEAAgent extends JPSAgent {
     private Query getHeightQuery(String uriString) {
         WhereBuilder wb =
                 new WhereBuilder()
-                        .addPrefix("ocgml", "http://locahost/ontocitygml/")
+                        //.addPrefix("ocgml", "http://locahost/ontocitygml/")
+                        .addPrefix( "ocgml", "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#" )
                         .addWhere("?o", "ocgml:attrName", "height")
                         .addWhere("?o", "ocgml:realVal", "?Height")
                         .addWhere("?o", "ocgml:cityObjectId", "?s");
         SelectBuilder sb = new SelectBuilder()
                 .addVar("?Height")
-                .addGraph(NodeFactory.createURI("http://localhost/berlin/cityobjectgenericattrib/"), wb);
+                //.addGraph(NodeFactory.createURI("http://localhost/berlin/cityobjectgenericattrib/"), wb);
+                .addGraph(NodeFactory.createURI("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/cityobjectgenericattrib/"), wb);
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
 
         return sb.build();
@@ -173,10 +178,16 @@ public class CEAAgent extends JPSAgent {
      * @param isUpdate
      */
     private void setKGClient(boolean isQuery, boolean isUpdate){
-
-        this.kgClient = StoreRouter.getStoreClient(ROUTE,
-                isQuery,
-                isUpdate);
+        if(isQuery) {
+            this.kgClient = StoreRouter.getStoreClient(ROUTE2,
+                    isQuery,
+                    isUpdate);
+        }
+        else if(isUpdate){
+            this.kgClient = StoreRouter.getStoreClient(ROUTE1,
+                    isQuery,
+                    isUpdate);
+        }
     }
 
     public int sparqlUpdate(CEAOutputData output, String uriString) {
