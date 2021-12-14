@@ -65,6 +65,9 @@ public class RunCEATask implements Callable<CEAOutputData> {
                  else if(demand_columns.get(0)[n].equals("QC_sys_MWhyr")) {
                      result.cooling_demand = demand_columns.get(1)[n];
                  }
+                 else if(demand_columns.get(0)[n].equals("E_sys_MWhyr")) {
+                     result.electricity_demand = demand_columns.get(1)[n];
+                 }
             }
             i=0;
             while ((line = PV_file.readLine()) != null)   //returns a Boolean value
