@@ -13,7 +13,7 @@
 - script: surroundings-helper
   parameters:
     scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
-    buffer: 250.
+    buffer: 50.
 - script: terrain-helper
   parameters:
     scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
@@ -38,10 +38,10 @@
   parameters:
     scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
     buildings: ['B001']
-    loads-output: ['GRID', 'QH_sys', 'QC_sys']
+    loads-output: ['GRID', 'QH_sys', 'QC_sys', 'E_sys']
     massflows-output: []
     temperatures-output: []
-- script: photovoltaic-thermal
+- script: photovoltaic
   parameters:
     scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
     buildings: ['B001']
