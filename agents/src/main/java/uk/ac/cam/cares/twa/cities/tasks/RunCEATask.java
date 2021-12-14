@@ -3,41 +3,35 @@ package uk.ac.cam.cares.twa.cities.tasks;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import com.google.gson.Gson;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
-import java.io.FileReader;
 import java.lang.Process;
+import java.util.concurrent.Callable;
 
-public class RunCEATask implements Runnable {
+public class RunCEATask implements Callable<CEAOutputData> {
     private final CEAInputData inputs;
-    private final CEAOutputData result;
     private Boolean stop = false;
 
-    public RunCEATask(CEAInputData buildingData, CEAOutputData output) {
-        this.inputs = buildingData;
-        this.result = output;
-    }
+    public RunCEATask(CEAInputData buildingData) {  this.inputs = buildingData; }
 
     public void stop() {
         stop = true;
     }
 
     public void runCEAScript(String ceaArgs) {
-        String CMDER_ROOT = "C:\\Users\\ELLO01\\Documents\\CityEnergyAnalyst\\Dependencies\\cmder";
-        String FilePath = new File(CMDER_ROOT, "test_new.bat").getAbsolutePath();
-
         ArrayList<String> args = new ArrayList<>();
-        args.add(FilePath);
-        args.add(ceaArgs);
+        args.add("cmd.exe");
+        args.add("/C");
+        args.add("conda activate cea &&" + ceaArgs);
 
         ProcessBuilder builder = new ProcessBuilder(args);
+        builder.redirectErrorStream(true);
 
         // starting the process
         try {
-            Process process = builder.start();
-        } catch ( IOException  e) {
+            Process p = builder.start();
+            p.waitFor();
+        } catch ( IOException | InterruptedException e) {
             e.printStackTrace();
             throw new JPSRuntimeException(e);
         }
@@ -63,13 +57,13 @@ public class RunCEATask implements Runnable {
             }
             for(int n=0; n<demand_columns.get(0).length; n++) {
                  if(demand_columns.get(0)[n].equals("GRID_MWhyr")) {
-                     result.grid_demand=demand_columns.get(1)[n];
+                     result.grid_demand = demand_columns.get(1)[n];
                  }
                  else if(demand_columns.get(0)[n].equals("QH_sys_MWhyr")) {
-                     result.heating_demand=demand_columns.get(1)[n];
+                     result.heating_demand = demand_columns.get(1)[n];
                  }
                  else if(demand_columns.get(0)[n].equals("QC_sys_MWhyr")) {
-                     result.cooling_demand=demand_columns.get(1)[n];
+                     result.cooling_demand = demand_columns.get(1)[n];
                  }
             }
             i=0;
@@ -94,7 +88,7 @@ public class RunCEATask implements Runnable {
     }
 
     @Override
-    public void run() {
+    public CEAOutputData call() {
         while (!stop) {
 
             try {
@@ -116,8 +110,6 @@ public class RunCEATask implements Runnable {
                 String workflowArgs = "cea workflow --workflow C:\\Users\\ELLO01\\Documents\\CitiesKG\\utils\\workflow.yml";
                 runCEAScript(workflowArgs);
 
-                CEAOutputData results = extractOutputs();
-
             } catch (  InterruptedException | IOException | NullPointerException e) {
                 e.printStackTrace();
                 throw new JPSRuntimeException(e);
@@ -125,5 +117,6 @@ public class RunCEATask implements Runnable {
                 stop();
             }
         }
+        return extractOutputs();
     }
 }

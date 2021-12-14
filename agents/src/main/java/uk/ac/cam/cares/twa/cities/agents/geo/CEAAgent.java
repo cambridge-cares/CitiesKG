@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.agents.geo;
 
 import org.apache.jena.sparql.core.Var;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
+import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.tasks.CEAInputData;
 import uk.ac.cam.cares.twa.cities.tasks.CEAOutputData;
 import uk.ac.cam.cares.twa.cities.tasks.RunCEATask;
@@ -11,13 +12,13 @@ import javax.ws.rs.HttpMethod;
 import java.util.ArrayList;
 import java.util.Set;
 import javax.servlet.annotation.WebServlet;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.UUID;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
+import org.apache.jena.update.UpdateRequest;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.json.JSONArray;
@@ -43,13 +44,15 @@ public class CEAAgent extends JPSAgent {
 
         if (validateInput(requestParams)) {
             String uri = requestParams.getString("iri");
+
             CEAInputData testData = new CEAInputData();
             testData.geometry = getValue(uri, "Envelope");
             testData.height = getValue(uri, "Height");
-            CEAOutputData outputs = new CEAOutputData();
-            runCEA(testData, outputs);
-        }
 
+            CEAOutputData outputs = runCEA(testData);
+
+            sparqlUpdate(outputs, uri);
+        }
         return requestParams;
     }
 
@@ -78,9 +81,17 @@ public class CEAAgent extends JPSAgent {
         return true;
     }
 
-    private void runCEA(CEAInputData buildingData, CEAOutputData output) {
-        RunCEATask task = new RunCEATask(buildingData, output);
-        CEAExecutor.execute(task);
+    private CEAOutputData runCEA(CEAInputData buildingData) {
+        RunCEATask task = new RunCEATask(buildingData);
+        Future<CEAOutputData> future = CEAExecutor.submit(task);
+        CEAOutputData result;
+        try {
+             result = future.get();
+        } catch( InterruptedException | ExecutionException| CancellationException e) {
+            e.printStackTrace();
+            throw new JPSRuntimeException(e);
+        }
+        return result;
     }
 
     /**
@@ -92,7 +103,7 @@ public class CEAAgent extends JPSAgent {
     private String getValue(String uriString, String value){
 
         String result = "";
-        setKGClient();
+        setKGClient(true, false);
 
         Query q = getQuery(uriString, value);
         String queryResultString = kgClient.execute(q.toString());
@@ -157,14 +168,55 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * sets KG Client for specific query endpoint.
+     * sets KG Client for specific query or update endpoint
+     * @param isQuery
+     * @param isUpdate
      */
-    private void setKGClient(){
+    private void setKGClient(boolean isQuery, boolean isUpdate){
 
         this.kgClient = StoreRouter.getStoreClient(ROUTE,
-                true,
-                false);
+                isQuery,
+                isUpdate);
     }
 
+    public int sparqlUpdate(CEAOutputData output, String uriString) {
+        String outputGraphUri = "http://localhost/berlin/ceaoutput/";
+        String heatingUri = outputGraphUri + "UUID_" + UUID.randomUUID() + "/";
+        String coolingUri = outputGraphUri + "UUID_" + UUID.randomUUID() + "/";
+        String pvCellsUri = outputGraphUri + "UUID_" + UUID.randomUUID()+ "/";
+
+        UpdateBuilder ub =
+                new UpdateBuilder()
+                        .addPrefix("ontoubemmp", "http://www.theworldavatar.com/ontology/ontoubemmp/OntoUBEMMP.owl#")
+                        .addPrefix("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
+                        .addPrefix("owl", "http://www.w3.org/2002/07/owl#")
+                        .addInsert("?graph", NodeFactory.createURI(uriString), "rdf:type", "ontoubemmp:building")
+                        .addInsert("?graph", NodeFactory.createURI(uriString), "ontoubemmp:hasYearlyEnergyDemand", output.grid_demand)
+                        .addInsert("?graph", NodeFactory.createURI(uriString), "ontoubemmp:hasEnergyUnit", "megawattHour")
+                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "rdf:type", "ontoubemmp:EnergyConsumer")
+                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "ontoubemmp:isConsumerType", "heating")
+                        .addInsert("?graph", NodeFactory.createURI(uriString), "ontoubemmp:hasEnergyConsumer", NodeFactory.createURI(heatingUri))
+                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "ontoubemmp:hasEnergyUnit", "megawattHour")
+                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "ontoubemmp:hasYearlyEnergyDemand", output.heating_demand)
+                        .addInsert("?graph", NodeFactory.createURI(coolingUri), "rdf:type", "ontoubemmp:EnergyConsumer")
+                        .addInsert("?graph", NodeFactory.createURI(coolingUri), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(coolingUri), "ontoubemmp:isConsumerType", "cooling")
+                        .addInsert("?graph", NodeFactory.createURI(uriString), "ontoubemmp:hasEnergyConsumer", NodeFactory.createURI(coolingUri))
+                        .addInsert("?graph", NodeFactory.createURI(coolingUri), "ontoubemmp:hasEnergyUnit", "megawattHour")
+                        .addInsert("?graph", NodeFactory.createURI(coolingUri), "ontoubemmp:hasYearlyEnergyDemand", output.cooling_demand)
+                        .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "rdf:type", "ontoubemmp:PVCells")
+                        .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(uriString), "ontoubemmp:hasPotentialPVCells", NodeFactory.createURI(pvCellsUri))
+                        .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "ontoubemmp:hasEnergyUnit", "kilowattHour")
+                        .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "ontoubemmp:hasYearlyEnergySupply", output.PV_supply)
+                        .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "ontoubemmp:hasAreaUnit", "squareMeter")
+                        .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "ontoubemmp:hasSurfaceArea", output.PV_area);
+        ub.setVar(Var.alloc("graph"), NodeFactory.createURI(outputGraphUri));
+
+        UpdateRequest ur = ub.buildRequest();
+        setKGClient(false, true);
+        return kgClient.executeUpdate(ur);
+    }
 
 }
