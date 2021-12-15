@@ -14,6 +14,8 @@ import org.mockito.stubbing.Answer;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.sql.*;
 
 import static org.mockito.Mockito.*;
@@ -24,6 +26,7 @@ public class UtilAdapterTest extends TestCase {
     Connection conn = Mockito.mock(Connection.class, RETURNS_MOCKS);
     Statement statement = Mockito.mock(Statement.class, RETURNS_MOCKS);
     ResultSet rs = Mockito.mock(java.sql.ResultSet.class);
+    HttpURLConnection resp = Mockito.mock(HttpURLConnection.class);
 
     public UtilAdapter createNewUtilAdapter() throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
         Constructor c = UtilAdapter.class.getDeclaredConstructor(AbstractDatabaseAdapter.class);
@@ -47,7 +50,7 @@ public class UtilAdapterTest extends TestCase {
     @Test
     public void testNewUtilAdapterMethods() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         UtilAdapter utilAdapter = createNewUtilAdapter();
-        assertEquals(20, utilAdapter.getClass().getDeclaredMethods().length);
+        assertEquals(21, utilAdapter.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -60,9 +63,10 @@ public class UtilAdapterTest extends TestCase {
 
     @Test //test case when srs is supported
     public void testGetSrsInfoSupported() throws SQLException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        UtilAdapter utilAdapter = createNewUtilAdapter();
+        UtilAdapter spy = Mockito.spy(createNewUtilAdapter());
         DatabaseSrs srs = DatabaseSrs.createDefaultSrs();
 
+        when(spy.existsEndpoint(ArgumentMatchers.anyString())).thenReturn(true);
         try (MockedStatic<DriverManager> manager = Mockito.mockStatic(DriverManager.class, RETURNS_MOCKS)) {
             manager.when(() -> DriverManager.getConnection(ArgumentMatchers.anyString())).thenReturn(conn);
             when(conn.createStatement()).thenReturn(statement);
@@ -72,7 +76,7 @@ public class UtilAdapterTest extends TestCase {
             when(rs.getString(2)).thenReturn("type");
             when(rs.getString(3)).thenReturn("wktext");
 
-            utilAdapter.getSrsInfo(srs);
+            spy.getSrsInfo(srs);
             assertEquals("name", srs.getDatabaseSrsName());
             assertEquals(DatabaseSrsType.UNKNOWN, srs.getType());
             assertEquals("wktext", srs.getWkText());
@@ -82,9 +86,10 @@ public class UtilAdapterTest extends TestCase {
 
     @Test //test case when srs is supported but has no well known text
     public void testGetSrsInfoNoWktext() throws SQLException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        UtilAdapter utilAdapter = createNewUtilAdapter();
+        UtilAdapter spy = Mockito.spy(createNewUtilAdapter());
         DatabaseSrs srs = DatabaseSrs.createDefaultSrs();
 
+        when(spy.existsEndpoint(ArgumentMatchers.anyString())).thenReturn(true);
         try (MockedStatic<DriverManager> manager = Mockito.mockStatic(DriverManager.class, RETURNS_MOCKS)) {
             manager.when(() -> DriverManager.getConnection(ArgumentMatchers.anyString())).thenReturn(conn);
             when(conn.createStatement()).thenReturn(statement);
@@ -94,7 +99,7 @@ public class UtilAdapterTest extends TestCase {
             when(rs.getString(2)).thenReturn(null);
             when(rs.getString(3)).thenReturn("some string");
 
-            utilAdapter.getSrsInfo(srs);
+            spy.getSrsInfo(srs);
             assertEquals("", srs.getDatabaseSrsName());
             assertEquals(DatabaseSrsType.UNKNOWN, srs.getType());
             assertEquals("", srs.getWkText());
@@ -104,21 +109,70 @@ public class UtilAdapterTest extends TestCase {
 
     @Test //test case when srs is not supported
     public void testGetSrsInfoNotSupported() throws SQLException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        UtilAdapter utilAdapter = createNewUtilAdapter();
+        UtilAdapter spy = Mockito.spy(createNewUtilAdapter());
         DatabaseSrs srs = DatabaseSrs.createDefaultSrs();
 
+        when(spy.existsEndpoint(ArgumentMatchers.anyString())).thenReturn(true);
         try (MockedStatic<DriverManager> manager = Mockito.mockStatic(DriverManager.class, RETURNS_MOCKS)) {
             manager.when(() -> DriverManager.getConnection(ArgumentMatchers.anyString())).thenReturn(conn);
             when(conn.createStatement()).thenReturn(statement);
             when(statement.executeQuery(ArgumentMatchers.anyString())).thenReturn(rs);
             when(rs.next()).thenReturn(false);
 
-            utilAdapter.getSrsInfo(srs);
+            spy.getSrsInfo(srs);
             assertEquals("n/a", srs.getDatabaseSrsName());
             assertEquals(DatabaseSrsType.UNKNOWN, srs.getType());
             assertNull(srs.getWkText());
             assertFalse(srs.isSupported());
         }
+    }
+
+    @Test //test case when public namespace is not available at endpoint
+    public void testGetSrsInfoNotAvailable() throws SQLException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        UtilAdapter spy = Mockito.spy(createNewUtilAdapter());
+        DatabaseSrs srs = DatabaseSrs.createDefaultSrs();
+
+        when(spy.existsEndpoint(ArgumentMatchers.anyString())).thenReturn(false);
+
+        spy.getSrsInfo(srs);
+        assertEquals("n/a", srs.getDatabaseSrsName());
+        assertEquals(DatabaseSrsType.UNKNOWN, srs.getType());
+        assertNull(srs.getWkText());
+        assertFalse(srs.isSupported());
+    }
+
+    @Test
+    public void testExistsEndpointTrue() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        UtilAdapter utilAdapter = createNewUtilAdapter();
+        String endpoint = "test";
+
+        try (MockedConstruction<URL> url = Mockito.mockConstruction(URL.class, (mock, context) -> {
+            when(mock.openConnection()).thenReturn(resp);
+            when(resp.getResponseCode()).thenReturn(200);
+        })) {
+            assertTrue(utilAdapter.existsEndpoint(endpoint));
+        }
+    }
+
+    @Test
+    public void testExistsEndpointFalse() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        UtilAdapter utilAdapter = createNewUtilAdapter();
+        String endpoint = "test";
+
+        try (MockedConstruction<URL> url = Mockito.mockConstruction(URL.class, (mock, context) -> {
+            when(mock.openConnection()).thenReturn(resp);
+            when(resp.getResponseCode()).thenReturn(404);
+        })) {
+            assertFalse(utilAdapter.existsEndpoint(endpoint));
+        }
+    }
+
+    @Test
+    public void testExistsEndpointException() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        UtilAdapter utilAdapter = createNewUtilAdapter();
+        String endpoint = "test";
+
+        assertFalse(utilAdapter.existsEndpoint(endpoint));
     }
 
     @Test
@@ -186,7 +240,7 @@ public class UtilAdapterTest extends TestCase {
                 "WITH <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/databasesrs/>\n" +
                 "DELETE { ?srid ocgml:srid ?currentSrid .\n" +
                 "?srsname ocgml:srsname ?currentSrsname }\n" +
-                "INSERT { <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/> ocgml:srid 123;\n" +
+                "INSERT { <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> ocgml:srid 123;\n" +
                 "ocgml:srsname \"test\" }\n" +
                 "WHERE { OPTIONAL { ?srid ocgml:srid ?currentSrid }\n" +
                 "OPTIONAL { ?srsname ocgml:srsname ?currentSrsname } }";
