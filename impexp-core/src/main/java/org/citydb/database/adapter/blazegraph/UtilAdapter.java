@@ -130,8 +130,11 @@ public class UtilAdapter extends AbstractUtilAdapter {
     }
 
     protected String getChangeSrsUpdateStatement(String schema, String endpoint, DatabaseSrs srs) {
+        if (endpoint.endsWith("/")) {
+            endpoint = endpoint.substring(0, endpoint.length() - 1);
+        }
         String updateStatement = "PREFIX " + SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + " <" + schema + ">\n" +
-                "WITH <" + endpoint + "databasesrs/>\n" +
+                "WITH <" + endpoint + "/databasesrs/>\n" +
                 "DELETE { ?srid " + SchemaManagerAdapter.ONTO_SRID + " ?currentSrid .\n" +
                 "?srsname " + SchemaManagerAdapter.ONTO_SRSNAME + " ?currentSrsname }\n" +
                 "INSERT { <" + endpoint + "> " + SchemaManagerAdapter.ONTO_SRID + " " + srs.getSrid() + ";\n" +
