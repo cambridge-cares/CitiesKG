@@ -65,18 +65,9 @@ public class UtilAdapter extends AbstractUtilAdapter {
                 "        BIND(strbefore(?srtext, \"[\") as ?type)\n" +
                 "        ?s " + SchemaManagerAdapter.ONTO_SRID + " " + srs.getSrid() +
                 "}";
-        Boolean exists = true;
 
-        try {
-            URL url = new URL(endpointUrl);
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            con.setRequestMethod("HEAD");
-            if (con.getResponseCode() != 200) {
-                exists = false;
-            }
-        } catch (IOException e) {
-            exists = false;
-        }
+        //check if public namespace exists at endpoint
+        Boolean exists = existsEndpoint(endpointUrl);
 
         if (exists) {
             try (Connection conn = DriverManager.getConnection(connectionStr);
@@ -102,6 +93,21 @@ public class UtilAdapter extends AbstractUtilAdapter {
             srs.setSupported(false);
         }
         srsInfoMap.put(srs.getSrid(), srs);
+    }
+
+    public Boolean existsEndpoint(String endpointUrl) {
+        Boolean exists = true;
+        try {
+            URL url = new URL(endpointUrl);
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("HEAD");
+            if (con.getResponseCode() != 200) {
+                exists = false;
+            }
+        } catch (IOException e) {
+            exists = false;
+        }
+        return exists;
     }
 
     @Override
