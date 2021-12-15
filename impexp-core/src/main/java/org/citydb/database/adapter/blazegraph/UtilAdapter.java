@@ -84,9 +84,14 @@ public class UtilAdapter extends AbstractUtilAdapter {
                         srs.setType(getSrsType(rs.getString(2)));
                         srs.setWkText(rs.getString(3));
                     }
+                } else { //srs is not supported
+                    DatabaseSrs tmp = DatabaseSrs.createDefaultSrs();
+                    srs.setDatabaseSrsName(tmp.getDatabaseSrsName());
+                    srs.setType(tmp.getType());
+                    srs.setSupported(false);
                 }
             }
-        } else { //srs is not supported or spatialrefsys graph is not available at endpoint
+        } else { //public namespace is not available at endpoint
             DatabaseSrs tmp = DatabaseSrs.createDefaultSrs();
             srs.setDatabaseSrsName(tmp.getDatabaseSrsName());
             srs.setType(tmp.getType());
