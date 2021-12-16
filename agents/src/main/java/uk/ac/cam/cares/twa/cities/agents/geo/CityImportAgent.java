@@ -76,7 +76,8 @@ public class CityImportAgent extends JPSAgent {
   public static final String KEY_DIRECTORY = "directory";
   public static final String KEY_SPLIT = "split";
   public static final String KEY_TARGET_URL = "targetURL";
-  public static final String KEY_DATABASE_SRS = "databaseSrs";
+  public static final String KEY_SRID = "srid";
+  public static final String KEY_SRSNAME = "srsName";
   public static final String SPLIT_SCRIPT = "citygml_splitter.py";
   public final int CHUNK_SIZE = 50;
   public static final int NUM_SERVER_THREADS = 2;
@@ -110,11 +111,10 @@ public class CityImportAgent extends JPSAgent {
     if (validateInput(requestParams)) {
       requestUrl = requestParams.getString(KEY_REQ_URL);
       targetUrl = requestParams.getString(KEY_TARGET_URL);
+      srid = requestParams.getString(KEY_SRID);
+      srsname = requestParams.getString(KEY_SRSNAME);
       if (requestUrl.contains(URI_LISTEN)) {
         importDir = listenToImport(requestParams.getString(KEY_DIRECTORY));
-        String[] srsInput = requestParams.getString(KEY_DATABASE_SRS).split(",");
-        srid = srsInput[0];
-        srsname = srsInput[1];
       } else if (requestUrl.contains(URI_ACTION)) {
         String importedFiles = importFiles(new File(requestParams.getString(AsynchronousWatcherService.KEY_WATCH)));
         JSONObject jsonMessage = new JSONObject();
@@ -139,12 +139,11 @@ public class CityImportAgent extends JPSAgent {
           try {
             URL reqUrl = new URL(requestParams.getString(KEY_REQ_URL));
             new URL(requestParams.getString(KEY_TARGET_URL));
+            errorSrs = validateDatabaseSrsInput(requestParams, keys);
             if (reqUrl.getPath().contains(URI_LISTEN)) {
               error = validateListenInput(requestParams, keys);
-              errorSrs = validateDatabaseSrsInput(requestParams, keys);
             } else if (reqUrl.getPath().contains(URI_ACTION)) {
               error = validateActionInput(requestParams, keys);
-              errorSrs = false;
             }
           } catch (Exception e) {
             throw new BadRequestException();
@@ -200,17 +199,16 @@ public class CityImportAgent extends JPSAgent {
 
   private boolean validateDatabaseSrsInput(JSONObject requestParams, Set<String> keys) {
     boolean error = true;
-    if (keys.contains(KEY_DATABASE_SRS)) {
-      String[] srsInput = requestParams.getString(KEY_DATABASE_SRS).split(",");
-      if (srsInput.length == 2) {
-        try {
-          Integer.parseInt(srsInput[0]);
-          if (!srsInput[1].isEmpty()) {
-            error = false;
-          }
-        } catch (NumberFormatException e) {
-          throw new JPSRuntimeException(e);
+    if ((keys.contains(KEY_SRID)) && (keys.contains(KEY_SRSNAME))) {
+      String srid = requestParams.getString(KEY_SRID);
+      String srsname = requestParams.getString(KEY_SRSNAME);
+      try {
+        Integer.parseInt(srid);
+        if (!srsname.isEmpty()) {
+          error = false;
         }
+      } catch (NumberFormatException e) {
+        throw new JPSRuntimeException(e);
       }
     }
     return error;
@@ -237,6 +235,8 @@ public class CityImportAgent extends JPSAgent {
       json.put(AsynchronousWatcherService.KEY_WATCH, directoryName);
       json.put(AsynchronousWatcherService.KEY_CALLBACK_URL, url);
       json.put(KEY_TARGET_URL, targetUrl);
+      json.put(KEY_SRID, srid);
+      json.put(KEY_SRSNAME, srsname);
       CreateFileWatcher watcher = new CreateFileWatcher(dir,
           AsynchronousWatcherService.PARAM_TIMEOUT * AsynchronousWatcherService.TIMEOUT_MUL);
       WatcherCallback callback = watcher.getCallback(url, json.toString());
