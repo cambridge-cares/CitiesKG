@@ -27,6 +27,10 @@
  */
 package org.citydb.modules.kml.database;
 
+//import com.github.jsonldjava.utils.Obj;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.citydb.concurrent.WorkerPool;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.BoundingBox;
@@ -124,17 +128,43 @@ public class KmlSplitter {
 
 		boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value());
 
-		try (PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
-			 ResultSet rs = stmt.executeQuery()) {
+		if (is_Blazegraph) {
+			//For Blazegraph
 
-			int objectCount = 0;
+			List<PlaceHolder<?>> placeHolders = select.getInvolvedPlaceHolders();
+			int objectCount_sparql = 0;
 
-			while (rs.next() && shouldRun) {
+			// for each gmlid, a sparql query will be executed and resultset will be extracted
+			for (int i  = 0; i < placeHolders.size(); ++i) {
+				Object gmlidUri = placeHolders.get(i).getValue();
+				PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
+				// Assign one gmlid, the predicateTokens
+				if (((String)gmlidUri).contains("*")){
+						// @TODO: as the preparedstatement will create different query for particular gmlid or *
+				} else {
+					stmt.setString(1, (String)gmlidUri);
+					stmt.setString(2, (String)gmlidUri);
+				}
 
-				if (is_Blazegraph) {
-					String id_str = rs.getString(MappingConstants.ID);
-					String gmlId = rs.getString(MappingConstants.GMLID);
+				long startTime = System.currentTimeMillis();
+				//System.out.println(stmt);  // only the parameterized query
+				ResultSet rs = stmt.executeQuery();
+				long endTime = System.currentTimeMillis();
+
+				System.out.println("The first query getTopFeatureId takes: " + String.valueOf(endTime - startTime) + " milliseconds");
+
+				ArrayList<Integer> numbers = new ArrayList<>(Arrays.asList(64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26)); // correct solution
+
+				while (rs.next() && shouldRun) {
+
 					int objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
+
+					//if (numbers.contains(objectClassId)){
+						String id_str = rs.getString(MappingConstants.ID);
+					//	String[] elements = id_str.split("/");
+					//	String gmlId = elements[elements.length-2];
+						String gmlId = rs.getString(MappingConstants.GMLID);
+
 
 					GeometryObject envelope = null;
 					if (query.isSetTiling()) {
@@ -145,9 +175,22 @@ public class KmlSplitter {
 
 					// Note: This will lead to the implementation for Blazegraph in the same class
 					addWorkToQueue(id_str, gmlId, objectClassId, envelope, activeTile, false);
-					objectCount++;
+					objectCount_sparql++;
+					//}
+				}
 
-				}else {
+				if (query.isSetTiling())
+					Logger.getInstance().debug(
+							objectCount_sparql + " candidate objects found for Tile_" + activeTile.getX() + "_"
+									+ activeTile.getY() + ".");
+			}
+		} else {
+			// For SQL
+			try (PreparedStatement stmt = databaseAdapter.getSQLAdapter()
+					.prepareStatement(select, connection);
+					ResultSet rs = stmt.executeQuery()) {
+				int objectCount = 0;
+				while (rs.next() && shouldRun) {
 					long id = rs.getLong(MappingConstants.ID);
 					String gmlId = rs.getString(MappingConstants.GMLID);
 					int objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
@@ -163,11 +206,11 @@ public class KmlSplitter {
 					objectCount++;
 				}
 
-
+				if (query.isSetTiling())
+					Logger.getInstance().debug(
+							objectCount + " candidate objects found for Tile_" + activeTile.getX() + "_"
+									+ activeTile.getY() + ".");
 			}
-
-			if (query.isSetTiling())
-				Logger.getInstance().debug(objectCount + " candidate objects found for Tile_" + activeTile.getX() + "_" + activeTile.getY() + ".");
 		}
 	}
 

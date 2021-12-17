@@ -1,22 +1,18 @@
 package org.citydb.database.adapter.blazegraph;
 
-import org.apache.jena.query.Query;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.adapter.*;
 import org.citydb.query.filter.selection.operator.spatial.SpatialOperatorName;
 import org.citydb.sqlbuilder.SQLStatement;
-import org.citydb.sqlbuilder.expression.PlaceHolder;
 import org.citydb.sqlbuilder.schema.Column;
 import org.citydb.sqlbuilder.select.PredicateToken;
 import org.citydb.sqlbuilder.select.projection.Function;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.List;
+
 
 public class SQLAdapter extends AbstractSQLAdapter {
 
@@ -164,29 +160,18 @@ public class SQLAdapter extends AbstractSQLAdapter {
         return null;
     }
 
-    @Override
     public PreparedStatement prepareStatement(SQLStatement statement, Connection connection) throws SQLException{
+        String sparqlQuery = null;
+        PreparedStatement psQuery;
+        StatementTransformer queryTransformer = new StatementTransformer(databaseAdapter);
 
-        PreparedStatement preparedStatement = transformStatement(statement, connection);
-        System.out.println(preparedStatement);
-        return preparedStatement;
-    }
-
-    // Note: implement SQLPreparedStatement into SPARQLPreparedStatement transformer
-    public PreparedStatement transformStatement(SQLStatement statement, Connection connection) throws SQLException {
-        String SPARQLStatement = null;
-        PreparedStatement preparedStatement = null;
-
-        StatementTransformer querytransformer = new StatementTransformer(databaseAdapter);
         try {
-            SPARQLStatement = querytransformer.getTopFeatureId(statement);
+            sparqlQuery = queryTransformer.getTopFeatureId(statement);
         } catch (ParseException e) {
             e.printStackTrace();
         }
-
-        preparedStatement = connection.prepareStatement(SPARQLStatement.toString());
-
-        return preparedStatement;
+        psQuery = connection.prepareStatement(sparqlQuery.toString());
+        return psQuery;
     }
 
 }

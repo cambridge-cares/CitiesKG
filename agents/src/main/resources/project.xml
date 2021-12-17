@@ -1270,10 +1270,10 @@
                 <wrapText>false</wrapText>
                 <logLevel>info</logLevel>
             </console>
-            <file active="false">
+            <file active="true">
                 <logLevel>info</logLevel>
-                <useAlternativeLogPath>false</useAlternativeLogPath>
-                <alternativeLogPath></alternativeLogPath>
+                <useAlternativeLogPath>true</useAlternativeLogPath>
+                <alternativeLogPath>C:\tmp\export</alternativeLogPath>
             </file>
         </logging>
         <language>en</language>

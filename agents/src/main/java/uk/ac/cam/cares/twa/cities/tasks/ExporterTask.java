@@ -77,7 +77,7 @@ public class ExporterTask implements Runnable {
         // Copy the template to the location of output
         File exportFile = new File(outputpath);
 
-        String projectCfg = exportFile.getAbsolutePath().replace(EXT_FILE_KML, PROJECT_CONFIG);
+        String projectCfg = exportFile.getAbsolutePath().replace(EXT_FILE_KML, "_" + PROJECT_CONFIG);
         Files.copy(Paths.get(Objects.requireNonNull(getClass().getClassLoader().getResource(PROJECT_CONFIG)).toURI()),
                     Paths.get(projectCfg), StandardCopyOption.REPLACE_EXISTING);
 
@@ -99,7 +99,7 @@ public class ExporterTask implements Runnable {
         for (String gmlid : gmlids){
             sb.append("<id>");
             sb.append(gmlid);
-            sb.append("</id>");
+            sb.append("</id>\n");
         }
         return sb.toString();
     }

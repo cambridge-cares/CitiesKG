@@ -205,9 +205,5 @@ public class SQLAdapter extends AbstractSQLAdapter {
 		return null;
 	}
 
-	public PreparedStatement transformStatement(SQLStatement statement, Connection connection) throws SQLException {
-		return null;
-	}
-
 
 }
