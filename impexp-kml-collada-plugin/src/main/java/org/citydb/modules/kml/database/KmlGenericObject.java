@@ -54,6 +54,7 @@ import org.citydb.config.project.kmlExporter.KmlExporter;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.AbstractGeometryConverterAdapter;
 import org.citydb.database.adapter.BlobExportAdapter;
+import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.event.EventDispatcher;
 import org.citydb.event.global.CounterEvent;
@@ -204,7 +205,7 @@ public abstract class KmlGenericObject<T> {
 	private final ImageReader imageReader;
 
 	// Added by Shiying
-	public boolean isBlazegraph = kmlExporterManager.isBlazegraph();
+	public boolean isBlazegraph;
 
 	protected KmlGenericObject(Connection connection,
 			Query query,
@@ -243,6 +244,9 @@ public abstract class KmlGenericObject<T> {
 
 		queries = new Queries(databaseAdapter, kmlExporterManager.getDatabaseAdapter().getConnectionDetails().getSchema());
 		imageReader = new ImageReader();
+
+		// Added by Shiying
+		isBlazegraph = kmlExporterManager.isBlazegraph();
 	}
 
 	public abstract void read(KmlSplittingResult work);
@@ -1397,13 +1401,15 @@ public abstract class KmlGenericObject<T> {
 			if (!rs.wasNull() && buildingGeometryObj != null) {
 				eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
 
+				GeometryObject unconvertedGeom = null;
 				// Added by Shiying: convert the # string to geometry, it has to be 3D?
 				if (isBlazegraph){
-					buildingGeometryObj = StatementTransformer.Str2Geometry(buildingGeometryObj.toString(), datatype);
+					//buildingGeometryObj = StatementTransformer.Str2Geometry(buildingGeometryObj.toString(), datatype);
+					unconvertedGeom = GeoSpatialProcessor.create3dPolygon(buildingGeometryObj.toString(), datatype);
+				} else {
+					unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
 				}
 
-
-				GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
 				if (unconvertedGeom == null || (unconvertedGeom.getGeometryType() != GeometryType.POLYGON && unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON))
 					continue;
 
@@ -2708,6 +2714,8 @@ public abstract class KmlGenericObject<T> {
 			throw e;
 		}
 
+		// To set the z-coordinate of the geometryObject, no need to reconstruct the GeometryObject using double[][]
+		// Need to make sure the originalCoords and convertedCoords has the same dimesion
 		if (config.getProject().getKmlExporter().isUseOriginalZCoords() && geomObj.getDimension() == 3) {
 			double[][] originalCoords = geomObj.getCoordinates();			
 			double[][] convertedCoords = convertedGeomObj.getCoordinates();

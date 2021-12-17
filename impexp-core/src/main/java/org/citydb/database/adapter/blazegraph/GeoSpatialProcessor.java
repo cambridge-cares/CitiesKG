@@ -59,19 +59,24 @@ public class GeoSpatialProcessor {
         return details;
     }
 
-    /* Equivalent ST_Transform(Geometry g1, integer srid)
+
+    /**
+     * Simulate ST_Transform for blazegraph based on JTS, equivalent ST_Transform(Geometry g1, integer srid)
      * https://postgis.net/docs/ST_Transform.html
-     * Return: Geometry
-     * Default : SRID 4326
-     * */
-    public Geometry Transform(Geometry geom, int srcSRID, int dstSRID) {
+     *
+     * @param sourceGeometry     - Geometry to be transformed
+     * @param srcSRID            - Source srid
+     * @param dstSRID            - Target srid (Default : SRID 4326)
+     * @return Geometry - make sure the incoming and outgoing has the same format (type, dimension)
+     */
+    public Geometry Transform(Geometry sourceGeometry, int srcSRID, int dstSRID) {
 
         GeometryFactory fac = new GeometryFactory();
 
         // need to reverse the coordinates of the polygpn
         //Coordinate[] sourceCoords = getReversedCoordinates(geom);
-        //Geometry sourceGeometry = fac.createPolygon(sourceCoords);
-        Geometry sourceGeometry = fac.createGeometry(geom);
+
+        //Geometry sourceGeometry = fac.createGeometry(geom);
 
         Geometry targetGeometry = null;
         try {
@@ -149,7 +154,7 @@ public class GeoSpatialProcessor {
     /*Convert the input String into list of coordinates
      * Polygon testpoly2 = fac.createPolygon(str2coords(testpolygon2).toArray(new Coordinate[0]));
      * */
-    public List<Coordinate> str2coords(String st_geometry) {
+    public static List<Coordinate> str2coords(String st_geometry) {
         String[] pointXYZList = null;
         List<Coordinate> coords = new LinkedList<Coordinate>();
 
@@ -230,28 +235,72 @@ public class GeoSpatialProcessor {
 
         return geom;
     }
-
+    // Need to consider 2d or 3d, @todo: CHECK 2D and 3D
     public Coordinate[] getReversedCoordinates(Geometry geometry) {
 
         Coordinate[] original = geometry.getCoordinates();
         Coordinate[] reversed = new Coordinate[original.length];
 
         for (int i = 0; i < original.length; i++) {
-            reversed[i] = new Coordinate(original[i].y, original[i].x);
+                reversed[i] = new Coordinate(original[i].getY(), original[i].getX(), original[i].getZ());
         }
 
         return reversed;
     }
 
 
-    /* Todo */
-    public GeometryObject create3dPolygon(String coordlist, String geomtype, int dimension, int[] dimOfRings){
-        GeometryFactory fac = new GeometryFactory();
-        Coordinate[] coordinates = str2coords(coordlist).toArray(new Coordinate[0]);
-        if (dimOfRings.length == 1) {
-            LinearRing shell = fac.createLinearRing(coordinates);
-            //geom = fac.createPolygon(shell);
+    /* Todo String geomtype, int dimension, int[] dimOfRings */
+    public static GeometryObject create3dPolygon(String coordlist, String datatypeURI){
+
+        String datatype = datatypeURI.substring(datatypeURI.lastIndexOf('/') + 1);
+        String[] datatype_list = datatype.split("-");
+        String geomtype = datatype_list[0];
+        int dim = Integer.valueOf(datatype_list[1]);
+        int[] dimOfRings = new int[datatype_list.length-2];
+        for (int i = 2; i < datatype_list.length; ++i){
+            dimOfRings[i-2] = Integer.valueOf(datatype_list[i]);
         }
-        return null;
+        // put in createGeopmetry (extracted, geomtype, listOfDim)
+        //Geometry geomobj = geospatial.createGeometry(extracted, geomtype, dim, dimOfRings);
+
+        GeometryBuilder builder = new GeometryBuilder();
+        String[] coords = coordlist.split("#");
+        double[] ord = new double[coords.length];
+        for (int i = 0; i < coords.length; ++i) {
+            ord[i] = Double.valueOf(coords[i]);
+        }
+        Polygon polygon3d = null;
+        Geometry geomObj = null;
+        LinearRing lingring3d = null;
+        Coordinate[] coordinates = str2coords(coordlist).toArray(new Coordinate[0]);
+        GeometryObject geom = null;
+        if (dimOfRings.length == 1) {
+            //polygon3d = builder.polygonZ(ord);
+            //lingring3d = builder.linearRingZ(ord);
+            geom = GeometryObject.createPolygon(ord, dim, 4326);
+            //LinearRing shell = fac.createLinearRing(coordinates);
+            //geom = fac.createPolygon(shell);
+            //System.out.println(polygon3d);
+        }
+
+        return geom;
+    }
+
+    /* Convert two-dimensional GeometryObject to three-dimensional GeometryObject */
+    public static GeometryObject convertTo3d (GeometryObject geometryObj2d, GeometryObject originalGeomObj) {
+        double[][] coordinates2d = geometryObj2d.getCoordinates();
+        double[][] origCoords = originalGeomObj.getCoordinates();
+
+        if (originalGeomObj.getDimension() == 3 && geometryObj2d.getDimension() == 2) {
+            for (int i = 0 ; i < origCoords.length; ++i) {
+                for (int j = 0; j < origCoords.length; j+=3) {
+                    origCoords[i][j] = coordinates2d[i][j];
+                    origCoords[i][j+1] = coordinates2d[i][j+1];
+                }
+
+            }
+        }
+
+        return originalGeomObj;
     }
 }

@@ -1,5 +1,6 @@
 package org.citydb.database.adapter.blazegraph;
 
+import java.util.Arrays;
 import org.citydb.config.geometry.BoundingBox;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.config.geometry.GeometryType;
@@ -10,6 +11,7 @@ import org.citydb.database.adapter.AbstractUtilAdapter;
 import org.citydb.database.adapter.IndexStatusInfo;
 import org.citydb.database.connection.DatabaseMetaData;
 import org.citydb.database.version.DatabaseVersion;
+import org.geotools.geometry.jts.GeometryBuilder;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -17,6 +19,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import org.locationtech.jts.geom.LinearRing;
 
 public class UtilAdapter extends AbstractUtilAdapter {
 
@@ -70,49 +73,68 @@ public class UtilAdapter extends AbstractUtilAdapter {
     protected BoundingBox transformBoundingBox(BoundingBox bbox, DatabaseSrs sourceSrs, DatabaseSrs targetSrs, Connection connection) throws SQLException {
         return null;
     }
-    //The postgis implementation is to execute ST_Transform in postgis
+
+    /**
+     * Simulate ST_Transform for blazegraph using the GeoSpatialProcessor (based on JTS)
+     *
+     * @param geometry     - GeometryObject to be transformed, can contain multipolygon
+     * @param targetSrs    - target SRID
+     * @param connection   - database connection
+     * @return GeometryObject - make sure the incoming and outgoing has the same format (dimension)
+     */
     @Override
     protected GeometryObject transform(GeometryObject geometry, DatabaseSrs targetSrs, Connection connection) throws SQLException {
-        GeometryObject result = null;
 
-        int numPolygon = geometry.getNumElements();
-        double[][] coordinates = new double[numPolygon][];
-        GeometryFactory fac = new GeometryFactory();
+        GeometryObject converted3d = null;
+
+        int numGeometry = geometry.getNumElements();
+        double[][] coordinates = geometry.getCoordinates();
+        int dim = geometry.getDimension();
+        int srcSrs = geometry.getSrid();
+
+        GeometryFactory fac = new GeometryFactory();  // no polygonZ
         GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
-
+        GeometryBuilder geometrybuilder = new GeometryBuilder();
         List<Geometry> polygonlist = new ArrayList<>();
 
-        for (int i = 0; i < numPolygon; ++i){
-            coordinates[i] = geometry.getCoordinates(i);
-        }
+        //for (int i = 0; i < numGeometry; ++i){
+        //    coordinates[i] = geometry.getCoordinates(i);
+        //}
 
-        for (int j = 0; j < numPolygon; ++j) {
+        for (int j = 0; j < numGeometry; ++j) {
             List<Coordinate> polygoncoord = new ArrayList<>();
-            for (int k = 0; k < coordinates[j].length; k = k + 2){
-                polygoncoord.add(new Coordinate(coordinates[j][k], coordinates[j][k+1]));
+            for (int k = 0; k < coordinates[j].length; k = k + dim){
+                if (dim == 2) {
+                    polygoncoord.add(new Coordinate(coordinates[j][k], coordinates[j][k+1]));  // Things go wrong here
+                } else {
+                    polygoncoord.add(new Coordinate(coordinates[j][k], coordinates[j][k+1], coordinates[j][k+2]));
+                }
+
             }
             polygonlist.add(fac.createPolygon(polygoncoord.toArray(polygoncoord.toArray(new Coordinate[0]))));
         }
 
-        int sourceSrsId;
-        if (geometry.getSrid() == 0){
-            sourceSrsId = 31466;
-        }else{
-            sourceSrsId = geometry.getSrid();
-        }
+        // only GeoSpatialProcessor has Transform
+        Geometry coll = fac.buildGeometry(polygonlist);
+        Geometry converted = geospatial.Transform(coll, srcSrs , targetSrs.getSrid());
+        //List<Geometry> convertedGeometry = new ArrayList<>();
+        //for (int i = 0; i < numGeometry; ++i){
+        //    Geometry converted = geospatial.Transform(polygonlist.get(i), geometry.getSrid(), targetSrs.getSrid()); // the hague: 28992, berlin: 25933 / 25833
+        //    Coordinate[] reverseCoord = geospatial.getReversedCoordinates(converted);
+        //    Geometry reverseConverted = fac.createPolygon(reverseCoord);
+        //    convertedGeometry.add(reverseConverted);
+        //}
 
-        List<Geometry> convertedGeometry = new ArrayList<>();
-        for (int i = 0; i < numPolygon; ++i){
-            Geometry converted = geospatial.Transform(polygonlist.get(i),25833, targetSrs.getSrid()); // the hague: 28992, berlin: 25933
-            Coordinate[] reverseCoord = geospatial.getReversedCoordinates(converted);
-            Geometry reverseConverted = fac.createPolygon(reverseCoord);
-            convertedGeometry.add(reverseConverted);
-        }
+        // need to reverse the coordinates to match POSTGIS results --> move to somewhere
+        //Geometry union = geospatial.UnaryUnion(convertedGeometry);
 
-        // need to reverse the coordinates to match POSTGIS results
-        Geometry union = geospatial.UnaryUnion(convertedGeometry);
-        result = databaseAdapter.getGeometryConverter().getGeometry(union);
-        return result;
+        GeometryObject geomObj2d = databaseAdapter.getGeometryConverter().getGeometry(converted);
+        converted3d = GeoSpatialProcessor.convertTo3d(geomObj2d, geometry);  // convert 2d to 3d coordinates
+
+        //double[][] convertedCoords = result.getCoordinates();
+        //result.setSrid(targetSrs.getSrid());
+
+        return converted3d;
     }
 
     @Override
