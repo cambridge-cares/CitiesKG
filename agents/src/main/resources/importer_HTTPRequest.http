@@ -1,5 +1,8 @@
 POST http://localhost:8080/agents/import/source
 Content-Type: application/json
 
-{"directory":"C:\\tmp\\import",
-  "targetURL": "http://192.168.10.111:9999/blazegraph/namespace/testdata/sparql"}
+{"directory":"C:\\tmp2\\import",
+  "targetURL": "http://172.20.10.5:9999/blazegraph/namespace/URA_complete/sparql"}
+
+
+
