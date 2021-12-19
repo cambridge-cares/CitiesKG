@@ -1,7 +1,5 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
-import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
@@ -57,7 +55,7 @@ public class CityInformationAgent extends JPSAgent {
 
     for (String cityObjectIri : uris) {
       CityObject cityObject = new CityObject();
-      cityObject.populateAll(cityObjectIri, kgClient, 1);
+      cityObject.pullAll(cityObjectIri, kgClient, 1);
 
       ArrayList<CityObject> cityObjectList = new ArrayList<>();
       cityObjectList.add(cityObject);

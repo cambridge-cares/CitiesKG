@@ -37,9 +37,9 @@ public class Building extends Model {
   @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_LOD2_MULTI_CURVE) protected URI lod2MultiCurve; // check-type
   @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_LOD3_MULTI_CURVE) protected URI lod3MultiCurve; // check-type
   @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_LOD4_MULTI_CURVE) protected URI lod4MultiCurve; // check-type
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_MEASURED_HEIGHT) protected double measuredHeight;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_MEASURED_HEIGHT) protected Double measuredHeight;
   @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_MEASURED_HEIGHT_UNIT) protected String measuredHeightUnit; // check-type
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID) protected int objectClassId;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID) protected Integer objectClassId;
   @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_ROOF_TYPE_CODESPACE) protected String roofTypeCodespace; // check-type
   @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_ABOVE_GROUND) protected String storeyHeightsAboveGround; // check-type
   @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_BELLOW_GROUND) protected String storeyHeightsBelowGround; // check-type

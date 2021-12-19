@@ -17,21 +17,15 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.update.UpdateRequest;
-import org.geotools.geometry.jts.JTS;
-import org.geotools.referencing.CRS;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.operation.distance3d.Distance3DOp;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
+import org.locationtech.jts.geom.Coordinate;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
-import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.jps.base.query.KGRouter;
-import uk.ac.cam.cares.twa.cities.models.geo.Envelope;
+import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
+import uk.ac.cam.cares.twa.cities.models.geo.EnvelopeType;
+import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
 
 /**
  * DistanceAgent class retrieves existing distance between the centroids of two objects envelopes
@@ -106,14 +100,11 @@ public class DistanceAgent extends JPSAgent {
         double distance = getDistance(firstObjectUri, secondObjectUri);
 
         if (distance < 0) {
+          GeometryType.setMetricCrsName("EPSG:24500");
           String firstSrs = getObjectSrs(firstObjectUri, true);
           String secondSrs = getObjectSrs(secondObjectUri, true);
-          String targetSrs = getObjectSrs(firstObjectUri, false);
           distance =
-              computeDistance(
-                  getEnvelope(firstObjectUri, firstSrs),
-                  getEnvelope(secondObjectUri, secondSrs),
-                  targetSrs);
+              computeDistance(getEnvelope(firstObjectUri, firstSrs), getEnvelope(secondObjectUri, secondSrs));
           setDistance(firstObjectUri, secondObjectUri, distance);
         }
         distances.add(distance);
@@ -278,12 +269,11 @@ public class DistanceAgent extends JPSAgent {
    * @param uriString city object id
    * @return envelope
    */
-  public Envelope getEnvelope(String uriString, String coordinateSystem) {
-    Envelope envelope = new Envelope(coordinateSystem);
-    String envelopeString = envelope.getEnvelopeString(uriString);
-    envelope.extractEnvelopePoints(envelopeString);
-
-    return envelope;
+  public EnvelopeType getEnvelope(String uriString, String coordinateSystem) {
+    GeometryType.setSourceCrsName(coordinateSystem);
+    CityObject cityObject = new CityObject();
+    cityObject.pullAll(uriString, kgClient, 0);
+    return cityObject.getEnvelopeType();
   }
 
   /**
@@ -293,36 +283,10 @@ public class DistanceAgent extends JPSAgent {
    * @param envelope2 city object 2 envelope
    * @return distance
    */
-  public double computeDistance(Envelope envelope1, Envelope envelope2, String targetCrs) {
-
-    Point centroid1 = envelope1.getCentroid();
-    Point centroid2 = envelope2.getCentroid();
-    String crs1 = envelope1.getCRS();
-    String crs2 = envelope2.getCRS();
-    centroid1 = setUniformCRS(centroid1, crs1, targetCrs);
-    centroid2 = setUniformCRS(centroid2, crs2, targetCrs);
-
-    return Distance3DOp.distance(centroid1, centroid2);
-  }
-
-  /**
-   * sets point CRS to a fixed coordinate system.
-   *
-   * @param point original points
-   * @param sourceCRSstring source CRS
-   * @return points
-   */
-  private Point setUniformCRS(Point point, String sourceCRSstring, String targetCRSstring) {
-
-    try {
-      CoordinateReferenceSystem sourceCRS = CRS.decode(sourceCRSstring);
-      CoordinateReferenceSystem targetCRS = CRS.decode(targetCRSstring);
-      MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
-      point = (Point) JTS.transform(point, transform);
-    } catch (FactoryException | TransformException | JPSRuntimeException e) {
-      throw new JPSRuntimeException(e);
-    }
-    return point;
+  public double computeDistance(EnvelopeType envelope1, EnvelopeType envelope2) {
+    Coordinate c1 = envelope1.getMetricCentroid();
+    Coordinate c2 = envelope2.getMetricCentroid();
+    return c1.distance3D(c2);
   }
 
   /**

@@ -19,10 +19,10 @@ public class ThematicSurface extends Model {
 
   @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_BUILDING_ID)  private URI buildingId;
   @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_BUILDING_INSTALLATION_ID)  private URI buildingInstallationId;
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_LOD2_MULTI_SURFACE_ID)  private URI lod2MultiSurfaceId;
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_LOD3_MULTI_SURFACE_ID)  private URI lod3MultiSurfaceId;
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_LOD4_MULTI_SURFACE_ID)  private URI lod4MultiSurfaceId;
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID)  private int objectClassId;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_LOD2_MULTI_SURFACE_ID)  private SurfaceGeometry lod2MultiSurfaceId;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_LOD3_MULTI_SURFACE_ID)  private SurfaceGeometry lod3MultiSurfaceId;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_LOD4_MULTI_SURFACE_ID)  private SurfaceGeometry lod4MultiSurfaceId;
+  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID)  private Integer objectClassId;
   @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_ROOM_ID)  private URI roomId;
 
 }

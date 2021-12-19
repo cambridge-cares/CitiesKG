@@ -10,7 +10,8 @@ import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.jps.base.query.KGRouter;
 import uk.ac.cam.cares.jps.base.query.RemoteKnowledgeBaseClient;
 import uk.ac.cam.cares.twa.cities.agents.geo.DistanceAgent;
-import uk.ac.cam.cares.twa.cities.models.geo.Envelope;
+import uk.ac.cam.cares.twa.cities.models.geo.EnvelopeType;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.UUID;
@@ -150,64 +151,28 @@ public class DistanceAgentTest extends TestCase {
         }
     }
 
-    public void testGetEnvelope(){
-
-        DistanceAgent distanceAgent = new DistanceAgent();
-        String uri = "http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/";
-        String mockedEnvelopeString = "0#0#0#0#1#0#1#1#0#1#0#0";
-
-        try (MockedConstruction<Envelope> ignored = mockConstruction(Envelope.class,
-                (mock, context)-> when(mock.getEnvelopeString(uri)).thenReturn(mockedEnvelopeString))) {
-            Envelope envelope = distanceAgent.getEnvelope(uri, "EPSG:25833");
-            Mockito.verify(envelope).getEnvelopeString(uri);
-            Mockito.verify(envelope).extractEnvelopePoints(mockedEnvelopeString);
-        }
-    }
-
     public void testComputeDistance() {
 
         DistanceAgent distanceAgent = new DistanceAgent();
 
+        EnvelopeType.setSourceCrsName("EPSG:24500");
+        EnvelopeType.setMetricCrsName("EPSG:24500");
+
         // test distance calculation without CRS conversion.
         String envelopeString1 = "1#1#0#1#2#0#2#2#0#2#1#0#1#1#0";
-        Envelope envelope1 =  new Envelope("EPSG:24500");
-        envelope1.extractEnvelopePoints(envelopeString1);
+        EnvelopeType envelope1 =  new EnvelopeType(envelopeString1, "POLYGON-3-15");
 
         String envelopeString2 = "1#2#1#1#3#1#2#3#1#2#2#1#1#2#1";
-        Envelope envelope2 =  new Envelope("EPSG:24500");
-        envelope2.extractEnvelopePoints(envelopeString2);
+        EnvelopeType envelope2 =  new EnvelopeType(envelopeString2, "POLYGON-3-15");
 
-        assertEquals(1.4142135623730951, distanceAgent.computeDistance(envelope1, envelope2, "EPSG:24500"));
+        assertEquals(1.4142135623730951, distanceAgent.computeDistance(envelope1, envelope2));
 
         // test distance calculation with CRS conversion.
+        EnvelopeType.setSourceCrsName("EPSG:3414");
         String envelopeString3 = "2.85#-1.85#0#2.85#0.15#0#4.85#0.15#0#4.85#-1.85#0#2.85#-1.85#0";
-        Envelope envelope3 = new Envelope("EPSG:3414");
-        envelope3.extractEnvelopePoints(envelopeString3);
+        EnvelopeType envelope3 = new EnvelopeType(envelopeString3, "POLYGON-3-15");
 
-        assertEquals(1.0034225353460755, distanceAgent.computeDistance(envelope1, envelope3, "EPSG:24500"));
-    }
-
-    public void testSetUniformCRS(){
-
-        DistanceAgent distanceAgent = new DistanceAgent();
-
-        GeometryBuilder builder = new GeometryBuilder();
-        Point point = builder.pointZ(1,1,0);
-
-        try {
-            assertNotNull(distanceAgent.getClass().getDeclaredMethod("setUniformCRS", Point.class, String.class, String.class));
-            Method setUniformCRS = distanceAgent.getClass().getDeclaredMethod("setUniformCRS", Point.class, String.class, String.class);
-            setUniformCRS.setAccessible(true);
-
-            Point pointTransformed = (Point) setUniformCRS.invoke(distanceAgent,point, "EPSG:3414", "EPSG:24500");
-
-            assertEquals(3.3531995128068957, pointTransformed.getCoordinate().x);
-            assertEquals(-0.34659662783087697, pointTransformed.getCoordinate().y);
-            assertEquals(0.0, pointTransformed.getCoordinate().z);
-        }
-        catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-            fail();
-        }
+        assertEquals(1.0034225353460755, distanceAgent.computeDistance(envelope1, envelope3));
     }
 
     public void testGetSetDistanceQuery(){
