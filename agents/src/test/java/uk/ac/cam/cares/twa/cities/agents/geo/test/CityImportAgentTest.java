@@ -21,8 +21,13 @@ import java.util.concurrent.ThreadPoolExecutor;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import junit.framework.TestCase;
+import kong.unirest.HttpResponse;
+import kong.unirest.Unirest;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
+import org.mockito.ArgumentMatchers;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
@@ -822,6 +827,91 @@ public class CityImportAgentTest extends TestCase {
     }
 
     //other functionality already tested in the corresponding task
+  }
+
+  public void testSetDatabaseSrs() {
+    CityImportAgent agent = new CityImportAgent();
+    Field targetUrl = null;
+    Method setDatabaseSrs = null;
+
+    try {
+      targetUrl = agent.getClass().getDeclaredField("targetUrl");
+      targetUrl.setAccessible(true);
+      targetUrl.set(agent, "http://localhost");
+      setDatabaseSrs = agent.getClass().getDeclaredMethod("setDatabaseSrs");
+      setDatabaseSrs.setAccessible(true);
+    } catch (NoSuchMethodException | IllegalAccessException | NoSuchFieldException e) {
+      fail();
+    }
+
+    try {
+      setDatabaseSrs.invoke(agent);
+    } catch (Exception e) {
+      assert e instanceof InvocationTargetException;
+      assertEquals(((InvocationTargetException) e).getTargetException().getClass(), JPSRuntimeException.class);
+    }
+
+    try {
+      HttpResponse<?> response = Mockito.mock(HttpResponse.class);
+      try (MockedStatic<Unirest> unirest = Mockito.mockStatic(Unirest.class, Mockito.RETURNS_MOCKS)) {
+        unirest.when(() -> Unirest.post(ArgumentMatchers.anyString())
+                .header(ArgumentMatchers.anyString(), ArgumentMatchers.anyString())
+                .body(ArgumentMatchers.anyString())
+                .socketTimeout(ArgumentMatchers.anyInt())
+                .asEmpty())
+                .thenReturn(response);
+        setDatabaseSrs.invoke(agent);
+      } catch (Exception e) {
+        assert e instanceof InvocationTargetException;
+        assertEquals(((InvocationTargetException) e).getTargetException().getClass(), JPSRuntimeException.class);
+        assertEquals(((InvocationTargetException) e).getTargetException().getCause().getMessage(), "http://localhost 0");
+      }
+    } catch (Exception e) {
+      fail();
+    }
+  }
+
+  public void testGetSetDatabaseSrsUpdate() {
+    CityImportAgent agent = new CityImportAgent();
+
+    try {
+      Field targetUrl = agent.getClass().getDeclaredField("targetUrl");
+      targetUrl.setAccessible(true);
+      targetUrl.set(agent, "http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql");
+      Field srid = agent.getClass().getDeclaredField("srid");
+      srid.setAccessible(true);
+      srid.set(agent, "123");
+      Field srsname = agent.getClass().getDeclaredField("srsname");
+      srsname.setAccessible(true);
+      srsname.set(agent, "test");
+    } catch (Exception e) {
+      fail();
+    }
+
+    String updateString = "PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>\n" +
+            "\n" +
+            "WITH <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/databasesrs/>\n" +
+            "DELETE {\n" +
+            "  ?srid ocgml:srid ?currentSrid .\n" +
+            "  ?srsname ocgml:srsname ?currentSrsname .\n" +
+            "}\n" +
+            "INSERT {\n" +
+            "  <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> ocgml:srid 123 .\n" +
+            "  <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> ocgml:srsname \"test\" .\n" +
+            "}\n" +
+            "WHERE\n" +
+            "  { OPTIONAL\n" +
+            "      { ?srid  ocgml:srid  ?currentSrid}\n" +
+            "    OPTIONAL\n" +
+            "      { ?srsname  ocgml:srsname  ?currentSrsname}\n" +
+            "  }\n";
+    try {
+      Method getSetDatabaseSrsUpdate = agent.getClass().getDeclaredMethod("getSetDatabaseSrsUpdate");
+      getSetDatabaseSrsUpdate.setAccessible(true);
+      assertEquals(getSetDatabaseSrsUpdate.invoke(agent).toString(), updateString);
+    } catch (Exception e) {
+      fail();
+    }
   }
 
   public void testArchiveImportFiles() {
