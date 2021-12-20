@@ -104,12 +104,13 @@ public class GeometryType implements DatatypeModel {
     double x = 0;
     double y = 0;
     double z = 0;
-    for(int i = 0; i < coordinates.length - (skipLast ? 1 : 0); i++) {
+    int length = coordinates.length - (skipLast ? 1 : 0);
+    for(int i = 0; i < length; i++) {
       x += coordinates[i].getX();
       y += coordinates[i].getY();
       z += coordinates[i].getZ();
     }
-    return new Coordinate(x/coordinates.length, y/coordinates.length, z/coordinates.length);
+    return new Coordinate(x/length, y/length, z/length);
   }
 
   public static Vector3D computeVectorArea(LinearRing ring) {

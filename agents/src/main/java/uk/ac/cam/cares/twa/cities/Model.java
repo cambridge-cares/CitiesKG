@@ -18,8 +18,43 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
-import uk.ac.cam.cares.jps.base.query.sparql.PrefixToUrlMap;
 
+class MetaModel {
+
+  public final String nativeGraph;
+  public final Constructor<?> constructor;
+  public final HashMap<String, FieldInterface> fieldMap;
+
+  public MetaModel (Class<?> target) throws NoSuchMethodException, InvalidClassException {
+    // Miscellaneous useful data
+    constructor = target.getConstructor();
+    ModelMetadata metadata = target.getAnnotation(ModelMetadata.class);
+    nativeGraph = metadata.nativeGraph();
+    // Collect fields
+    Class<?> currentClass = target;
+    ArrayList<Field> fields = new ArrayList<>();
+    do {
+      fields.addAll(Arrays.asList(currentClass.getDeclaredFields()));
+      currentClass = currentClass.getSuperclass();
+    } while (currentClass != null);
+    // Build fieldMap
+    fieldMap = new HashMap<>();
+    for (Field field : fields) {
+      ModelField annotation = field.getAnnotation(ModelField.class);
+      if (annotation != null) {
+        String predicate = PrefixUtils.expandQualifiedName(annotation.value());
+        String graph = annotation.graphName().equals("") ? nativeGraph : annotation.graphName();
+        boolean backward = annotation.backward();
+        // Keys have format e.g.
+        // surfacegeometry|http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#|true
+        // The predicate is expanded but the graph is not because the full graph iri is target namespace-dependent
+        // and will not be the same across different applications, while the full predicate iri does not change.
+        fieldMap.put(graph + "|" + predicate + "|" + backward, new FieldInterface(field));
+      }
+    }
+  }
+
+}
 
 public abstract class Model {
 
@@ -29,58 +64,23 @@ public abstract class Model {
   protected static final String PREDICATE = "predicate";
   protected static final String VALUE = "value";
   protected static final String DATATYPE = "datatype";
-  public static final String OCGML = "ocgml";
-  public static final String OCGML_FULL = ResourceBundle.getBundle("config").getString("uri.ontology.ontocitygml");
-  public static final String OCGML_PREFIX_STATEMENT = String.format("PREFIX %s:<%s> \n", OCGML, OCGML_FULL);
-  public static final String XML_PREFIX_STATEMENT = PrefixToUrlMap.getPrefixForSPARQL("xsd");
-  private static final String UPDATE_PREFIX_STATEMENTS = OCGML_PREFIX_STATEMENT + XML_PREFIX_STATEMENT;
-
   private static StringBuilder updateQueue = new StringBuilder();
+  private final static HashMap<Class<?>, MetaModel> metaModelMap = new HashMap<>();
 
-  // Probably there could be a better way to do this? The key of fieldMap is e.g. "surfaceGeometry/cityObjectId/false"
-  // The clean copy is for comparison when pushing such to only push modified fields. Dirty flags would be more elegant
-  // but also more work and longer code.
-  private Constructor<?> cleanConstructor;
   private Model cleanCopy;
-  protected final HashMap<String, FieldInterface> fieldMap;
-  private static HashMap<Class<?>, HashMap<String, FieldInterface>> fieldMapMap = new HashMap<>();
+  protected final MetaModel metaModel;
 
   public Model() {
-    try {
-      cleanConstructor = this.getClass().getConstructor();
-    } catch (NoSuchMethodException e) {
-      throw new JPSRuntimeException(e);
-    }
-    if (fieldMapMap.containsKey(this.getClass())) {
-      // If we have mapped this class before, use the cached map.
-      fieldMap = fieldMapMap.get(this.getClass());
+    Class<?> thisClass = this.getClass();
+    if (metaModelMap.containsKey(thisClass)) {
+      metaModel = metaModelMap.get(thisClass);
     } else {
-      // Otherwise, build one and cache it.
-      fieldMap = new HashMap<>();
-      fieldMapMap.put(this.getClass(), fieldMap);
-      Class<?> currentClass = this.getClass();
-      // Collect fields
-      ArrayList<Field> fields = new ArrayList<>();
-      do {
-        fields.addAll(Arrays.asList(currentClass.getDeclaredFields()));
-        currentClass = currentClass.getSuperclass();
-      } while (currentClass != null);
-      // Build fieldMap
-      ModelMetadata metadata = this.getClass().getAnnotation(ModelMetadata.class);
-      for (Field field : fields) {
-        ModelField annotation = field.getAnnotation(ModelField.class);
-        if (annotation != null) {
-          String predicate = annotation.value().replace(OCGML + ":", "");
-          String graph = annotation.graphName();
-          if (graph.equals("")) graph = metadata.defaultGraph();
-          boolean backward = annotation.backward();
-          try {
-            fieldMap.put(graph + "/" + predicate + "/" + backward, new FieldInterface(field));
-          } catch (NoSuchMethodException | InvalidClassException e) {
-            throw new JPSRuntimeException(e);
-          }
-        }
+      try {
+        metaModel = new MetaModel(thisClass);
+      } catch (NoSuchMethodException | InvalidClassException e){
+        throw new JPSRuntimeException(e);
       }
+      metaModelMap.put(thisClass, metaModel);
     }
   }
 
@@ -93,11 +93,11 @@ public abstract class Model {
   public void setIri(String UUID, String namespace) {
     ModelMetadata metadata = this.getClass().getAnnotation(ModelMetadata.class);
     if (!namespace.endsWith("/")) namespace = namespace + "/";
-    setIri(URI.create(namespace + metadata.defaultGraph() + "/" + UUID));
+    setIri(URI.create(namespace + metadata.nativeGraph() + "/" + UUID));
   }
 
   public static void executeQueuedUpdates(KnowledgeBaseClientInterface kgClient) {
-    kgClient.executeUpdate(UPDATE_PREFIX_STATEMENTS + updateQueue);
+    kgClient.executeUpdate(PrefixUtils.insertPrefixStatements(updateQueue.toString()));
     updateQueue = new StringBuilder();
   }
 
@@ -105,21 +105,21 @@ public abstract class Model {
    * Queues an update to overwrite all forward, scalar properties of this model in the database. I am pretty sure that
    * all triples are (forward) scalar from one of the two directions, but you may want to check before relying on that.
    */
-  public void queuePushForwardScalars() {
+  public void queuePushForwardScalars(KnowledgeBaseClientInterface kgClient) {
     String self = getIri().toString();
     StringBuilder deleteString = new StringBuilder("DELETE WHERE { \n");
     StringBuilder insertString = new StringBuilder("INSERT DATA {  \n");
     int varCount = 0;
     String currentGraph = null;
-    for (Map.Entry<String, FieldInterface> entry : fieldMap.entrySet()) {
+    for (Map.Entry<String, FieldInterface> entry : metaModel.fieldMap.entrySet()) {
       FieldInterface field = entry.getValue();
-      String[] key = entry.getKey().split("/");
+      String[] key = entry.getKey().split("\\|"); // this is "|" but escaping the | because it's parsed as regex
       String graph = buildGraphIri(getIri(), key[0]);
-      String predicate = OCGML + ":" + key[1];
+      String predicate = key[1];
       boolean backward = Boolean.parseBoolean(key[2]);
       boolean dirty = cleanCopy == null || !field.equals(this, cleanCopy);
       if (field.isList || backward || !dirty)
-        return;
+        continue;
       if (currentGraph == null || !currentGraph.equals(graph)) {
         if (currentGraph != null) {
           deleteString.append("    }\n");
@@ -129,22 +129,24 @@ public abstract class Model {
         deleteString.append(String.format("    GRAPH <%s> { <%s> \n", graph, self));
         insertString.append(String.format("    GRAPH <%s> { <%s> \n", graph, self));
       }
-      deleteString.append(String.format("        %s ?v%d; \n", predicate, varCount));
-      insertString.append(String.format("        %s %s;   \n", predicate, field.getLiteral(this)));
+      deleteString.append(String.format("        <%s> ?v%d; \n", predicate, varCount));
+      insertString.append(String.format("        <%s> %s;   \n", predicate, field.getLiteral(this)));
       varCount++;
     }
     deleteString.append("} };\n");
     insertString.append("} };\n");
-    updateQueue.append(deleteString + insertString.toString());
+    updateQueue.append(deleteString).append(insertString);
+    if (updateQueue.length() > 100000) executeQueuedUpdates(kgClient);
   }
 
   /**
    * Queues an update to overwrite entirely delete this object from the database, including all triples which have its
    * iri as subject or object.
    */
-  public void queueDeleteInstantiation() {
+  public void queueDeleteInstantiation(KnowledgeBaseClientInterface kgClient) {
     String self = getIri().toString();
     updateQueue.append(String.format("DELETE WHERE { ?a ?b <%s> }; DELETE WHERE { <%s> ?a ?b };\n", self, self));
+    if (updateQueue.length() > 100000) executeQueuedUpdates(kgClient);
   }
 
   /**
@@ -153,9 +155,9 @@ public abstract class Model {
    * @param recursiveInstantiationDepth the number of levels into the model hierarchy below this to instantiate.
    */
   public void pullAll(String iriName, KnowledgeBaseClientInterface kgClient, int recursiveInstantiationDepth) {
-    for (FieldInterface field : fieldMap.values()) field.clear(this);
+    for (FieldInterface field : metaModel.fieldMap.values()) field.clear(this);
     try {
-      cleanCopy = (Model) cleanConstructor.newInstance();
+      cleanCopy = (Model) metaModel.constructor.newInstance();
       populateFieldsInDirection(iriName, kgClient, true, recursiveInstantiationDepth);
       populateFieldsInDirection(iriName, kgClient, false, recursiveInstantiationDepth);
     } catch (InvocationTargetException | IllegalAccessException | InstantiationException e) {
@@ -176,27 +178,16 @@ public abstract class Model {
     JSONArray queryResult = new JSONArray(queryResultString);
     for (int index = 0; index < queryResult.length(); index++) {
       JSONObject row = queryResult.getJSONObject(index);
-      String predicate = row.getString(PREDICATE).replace(OCGML_FULL, "");
-      String graph = pop(row.getString(GRAPH), 1);
-      String key = graph + "/" + predicate + "/" + backward;
-      FieldInterface field = fieldMap.get(key);
+      String predicate = row.getString(PREDICATE);
+      String[] splitGraph = row.getString(GRAPH).split("/");
+      String graph = splitGraph[splitGraph.length-1];
+      String key = graph + "|" + predicate + "|" + backward;
+      FieldInterface field = metaModel.fieldMap.get(key);
       if (field != null) {
         field.pull(this, row, kgClient, recursiveInstantiationDepth);
         field.copy(this, cleanCopy);
       }
     }
-  }
-
-  /**
-   * Returns the nth from the last part of the iri.
-   * @param iriName object id
-   * @param n       the index counting from the back to return
-   * @return the nth-from-last part of the provided iri
-   */
-  protected static String pop(String iriName, int n) {
-    // Note that a trailing slash is automatically ignored, i.e. .../abc/ will split with a last element "abc".
-    String[] splitIri = iriName.split("/");
-    return splitIri[splitIri.length - n];
   }
 
   /**
@@ -207,8 +198,7 @@ public abstract class Model {
   public static String getNamespace(String iriName) {
     // Note that a trailing slash is automatically ignored, i.e. .../abc/ will split with a last element "abc".
     String[] splitUri = iriName.split("/");
-    String namespace = String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 2)) + "/";
-    return namespace;
+    return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 2)) + "/";
   }
 
   /**
@@ -237,7 +227,6 @@ public abstract class Model {
     Node datatype = NodeFactory.createVariable(DATATYPE);
     try {
       WhereBuilder wb = new WhereBuilder()
-          .addPrefix(OCGML, OCGML_FULL)
           .addWhere(backwards ? value : self, predicate, backwards ? self : value)
           .addFilter("!ISBLANK(?" + VALUE + ")");
       sb = new SelectBuilder()

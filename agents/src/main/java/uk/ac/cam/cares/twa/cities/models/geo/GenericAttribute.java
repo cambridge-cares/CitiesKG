@@ -1,12 +1,7 @@
 package uk.ac.cam.cares.twa.cities.models.geo;
 
-import java.io.InvalidClassException;
-import java.lang.reflect.Field;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import org.json.JSONObject;
+
 import lombok.Getter;
 import lombok.Setter;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
@@ -18,7 +13,7 @@ import uk.ac.cam.cares.twa.cities.ModelMetadata;
  * GenericAttribute class represent a java model of GenericCityAttribute module of CityGML. It
  * retrieves GenericCityAttribute attributes and fills equivalent fields in the java model.
  */
-@ModelMetadata(defaultGraph = SchemaManagerAdapter.GENERIC_ATTRIB_GARPH)
+@ModelMetadata(nativeGraph = SchemaManagerAdapter.GENERIC_ATTRIB_GARPH)
 public class GenericAttribute extends Model {
 
   @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_ATTR_NAME) protected String attrName;

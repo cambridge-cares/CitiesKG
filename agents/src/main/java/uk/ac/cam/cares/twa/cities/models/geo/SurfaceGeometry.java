@@ -7,12 +7,11 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import org.locationtech.jts.geom.Polygon;
 import uk.ac.cam.cares.twa.cities.Model;
 import uk.ac.cam.cares.twa.cities.ModelField;
 import uk.ac.cam.cares.twa.cities.ModelMetadata;
 
-@ModelMetadata(defaultGraph = SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH)
+@ModelMetadata(nativeGraph = SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH)
 public class SurfaceGeometry extends Model {
 
   @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID) protected URI cityObjectId;

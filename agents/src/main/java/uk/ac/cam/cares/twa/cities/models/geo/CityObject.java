@@ -13,7 +13,7 @@ import uk.ac.cam.cares.twa.cities.ModelMetadata;
  * CityObject class represent a java model of CityObject module of CityGML. It retrieves CityObject
  * attributes and fills equivalent fields in the java model.
  */
-@ModelMetadata(defaultGraph = SchemaManagerAdapter.CITY_OBJECT_GRAPH)
+@ModelMetadata(nativeGraph = SchemaManagerAdapter.CITY_OBJECT_GRAPH)
 public class CityObject extends Model {
 
   @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_CREATION_DATE) protected String creationDate;

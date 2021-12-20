@@ -1,20 +1,15 @@
 package uk.ac.cam.cares.twa.cities.models.geo;
 
-import java.io.InvalidClassException;
-import java.lang.reflect.Field;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
+
 import lombok.Getter;
 import lombok.Setter;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import org.json.JSONObject;
 import uk.ac.cam.cares.twa.cities.Model;
 import uk.ac.cam.cares.twa.cities.ModelField;
 import uk.ac.cam.cares.twa.cities.ModelMetadata;
 
-@ModelMetadata(defaultGraph = SchemaManagerAdapter.THEMATIC_SURFACE_GRAPH)
+@ModelMetadata(nativeGraph = SchemaManagerAdapter.THEMATIC_SURFACE_GRAPH)
 public class ThematicSurface extends Model {
 
   @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_BUILDING_ID)  private URI buildingId;

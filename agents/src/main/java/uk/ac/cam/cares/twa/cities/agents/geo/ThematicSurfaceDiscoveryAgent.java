@@ -6,19 +6,23 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.locationtech.jts.geom.Coordinate;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
-import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.jps.base.query.RemoteKnowledgeBaseClient;
 import uk.ac.cam.cares.twa.cities.Model;
+import uk.ac.cam.cares.twa.cities.PrefixUtils;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
 
 /**
@@ -35,20 +39,47 @@ import uk.ac.cam.cares.twa.cities.models.geo.*;
 @WebServlet(urlPatterns = {ThematicSurfaceDiscoveryAgent.URI_LISTEN})
 public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
 
+  public ExecutorService executor = Executors.newSingleThreadExecutor();
+
   public static final String URI_LISTEN = "/discovery/thematicsurface";
+  public static final String KEY_NAMESPACE = "namespace";
   public static final String KEY_COBI = "cityObjectIRI";
-  private static final String OCGML = ResourceBundle.getBundle("config").getString("uri.ontology.ontocitygml");
-  private static final String SRS = "srs";
-  private URI cityObjectURI;
+  public static final String KEY_THRESHOLD = "threshold_angle";
 
-  private KnowledgeBaseClientInterface kgClient; // AccessAgent should be used instead of this
-  private static String route;
+  private static final String route = ResourceBundle.getBundle("config").getString("uri.route");
+  private KnowledgeBaseClientInterface kgClient = new RemoteKnowledgeBaseClient(route, route); // AccessAgent should be used instead of this
 
-  public ThematicSurfaceDiscoveryAgent() {
-    super();
-    ResourceBundle config = ResourceBundle.getBundle("config");
-    route = config.getString("uri.route");
-    this.kgClient = new RemoteKnowledgeBaseClient(route, route);
+  private URI buildingIri;
+  private URI namespaceIri;
+  private double threshold;
+
+  @Override
+  public boolean validateInput(JSONObject requestParams) throws BadRequestException {
+    if (!requestParams.isEmpty()
+        && requestParams.get(CityImportAgent.KEY_REQ_METHOD).equals(HttpMethod.GET)) {
+      Set<String> keys = requestParams.keySet();
+      try {
+        if (keys.contains(KEY_THRESHOLD)) {
+          threshold = requestParams.getDouble(KEY_THRESHOLD);
+        } else {
+          threshold = 15;
+        }
+        if (keys.contains(KEY_COBI)) {
+          System.out.println(requestParams.getString(KEY_COBI));
+          buildingIri = new URI(requestParams.getString(KEY_COBI));
+          namespaceIri = new URI(Model.getNamespace(buildingIri.toString()));
+          return true;
+        } else if (keys.contains(KEY_NAMESPACE)) {
+          System.out.println(requestParams.getString(KEY_NAMESPACE));
+          buildingIri = null;
+          namespaceIri = new URI(requestParams.getString(KEY_NAMESPACE));
+          return true;
+        }
+      } catch (URISyntaxException e) {
+        throw new BadRequestException(e);
+      }
+    }
+    throw new BadRequestException();
   }
 
   @Override
@@ -57,34 +88,83 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
     requestParams.put("acceptHeaders", "application/json");
     // Check srs
     // Move this into an srs agent?
-    Instant before = Instant.now();
-    String responseString = kgClient.execute("SELECT ?" + SRS + " WHERE {?a <" + OCGML + "srsname> ?" + SRS + " }");
-    JSONArray srsQueryResponse = new JSONArray(responseString);
-    if (srsQueryResponse.length() == 0) {
+    JSONArray srsResponse = new JSONArray(kgClient.execute(PrefixUtils.insertPrefixStatements(
+        String.format("SELECT ?srs WHERE {<%s> ocgml:srsname ?srs }", namespaceIri.toString()))));
+    if (srsResponse.length() == 0) {
       throw new BadRequestException("Namespace has no coordinate reference system specified.");
-    } else if (srsQueryResponse.length() > 1) {
+    } else if (srsResponse.length() > 1) {
       throw new BadRequestException("Namespace has more than one coordinate reference system specified.");
     } else {
-      GeometryType.setSourceCrsName(srsQueryResponse.getJSONObject(0).getString(SRS));
+      GeometryType.setSourceCrsName(srsResponse.getJSONObject(0).getString("srs"));
       GeometryType.setMetricCrsName("EPSG:25833");
     }
-    Duration srsTime = Duration.between(before, Instant.now());
-    before = Instant.now();
-    // Check cityObject is building
-    CityObject cityObject = new CityObject();
-    cityObject.pullAll(cityObjectURI.toString(), kgClient, 1);
-    if (cityObject.getObjectClassId() != 26)
-      throw new BadRequestException("IRI is not a building.");
+    executor.execute(() -> {
+      if (buildingIri != null) {
+        // Don't have a delayed postprocess set up for a single building.
+        processBuilding(buildingIri.toString(), null);
+      } else {
+        Instant startTime = Instant.now();
+        // Find all buildings
+        JSONArray buildingsResponse = new JSONArray(kgClient.execute(
+            PrefixUtils.insertPrefixStatements(String.format(
+                "SELECT ?bldg WHERE {?bldg %s \"26\"^^xsd:integer; %s ?val. }",
+                SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID,
+                SchemaManagerAdapter.ONTO_BUILDING_PARENT_ID))));
+        // Process buildings, tracking whether or not they were flipped for roof vs ground.
+        Queue<Consumer<Boolean>> delayedPostprocessTasks = new LinkedList<>();
+        int flipBalance = 0;
+        int upCount = 0;
+        int downCount = 0;
+        int delayedCount = 0;
+        int nullCount = 0;
+        for (int i = 0; i < buildingsResponse.length(); i++) {
+          int del = processBuilding(buildingsResponse.getJSONObject(i).getString("bldg"), delayedPostprocessTasks);
+          if(del == 1) upCount++;
+          else if(del==-1) downCount++;
+          else nullCount++;
+          flipBalance += del;
+        }
+        // Process delayed flip-indeterminate cases, using the results from other buildings to hint flip determination.
+        for (Consumer<Boolean> task : delayedPostprocessTasks) {
+          task.accept(flipBalance > 0);
+          nullCount--;
+          delayedCount++;
+        }
+        Duration timeTaken = Duration.between(startTime, Instant.now());
+        System.err.println(String.format("Processed %d buildings (%d+, %d-, %d~, %dx) in %ds.",
+            buildingsResponse.length(), upCount, downCount, delayedCount, nullCount, timeTaken.getSeconds()));
+      }
+    });
+    return requestParams;
+  }
+
+  /**
+   * Pulls a Building by iri, sorts through its lodXMultiSurface, and attempts to transform the geometry tree into a
+   * ThematicSurface-based hierarchy. If correct roof-vs-ground determinations cannot be made based on the Building's
+   * data alone, the second half of the task is paused and queued. The caller then has the responsibility of triggering
+   * the rest of the task at any later point by providing a "flip" hint on the roof-vs-ground issue.
+   * <p>
+   * The determination of surface theme is based on polygon normals, but unless winding order is known, only the axis
+   * of the normal can be determined for a single GeometryType. Therefore, roof and ground polygons can be separated
+   * but not each sorted category assigned an explicit label. If one category is on average above the other, then it
+   * is assigned "roof" and the other "ground", but if they are on the same level or one is empty, it is impossible
+   * to determine, and the issue is queued for later resolution.
+   * @param buildingIri             the iri of the building to be processed
+   * @param delayedPostprocessTasks the queue into which paused tasks will be submitted
+   * @return which way the roofs-vs-grounds were assigned after geometric meta-analysis, which should be collated by the
+   * caller to determine what to provide as "flip" hint to the queued task. 1 if flipped, -1 if not flipped, 0 if queued
+   * without determination or if the building has no lodXMultiSurface to process.
+   */
+  private int processBuilding(String buildingIri, Queue<Consumer<Boolean>> delayedPostprocessTasks) {
     // Load building
-    String buildingIri = cityObject.getIri().toString().replace("cityobject", "building");
     Building building = new Building();
-    building.pullAll(buildingIri, kgClient, 99);
-    Duration queryTime = Duration.between(before, Instant.now());
-    before = Instant.now();
+    building.pullAll(buildingIri, kgClient, 0);
     // Fetch relevant multisurface
     SurfaceGeometry root = building.getLod2MultiSurfaceId();
+    if (root == null) root = building.getLod3MultiSurfaceId();
     if (root == null) root = building.getLod1MultiSurfaceId();
-    if (root == null) throw new JPSRuntimeException("Building does not have an LoD1 or LoD2 MultiSurface.");
+    if (root == null) return 0;
+    root.pullAll(root.getIri().toString(), kgClient, 99);
     // Sort into thematic surfaces
     List<List<SurfaceGeometry>> topLevelThematicGeometries = Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     List<List<SurfaceGeometry>> bottomLevelThematicGeometries = Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
@@ -93,8 +173,36 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
     // Calculate centroid of detected roofs' centroids and centroid of detected grounds' centroids
     double averageRoofZ = computeUnweightedCentroid(bottomLevelThematicGeometries.get(Theme.ROOF.index)).getZ();
     double averageGroundZ = computeUnweightedCentroid(bottomLevelThematicGeometries.get(Theme.GROUND.index)).getZ();
-    // If the roofs are below the grounds, we probably have the winding convention inverted: flip.
-    if (averageRoofZ < averageGroundZ) {
+    // If the data is nice --- there are instances of each surface type, and they aren't at the same height --- we can
+    // immediately decide whether to flip and then push our changes. Otherwise, we queue this case to be resolved later.
+    if ((bottomLevelThematicGeometries.get(Theme.ROOF.index).size() != 0 &&
+        bottomLevelThematicGeometries.get(Theme.GROUND.index).size() != 0 &&
+        averageRoofZ != averageGroundZ) || delayedPostprocessTasks == null) {
+      boolean flip = averageRoofZ < averageGroundZ;
+      postprocessBuilding(building, topLevelThematicGeometries, mixedGeometries, flip);
+      return flip ? 1 : -1;
+    } else {
+      // Non-nice data; queue.
+      delayedPostprocessTasks.add((Boolean flip) ->
+          postprocessBuilding(building, topLevelThematicGeometries, mixedGeometries, flip));
+      return 0;
+    }
+  }
+
+  /**
+   * The second half of the building processing task begun in processBuilding(). The parameters passed in are the
+   * working Model variables pulled and built in processBuilding(). This method should not be directly called except
+   * from processBuilding() or through the lambda constructed in and provided by processBuilding().
+   * @param building                   the building being processed
+   * @param topLevelThematicGeometries the top level thematic geometries collected in processBuilding
+   * @param mixedGeometries            the mixed geometries collected in processBuilding
+   * @param flip                       whether to reverse the default tentative assignment of roofs vs grounds.
+   */
+  private void postprocessBuilding(Building building,
+                                   List<List<SurfaceGeometry>> topLevelThematicGeometries,
+                                   List<SurfaceGeometry> mixedGeometries,
+                                   boolean flip) {
+    if (flip) {
       List<SurfaceGeometry> temp = topLevelThematicGeometries.get(Theme.ROOF.index);
       topLevelThematicGeometries.set(Theme.ROOF.index, topLevelThematicGeometries.get(Theme.GROUND.index));
       topLevelThematicGeometries.set(Theme.GROUND.index, temp);
@@ -109,14 +217,14 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
         tsCityObject.setLastModificationDate(OffsetDateTime.now().toString());
         tsCityObject.setUpdatingPerson("ThematicSurfaceDiscoveryAgent");
         tsCityObject.setGmlId(uuid);
-        tsCityObject.setIri(uuid, Model.getNamespace(buildingIri));
+        tsCityObject.setIri(uuid, Model.getNamespace(building.getIri().toString()));
         // Construct ThematicSurface
         ThematicSurface thematicSurface = new ThematicSurface();
         thematicSurface.setLod2MultiSurfaceId(topLevelGeometry);
         thematicSurface.setObjectClassId(33 + i);
         thematicSurface.setBuildingId(building.getIri());
-        thematicSurface.setIri(uuid, Model.getNamespace(buildingIri));
-        // Reassign SurfaceGeometry hierarchial properties
+        thematicSurface.setIri(uuid, Model.getNamespace(building.getIri().toString()));
+        // Reassign SurfaceGeometry hierarchical properties
         topLevelGeometry.setParentId(null);
         List<SurfaceGeometry> allDescendantGeometries = topLevelGeometry.getFlattenedSubtree(false);
         for (SurfaceGeometry geometry : allDescendantGeometries) {
@@ -124,28 +232,19 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
           geometry.setCityObjectId(thematicSurface.getIri());
         }
         // Push updates
-        thematicSurface.queuePushForwardScalars();
-        tsCityObject.queuePushForwardScalars();
-        for (SurfaceGeometry geometry : allDescendantGeometries) geometry.queuePushForwardScalars();
+        thematicSurface.queuePushForwardScalars(kgClient);
+        tsCityObject.queuePushForwardScalars(kgClient);
+        for (SurfaceGeometry geometry : allDescendantGeometries) geometry.queuePushForwardScalars(kgClient);
       }
     }
-    for (SurfaceGeometry geometry : mixedGeometries) geometry.queueDeleteInstantiation();
+    for (SurfaceGeometry geometry : mixedGeometries) geometry.queueDeleteInstantiation(kgClient);
     // Unset building lodMultiSurfaceId. Technically these triples should already have been deleted when destroying
     // the mixed geometries, but just to be safe.
     building.setLod1MultiSurfaceId(null);
     building.setLod2MultiSurfaceId(null);
-    building.queuePushForwardScalars();
-    Duration processingTime = Duration.between(before, Instant.now());
-    before = Instant.now();
+    building.setLod3MultiSurfaceId(null);
+    building.queuePushForwardScalars(kgClient);
     Model.executeQueuedUpdates(kgClient);
-    Duration updateTime = Duration.between(before, Instant.now());
-    JSONObject times = new JSONObject();
-    times.append("srsTime", queryTime.toMillis());
-    times.append("queryTime", queryTime.toMillis());
-    times.append("processingTime", processingTime.toMillis());
-    times.append("updateTime", updateTime.toMillis());
-    requestParams.append("times", times);
-    return requestParams;
   }
 
   enum Theme {
@@ -198,9 +297,8 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
     } else if (geometry != null) {
       // "Leaf" SurfaceGeometry with actual polygon: determine based on normal.
       // Note that this considers 0 area polygons into GROUND.
-      System.err.println(geometry.getNormal().getX() + "," + geometry.getNormal().getY() + "," + geometry.getNormal().getZ() + ":" + geometry.getArea());
       double z = geometry.getNormal().getZ();
-      aggregateTheme = Math.abs(z) < 0.01 ? Theme.WALL : (z > 0 ? Theme.ROOF : Theme.GROUND);
+      aggregateTheme = Math.abs(z) < Math.sin(Math.toRadians(threshold)) ? Theme.WALL : (z > 0 ? Theme.ROOF : Theme.GROUND);
       bottomLevelThematicGeometries.get(aggregateTheme.index).add(surface);
     } else {
       // Structural SurfaceGeometry with no actual polygon: determine based on children.
@@ -230,24 +328,6 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
     Stream<Coordinate> subCentroids = surfaceGeometries.stream().map(
         (SurfaceGeometry geometry) -> geometry.getGeometryType().getCentroid());
     return GeometryType.computeCentroid(subCentroids.toArray(Coordinate[]::new), false);
-  }
-
-  @Override
-  public boolean validateInput(JSONObject requestParams) throws BadRequestException {
-    if (!requestParams.isEmpty()
-        && requestParams.get(CityImportAgent.KEY_REQ_METHOD).equals(HttpMethod.GET)) {
-      Set<String> keys = requestParams.keySet();
-      if (keys.contains(KEY_COBI)) {
-        try {
-          System.out.println(requestParams.getString(KEY_COBI));
-          cityObjectURI = new URI(requestParams.getString(KEY_COBI));
-          return true;
-        } catch (URISyntaxException e) {
-          throw new BadRequestException();
-        }
-      }
-    }
-    throw new BadRequestException();
   }
 
 }

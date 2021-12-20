@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 import uk.ac.cam.cares.twa.cities.ModelMetadata;
 
-@ModelMetadata(defaultGraph = SchemaManagerAdapter.BUILDING_GRAPH)
+@ModelMetadata(nativeGraph = SchemaManagerAdapter.BUILDING_GRAPH)
 public class Building extends Model {
 
   @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_FUNCTION) protected String function;
