@@ -171,7 +171,7 @@ public class CityImportAgentTest extends TestCase {
 
   public void testNewCityImportAgentMethods() {
     CityImportAgent agent = new CityImportAgent();
-    assertEquals(15, agent.getClass().getDeclaredMethods().length);
+    assertEquals(18, agent.getClass().getDeclaredMethods().length);
   }
 
   public void testValidateListenInput() {
