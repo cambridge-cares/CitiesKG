@@ -106,7 +106,7 @@ public class UtilAdapter extends AbstractUtilAdapter {
             URL url = new URL(endpointUrl);
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("HEAD");
-            if (con.getResponseCode() != 200) {
+            if (con.getResponseCode() != HttpURLConnection.HTTP_OK) {
                 exists = false;
             }
         } catch (IOException e) {
