@@ -232,6 +232,60 @@ public class CityImportAgentTest extends TestCase {
     }
   }
 
+  public void testValidateDatabaseSrsInput() {
+    CityImportAgent agent = new CityImportAgent();
+    Method validateDatabaseSrsInput = null;
+
+    try {
+      validateDatabaseSrsInput = agent.getClass().getDeclaredMethod("validateDatabaseSrsInput", JSONObject.class, Set.class);
+      validateDatabaseSrsInput.setAccessible(true);
+    } catch (NoSuchMethodException e) {
+      fail();
+    }
+
+    JSONObject requestParams = new JSONObject();
+    JSONObject requestParamsSridError = new JSONObject();
+    JSONObject requestParamsSrsnameError = new JSONObject();
+    Set<String> keys = new HashSet<>();
+
+    try {
+      //test case when KEY_SRID and KEY_SRSNAME not available
+      assertTrue((Boolean) validateDatabaseSrsInput.invoke(agent, requestParams, keys));
+      keys.add(CityImportAgent.KEY_SRID);
+      keys.add(CityImportAgent.KEY_SRSNAME);
+
+      //test case when both srid and srsname are correct
+      requestParams.put(CityImportAgent.KEY_SRID, "123");
+      requestParams.put(CityImportAgent.KEY_SRSNAME, "srsname");
+
+      assertFalse((Boolean) validateDatabaseSrsInput.invoke(agent, requestParams, keys));
+    } catch (Exception e) {
+      fail();
+    }
+
+    try {
+      //testcase when srid is not a number
+      requestParamsSridError.put(CityImportAgent.KEY_SRID, "srid");
+      requestParamsSridError.put(CityImportAgent.KEY_SRSNAME, "srsname");
+
+      validateDatabaseSrsInput.invoke(agent, requestParamsSridError, keys);
+    } catch (Exception e) {
+      assert e instanceof InvocationTargetException;
+      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
+              JPSRuntimeException.class);
+    }
+
+    try {
+      //testcase when srsname is empty
+      requestParamsSrsnameError.put(CityImportAgent.KEY_SRID, "123");
+      requestParamsSrsnameError.put(CityImportAgent.KEY_SRSNAME, "");
+
+      assertTrue((Boolean) validateDatabaseSrsInput.invoke(agent, requestParamsSrsnameError, keys));
+    } catch (Exception e) {
+      fail();
+    }
+  }
+
   public void testValidateInput() {
     CityImportAgent agent = new CityImportAgent();
     Method validateInput = null;
