@@ -197,6 +197,13 @@ public class CityImportAgent extends JPSAgent {
     return error;
   }
 
+  /**
+   * Validates database srs inputs
+   *
+   * @param requestParams - request body in JSON format
+   * @param keys          - request body keys
+   * @return boolean saying if database srs is valid or not
+   */
   private boolean validateDatabaseSrsInput(JSONObject requestParams, Set<String> keys) {
     boolean error = true;
     if ((keys.contains(KEY_SRID)) && (keys.contains(KEY_SRSNAME))) {
@@ -403,6 +410,11 @@ public class CityImportAgent extends JPSAgent {
     return task;
   }
 
+  /**
+   * Performs POST request to execute a SPARQL update at targetUrl endpoint. The SPARQL update:
+   * 1. Creates a named graph 'databasesrs' and adds srid and srsname as triples if 'databasesrs' does not exist, or
+   * 2. Replaces existing srid and srsname triples in an existing 'databasesrs' named graph
+   */
   private void setDatabaseSrs() {
     String update = getSetDatabaseSrsUpdate().toString();
     try { HttpResponse<?> response = Unirest.post(targetUrl)
@@ -419,6 +431,11 @@ public class CityImportAgent extends JPSAgent {
     }
   }
 
+  /**
+   * Builds the SPARQL update statement for setDatabaseSrs
+   *
+   * @return UpdateRequest - update statement
+   */
   private UpdateRequest getSetDatabaseSrsUpdate() {
     UpdateBuilder builder = new UpdateBuilder()
             .addPrefix(OCGML_PREFIX, OCGML_SCHEMA)
