@@ -313,6 +313,7 @@ public class CityImportAgentTest extends TestCase {
       assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
           BadRequestException.class);
     }
+    /*
 
     try {
       validateInput.invoke(agent, requestParams);
@@ -337,6 +338,8 @@ public class CityImportAgentTest extends TestCase {
       assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
           BadRequestException.class);
     }
+
+     */
 
     requestParams.put(CityImportAgent.KEY_REQ_METHOD, HttpMethod.GET);
 
@@ -412,7 +415,9 @@ public class CityImportAgentTest extends TestCase {
           BadRequestException.class);
     }
 
-    requestParams.put(CityImportAgent.KEY_DIRECTORY, System.getProperty("java.io.tmpdir"));
+    requestParams.put(CityImportAgent.KEY_SRID, "123");
+    requestParams.put(CityImportAgent.KEY_SRSNAME, "srsname");
+    //requestParams.put(CityImportAgent.KEY_DIRECTORY, System.getProperty("java.io.tmpdir"));
 
     try {
       assertTrue((Boolean) validateInput.invoke(agent, requestParams));
@@ -458,6 +463,15 @@ public class CityImportAgentTest extends TestCase {
       assertTrue((Boolean) validateInput.invoke(agent, requestParams));
     } catch (Exception e) {
       fail();
+    }
+
+    requestParams.put(CityImportAgent.KEY_SRSNAME, "");
+    try {
+      validateInput.invoke(agent, requestParams);
+    } catch (Exception e) {
+      assert e instanceof InvocationTargetException;
+      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
+              BadRequestException.class);
     }
 
   }
