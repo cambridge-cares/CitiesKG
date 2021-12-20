@@ -49,7 +49,7 @@ public class CityImportAgentTest extends TestCase {
   public void testNewCityImportAgentFields() {
     CityImportAgent agent = new CityImportAgent();
 
-    assertEquals(20, agent.getClass().getDeclaredFields().length);
+    assertEquals(33, agent.getClass().getDeclaredFields().length);
 
     Field URI_LISTEN;
     Field URI_ACTION;
@@ -71,6 +71,19 @@ public class CityImportAgentTest extends TestCase {
     Field importerExecutor;
     Field nqExportExecutor;
     Field nqUploadExecutor;
+    Field KEY_SRID;
+    Field KEY_SRSNAME;
+    Field CTYPE_SPARQLUPDATE;
+    Field srid;
+    Field srsname;
+    Field OCGML_PREFIX;
+    Field OCGML_SCHEMA;
+    Field GRAPH_DATABASESRS;
+    Field QN_MARK;
+    Field SUB_SRID;
+    Field SUB_SRSNAME;
+    Field OB_SRID;
+    Field OB_SRSNAME;
 
     try {
       URI_LISTEN = agent.getClass().getDeclaredField("URI_LISTEN");
@@ -123,6 +136,34 @@ public class CityImportAgentTest extends TestCase {
       nqUploadExecutor = agent.getClass().getDeclaredField("nqUploadExecutor");
       nqUploadExecutor.setAccessible(true);
       assertFalse(((ExecutorService) nqUploadExecutor.get(agent)).isTerminated());
+      KEY_SRID = agent.getClass().getDeclaredField("KEY_SRID");
+      assertEquals(KEY_SRID.get(agent), "srid");
+      KEY_SRSNAME = agent.getClass().getDeclaredField("KEY_SRSNAME");
+      assertEquals(KEY_SRSNAME.get(agent), "srsName");
+      CTYPE_SPARQLUPDATE = agent.getClass().getDeclaredField("CTYPE_SPARQLUPDATE");
+      assertEquals(CTYPE_SPARQLUPDATE.get(agent), "application/sparql-update");
+      srid = agent.getClass().getDeclaredField("srid");
+      srid.setAccessible(true);
+      assertNull(srid.get(agent));
+      srsname = agent.getClass().getDeclaredField("srsname");
+      srsname.setAccessible(true);
+      assertNull(srsname.get(agent));
+      OCGML_PREFIX = agent.getClass().getDeclaredField("OCGML_PREFIX");
+      assertEquals(OCGML_PREFIX.get(agent), "ocgml");
+      OCGML_SCHEMA = agent.getClass().getDeclaredField("OCGML_SCHEMA");
+      assertEquals(OCGML_SCHEMA.get(agent), "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#");
+      GRAPH_DATABASESRS = agent.getClass().getDeclaredField("GRAPH_DATABASESRS");
+      assertEquals(GRAPH_DATABASESRS.get(agent), "/databasesrs/");
+      QN_MARK = agent.getClass().getDeclaredField("QN_MARK");
+      assertEquals(QN_MARK.get(agent), "?");
+      SUB_SRID = agent.getClass().getDeclaredField("SUB_SRID");
+      assertEquals(SUB_SRID.get(agent), "srid");
+      SUB_SRSNAME = agent.getClass().getDeclaredField("SUB_SRSNAME");
+      assertEquals(SUB_SRSNAME.get(agent), "srsname");
+      OB_SRID = agent.getClass().getDeclaredField("OB_SRID");
+      assertEquals(OB_SRID.get(agent), "currentSrid");
+      OB_SRSNAME = agent.getClass().getDeclaredField("OB_SRSNAME");
+      assertEquals(OB_SRSNAME.get(agent), "currentSrsname");
     } catch (NoSuchFieldException | IllegalAccessException e) {
       fail();
     }
