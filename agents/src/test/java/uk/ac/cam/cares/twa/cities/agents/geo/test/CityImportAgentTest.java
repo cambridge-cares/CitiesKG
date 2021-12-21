@@ -563,13 +563,13 @@ public class CityImportAgentTest extends TestCase {
   }
 
   public void testImportChunk() {
-    //String fs = System.getProperty("file.separator");
+    String separator = System.getProperty("file.separator");
     String fs = "/";
     CityImportAgent agent = new CityImportAgent();
     File testFile = new File(
         Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
     File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
-    File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
+    File impF = new File(impD.getAbsolutePath() + separator + "test.gml");
 
     Field targetUrl = null;
     Method importChunk = null;
@@ -617,13 +617,13 @@ public class CityImportAgentTest extends TestCase {
   }
 
   public void testStartBlazegraphInstance() {
-    //String fs = System.getProperty("file.separator");
+    String separator = System.getProperty("file.separator");
     String fs = "/";
     CityImportAgent agent = new CityImportAgent();
     File testFile = new File(
         Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
     File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
-    File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
+    File impF = new File(impD.getAbsolutePath() + separator + "test.gml");
 
     Method startBlazegraphInstance;
 
@@ -648,13 +648,13 @@ public class CityImportAgentTest extends TestCase {
   }
 
   public void testImportToLocalBlazegraphInstance() {
-    //String fs = System.getProperty("file.separator");
+    String separator = System.getProperty("file.separator");
     String fs = "/";
     CityImportAgent agent = new CityImportAgent();
     File testFile = new File(
         Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
     File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
-    File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
+    File impF = new File(impD.getAbsolutePath() + separator + "test.gml");
 
     Method importToLocalBlazegraphInstance;
 
@@ -679,13 +679,13 @@ public class CityImportAgentTest extends TestCase {
   }
 
   public void testExportToNquads() {
-    //String fs = System.getProperty("file.separator");
+    String separator = System.getProperty("file.separator");
     String fs = "/";
     CityImportAgent agent = new CityImportAgent();
     File testFile = new File(
         Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
     File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
-    File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
+    File impF = new File(impD.getAbsolutePath() + separator + "test.gml");
 
     Method exportToNquads;
 
