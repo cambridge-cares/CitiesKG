@@ -520,11 +520,11 @@ public class CityImportAgentTest extends TestCase {
   }
 
   public void testSplitFile() {
-    //String fs = System.getProperty("file.separator");
-    String fs = "/";
+    String fs = System.getProperty("file.separator");
+    String forwardSlash = "/";
     CityImportAgent agent = new CityImportAgent();
     File testFile = new File(
-        Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
+        Objects.requireNonNull(this.getClass().getResource(forwardSlash + "test.gml")).getFile());
     File impF = new File(System.getProperty("java.io.tmpdir") + fs + "test.gml");
     Method splitFile;
 
