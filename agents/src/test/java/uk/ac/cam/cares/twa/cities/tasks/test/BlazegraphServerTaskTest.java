@@ -137,13 +137,14 @@ public class BlazegraphServerTaskTest extends TestCase {
   public void testNewBlazegraphServerTaskSetupPathsMethod() {
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(),
         "/test/test.jnl");
+    String fs = System.getProperty("file.separator");
 
     try {
       Field PROPERTY_FILE = task.getClass().getDeclaredField("PROPERTY_FILE");
       PROPERTY_FILE.setAccessible(true);
       Method setupPaths = task.getClass().getDeclaredMethod("setupPaths");
       setupPaths.setAccessible(true);
-      assertEquals(setupPaths.invoke(task), "/test/test" + PROPERTY_FILE.get(task));   // Note: Difference of path between windows and mac
+      assertEquals(setupPaths.invoke(task), fs + "test" + fs + "test" + PROPERTY_FILE.get(task));
 
     } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       fail();
