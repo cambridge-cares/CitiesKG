@@ -387,7 +387,7 @@ public class CityImportAgentTest extends TestCase {
   }
 
   public void testImportFiles() {
-    //String fs = System.getProperty("file.separator");
+    String separator = System.getProperty("file.separator");
     String fs = "/";
     CityImportAgent agent = new CityImportAgent();
     Field targetUrl = null;
@@ -395,7 +395,7 @@ public class CityImportAgentTest extends TestCase {
     Method importFiles = null;
     File testFile = new File(Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
     File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
-    File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
+    File impF = new File(impD.getAbsolutePath() + separator + "test.gml");
 
 
     try {
@@ -419,7 +419,8 @@ public class CityImportAgentTest extends TestCase {
       }
     }
 
-    // Case: if the importDir doesn't not exist
+    // Case: if the importDir doesn't exist
+    // should return NullPointerException at Objects.requireNonNull(dirContent)
     try {
       importDir.set(agent, impD);
       importFiles.invoke(agent, impD);
@@ -433,17 +434,13 @@ public class CityImportAgentTest extends TestCase {
     }
 
     // Case: if the importDir exists but no content, the directory is deletable.
+    // should return empty string as it skips the if block at if (Objects.requireNonNull(dirContent).length > 0)
     try {
       if (impD.mkdirs()) {  // FILE.mkdirs() only return true for the first time, otherwise false
-        importFiles.invoke(agent, impD);
+        assertEquals(importFiles.invoke(agent, impD), "");
       }
-    } catch (InvocationTargetException | IllegalAccessException e) {
-      if (e.getClass() == InvocationTargetException.class) {
-        assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-            JPSRuntimeException.class);
-      } else {
-        fail();
-      }
+    } catch (Exception e) {
+      fail();
     } finally {
       NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
       try {
@@ -452,7 +449,10 @@ public class CityImportAgentTest extends TestCase {
         e.printStackTrace();
       }
     }
-    // Case: with content
+
+    // Case: if the importDir exists with content, but null targetUrl
+    // should return JPSRuntimeException
+    // caused by NullPointerException due to null targetUrl at new URI(targetUrl) in importChunk method
     try {
       if (impD.mkdirs()) {
         Files.copy(testFile.toPath(), impF.toPath());
@@ -473,7 +473,7 @@ public class CityImportAgentTest extends TestCase {
         e.printStackTrace();
       }
     }
-
+/*
     try {
       if (impD.mkdirs()) {
         Files.copy(testFile.toPath(), impF.toPath());
@@ -496,11 +496,14 @@ public class CityImportAgentTest extends TestCase {
       }
     }
 
+ */
+
+    // Case: test file is successfully imported
     try {
       if (impD.mkdirs()) {
         Files.copy(testFile.toPath(), impF.toPath());
         targetUrl.set(agent, "http://localhost/test");
-        assertEquals(importFiles.invoke(agent, impD), "");    // Initial code: Splitfiles returns null, chunks = null, assume the file is small
+        assertEquals(importFiles.invoke(agent, impD), "file_part_1.gml \n");    // Initial code: Splitfiles returns null, chunks = null, assume the file is small
       }
     } catch (InvocationTargetException | IllegalAccessException | IOException e) {
       fail();
