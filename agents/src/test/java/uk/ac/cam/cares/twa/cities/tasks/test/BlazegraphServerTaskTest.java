@@ -8,6 +8,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
@@ -183,8 +184,11 @@ public class BlazegraphServerTaskTest extends TestCase {
         setupFiles.invoke(task, propFilePath + fs + propFile.getName());
         fail();
       } catch (InvocationTargetException e) {
+        /*
         assertEquals(e.getTargetException().getClass().getSuperclass().getName(),
             IOException.class.getName());
+         */
+        assertEquals(e.getTargetException().getClass(), NoSuchFileException.class);
       }
 
     } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException |
