@@ -1514,7 +1514,7 @@ public abstract class KmlGenericObject<T> {
 				}
 			}
 
-
+		// existGS is false
 		} else {// Require the GeoSpatialProcessor to post-process the data, return only 1 entry after ST_UNION
 			ArrayList<String> simpleGeom = new ArrayList<>();
 			for (ResultSet rs : sparqlResults){
