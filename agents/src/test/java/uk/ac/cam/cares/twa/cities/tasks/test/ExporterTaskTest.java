@@ -55,11 +55,16 @@ public class ExporterTaskTest extends TestCase {
         String outputPath = outputFile.getAbsolutePath();
 
         ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo);
-        assertEquals(8, task.getClass().getDeclaredFields().length);
+        assertEquals(13, task.getClass().getDeclaredFields().length);
 
         Field PROJECT_CONFIG;
+        Field EXT_FILE_KML;
+        Field PLACEHOLDER_HOST;
+        Field PLACEHOLDER_PORT;
+        Field PLACEHOLDER_NS;
         Field inputs;
         Field outputpath;
+        Field serverinfo;
         Field stop;
         Field PLACEHOLDER_GMLID;
         Field ARG_SHELL;
@@ -69,8 +74,16 @@ public class ExporterTaskTest extends TestCase {
         try {
             PROJECT_CONFIG = task.getClass().getDeclaredField("PROJECT_CONFIG");
             assertEquals("project.xml", PROJECT_CONFIG.get(task));
+            EXT_FILE_KML = task.getClass().getDeclaredField("EXT_FILE_KML");
+            assertEquals(".kml", EXT_FILE_KML.get(task));
             PLACEHOLDER_GMLID = task.getClass().getDeclaredField("PLACEHOLDER_GMLID");
             assertEquals("{{gmlid}}", PLACEHOLDER_GMLID.get(task));
+            PLACEHOLDER_HOST = task.getClass().getDeclaredField("PLACEHOLDER_HOST");
+            assertEquals("{{host}}", PLACEHOLDER_HOST.get(task));
+            PLACEHOLDER_PORT = task.getClass().getDeclaredField("PLACEHOLDER_PORT");
+            assertEquals("{{port}}", PLACEHOLDER_PORT.get(task));
+            PLACEHOLDER_NS = task.getClass().getDeclaredField("PLACEHOLDER_NS");
+            assertEquals("{{namespace}}", PLACEHOLDER_NS.get(task));
             ARG_SHELL = task.getClass().getDeclaredField("ARG_SHELL");
             assertEquals("-shell", ARG_SHELL.get(task));
             ARG_KMLEXPORT = task.getClass().getDeclaredField("ARG_KMLEXPORT");
@@ -83,6 +96,9 @@ public class ExporterTaskTest extends TestCase {
             outputpath = task.getClass().getDeclaredField("outputpath");
             outputpath.setAccessible(true);
             assertEquals(outputPath, outputpath.get(task));
+            serverinfo = task.getClass().getDeclaredField("serverinfo");
+            serverinfo.setAccessible(true);
+            assertEquals(testServerInfo, serverinfo.get(task));
             stop = task.getClass().getDeclaredField("stop");
             stop.setAccessible(true);
             assertFalse((boolean) stop.get(task));
