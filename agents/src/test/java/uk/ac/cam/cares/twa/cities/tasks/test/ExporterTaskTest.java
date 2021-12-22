@@ -116,7 +116,7 @@ public class ExporterTaskTest extends TestCase {
         String outputPath= outputFile.getAbsolutePath();
 
         ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo);
-        assertEquals(3, task.getClass().getDeclaredMethods().length);
+        assertEquals(4, task.getClass().getDeclaredMethods().length);
     }
 
 
