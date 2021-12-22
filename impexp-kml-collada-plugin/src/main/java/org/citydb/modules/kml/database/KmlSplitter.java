@@ -138,6 +138,7 @@ public class KmlSplitter {
 			for (int i  = 0; i < placeHolders.size(); ++i) {
 				Object gmlidUri = placeHolders.get(i).getValue();
 				PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
+
 				// Assign one gmlid, the predicateTokens
 				if (((String)gmlidUri).contains("*")){
 						// @TODO: as the preparedstatement will create different query for particular gmlid or *

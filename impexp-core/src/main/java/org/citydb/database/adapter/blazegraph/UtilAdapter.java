@@ -92,6 +92,10 @@ public class UtilAdapter extends AbstractUtilAdapter {
         int dim = geometry.getDimension();
         int srcSrs = geometry.getSrid();
 
+        if (srcSrs == 0){
+            srcSrs = 31466;  // for berlin data
+        }
+
         GeometryFactory fac = new GeometryFactory();  // no polygonZ
         GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
         GeometryBuilder geometrybuilder = new GeometryBuilder();
@@ -100,6 +104,8 @@ public class UtilAdapter extends AbstractUtilAdapter {
         //for (int i = 0; i < numGeometry; ++i){
         //    coordinates[i] = geometry.getCoordinates(i);
         //}
+
+
 
         for (int j = 0; j < numGeometry; ++j) {
             List<Coordinate> polygoncoord = new ArrayList<>();

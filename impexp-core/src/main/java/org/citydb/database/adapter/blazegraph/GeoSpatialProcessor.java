@@ -300,6 +300,7 @@ public class GeoSpatialProcessor {
 
             }
         }
+        originalGeomObj.setSrid(geometryObj2d.getSrid());
 
         return originalGeomObj;
     }

@@ -1479,7 +1479,7 @@ public abstract class KmlGenericObject<T> {
 
 		PolygonType polygon = null;
 
-		if (existGS) { // Do not require the GeoSpatialProcessor
+		if (existGS) { // Do not require the GeoSpatialProcessor, usually one entry
 			for (ResultSet rs : sparqlResults) {
 				while (rs.next()) {
 					Object buildingGeometryObj = rs.getObject("geomtype");
@@ -1495,6 +1495,7 @@ public abstract class KmlGenericObject<T> {
 
 							GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(
 									buildingGeometryObj);
+
 							if (unconvertedGeom == null || (
 									unconvertedGeom.getGeometryType() != GeometryType.POLYGON
 											&& unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON))
