@@ -184,11 +184,7 @@ public class BlazegraphServerTaskTest extends TestCase {
         setupFiles.invoke(task, propFilePath + fs + propFile.getName());
         fail();
       } catch (InvocationTargetException e) {
-        /*
-        assertEquals(e.getTargetException().getClass().getSuperclass().getName(),
-            IOException.class.getName());
-         */
-        assertEquals(e.getTargetException().getClass(), NoSuchFileException.class);
+        assertEquals(e.getTargetException().getClass().getSuperclass().getSuperclass(), IOException.class);
       }
 
     } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException |
