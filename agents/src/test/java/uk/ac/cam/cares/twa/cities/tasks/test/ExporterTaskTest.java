@@ -162,7 +162,8 @@ public class ExporterTaskTest extends TestCase {
             try {
                 modifiedConfigFile = (File) setupConfig.invoke(task);
             } catch (InvocationTargetException e) {
-                assertEquals(IOException.class.getName(), e.getTargetException().getClass().getSuperclass().getSuperclass().getName());
+                fail();
+                //assertEquals(IOException.class.getName(), e.getTargetException().getClass().getSuperclass().getSuperclass().getName());
             }
 
             assert modifiedConfigFile != null;
@@ -171,7 +172,7 @@ public class ExporterTaskTest extends TestCase {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document cfg = builder.parse(modifiedConfigFile);
-            assertEquals(gmlIds, cfg.getElementsByTagName("id").item(1).getTextContent());
+            assertEquals(gmlIds[0], cfg.getElementsByTagName("id").item(1).getTextContent());
 
         } catch (NoSuchMethodException | IllegalAccessException | SAXException | IOException | ParserConfigurationException e) {
             fail();
