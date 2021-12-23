@@ -36,6 +36,7 @@ public class CEAAgent extends JPSAgent {
     public static final String KEY_IRI = "iri";
     public static final String CITY_OBJECT = "cityobject";
     public static final String CITY_OBJECT_GEN_ATT = "cityobjectgenericattrib";
+    public static final String BUILDING = "building";
     public static final String ENERGY_PROFILE = "energyprofile";
 
     private StoreClientInterface kgClient;
@@ -63,8 +64,8 @@ public class CEAAgent extends JPSAgent {
             String uri = requestParams.getString("iri");
 
             CEAInputData testData = new CEAInputData();
-            testData.geometry = getValue(uri, "Envelope");
             testData.height = getValue(uri, "Height");
+            testData.geometry = getValue(uri, "Envelope");
             CEAOutputData outputs = runCEA(testData);
 
             sparqlUpdate(outputs, uri);
@@ -145,6 +146,16 @@ public class CEAAgent extends JPSAgent {
         return namespace + "/" + graph + "/";
     }
 
+    /**
+     * gets UUID from input city object uri
+     *
+     * @param uriString input city object id
+     * @return Requested UUID
+     */
+    private String getUUID(String uriString) {
+        String[] splitUri = uriString.split("/");
+        return splitUri[splitUri.length-1];
+    }
 
     /**
      * executes query on SPARQL endpoint and retrieves requested value of building
@@ -189,7 +200,6 @@ public class CEAAgent extends JPSAgent {
      * @return returns a query string
      */
     private Query getGeometryQuery(String uriString) {
-
         SelectBuilder sb = new SelectBuilder()
                 .addPrefix( "ocgml", ocgmlUri )
                 .addVar("?Envelope")
@@ -205,16 +215,25 @@ public class CEAAgent extends JPSAgent {
      * @return returns a query string
      */
     private Query getHeightQuery(String uriString) {
-        WhereBuilder wb =
-                new WhereBuilder()
-                        .addPrefix("ocgml", ocgmlUri)
-                        .addWhere("?o", "ocgml:attrName", "height")
-                        .addWhere("?o", "ocgml:realVal", "?Height")
-                        .addWhere("?o", "ocgml:cityObjectId", "?s");
-        SelectBuilder sb = new SelectBuilder()
-                .addVar("?Height")
-                .addGraph(NodeFactory.createURI(getGraph(uriString,CITY_OBJECT_GEN_ATT)), wb);
-        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
+        WhereBuilder wb = new WhereBuilder();
+        SelectBuilder sb = new SelectBuilder();
+        if(uriString.contains("kings-lynn-open-data"))
+        {
+            wb.addPrefix("ocgml", ocgmlUri)
+                    .addWhere("?s", "ocgml:measuredHeight", "?Height");
+            sb.addVar("?Height")
+                    .addGraph(NodeFactory.createURI(getGraph(uriString,BUILDING)), wb);
+            sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getGraph(uriString,BUILDING))+getUUID(uriString)+"/");
+        }
+        else{
+            wb.addPrefix("ocgml", ocgmlUri)
+                    .addWhere("?o", "ocgml:attrName", "height")
+                    .addWhere("?o", "ocgml:realVal", "?Height")
+                    .addWhere("?o", "ocgml:cityObjectId", "?s");
+            sb.addVar("?Height")
+                    .addGraph(NodeFactory.createURI(getGraph(uriString,CITY_OBJECT_GEN_ATT)), wb);
+            sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
+        }
 
         return sb.build();
     }
