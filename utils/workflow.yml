@@ -1,47 +1,46 @@
 - script: create-new-scenario
   parameters:
-    project: testProject1
+    project: testProject
     scenario: testScenario
-    output-path: C:\Users\ELLO01\Documents\testProject
-    zone: C:\Users\ELLO01\Documents\testProject\zone.shp
+    output-path: directory_path
+    zone: filepath_zone
     terrain:
     streets:
 - script: weather-helper
   parameters:
-    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+    scenario: scenario_path
     weather: Singapore-Changi_1990_2010_TMY
 - script: surroundings-helper
   parameters:
-    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+    scenario: scenario_path
     buffer: 50.
 - script: terrain-helper
   parameters:
-    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+    scenario: scenario_path
 - script: data-initializer
   parameters:
-    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
-    databases-path: C:\Users\ELLO01\Documents\GitHub\CityEnergyAnalyst\cea\databases\SG
+    scenario: scenario_path
+    databases-path: SG
 - script: archetypes-mapper
   parameters:
-    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+    scenario: scenario_path
     buildings: ['B001']
 - script: radiation
   parameters:
-    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+    scenario: scenario_path
     buildings: ['B001']
-    daysim-bin-directory: C:\Users\ELLO01\Documents\GitHub\CityEnergyAnalyst\setup\Dependencies\Daysim
 - script: schedule-maker
   parameters:
-    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+    scenario: scenario_path
     buildings: ['B001']
 - script: demand
   parameters:
-    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+    scenario: scenario_path
     buildings: ['B001']
     loads-output: ['GRID', 'QH_sys', 'QC_sys', 'E_sys']
     massflows-output: []
     temperatures-output: []
 - script: photovoltaic
   parameters:
-    scenario: C:\Users\ELLO01\Documents\testProject\testProject1\testScenario
+    scenario: scenario_path
     buildings: ['B001']

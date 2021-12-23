@@ -10,6 +10,7 @@ import argparse
 import json
 import math
 from pyproj import CRS
+import os
 
 
 def create_shapefile(geometry, height, shapefile):
@@ -25,7 +26,7 @@ def create_shapefile(geometry, height, shapefile):
     split_data = geometry.split("#")
     points = [[] for i in range(4)]
 
-    # Extract x-y data
+    # Extract x-y footprint data
     for a in range(0, 4):
         for b in range(0, 3):
             if b == 0 or b == 1:
@@ -60,9 +61,8 @@ def create_shapefile(geometry, height, shapefile):
 
 def main(argv):
 
-    shapefile_loc = "C:\\Users\\ELLO01\\Documents\\testProject\\"
     shapefile_file = "zone.shp"
-    shapefile = shapefile_loc+shapefile_file
+    shapefile = argv.zone_file_location+os.sep+shapefile_file
     data_dictionary = json.loads(argv.data)
 
     try:
@@ -76,6 +76,7 @@ if __name__ == '__main__':
 
     # add arguments to the parser
     parser.add_argument("data")
+    parser.add_argument("zone_file_location")
 
     # parse the arguments
     args = parser.parse_args()
