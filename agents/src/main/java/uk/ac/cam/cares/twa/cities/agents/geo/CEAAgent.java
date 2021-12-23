@@ -9,11 +9,12 @@ import uk.ac.cam.cares.twa.cities.tasks.RunCEATask;
 import org.json.JSONObject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
-import java.util.ArrayList;
 import java.util.Set;
 import javax.servlet.annotation.WebServlet;
 import java.util.concurrent.*;
 import java.util.UUID;
+import java.util.ResourceBundle;
+import java.util.Arrays;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
@@ -33,12 +34,27 @@ public class CEAAgent extends JPSAgent {
     public static final String KEY_REQ_METHOD = "method";
     public static final String URI_ACTION = "/cea";
     public static final String KEY_IRI = "iri";
-    private StoreClientInterface kgClient;
-    private static final String ROUTE1 = "http://kb/singapore-local";
-    private static final String ROUTE2 = "http://kb/singaporeEPSG24500";
+    public static final String CITY_OBJECT = "cityobject";
+    public static final String CITY_OBJECT_GEN_ATT = "cityobjectgenericattrib";
+    public static final String ENERGY_PROFILE = "energyprofile";
 
-    public final int NUM_IMPORTER_THREADS = 1;
-    private final ThreadPoolExecutor CEAExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_IMPORTER_THREADS);
+    private StoreClientInterface kgClient;
+
+    public final int NUM_CEA_THREADS = 1;
+    private final ThreadPoolExecutor CEAExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_CEA_THREADS);
+
+    // Variables fetched from CEAAgentConfig.properties file.
+    private String ocgmlUri;
+    private String ontoUBEMMPUri;
+    private String rdfUri;
+    private String owlUri;
+    private static String unitOntology;
+    private static String QUERY_ROUTE;
+    private static String UPDATE_ROUTE;
+
+    public CEAAgent() {
+        readConfig();
+    }
 
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
@@ -49,7 +65,6 @@ public class CEAAgent extends JPSAgent {
             CEAInputData testData = new CEAInputData();
             testData.geometry = getValue(uri, "Envelope");
             testData.height = getValue(uri, "Height");
-
             CEAOutputData outputs = runCEA(testData);
 
             sparqlUpdate(outputs, uri);
@@ -82,6 +97,18 @@ public class CEAAgent extends JPSAgent {
         return true;
     }
 
+    private void readConfig() {
+        ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
+        UPDATE_ROUTE = config.getString("uri.route.local");
+        QUERY_ROUTE = config.getString("uri.route.wa");
+        ocgmlUri = config.getString("uri.ontology.ontocitygml");
+        unitOntology = config.getString("uri.ontology.om");
+        ontoUBEMMPUri = config.getString("uri.ontology.ontoubemmp");
+        rdfUri = config.getString("uri.ontology.rdf");
+        owlUri = config.getString("uri.ontology.owl");
+
+    }
+
     private CEAOutputData runCEA(CEAInputData buildingData) {
         RunCEATask task = new RunCEATask(buildingData);
         Future<CEAOutputData> future = CEAExecutor.submit(task);
@@ -94,6 +121,30 @@ public class CEAAgent extends JPSAgent {
         }
         return result;
     }
+
+    /**
+     * gets namespace uri from input city object uri.
+     *
+     * @param uriString input city object id
+     * @return Object's namespace
+     */
+    private String getNamespace(String uriString) {
+        String[] splitUri = uriString.split("/");
+        return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 2));
+    }
+
+    /**
+     * creates graph uri from input city object uri and graph name tag.
+     *
+     * @param uriString input city object id
+     * @param graph name tag of graph wanted
+     * @return Requested graph with correct namespace
+     */
+    private String getGraph(String uriString, String graph) {
+        String namespace = getNamespace(uriString);
+        return namespace + "/" + graph + "/";
+    }
+
 
     /**
      * executes query on SPARQL endpoint and retrieves requested value of building
@@ -140,11 +191,9 @@ public class CEAAgent extends JPSAgent {
     private Query getGeometryQuery(String uriString) {
 
         SelectBuilder sb = new SelectBuilder()
-                //.addPrefix( "ocgml", "http://locahost/ontocitygml/" )
-                .addPrefix( "ocgml", "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#" )
+                .addPrefix( "ocgml", ocgmlUri )
                 .addVar("?Envelope")
-                //.addGraph(NodeFactory.createURI("http://localhost/berlin/cityobject/"), "?s", "ocgml:EnvelopeType", "?Envelope");
-                .addGraph(NodeFactory.createURI("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/cityobject/"), "?s", "ocgml:EnvelopeType", "?Envelope");
+                .addGraph(NodeFactory.createURI(getGraph(uriString,CITY_OBJECT)), "?s", "ocgml:EnvelopeType", "?Envelope");
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
 
         return sb.build();
@@ -158,15 +207,13 @@ public class CEAAgent extends JPSAgent {
     private Query getHeightQuery(String uriString) {
         WhereBuilder wb =
                 new WhereBuilder()
-                        //.addPrefix("ocgml", "http://locahost/ontocitygml/")
-                        .addPrefix( "ocgml", "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#" )
+                        .addPrefix("ocgml", ocgmlUri)
                         .addWhere("?o", "ocgml:attrName", "height")
                         .addWhere("?o", "ocgml:realVal", "?Height")
                         .addWhere("?o", "ocgml:cityObjectId", "?s");
         SelectBuilder sb = new SelectBuilder()
                 .addVar("?Height")
-                //.addGraph(NodeFactory.createURI("http://localhost/berlin/cityobjectgenericattrib/"), wb);
-                .addGraph(NodeFactory.createURI("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/cityobjectgenericattrib/"), wb);
+                .addGraph(NodeFactory.createURI(getGraph(uriString,CITY_OBJECT_GEN_ATT)), wb);
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
 
         return sb.build();
@@ -179,28 +226,28 @@ public class CEAAgent extends JPSAgent {
      */
     private void setKGClient(boolean isQuery, boolean isUpdate){
         if(isQuery) {
-            this.kgClient = StoreRouter.getStoreClient(ROUTE2,
+            this.kgClient = StoreRouter.getStoreClient(QUERY_ROUTE,
                     isQuery,
                     isUpdate);
         }
         else if(isUpdate){
-            this.kgClient = StoreRouter.getStoreClient(ROUTE1,
+            this.kgClient = StoreRouter.getStoreClient(UPDATE_ROUTE,
                     isQuery,
                     isUpdate);
         }
     }
 
     public int sparqlUpdate(CEAOutputData output, String uriString) {
-        String outputGraphUri = "http://localhost/berlin/ceaoutput/";
+        String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
         String heatingUri = outputGraphUri + "UUID_" + UUID.randomUUID() + "/";
         String coolingUri = outputGraphUri + "UUID_" + UUID.randomUUID() + "/";
         String pvCellsUri = outputGraphUri + "UUID_" + UUID.randomUUID()+ "/";
 
         UpdateBuilder ub =
                 new UpdateBuilder()
-                        .addPrefix("ontoubemmp", "http://www.theworldavatar.com/ontology/ontoubemmp/OntoUBEMMP.owl#")
-                        .addPrefix("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
-                        .addPrefix("owl", "http://www.w3.org/2002/07/owl#")
+                        .addPrefix("ontoubemmp", ontoUBEMMPUri)
+                        .addPrefix("rdf", rdfUri)
+                        .addPrefix("owl", owlUri)
                         .addInsert("?graph", NodeFactory.createURI(uriString), "rdf:type", "ontoubemmp:building")
                         .addInsert("?graph", NodeFactory.createURI(uriString), "ontoubemmp:hasYearlyEnergyDemand", output.grid_demand)
                         .addInsert("?graph", NodeFactory.createURI(uriString), "ontoubemmp:hasEnergyUnit", "megawattHour")
