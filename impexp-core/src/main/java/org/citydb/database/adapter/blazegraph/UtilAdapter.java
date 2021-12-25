@@ -103,7 +103,7 @@ public class UtilAdapter extends AbstractUtilAdapter {
 
         List<Geometry> convertedGeometry = new ArrayList<>();
         for (int i = 0; i < numPolygon; ++i){
-            Geometry converted = geospatial.Transform(polygonlist.get(i),25933, targetSrs.getSrid()); // the hague: 28992, berlin: 25933
+            Geometry converted = geospatial.Transform(polygonlist.get(i),25833, targetSrs.getSrid()); // the hague: 28992, berlin: 25833
             Coordinate[] reverseCoord = geospatial.getReversedCoordinates(converted);
             Geometry reverseConverted = fac.createPolygon(reverseCoord);
             convertedGeometry.add(reverseConverted);
