@@ -1640,8 +1640,8 @@ public abstract class KmlGenericObject<T> {
 				if (!rs.wasNull() && buildingGeometryObj != null) {
 					eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
 
-					GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(
-							buildingGeometryObj);
+					GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
+
 					if (unconvertedGeom == null || (unconvertedGeom.getGeometryType() != GeometryType.POLYGON
 							&& unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON))
 						continue;
@@ -1650,8 +1650,7 @@ public abstract class KmlGenericObject<T> {
 					if (transformer != null)
 						unconvertedGeom = transformer.applyTransformation(unconvertedGeom);
 
-					GeometryObject groundSurface = convertToWGS84(
-							unconvertedGeom); // apply transformation, coordinates have totally been changed
+					GeometryObject groundSurface = convertToWGS84(unconvertedGeom); // apply transformation, coordinates have totally been changed
 					unconvertedGeom = null;
 
 					int dim = groundSurface.getDimension();
