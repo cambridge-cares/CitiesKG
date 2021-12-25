@@ -56,7 +56,7 @@ public class GeoSpatialProcessor {
         return details;
     }
 
-    /* Equivalent ST_Transform(Geometry g1, integer srid)
+    /* Equivalent ST_Transform(Geometry g1, integer destSrid)
      * https://postgis.net/docs/ST_Transform.html
      * Return: Geometry
      * Default : SRID 4326

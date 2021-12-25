@@ -1497,14 +1497,15 @@ public abstract class KmlGenericObject<T> {
 								polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
 								polygon.setOuterBoundaryIs(boundary);
 								multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
-							} else
+							} else {
 								polygon.getInnerBoundaryIs().add(boundary);
+							}
 
 							double[] ordinatesArray = groundSurface.getCoordinates(i);
+
 							if (reversePointOrder) {
 								for (int j = 0; j < ordinatesArray.length; j = j+dim)
 									linearRing.getCoordinates().add(String.valueOf(ordinatesArray[j] + "," + ordinatesArray[j+1] + "," + measuredHeight));
-
 							} else if (polygon != null)
 								// order points counter-clockwise
 								for (int j = ordinatesArray.length - dim; j >= 0; j = j-dim)
@@ -1556,10 +1557,12 @@ public abstract class KmlGenericObject<T> {
 						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
 						polygon.setOuterBoundaryIs(boundary);
 						multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
-					} else
+					} else {
 						polygon.getInnerBoundaryIs().add(boundary);
+					}
 
 					double[] ordinatesArray = groundSurface.getCoordinates(i);
+
 					if (reversePointOrder) {
 						for (int j = 0; j < ordinatesArray.length; j = j + dim)
 							linearRing.getCoordinates().add(String.valueOf(ordinatesArray[j] + "," + ordinatesArray[j + 1] + "," + measuredHeight));
@@ -1599,6 +1602,7 @@ public abstract class KmlGenericObject<T> {
 		PolygonType polygon = null;
 		while (rs.next()) {
 			Object buildingGeometryObj = rs.getObject(1);
+			System.out.println(buildingGeometryObj.toString());
 
 			if (!rs.wasNull() && buildingGeometryObj != null) {
 				eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
@@ -1628,8 +1632,9 @@ public abstract class KmlGenericObject<T> {
 						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
 						polygon.setOuterBoundaryIs(boundary);
 						multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
-					} else
+					} else {
 						polygon.getInnerBoundaryIs().add(boundary);
+					}
 
 					double[] ordinatesArray = groundSurface.getCoordinates(i);
 					if (reversePointOrder) {
@@ -2691,7 +2696,7 @@ public abstract class KmlGenericObject<T> {
 
 		return pointCoords;
 	}
-
+	// This will be shared between postgis and blazegraph, the framework should not change; utilAdapter.transform is different
 	protected GeometryObject convertToWGS84(GeometryObject geomObj) throws SQLException {
 		GeometryObject convertedGeomObj = null;
 		try {

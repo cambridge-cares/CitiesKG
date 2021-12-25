@@ -70,6 +70,7 @@ public class UtilAdapter extends AbstractUtilAdapter {
     protected BoundingBox transformBoundingBox(BoundingBox bbox, DatabaseSrs sourceSrs, DatabaseSrs targetSrs, Connection connection) throws SQLException {
         return null;
     }
+
     //The postgis implementation is to execute ST_Transform in postgis
     @Override
     protected GeometryObject transform(GeometryObject geometry, DatabaseSrs targetSrs, Connection connection) throws SQLException {

@@ -58,7 +58,7 @@ public class OptimizedSparqlQuery {
           "SELECT " + LOD2MSID +
           " WHERE {" +
           "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> {" +
-          "?ts_id ocgml:objectClassId 35 ; ocgml:buildingId " + QST_MARK +" ; ocgml:lod2MultiSurfaceId " + LOD2MSID + " .} ");
+          "?ts_id ocgml:objectClassId 35 ; ocgml:buildingId " + QST_MARK +" ; ocgml:lod2MultiSurfaceId " + LOD2MSID + " . ");
       sparqlbuilder.append("} }");
     }
     return sparqlbuilder.toString();
