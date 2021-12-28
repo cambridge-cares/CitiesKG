@@ -90,12 +90,13 @@ public class UtilAdapter extends AbstractUtilAdapter {
         int numGeometry = geometry.getNumElements();
         double[][] coordinates = geometry.getCoordinates();
         int dim = geometry.getDimension();
-        int srcSrs = geometry.getSrid();
 
-        if (srcSrs == 0){
-            srcSrs = 31466;  // for berlin data
+
+        if (geometry.getSrid() == 0){
+            geometry.setSrid(31466);  // for berlin data
         }
 
+        int srcSrs = geometry.getSrid();
         GeometryFactory fac = new GeometryFactory();  // no polygonZ
         GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
         GeometryBuilder geometrybuilder = new GeometryBuilder();
@@ -104,8 +105,6 @@ public class UtilAdapter extends AbstractUtilAdapter {
         //for (int i = 0; i < numGeometry; ++i){
         //    coordinates[i] = geometry.getCoordinates(i);
         //}
-
-
 
         for (int j = 0; j < numGeometry; ++j) {
             List<Coordinate> polygoncoord = new ArrayList<>();
@@ -123,13 +122,13 @@ public class UtilAdapter extends AbstractUtilAdapter {
         // only GeoSpatialProcessor has Transform
         Geometry coll = fac.buildGeometry(polygonlist);
         Geometry converted = geospatial.Transform(coll, srcSrs , targetSrs.getSrid());
-        //List<Geometry> convertedGeometry = new ArrayList<>();
-        //for (int i = 0; i < numGeometry; ++i){
-        //    Geometry converted = geospatial.Transform(polygonlist.get(i), geometry.getSrid(), targetSrs.getSrid()); // the hague: 28992, berlin: 25933 / 25833
-        //    Coordinate[] reverseCoord = geospatial.getReversedCoordinates(converted);
-        //    Geometry reverseConverted = fac.createPolygon(reverseCoord);
-        //    convertedGeometry.add(reverseConverted);
-        //}
+        List<Geometry> convertedGeometry = new ArrayList<>();
+        for (int i = 0; i < numGeometry; ++i){
+            Geometry converted_1 = geospatial.Transform(polygonlist.get(i), geometry.getSrid(), targetSrs.getSrid()); // the hague: 28992, berlin: 25933 / 25833
+            Coordinate[] reverseCoord = geospatial.getReversedCoordinates(converted_1);
+            Geometry reverseConverted = fac.createPolygon(reverseCoord);
+            convertedGeometry.add(reverseConverted);
+        }
 
         // need to reverse the coordinates to match POSTGIS results --> move to somewhere
         //Geometry union = geospatial.UnaryUnion(convertedGeometry);

@@ -70,7 +70,7 @@ public class OptimizedSparqlQuery {
   public static String getBuildingPartQuery_part2() {
     StringBuilder sparqlbuilder = new StringBuilder();
     sparqlbuilder.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-        "SELECT ?geomtype (datatype(?geomtype) AS ?type)" +
+        "SELECT ?geomtype (datatype(?geomtype) AS ?type) " +
         "WHERE {" +
         "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> {" +
         "?sg_id ocgml:rootId " + QST_MARK + " ; ocgml:GeometryType ?geomtype . FILTER(!isBlank(?geomtype))} }");
