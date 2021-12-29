@@ -199,7 +199,8 @@ public class NquadsExporterTaskTest extends TestCase {
 
       assertEquals(
           getLocalSourceUrlFromProjectCfg.invoke(task, NquadsExporterTaskTestHelper.nqGzFile),
-          "http://127.0.0.1:52066/blazegraph/namespace/tmpkb/sparql/");
+          "http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/");
+          //"http://127.0.0.1:52066/blazegraph/namespace/tmpkb/sparql/");
 
     } catch (NoSuchMethodException | IllegalAccessException | IOException | InvocationTargetException e) {
       fail();
