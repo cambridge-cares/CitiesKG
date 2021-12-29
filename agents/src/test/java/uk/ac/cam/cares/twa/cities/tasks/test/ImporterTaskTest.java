@@ -140,8 +140,9 @@ public class ImporterTaskTest extends TestCase {
   }
 
   public void testNewImporterTaskSetupFilesMethod() {
+    String fs = System.getProperty("file.separator");
     File impFile = new File(
-        System.getProperty("java.io.tmpdir") + "abc" + "test.gml");
+        System.getProperty("java.io.tmpdir") + fs + "abc" + fs + "test.gml");
     File projFile = null;
     ImporterTask task = new ImporterTask(new LinkedBlockingDeque<>(), impFile);
     String localhostUriStr = "http://localhost:9999/";
