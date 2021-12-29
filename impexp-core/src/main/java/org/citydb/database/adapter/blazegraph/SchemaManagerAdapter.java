@@ -182,7 +182,9 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     @Override
     public boolean existsSchema(Connection connection, String schema) {
         boolean exists = true;
-        /*
+
+        /** When the schema link owl.# is not working
+
         try {
             URL myURL = new URL(schema);
             HttpURLConnection myURLConnection = (HttpURLConnection) myURL.openConnection();
@@ -195,6 +197,7 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
             exists = false;
         }
         */
+
         return exists;
     }
 

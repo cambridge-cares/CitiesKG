@@ -1,0 +1,6 @@
+POST http://localhost:8080/agents/export/kml
+Content-Type: application/json
+
+{"gmlid":  ["http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/*/"]}
+
+

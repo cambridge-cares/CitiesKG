@@ -246,8 +246,4 @@ public class SQLAdapter extends AbstractSQLAdapter {
                         envelope, new IntegerLiteral(databaseAdapter.getConnectionMetaData().getReferenceSystem().getSrid())));
     }
 
-    public PreparedStatement transformStatement(SQLStatement statement, Connection connection) throws SQLException {
-        return null;
-    }
-
 }

@@ -37,7 +37,8 @@ impexp-core/test_config.properties
 
 db/RWStore.properties
 db/vocabularies/src/main/resources/config.properties
-agents/${tomcatPath}/
+${tomcatPath}/
 
 3dwebclient/test/*
-
+3dcitydb-web-map-1.9.0/3dwebclient/berlinExample/
+3dcitydb-web-map-1.9.0/node_modules/
