@@ -240,8 +240,18 @@ public class NquadsExporterTaskTest extends TestCase {
       FileOutputStream fos = new FileOutputStream(nqGzFile.getAbsolutePath());
 
       GZIPOutputStream gzos = new GZIPOutputStream(fos);
-      gzos.write(nQuads.getBytes());
-      gzos.finish();
+
+      try {
+        gzos.write(nQuads.getBytes());
+      } finally {
+        try {
+          gzos.finish();
+          gzos.close();
+          fos.close();
+        } catch (IOException e) {
+          fail();
+        }
+      }
 
       File targetNqFile = (File) changeUrlsInNQuadsFile.invoke(task, nqGzFile, from, to);
 
@@ -392,6 +402,7 @@ public class NquadsExporterTaskTest extends TestCase {
     }
 
     public static void tearDown() {
+      System.gc();
       if (Objects.requireNonNull(impFile).isFile()) {
         if (!impFile.delete()) {
           fail();
