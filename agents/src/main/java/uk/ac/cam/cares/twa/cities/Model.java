@@ -102,14 +102,15 @@ public abstract class Model {
   }
 
   /**
-   * Queues an update to overwrite all forward, scalar properties of this model in the database. I am pretty sure that
-   * all triples are (forward) scalar from one of the two directions, but you may want to check before relying on that.
+   * Queues an update to overwrite all forward properties of this model in the database.
    */
-  public void queuePushForwardScalars(KnowledgeBaseClientInterface kgClient) {
+  public void queuePushForward(KnowledgeBaseClientInterface kgClient) {
     String self = getIri().toString();
-    StringBuilder deleteString = new StringBuilder("DELETE WHERE { \n");
-    StringBuilder insertString = new StringBuilder("INSERT DATA {  \n");
+    // scalars
     int varCount = 0;
+    StringBuilder scalarDeleteString = new StringBuilder("DELETE WHERE { \n");
+    StringBuilder vectorDeleteString = new StringBuilder("");
+    StringBuilder insertString = new StringBuilder("INSERT DATA {  \n");
     String currentGraph = null;
     for (Map.Entry<String, FieldInterface> entry : metaModel.fieldMap.entrySet()) {
       FieldInterface field = entry.getValue();
@@ -118,24 +119,30 @@ public abstract class Model {
       String predicate = key[1];
       boolean backward = Boolean.parseBoolean(key[2]);
       boolean dirty = cleanCopy == null || !field.equals(this, cleanCopy);
-      if (field.isList || backward || !dirty)
+      if (backward || !dirty)
         continue;
       if (currentGraph == null || !currentGraph.equals(graph)) {
         if (currentGraph != null) {
-          deleteString.append("    }\n");
+          scalarDeleteString.append("    }\n");
           insertString.append("    }\n");
         }
         currentGraph = graph;
-        deleteString.append(String.format("    GRAPH <%s> { <%s> \n", graph, self));
+        scalarDeleteString.append(String.format("    GRAPH <%s> { <%s> \n", graph, self));
         insertString.append(String.format("    GRAPH <%s> { <%s> \n", graph, self));
       }
-      deleteString.append(String.format("        <%s> ?v%d; \n", predicate, varCount));
-      insertString.append(String.format("        <%s> %s;   \n", predicate, field.getLiteral(this)));
-      varCount++;
+      if (field.isList) {
+        vectorDeleteString.append(String.format("DELETE WHERE { GRAPH <%s> { <%s> <%s> ?v} } \n", graph, self, predicate));
+        for(String literalString: field.getLiterals(this))
+          insertString.append(String.format("        <%s> %s;   \n", predicate, literalString));
+      } else {
+        scalarDeleteString.append(String.format("        <%s> ?v%d; \n", predicate, varCount));
+        insertString.append(String.format("        <%s> %s;   \n", predicate, field.getLiteral(this)));
+        varCount++;
+      }
     }
-    deleteString.append("} };\n");
+    scalarDeleteString.append("} };\n");
     insertString.append("} };\n");
-    updateQueue.append(deleteString).append(insertString);
+    updateQueue.append(scalarDeleteString).append(vectorDeleteString).append(insertString);
     if (updateQueue.length() > 100000) executeQueuedUpdates(kgClient);
   }
 

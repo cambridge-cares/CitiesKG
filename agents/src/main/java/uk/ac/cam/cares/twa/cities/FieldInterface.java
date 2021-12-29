@@ -8,6 +8,7 @@ import java.io.InvalidClassException;
 import java.lang.reflect.*;
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @FunctionalInterface
 interface Parser {
@@ -36,7 +37,7 @@ public class FieldInterface {
   private final Putter putter;
   // Function for generating string representations of literals to push to the database
   private final LiteralGetter literalGetter;
-  // List constructor if isList
+  // List-only methods
   private final Constructor<?> listConstructor;
 
   public FieldInterface(Field field) throws NoSuchMethodException, InvalidClassException {
@@ -92,7 +93,7 @@ public class FieldInterface {
       // Override previously assigned default constructor, which was for innerType
       listConstructor = outerType.getConstructor();
     } else {
-      putter = (Object object, Object value) -> setter.invoke(object, value);
+      putter = setter::invoke;
       listConstructor = null;
     }
   }
@@ -137,11 +138,27 @@ public class FieldInterface {
 
   /**
    * Gets the string representation of the current field value for pushing to the database.
+   * Use with non-List fields.
    */
   public String getLiteral(Object object) {
     try {
       Object value = getter.invoke(object);
       return value == null ? "[]" : literalGetter.get(value);
+    } catch (Exception e) {
+      throw new JPSRuntimeException(e);
+    }
+  }
+
+  /**
+   * Gets the string representations of the current elements of a list field, for pushing to the database.
+   */
+  public String[] getLiterals(Object object) {
+    try {
+      List<?> list = (List<?>) getter.invoke(object);
+      String[] literals = new String[list.size()];
+      for (int i = 0; i < literals.length; i++)
+        literals[i] = list.get(i) == null ? "[]" : literalGetter.get(list.get(i));
+      return literals;
     } catch (Exception e) {
       throw new JPSRuntimeException(e);
     }

@@ -232,9 +232,9 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
           geometry.setCityObjectId(thematicSurface.getIri());
         }
         // Push updates
-        thematicSurface.queuePushForwardScalars(kgClient);
-        tsCityObject.queuePushForwardScalars(kgClient);
-        for (SurfaceGeometry geometry : allDescendantGeometries) geometry.queuePushForwardScalars(kgClient);
+        thematicSurface.queuePushForward(kgClient);
+        tsCityObject.queuePushForward(kgClient);
+        for (SurfaceGeometry geometry : allDescendantGeometries) geometry.queuePushForward(kgClient);
       }
     }
     for (SurfaceGeometry geometry : mixedGeometries) geometry.queueDeleteInstantiation(kgClient);
@@ -243,7 +243,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
     building.setLod1MultiSurfaceId(null);
     building.setLod2MultiSurfaceId(null);
     building.setLod3MultiSurfaceId(null);
-    building.queuePushForwardScalars(kgClient);
+    building.queuePushForward(kgClient);
     Model.executeQueuedUpdates(kgClient);
   }
 
