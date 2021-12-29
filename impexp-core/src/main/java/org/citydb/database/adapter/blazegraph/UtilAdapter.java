@@ -116,23 +116,29 @@ public class UtilAdapter extends AbstractUtilAdapter {
                 }
 
             }
-            polygonlist.add(fac.createPolygon(polygoncoord.toArray(polygoncoord.toArray(new Coordinate[0]))));
+            Coordinate[] polygonCoord = polygoncoord.toArray(polygoncoord.toArray(new Coordinate[0]));
+            Coordinate[] reverseedPolygonCoord = geospatial.reverseCoordinates(polygonCoord);
+            polygonlist.add(fac.createPolygon(reverseedPolygonCoord));
         }
 
+        //Coordinate[] reverseCoord = geospatial.getReversedCoordinates(polygonlist.get(0));
+        //Geometry reverseConverted = fac.createPolygon(reverseCoord);
         // only GeoSpatialProcessor has Transform
         Geometry coll = fac.buildGeometry(polygonlist);
         Geometry converted = geospatial.Transform(coll, srcSrs , targetSrs.getSrid());
-        List<Geometry> convertedGeometry = new ArrayList<>();
-        for (int i = 0; i < numGeometry; ++i){
-            Geometry converted_1 = geospatial.Transform(polygonlist.get(i), geometry.getSrid(), targetSrs.getSrid()); // the hague: 28992, berlin: 25933 / 25833
-            Coordinate[] reverseCoord = geospatial.getReversedCoordinates(converted_1);
-            Geometry reverseConverted = fac.createPolygon(reverseCoord);
-            convertedGeometry.add(reverseConverted);
-        }
+        //List<Geometry> convertedGeometry = new ArrayList<>();
+        //for (int i = 0; i < numGeometry; ++i){
+        //    Geometry converted_1 = geospatial.Transform(polygonlist.get(i), geometry.getSrid(), targetSrs.getSrid()); // the hague: 28992, berlin: 25933 / 25833
+        //    Coordinate[] reverseCoord_1 = geospatial.getReversedCoordinates(converted_1);
+        //    Geometry reverseConverted_1 = fac.createPolygon(reverseCoord_1);
+        //    convertedGeometry.add(reverseConverted_1);
+        //}
 
         // need to reverse the coordinates to match POSTGIS results --> move to somewhere
         //Geometry union = geospatial.UnaryUnion(convertedGeometry);
-
+        Coordinate[] convertedCoords = converted.getCoordinates();
+        Coordinate[] reversedConvertedCoords = geospatial.reverseCoordinates(convertedCoords);
+        Geometry convertedColl = fac.createPolygon(reversedConvertedCoords);
         GeometryObject geomObj2d = databaseAdapter.getGeometryConverter().getGeometry(converted);
         converted3d = GeoSpatialProcessor.convertTo3d(geomObj2d, geometry);  // convert 2d to 3d coordinates
 

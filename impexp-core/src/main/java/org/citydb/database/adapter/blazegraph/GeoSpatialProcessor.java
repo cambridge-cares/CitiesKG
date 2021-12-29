@@ -248,6 +248,16 @@ public class GeoSpatialProcessor {
         return reversed;
     }
 
+    // Reverse the coordinates X and Y
+    public Coordinate[] reverseCoordinates (Coordinate[] original) {
+
+        Coordinate[] reversed = new Coordinate[original.length];
+        for (int i = 0; i < original.length; i++) {
+            reversed[i] = new Coordinate(original[i].getY(), original[i].getX(), original[i].getZ());
+        }
+        return reversed;
+    }
+
 
     /* Todo String geomtype, int dimension, int[] dimOfRings */
     public static GeometryObject create3dPolygon(String coordlist, String datatypeURI){
