@@ -68,7 +68,7 @@ public class GeometryConverterAdapterTest extends TestCase {
         .createDatabaseAdapter(DatabaseType.fromValue(TEST_DB_ADAPTER_TYPE));
     GeometryConverterAdapter converter = (GeometryConverterAdapter) adapter.getGeometryConverter();
 
-    assertEquals(12, converter.getClass().getDeclaredMethods().length);
+    assertEquals(15, converter.getClass().getDeclaredMethods().length);
   }
 
   @Test
