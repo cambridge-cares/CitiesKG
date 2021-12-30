@@ -12,7 +12,7 @@ class DBOpeningToThemSurfaceTest extends DBTest{
 
         String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
                 "BASE <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql>" +
-                "INSERT DATA { GRAPH <openingtothemsurface/> { ? ocgml:openingId  ?;ocgml:themSurfaceId  ?;.}}";
+                "INSERT DATA { GRAPH <openingtothemsurface/> { ? ocgml:openingID  ?;ocgml:themSurfaceID  ?;.}}";
         String generated;
 
         try {
