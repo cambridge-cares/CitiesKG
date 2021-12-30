@@ -138,6 +138,11 @@ public class UtilAdapter extends AbstractUtilAdapter {
         //Geometry union = geospatial.UnaryUnion(convertedGeometry);
         Coordinate[] convertedCoords = converted.getCoordinates();
         Coordinate[] reversedConvertedCoords = geospatial.reverseCoordinates(convertedCoords);
+        System.out.println("=========");
+        for (Coordinate cord : reversedConvertedCoords) {
+            System.out.println(cord);
+        }
+        System.out.println(reversedConvertedCoords);
         Geometry convertedColl = fac.createPolygon(reversedConvertedCoords);
         GeometryObject geomObj2d = databaseAdapter.getGeometryConverter().getGeometry(converted);
         converted3d = GeoSpatialProcessor.convertTo3d(geomObj2d, geometry);  // convert 2d to 3d coordinates
