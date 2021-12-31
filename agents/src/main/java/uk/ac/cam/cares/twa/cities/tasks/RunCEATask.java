@@ -17,6 +17,7 @@ public class RunCEATask implements Callable<CEAOutputData> {
     private static final String WORKFLOW_SCRIPT = "workflow.yml";
     private static final String CREATE_WORKFLOW_SCRIPT = "create_cea_workflow.py";
     private static final String FS = System.getProperty("file.separator");
+
     public RunCEATask(CEAInputData buildingData) {  this.inputs = buildingData; }
 
     public void stop() {
@@ -37,12 +38,12 @@ public class RunCEATask implements Callable<CEAOutputData> {
         }
     }
 
-    public void deleteDirectory(File file)
+    public void deleteDirectoryContents(File file)
     {
         for (File subFile : file.listFiles()) {
             // if it is a subfolder recursively call function to empty it
             if (subFile.isDirectory()) {
-                deleteDirectory(subFile);
+                deleteDirectoryContents(subFile);
             }
             subFile.delete();
         }
@@ -97,7 +98,7 @@ public class RunCEATask implements Callable<CEAOutputData> {
 
         }
         File file = new File(projectDir);
-        deleteDirectory(file);
+        deleteDirectoryContents(file);
         file.delete();
 
         return result;
