@@ -63,12 +63,10 @@ public class CEAAgent extends JPSAgent {
         if (validateInput(requestParams)) {
             String uri = requestParams.getString("iri");
 
-            CEAInputData testData = new CEAInputData();
-            testData.height = getValue(uri, "Height");
-            testData.geometry = getValue(uri, "Envelope");
+            CEAInputData testData = new CEAInputData(getValue(uri, "Envelope"), getValue(uri, "Height"));
             CEAOutputData outputs = runCEA(testData);
 
-            sparqlUpdate(outputs, uri);
+            //sparqlUpdate(outputs, uri);
         }
         return requestParams;
     }
@@ -101,13 +99,12 @@ public class CEAAgent extends JPSAgent {
     private void readConfig() {
         ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
         UPDATE_ROUTE = config.getString("uri.route.local");
-        QUERY_ROUTE = config.getString("uri.route.wa");
+        QUERY_ROUTE = config.getString("uri.route.local");
         ocgmlUri = config.getString("uri.ontology.ontocitygml");
         unitOntology = config.getString("uri.ontology.om");
         ontoUBEMMPUri = config.getString("uri.ontology.ontoubemmp");
         rdfUri = config.getString("uri.ontology.rdf");
         owlUri = config.getString("uri.ontology.owl");
-
     }
 
     private CEAOutputData runCEA(CEAInputData buildingData) {
@@ -169,6 +166,10 @@ public class CEAAgent extends JPSAgent {
         setKGClient(true, false);
 
         Query q = getQuery(uriString, value);
+
+        //Use access agent
+        //String queryResultString = this.query(QUERY_ROUTE, q.toString());
+
         String queryResultString = kgClient.execute(q.toString());
         JSONArray queryResult = new JSONArray(queryResultString);
 
@@ -223,7 +224,7 @@ public class CEAAgent extends JPSAgent {
                     .addWhere("?s", "ocgml:measuredHeight", "?Height");
             sb.addVar("?Height")
                     .addGraph(NodeFactory.createURI(getGraph(uriString,BUILDING)), wb);
-            sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getGraph(uriString,BUILDING))+getUUID(uriString)+"/");
+            sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getGraph(uriString,BUILDING)+getUUID(uriString)+"/"));
         }
         else{
             wb.addPrefix("ocgml", ocgmlUri)
@@ -294,6 +295,9 @@ public class CEAAgent extends JPSAgent {
         UpdateRequest ur = ub.buildRequest();
         setKGClient(false, true);
         return kgClient.executeUpdate(ur);
+
+        //Use access agent
+        //this.update(UPDATE_ROUTE, ur.toString());
     }
 
 }
