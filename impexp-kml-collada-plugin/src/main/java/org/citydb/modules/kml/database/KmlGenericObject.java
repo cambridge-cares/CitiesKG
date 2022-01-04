@@ -1505,8 +1505,7 @@ public abstract class KmlGenericObject<T> {
 							if (transformer != null)
 								unconvertedGeom = transformer.applyTransformation(unconvertedGeom);
 
-							GeometryObject groundSurface = convertToWGS84(
-									unconvertedGeom); // apply transformation, coordinates have totally been changed
+							GeometryObject groundSurface = convertToWGS84(unconvertedGeom); // apply transformation, coordinates have totally been changed
 							unconvertedGeom = null;
 
 							int dim = groundSurface.getDimension();
@@ -1554,9 +1553,9 @@ public abstract class KmlGenericObject<T> {
 					}
 				}
 
-				// Added by Shiying: Filter the results, return Geometry object
+				// Added by Shiying: Filter the results, return Geometry object // only 1 entry after ST_UNION
 				Object buildingGeometryObj = StatementTransformer.filterResult(simpleGeom,
-						0.001);  // only 1 entry after ST_UNION
+						0.001);
 
 				if (!simpleGeom.isEmpty() && buildingGeometryObj != null) {
 					eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));

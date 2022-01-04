@@ -522,7 +522,7 @@ public class StatementTransformer {
             String geomStr = extracted.get(i);
             System.out.println(geomStr);
             Geometry geomobj = geospatial.createGeometry(geomStr);
-            if (geospatial.IsValid(geomobj) && geospatial.CalculateArea(geospatial.Transform(geomobj, 4326, 4326)) > tolerance){
+            if (geospatial.IsValid(geomobj) && geospatial.CalculateArea(geospatial.Transform(geomobj, 4326, 4326)) > tolerance){ // this has no need to changed, this condition will not affect the output
                 geom2union.add(geomobj);
             }
         }

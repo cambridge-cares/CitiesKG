@@ -187,9 +187,9 @@ public class KmlSplitter {
 			}
 		} else {
 			// For SQL
-			try (PreparedStatement stmt = databaseAdapter.getSQLAdapter()
-					.prepareStatement(select, connection);
+			try (PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
 					ResultSet rs = stmt.executeQuery()) {
+
 				int objectCount = 0;
 				while (rs.next() && shouldRun) {
 					long id = rs.getLong(MappingConstants.ID);
