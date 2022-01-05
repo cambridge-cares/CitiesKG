@@ -307,9 +307,11 @@ public class GeoSpatialProcessor {
             return geometryObj2d;
         } else if (originalGeomObj.getDimension() == 3 && geometryObj2d.getDimension() == 2) { // replace x and y of orignalGeomObj with new coordinates
             for (int i = 0 ; i < origCoords.length; ++i) {
-                for (int j = 0; j < origCoords.length; j+=3) {
-                    origCoords[i][j] = coordinates2d[i][j];
-                    origCoords[i][j+1] = coordinates2d[i][j+1];
+                int k = 0;
+                for (int j = 0; j < origCoords[i].length; j+=3) {
+                    origCoords[i][j] = coordinates2d[i][k];
+                    origCoords[i][j+1] = coordinates2d[i][k+1];
+                    k += 2;
                 }
             }
         }
