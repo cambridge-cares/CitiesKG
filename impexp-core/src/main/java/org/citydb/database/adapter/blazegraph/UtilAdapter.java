@@ -94,7 +94,7 @@ public class UtilAdapter extends AbstractUtilAdapter {
 
 
         if (geometry.getSrid() == 0){
-            geometry.setSrid(28992);  // 25833 for berlin data // 28992 for the hague
+            geometry.setSrid(25833);  // 25833 for berlin data // 28992 for the hague
         }
 
         GeometryFactory fac = new GeometryFactory();  // no polygonZ
