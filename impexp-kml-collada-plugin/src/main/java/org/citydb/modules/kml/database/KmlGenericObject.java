@@ -2847,7 +2847,7 @@ public abstract class KmlGenericObject<T> {
 
 				for (int i = 0; i < originalCoords.length; i++) {
 					for (int j = 2; j < originalCoords[i].length; j += 3)
-						convertedCoords[i][j] = originalCoords[i][j];
+						convertedCoords[i][j] = originalCoords[i][j];  // just to copy the z-coordinate to convertedCoords
 				}
 			}
 
