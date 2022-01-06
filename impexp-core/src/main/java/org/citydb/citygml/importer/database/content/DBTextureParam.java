@@ -30,11 +30,9 @@ package org.citydb.citygml.importer.database.content;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.LocalAppearanceHandler.SurfaceGeometryTarget;
 import org.citydb.config.Config;
@@ -59,7 +57,7 @@ public class DBTextureParam extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".textureparam (surface_geometry_id, is_texture_parametrization, " +
+		return "insert into " + sqlSchema + ".textureparam (surface_geometry_id, is_texture_parametrization, " +
 				"world_to_texture, texture_coordinates, surface_data_id) values " +
 				"(?, ?, ?, ?, ?)";
 	}
@@ -67,10 +65,10 @@ public class DBTextureParam extends AbstractDBImporter {
 	@Override
 	protected String getSPARQLStatement() {
 		String param = "  ?;";
-		String texCoordListStmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-				"BASE <" + IRI_GRAPH_BASE + "> " +
+		String texCoordListStmt = "PREFIX ocgml: <" + prefixOntoCityGML + "> " +
+				"BASE <" + iriGraphBase + "> " +
 				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				" { GRAPH <" + iriGraphObjectRel + "> " +
 				"{ ? "+ SchemaManagerAdapter.ONTO_SURFACE_GEOMETRY_ID + param +
 				SchemaManagerAdapter.ONTO_IS_TEXTURE_PARAMETRIZATION + param  +
 				SchemaManagerAdapter.ONTO_WORLD_TO_TEXTURE + param  +
@@ -87,7 +85,7 @@ public class DBTextureParam extends AbstractDBImporter {
 		if (importer.isBlazegraph()) {
 			try {
 				String uuid = importer.generateNewGmlId();
-				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				URL url = new URL(iriGraphObject + uuid + "/");
 				preparedStatement.setURL(++index, url);
 			} catch (MalformedURLException e) {
 				setBlankNode(preparedStatement, ++index);
@@ -113,7 +111,7 @@ public class DBTextureParam extends AbstractDBImporter {
 		if (importer.isBlazegraph()) {
 			try {
 				String uuid = importer.generateNewGmlId();
-				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				URL url = new URL(iriGraphObject + uuid + "/");
 				preparedStatement.setURL(++index, url);
 			} catch (MalformedURLException e) {
 				setBlankNode(preparedStatement, ++index);
@@ -141,7 +139,7 @@ public class DBTextureParam extends AbstractDBImporter {
 		if (importer.isBlazegraph()) {
 			try {
 				String uuid = importer.generateNewGmlId();
-				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				URL url = new URL(iriGraphObject + uuid + "/");
 				preparedStatement.setURL(++index, url);
 			} catch (MalformedURLException e) {
 				setBlankNode(preparedStatement, ++index);

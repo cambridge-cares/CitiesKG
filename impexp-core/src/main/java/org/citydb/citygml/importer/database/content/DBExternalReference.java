@@ -30,7 +30,6 @@ package org.citydb.citygml.importer.database.content;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
@@ -64,7 +63,7 @@ public class DBExternalReference extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".external_reference (id, infosys, name, uri, cityobject_id) values " +
+		return "insert into " + sqlSchema + ".external_reference (id, infosys, name, uri, cityobject_id) values " +
 				"(" + importer.getDatabaseAdapter().getSQLAdapter().getNextSequenceValue(SequenceEnum.EXTERNAL_REFERENCE_ID_SEQ.getName()) +
 				", ?, ?, ?, ?)";
 	}
@@ -72,10 +71,10 @@ public class DBExternalReference extends AbstractDBImporter {
 	@Override
 	protected String getSPARQLStatement() {
 		String param = "  ?;";
-		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-				"BASE <" + IRI_GRAPH_BASE + "> " +
+		String stmt = "PREFIX ocgml: <" + prefixOntoCityGML + "> " +
+				"BASE <" + iriGraphBase + "> " +
 				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				" { GRAPH <" + iriGraphObjectRel + "> " +
 				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
 				SchemaManagerAdapter.ONTO_INFO_SYS + param +
 				SchemaManagerAdapter.ONTO_NAME + param +
@@ -95,7 +94,7 @@ public class DBExternalReference extends AbstractDBImporter {
 		if (isBlazegraph) {
 			try {
 				String uuid = importer.generateNewGmlId();
-				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				URL url = new URL(iriGraphObject + uuid + "/");
 				preparedStatement.setURL(++index, url);
 				preparedStatement.setURL(++index, url);
 			} catch (MalformedURLException e) {

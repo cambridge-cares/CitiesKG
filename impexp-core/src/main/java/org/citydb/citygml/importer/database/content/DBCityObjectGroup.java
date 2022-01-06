@@ -42,7 +42,6 @@ import org.citygml4j.model.gml.geometry.AbstractGeometry;
 import org.citygml4j.model.gml.geometry.GeometryProperty;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
@@ -78,16 +77,11 @@ public class DBCityObjectGroup extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".cityobjectgroup (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
+		return "insert into " + sqlSchema + ".cityobjectgroup (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
 				"brep_id, other_geom" +
 				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
-	}
-
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(CityObjectGroup cityObjectGroup) throws CityGMLImportException, SQLException {

@@ -27,7 +27,6 @@
  */
 package org.citydb.citygml.importer.database.content;
 
-import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
 import org.citydb.database.schema.TableEnum;
@@ -39,7 +38,6 @@ import org.citygml4j.model.citygml.waterbody.WaterSurface;
 import org.citygml4j.model.gml.geometry.primitives.SurfaceProperty;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
@@ -66,14 +64,9 @@ public class DBWaterBoundarySurface extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".waterboundary_surface (id, objectclass_id, water_level, water_level_codespace, " +
+		return "insert into " + sqlSchema + ".waterboundary_surface (id, objectclass_id, water_level, water_level_codespace, " +
 				"lod2_surface_id, lod3_surface_id, lod4_surface_id) values " +
 				"(?, ?, ?, ?, ?, ?, ?)";
-	}
-
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(AbstractWaterBoundarySurface waterBoundarySurface) throws CityGMLImportException, SQLException {

@@ -72,17 +72,12 @@ public class DBPlantCover extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".plant_cover (id, class, class_codespace, function, function_codespace, usage, usage_codespace, average_height, average_height_unit, " +
+		return "insert into " + sqlSchema + ".plant_cover (id, class, class_codespace, function, function_codespace, usage, usage_codespace, average_height, average_height_unit, " +
 				"lod1_multi_surface_id, lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id, " +
 				"lod1_multi_solid_id, lod2_multi_solid_id, lod3_multi_solid_id, lod4_multi_solid_id" +
 				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
-	}
-
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(PlantCover plantCover) throws CityGMLImportException, SQLException {

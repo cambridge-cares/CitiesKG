@@ -28,7 +28,6 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import org.citydb.citygml.importer.CityGMLImportException;
@@ -37,7 +36,7 @@ import org.citydb.database.schema.TableEnum;
 
 public class DBReliefFeatToRelComp extends AbstractDBImporter {
 
-	public DBReliefFeatToRelComp(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
+	public DBReliefFeatToRelComp(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException, CityGMLImportException {
 		super(batchConn, config, importer);
 	}
 	
@@ -53,13 +52,8 @@ public class DBReliefFeatToRelComp extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".relief_feat_to_rel_comp (relief_component_id, relief_feature_id) values " +
+		return "insert into " + sqlSchema + ".relief_feat_to_rel_comp (relief_component_id, relief_feature_id) values " +
 				"(?, ?)";
-	}
-
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
 	}
 
 	protected void doImport(long reliefComponentId, long reliefFeatureId) throws CityGMLImportException, SQLException {

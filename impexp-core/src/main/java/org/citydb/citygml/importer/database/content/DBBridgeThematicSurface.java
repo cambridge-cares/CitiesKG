@@ -71,14 +71,9 @@ public class DBBridgeThematicSurface extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".bridge_thematic_surface (id, objectclass_id, bridge_id, bridge_room_id, bridge_installation_id, bridge_constr_element_id, " +
+		return "insert into " + sqlSchema + ".bridge_thematic_surface (id, objectclass_id, bridge_id, bridge_room_id, bridge_installation_id, bridge_constr_element_id, " +
 				"lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id) values " +
 				"(?, ?, ?, ?, ?, ?, ?, ?, ?)";
-	}
-
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(AbstractBoundarySurface boundarySurface) throws CityGMLImportException, SQLException {

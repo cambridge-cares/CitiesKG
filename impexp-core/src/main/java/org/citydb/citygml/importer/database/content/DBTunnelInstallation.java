@@ -28,7 +28,6 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
@@ -86,17 +85,12 @@ public class DBTunnelInstallation extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".tunnel_installation (id, objectclass_id, class, class_codespace, function, function_codespace, usage, usage_codespace, tunnel_id, tunnel_hollow_space_id, " +
+		return "insert into " + sqlSchema + ".tunnel_installation (id, objectclass_id, class, class_codespace, function, function_codespace, usage, usage_codespace, tunnel_id, tunnel_hollow_space_id, " +
 				"lod2_brep_id, lod3_brep_id, lod4_brep_id, lod2_other_geom, lod3_other_geom, lod4_other_geom, " +
 				"lod2_implicit_rep_id, lod3_implicit_rep_id, lod4_implicit_rep_id, " +
 				"lod2_implicit_ref_point, lod3_implicit_ref_point, lod4_implicit_ref_point, " +
 				"lod2_implicit_transformation, lod3_implicit_transformation, lod4_implicit_transformation) values " +
 				"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-	}
-
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(TunnelInstallation tunnelInstallation) throws CityGMLImportException, SQLException {

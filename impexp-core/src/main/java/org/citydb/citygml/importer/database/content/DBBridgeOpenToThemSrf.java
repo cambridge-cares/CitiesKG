@@ -28,7 +28,6 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import org.citydb.citygml.importer.CityGMLImportException;
@@ -36,7 +35,7 @@ import org.citydb.config.Config;
 import org.citydb.database.schema.TableEnum;
 
 public class DBBridgeOpenToThemSrf extends AbstractDBImporter {
-	public DBBridgeOpenToThemSrf(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
+	public DBBridgeOpenToThemSrf(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException, CityGMLImportException {
 		super(batchConn, config, importer);
 	}
 
@@ -52,13 +51,8 @@ public class DBBridgeOpenToThemSrf extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".bridge_open_to_them_srf (bridge_opening_id, bridge_thematic_surface_id) values " +
+		return "insert into " + sqlSchema + ".bridge_open_to_them_srf (bridge_opening_id, bridge_thematic_surface_id) values " +
 				"(?, ?)";
-	}
-
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
 	}
 
 	protected void doImport(long openingId, long thematicSurfaceId) throws CityGMLImportException, SQLException {

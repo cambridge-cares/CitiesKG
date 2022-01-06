@@ -81,16 +81,11 @@ public class DBBridgeRoom extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".bridge_room (id, class, class_codespace, function, function_codespace, usage, usage_codespace, bridge_id, " +
+		return "insert into " + sqlSchema + ".bridge_room (id, class, class_codespace, function, function_codespace, usage, usage_codespace, bridge_id, " +
 				"lod4_multi_surface_id, lod4_solid_id" +
 				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
-	}
-
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(BridgeRoom bridgeRoom) throws CityGMLImportException, SQLException {

@@ -30,13 +30,11 @@ package org.citydb.citygml.importer.database.content;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
 import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
-import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
 import org.citydb.config.Config;
@@ -89,7 +87,7 @@ public class DBOpening extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".opening (id, objectclass_id, address_id, " +
+		return "insert into " + sqlSchema + ".opening (id, objectclass_id, address_id, " +
 				"lod3_multi_surface_id, lod4_multi_surface_id, " +
 				"lod3_implicit_rep_id, lod4_implicit_rep_id, " +
 				"lod3_implicit_ref_point, lod4_implicit_ref_point, " +
@@ -100,10 +98,10 @@ public class DBOpening extends AbstractDBImporter {
 	@Override
 	protected String getSPARQLStatement() {
 		String param = "  ?;";
-		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-				"BASE <" + IRI_GRAPH_BASE + "> " +  // add BASE by SYL
+		String stmt = "PREFIX ocgml: <" + prefixOntoCityGML + "> " +
+				"BASE <" + iriGraphBase + "> " +  // add BASE by SYL
 				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				" { GRAPH <" + iriGraphObjectRel + "> " +
 				"{ ? " + SchemaManagerAdapter.ONTO_ID + param +
 				SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param +
 				SchemaManagerAdapter.ONTO_ADDRESS_ID + param +
@@ -143,7 +141,7 @@ public class DBOpening extends AbstractDBImporter {
 				if (uuid.isEmpty()) {
 					uuid = importer.generateNewGmlId();
 				}
-				objectURL = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				objectURL = new URL(iriGraphObject + uuid + "/");
 			} catch (MalformedURLException e) {
 				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
 			}

@@ -28,7 +28,6 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import org.citydb.citygml.importer.CityGMLImportException;
@@ -53,13 +52,8 @@ public class DBAddressToBridge extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".address_to_bridge (bridge_id, address_id) values " +
+		return "insert into " + sqlSchema + ".address_to_bridge (bridge_id, address_id) values " +
 				"(?, ?)";
-	}
-
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
 	}
 
 	protected void doImport(long addressId, long bridgeId) throws CityGMLImportException, SQLException {

@@ -28,7 +28,6 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import org.citydb.citygml.importer.CityGMLImportException;
@@ -53,13 +52,8 @@ public class DBTunnelOpenToThemSrf extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".tunnel_open_to_them_srf (tunnel_opening_id, tunnel_thematic_surface_id) values " +
+		return "insert into " + sqlSchema + ".tunnel_open_to_them_srf (tunnel_opening_id, tunnel_thematic_surface_id) values " +
 				"(?, ?)";
-	}
-
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
 	}
 
 	protected void doImport(long openingId, long thematicSurfaceId) throws CityGMLImportException, SQLException {

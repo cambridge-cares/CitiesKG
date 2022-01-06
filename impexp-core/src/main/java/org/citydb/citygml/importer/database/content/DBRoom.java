@@ -30,13 +30,11 @@ package org.citydb.citygml.importer.database.content;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
 import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
-import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
 import org.citydb.config.Config;
@@ -52,8 +50,6 @@ import org.citygml4j.model.citygml.building.IntBuildingInstallationProperty;
 import org.citygml4j.model.citygml.building.InteriorFurnitureProperty;
 import org.citygml4j.model.citygml.building.Room;
 import org.citygml4j.model.gml.basicTypes.Code;
-import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
-import org.citygml4j.model.gml.geometry.primitives.SolidProperty;
 
 public class DBRoom extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
@@ -94,7 +90,7 @@ public class DBRoom extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return  "insert into " + SQL_SCHEMA + ".room (id, objectclass_id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
+		return  "insert into " + sqlSchema + ".room (id, objectclass_id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
 				"building_id, lod4_multi_surface_id, lod4_solid_id)" +
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	}
@@ -102,10 +98,10 @@ public class DBRoom extends AbstractDBImporter {
 	@Override
 	protected String getSPARQLStatement() {
 		String param = "  ?;";
-		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-				"BASE <" + IRI_GRAPH_BASE + "> " +  // add BASE by SYL
+		String stmt = "PREFIX ocgml: <" + prefixOntoCityGML + "> " +
+				"BASE <" + iriGraphBase + "> " +  // add BASE by SYL
 				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				" { GRAPH <" + iriGraphObjectRel + "> " +
 				"{ ? " + SchemaManagerAdapter.ONTO_ID + param +
 				SchemaManagerAdapter.ONTO_CLASS + param +
 				SchemaManagerAdapter.ONTO_CLASS_CODESPACE + param +
@@ -145,7 +141,7 @@ public class DBRoom extends AbstractDBImporter {
 				if (uuid.isEmpty()) {
 					uuid = importer.generateNewGmlId();
 				}
-				objectURL = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				objectURL = new URL(iriGraphObject + uuid + "/");
 			} catch (MalformedURLException e) {
 				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
 			}

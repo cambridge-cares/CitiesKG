@@ -68,17 +68,17 @@ public class DBThematicSurface extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".thematic_surface (id, objectclass_id, building_id, room_id, building_installation_id, lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id) values " +
+		return "insert into " + sqlSchema + ".thematic_surface (id, objectclass_id, building_id, room_id, building_installation_id, lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id) values " +
 				"(?, ?, ?, ?, ?, ?, ?, ?)";
 	}
 
 	@Override
 	protected String getSPARQLStatement() {
 		String param = "  ?;";
-		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-				"BASE <" + IRI_GRAPH_BASE + "> " +
+		String stmt = "PREFIX ocgml: <" + prefixOntoCityGML + "> " +
+				"BASE <" + iriGraphBase + "> " +
 				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				" { GRAPH <" + iriGraphObjectRel + "> " +
 				"{ ? " + SchemaManagerAdapter.ONTO_ID + param +
 				SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID + param +
 				SchemaManagerAdapter.ONTO_BUILDING_ID + param +
@@ -114,7 +114,7 @@ public class DBThematicSurface extends AbstractDBImporter {
 
 		if (importer.isBlazegraph()) {
 			try {
-				objectURL = new URL(IRI_GRAPH_OBJECT + boundarySurface.getId() + "/");
+				objectURL = new URL(iriGraphObject + boundarySurface.getId() + "/");
 				preparedStatement.setURL(++index, objectURL);
 				preparedStatement.setURL(++index, objectURL);
 				boundarySurface.setLocalProperty(CoreConstants.OBJECT_URIID, objectURL);

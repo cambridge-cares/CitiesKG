@@ -27,7 +27,6 @@
  */
 package org.citydb.citygml.importer.database.content;
 
-import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
@@ -49,7 +48,6 @@ import org.citygml4j.model.gml.geometry.aggregates.MultiCurveProperty;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
@@ -89,7 +87,7 @@ public class DBGenericCityObject extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".generic_cityobject (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
+		return "insert into " + sqlSchema + ".generic_cityobject (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
 				"lod0_terrain_intersection, lod1_terrain_intersection, lod2_terrain_intersection, lod3_terrain_intersection, lod4_terrain_intersection, " +
 				"lod0_brep_id, lod1_brep_id, lod2_brep_id, lod3_brep_id, lod4_brep_id, " +
 				"lod0_other_geom, lod1_other_geom, lod2_other_geom, lod3_other_geom, lod4_other_geom, " +
@@ -104,10 +102,10 @@ public class DBGenericCityObject extends AbstractDBImporter {
 	@Override
 	protected String getSPARQLStatement() {
 		String param = "  ?;";
-		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-				"BASE <" + IRI_GRAPH_BASE + "> " +
+		String stmt = "PREFIX ocgml: <" + prefixOntoCityGML + "> " +
+				"BASE <" + iriGraphBase + "> " +
 				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				" { GRAPH <" + iriGraphObjectRel + "> " +
 				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
 				SchemaManagerAdapter.ONTO_CLASS + param +
 				SchemaManagerAdapter.ONTO_CLASS_CODESPACE + param +
@@ -174,7 +172,7 @@ public class DBGenericCityObject extends AbstractDBImporter {
 				if (uuid.isEmpty()) {
 					uuid = importer.generateNewGmlId();
 				}
-				objectURL = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				objectURL = new URL(iriGraphObject + uuid + "/");
 			} catch (MalformedURLException e) {
 				setBlankNode(preparedStatement, ++index);
 			}

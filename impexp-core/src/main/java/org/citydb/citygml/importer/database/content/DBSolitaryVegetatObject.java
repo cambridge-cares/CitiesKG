@@ -28,7 +28,6 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
@@ -83,7 +82,7 @@ public class DBSolitaryVegetatObject extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".solitary_vegetat_object (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
+		return "insert into " + sqlSchema + ".solitary_vegetat_object (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
 				"species, species_codespace, height, height_unit, trunk_diameter, trunk_diameter_unit, crown_diameter, crown_diameter_unit, " +
 				"lod1_brep_id, lod2_brep_id, lod3_brep_id, lod4_brep_id, " +
 				"lod1_other_geom, lod2_other_geom, lod3_other_geom, lod4_other_geom, " +
@@ -93,11 +92,6 @@ public class DBSolitaryVegetatObject extends AbstractDBImporter {
 				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
-	}
-
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(SolitaryVegetationObject vegetationObject) throws CityGMLImportException, SQLException {

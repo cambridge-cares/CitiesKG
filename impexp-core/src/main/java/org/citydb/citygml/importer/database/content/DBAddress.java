@@ -30,7 +30,6 @@ package org.citydb.citygml.importer.database.content;
 import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
-import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.SequenceEnum;
 import org.citydb.database.schema.TableEnum;
@@ -39,7 +38,6 @@ import org.citydb.util.CoreConstants;
 import org.citygml4j.model.citygml.core.Address;
 import org.citygml4j.model.citygml.core.AddressProperty;
 import org.citygml4j.model.gml.base.AbstractGML;
-import org.citygml4j.model.gml.geometry.aggregates.MultiCurveProperty;
 import org.citygml4j.model.module.xal.XALModuleType;
 import org.citygml4j.model.xal.CountryName;
 import org.citygml4j.model.xal.LocalityName;
@@ -52,7 +50,6 @@ import org.citygml4j.util.walker.XALWalker;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
@@ -101,7 +98,7 @@ public class DBAddress extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".address (id, " + (hasGmlIdColumn ? "gmlid, " : "") + (gmlIdCodespace != null ? "gmlid_codespace, " : "") +
+		return "insert into " + sqlSchema + ".address (id, " + (hasGmlIdColumn ? "gmlid, " : "") + (gmlIdCodespace != null ? "gmlid_codespace, " : "") +
 				"street, house_number, po_box, zip_code, city, country, multi_point, xal_source) values " +
 				"(?, " + (hasGmlIdColumn ? "?, " : "") + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?, ?, ?)";
 	}
@@ -109,10 +106,10 @@ public class DBAddress extends AbstractDBImporter {
 	@Override
 	protected String getSPARQLStatement(){
 		String param = "  ?;";
-		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-				"BASE <" + IRI_GRAPH_BASE + "> " +
+		String stmt = "PREFIX ocgml: <" + prefixOntoCityGML + "> " +
+				"BASE <" + iriGraphBase + "> " +
 				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				" { GRAPH <" + iriGraphObjectRel + "> " +
 				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
 				(hasGmlIdColumn ? SchemaManagerAdapter.ONTO_GML_ID + param : "") +
 				(gmlIdCodespace != null ? SchemaManagerAdapter.ONTO_GML_ID_CODESPACE + param : "") +
@@ -169,7 +166,7 @@ public class DBAddress extends AbstractDBImporter {
 				if (uuid.isEmpty()) {
 					uuid = importer.generateNewGmlId();
 				}
-				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				URL url = new URL(iriGraphObject + uuid + "/");
 				preparedStatement.setURL(index++, url);
 				preparedStatement.setURL(index++, url);
 				address.setLocalProperty(CoreConstants.OBJECT_URIID, url);

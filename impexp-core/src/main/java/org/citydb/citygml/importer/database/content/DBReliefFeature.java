@@ -28,7 +28,6 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
@@ -70,17 +69,12 @@ public class DBReliefFeature extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".relief_feature (id, lod" +
+		return "insert into " + sqlSchema + ".relief_feature (id, lod" +
 				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
 				"values (?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
 	}
 
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
-	}
-	
 	protected long doImport(ReliefFeature reliefFeature) throws CityGMLImportException, SQLException {
 		FeatureType featureType = importer.getFeatureType(reliefFeature);
 		if (featureType == null)

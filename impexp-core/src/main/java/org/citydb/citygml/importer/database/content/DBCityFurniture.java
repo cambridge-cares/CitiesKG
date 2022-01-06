@@ -28,7 +28,6 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
@@ -86,7 +85,7 @@ public class DBCityFurniture extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".city_furniture (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
+		return "insert into " + sqlSchema + ".city_furniture (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
 				"lod1_terrain_intersection, lod2_terrain_intersection, lod3_terrain_intersection, lod4_terrain_intersection, " +
 				"lod1_brep_id, lod2_brep_id, lod3_brep_id, lod4_brep_id, " +
 				"lod1_other_geom, lod2_other_geom, lod3_other_geom, lod4_other_geom, " +
@@ -98,11 +97,6 @@ public class DBCityFurniture extends AbstractDBImporter {
 				(hasObjectClassIdColumn ? ", ?)" : ")");
 	}
 
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
-	}
-	
 	protected long doImport(CityFurniture cityFurniture) throws CityGMLImportException, SQLException {
 		FeatureType featureType = importer.getFeatureType(cityFurniture);
 		if (featureType == null)

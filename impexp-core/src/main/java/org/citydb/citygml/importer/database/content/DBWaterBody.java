@@ -28,16 +28,13 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
-import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
 import org.citydb.config.Config;
-import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.schema.TableEnum;
 import org.citydb.database.schema.mapping.FeatureType;
 import org.citygml4j.model.citygml.waterbody.AbstractWaterBoundarySurface;
@@ -82,17 +79,12 @@ public class DBWaterBody extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".waterbody (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
+		return "insert into " + sqlSchema + ".waterbody (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
 				"lod0_multi_curve, lod1_multi_curve, lod0_multi_surface_id, lod1_multi_surface_id, " +
 				"lod1_solid_id, lod2_solid_id, lod3_solid_id, lod4_solid_id" +
 				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
-	}
-
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(WaterBody waterBody) throws CityGMLImportException, SQLException {

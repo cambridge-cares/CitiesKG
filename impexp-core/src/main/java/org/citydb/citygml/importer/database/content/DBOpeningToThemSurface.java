@@ -27,20 +27,14 @@
  */
 package org.citydb.citygml.importer.database.content;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
-import org.citydb.util.CoreConstants;
-import org.citygml4j.model.citygml.building.AbstractOpening;
-import org.citygml4j.model.citygml.core.AbstractCityObject;
 
 public class DBOpeningToThemSurface extends AbstractDBImporter {
 
@@ -60,17 +54,17 @@ public class DBOpeningToThemSurface extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".opening_to_them_surface (opening_id, thematic_surface_id) values " +
+		return "insert into " + sqlSchema + ".opening_to_them_surface (opening_id, thematic_surface_id) values " +
 				"(?, ?)";
 	}
 
 	@Override
 	protected String getSPARQLStatement() {
 		String param = "  ?;";
-		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-				"BASE <" + IRI_GRAPH_BASE + ">" +
+		String stmt = "PREFIX ocgml: <" + prefixOntoCityGML + "> " +
+				"BASE <" + iriGraphBase + ">" +
 				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				" { GRAPH <" + iriGraphObjectRel + "> " +
 				"{ ? "+ SchemaManagerAdapter.ONTO_OPENING_ID + param +
 				SchemaManagerAdapter.ONTO_THEMSURFACE_ID + param  +
 				".}" +

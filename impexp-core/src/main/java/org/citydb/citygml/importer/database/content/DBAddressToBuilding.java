@@ -30,7 +30,6 @@ package org.citydb.citygml.importer.database.content;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import org.apache.jena.graph.NodeFactory;
@@ -57,17 +56,17 @@ public class DBAddressToBuilding extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement(){
-		return "insert into " + SQL_SCHEMA + ".address_to_building (building_id, address_id) values " +
+		return "insert into " + sqlSchema + ".address_to_building (building_id, address_id) values " +
 				"(?, ?)";
 	}
 
 	@Override
 	protected String getSPARQLStatement(){
 		String param = "  ?;";
-		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-				"BASE <" + IRI_GRAPH_BASE + ">" +
+		String stmt = "PREFIX ocgml: <" + prefixOntoCityGML + "> " +
+				"BASE <" + iriGraphBase + ">" +
 				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				" { GRAPH <" + iriGraphObjectRel + "> " +
 				"{ ? "+ SchemaManagerAdapter.ONTO_BUILDING_ID + param +
 				SchemaManagerAdapter.ONTO_ADDRESS_ID + param  +
 				".}" +
@@ -82,7 +81,7 @@ public class DBAddressToBuilding extends AbstractDBImporter {
 		if (importer.isBlazegraph()) {
 			try {
 				String uuid = importer.generateNewGmlId();
-				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				URL url = new URL(iriGraphObject + uuid + "/");
 				preparedStatement.setURL(++index, url);
 			} catch (MalformedURLException e) {
 				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
