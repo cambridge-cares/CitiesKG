@@ -23,12 +23,12 @@ class MetaModel {
 
   public final String nativeGraph;
   public final Constructor<?> constructor;
-  public final HashMap<String, FieldInterface> fieldMap;
+  public final HashMap<FieldKey, FieldInterface> fieldMap;
 
   public MetaModel (Class<?> target) throws NoSuchMethodException, InvalidClassException {
     // Miscellaneous useful data
     constructor = target.getConstructor();
-    ModelMetadata metadata = target.getAnnotation(ModelMetadata.class);
+    ModelAnnotation metadata = target.getAnnotation(ModelAnnotation.class);
     nativeGraph = metadata.nativeGraph();
     // Collect fields
     Class<?> currentClass = target;
@@ -40,17 +40,8 @@ class MetaModel {
     // Build fieldMap
     fieldMap = new HashMap<>();
     for (Field field : fields) {
-      ModelField annotation = field.getAnnotation(ModelField.class);
-      if (annotation != null) {
-        String predicate = PrefixUtils.expandQualifiedName(annotation.value());
-        String graph = annotation.graphName().equals("") ? nativeGraph : annotation.graphName();
-        boolean backward = annotation.backward();
-        // Keys have format e.g.
-        // surfacegeometry|http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#|true
-        // The predicate is expanded but the graph is not because the full graph iri is target namespace-dependent
-        // and will not be the same across different applications, while the full predicate iri does not change.
-        fieldMap.put(graph + "|" + predicate + "|" + backward, new FieldInterface(field));
-      }
+      FieldAnnotation annotation = field.getAnnotation(FieldAnnotation.class);
+      if (annotation != null) fieldMap.put(new FieldKey(annotation, nativeGraph), new FieldInterface(field));
     }
   }
 
@@ -58,7 +49,7 @@ class MetaModel {
 
 public abstract class Model {
 
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_ID) protected URI iri;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ID) protected URI iri;
 
   protected static final String GRAPH = "graph";
   protected static final String PREDICATE = "predicate";
@@ -91,7 +82,7 @@ public abstract class Model {
    * @param namespace the namespace of the iri.
    */
   public void setIri(String UUID, String namespace) {
-    ModelMetadata metadata = this.getClass().getAnnotation(ModelMetadata.class);
+    ModelAnnotation metadata = this.getClass().getAnnotation(ModelAnnotation.class);
     if (!namespace.endsWith("/")) namespace = namespace + "/";
     setIri(URI.create(namespace + metadata.nativeGraph() + "/" + UUID));
   }
@@ -112,14 +103,13 @@ public abstract class Model {
     StringBuilder vectorDeleteString = new StringBuilder("");
     StringBuilder insertString = new StringBuilder("INSERT DATA {  \n");
     String currentGraph = null;
-    for (Map.Entry<String, FieldInterface> entry : metaModel.fieldMap.entrySet()) {
+    for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.fieldMap.entrySet()) {
       FieldInterface field = entry.getValue();
-      String[] key = entry.getKey().split("\\|"); // this is "|" but escaping the | because it's parsed as regex
-      String graph = buildGraphIri(getIri(), key[0]);
-      String predicate = key[1];
-      boolean backward = Boolean.parseBoolean(key[2]);
+      FieldKey key = entry.getKey();
+      String predicate = key.predicate.toString();
+      String graph = buildGraphIri(getIri(), key.graph);
       boolean dirty = cleanCopy == null || !field.equals(this, cleanCopy);
-      if (backward || !dirty)
+      if (key.backward || !dirty)
         continue;
       if (currentGraph == null || !currentGraph.equals(graph)) {
         if (currentGraph != null) {
@@ -185,11 +175,9 @@ public abstract class Model {
     JSONArray queryResult = new JSONArray(queryResultString);
     for (int index = 0; index < queryResult.length(); index++) {
       JSONObject row = queryResult.getJSONObject(index);
-      String predicate = row.getString(PREDICATE);
-      String[] splitGraph = row.getString(GRAPH).split("/");
-      String graph = splitGraph[splitGraph.length-1];
-      String key = graph + "|" + predicate + "|" + backward;
-      FieldInterface field = metaModel.fieldMap.get(key);
+      URI predicate = URI.create(row.getString(PREDICATE));
+      URI graph = URI.create(row.getString(GRAPH));
+      FieldInterface field = metaModel.fieldMap.get(new FieldKey(graph, predicate, backward));
       if (field != null) {
         field.pull(this, row, kgClient, recursiveInstantiationDepth);
         field.copy(this, cleanCopy);

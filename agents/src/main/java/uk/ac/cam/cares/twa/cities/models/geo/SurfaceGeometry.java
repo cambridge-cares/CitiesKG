@@ -8,26 +8,26 @@ import lombok.Getter;
 import lombok.Setter;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import uk.ac.cam.cares.twa.cities.Model;
-import uk.ac.cam.cares.twa.cities.ModelField;
-import uk.ac.cam.cares.twa.cities.ModelMetadata;
+import uk.ac.cam.cares.twa.cities.FieldAnnotation;
+import uk.ac.cam.cares.twa.cities.ModelAnnotation;
 
-@ModelMetadata(nativeGraph = SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH)
+@ModelAnnotation(nativeGraph = SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH)
 public class SurfaceGeometry extends Model {
 
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID) protected URI cityObjectId;
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_GEOMETRY_IMPLICIT) protected String implicitGeometryType;
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_IS_COMPOSITE) protected Integer isComposite;
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_IS_REVERSE) protected Integer isReverse;
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_IS_SOLID) protected Integer isSolid;
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_IS_TRIANGULATED) protected Integer isTriangulated;
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_IS_XLINK) protected Integer isXlink;
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_PARENT_ID) protected URI parentId;
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_ROOT_ID) protected URI rootId;
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_GEOMETRY_SOLID) protected String solidType;
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_GEOMETRY) protected GeometryType geometryType;
-  @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_GML_ID) protected String gmlId;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID) protected URI cityObjectId;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_GEOMETRY_IMPLICIT) protected String implicitGeometryType;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_COMPOSITE) protected Integer isComposite;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_REVERSE) protected Integer isReverse;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_SOLID) protected Integer isSolid;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_TRIANGULATED) protected Integer isTriangulated;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_XLINK) protected Integer isXlink;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_PARENT_ID) protected URI parentId;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ROOT_ID) protected URI rootId;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_GEOMETRY_SOLID) protected String solidType;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_GEOMETRY) protected GeometryType geometryType;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_GML_ID) protected String gmlId;
 
-  @Getter @Setter @ModelField(
+  @Getter @Setter @FieldAnnotation(
       value = SchemaManagerAdapter.ONTO_PARENT_ID,
       innerType = SurfaceGeometry.class,
       backward = true)

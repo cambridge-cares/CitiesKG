@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface ModelField{
+public @interface FieldAnnotation {
 	String value();
 	boolean backward() default false;
 	String graphName() default "";

@@ -100,7 +100,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
     }
     executor.execute(() -> {
       if (buildingIri != null) {
-        // Don't have a delayed postprocess set up for a single building.
+        // Don't have a deferred postprocess set up for a single building.
         processBuilding(buildingIri.toString(), null);
       } else {
         Instant startTime = Instant.now();
@@ -111,28 +111,28 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
                 SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID,
                 SchemaManagerAdapter.ONTO_BUILDING_PARENT_ID))));
         // Process buildings, tracking whether or not they were flipped for roof vs ground.
-        Queue<Consumer<Boolean>> delayedPostprocessTasks = new LinkedList<>();
+        Queue<Consumer<Boolean>> deferredPostprocessTasks = new LinkedList<>();
         int flipBalance = 0;
         int upCount = 0;
         int downCount = 0;
-        int delayedCount = 0;
+        int deferredCount = 0;
         int nullCount = 0;
         for (int i = 0; i < buildingsResponse.length(); i++) {
-          int del = processBuilding(buildingsResponse.getJSONObject(i).getString("bldg"), delayedPostprocessTasks);
+          int del = processBuilding(buildingsResponse.getJSONObject(i).getString("bldg"), deferredPostprocessTasks);
           if(del == 1) upCount++;
           else if(del==-1) downCount++;
           else nullCount++;
           flipBalance += del;
         }
-        // Process delayed flip-indeterminate cases, using the results from other buildings to hint flip determination.
-        for (Consumer<Boolean> task : delayedPostprocessTasks) {
+        // Process deferred flip-indeterminate cases, using the results from other buildings to hint flip determination.
+        for (Consumer<Boolean> task : deferredPostprocessTasks) {
           task.accept(flipBalance > 0);
           nullCount--;
-          delayedCount++;
+          deferredCount++;
         }
         Duration timeTaken = Duration.between(startTime, Instant.now());
         System.err.println(String.format("Processed %d buildings (%d+, %d-, %d~, %dx) in %ds.",
-            buildingsResponse.length(), upCount, downCount, delayedCount, nullCount, timeTaken.getSeconds()));
+            buildingsResponse.length(), upCount, downCount, deferredCount, nullCount, timeTaken.getSeconds()));
       }
     });
     return requestParams;
@@ -150,12 +150,12 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
    * is assigned "roof" and the other "ground", but if they are on the same level or one is empty, it is impossible
    * to determine, and the issue is queued for later resolution.
    * @param buildingIri             the iri of the building to be processed
-   * @param delayedPostprocessTasks the queue into which paused tasks will be submitted
+   * @param deferredPostprocessTasks the queue into which paused tasks will be submitted
    * @return which way the roofs-vs-grounds were assigned after geometric meta-analysis, which should be collated by the
    * caller to determine what to provide as "flip" hint to the queued task. 1 if flipped, -1 if not flipped, 0 if queued
    * without determination or if the building has no lodXMultiSurface to process.
    */
-  private int processBuilding(String buildingIri, Queue<Consumer<Boolean>> delayedPostprocessTasks) {
+  private int processBuilding(String buildingIri, Queue<Consumer<Boolean>> deferredPostprocessTasks) {
     // Load building
     Building building = new Building();
     building.pullAll(buildingIri, kgClient, 0);
@@ -177,13 +177,13 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
     // immediately decide whether to flip and then push our changes. Otherwise, we queue this case to be resolved later.
     if ((bottomLevelThematicGeometries.get(Theme.ROOF.index).size() != 0 &&
         bottomLevelThematicGeometries.get(Theme.GROUND.index).size() != 0 &&
-        averageRoofZ != averageGroundZ) || delayedPostprocessTasks == null) {
+        averageRoofZ != averageGroundZ) || deferredPostprocessTasks == null) {
       boolean flip = averageRoofZ < averageGroundZ;
       postprocessBuilding(building, topLevelThematicGeometries, mixedGeometries, flip);
       return flip ? 1 : -1;
     } else {
       // Non-nice data; queue.
-      delayedPostprocessTasks.add((Boolean flip) ->
+      deferredPostprocessTasks.add((Boolean flip) ->
           postprocessBuilding(building, topLevelThematicGeometries, mixedGeometries, flip));
       return 0;
     }

@@ -8,7 +8,6 @@ import java.io.InvalidClassException;
 import java.lang.reflect.*;
 import java.net.URI;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @FunctionalInterface
 interface Parser {
@@ -46,7 +45,7 @@ public class FieldInterface {
     Class<?> parentType = field.getDeclaringClass();
     Class<?> outerType = field.getType();
     isList = List.class.isAssignableFrom(outerType);
-    Class<?> innerType = isList ? field.getAnnotation(ModelField.class).innerType() : outerType;
+    Class<?> innerType = isList ? field.getAnnotation(FieldAnnotation.class).innerType() : outerType;
     isModel = Model.class.isAssignableFrom(innerType);
     // Get the lombok accessors/modifiers --- we can't access private/protected fields. :(
     String fieldName = field.getName();
@@ -119,7 +118,7 @@ public class FieldInterface {
 
   public boolean equals(Object first, Object second) {
     try {
-      return getter.invoke(first) == getter.invoke(second);
+      return getter.invoke(first).equals(getter.invoke(second));
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new JPSRuntimeException(e);
     }
