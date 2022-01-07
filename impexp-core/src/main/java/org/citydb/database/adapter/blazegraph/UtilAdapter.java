@@ -53,6 +53,8 @@ public class UtilAdapter extends AbstractUtilAdapter {
     @Override
     public void getSrsInfo(DatabaseSrs srs) throws SQLException {
         String connectionStr = databaseAdapter.getJDBCUrl(databaseAdapter.getConnectionDetails().getServer(), databaseAdapter.getConnectionDetails().getPort(), databaseAdapter.getConnectionDetails().getSid().replaceFirst("(namespace/)\\S*(/sparql)", "$1public$2"));
+        //extract the endpoint url of public namespace
+        //remove / at the end of endpoint if any - if endpoint ends with /, existsEndpoint will fail even if public namespace exists
         String endpointUrl = connectionStr.substring(23, connectionStr.indexOf("&"));
         if (endpointUrl.endsWith("/")) {
             endpointUrl = endpointUrl.substring(0, endpointUrl.length() - 1);
