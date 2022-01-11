@@ -1,11 +1,16 @@
 package uk.ac.cam.cares.twa.cities.tasks.test;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask.DEF_JOURNAL_NAME;
+
+import com.bigdata.rdf.store.DataLoader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Objects;
@@ -276,9 +281,9 @@ public class NquadsExporterTaskTest extends TestCase {
 
     try {
       Files.copy(NquadsExporterTaskTestHelper.testNqFile.toPath(),
-          NquadsExporterTaskTestHelper.nqFile.toPath());
+          NquadsExporterTaskTestHelper.nqFile.toPath(), REPLACE_EXISTING);
       Files.copy(NquadsExporterTaskTestHelper.testPropFile.toPath(),
-          NquadsExporterTaskTestHelper.propFile.toPath());
+          NquadsExporterTaskTestHelper.propFile.toPath(), REPLACE_EXISTING);
       try {
         task.run();
       } catch (Exception e) {
@@ -292,11 +297,11 @@ public class NquadsExporterTaskTest extends TestCase {
 
     try {
       Files.copy(NquadsExporterTaskTestHelper.testNqFile.toPath(),
-          NquadsExporterTaskTestHelper.nqFile.toPath());
+          NquadsExporterTaskTestHelper.nqFile.toPath(), REPLACE_EXISTING);
       Files.copy(NquadsExporterTaskTestHelper.testPropFile.toPath(),
-          NquadsExporterTaskTestHelper.propFile.toPath());
+          NquadsExporterTaskTestHelper.propFile.toPath(), REPLACE_EXISTING);
       Files.copy(NquadsExporterTaskTestHelper.testProjFile.toPath(),
-          NquadsExporterTaskTestHelper.projFile.toPath());
+          NquadsExporterTaskTestHelper.projFile.toPath(), REPLACE_EXISTING);
       try {
         task.run();
       } catch (Exception e) {
@@ -334,6 +339,8 @@ public class NquadsExporterTaskTest extends TestCase {
 
     } catch (NoSuchFieldException | IllegalAccessException | InterruptedException | IOException | NoSuchMethodException | InvocationTargetException e) {
       fail();
+    } finally {
+      NquadsExporterTaskTestHelper.tearDown();
     }
 
   }
@@ -369,37 +376,34 @@ public class NquadsExporterTaskTest extends TestCase {
         System.getProperty("java.io.tmpdir") + CityImportAgent.KEY_SPLIT);
 
     public static void setUp() {
-      assertTrue(testFile.exists());
+      assertTrue(testNqFile.exists());
+      assertTrue(testPropFile.exists());
+      assertTrue(testProjFile.exists());
       try {
-        Files.copy(testFile.toPath(), impFile.toPath());
+        Files.copy(testNqFile.toPath(), nqFile.toPath(), REPLACE_EXISTING);
+        Files.copy(testPropFile.toPath(), propFile.toPath(), REPLACE_EXISTING);
+        Files.copy(testProjFile.toPath(), projFile.toPath(), REPLACE_EXISTING);
+        String data = FileUtils.readFileToString(propFile, String.valueOf(Charset.defaultCharset()));
+        data = data.replace(DEF_JOURNAL_NAME, jnlFile.getAbsolutePath());
+        FileUtils.writeStringToFile(propFile, data);
+        data = FileUtils.readFileToString(projFile, String.valueOf(Charset.defaultCharset()));
+        data = data.replace("www.theworldavatar.com", "127.0.0.1");
+        data = data.replace("/citieskg/namespace/berlin/sparql/", "/blazegraph/namespace/tmpkb/sparql/");
+        data = data.replace("<port>83</port>", "<port>52066</port>");
+        FileUtils.writeStringToFile(projFile, data);
       } catch (IOException e) {
         fail();
       }
-      ExecutorService serverExecutor = Executors.newFixedThreadPool(1);
-      BlockingQueue<Server> importQueue = new LinkedBlockingDeque<>();
-      BlazegraphServerTask serverTask = new BlazegraphServerTask(importQueue,
-          jnlFile.getAbsolutePath());
-      serverExecutor.execute(serverTask);
 
-      ImporterTask task = new ImporterTask(importQueue, impFile);
+      String[] args = {"-namespace", "tmpkb",
+          propFile.getAbsolutePath(), nqFile.getAbsolutePath()};
 
       try {
-        Field stop = task.getClass().getDeclaredField("stop");
-        Field serverInstances = task.getClass().getDeclaredField("serverInstances");
-        stop.setAccessible(true);
-        serverInstances.setAccessible(true);
-        new Thread(task).start();
-
-        while (!(boolean) stop.get(task)) {
-          if (((BlockingQueue<?>) serverInstances.get(task)).size() == 0) {
-            if (Objects.requireNonNull(nqFile).isFile()) {
-              assertTrue(nqFile.exists());
-            }
-          }
-        }
-      } catch (NoSuchFieldException | IllegalAccessException e) {
+        DataLoader.main(args);
+      } catch (IOException e) {
         fail();
       }
+
     }
 
     public static void tearDown() {
