@@ -202,10 +202,11 @@ public class NquadsExporterTaskTest extends TestCase {
       Files.copy(NquadsExporterTaskTestHelper.testProjFile.toPath(),
           NquadsExporterTaskTestHelper.projFile.toPath());
 
+      NquadsExporterTaskTestHelper.setUp();
+
       assertEquals(
           getLocalSourceUrlFromProjectCfg.invoke(task, NquadsExporterTaskTestHelper.nqGzFile),
-          "http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/");
-          //"http://127.0.0.1:52066/blazegraph/namespace/tmpkb/sparql/");
+          "http://127.0.0.1:52066/blazegraph/namespace/tmpkb/sparql/");
 
     } catch (NoSuchMethodException | IllegalAccessException | IOException | InvocationTargetException e) {
       fail();
