@@ -347,7 +347,7 @@ public class NquadsExporterTaskTest extends TestCase {
   }
 
   public static class NquadsExporterTaskTestHelper {
-
+    public static final String FS = System.getProperty("file.separator");
     public static final File impFile = new File(System.getProperty("java.io.tmpdir") + "test.gml");
     public static final File testFile = new File(Objects.requireNonNull(
         NquadsExporterTaskTestHelper.class.getClassLoader()
@@ -371,6 +371,8 @@ public class NquadsExporterTaskTest extends TestCase {
         .replace(ImporterTask.EXT_FILE_GML, BlazegraphServerTask.PROPERTY_FILE));
     public static final File projFile = new File(
         impFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_GML, ImporterTask.PROJECT_CONFIG));
+    public static final File defaultJnlFile = new File(
+            System.getProperty("user.dir").concat(FS + DEF_JOURNAL_NAME));
     public static final File quadsDir = new File(
         System.getProperty("java.io.tmpdir") + NquadsExporterTask.NQ_OUTDIR);
     public static final File splitDir = new File(
@@ -382,17 +384,18 @@ public class NquadsExporterTaskTest extends TestCase {
       assertTrue(testProjFile.exists());
       try {
         Files.copy(testNqFile.toPath(), nqFile.toPath(), REPLACE_EXISTING);
-        Files.copy(testPropFile.toPath(), propFile.toPath(), REPLACE_EXISTING);
         Files.copy(testProjFile.toPath(), projFile.toPath(), REPLACE_EXISTING);
-        String data = FileUtils.readFileToString(propFile, String.valueOf(Charset.defaultCharset()));
-        data = data.replace(DEF_JOURNAL_NAME, jnlFile.getAbsolutePath());
-        FileUtils.writeStringToFile(propFile, data);
-        data = FileUtils.readFileToString(projFile, String.valueOf(Charset.defaultCharset()));
+
+        Method setupFiles = BlazegraphServerTask.class.getDeclaredMethod("setupFiles", String.class);
+        setupFiles.setAccessible(true);
+        setupFiles.invoke(new BlazegraphServerTask(new LinkedBlockingDeque<>(), jnlFile.getAbsolutePath()), propFile.getAbsolutePath());
+
+        String data = FileUtils.readFileToString(projFile, String.valueOf(Charset.defaultCharset()));
         data = data.replace("www.theworldavatar.com", "127.0.0.1");
         data = data.replace("/citieskg/namespace/berlin/sparql/", "/blazegraph/namespace/tmpkb/sparql/");
         data = data.replace("<port>83</port>", "<port>52066</port>");
         FileUtils.writeStringToFile(projFile, data);
-      } catch (IOException e) {
+      } catch (IOException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
         fail();
       }
 
@@ -436,6 +439,11 @@ public class NquadsExporterTaskTest extends TestCase {
       }
       if (Objects.requireNonNull(projFile).isFile()) {
         if (!projFile.delete()) {
+          fail();
+        }
+      }
+      if (Objects.requireNonNull(defaultJnlFile).isFile()) {
+        if(!defaultJnlFile.delete()) {
           fail();
         }
       }
