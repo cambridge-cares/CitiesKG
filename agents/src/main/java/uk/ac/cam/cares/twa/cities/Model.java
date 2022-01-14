@@ -3,16 +3,20 @@ package uk.ac.cam.cares.twa.cities;
 import java.io.InvalidClassException;
 import java.lang.reflect.*;
 import java.net.URI;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
+import org.apache.jena.update.UpdateRequest;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -23,9 +27,9 @@ class MetaModel {
 
   public final String nativeGraph;
   public final Constructor<?> constructor;
-  public final HashMap<FieldKey, FieldInterface> fieldMap;
+  public final Map<FieldKey, FieldInterface> fieldMap;
 
-  public MetaModel (Class<?> target) throws NoSuchMethodException, InvalidClassException {
+  public MetaModel(Class<?> target) throws NoSuchMethodException, InvalidClassException {
     // Miscellaneous useful data
     constructor = target.getConstructor();
     ModelAnnotation metadata = target.getAnnotation(ModelAnnotation.class);
@@ -38,7 +42,7 @@ class MetaModel {
       currentClass = currentClass.getSuperclass();
     } while (currentClass != null);
     // Build fieldMap
-    fieldMap = new HashMap<>();
+    fieldMap = new TreeMap<>();
     for (Field field : fields) {
       FieldAnnotation annotation = field.getAnnotation(FieldAnnotation.class);
       if (annotation != null) fieldMap.put(new FieldKey(annotation, nativeGraph), new FieldInterface(field));
@@ -51,11 +55,19 @@ public abstract class Model {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ID) protected URI iri;
 
-  protected static final String GRAPH = "graph";
-  protected static final String PREDICATE = "predicate";
-  protected static final String VALUE = "value";
-  protected static final String DATATYPE = "datatype";
-  private static StringBuilder updateQueue = new StringBuilder();
+  // SPARQL variable names, exposed so FieldInterface can parse the result rows from our queries
+  public static final String GRAPH = "graph";
+  public static final String PREDICATE = "predicate";
+  public static final String VALUE = "value";
+  public static final String DATATYPE = "dtype";
+  // Helper constants for constructing SPARQL queries
+  private static final String NOT_BLANK = "!ISBLANK";
+  private static final String DATATYPE_FUN = "DATATYPE";
+  private static final String QM = "?";
+  private static final String OPENP = "(";
+  private static final String CLOSEP = ")";
+
+  public static UpdateRequest updateQueue = new UpdateRequest();
   private final static HashMap<Class<?>, MetaModel> metaModelMap = new HashMap<>();
 
   private Model cleanCopy;
@@ -68,11 +80,12 @@ public abstract class Model {
     } else {
       try {
         metaModel = new MetaModel(thisClass);
-      } catch (NoSuchMethodException | InvalidClassException e){
+      } catch (NoSuchMethodException | InvalidClassException e) {
         throw new JPSRuntimeException(e);
       }
       metaModelMap.put(thisClass, metaModel);
     }
+    clearAll();
   }
 
   /**
@@ -87,73 +100,97 @@ public abstract class Model {
     setIri(URI.create(namespace + metadata.nativeGraph() + "/" + UUID));
   }
 
-  public static void executeQueuedUpdates(StoreClientInterface kgClient) {
-    kgClient.executeUpdate(PrefixUtils.insertPrefixStatements(updateQueue.toString()));
-    updateQueue = new StringBuilder();
+  public static long totalNanos = 0;
+  public static void executeUpdates(StoreClientInterface kgClient, boolean force) {
+    String updateString = updateQueue.toString();
+    if(force || updateString.length() > 100000) {
+      Instant start = Instant.now();
+      kgClient.executeUpdate(updateString);
+      totalNanos += Duration.between(start, Instant.now()).toNanos();
+    }
   }
 
   /**
    * Queues an update to overwrite all forward properties of this model in the database.
    */
-  public void queuePushForward(StoreClientInterface kgClient) {
-    String self = getIri().toString();
-    // scalars
+  public void queueAndExecutePushForwardUpdate(StoreClientInterface kgClient) {
+    queuePushForwardUpdate();
+    executeUpdates(kgClient, false);
+  }
+
+  public void queuePushForwardUpdate() {
+    Node self = NodeFactory.createURI(getIri().toString());
     int varCount = 0;
-    StringBuilder scalarDeleteString = new StringBuilder("DELETE WHERE { \n");
-    StringBuilder vectorDeleteString = new StringBuilder("");
-    StringBuilder insertString = new StringBuilder("INSERT DATA {  \n");
-    String currentGraph = null;
+    String currentGraphIri = null;
+    WhereBuilder currentScalarDeleteSubquery = null;
+    WhereBuilder currentInsertSubquery = null;
+    UpdateBuilder scalarDeleteQuery = new UpdateBuilder();
+    UpdateBuilder insertQuery = new UpdateBuilder();
+    Stack<UpdateBuilder> vectorDeleteQueries = new Stack<>();
     for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.fieldMap.entrySet()) {
       FieldInterface field = entry.getValue();
       FieldKey key = entry.getKey();
-      String predicate = key.predicate.toString();
-      String graph = buildGraphIri(getIri(), key.graph);
+      Node predicate = NodeFactory.createURI(key.predicate.toString());
+      String graphIri = buildGraphIri(getNamespace(), key.graph);
+      Node graph = NodeFactory.createURI(graphIri);
       boolean dirty = cleanCopy == null || !field.equals(this, cleanCopy);
       if (key.backward || !dirty)
         continue;
-      if (currentGraph == null || !currentGraph.equals(graph)) {
-        if (currentGraph != null) {
-          scalarDeleteString.append("    }\n");
-          insertString.append("    }\n");
-        }
-        currentGraph = graph;
-        scalarDeleteString.append(String.format("    GRAPH <%s> { <%s> \n", graph, self));
-        insertString.append(String.format("    GRAPH <%s> { <%s> \n", graph, self));
+      if (currentGraphIri == null || !currentGraphIri.equals(graphIri)) {
+        currentGraphIri = graphIri;
+        currentScalarDeleteSubquery = new WhereBuilder();
+        currentInsertSubquery = new WhereBuilder();
+        scalarDeleteQuery.addGraph(graph, currentScalarDeleteSubquery);
+        insertQuery.addInsert(graph, currentInsertSubquery);
       }
       if (field.isList) {
-        vectorDeleteString.append(String.format("DELETE WHERE { GRAPH <%s> { <%s> <%s> ?v} } \n", graph, self, predicate));
-        for(String literalString: field.getLiterals(this))
-          insertString.append(String.format("        <%s> %s;   \n", predicate, literalString));
+        UpdateBuilder vectorDeleteQuery = new UpdateBuilder().addGraph(graph,
+            new WhereBuilder().addWhere(self, predicate, QM + VALUE));
+        vectorDeleteQueries.push( vectorDeleteQuery);
+        for (Node value : field.getNodes(this))
+          currentInsertSubquery.addWhere(self, predicate, value);
       } else {
-        scalarDeleteString.append(String.format("        <%s> ?v%d; \n", predicate, varCount));
-        insertString.append(String.format("        <%s> %s;   \n", predicate, field.getLiteral(this)));
-        varCount++;
+        currentScalarDeleteSubquery.addWhere(self, predicate, QM + VALUE + (varCount++));
+        currentInsertSubquery.addWhere(self, predicate, field.getNode(this));
       }
     }
-    if(currentGraph == null) return; // nothing happened
-    scalarDeleteString.append("} };\n");
-    insertString.append("} };\n");
-    updateQueue.append(scalarDeleteString).append(vectorDeleteString).append(insertString);
-    if (updateQueue.length() > 100000) executeQueuedUpdates(kgClient);
+    if (currentGraphIri == null) return; // nothing happened
+    updateQueue.add(scalarDeleteQuery.buildDeleteWhere());
+    while(!vectorDeleteQueries.isEmpty())
+      updateQueue.add(vectorDeleteQueries.pop().buildDeleteWhere());
+    updateQueue.add(insertQuery.build());
   }
 
   /**
    * Queues an update to overwrite entirely delete this object from the database, including all triples which have its
    * iri as subject or object.
    */
-  public void queueDeleteInstantiation(StoreClientInterface kgClient) {
-    String self = getIri().toString();
-    updateQueue.append(String.format("DELETE WHERE { ?a ?b <%s> }; DELETE WHERE { <%s> ?a ?b };\n", self, self));
-    if (updateQueue.length() > 100000) executeQueuedUpdates(kgClient);
+  public void queueAndExecuteDeletionUpdate(StoreClientInterface kgClient) {
+    queueDeletionUpdate();
+    executeUpdates(kgClient, false);
+  }
+
+  public void queueDeletionUpdate() {
+    Node self = NodeFactory.createURI(getIri().toString());
+    updateQueue.add(new UpdateBuilder().addWhere(QM + VALUE, QM + PREDICATE, self).buildDeleteWhere());
+    updateQueue.add(new UpdateBuilder().addWhere(self, QM + PREDICATE, QM + VALUE).buildDeleteWhere());
   }
 
   /**
-   * Populates all fields of a CityGML model instance.
+   * Clears all field of the model instance
+   */
+  public void clearAll() {
+    for (FieldInterface field : metaModel.fieldMap.values())
+      field.clear(this);
+  }
+
+  /**
+   * Populates all fields of the model instance.
    * @param kgClient                    sends the query to the right endpoint.
    * @param recursiveInstantiationDepth the number of levels into the model hierarchy below this to instantiate.
    */
   public void pullAll(String iriName, StoreClientInterface kgClient, int recursiveInstantiationDepth) {
-    for (FieldInterface field : metaModel.fieldMap.values()) field.clear(this);
+    clearAll();
     try {
       cleanCopy = (Model) metaModel.constructor.newInstance();
       populateFieldsInDirection(iriName, kgClient, true, recursiveInstantiationDepth);
@@ -171,7 +208,7 @@ public abstract class Model {
    */
   private void populateFieldsInDirection(String iriName, StoreClientInterface kgClient, boolean backward, int recursiveInstantiationDepth)
       throws InvocationTargetException, IllegalAccessException {
-    Query q = getPopulateQuery(iriName, backward);
+    Query q = buildPopulateQuery(iriName, backward);
     String queryResultString = kgClient.execute(q.toString());
     JSONArray queryResult = new JSONArray(queryResultString);
     for (int index = 0; index < queryResult.length(); index++) {
@@ -187,7 +224,7 @@ public abstract class Model {
   }
 
   /**
-   * Returns the namespace an iri is in.
+   * Returns the namespace an iri is in, including a trailing slash
    * @param iriName object id
    * @return namespace as string
    */
@@ -198,41 +235,42 @@ public abstract class Model {
   }
 
   /**
-   * Builds the iri of a named graph, taking another existing iri as a reference for the namespace.
-   * @param namespaceReferenceIri a URI from which to take the namespace
-   * @param graphName             the short name of the graph, e.g. "surfacegeometry"
-   * @return graph iri as string
+   * Returns the namespace of a model, including a trailing slash
+   * @return namespace as string
    */
-  public static String buildGraphIri(URI namespaceReferenceIri, String graphName) {
-    return buildGraphIri(namespaceReferenceIri.toString(), graphName);
+  public String getNamespace() {
+    return getNamespace(getIri().toString());
   }
 
-  public static String buildGraphIri(String namespaceReferenceIriName, String graphName) {
-    return getNamespace(namespaceReferenceIriName) + graphName + "/";
+  /**
+   * Builds a graph iri, including a trailing slash, from a given namespace and graph name.
+   * Equivalent to namespace + graphName + "/".
+   * @param namespace the namespace iri.
+   * @param graphName the short name of the graph, e.g. "surfacegeometry".
+   * @return graph iri as string
+   */
+  public static String buildGraphIri(String namespace, String graphName) {
+    return namespace + graphName + "/";
   }
 
   /**
    * Builds query to get triples linked to a given iri.
    */
-  private static Query getPopulateQuery(String iriName, boolean backwards) {
+  public static Query buildPopulateQuery(String iriName, boolean backwards) {
     SelectBuilder sb = null;
-    Node self = NodeFactory.createURI(iriName);
-    Node value = NodeFactory.createVariable(VALUE);
-    Node predicate = NodeFactory.createVariable(PREDICATE);
-    Node graph = NodeFactory.createVariable(GRAPH);
-    Node datatype = NodeFactory.createVariable(DATATYPE);
     try {
       WhereBuilder wb = new WhereBuilder()
-          .addWhere(backwards ? value : self, predicate, backwards ? self : value)
-          .addFilter("!ISBLANK(?" + VALUE + ")");
+          .addWhere(backwards ? (QM + VALUE) : NodeFactory.createURI(iriName),
+              QM + PREDICATE, backwards ? NodeFactory.createURI(iriName) : (QM + VALUE))
+          .addFilter(NOT_BLANK + OPENP + QM + VALUE + CLOSEP);
       sb = new SelectBuilder()
-          .addVar(predicate).addVar(value).addVar(graph).addVar(datatype)
-          .addBind("DATATYPE(?" + VALUE + ")", datatype)
-          .addGraph(graph, wb);
+          .addVar(QM + PREDICATE).addVar(QM + VALUE).addVar(QM + GRAPH).addVar(QM + DATATYPE)
+          .addBind(DATATYPE_FUN + OPENP + QM + VALUE + CLOSEP, QM + DATATYPE)
+          .addGraph(QM + GRAPH, wb);
+      return sb.build();
     } catch (ParseException e) {
-      e.printStackTrace();
+      throw new JPSRuntimeException(e);
     }
-    return sb.build();
   }
 
 }

@@ -6,6 +6,8 @@ import uk.ac.cam.cares.twa.cities.Model;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
 
 import javax.ws.rs.BadRequestException;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.function.Consumer;
@@ -86,6 +88,8 @@ public class ThematicisationTask implements Runnable {
                     lod == 4 ? building.getLod4MultiSurfaceId() :
                         null;
     if (root == null) return 0;
+    Model.totalNanos = 0;
+    Instant start = Instant.now();
     root.pullAll(root.getIri().toString(), kgClient, 99);
     // Sort into thematic surfaces
     List<List<SurfaceGeometry>> topLevelThematicGeometries = Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
@@ -101,12 +105,15 @@ public class ThematicisationTask implements Runnable {
         bottomLevelThematicGeometries.get(Theme.GROUND.index).size() != 0 &&
         averageRoofZ != averageGroundZ)) {
       boolean flip = averageRoofZ < averageGroundZ;
-      postprocessLodMultiSurface(building, topLevelThematicGeometries, mixedGeometries, flip);
+      postprocessLodMultiSurface(building, lod, topLevelThematicGeometries, mixedGeometries, flip);
+      double totalSeconds = 1.0e-9 * Duration.between(start, Instant.now()).toNanos();
+      double updateSeconds = 1.0e-9 * Model.totalNanos;
+      System.err.println(String.format("Building took: %32.2fs (total), %32.2fs (executing). %32.2f%% of time spent executing.%n", totalSeconds, updateSeconds, updateSeconds/totalSeconds*100));
       return flip ? 1 : -1;
     } else {
       // Non-nice data; queue.
       deferredPostprocessTasks.add((Boolean flip) ->
-          postprocessLodMultiSurface(building, topLevelThematicGeometries, mixedGeometries, flip));
+          postprocessLodMultiSurface(building, lod, topLevelThematicGeometries, mixedGeometries, flip));
       return 0;
     }
   }
@@ -121,6 +128,7 @@ public class ThematicisationTask implements Runnable {
    * @param flip                       whether to reverse the default tentative assignment of roofs vs grounds.
    */
   private void postprocessLodMultiSurface(Building building,
+                                          int lod,
                                           List<List<SurfaceGeometry>> topLevelThematicGeometries,
                                           List<SurfaceGeometry> mixedGeometries,
                                           boolean flip) {
@@ -139,13 +147,15 @@ public class ThematicisationTask implements Runnable {
         tsCityObject.setLastModificationDate(OffsetDateTime.now().toString());
         tsCityObject.setUpdatingPerson(UPDATING_PERSON);
         tsCityObject.setGmlId(uuid);
-        tsCityObject.setIri(uuid, Model.getNamespace(building.getIri().toString()));
+        tsCityObject.setIri(uuid, building.getNamespace());
         // Construct ThematicSurface
         ThematicSurface thematicSurface = new ThematicSurface();
-        thematicSurface.setLod2MultiSurfaceId(topLevelGeometry);
+        if(lod <= 2) thematicSurface.setLod2MultiSurfaceId(topLevelGeometry);
+        else if(lod == 3) thematicSurface.setLod3MultiSurfaceId(topLevelGeometry);
+        else if(lod == 4) thematicSurface.setLod4MultiSurfaceId(topLevelGeometry);
         thematicSurface.setObjectClassId(33 + i);
         thematicSurface.setBuildingId(building.getIri());
-        thematicSurface.setIri(uuid, Model.getNamespace(building.getIri().toString()));
+        thematicSurface.setIri(uuid, building.getNamespace());
         // Reassign SurfaceGeometry hierarchical properties
         topLevelGeometry.setParentId(null);
         List<SurfaceGeometry> allDescendantGeometries = topLevelGeometry.getFlattenedSubtree(false);
@@ -154,13 +164,13 @@ public class ThematicisationTask implements Runnable {
           geometry.setCityObjectId(thematicSurface.getIri());
         }
         // Push updates
-        thematicSurface.queuePushForward(kgClient);
-        tsCityObject.queuePushForward(kgClient);
-        for (SurfaceGeometry geometry : allDescendantGeometries) geometry.queuePushForward(kgClient);
+        thematicSurface.queueAndExecutePushForwardUpdate(kgClient);
+        tsCityObject.queueAndExecutePushForwardUpdate(kgClient);
+        for (SurfaceGeometry geometry : allDescendantGeometries) geometry.queueAndExecutePushForwardUpdate(kgClient);
       }
     }
-    for (SurfaceGeometry geometry : mixedGeometries) geometry.queueDeleteInstantiation(kgClient);
-    Model.executeQueuedUpdates(kgClient);
+    for (SurfaceGeometry geometry : mixedGeometries) geometry.queueAndExecuteDeletionUpdate(kgClient);
+    Model.executeUpdates(kgClient, true);
   }
 
   enum Theme {

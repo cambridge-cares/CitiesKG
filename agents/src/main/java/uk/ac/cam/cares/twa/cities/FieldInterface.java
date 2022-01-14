@@ -1,5 +1,9 @@
 package uk.ac.cam.cares.twa.cities;
 
+import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.graph.BlankNodeId;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
@@ -20,8 +24,8 @@ interface Putter {
 }
 
 @FunctionalInterface
-interface LiteralGetter {
-  String get(Object object) throws Exception;
+interface NodeGetter {
+  Node get(Object object) throws Exception;
 }
 
 public class FieldInterface {
@@ -34,8 +38,8 @@ public class FieldInterface {
   // Functions for consuming updates from the database
   private final Parser parser;
   private final Putter putter;
-  // Function for generating string representations of literals to push to the database
-  private final LiteralGetter literalGetter;
+  // Function for generating literal nodes to push to the database
+  private final NodeGetter nodeGetter;
   // List-only methods
   private final Constructor<?> listConstructor;
 
@@ -63,24 +67,24 @@ public class FieldInterface {
           model.setIri(URI.create(row.getString(Model.VALUE)));
         return model;
       };
-      literalGetter = (Object value) -> String.format("<%s>", ((Model) value).getIri());
+      nodeGetter = (Object value) -> NodeFactory.createURI(((Model) value).getIri().toString());
     } else if (innerType == Integer.class) {
       parser = (JSONObject row, StoreClientInterface kgc, int rid) -> row.getInt(Model.VALUE);
-      literalGetter = (Object value) -> String.format("\"%s\"^^xsd:integer", String.valueOf((int) value));
+      nodeGetter = (Object value) -> NodeFactory.createLiteral(String.valueOf((int) value), XSDDatatype.XSDinteger);
     } else if (innerType == Double.class) {
       parser = (JSONObject row, StoreClientInterface kgc, int rid) -> row.getDouble(Model.VALUE);
-      literalGetter = (Object value) -> String.format("\"%s\"^^xsd:double", String.valueOf((double) value));
+      nodeGetter = (Object value) -> NodeFactory.createLiteral(String.valueOf((double) value), XSDDatatype.XSDdouble);
     } else if (innerType == String.class) {
       parser = (JSONObject row, StoreClientInterface kgc, int rid) -> row.getString(Model.VALUE);
-      literalGetter = (Object value) -> String.format("\"%s\"^^xsd:string", (String) value);
+      nodeGetter = (Object value) -> NodeFactory.createLiteral((String) value, XSDDatatype.XSDstring);
     } else if (innerType == URI.class) {
       parser = (JSONObject row, StoreClientInterface kgc, int rid) -> URI.create(row.getString(Model.VALUE));
-      literalGetter = (Object value) -> String.format("<%s>", (URI) value);
+      nodeGetter = (Object value) -> NodeFactory.createURI(((URI) value).toString());
     } else if (DatatypeModel.class.isAssignableFrom(innerType)) {
       Constructor<?> constructor = innerType.getConstructor(String.class, String.class);
       parser = (JSONObject row, StoreClientInterface kgc, int rid)
           -> constructor.newInstance(row.getString(Model.VALUE), row.getString(Model.DATATYPE));
-      literalGetter = (Object value) -> ((DatatypeModel) value).getLiteralString();
+      nodeGetter = (Object value) -> ((DatatypeModel) value).getNode();
     } else {
       throw new InvalidClassException(innerType.toString(), "Class not supported.");
     }
@@ -141,10 +145,10 @@ public class FieldInterface {
    * Gets the string representation of the current field value for pushing to the database.
    * Use with non-List fields.
    */
-  public String getLiteral(Object object) {
+  public Node getNode(Object object) {
     try {
       Object value = getter.invoke(object);
-      return value == null ? "[]" : literalGetter.get(value);
+      return value == null ? NodeFactory.createBlankNode() : nodeGetter.get(value);
     } catch (Exception e) {
       throw new JPSRuntimeException(e);
     }
@@ -153,12 +157,12 @@ public class FieldInterface {
   /**
    * Gets the string representations of the current elements of a list field, for pushing to the database.
    */
-  public String[] getLiterals(Object object) {
+  public Node[] getNodes(Object object) {
     try {
       List<?> list = (List<?>) getter.invoke(object);
-      String[] literals = new String[list.size()];
+      Node[] literals = new Node[list.size()];
       for (int i = 0; i < literals.length; i++)
-        literals[i] = list.get(i) == null ? "[]" : literalGetter.get(list.get(i));
+        literals[i] = list.get(i) == null ? NodeFactory.createBlankNode() : nodeGetter.get(list.get(i));
       return literals;
     } catch (Exception e) {
       throw new JPSRuntimeException(e);

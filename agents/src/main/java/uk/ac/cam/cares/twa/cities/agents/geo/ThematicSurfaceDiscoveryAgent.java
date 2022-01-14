@@ -9,6 +9,11 @@ import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 
+import com.bigdata.rdf.internal.impl.literal.XSDIntegerIV;
+import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -36,22 +41,31 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
 
   private ExecutorService executor = Executors.newSingleThreadExecutor();
 
+  // Agent endpoint and parameter keys
   public static final String URI_LISTEN = "/discovery/thematicsurface";
   public static final String KEY_NAMESPACE = "namespace";
   public static final String KEY_COBI = "cityObjectIRI";
   public static final String KEY_LOD = "lod";
   public static final String KEY_THRESHOLD = "thresholdAngle";
 
-  private static final String METRIC_SRS = "EPSG:25833";
+  // Metric CRS to use for geometry calculations
+  private static final String METRIC_CRS = "EPSG:25833";
 
+  // Exception and error text
   private static final String NO_CRS_ERROR_TEXT = "Namespace has no CRS specified.";
   private static final String MULTIPLE_CRS_ERROR_TEXT = "Namespace has more than one CRS specified.";
+
+  // Query labels
+  private static final String QM = "?";
+  private static final String SRS = "srs";
+  private static final String BUILDING = "bldg";
+  private static final String BUILDING_PARENT = "bldgParent";
 
   private static final String route = ResourceBundle.getBundle("config").getString("uri.route");
   private final StoreClientInterface kgClient = new RemoteStoreClient(route, route); // AccessAgent should be used instead of this
 
-  private URI buildingIri;
-  private URI namespaceIri;
+  private String buildingIri;
+  private String namespaceIri;
   private boolean[] thematiciseLod;
   private double threshold;
 
@@ -67,13 +81,13 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
           threshold = 15;
         }
         if (keys.contains(KEY_NAMESPACE)) {
-          namespaceIri = new URI(requestParams.getString(KEY_NAMESPACE));
-          buildingIri = keys.contains(KEY_COBI) ? new URI(requestParams.getString(KEY_COBI)) : null;
+          namespaceIri = new URI(requestParams.getString(KEY_NAMESPACE)).toString();
+          buildingIri = keys.contains(KEY_COBI) ? new URI(requestParams.getString(KEY_COBI)).toString() : null;
           thematiciseLod = new boolean[4];
-          for(int i = 0; i < 3; i++) {
-            thematiciseLod[i] = keys.contains(KEY_LOD + (i+1)) && requestParams.getInt(KEY_LOD + (i+1)) == 1;
+          for (int i = 0; i < 3; i++) {
+            thematiciseLod[i] = keys.contains(KEY_LOD + (i + 1)) && requestParams.getInt(KEY_LOD + (i + 1)) == 1;
           }
-          if(!(thematiciseLod[0] || thematiciseLod[1] || thematiciseLod[2] || thematiciseLod[3])) {
+          if (!(thematiciseLod[0] || thematiciseLod[1] || thematiciseLod[2] || thematiciseLod[3])) {
             thematiciseLod[0] = thematiciseLod[1] = thematiciseLod[2] = thematiciseLod[3] = true;
           }
           return true;
@@ -85,16 +99,19 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
     throw new BadRequestException();
   }
 
-  private void importSrs() throws JPSRuntimeException{
-    JSONArray srsResponse = new JSONArray(kgClient.execute(PrefixUtils.insertPrefixStatements(
-        String.format("SELECT ?srs WHERE {<%s> ocgml:srsname ?srs }", namespaceIri.toString()))));
+  private void importSrs() throws JPSRuntimeException {
+    // TODO: convert ocgml:srsname to a SchemaManagerAdapter constant when it exists.
+    SelectBuilder srsQuery = new SelectBuilder();
+    PrefixUtils.addPrefix("ocgml:srsname", srsQuery);
+    srsQuery.addVar(QM + SRS).addWhere(NodeFactory.createURI(namespaceIri), "ocgml:srsname", QM + SRS);
+    JSONArray srsResponse = new JSONArray(kgClient.execute(srsQuery.buildString()));
     if (srsResponse.length() == 0) {
       throw new JPSRuntimeException(NO_CRS_ERROR_TEXT);
     } else if (srsResponse.length() > 1) {
       throw new JPSRuntimeException(MULTIPLE_CRS_ERROR_TEXT);
     } else {
       GeometryType.setSourceCrsName(srsResponse.getJSONObject(0).getString("srs"));
-      GeometryType.setMetricCrsName(METRIC_SRS);
+      GeometryType.setMetricCrsName(METRIC_CRS);
     }
   }
 
@@ -108,12 +125,14 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
     if (buildingIri != null) {
       buildingIris.add(buildingIri.toString());
     } else {
-      JSONArray buildingsResponse = new JSONArray(kgClient.execute(
-          PrefixUtils.insertPrefixStatements(String.format(
-              "SELECT ?bldg WHERE {?bldg %s \"26\"^^xsd:integer; %s ?val. }",
-              SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID,
-              SchemaManagerAdapter.ONTO_BUILDING_PARENT_ID))));
-      for(int i = 0; i < buildingsResponse.length(); i++)
+      Node buildingObjectClass = NodeFactory.createLiteral(String.valueOf(26), XSDDatatype.XSDinteger);
+      SelectBuilder buildingsQuery = new SelectBuilder();
+      PrefixUtils.addPrefix(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID, buildingsQuery);
+      buildingsQuery.addVar(QM + BUILDING)
+          .addWhere(QM + BUILDING, SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID, buildingObjectClass)
+          .addWhere(QM + BUILDING, SchemaManagerAdapter.ONTO_BUILDING_PARENT_ID, QM + BUILDING_PARENT);
+      JSONArray buildingsResponse = new JSONArray(kgClient.execute(buildingsQuery.buildString()));
+      for (int i = 0; i < buildingsResponse.length(); i++)
         buildingIris.add(buildingsResponse.getJSONObject(i).getString("bldg"));
     }
     executor.execute(new ThematicisationTask(buildingIris, thematiciseLod, threshold, kgClient));

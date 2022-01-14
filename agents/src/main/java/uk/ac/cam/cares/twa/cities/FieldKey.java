@@ -3,7 +3,7 @@ package uk.ac.cam.cares.twa.cities;
 import java.net.URI;
 import java.util.Objects;
 
-public class FieldKey {
+public class FieldKey implements Comparable {
   // The predicate is expanded to a full IRI but the graph is kept as a fragment because the full graph iri is namespace
   // -dependent and will not be the same across different applications, while the full predicate iri does not change.
   public final URI predicate;
@@ -49,9 +49,17 @@ public class FieldKey {
     return backward == fieldKey.backward && predicate.equals(fieldKey.predicate) && graph.equals(fieldKey.graph);
   }
 
+
+
   @Override
   public int hashCode() {
     return Objects.hash(predicate, graph, backward);
   }
 
+  @Override
+  public int compareTo(Object o) {
+    if (!(o instanceof FieldKey)) return 0;
+    FieldKey other = (FieldKey)o;
+    return (graph + predicate + backward).compareTo(other.graph + other.predicate + other.backward);
+  }
 }

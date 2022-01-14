@@ -8,6 +8,8 @@ import java.util.stream.Stream;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.geotools.referencing.CRS;
 import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.*;
@@ -17,6 +19,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+import uk.ac.cam.cares.twa.cities.ArbitraryJenaDatatype;
 import uk.ac.cam.cares.twa.cities.DatatypeModel;
 
 import javax.ws.rs.BadRequestException;
@@ -129,22 +132,22 @@ public class GeometryType implements DatatypeModel {
   }
 
   @Override
-  public String getLiteralString() {
+  public Node getNode() {
     // Value
     Coordinate[] coordinates = polygon.getCoordinates();
-    if(coordinates.length == 0) return "";
-    StringBuilder str = new StringBuilder("\"");
+    if(coordinates.length == 0) return NodeFactory.createBlankNode();
+    StringBuilder value = new StringBuilder();
     for(Coordinate coordinate: coordinates)
       for(int i = 0; i < 3; i++)
-        str.append("#").append(coordinate.getOrdinate(i));
-    str.deleteCharAt(1);
+        value.append("#").append(coordinate.getOrdinate(i));
+    value.deleteCharAt(0);
     // Datatype
-    str.append("\"^^<http://localhost/blazegraph/literals/POLYGON-3");
-    str.append("-" + polygon.getExteriorRing().getNumPoints() * 3);
+    StringBuilder datatype = new StringBuilder();
+    datatype.append("http://localhost/blazegraph/literals/POLYGON-3");
+    datatype.append("-" + polygon.getExteriorRing().getNumPoints() * 3);
     for(int i = 0; i < polygon.getNumInteriorRing(); i++)
-      str.append("-" + polygon.getInteriorRingN(i).getNumPoints() * 3);
-    str.append(">");
-    return str.toString();
+      datatype.append("-" + polygon.getInteriorRingN(i).getNumPoints() * 3);
+    return NodeFactory.createLiteral(value.toString(), ArbitraryJenaDatatype.get(datatype.toString()));
   }
 
   @Override

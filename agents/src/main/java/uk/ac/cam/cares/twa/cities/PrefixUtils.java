@@ -1,5 +1,7 @@
 package uk.ac.cam.cares.twa.cities;
 
+import org.apache.jena.arq.querybuilder.AbstractQueryBuilder;
+import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import uk.ac.cam.cares.jps.base.query.sparql.PrefixToUrlMap;
 
 import java.util.*;
@@ -11,23 +13,30 @@ public class PrefixUtils {
   private static Map<String, String> prefixMap = new HashMap<>();
   private static final Pattern qualifiedNamePattern = Pattern.compile("([A-Za-z0-9]+):([A-Za-z0-9]+)");
 
-  public static String insertPrefixStatements(String query) {
+  public static <T extends AbstractQueryBuilder<T>> AbstractQueryBuilder<T> addPrefix(String sample, AbstractQueryBuilder<T> builder) {
     // Find all prefixes referenced in the query
-    Matcher matcher = qualifiedNamePattern.matcher(query);
+    Matcher matcher = qualifiedNamePattern.matcher(sample);
     Set<String> prefixes = new HashSet<>();
     while(matcher.find()) prefixes.add(matcher.group(1));
     // Compile prefix statements
-    StringBuilder prefixStatements = new StringBuilder();
     for (String prefix: prefixes) {
-      String prefixStatement = getPrefixStatement(prefix);
-      if(prefixStatement != null) prefixStatements.append(prefixStatement);
+      String prefixUrl = getPrefixUrl(prefix);
+      if(prefixUrl != null) builder.addPrefix(prefix, prefixUrl);
     }
-    return prefixStatements + query;
+    return builder;
   }
 
-  public static String getPrefixStatement(String prefix) {
-    String prefixUrl = getPrefixUrl(prefix);
-    return prefixUrl == null ? null : String.format("PREFIX %s:<%s> \n", prefix, prefixUrl);
+  public static UpdateBuilder addPrefix(String sample, UpdateBuilder builder) {
+    // Find all prefixes referenced in the query
+    Matcher matcher = qualifiedNamePattern.matcher(sample);
+    Set<String> prefixes = new HashSet<>();
+    while(matcher.find()) prefixes.add(matcher.group(1));
+    // Compile prefix statements
+    for (String prefix: prefixes) {
+      String prefixUrl = getPrefixUrl(prefix);
+      if(prefixUrl != null) builder.addPrefix(prefix, prefixUrl);
+    }
+    return builder;
   }
 
   public static String getPrefixUrl(String prefix) {
