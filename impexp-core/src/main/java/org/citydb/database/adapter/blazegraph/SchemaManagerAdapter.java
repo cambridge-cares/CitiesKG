@@ -77,7 +77,7 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_ROOF_TYPE_CODESPACE = ONTO_PREFIX_NAME_ONTOCITYGML + "roofTypeCodespace";
     public static final String ONTO_YEAR_CONSTRUCTION = ONTO_PREFIX_NAME_ONTOCITYGML + "yearOfConstruction";
     public static final String ONTO_YEAR_DEMOLITION = ONTO_PREFIX_NAME_ONTOCITYGML + "yearOfDemolition";
-    public static final String ONTO_MEASURED_HEIGHT = ONTO_PREFIX_NAME_ONTOCITYGML + "measuredHeigh";
+    public static final String ONTO_MEASURED_HEIGHT = ONTO_PREFIX_NAME_ONTOCITYGML + "measuredHeight";
     public static final String ONTO_MEASURED_HEIGHT_UNIT = ONTO_PREFIX_NAME_ONTOCITYGML + "measuredHeightUnit";
     public static final String ONTO_STOREYS_ABOVE_GROUND = ONTO_PREFIX_NAME_ONTOCITYGML + "storeysAboveGround";
     public static final String ONTO_STOREYS_BELLOW_GROUND = ONTO_PREFIX_NAME_ONTOCITYGML + "storeysBelowGround";
