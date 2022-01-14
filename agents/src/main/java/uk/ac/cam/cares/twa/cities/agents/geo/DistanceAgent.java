@@ -21,8 +21,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.locationtech.jts.geom.Coordinate;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
-import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
-import uk.ac.cam.cares.jps.base.query.KGRouter;
+import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
+import uk.ac.cam.cares.jps.base.query.StoreRouter;
+import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 import uk.ac.cam.cares.twa.cities.models.geo.EnvelopeType;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
@@ -70,7 +71,7 @@ public class DistanceAgent extends JPSAgent {
   // Variables fetched from config.properties file.
   private String ocgmlUri;
   private static String unitOntology;
-  private KnowledgeBaseClientInterface kgClient;
+  private StoreClientInterface kgClient;
   private static String route;
 
   public DistanceAgent() {
@@ -215,8 +216,8 @@ public class DistanceAgent extends JPSAgent {
    * @param isQuery boolean
    */
   private void setKGClient(boolean isQuery) {
-
-    this.kgClient = KGRouter.getKnowledgeBaseClient(route, isQuery, !isQuery);
+    this.kgClient = new RemoteStoreClient(route, route);
+    // this.kgClient = StoreRouter.getStoreClient(route, isQuery, !isQuery);
   }
 
   /**

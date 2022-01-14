@@ -25,7 +25,7 @@ public class GenericAttribute extends Model {
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_PARRENT_GENATTRIB_ID) protected String parentGenattribId;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_INT_VAL) protected String intVal;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_DATE_VAL) protected String dateVal;
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_DATA_TYPE) protected int dataType;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_DATA_TYPE) protected Integer dataType;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID) protected URI cityObjectId;
 
 }

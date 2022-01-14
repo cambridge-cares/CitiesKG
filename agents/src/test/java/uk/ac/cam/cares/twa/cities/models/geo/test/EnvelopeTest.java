@@ -14,16 +14,16 @@
 //import org.mockito.Mock;
 //import org.mockito.MockedStatic;
 //import org.mockito.Mockito;
-//import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
-//import uk.ac.cam.cares.jps.base.query.KGRouter;
-//import uk.ac.cam.cares.jps.base.query.RemoteKnowledgeBaseClient;
+//import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
+//import uk.ac.cam.cares.jps.base.query.StoreRouter;
+//import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 //import java.lang.reflect.InvocationTargetException;
 //import java.lang.reflect.Method;
 //
 //public class EnvelopeTest extends TestCase {
 //
 //    @Mock
-//    KnowledgeBaseClientInterface kgClientMock = Mockito.mock(RemoteKnowledgeBaseClient.class);
+//    StoreClientInterface kgClientMock = Mockito.mock(RemoteStoreClient.class);
 //
 //    public void testGetEnvelopeQuery(){
 //
@@ -67,8 +67,8 @@
 //        String json = "[{'Envelope': '1#2#0'}]";
 //        Mockito.when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(json);
 //
-//        try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
-//            kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
+//        try (MockedStatic<StoreRouter> kgRouterMock = Mockito.mockStatic(StoreRouter.class)) {
+//            kgRouterMock.when(() -> StoreRouter.getStoreClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
 //                    .thenReturn(kgClientMock);
 //            assertEquals("1#2#0", envelope.getEnvelopeString(uri));
 //        }
@@ -77,8 +77,8 @@
 //        String jsonEmpty = "[]";
 //        Mockito.when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(jsonEmpty);
 //
-//        try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
-//            kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
+//        try (MockedStatic<StoreRouter> kgRouterMock = Mockito.mockStatic(StoreRouter.class)) {
+//            kgRouterMock.when(() -> StoreRouter.getStoreClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
 //                    .thenReturn(kgClientMock);
 //            try {
 //                envelope.getEnvelopeString(uri);

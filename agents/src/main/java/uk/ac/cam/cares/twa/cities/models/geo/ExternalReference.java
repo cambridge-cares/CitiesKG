@@ -4,7 +4,7 @@ import java.net.URI;
 import java.util.Arrays;
 import org.apache.jena.query.Query;
 import org.json.JSONArray;
-import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
+import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
 
 /**
  * ExternalReference class represent a java model of ExternalReference module of CityGML.
@@ -74,7 +74,7 @@ public class ExternalReference {
      * @param kgClient sends the query to the right endpoint.
      * @return nothing - just fills in fields
      */
-    public void fillScalars(String iriName, KnowledgeBaseClientInterface kgClient) {
+    public void fillScalars(String iriName, StoreClientInterface kgClient) {
 
         Query q = getFetchExtRefScalarsQuery(iriName);
         String queryResultString = kgClient.execute(q.toString());

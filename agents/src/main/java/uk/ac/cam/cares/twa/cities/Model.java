@@ -17,7 +17,7 @@ import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
+import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
 
 class MetaModel {
 
@@ -87,7 +87,7 @@ public abstract class Model {
     setIri(URI.create(namespace + metadata.nativeGraph() + "/" + UUID));
   }
 
-  public static void executeQueuedUpdates(KnowledgeBaseClientInterface kgClient) {
+  public static void executeQueuedUpdates(StoreClientInterface kgClient) {
     kgClient.executeUpdate(PrefixUtils.insertPrefixStatements(updateQueue.toString()));
     updateQueue = new StringBuilder();
   }
@@ -95,7 +95,7 @@ public abstract class Model {
   /**
    * Queues an update to overwrite all forward properties of this model in the database.
    */
-  public void queuePushForward(KnowledgeBaseClientInterface kgClient) {
+  public void queuePushForward(StoreClientInterface kgClient) {
     String self = getIri().toString();
     // scalars
     int varCount = 0;
@@ -130,6 +130,7 @@ public abstract class Model {
         varCount++;
       }
     }
+    if(currentGraph == null) return; // nothing happened
     scalarDeleteString.append("} };\n");
     insertString.append("} };\n");
     updateQueue.append(scalarDeleteString).append(vectorDeleteString).append(insertString);
@@ -140,7 +141,7 @@ public abstract class Model {
    * Queues an update to overwrite entirely delete this object from the database, including all triples which have its
    * iri as subject or object.
    */
-  public void queueDeleteInstantiation(KnowledgeBaseClientInterface kgClient) {
+  public void queueDeleteInstantiation(StoreClientInterface kgClient) {
     String self = getIri().toString();
     updateQueue.append(String.format("DELETE WHERE { ?a ?b <%s> }; DELETE WHERE { <%s> ?a ?b };\n", self, self));
     if (updateQueue.length() > 100000) executeQueuedUpdates(kgClient);
@@ -151,7 +152,7 @@ public abstract class Model {
    * @param kgClient                    sends the query to the right endpoint.
    * @param recursiveInstantiationDepth the number of levels into the model hierarchy below this to instantiate.
    */
-  public void pullAll(String iriName, KnowledgeBaseClientInterface kgClient, int recursiveInstantiationDepth) {
+  public void pullAll(String iriName, StoreClientInterface kgClient, int recursiveInstantiationDepth) {
     for (FieldInterface field : metaModel.fieldMap.values()) field.clear(this);
     try {
       cleanCopy = (Model) metaModel.constructor.newInstance();
@@ -168,7 +169,7 @@ public abstract class Model {
    * @param backward                    whether iriName is the object or subject in the rows retrieved.
    * @param recursiveInstantiationDepth the number of levels into the model hierarchy below this to instantiate.
    */
-  private void populateFieldsInDirection(String iriName, KnowledgeBaseClientInterface kgClient, boolean backward, int recursiveInstantiationDepth)
+  private void populateFieldsInDirection(String iriName, StoreClientInterface kgClient, boolean backward, int recursiveInstantiationDepth)
       throws InvocationTargetException, IllegalAccessException {
     Query q = getPopulateQuery(iriName, backward);
     String queryResultString = kgClient.execute(q.toString());

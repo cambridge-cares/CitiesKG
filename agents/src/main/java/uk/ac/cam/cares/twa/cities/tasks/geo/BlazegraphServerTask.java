@@ -34,7 +34,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 public class BlazegraphServerTask implements Runnable {
 
   public static final String PROPERTY_FILE = "RWStore.properties";
-  public static final String PROPERTY_FILE_PATH = "../../../../../../../";
+  public static final String PROPERTY_FILE_PATH = "../../../../../../../../";
   public static final String JETTY_CFG_PATH = "jetty.xml";
   public static final String WAR_PATH = "war";
   public static final String NSS_PATH = "com/bigdata/rdf/sail/webapp/";

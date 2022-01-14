@@ -10,8 +10,8 @@ import javax.ws.rs.HttpMethod;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
-import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
-import uk.ac.cam.cares.jps.base.query.KGRouter;
+import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
+import uk.ac.cam.cares.jps.base.query.StoreRouter;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 
 
@@ -26,7 +26,7 @@ public class CityInformationAgent extends JPSAgent {
   public static final String KEY_IRIS = "iris";
   public static final String KEY_ATTRIBUTES = "attributes";
 
-  private KnowledgeBaseClientInterface kgClient;
+  private StoreClientInterface kgClient;
   private static String route;
   private boolean lazyload;
 
@@ -102,6 +102,6 @@ public class CityInformationAgent extends JPSAgent {
    * @param isQuery boolean
    */
   private void setKGClient(boolean isQuery) {
-    this.kgClient = KGRouter.getKnowledgeBaseClient(route, isQuery, !isQuery);
+    this.kgClient = StoreRouter.getStoreClient(route, isQuery, !isQuery);
   }
 }

@@ -114,6 +114,7 @@ public class GeometryType implements DatatypeModel {
     return new Coordinate(x/length, y/length, z/length);
   }
 
+  // Assumes counter-clockwise winding order
   public static Vector3D computeVectorArea(LinearRing ring) {
     CoordinateSequence coords = ring.getCoordinateSequence();
     double x = 0;

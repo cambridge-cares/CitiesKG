@@ -2,7 +2,7 @@ package uk.ac.cam.cares.twa.cities;
 
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
+import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
 
 import java.io.InvalidClassException;
 import java.lang.reflect.*;
@@ -11,7 +11,7 @@ import java.util.List;
 
 @FunctionalInterface
 interface Parser {
-  Object parse(JSONObject row, KnowledgeBaseClientInterface kgClient, int recursiveInstantiationDepth) throws Exception;
+  Object parse(JSONObject row, StoreClientInterface kgClient, int recursiveInstantiationDepth) throws Exception;
 }
 
 @FunctionalInterface
@@ -55,7 +55,7 @@ public class FieldInterface {
     // Generate parser
     if (isModel) {
       Constructor<?> constructor = innerType.getConstructor();
-      parser = (JSONObject row, KnowledgeBaseClientInterface kgClient, int recursiveInstantiationDepth) -> {
+      parser = (JSONObject row, StoreClientInterface kgClient, int recursiveInstantiationDepth) -> {
         Model model = (Model) constructor.newInstance();
         if (recursiveInstantiationDepth > 0)
           model.pullAll(row.getString(Model.VALUE), kgClient, recursiveInstantiationDepth - 1);
@@ -65,20 +65,20 @@ public class FieldInterface {
       };
       literalGetter = (Object value) -> String.format("<%s>", ((Model) value).getIri());
     } else if (innerType == Integer.class) {
-      parser = (JSONObject row, KnowledgeBaseClientInterface kgc, int rid) -> row.getInt(Model.VALUE);
+      parser = (JSONObject row, StoreClientInterface kgc, int rid) -> row.getInt(Model.VALUE);
       literalGetter = (Object value) -> String.format("\"%s\"^^xsd:integer", String.valueOf((int) value));
     } else if (innerType == Double.class) {
-      parser = (JSONObject row, KnowledgeBaseClientInterface kgc, int rid) -> row.getDouble(Model.VALUE);
+      parser = (JSONObject row, StoreClientInterface kgc, int rid) -> row.getDouble(Model.VALUE);
       literalGetter = (Object value) -> String.format("\"%s\"^^xsd:double", String.valueOf((double) value));
     } else if (innerType == String.class) {
-      parser = (JSONObject row, KnowledgeBaseClientInterface kgc, int rid) -> row.getString(Model.VALUE);
+      parser = (JSONObject row, StoreClientInterface kgc, int rid) -> row.getString(Model.VALUE);
       literalGetter = (Object value) -> String.format("\"%s\"^^xsd:string", (String) value);
     } else if (innerType == URI.class) {
-      parser = (JSONObject row, KnowledgeBaseClientInterface kgc, int rid) -> URI.create(row.getString(Model.VALUE));
+      parser = (JSONObject row, StoreClientInterface kgc, int rid) -> URI.create(row.getString(Model.VALUE));
       literalGetter = (Object value) -> String.format("<%s>", (URI) value);
     } else if (DatatypeModel.class.isAssignableFrom(innerType)) {
       Constructor<?> constructor = innerType.getConstructor(String.class, String.class);
-      parser = (JSONObject row, KnowledgeBaseClientInterface kgc, int rid)
+      parser = (JSONObject row, StoreClientInterface kgc, int rid)
           -> constructor.newInstance(row.getString(Model.VALUE), row.getString(Model.DATATYPE));
       literalGetter = (Object value) -> ((DatatypeModel) value).getLiteralString();
     } else {
@@ -100,7 +100,7 @@ public class FieldInterface {
   /**
    * Populates the associated field of the object with the value in the row.
    */
-  public void pull(Object object, JSONObject row, KnowledgeBaseClientInterface kgClient, int recursiveInstantiationDepth) {
+  public void pull(Object object, JSONObject row, StoreClientInterface kgClient, int recursiveInstantiationDepth) {
     try {
       putter.consume(object, parser.parse(row, kgClient, recursiveInstantiationDepth));
     } catch (Exception e) {
@@ -118,7 +118,9 @@ public class FieldInterface {
 
   public boolean equals(Object first, Object second) {
     try {
-      return getter.invoke(first).equals(getter.invoke(second));
+      Object firstValue = getter.invoke(first);
+      Object secondValue = getter.invoke(second);
+      return firstValue == secondValue || (first != null && first.equals(second));
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new JPSRuntimeException(e);
     }

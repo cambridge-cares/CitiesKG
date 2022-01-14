@@ -6,9 +6,9 @@ import org.apache.jena.update.UpdateRequest;
 import org.geotools.geometry.jts.GeometryBuilder;
 import org.locationtech.jts.geom.Point;
 import org.mockito.*;
-import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
-import uk.ac.cam.cares.jps.base.query.KGRouter;
-import uk.ac.cam.cares.jps.base.query.RemoteKnowledgeBaseClient;
+import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
+import uk.ac.cam.cares.jps.base.query.StoreRouter;
+import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.twa.cities.agents.geo.DistanceAgent;
 import uk.ac.cam.cares.twa.cities.models.geo.EnvelopeType;
 
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 public class DistanceAgentTest extends TestCase {
 
     @Mock
-    KnowledgeBaseClientInterface kgClientMock = Mockito.mock(RemoteKnowledgeBaseClient.class);
+    StoreClientInterface kgClientMock = Mockito.mock(RemoteStoreClient.class);
 
     public void testGetDistanceQuery()
         throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
@@ -85,8 +85,8 @@ public class DistanceAgentTest extends TestCase {
         //test with mocked kgClient and kgRouter when it returns a string.
         String srs = "[{'srsName': 'EPSG:3414'}]";
         when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(srs);
-        try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
-            kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
+        try (MockedStatic<StoreRouter> kgRouterMock = Mockito.mockStatic(StoreRouter.class)) {
+            kgRouterMock.when(() -> StoreRouter.getStoreClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
                 .thenReturn(kgClientMock);
 
             assertNotNull(distanceAgent.getClass().getDeclaredMethod("getObjectSrs", String.class, boolean.class));
@@ -98,8 +98,8 @@ public class DistanceAgentTest extends TestCase {
         //test with mocked kgClient and kgRouter when method is called to return appropriate metric srs.
         String targetSrs = "[{'srsName': 'EPSG:3414'}]";
         when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(targetSrs);
-        try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
-            kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
+        try (MockedStatic<StoreRouter> kgRouterMock = Mockito.mockStatic(StoreRouter.class)) {
+            kgRouterMock.when(() -> StoreRouter.getStoreClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
                 .thenReturn(kgClientMock);
 
             assertNotNull(distanceAgent.getClass().getDeclaredMethod("getObjectSrs", String.class, boolean.class));
@@ -111,8 +111,8 @@ public class DistanceAgentTest extends TestCase {
         //test with mocked kgClient and kgRouter when there is no string to return.
         String srsEmpty = "[]";
         when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(srsEmpty);
-        try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
-            kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
+        try (MockedStatic<StoreRouter> kgRouterMock = Mockito.mockStatic(StoreRouter.class)) {
+            kgRouterMock.when(() -> StoreRouter.getStoreClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
                 .thenReturn(kgClientMock);
             Method getObjectSrs = distanceAgent.getClass().getDeclaredMethod("getObjectSrs", String.class, boolean.class);
             getObjectSrs.setAccessible(true);
@@ -128,8 +128,8 @@ public class DistanceAgentTest extends TestCase {
         //test with mocked kgClient and kgRouter when it returns a string.
         String distance = "[{'distance': 10.0}]";
         when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(distance);
-        try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
-            kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
+        try (MockedStatic<StoreRouter> kgRouterMock = Mockito.mockStatic(StoreRouter.class)) {
+            kgRouterMock.when(() -> StoreRouter.getStoreClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
                     .thenReturn(kgClientMock);
             assertNotNull(distanceAgent.getClass().getDeclaredMethod("getDistance", String.class, String.class));
             Method getDistance = distanceAgent.getClass().getDeclaredMethod("getDistance", String.class, String.class);
@@ -140,8 +140,8 @@ public class DistanceAgentTest extends TestCase {
         //test with mocked kgClient and kgRouter when there is no string to return.
         String distanceEmpty = "[]";
         when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(distanceEmpty);
-        try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
-            kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
+        try (MockedStatic<StoreRouter> kgRouterMock = Mockito.mockStatic(StoreRouter.class)) {
+            kgRouterMock.when(() -> StoreRouter.getStoreClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
                     .thenReturn(kgClientMock);
             assertNotNull(distanceAgent.getClass().getDeclaredMethod("getDistance", String.class, String.class));
             Method getDistance = distanceAgent.getClass().getDeclaredMethod("getDistance", String.class, String.class);
@@ -211,8 +211,8 @@ public class DistanceAgentTest extends TestCase {
         DistanceAgent distanceAgent = new DistanceAgent();
 
         when(kgClientMock.executeUpdate(ArgumentMatchers.any(UpdateRequest.class))).thenReturn(0);
-        try (MockedStatic<KGRouter> kgRouterMock = Mockito.mockStatic(KGRouter.class)) {
-            kgRouterMock.when(() -> KGRouter.getKnowledgeBaseClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
+        try (MockedStatic<StoreRouter> kgRouterMock = Mockito.mockStatic(StoreRouter.class)) {
+            kgRouterMock.when(() -> StoreRouter.getStoreClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
                     .thenReturn(kgClientMock);
             assertNotNull(distanceAgent.getClass().getDeclaredMethod("setDistance", String.class, String.class, double.class));
             Method setDistance = distanceAgent.getClass().getDeclaredMethod("setDistance", String.class, String.class, double.class);
