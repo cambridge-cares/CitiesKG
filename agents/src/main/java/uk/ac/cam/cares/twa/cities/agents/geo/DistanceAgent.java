@@ -22,7 +22,6 @@ import org.json.JSONObject;
 import org.locationtech.jts.geom.Coordinate;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
-import uk.ac.cam.cares.jps.base.query.StoreRouter;
 import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 import uk.ac.cam.cares.twa.cities.models.geo.EnvelopeType;
@@ -272,7 +271,7 @@ public class DistanceAgent extends JPSAgent {
   public EnvelopeType getEnvelope(String uriString, String coordinateSystem) {
     GeometryType.setSourceCrsName(coordinateSystem);
     CityObject cityObject = new CityObject();
-    cityObject.pullAll(uriString, kgClient, 0);
+    cityObject.pullIndiscriminate(uriString, kgClient, 0);
     return cityObject.getEnvelopeType();
   }
 

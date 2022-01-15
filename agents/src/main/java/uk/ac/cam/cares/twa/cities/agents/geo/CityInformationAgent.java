@@ -55,7 +55,7 @@ public class CityInformationAgent extends JPSAgent {
 
     for (String cityObjectIri : uris) {
       CityObject cityObject = new CityObject();
-      cityObject.pullAll(cityObjectIri, kgClient, 1);
+      cityObject.pullIndiscriminate(cityObjectIri, kgClient, 1);
 
       ArrayList<CityObject> cityObjectList = new ArrayList<>();
       cityObjectList.add(cityObject);

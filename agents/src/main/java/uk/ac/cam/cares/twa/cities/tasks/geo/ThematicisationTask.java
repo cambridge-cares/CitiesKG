@@ -54,7 +54,7 @@ public class ThematicisationTask implements Runnable {
   private int thematiciseBuilding(String buildingIri) {
     // Load building
     Building building = new Building();
-    building.pullAll(buildingIri, kgClient, 0);
+    building.pullIndiscriminate(buildingIri, kgClient, 0);
     int subFlipBalance = 0;
     for (int i = 0; i < 4; i++) {
       if (thematiciseLod[i])
@@ -90,9 +90,9 @@ public class ThematicisationTask implements Runnable {
                     lod == 4 ? building.getLod4MultiSurfaceId() :
                         null;
     if (root == null) return 0;
-    Model.totalNanos = 0;
+    Model.cumulativeUpdateExecutionNanoseconds = 0;
     Instant start = Instant.now();
-    root.pullAll(root.getIri().toString(), kgClient, 99);
+    root.pullIndiscriminate(root.getIri().toString(), kgClient, 99);
     // Sort into thematic surfaces
     List<List<SurfaceGeometry>> topLevelThematicGeometries = Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     List<List<SurfaceGeometry>> bottomLevelThematicGeometries = Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
@@ -109,7 +109,7 @@ public class ThematicisationTask implements Runnable {
       boolean flip = averageRoofZ < averageGroundZ;
       postprocessLodMultiSurface(building, lod, topLevelThematicGeometries, mixedGeometries, flip);
       double totalSeconds = 1.0e-9 * Duration.between(start, Instant.now()).toNanos();
-      double updateSeconds = 1.0e-9 * Model.totalNanos;
+      double updateSeconds = 1.0e-9 * Model.cumulativeUpdateExecutionNanoseconds;
       System.err.println(String.format("Building took: %.2fs (total), %.2fs (executing). %.2f%% of time spent executing.%n", totalSeconds, updateSeconds, updateSeconds/totalSeconds*100));
       return flip ? 1 : -1;
     } else {
