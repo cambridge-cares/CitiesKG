@@ -101,7 +101,6 @@ public class DistanceAgent extends JPSAgent {
         double distance = getDistance(firstObjectUri, secondObjectUri);
 
         if (distance < 0) {
-          GeometryType.setMetricCrsName("EPSG:24500");
           String firstSrs = getObjectSrs(firstObjectUri, true);
           String secondSrs = getObjectSrs(secondObjectUri, true);
           distance =

@@ -12,10 +12,11 @@ import java.io.InvalidClassException;
 import java.lang.reflect.*;
 import java.net.URI;
 import java.util.List;
+import java.util.Objects;
 
 @FunctionalInterface
 interface Parser {
-  Object parse(JSONObject row, StoreClientInterface kgClient, int recursiveInstantiationDepth) throws Exception;
+  Object parse(JSONObject row, String valueName, String dtypeName, StoreClientInterface kgClient, int recursiveInstantiationDepth) throws Exception;
 }
 
 @FunctionalInterface
@@ -59,34 +60,34 @@ public class FieldInterface {
     // Generate parser
     if (isModel) {
       Constructor<?> constructor = innerType.getConstructor();
-      parser = (JSONObject row, StoreClientInterface kgClient, int recursiveInstantiationDepth) -> {
+      parser = (JSONObject row, String valueName, String dtypeName, StoreClientInterface kgClient, int recursiveInstantiationDepth) -> {
         Model model = (Model) constructor.newInstance();
         if (recursiveInstantiationDepth > 0)
-          model.pullAll(row.getString(Model.VALUE), kgClient, recursiveInstantiationDepth - 1);
+          model.pullAll(row.getString(valueName), kgClient, recursiveInstantiationDepth - 1);
         else
-          model.setIri(URI.create(row.getString(Model.VALUE)));
+          model.setIri(URI.create(row.getString(valueName)));
         return model;
       };
       nodeGetter = (Object value) -> NodeFactory.createURI(((Model) value).getIri().toString());
     } else if (innerType == Integer.class) {
-      parser = (JSONObject row, StoreClientInterface kgc, int rid) -> row.getInt(Model.VALUE);
+      parser = (JSONObject row, String valueName, String dtypeName, StoreClientInterface kgc, int rid) -> row.getInt(valueName);
       nodeGetter = (Object value) -> NodeFactory.createLiteral(String.valueOf((int) value), XSDDatatype.XSDinteger);
     } else if (innerType == Double.class) {
-      parser = (JSONObject row, StoreClientInterface kgc, int rid) -> row.getDouble(Model.VALUE);
+      parser = (JSONObject row, String valueName, String dtypeName, StoreClientInterface kgc, int rid) -> row.getDouble(valueName);
       nodeGetter = (Object value) -> NodeFactory.createLiteral(String.valueOf((double) value), XSDDatatype.XSDdouble);
     } else if (innerType == String.class) {
-      parser = (JSONObject row, StoreClientInterface kgc, int rid) -> row.getString(Model.VALUE);
+      parser = (JSONObject row, String valueName, String dtypeName, StoreClientInterface kgc, int rid) -> row.getString(valueName);
       nodeGetter = (Object value) -> NodeFactory.createLiteral((String) value, XSDDatatype.XSDstring);
     } else if (innerType == URI.class) {
-      parser = (JSONObject row, StoreClientInterface kgc, int rid) -> URI.create(row.getString(Model.VALUE));
+      parser = (JSONObject row, String valueName, String dtypeName, StoreClientInterface kgc, int rid) -> URI.create(row.getString(valueName));
       nodeGetter = (Object value) -> NodeFactory.createURI(((URI) value).toString());
     } else if (DatatypeModel.class.isAssignableFrom(innerType)) {
       Constructor<?> constructor = innerType.getConstructor(String.class, String.class);
-      parser = (JSONObject row, StoreClientInterface kgc, int rid)
-          -> constructor.newInstance(row.getString(Model.VALUE), row.getString(Model.DATATYPE));
+      parser = (JSONObject row, String valueName, String dtypeName, StoreClientInterface kgc, int rid)
+          -> constructor.newInstance(row.getString(valueName), row.getString(dtypeName));
       nodeGetter = (Object value) -> ((DatatypeModel) value).getNode();
     } else {
-      throw new InvalidClassException(innerType.toString(), "Class not supported.");
+      throw new InvalidClassException(innerType.toString());
     }
     // Generate pusher
     if (isList) {
@@ -104,27 +105,26 @@ public class FieldInterface {
   /**
    * Populates the associated field of the object with the value in the row.
    */
-  public void pull(Object object, JSONObject row, StoreClientInterface kgClient, int recursiveInstantiationDepth) {
+  public void put(Model model, JSONObject row, String valueName, String dtypeName, StoreClientInterface kgClient, int recursiveInstantiationDepth) {
     try {
-      putter.consume(object, parser.parse(row, kgClient, recursiveInstantiationDepth));
+      putter.consume(model, parser.parse(row, valueName, dtypeName, kgClient, recursiveInstantiationDepth));
+      putter.consume(model.cleanCopy, parser.parse(row, valueName, dtypeName, kgClient, recursiveInstantiationDepth));
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
-  public void copy(Object from, Object to) {
-    try {
-      setter.invoke(to, getter.invoke(from));
-    } catch (IllegalAccessException | InvocationTargetException e) {
-      throw new JPSRuntimeException(e);
-    }
+  public boolean isDirty(Model model) {
+    return !equals(model, model.cleanCopy);
   }
 
-  public boolean equals(Object first, Object second) {
+  public boolean equals(Object model1, Object model2) {
+    if(model1 == model2) return true;
+    if(model2 == null) return false;
     try {
-      Object firstValue = getter.invoke(first);
-      Object secondValue = getter.invoke(second);
-      return firstValue == secondValue || (first != null && first.equals(second));
+      Object value1 = getter.invoke(model1);
+      Object value2 = getter.invoke(model2);
+      return Objects.equals(value1, value2);
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new JPSRuntimeException(e);
     }

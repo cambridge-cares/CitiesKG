@@ -9,7 +9,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 
-import com.bigdata.rdf.internal.impl.literal.XSDIntegerIV;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
@@ -24,6 +23,7 @@ import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.twa.cities.PrefixUtils;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
 import uk.ac.cam.cares.twa.cities.tasks.geo.ThematicisationTask;
+
 
 /**
  * A JPSAgent framework based ThematicSurfaceDiscoveryAgent class used to discover thematic surfaces
@@ -48,12 +48,9 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
   public static final String KEY_LOD = "lod";
   public static final String KEY_THRESHOLD = "thresholdAngle";
 
-  // Metric CRS to use for geometry calculations
-  private static final String METRIC_CRS = "EPSG:25833";
-
   // Exception and error text
-  private static final String NO_CRS_ERROR_TEXT = "Namespace has no CRS specified.";
-  private static final String MULTIPLE_CRS_ERROR_TEXT = "Namespace has more than one CRS specified.";
+  private static final String NO_CRS_EXCEPTION_TEXT = "Namespace has no CRS specified.";
+  private static final String MULTIPLE_CRS_EXCEPTION_TEXT = "Namespace has more than one CRS specified.";
 
   // Query labels
   private static final String QM = "?";
@@ -106,12 +103,11 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
     srsQuery.addVar(QM + SRS).addWhere(NodeFactory.createURI(namespaceIri), "ocgml:srsname", QM + SRS);
     JSONArray srsResponse = new JSONArray(kgClient.execute(srsQuery.buildString()));
     if (srsResponse.length() == 0) {
-      throw new JPSRuntimeException(NO_CRS_ERROR_TEXT);
+      throw new JPSRuntimeException(NO_CRS_EXCEPTION_TEXT);
     } else if (srsResponse.length() > 1) {
-      throw new JPSRuntimeException(MULTIPLE_CRS_ERROR_TEXT);
+      throw new JPSRuntimeException(MULTIPLE_CRS_EXCEPTION_TEXT);
     } else {
-      GeometryType.setSourceCrsName(srsResponse.getJSONObject(0).getString("srs"));
-      GeometryType.setMetricCrsName(METRIC_CRS);
+      GeometryType.setSourceCrsName(srsResponse.getJSONObject(0).getString(SRS));
     }
   }
 
@@ -133,7 +129,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
           .addWhere(QM + BUILDING, SchemaManagerAdapter.ONTO_BUILDING_PARENT_ID, QM + BUILDING_PARENT);
       JSONArray buildingsResponse = new JSONArray(kgClient.execute(buildingsQuery.buildString()));
       for (int i = 0; i < buildingsResponse.length(); i++)
-        buildingIris.add(buildingsResponse.getJSONObject(i).getString("bldg"));
+        buildingIris.add(buildingsResponse.getJSONObject(i).getString(BUILDING));
     }
     executor.execute(new ThematicisationTask(buildingIris, thematiciseLod, threshold, kgClient));
     return requestParams;

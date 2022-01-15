@@ -1,11 +1,11 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo;
 
 import org.locationtech.jts.geom.Coordinate;
+import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
 import uk.ac.cam.cares.twa.cities.Model;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
 
-import javax.ws.rs.BadRequestException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -16,6 +16,8 @@ import java.util.stream.Stream;
 public class ThematicisationTask implements Runnable {
 
   private static final String UPDATING_PERSON = "ThematicSurfaceDiscoveryAgent";
+  private static final String MALFORMED_SURFACE_GEOMETRY_EXCEPTION_TEXT =
+      "Malformed building: SurfaceGeometry contains both sub-geometries and explicit GeometryType.";
 
   private final List<String> buildingIris;
 
@@ -108,12 +110,11 @@ public class ThematicisationTask implements Runnable {
       postprocessLodMultiSurface(building, lod, topLevelThematicGeometries, mixedGeometries, flip);
       double totalSeconds = 1.0e-9 * Duration.between(start, Instant.now()).toNanos();
       double updateSeconds = 1.0e-9 * Model.totalNanos;
-      System.err.println(String.format("Building took: %32.2fs (total), %32.2fs (executing). %32.2f%% of time spent executing.%n", totalSeconds, updateSeconds, updateSeconds/totalSeconds*100));
+      System.err.println(String.format("Building took: %.2fs (total), %.2fs (executing). %.2f%% of time spent executing.%n", totalSeconds, updateSeconds, updateSeconds/totalSeconds*100));
       return flip ? 1 : -1;
     } else {
       // Non-nice data; queue.
-      deferredPostprocessTasks.add((Boolean flip) ->
-          postprocessLodMultiSurface(building, lod, topLevelThematicGeometries, mixedGeometries, flip));
+      deferredPostprocessTasks.add((Boolean flip) -> postprocessLodMultiSurface(building, lod, topLevelThematicGeometries, mixedGeometries, flip));
       return 0;
     }
   }
@@ -218,8 +219,7 @@ public class ThematicisationTask implements Runnable {
     GeometryType geometry = surface.getGeometryType();
     Theme aggregateTheme = Theme.UNSET;
     if (geometry != null && children.size() != 0) {
-      throw new BadRequestException("Malformed building: SurfaceGeometry " + surface.getIri() +
-          " contains both sub-geometries and explicit GeometryType.");
+      throw new JPSRuntimeException(MALFORMED_SURFACE_GEOMETRY_EXCEPTION_TEXT);
     } else if (geometry != null) {
       // "Leaf" SurfaceGeometry with actual polygon: determine based on normal.
       // Note that this considers 0 area polygons into GROUND.

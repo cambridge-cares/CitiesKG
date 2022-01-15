@@ -19,16 +19,20 @@ public class EnvelopeType extends GeometryType {
     recalculateGeometricProperties();
   }
 
-  private static Polygon computeBounds(List<SurfaceGeometry> polygons) {
+  public static Polygon computeBounds(List<SurfaceGeometry> polygons) {
     // Flatten all exterior polygons into a single coordinate array
-    Coordinate[] allCoordinates = polygons.stream().flatMap(
+    Coordinate[] flatCoordinates = polygons.stream().flatMap(
         (SurfaceGeometry surf) -> Arrays.stream(surf.getGeometryType().getPolygon().getExteriorRing().getCoordinates())
     ).toArray(Coordinate[]::new);
+    return computeBounds(flatCoordinates);
+  }
+
+  public static Polygon computeBounds(Coordinate[] coordinates) {
     // Functionally fold the array into the minimum x, y, z.
-    Coordinate min = Arrays.stream(allCoordinates).reduce((Coordinate a, Coordinate b)
+    Coordinate min = Arrays.stream(coordinates).reduce((Coordinate a, Coordinate b)
         -> new Coordinate(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.min(a.getZ(), b.getZ()))).get();
     // Functionally fold the array into the maximum x, y, z.
-    Coordinate max = Arrays.stream(allCoordinates).reduce((Coordinate a, Coordinate b)
+    Coordinate max = Arrays.stream(coordinates).reduce((Coordinate a, Coordinate b)
         -> new Coordinate(Math.max(a.x, b.x), Math.max(a.y, b.y), Math.max(a.getZ(), b.getZ()))).get();
     // Construct the envelope with the min and max x, y, z
     return factory.createPolygon(new Coordinate[]{

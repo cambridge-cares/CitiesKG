@@ -156,7 +156,6 @@ public class DistanceAgentTest extends TestCase {
         DistanceAgent distanceAgent = new DistanceAgent();
 
         EnvelopeType.setSourceCrsName("EPSG:24500");
-        EnvelopeType.setMetricCrsName("EPSG:24500");
 
         // test distance calculation without CRS conversion.
         String envelopeString1 = "1#1#0#1#2#0#2#2#0#2#1#0#1#1#0";
@@ -165,7 +164,7 @@ public class DistanceAgentTest extends TestCase {
         String envelopeString2 = "1#2#1#1#3#1#2#3#1#2#2#1#1#2#1";
         EnvelopeType envelope2 =  new EnvelopeType(envelopeString2, "POLYGON-3-15");
 
-        assertEquals(1.4142135623730951, distanceAgent.computeDistance(envelope1, envelope2));
+        assertEquals(1.4141411791908234, distanceAgent.computeDistance(envelope1, envelope2));
 
         // test distance calculation with CRS conversion.
         EnvelopeType.setSourceCrsName("EPSG:3414");

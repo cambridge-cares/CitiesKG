@@ -6,6 +6,7 @@ import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import uk.ac.cam.cares.twa.cities.FieldAnnotation;
 import uk.ac.cam.cares.twa.cities.Model;
 import uk.ac.cam.cares.twa.cities.ModelAnnotation;
+import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
 import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
 
 import java.net.URI;
@@ -21,12 +22,13 @@ public class TestModel extends Model {
   @Getter @Setter @FieldAnnotation("dbpediao:doubleprop") private Double doubleProp;
   @Getter @Setter @FieldAnnotation("dbpediao:uriprop") private URI uriProp;
   @Getter @Setter @FieldAnnotation("dbpediao:modelprop") private TestModel modelProp;
+  @Getter @Setter @FieldAnnotation("JPSLAND:geometryprop") private GeometryType geometryProp;
 
-  @Getter @Setter @FieldAnnotation("JPSLAND:stringprop") private String stringNullProp;
-  @Getter @Setter @FieldAnnotation("dbpediao:intprop") private Integer intNullProp;
-  @Getter @Setter @FieldAnnotation("dbpediao:doubleprop") private Double doubleNullProp;
-  @Getter @Setter @FieldAnnotation("dbpediao:uriprop") private URI uriNullProp;
-  @Getter @Setter @FieldAnnotation("dbpediao:modelprop") private TestModel modelNullProp;
+  @Getter @Setter @FieldAnnotation("JPSLAND:stringpropnull") private String stringNullProp;
+  @Getter @Setter @FieldAnnotation("dbpediao:intpropnull") private Integer intNullProp;
+  @Getter @Setter @FieldAnnotation("dbpediao:doublepropnull") private Double doubleNullProp;
+  @Getter @Setter @FieldAnnotation("dbpediao:uripropnull") private URI uriNullProp;
+  @Getter @Setter @FieldAnnotation("dbpediao:modelpropnull") private TestModel modelNullProp;
 
   @Getter @Setter @FieldAnnotation(value = "JPSLAND:backuriprop", backward = true) private URI backUriProp;
   @Getter @Setter @FieldAnnotation(value = "JPSLAND:backuripropnull", backward = true) private URI backUriPropNull;
@@ -46,22 +48,28 @@ public class TestModel extends Model {
 
   public TestModel() {
     super();
-    setIri(UUID.randomUUID().toString(), "https://eg/examplenamespace");
   }
 
   public TestModel(long seed) {
-    this();
     random = new Random(seed);
+    // Create random UUID deterministically
+    byte[] randomBytes = new byte[5];
+    random.nextBytes(randomBytes);
+    setIri(UUID.nameUUIDFromBytes(randomBytes).toString(), "https://eg/examplenamespace");
+    // Randomise in scalar properties
     stringProp = "randomString" + random.nextInt();
     intProp = random.nextInt();
     doubleProp = random.nextDouble();
     uriProp = randomUri();
     modelProp = new TestModel();
     backUriProp = randomUri();
-    forwardVector.add(3.0);
-    forwardVector.add(4.0);
-    backwardVector.add(randomUri());
-    backwardVector.add(randomUri());
+    // Randomise vector properties
+    for(int i = 0; i < 25; i++) {
+      forwardVector.add(random.nextDouble());
+      forwardVector.add(random.nextDouble());
+      backwardVector.add(randomUri());
+      backwardVector.add(randomUri());
+    }
   }
 
   private URI randomUri() {

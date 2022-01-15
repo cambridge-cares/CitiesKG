@@ -83,7 +83,7 @@ public class BlazegraphServerTask implements Runnable {
   }
 
   /**
-   * Creates path to a local Blazergaph RWStore.properties file based on the journal filename.
+   * Creates path to a local Blazergraph RWStore.properties file based on the journal filename.
    *
    * @return - properties file path
    */

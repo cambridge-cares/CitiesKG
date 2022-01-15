@@ -55,11 +55,11 @@ public abstract class Model {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ID) protected URI iri;
 
-  // SPARQL variable names, exposed so FieldInterface can parse the result rows from our queries
-  public static final String GRAPH = "graph";
-  public static final String PREDICATE = "predicate";
-  public static final String VALUE = "value";
-  public static final String DATATYPE = "dtype";
+  // SPARQL variable names
+  private static final String GRAPH = "graph";
+  private static final String PREDICATE = "predicate";
+  private static final String VALUE = "value";
+  private static final String DATATYPE = "dtype";
   // Helper constants for constructing SPARQL queries
   private static final String NOT_BLANK = "!ISBLANK";
   private static final String DATATYPE_FUN = "DATATYPE";
@@ -67,10 +67,12 @@ public abstract class Model {
   private static final String OPENP = "(";
   private static final String CLOSEP = ")";
 
+  private static final String OBJECT_NOT_FOUND_EXCEPTION_TEXT = "Object not found in database.";
+
   public static UpdateRequest updateQueue = new UpdateRequest();
   private final static HashMap<Class<?>, MetaModel> metaModelMap = new HashMap<>();
 
-  private Model cleanCopy;
+  public Model cleanCopy;
   protected final MetaModel metaModel;
 
   public Model() {
@@ -101,9 +103,10 @@ public abstract class Model {
   }
 
   public static long totalNanos = 0;
+
   public static void executeUpdates(StoreClientInterface kgClient, boolean force) {
     String updateString = updateQueue.toString();
-    if(force || updateString.length() > 100000) {
+    if (force || updateString.length() > 250000) {
       Instant start = Instant.now();
       kgClient.executeUpdate(updateString);
       totalNanos += Duration.between(start, Instant.now()).toNanos();
@@ -114,11 +117,11 @@ public abstract class Model {
    * Queues an update to overwrite all forward properties of this model in the database.
    */
   public void queueAndExecutePushForwardUpdate(StoreClientInterface kgClient) {
-    queuePushForwardUpdate();
+    queuePushUpdatesInDirection(false);
     executeUpdates(kgClient, false);
   }
 
-  public void queuePushForwardUpdate() {
+  public void queuePushUpdatesInDirection(boolean backward) {
     Node self = NodeFactory.createURI(getIri().toString());
     int varCount = 0;
     String currentGraphIri = null;
@@ -133,8 +136,7 @@ public abstract class Model {
       Node predicate = NodeFactory.createURI(key.predicate.toString());
       String graphIri = buildGraphIri(getNamespace(), key.graph);
       Node graph = NodeFactory.createURI(graphIri);
-      boolean dirty = cleanCopy == null || !field.equals(this, cleanCopy);
-      if (key.backward || !dirty)
+      if (key.backward != backward || !field.isDirty(this))
         continue;
       if (currentGraphIri == null || !currentGraphIri.equals(graphIri)) {
         currentGraphIri = graphIri;
@@ -145,18 +147,20 @@ public abstract class Model {
       }
       if (field.isList) {
         UpdateBuilder vectorDeleteQuery = new UpdateBuilder().addGraph(graph,
-            new WhereBuilder().addWhere(self, predicate, QM + VALUE));
-        vectorDeleteQueries.push( vectorDeleteQuery);
+            new WhereBuilder().addWhere(backward ? (QM + VALUE) : self, predicate, backward ? self : (QM + VALUE)));
+        vectorDeleteQueries.push(vectorDeleteQuery);
         for (Node value : field.getNodes(this))
-          currentInsertSubquery.addWhere(self, predicate, value);
+          currentInsertSubquery.addWhere(backward ? value : self, predicate, backward ? self : value);
       } else {
-        currentScalarDeleteSubquery.addWhere(self, predicate, QM + VALUE + (varCount++));
-        currentInsertSubquery.addWhere(self, predicate, field.getNode(this));
+        String valueVar = QM + VALUE + (varCount++);
+        Node valueValue = field.getNode(this);
+        currentScalarDeleteSubquery.addWhere(backward ? valueVar : self, predicate, backward ? self : valueVar);
+        currentInsertSubquery.addWhere(backward ? valueValue : self, predicate, backward ? self : valueValue);
       }
     }
     if (currentGraphIri == null) return; // nothing happened
     updateQueue.add(scalarDeleteQuery.buildDeleteWhere());
-    while(!vectorDeleteQueries.isEmpty())
+    while (!vectorDeleteQueries.isEmpty())
       updateQueue.add(vectorDeleteQueries.pop().buildDeleteWhere());
     updateQueue.add(insertQuery.build());
   }
@@ -185,6 +189,13 @@ public abstract class Model {
   }
 
   /**
+   * Instantiates a fresh instance of the model and assigns it to cleanCopy.
+   */
+  public void instantiateCleanCopy() throws InvocationTargetException, InstantiationException, IllegalAccessException {
+    cleanCopy = (Model) metaModel.constructor.newInstance();
+  }
+
+  /**
    * Populates all fields of the model instance.
    * @param kgClient                    sends the query to the right endpoint.
    * @param recursiveInstantiationDepth the number of levels into the model hierarchy below this to instantiate.
@@ -192,7 +203,7 @@ public abstract class Model {
   public void pullAll(String iriName, StoreClientInterface kgClient, int recursiveInstantiationDepth) {
     clearAll();
     try {
-      cleanCopy = (Model) metaModel.constructor.newInstance();
+      instantiateCleanCopy();
       populateFieldsInDirection(iriName, kgClient, true, recursiveInstantiationDepth);
       populateFieldsInDirection(iriName, kgClient, false, recursiveInstantiationDepth);
     } catch (InvocationTargetException | IllegalAccessException | InstantiationException e) {
@@ -217,8 +228,7 @@ public abstract class Model {
       URI graph = URI.create(row.getString(GRAPH));
       FieldInterface field = metaModel.fieldMap.get(new FieldKey(graph, predicate, backward));
       if (field != null) {
-        field.pull(this, row, kgClient, recursiveInstantiationDepth);
-        field.copy(this, cleanCopy);
+        field.put(this, row, VALUE, DATATYPE, kgClient, recursiveInstantiationDepth);
       }
     }
   }
@@ -257,13 +267,12 @@ public abstract class Model {
    * Builds query to get triples linked to a given iri.
    */
   public static Query buildPopulateQuery(String iriName, boolean backwards) {
-    SelectBuilder sb = null;
     try {
       WhereBuilder wb = new WhereBuilder()
           .addWhere(backwards ? (QM + VALUE) : NodeFactory.createURI(iriName),
               QM + PREDICATE, backwards ? NodeFactory.createURI(iriName) : (QM + VALUE))
           .addFilter(NOT_BLANK + OPENP + QM + VALUE + CLOSEP);
-      sb = new SelectBuilder()
+      SelectBuilder sb = new SelectBuilder()
           .addVar(QM + PREDICATE).addVar(QM + VALUE).addVar(QM + GRAPH).addVar(QM + DATATYPE)
           .addBind(DATATYPE_FUN + OPENP + QM + VALUE + CLOSEP, QM + DATATYPE)
           .addGraph(QM + GRAPH, wb);
@@ -271,6 +280,85 @@ public abstract class Model {
     } catch (ParseException e) {
       throw new JPSRuntimeException(e);
     }
+  }
+
+  public void populate(StoreClientInterface kgClient, int recursiveInstantiationDepth) {
+    try {
+      cleanCopy = (Model) metaModel.constructor.newInstance();
+    } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+      e.printStackTrace();
+    }
+    Node self = NodeFactory.createURI(getIri().toString());
+    int varCount = 0;
+    String currentGraphIri = null;
+    WhereBuilder currentScalarSubquery = null;
+    List<FieldInterface> scalarFields = new ArrayList<>();
+    SelectBuilder scalarQuery = new SelectBuilder();
+    Stack<FieldInterface> vectorFields = new Stack<>();
+    Stack<SelectBuilder> vectorQueries = new Stack<>();
+    try {
+      for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.fieldMap.entrySet()) {
+        FieldInterface field = entry.getValue();
+        FieldKey key = entry.getKey();
+        Node predicate = NodeFactory.createURI(key.predicate.toString());
+        String graphIri = buildGraphIri(getNamespace(), key.graph);
+        Node graph = NodeFactory.createURI(graphIri);
+        if (field.isList) {
+          vectorFields.push(field);
+          vectorQueries.push(new SelectBuilder()
+              .addVar(QM + VALUE).addVar(QM + DATATYPE)
+              .addBind(DATATYPE_FUN + OPENP + QM + VALUE + CLOSEP, QM + DATATYPE)
+              .addGraph(graph, new WhereBuilder()
+                  .addWhere(key.backward ? (QM + VALUE) : self, predicate, key.backward ? self : (QM + VALUE))));
+        } else {
+          scalarFields.add(field);
+          if (currentGraphIri == null || !currentGraphIri.equals(graphIri)) {
+            currentGraphIri = graphIri;
+            currentScalarSubquery = new WhereBuilder();
+            scalarQuery.addGraph(graph, currentScalarSubquery);
+          }
+          String indexedValue = QM + VALUE + varCount;
+          String indexedDatatype = QM + DATATYPE + varCount;
+          scalarQuery.addVar(indexedValue).addVar(indexedDatatype)
+              .addBind(DATATYPE_FUN + OPENP + indexedValue + CLOSEP, indexedDatatype);
+          currentScalarSubquery.addOptional(
+              new SelectBuilder().addWhere(key.backward ? indexedValue : self, predicate, key.backward ? self : indexedValue)
+                  .addFilter(NOT_BLANK + OPENP + indexedValue + CLOSEP));
+          varCount++;
+        }
+      }
+    } catch (ParseException e) {
+      throw new JPSRuntimeException(e);
+    }
+    // Populate scalars
+    JSONArray scalarResponse = new JSONArray(kgClient.execute(scalarQuery.buildString()));
+    if (scalarResponse.length() == 0) {
+      throw new JPSRuntimeException(OBJECT_NOT_FOUND_EXCEPTION_TEXT);
+    }
+    JSONObject row = scalarResponse.getJSONObject(0);
+    for (int i = 0; i < varCount; i++) {
+      if (row.has(VALUE + i)) {
+        scalarFields.get(i).put(this, row, VALUE + i, DATATYPE + i, kgClient, recursiveInstantiationDepth);
+      }
+    }
+    // Populate vectors
+    while (!vectorFields.empty()) {
+      FieldInterface field = vectorFields.pop();
+      JSONArray response = new JSONArray(kgClient.execute(vectorQueries.pop().buildString()));
+      for (int i = 0; i < response.length(); i++) {
+        field.put(this, response.getJSONObject(i), VALUE, DATATYPE, kgClient, recursiveInstantiationDepth);
+      }
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    for (FieldInterface field : metaModel.fieldMap.values())
+      if (!field.equals(this, o))
+        return false;
+    return true;
   }
 
 }
