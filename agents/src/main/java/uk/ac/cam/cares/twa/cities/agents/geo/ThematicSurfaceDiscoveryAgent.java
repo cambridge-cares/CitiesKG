@@ -22,7 +22,7 @@ import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
 import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.twa.cities.PrefixUtils;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
-import uk.ac.cam.cares.twa.cities.tasks.geo.ThematicisationTask;
+import uk.ac.cam.cares.twa.cities.tasks.geo.ThematicSurfaceDiscoveryTask;
 
 
 /**
@@ -131,7 +131,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
       for (int i = 0; i < buildingsResponse.length(); i++)
         buildingIris.add(buildingsResponse.getJSONObject(i).getString(BUILDING));
     }
-    executor.execute(new ThematicisationTask(buildingIris, thematiciseLod, threshold, kgClient));
+    executor.execute(new ThematicSurfaceDiscoveryTask(buildingIris, thematiciseLod, threshold, kgClient));
     return requestParams;
   }
 

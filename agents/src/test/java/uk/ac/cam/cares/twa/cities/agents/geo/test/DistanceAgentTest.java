@@ -83,7 +83,7 @@ public class DistanceAgentTest extends TestCase {
         String uri = "http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/";
 
         //test with mocked kgClient and kgRouter when it returns a string.
-        String srs = "[{'srsName': 'EPSG:3414'}]";
+        String srs = "[{'srsname': 'EPSG:3414'}]";
         when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(srs);
         try (MockedStatic<StoreRouter> kgRouterMock = Mockito.mockStatic(StoreRouter.class)) {
             kgRouterMock.when(() -> StoreRouter.getStoreClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
@@ -96,7 +96,7 @@ public class DistanceAgentTest extends TestCase {
         }
 
         //test with mocked kgClient and kgRouter when method is called to return appropriate metric srs.
-        String targetSrs = "[{'srsName': 'EPSG:3414'}]";
+        String targetSrs = "[{'srsname': 'EPSG:3414'}]";
         when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(targetSrs);
         try (MockedStatic<StoreRouter> kgRouterMock = Mockito.mockStatic(StoreRouter.class)) {
             kgRouterMock.when(() -> StoreRouter.getStoreClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
@@ -171,7 +171,7 @@ public class DistanceAgentTest extends TestCase {
         String envelopeString3 = "2.85#-1.85#0#2.85#0.15#0#4.85#0.15#0#4.85#-1.85#0#2.85#-1.85#0";
         EnvelopeType envelope3 = new EnvelopeType(envelopeString3, "POLYGON-3-15");
 
-        assertEquals(1.0034225353460755, distanceAgent.computeDistance(envelope1, envelope3));
+        assertEquals(1.0046332681755001, distanceAgent.computeDistance(envelope1, envelope3));
     }
 
     public void testGetSetDistanceQuery(){

@@ -33,13 +33,13 @@ public class SpeedTest {
   }
 
   private static long newTest(StoreClientInterface kgClient) {
-    TestModel model = new TestModel(Instant.now().getNano());
+    TestModel model = new TestModel(Instant.now().getNano(), 25, 0);
     model.queuePushUpdate(true, true);
     Model.executeUpdates(kgClient, true);
     TestModel pulledModel = new TestModel();
     pulledModel.setIri(model.getIri());
     Instant start = Instant.now();
-    pulledModel.pullOnly(kgClient, 0);
+    pulledModel.pullScalars(kgClient);
     long millis = Duration.between(start, Instant.now()).toMillis();
     model.queueDeletionUpdate();
     Model.executeUpdates(kgClient, true);
@@ -48,12 +48,13 @@ public class SpeedTest {
   }
 
   private static long oldTest(StoreClientInterface kgClient) {
-    TestModel model = new TestModel(Instant.now().getNano());
+    TestModel model = new TestModel(Instant.now().getNano(), 25, 0);
     model.queuePushUpdate(true, true);
     Model.executeUpdates(kgClient, true);
     TestModel pulledModel = new TestModel();
+    pulledModel.setIri(model.getIri());
     Instant start = Instant.now();
-    pulledModel.pullIndiscriminate(model.getIri().toString(), kgClient, 0);
+    pulledModel.pullAll(kgClient, 0);
     long millis = Duration.between(start, Instant.now()).toMillis();
     model.queueDeletionUpdate();
     Model.executeUpdates(kgClient, true);

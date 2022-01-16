@@ -23,45 +23,6 @@ import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
 
-class MetaModel {
-
-  public final String nativeGraph;
-  public final Constructor<?> constructor;
-  public final TreeMap<FieldKey, FieldInterface> fieldMap;
-  public final List<Map.Entry<FieldKey, FieldInterface>> vectorFieldList;
-  public final List<Map.Entry<FieldKey, FieldInterface>> scalarFieldList;
-
-  public MetaModel(Class<?> target) throws NoSuchMethodException, InvalidClassException {
-    constructor = target.getConstructor();
-    ModelAnnotation metadata = target.getAnnotation(ModelAnnotation.class);
-    nativeGraph = metadata.nativeGraph();
-    // Collect fields through the full inheritance hierarchy
-    Class<?> currentClass = target;
-    ArrayList<Field> fields = new ArrayList<>();
-    do {
-      fields.addAll(Arrays.asList(currentClass.getDeclaredFields()));
-      currentClass = currentClass.getSuperclass();
-    } while (currentClass != null);
-    // Build fieldMaps. Use TreeMaps because sorting makes compiled queries and updates more efficient.
-    // See queuePushUpdates and FieldKey.compareTo for more details.
-    fieldMap = new TreeMap<>();
-    TreeMap<FieldKey, FieldInterface> scalarFieldMap = new TreeMap<>();
-    TreeMap<FieldKey, FieldInterface> vectorFieldMap = new TreeMap<>();
-    for (Field field : fields) {
-      FieldAnnotation annotation = field.getAnnotation(FieldAnnotation.class);
-      if (annotation != null) {
-        FieldInterface fieldInterface = new FieldInterface(field);
-        FieldKey fieldKey = new FieldKey(annotation, nativeGraph);
-        fieldMap.put(fieldKey, fieldInterface);
-        (fieldInterface.isList ? vectorFieldMap : scalarFieldMap).put(fieldKey, fieldInterface);
-      }
-    }
-    scalarFieldList = new ArrayList<>(scalarFieldMap.entrySet());
-    vectorFieldList = new ArrayList<>(vectorFieldMap.entrySet());
-  }
-
-}
-
 public abstract class Model {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ID) protected URI iri;
@@ -81,18 +42,17 @@ public abstract class Model {
   private static final String OBJECT_NOT_FOUND_EXCEPTION_TEXT = "Object not found in database.";
 
   // Resources for batched execution of updates
-  public static UpdateRequest updateQueue = new UpdateRequest();
+  protected static UpdateRequest updateQueue = new UpdateRequest();
   public static long cumulativeUpdateExecutionNanoseconds = 0;
 
-  // Lookup for previously constructed metamodels.
+  // Lookup for previously constructed MetaModel.
   private final static HashMap<Class<?>, MetaModel> metaModelMap = new HashMap<>();
-  // The metamodel of this object, which provides FieldInterfaces for interacting with data.
+  // The MetaModel of this object, which provides FieldInterfaces for interacting with data.
   protected final MetaModel metaModel;
 
-  // A deep copy of this object generated when pulling from the database, for comparison against during updates to only
-  // submit updates for changed properties.
-  public Model cleanCopy;
-
+  // Minimised representations of the original values of fields from the last pull from the database.
+  // These are ordered in the same order as metaModel.scalarFieldList and metaModel.vectorFieldList.
+  protected Object[] originalFieldValues;
 
   public Model() {
     Class<?> thisClass = this.getClass();
@@ -107,6 +67,7 @@ public abstract class Model {
       metaModelMap.put(thisClass, metaModel);
     }
     clearAll();
+    dirtyAll();
   }
 
   /**
@@ -115,17 +76,23 @@ public abstract class Model {
   public void clearAll() {
     for (FieldInterface field : metaModel.fieldMap.values())
       field.clear(this);
+    originalFieldValues = new Object[metaModel.fieldMap.size()];
   }
 
   /**
-   * Instantiates a fresh instance of the model and assigns it to cleanCopy.
+   * Makes all fields of the model instance dirty
    */
-  public void resetCleanCopy() {
-    try {
-      cleanCopy = (Model) metaModel.constructor.newInstance();
-    } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
-      throw new JPSRuntimeException(e);
-    }
+  public void dirtyAll() {
+    // Object.class is a placeholder which != any valid return of FieldInterface.getMinimised.
+    Arrays.fill(originalFieldValues, Object.class);
+  }
+
+  /**
+   * Makes all fields of the model instance clean
+   */
+  public void cleanAll() {
+    for(FieldInterface field: metaModel.fieldMap.values())
+      originalFieldValues[field.index] = field.getMinimised(this);
   }
 
   /**
@@ -142,7 +109,7 @@ public abstract class Model {
 
   /**
    * Executes queued updates in the updateQueue
-   * @param kgClient the client to execute the updates with.
+   * @param kgClient the client to execute updates with.
    * @param force    if false, the updates will only be executed if their cumulative length is >250000 characters.
    */
   public static void executeUpdates(StoreClientInterface kgClient, boolean force) {
@@ -151,16 +118,15 @@ public abstract class Model {
       Instant start = Instant.now();
       kgClient.executeUpdate(updateString);
       cumulativeUpdateExecutionNanoseconds += Duration.between(start, Instant.now()).toNanos();
+      clearUpdateQueue();
     }
   }
 
   /**
-   * Queues an update to push all forward properties to the database, and prompts an update batch execution.
-   * @param kgClient the client to push updates with.
+   * Clears queued updates without executing.
    */
-  public void queueAndExecutePushForwardUpdate(StoreClientInterface kgClient) {
-    queuePushUpdate(true, false);
-    executeUpdates(kgClient, false);
+  public static void clearUpdateQueue() {
+    updateQueue = new UpdateRequest();
   }
 
   /**
@@ -180,8 +146,9 @@ public abstract class Model {
       FieldInterface field = entry.getValue();
       FieldKey key = entry.getKey();
       // Filter for direction and whether the field is dirty.
-      if ((!key.backward && pushForward) || (key.backward && pushBackward) || field.equals(this, cleanCopy))
-        continue;
+      boolean directionSupported = ((!key.backward && pushForward) || (key.backward && pushBackward));
+      boolean clean = Objects.equals(field.getMinimised(this), originalFieldValues[field.index]);
+      if (clean || !directionSupported) continue;
       // If the graph changes, break new subgraphs for insert and scalar delete. Sorted keys make this more efficient.
       if (graph == null || !graph.getURI().equals(buildGraphIri(key.graph))) {
         graph = NodeFactory.createURI(buildGraphIri(key.graph));
@@ -204,18 +171,9 @@ public abstract class Model {
       }
     }
     if (graph == null) return; // nothing happened
+    cleanAll();
     updateQueue.add(scalarDeleteQuery.buildDeleteWhere());
     updateQueue.add(insertQuery.build());
-  }
-
-  /**
-   * Queues an update to overwrite entirely delete this object from the database, including all triples which have its
-   * iri as subject or object, and prompts an update batch execution.
-   * @param kgClient the client to push updates with.
-   */
-  public void queueAndExecuteDeletionUpdate(StoreClientInterface kgClient) {
-    queueDeletionUpdate();
-    executeUpdates(kgClient, false);
   }
 
   /**
@@ -226,28 +184,31 @@ public abstract class Model {
     Node self = NodeFactory.createURI(getIri().toString());
     updateQueue.add(new UpdateBuilder().addWhere(QM + VALUE, QM + PREDICATE, self).buildDeleteWhere());
     updateQueue.add(new UpdateBuilder().addWhere(self, QM + PREDICATE, QM + VALUE).buildDeleteWhere());
+    dirtyAll();
   }
 
   /**
-   * Populates all fields of the model instance.
-   * @param kgClient                    sends the query to the right endpoint.
+   * Populates all fields of the model instance with values from the database.
+   * @param kgClient                    the client to execute queries with.
    * @param recursiveInstantiationDepth the number of levels into the model hierarchy below this to instantiate.
    */
-  public void pullIndiscriminate(String iriName, StoreClientInterface kgClient, int recursiveInstantiationDepth) {
+  public void pullAll(StoreClientInterface kgClient, int recursiveInstantiationDepth) {
+    URI iri = getIri();
     clearAll();
-    resetCleanCopy();
-    pullIndiscriminateInDirection(iriName, kgClient, true, recursiveInstantiationDepth);
-    pullIndiscriminateInDirection(iriName, kgClient, false, recursiveInstantiationDepth);
+    setIri(iri);
+    pullAllInDirection(kgClient, true, recursiveInstantiationDepth);
+    pullAllInDirection(kgClient, false, recursiveInstantiationDepth);
+    cleanAll();
   }
 
   /**
-   * Populates all fields of a CityGML model instance in one direction
-   * @param kgClient                    sends the query to the right endpoint.
+   * Populates all fields in one direction with values from the database.
+   * @param kgClient                    the client to execute queries with.
    * @param backward                    whether iriName is the object or subject in the rows retrieved.
    * @param recursiveInstantiationDepth the number of levels into the model hierarchy below this to instantiate.
    */
-  private void pullIndiscriminateInDirection(String iriName, StoreClientInterface kgClient, boolean backward, int recursiveInstantiationDepth) {
-    Query q = buildPullIndiscriminateInDirectionQuery(iriName, backward);
+  private void pullAllInDirection(StoreClientInterface kgClient, boolean backward, int recursiveInstantiationDepth) {
+    Query q = buildPullAllInDirectionQuery(getIri().toString(), backward);
     String queryResultString = kgClient.execute(q.toString());
     JSONArray queryResult = new JSONArray(queryResultString);
     for (int index = 0; index < queryResult.length(); index++) {
@@ -257,18 +218,17 @@ public abstract class Model {
         String valueString = row.getString(VALUE);
         String datatypeString = row.optString(DATATYPE);
         field.put(this, valueString, datatypeString, kgClient, recursiveInstantiationDepth);
-        field.put(cleanCopy, valueString, datatypeString, kgClient, recursiveInstantiationDepth);
       }
     }
   }
 
   /**
    * Composes a query to pull all triples relating to this Model instance
-   * @param iriName the iri from which to pull data.
-   * @param backwards whether to query quadds with iriName as the object (true) or subject (false).
+   * @param iriName   the iri from which to pull data.
+   * @param backwards whether to query quads with iriName as the object (true) or subject (false).
    * @return the composed query.
    */
-  public static Query buildPullIndiscriminateInDirectionQuery(String iriName, boolean backwards) {
+  public static Query buildPullAllInDirectionQuery(String iriName, boolean backwards) {
     try {
       WhereBuilder wb = new WhereBuilder()
           .addWhere(backwards ? (QM + VALUE) : NodeFactory.createURI(iriName),
@@ -284,9 +244,11 @@ public abstract class Model {
     }
   }
 
-  public void pullOnly(StoreClientInterface kgClient, int recursiveInstantiationDepth) {
-    resetCleanCopy();
-    // Populate scalars
+  /**
+   * Populates all scalar fields with values from the database.
+   * @param kgClient the client to execute queries with.
+   */
+  public void pullScalars(StoreClientInterface kgClient) {
     JSONArray scalarResponse = new JSONArray(kgClient.execute(buildScalarsQuery().buildString()));
     if (scalarResponse.length() == 0) {
       throw new JPSRuntimeException(OBJECT_NOT_FOUND_EXCEPTION_TEXT);
@@ -295,22 +257,8 @@ public abstract class Model {
     for (int i = 0; i < metaModel.scalarFieldList.size(); i++) {
       if (row.has(VALUE + i)) {
         FieldInterface field = metaModel.scalarFieldList.get(i).getValue();
-        String valueString = row.getString(VALUE + i);
-        String dtypeString = row.optString(DATATYPE + i);
-        field.put(this, valueString, dtypeString, kgClient, recursiveInstantiationDepth);
-        field.put(cleanCopy, valueString, dtypeString, kgClient, recursiveInstantiationDepth);
-      }
-    }
-    // Populate vectors
-    for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.vectorFieldList) {
-      JSONArray response = new JSONArray(kgClient.execute(buildVectorQuery(entry.getKey()).buildString()));
-      for (int i = 0; i < response.length(); i++) {
-        row = response.getJSONObject(i);
-        FieldInterface field = metaModel.scalarFieldList.get(i).getValue();
-        String valueString = row.getString(VALUE);
-        String datatypeString = row.optString(DATATYPE);
-        field.put(this, valueString, datatypeString, kgClient, recursiveInstantiationDepth);
-        field.put(cleanCopy, valueString, datatypeString, kgClient, recursiveInstantiationDepth);
+        field.put(this, row.getString(VALUE + i), row.optString(DATATYPE + i), kgClient, 0);
+        originalFieldValues[field.index] = field.getMinimised(this);
       }
     }
   }
@@ -350,6 +298,26 @@ public abstract class Model {
   }
 
   /**
+   * Populates the named vector fields with values from the database.
+   * @param fieldNames the list of vector field names to be populated.
+   * @param kgClient the client to execute queries with.
+   */
+  public void pullVector(List<String> fieldNames, StoreClientInterface kgClient) {
+    // Populate vectors
+    for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.vectorFieldList) {
+      if (fieldNames.contains(entry.getValue().field.getName())) {
+        FieldInterface field = entry.getValue();
+        JSONArray response = new JSONArray(kgClient.execute(buildVectorQuery(entry.getKey()).buildString()));
+        for (int i = 0; i < response.length(); i++) {
+          JSONObject row = response.getJSONObject(i);
+          field.put(this, row.getString(VALUE), row.optString(DATATYPE), kgClient, 0);
+        }
+        originalFieldValues[field.index] = field.getMinimised(this);
+      }
+    }
+  }
+
+  /**
    * Composes a query for all matches of a property specification described by a FieldKey, for this Model instance.
    * @param key the FieldKey describing the property to be queried.
    * @return the composed query.
@@ -385,19 +353,19 @@ public abstract class Model {
   }
 
   /**
-   * Returns the namespace an iri is in, including a trailing slash
-   * @param iriName object id
-   * @return namespace as string
+   * Returns the namespace an iri is in, including a trailing slash.
+   * @param iri object iri.
+   * @return namespace as string.
    */
-  public static String getNamespace(String iriName) {
+  public static String getNamespace(String iri) {
     // Note that a trailing slash is automatically ignored, i.e. .../abc/ will split with a last element "abc".
-    String[] splitUri = iriName.split("/");
+    String[] splitUri = iri.split("/");
     return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 2)) + "/";
   }
 
   /**
-   * Returns the namespace of a model, including a trailing slash
-   * @return namespace as string
+   * Returns the namespace of a model, including a trailing slash.
+   * @return namespace as string.
    */
   public String getNamespace() {
     return getNamespace(getIri().toString());

@@ -13,6 +13,9 @@ import uk.ac.cam.cares.twa.cities.models.geo.test.TestModel;
 import java.io.InvalidClassException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -30,27 +33,25 @@ public class FieldInterfaceTest extends TestCase {
   @Mock
   StoreClientInterface kgClient;
 
-  public FieldInterfaceTest() throws InvocationTargetException, InstantiationException, IllegalAccessException {
-    model1.resetCleanCopy();
-    model2.resetCleanCopy();
-  }
-
   public void testIntegerInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
     this.testScalarInterface("intProp", TestModel::setIntProp, TestModel::getIntProp,
-        "1", "http://www.w3.org/2001/XMLSchema#integer", 1, 2, NodeFactory.createLiteral(String.valueOf(2), XSDDatatype.XSDinteger));
+        "1", "http://www.w3.org/2001/XMLSchema#integer", 1, 2,
+        NodeFactory.createLiteral(String.valueOf(2), XSDDatatype.XSDinteger), 2);
   }
 
   public void testDoubleInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
     this.testScalarInterface("doubleProp", TestModel::setDoubleProp, TestModel::getDoubleProp,
-        "3.14", "http://www.w3.org/2001/XMLSchema#double", 3.14, 5.1167, NodeFactory.createLiteral("5.1167", XSDDatatype.XSDdouble));
+        "3.14", "http://www.w3.org/2001/XMLSchema#double", 3.14, 5.1167,
+        NodeFactory.createLiteral("5.1167", XSDDatatype.XSDdouble), 5.1167);
   }
 
   public void testStringInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
     this.testScalarInterface("stringProp", TestModel::setStringProp, TestModel::getStringProp,
-        "teststring", "http://www.w3.org/2001/XMLSchema#string", "teststring", "test2", NodeFactory.createLiteral("test2", XSDDatatype.XSDstring));
+        "teststring", "http://www.w3.org/2001/XMLSchema#string", "teststring", "test2",
+        NodeFactory.createLiteral("test2", XSDDatatype.XSDstring), "test2");
   }
 
   public void testUriInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
@@ -58,7 +59,7 @@ public class FieldInterfaceTest extends TestCase {
     this.testScalarInterface("uriProp", TestModel::setUriProp, TestModel::getUriProp,
         "https://example.com/testuri", "",
         URI.create("https://example.com/testuri"), URI.create("http://example.com/uri2"),
-        NodeFactory.createURI("http://example.com/uri2"));
+        NodeFactory.createURI("http://example.com/uri2"), "http://example.com/uri2");
   }
 
   public void testModelInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
@@ -68,13 +69,13 @@ public class FieldInterfaceTest extends TestCase {
     TestModel secondModel = new TestModel();
     secondModel.setIri(URI.create("http://example.com/model2"));
     this.testScalarInterface("modelProp", TestModel::setModelProp, TestModel::getModelProp,
-        "http://example.com/testmodel", "", dataModel, secondModel, NodeFactory.createURI("http://example.com/model2"));
+        "http://example.com/testmodel", "", dataModel, secondModel,
+        NodeFactory.createURI("http://example.com/model2"), "http://example.com/model2");
   }
 
   public void testDatatypeModelInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
-    JSONObject row = new JSONObject();
-    GeometryType rowGeometryType = new GeometryType(
+    GeometryType dataGeometryType = new GeometryType(
         "1.0#1.0#3.0#1.0#2.0#3.0#2.0#2.0#3.0#2.0#1.0#3.0#1.0#1.0#1.0",
         "http://localhost/blazegraph/literals/POLYGON-3-15");
     GeometryType secondGeometryType = new GeometryType(
@@ -83,15 +84,16 @@ public class FieldInterfaceTest extends TestCase {
     this.testScalarInterface("geometryProp", TestModel::setGeometryProp, TestModel::getGeometryProp,
         "1.0#1.0#3.0#1.0#2.0#3.0#2.0#2.0#3.0#2.0#1.0#3.0#1.0#1.0#1.0",
         "http://localhost/blazegraph/literals/POLYGON-3-15",
-        rowGeometryType, secondGeometryType, secondGeometryType.getNode());
+        dataGeometryType, secondGeometryType, secondGeometryType.getNode(),
+        "\"1.0#1.0#3.0#1.0#2.0#3.0#2.0#2.0#3.0#2.0#1.0#3.0#1.0#1.0#1.0#1.0#1.0#3.0\"^^http://localhost/blazegraph/literals/POLYGON-3-18");
   }
 
   private <T> void testScalarInterface(
       String fieldName, BiConsumer<TestModel, T> directSetter, Function<TestModel, T> directGetter,
-      String valueString, String datatypeString, T dataValue, T secondValue, Node secondValueNode)
+      String valueString, String datatypeString, T dataValue, T secondValue, Node secondValueNode, Object secondValueMinimised)
       throws NoSuchFieldException, InvalidClassException, NoSuchMethodException {
-    FieldInterface field = new FieldInterface(TestModel.class.getDeclaredField(fieldName));
-    // Test writing JSON data to model field; this does not dirty the field
+    FieldInterface field = new FieldInterface(TestModel.class.getDeclaredField(fieldName), 0);
+    // Test putting
     field.put(model1, valueString, datatypeString, kgClient, 0);
     assertEquals(dataValue, directGetter.apply(model1));
     // Test equality checks
@@ -111,25 +113,37 @@ public class FieldInterfaceTest extends TestCase {
     directSetter.accept(model2, secondValue);
     assertEquals(secondValueNode, field.getNode(model2));
     assertTrue(field.getNode(model1).isBlank());
+    // Test minimisation
+    assertEquals(secondValueMinimised, field.getMinimised(model2));
+    assertNull(field.getMinimised(model1));
   }
 
   public void testVectorInterface() throws NoSuchFieldException, InvalidClassException, NoSuchMethodException {
-    FieldInterface field = new FieldInterface(TestModel.class.getDeclaredField("forwardVector"));
-    // Test data insertion from null
+    FieldInterface field = new FieldInterface(TestModel.class.getDeclaredField("forwardVector"), 0);
+    // Test putting
     assertEquals(0, model1.getForwardVector().size());
     assertTrue(field.equals(model1, model2));
     field.put(model1, "1.32", "http://www.w3.org/2001/XMLSchema#double", kgClient, 0);
     assertEquals(1, model1.getForwardVector().size());
     assertEquals(1.32, model1.getForwardVector().get(0));
     assertFalse(field.equals(model1, model2));
-    // Test modification dirties field
-    model1.getForwardVector().add(5.32);
     // Test getting nodes
+    model1.getForwardVector().add(5.32);
     assertArrayEquals(new Node[]{
         NodeFactory.createLiteral("1.32", XSDDatatype.XSDdouble),
         NodeFactory.createLiteral("5.32", XSDDatatype.XSDdouble)
     }, field.getNodes(model1));
     assertArrayEquals(new Node[0], field.getNodes(model2));
+    // Test minimisation
+    Set<Double> minimisedModel1 = new HashSet<>();
+    minimisedModel1.add(1.32);
+    minimisedModel1.add(5.32);
+    assertEquals(minimisedModel1, field.getMinimised(model1));
+    assertEquals(new HashSet<>(), field.getMinimised(model2));
+    // Test equals
+    assertTrue(field.equals(model1, model1));
+    assertTrue(field.equals(model2, model2));
+    assertFalse(field.equals(model1, model2));
     // Test clear
     field.clear(model1);
     assertArrayEquals(new Node[0], field.getNodes(model1));

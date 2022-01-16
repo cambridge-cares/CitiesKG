@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -271,7 +272,8 @@ public class DistanceAgent extends JPSAgent {
   public EnvelopeType getEnvelope(String uriString, String coordinateSystem) {
     GeometryType.setSourceCrsName(coordinateSystem);
     CityObject cityObject = new CityObject();
-    cityObject.pullIndiscriminate(uriString, kgClient, 0);
+    cityObject.setIri(URI.create(uriString));
+    cityObject.pullAll(kgClient, 0);
     return cityObject.getEnvelopeType();
   }
 

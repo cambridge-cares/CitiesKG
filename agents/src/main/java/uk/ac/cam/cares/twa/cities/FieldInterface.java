@@ -3,7 +3,6 @@ package uk.ac.cam.cares.twa.cities;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
 
@@ -12,38 +11,48 @@ import java.lang.reflect.*;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
-
-@FunctionalInterface
-interface Parser {
-  Object parse(String value, String datatype, StoreClientInterface kgClient, int recursiveInstantiationDepth) throws Exception;
-}
-
-@FunctionalInterface
-interface Putter {
-  void consume(Object object, Object value) throws Exception;
-}
-
-@FunctionalInterface
-interface NodeGetter {
-  Node get(Object object) throws Exception;
-}
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class FieldInterface {
+
+  @FunctionalInterface
+  interface Parser {
+    Object parse(String value, String datatype, StoreClientInterface kgClient, int recursiveInstantiationDepth) throws Exception;
+  }
+
+  @FunctionalInterface
+  interface Putter {
+    void consume(Object object, Object value) throws Exception;
+  }
+
+  @FunctionalInterface
+  interface NodeGetter {
+    Node get(Object object) throws Exception;
+  }
+
   public final boolean isList;
+  public final int index;
   // Access for the field itself
   public final Field field;
   public final Method getter;
   public final Method setter;
+
   // Functions for consuming updates from the database
   private final Parser parser;
   private final Putter putter;
-  // Function for generating literal nodes to push to the database
+  // Function to generate minimal representation that can be used to check Node equality. Note this is different from
+  // the equals function because we only consider the data that goes into the SPARQL update Node, i.e. only IRI for
+  // models. Conceptually, this is similar to a hash: return values are cached by Model to track dirty fields.
+  private final Function<Object, Object> minimiser;
+  // Function for generating literal Nodes to push to the database;
   private final NodeGetter nodeGetter;
   // List-only methods
   private final Constructor<?> listConstructor;
 
-  public FieldInterface(Field field) throws NoSuchMethodException, InvalidClassException {
+  public FieldInterface(Field field, int index) throws NoSuchMethodException, InvalidClassException {
     this.field = field;
+    this.index = index;
     // Determine characteristics of field
     Class<?> parentType = field.getDeclaringClass();
     Class<?> outerType = field.getType();
@@ -59,34 +68,42 @@ public class FieldInterface {
       Constructor<?> constructor = innerType.getConstructor();
       parser = (String value, String datatype, StoreClientInterface kgClient, int recursiveInstantiationDepth) -> {
         Model model = (Model) constructor.newInstance();
-        if (recursiveInstantiationDepth > 0)
-          model.pullIndiscriminate(value, kgClient, recursiveInstantiationDepth - 1);
-        else
+        if (recursiveInstantiationDepth > 0) {
           model.setIri(URI.create(value));
+          model.pullAll(kgClient, recursiveInstantiationDepth - 1);
+        }else {
+          model.setIri(URI.create(value));
+        }
         return model;
       };
       nodeGetter = (Object value) -> {
         URI iri = ((Model) value).getIri();
         return iri == null ? NodeFactory.createBlankNode() : NodeFactory.createURI(iri.toString());
       };
-    } else if (innerType == Integer.class) {
-      parser = (String value, String datatype, StoreClientInterface kgc, int rid) -> Integer.valueOf(value);
-      nodeGetter = (Object value) -> NodeFactory.createLiteral(String.valueOf((int) value), XSDDatatype.XSDinteger);
-    } else if (innerType == Double.class) {
-      parser = (String value, String datatype, StoreClientInterface kgc, int rid) -> Double.valueOf(value);
-      nodeGetter = (Object value) -> NodeFactory.createLiteral(String.valueOf((double) value), XSDDatatype.XSDdouble);
-    } else if (innerType == String.class) {
-      parser = (String value, String datatype, StoreClientInterface kgc, int rid) -> value;
-      nodeGetter = (Object value) -> NodeFactory.createLiteral((String) value, XSDDatatype.XSDstring);
+      minimiser = (Object value) -> ((Model)value).getIri().toString();
     } else if (innerType == URI.class) {
       parser = (String value, String datatype, StoreClientInterface kgc, int rid) -> URI.create(value);
       nodeGetter = (Object value) -> NodeFactory.createURI(value.toString());
+      minimiser = Object::toString;
     } else if (DatatypeModel.class.isAssignableFrom(innerType)) {
       Constructor<?> constructor = innerType.getConstructor(String.class, String.class);
       parser = (String value, String datatype, StoreClientInterface kgc, int rid) -> constructor.newInstance(value, datatype);
       nodeGetter = (Object value) -> ((DatatypeModel) value).getNode();
+      minimiser = (Object value) -> ((DatatypeModel) value).getNode().toString();
     } else {
-      throw new InvalidClassException(innerType.toString());
+      minimiser = (Object value) -> value;
+      if (innerType == Integer.class) {
+        parser = (String value, String datatype, StoreClientInterface kgc, int rid) -> Integer.valueOf(value);
+        nodeGetter = (Object value) -> NodeFactory.createLiteral(String.valueOf((int) value), XSDDatatype.XSDinteger);
+      } else if (innerType == Double.class) {
+        parser = (String value, String datatype, StoreClientInterface kgc, int rid) -> Double.valueOf(value);
+        nodeGetter = (Object value) -> NodeFactory.createLiteral(String.valueOf((double) value), XSDDatatype.XSDdouble);
+      } else if (innerType == String.class) {
+        parser = (String value, String datatype, StoreClientInterface kgc, int rid) -> value;
+        nodeGetter = (Object value) -> NodeFactory.createLiteral((String) value, XSDDatatype.XSDstring);
+      } else {
+        throw new InvalidClassException(innerType.toString());
+      }
     }
     // Generate pusher
     if (isList) {
@@ -119,25 +136,6 @@ public class FieldInterface {
   }
 
   /**
-   * Determines if two objects have the same value in this field, by value (<code>.equals</code>), not reference
-   * (<code>==</code>) equality.
-   * @param o1 the first object.
-   * @param o2 the second object.
-   * @return whether the objects have the same value in this field.
-   */
-  public boolean equals(Object o1, Object o2) {
-    if (o1 == o2) return true;
-    if (o2 == null) return false;
-    try {
-      Object value1 = getter.invoke(o1);
-      Object value2 = getter.invoke(o2);
-      return Objects.equals(value1, value2);
-    } catch (IllegalAccessException | InvocationTargetException e) {
-      throw new JPSRuntimeException(e);
-    }
-  }
-
-  /**
    * Overwrites the existing value of a field with a default value. For a scalar field, this is <code>null</code>. For
    * a vector field, this is an empty ArrayList.
    * @param object the object for which to clear this field.
@@ -148,6 +146,41 @@ public class FieldInterface {
     } catch (Exception e) {
       throw new JPSRuntimeException(e);
     }
+  }
+
+  /**
+   * Gets a minimised representation of the value of this field that can be used with equals() to check equality on a
+   * database representation level, which is value equality but with caveats: only iri is considered for models, and
+   * order is ignored for vector fields.
+   * @param object the object from which to read and minimise the field value.
+   * @return the minimised representation.
+   */
+  public Object getMinimised(Object object) {
+    try {
+      Object value = getter.invoke(object);
+      if(isList) {
+        // Use a list instead of an array since the List<?>.equals does element-by-element comparison.
+        return ((List<?>)value).stream().map(
+            (obj) -> obj == null ? null : minimiser.apply(obj)
+        ).collect(Collectors.toSet());
+      } else {
+        return value == null ? null : minimiser.apply(value);
+      }
+    } catch (IllegalStateException | InvocationTargetException | IllegalAccessException e) {
+      throw new JPSRuntimeException(e);
+    }
+  }
+
+  /**
+   * Determines if two objects have equal values in this field on a database representation level. This is value
+   * equality with the caveats: only iri is considered for models, and order is ignored for vector fields. Internally
+   * uses getMinimised.
+   * @param o1 the first object to compare.
+   * @param o2 the second object to compare.
+   * @return whether they are equal on a database representation level.
+   */
+  public boolean equals(Object o1, Object o2) {
+    return Objects.equals(getMinimised(o1), getMinimised(o2));
   }
 
   /**

@@ -2,8 +2,10 @@ package uk.ac.cam.cares.twa.cities.models.geo.test;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.jena.update.UpdateRequest;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import uk.ac.cam.cares.twa.cities.FieldAnnotation;
+import uk.ac.cam.cares.twa.cities.MetaModel;
 import uk.ac.cam.cares.twa.cities.Model;
 import uk.ac.cam.cares.twa.cities.ModelAnnotation;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
@@ -40,9 +42,9 @@ public class TestModel extends Model {
   @Getter @Setter @FieldAnnotation(value = "dbpediao:graphtest3b", graphName = "graph3") private Double graphTest3b;
   @Getter @Setter @FieldAnnotation(value = "dbpediao:graphtest3c", graphName = "graph3") private Double graphTest3c;
 
-  @Getter @Setter @FieldAnnotation(value = "dbpediao:forwardvector", innerType=Double.class) private ArrayList<Double> forwardVector;
-  @Getter @Setter @FieldAnnotation(value = "dbpediao:emptyforwardvector", innerType=Double.class) private ArrayList<Double> emptyForwardVector;
-  @Getter @Setter @FieldAnnotation(value = "dbpediao:backwardVector", backward = true, innerType=URI.class) private ArrayList<URI> backwardVector;
+  @Getter @Setter @FieldAnnotation(value = "dbpediao:forwardvector", innerType = Double.class) private ArrayList<Double> forwardVector;
+  @Getter @Setter @FieldAnnotation(value = "dbpediao:emptyforwardvector", innerType = Double.class) private ArrayList<Double> emptyForwardVector;
+  @Getter @Setter @FieldAnnotation(value = "dbpediao:backwardVector", backward = true, innerType = URI.class) private ArrayList<URI> backwardVector;
 
   private Random random;
 
@@ -50,7 +52,7 @@ public class TestModel extends Model {
     super();
   }
 
-  public TestModel(long seed) {
+  public TestModel(long seed, int vectorSize, int recursiveDepth) {
     random = new Random(seed);
     // Create random UUID deterministically
     byte[] randomBytes = new byte[5];
@@ -61,13 +63,11 @@ public class TestModel extends Model {
     intProp = random.nextInt();
     doubleProp = random.nextDouble();
     uriProp = randomUri();
-    modelProp = new TestModel();
+    modelProp = recursiveDepth > 0 ? new TestModel(random.nextLong(), vectorSize, recursiveDepth - 1) : null;
     backUriProp = randomUri();
     // Randomise vector properties
-    for(int i = 0; i < 25; i++) {
+    for (int i = 0; i < vectorSize; i++) {
       forwardVector.add(random.nextDouble());
-      forwardVector.add(random.nextDouble());
-      backwardVector.add(randomUri());
       backwardVector.add(randomUri());
     }
   }
@@ -75,5 +75,15 @@ public class TestModel extends Model {
   private URI randomUri() {
     return URI.create(getNamespace() + "testmodels/model" + random.nextInt());
   }
+
+  public MetaModel getMetaModel() {
+    return metaModel;
+  }
+
+  public Object[] getOriginalFieldValues() { return originalFieldValues; }
+
+  public static UpdateRequest getUpdateQueue() { return updateQueue; }
+
+  public static String getUpdateQueueString() { return updateQueue.toString(); }
 
 }

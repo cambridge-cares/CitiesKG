@@ -6,14 +6,16 @@ import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
 import uk.ac.cam.cares.twa.cities.Model;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
 
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class ThematicisationTask implements Runnable {
+public class ThematicSurfaceDiscoveryTask implements Runnable {
 
   private static final String UPDATING_PERSON = "ThematicSurfaceDiscoveryAgent";
   private static final String MALFORMED_SURFACE_GEOMETRY_EXCEPTION_TEXT =
@@ -26,7 +28,7 @@ public class ThematicisationTask implements Runnable {
   private final double threshold;
   private final Queue<Consumer<Boolean>> deferredPostprocessTasks;
 
-  public ThematicisationTask(List<String> buildingIris, boolean[] thematiciseLod, double threshold, StoreClientInterface kgClient) {
+  public ThematicSurfaceDiscoveryTask(List<String> buildingIris, boolean[] thematiciseLod, double threshold, StoreClientInterface kgClient) {
     this.kgClient = kgClient;
     this.buildingIris = buildingIris;
     this.thematiciseLod = thematiciseLod;
@@ -54,12 +56,12 @@ public class ThematicisationTask implements Runnable {
   private int thematiciseBuilding(String buildingIri) {
     // Load building
     Building building = new Building();
-    building.pullIndiscriminate(buildingIri, kgClient, 0);
+    building.setIri(URI.create(buildingIri));
+    building.pullAll(kgClient, 0);
     int subFlipBalance = 0;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
       if (thematiciseLod[i])
         subFlipBalance += thematiciseLodMultiSurface(building, i + 1);
-    }
     return subFlipBalance;
   }
 
@@ -92,7 +94,7 @@ public class ThematicisationTask implements Runnable {
     if (root == null) return 0;
     Model.cumulativeUpdateExecutionNanoseconds = 0;
     Instant start = Instant.now();
-    root.pullIndiscriminate(root.getIri().toString(), kgClient, 99);
+    root.pullAll(kgClient, 99);
     // Sort into thematic surfaces
     List<List<SurfaceGeometry>> topLevelThematicGeometries = Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     List<List<SurfaceGeometry>> bottomLevelThematicGeometries = Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
@@ -165,12 +167,19 @@ public class ThematicisationTask implements Runnable {
           geometry.setCityObjectId(thematicSurface.getIri());
         }
         // Push updates
-        thematicSurface.queueAndExecutePushForwardUpdate(kgClient);
-        tsCityObject.queueAndExecutePushForwardUpdate(kgClient);
-        for (SurfaceGeometry geometry : allDescendantGeometries) geometry.queueAndExecutePushForwardUpdate(kgClient);
+        thematicSurface.queuePushUpdate(true, false);
+        tsCityObject.queuePushUpdate(true, false);
+        Model.executeUpdates(kgClient, false);
+        for (SurfaceGeometry geometry : allDescendantGeometries) {
+          geometry.queuePushUpdate(true, false);
+          Model.executeUpdates(kgClient, false);
+        }
       }
     }
-    for (SurfaceGeometry geometry : mixedGeometries) geometry.queueAndExecuteDeletionUpdate(kgClient);
+    for (SurfaceGeometry geometry : mixedGeometries) {
+      geometry.queueDeletionUpdate();
+      Model.executeUpdates(kgClient, false);
+    }
     Model.executeUpdates(kgClient, true);
   }
 
