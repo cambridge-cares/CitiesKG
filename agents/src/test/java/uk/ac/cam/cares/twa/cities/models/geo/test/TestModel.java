@@ -76,14 +76,4 @@ public class TestModel extends Model {
     return URI.create(getNamespace() + "testmodels/model" + random.nextInt());
   }
 
-  public MetaModel getMetaModel() {
-    return metaModel;
-  }
-
-  public Object[] getOriginalFieldValues() { return originalFieldValues; }
-
-  public static UpdateRequest getUpdateQueue() { return updateQueue; }
-
-  public static String getUpdateQueueString() { return updateQueue.toString(); }
-
 }

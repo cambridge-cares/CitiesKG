@@ -1,14 +1,17 @@
 package uk.ac.cam.cares.twa.cities.models.geo.test;
 
 import junit.framework.TestCase;
+import org.apache.jena.update.UpdateRequest;
 import org.json.JSONArray;
 import org.mockito.Mockito;
 import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
 import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.twa.cities.FieldInterface;
 import uk.ac.cam.cares.twa.cities.FieldKey;
+import uk.ac.cam.cares.twa.cities.MetaModel;
 import uk.ac.cam.cares.twa.cities.Model;
 
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,6 +23,16 @@ public class ModelTest extends TestCase {
 
   private final StoreClientInterface kgClient = new RemoteStoreClient("http://localhost:9999/blazegraph/namespace/test/sparql", "http://localhost:9999/blazegraph/namespace/test/sparql");
   private final RemoteStoreClient dummyClient = Mockito.mock(RemoteStoreClient.class);
+
+  private final Field metaModel;
+  private final Field updateQueue;
+
+  public ModelTest() throws NoSuchFieldException {
+    metaModel = Model.class.getDeclaredField("metaModel");
+    metaModel.setAccessible(true);
+    updateQueue = Model.class.getDeclaredField("updateQueue");
+    updateQueue.setAccessible(true);
+  }
 
   private TestModel clearDatabaseAndPushModel() {
     kgClient.executeUpdate("CLEAR ALL");
@@ -35,19 +48,21 @@ public class ModelTest extends TestCase {
     return response.getJSONObject(0).getInt("count");
   }
 
-  public void testModelInitialisation() {
+  public void testModelInitialisation() throws IllegalAccessException, NoSuchFieldException {
     TestModel freshModel = new TestModel();
     // Check scalars initialise to null and vectors initialise to empty lists
     assertEquals(new ArrayList<>(), freshModel.getForwardVector());
     assertNull(freshModel.getIntProp());
     assertNull(freshModel.getModelProp());
     // Check that the "original field values" are not equal to the default values (dirty on ex nihilo initialisation).
-    FieldInterface exampleScalarField = freshModel.getMetaModel().scalarFieldList.get(0).getValue();
-    FieldInterface exampleVectorField = freshModel.getMetaModel().scalarFieldList.get(0).getValue();
+    FieldInterface exampleScalarField = ((MetaModel)metaModel.get(freshModel)).scalarFieldList.get(0).getValue();
+    FieldInterface exampleVectorField = ((MetaModel)metaModel.get(freshModel)).scalarFieldList.get(0).getValue();
+    Field originalFieldValues = Model.class.getDeclaredField("originalFieldValues");
+    originalFieldValues.setAccessible(true);
     assertNotEquals(exampleScalarField.getMinimised(freshModel),
-        freshModel.getOriginalFieldValues()[exampleScalarField.index]);
+        ((Object[])originalFieldValues.get(freshModel))[exampleScalarField.index]);
     assertNotEquals(exampleVectorField.getMinimised(freshModel),
-        freshModel.getOriginalFieldValues()[exampleVectorField.index]);
+        ((Object[])originalFieldValues.get(freshModel))[exampleVectorField.index]);
   }
 
   public void testClearAll() {
@@ -58,65 +73,65 @@ public class ModelTest extends TestCase {
     assertEquals(blankModel, nonBlankModel);
   }
 
-  public void testCleanAll() {
+  public void testCleanAll() throws IllegalAccessException {
     // Baseline: new models are dirty.
     Model.clearUpdateQueue();
     Model testModel = new TestModel(2345, 4, 0);
     testModel.queuePushUpdate(true, true);
-    assertNotEquals("", TestModel.getUpdateQueueString());
+    assertNotEquals("", updateQueue.get(null).toString());
     Model.clearUpdateQueue();
     // A cleaned new model does not push updates.
     testModel = new TestModel(2345, 4, 0);
     testModel.cleanAll();
     testModel.queuePushUpdate(true, true);
-    assertEquals("", TestModel.getUpdateQueueString());
+    assertEquals("", updateQueue.get(null).toString());
     Model.clearUpdateQueue();
   }
 
-  public void testDirtyAll() {
+  public void testDirtyAll() throws IllegalAccessException {
     TestModel testModel = new TestModel(2345, 4, 0);
     testModel.cleanAll();
     testModel.queuePushUpdate(true, true);
-    assertEquals("", TestModel.getUpdateQueueString());
+    assertEquals("", updateQueue.get(null).toString());
     testModel.dirtyAll();
     testModel.queuePushUpdate(true, true);
-    String updateString = TestModel.getUpdateQueueString();
+    String updateString = updateQueue.get(null).toString();
     assertNotEquals("", updateString);
-    for (FieldKey key : testModel.getMetaModel().fieldMap.keySet()) {
+    for (FieldKey key : ((MetaModel)metaModel.get(testModel)).fieldMap.keySet()) {
       assertTrue(updateString.contains(key.predicate));
     }
   }
 
-  public void testDirtyingBehaviour() {
+  public void testDirtyingBehaviour() throws IllegalAccessException {
     Model.clearUpdateQueue();
     TestModel testModel = new TestModel(23456, 5, 0);
     testModel.cleanAll();
     testModel.queuePushUpdate(true, true);
-    assertEquals("", TestModel.getUpdateQueueString());
+    assertEquals("", updateQueue.get(null).toString());
     // Test scalar dirtying
     testModel.setIntProp(3);
-    assertFalse(TestModel.getUpdateQueueString().contains("intprop"));
+    assertFalse(updateQueue.get(null).toString().contains("intprop"));
     testModel.queuePushUpdate(true, true);
-    assertTrue(TestModel.getUpdateQueueString().contains("intprop"));
+    assertTrue(updateQueue.get(null).toString().contains("intprop"));
     // Test pushing again does nothing
-    String updateString = TestModel.getUpdateQueueString();
+    String updateString = updateQueue.get(null).toString();
     testModel.queuePushUpdate(true, true);
-    assertEquals(updateString, TestModel.getUpdateQueueString());
+    assertEquals(updateString, updateQueue.get(null).toString());
     // Test vector dirtying: add new element
     testModel.getForwardVector().add(4.0);
-    assertFalse(TestModel.getUpdateQueueString().contains("forwardvector"));
+    assertFalse(updateQueue.get(null).toString().contains("forwardvector"));
     testModel.queuePushUpdate(true, true);
-    assertTrue(TestModel.getUpdateQueueString().contains("forwardvector"));
+    assertTrue(updateQueue.get(null).toString().contains("forwardvector"));
     Model.executeUpdates(dummyClient, true);
     // Test vector dirtying: remove element
     testModel.getForwardVector().remove(0);
     testModel.queuePushUpdate(true, true);
-    assertTrue(TestModel.getUpdateQueueString().contains("forwardvector"));
+    assertTrue(updateQueue.get(null).toString().contains("forwardvector"));
     Model.executeUpdates(dummyClient, true);
     // Test vector dirtying: order change should not cause dirtying
     testModel.getForwardVector().add(testModel.getForwardVector().remove(0));
     testModel.queuePushUpdate(true, true);
-    assertEquals("", TestModel.getUpdateQueueString());
+    assertEquals("", updateQueue.get(null).toString());
   }
 
   public void testSetIri() {
@@ -125,42 +140,42 @@ public class ModelTest extends TestCase {
     assertEquals(URI.create("http://localhost:9999/testnamespace/testmodels/testuuid-12345"), model.getIri());
   }
 
-  public void testExecuteUpdateQueue() {
+  public void testExecuteUpdateQueue() throws IllegalAccessException {
     Model.clearUpdateQueue();
-    assertEquals("", TestModel.getUpdateQueueString());
+    assertEquals("", updateQueue.get(null).toString());
     String updateContents =
         "INSERT DATA {\n" +
             "  <http://test/test> <http://test/test2> <http://test/test3> .\n" +
             "}\n";
     // Check correctly added
-    TestModel.getUpdateQueue().add(updateContents);
-    assertEquals(updateContents, TestModel.getUpdateQueueString());
+    ((UpdateRequest)updateQueue.get(null)).add(updateContents);
+    assertEquals(updateContents, updateQueue.get(null).toString());
     // Short update should not trigger flush without force
     Model.executeUpdates(dummyClient, false);
-    assertEquals(updateContents, TestModel.getUpdateQueueString());
+    assertEquals(updateContents, updateQueue.get(null).toString());
     // Check flush with force option works
     Model.executeUpdates(dummyClient, true);
-    assertEquals("", TestModel.getUpdateQueueString());
+    assertEquals("", updateQueue.get(null).toString());
     // Try long update (need >250000 characters)
     for (int i = 0; i < 50000; i++) {
-      TestModel.getUpdateQueue().add("INSERT DATA {\n" +
+      ((UpdateRequest)updateQueue.get(null)).add("INSERT DATA {\n" +
           "  <http://test/test> <http://test/test" + i + "> <http://test/test3> .\n" +
           "}\n");
     }
     Model.executeUpdates(dummyClient, false);
-    assertEquals("", TestModel.getUpdateQueueString());
+    assertEquals("", updateQueue.get(null).toString());
   }
 
-  public void testClearUpdateQueue() {
+  public void testClearUpdateQueue() throws IllegalAccessException {
     String updateContents =
         "INSERT DATA {\n" +
             "  <http://test/test> <http://test/test2> <http://test/test3> .\n" +
             "}\n";
     // Check correctly added
-    TestModel.getUpdateQueue().add(updateContents);
-    assertNotEquals("", TestModel.getUpdateQueueString());
+    ((UpdateRequest)updateQueue.get(null)).add(updateContents);
+    assertNotEquals("", updateQueue.get(null).toString());
     Model.clearUpdateQueue();
-    assertEquals("", TestModel.getUpdateQueueString());
+    assertEquals("", updateQueue.get(null).toString());
   }
 
   public void testPushNewObject() {
@@ -245,24 +260,24 @@ public class ModelTest extends TestCase {
     assertEquals(dummyThirdLevelModel, pulledModel.getModelProp().getModelProp().getModelProp());
   }
 
-  public void testPullScalars() {
+  public void testPullScalars() throws IllegalAccessException {
     TestModel model = clearDatabaseAndPushModel();
     TestModel pulledModel = new TestModel();
     pulledModel.setIri(model.getIri());
     pulledModel.pullScalars(kgClient);
     assertNotEquals(model, pulledModel);
-    for (Map.Entry<FieldKey, FieldInterface> entry : model.getMetaModel().scalarFieldList) {
+    for (Map.Entry<FieldKey, FieldInterface> entry : ((MetaModel)metaModel.get(model)).scalarFieldList) {
       assertTrue(entry.getValue().equals(model, pulledModel));
     }
   }
 
-  public void testPullVector() {
+  public void testPullVector() throws IllegalAccessException {
     TestModel model = clearDatabaseAndPushModel();
     TestModel pulledModel = new TestModel();
     pulledModel.setIri(model.getIri());
     pulledModel.pullVector(Arrays.asList("forwardVector", "emptyForwardVector"), kgClient);
     assertNotEquals(model, pulledModel);
-    for (Map.Entry<FieldKey, FieldInterface> entry : model.getMetaModel().vectorFieldList) {
+    for (Map.Entry<FieldKey, FieldInterface> entry : ((MetaModel)metaModel.get(model)).vectorFieldList) {
       switch (entry.getValue().field.getName()) {
         case "forwardVector":
         case "emptyForwardVector":

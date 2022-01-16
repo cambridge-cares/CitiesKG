@@ -9,12 +9,14 @@ import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 
+import lombok.Getter;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -43,6 +45,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
 
   // Agent endpoint and parameter keys
   public static final String URI_LISTEN = "/discovery/thematicsurface";
+  public static final String KEY_REQ_METHOD = "method";
   public static final String KEY_NAMESPACE = "namespace";
   public static final String KEY_COBI = "cityObjectIRI";
   public static final String KEY_LOD = "lod";
@@ -59,37 +62,67 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
   private static final String BUILDING_PARENT = "bldgParent";
 
   private static final String route = ResourceBundle.getBundle("config").getString("uri.route");
-  private final StoreClientInterface kgClient = new RemoteStoreClient(route, route); // AccessAgent should be used instead of this
+  private final StoreClientInterface kgClient; // AccessAgent should be used instead of this
 
-  private String buildingIri;
-  private String namespaceIri;
-  private boolean[] thematiciseLod;
-  private double threshold;
+  // Default task parameters
+  private static final double DEFAULT_THRESHOLD = 15;
+
+  @Getter private String buildingIri;
+  @Getter private String namespaceIri;
+  @Getter private boolean[] lods;
+  @Getter private double threshold;
+
+  public ThematicSurfaceDiscoveryAgent() {
+    super();
+    this.kgClient = new RemoteStoreClient(route, route);
+  }
+
+  public ThematicSurfaceDiscoveryAgent(StoreClientInterface kgClient) {
+    super();
+    this.kgClient = kgClient;
+  }
+
+  @Override
+  public JSONObject processRequestParameters(JSONObject requestParams) {
+    validateInput(requestParams);
+    requestParams.put("acceptHeaders", "application/json");
+    importSrs();
+    // If building IRI specified, use that; else, fetch all buildings in namespace.
+    List<String> buildingIris = new ArrayList<>();
+    if (buildingIri != null) {
+      buildingIris.add(buildingIri);
+    } else {
+      Node buildingObjectClass = NodeFactory.createLiteral(String.valueOf(26), XSDDatatype.XSDinteger);
+      SelectBuilder buildingsQuery = new SelectBuilder();
+      PrefixUtils.addPrefix(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID, buildingsQuery);
+      buildingsQuery.addVar(QM + BUILDING)
+          .addWhere(QM + BUILDING, SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID, buildingObjectClass)
+          .addWhere(QM + BUILDING, SchemaManagerAdapter.ONTO_BUILDING_PARENT_ID, QM + BUILDING_PARENT);
+      JSONArray buildingsResponse = new JSONArray(kgClient.execute(buildingsQuery.buildString()));
+      for (int i = 0; i < buildingsResponse.length(); i++)
+        buildingIris.add(buildingsResponse.getJSONObject(i).getString(BUILDING));
+    }
+    executor.execute(new ThematicSurfaceDiscoveryTask(buildingIris, lods, threshold, kgClient));
+    return requestParams;
+  }
 
   @Override
   public boolean validateInput(JSONObject requestParams) throws BadRequestException {
     if (!requestParams.isEmpty()
-        && requestParams.get(CityImportAgent.KEY_REQ_METHOD).equals(HttpMethod.GET)) {
-      Set<String> keys = requestParams.keySet();
+        && requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.GET)) {
       try {
-        if (keys.contains(KEY_THRESHOLD)) {
-          threshold = requestParams.getDouble(KEY_THRESHOLD);
-        } else {
-          threshold = 15;
-        }
+        Set<String> keys = requestParams.keySet();
         if (keys.contains(KEY_NAMESPACE)) {
           namespaceIri = new URI(requestParams.getString(KEY_NAMESPACE)).toString();
           buildingIri = keys.contains(KEY_COBI) ? new URI(requestParams.getString(KEY_COBI)).toString() : null;
-          thematiciseLod = new boolean[4];
-          for (int i = 0; i < 3; i++) {
-            thematiciseLod[i] = keys.contains(KEY_LOD + (i + 1)) && requestParams.getInt(KEY_LOD + (i + 1)) == 1;
-          }
-          if (!(thematiciseLod[0] || thematiciseLod[1] || thematiciseLod[2] || thematiciseLod[3])) {
-            thematiciseLod[0] = thematiciseLod[1] = thematiciseLod[2] = thematiciseLod[3] = true;
-          }
+          threshold = keys.contains(KEY_THRESHOLD) ? requestParams.getDouble(KEY_THRESHOLD) : DEFAULT_THRESHOLD;
+          lods = new boolean[4];
+          for (int i = 0; i < 4; i++)
+            lods[i] = keys.contains(KEY_LOD + (i + 1)) && requestParams.getBoolean(KEY_LOD + (i + 1));
+          if (!(lods[0] || lods[1] || lods[2] || lods[3])) Arrays.fill(lods, true);
           return true;
         }
-      } catch (URISyntaxException e) {
+      } catch (URISyntaxException | JSONException e) {
         throw new BadRequestException(e);
       }
     }
@@ -110,30 +143,5 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
       GeometryType.setSourceCrsName(srsResponse.getJSONObject(0).getString(SRS));
     }
   }
-
-  @Override
-  public JSONObject processRequestParameters(JSONObject requestParams) {
-    validateInput(requestParams);
-    requestParams.put("acceptHeaders", "application/json");
-    importSrs();
-    // If building IRI specified, use that; else, fetch all buildings in namespace.
-    List<String> buildingIris = new ArrayList<>();
-    if (buildingIri != null) {
-      buildingIris.add(buildingIri.toString());
-    } else {
-      Node buildingObjectClass = NodeFactory.createLiteral(String.valueOf(26), XSDDatatype.XSDinteger);
-      SelectBuilder buildingsQuery = new SelectBuilder();
-      PrefixUtils.addPrefix(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID, buildingsQuery);
-      buildingsQuery.addVar(QM + BUILDING)
-          .addWhere(QM + BUILDING, SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID, buildingObjectClass)
-          .addWhere(QM + BUILDING, SchemaManagerAdapter.ONTO_BUILDING_PARENT_ID, QM + BUILDING_PARENT);
-      JSONArray buildingsResponse = new JSONArray(kgClient.execute(buildingsQuery.buildString()));
-      for (int i = 0; i < buildingsResponse.length(); i++)
-        buildingIris.add(buildingsResponse.getJSONObject(i).getString(BUILDING));
-    }
-    executor.execute(new ThematicSurfaceDiscoveryTask(buildingIris, thematiciseLod, threshold, kgClient));
-    return requestParams;
-  }
-
 
 }

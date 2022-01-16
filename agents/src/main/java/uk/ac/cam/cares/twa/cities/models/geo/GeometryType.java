@@ -24,7 +24,7 @@ public class GeometryType extends DatatypeModel {
   protected static GeometryFactory factory = new GeometryFactory();
 
   // Set source crs and metric crs before constructing a GeometryType
-  @Setter protected static String sourceCrsName = "EPSG:4326";
+  @Setter @Getter protected static String sourceCrsName = "EPSG:4326";
 
   // At construction, these are saved and initialised from the static settings.
   protected MathTransform transform = null;

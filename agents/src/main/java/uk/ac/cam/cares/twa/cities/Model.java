@@ -42,17 +42,17 @@ public abstract class Model {
   private static final String OBJECT_NOT_FOUND_EXCEPTION_TEXT = "Object not found in database.";
 
   // Resources for batched execution of updates
-  protected static UpdateRequest updateQueue = new UpdateRequest();
+  private static UpdateRequest updateQueue = new UpdateRequest();
   public static long cumulativeUpdateExecutionNanoseconds = 0;
 
   // Lookup for previously constructed MetaModel.
   private final static HashMap<Class<?>, MetaModel> metaModelMap = new HashMap<>();
   // The MetaModel of this object, which provides FieldInterfaces for interacting with data.
-  protected final MetaModel metaModel;
+  private final MetaModel metaModel;
 
   // Minimised representations of the original values of fields from the last pull from the database.
   // These are ordered in the same order as metaModel.scalarFieldList and metaModel.vectorFieldList.
-  protected Object[] originalFieldValues;
+  private Object[] originalFieldValues;
 
   public Model() {
     Class<?> thisClass = this.getClass();

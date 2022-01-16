@@ -112,7 +112,8 @@ public class ThematicSurfaceDiscoveryTask implements Runnable {
       postprocessLodMultiSurface(building, lod, topLevelThematicGeometries, mixedGeometries, flip);
       double totalSeconds = 1.0e-9 * Duration.between(start, Instant.now()).toNanos();
       double updateSeconds = 1.0e-9 * Model.cumulativeUpdateExecutionNanoseconds;
-      System.err.println(String.format("Building took: %.2fs (total), %.2fs (executing). %.2f%% of time spent executing.%n", totalSeconds, updateSeconds, updateSeconds/totalSeconds*100));
+      System.err.printf("Building took: %.2fs (total), %.2fs (executing). %.2f%% of time spent executing.%n%n",
+          totalSeconds, updateSeconds, updateSeconds/totalSeconds*100);
       return flip ? 1 : -1;
     } else {
       // Non-nice data; queue.
