@@ -12,7 +12,6 @@ import org.apache.jena.query.Query;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.twa.cities.Model;
 
 /**
@@ -47,9 +46,8 @@ public ExternalReference() throws NoSuchFieldException {
     /**
      * fills in the scalar fields of an external reference instance.
      */
-protected void assignScalarValueByRow(JSONObject row, HashMap<String, Field> fieldMap, String predicate)
+public void assignScalarValueByRow(JSONObject row, HashMap<String, Field> fieldMap, String predicate)
         throws IllegalAccessException {
-
 
       if (predicate.equals(SchemaManagerAdapter.ONTO_ID)
             || predicate.equals(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID)) {

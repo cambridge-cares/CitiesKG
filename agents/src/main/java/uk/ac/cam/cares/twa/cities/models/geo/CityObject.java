@@ -7,11 +7,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.jena.query.Query;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
 import uk.ac.cam.cares.twa.cities.Model;
 
 /**
@@ -67,7 +65,7 @@ public class CityObject extends Model {
   /**
    * fills in the scalar fields of a city object instance.
    */
-  protected void assignScalarValueByRow(JSONObject row, HashMap<String, Field> fieldMap, String predicate)
+  public void assignScalarValueByRow(JSONObject row, HashMap<String, Field> fieldMap, String predicate)
       throws IllegalAccessException {
     if (predicate.equals(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID)){
       fieldMap.get(predicate).set(this, row.getInt(VALUE));
@@ -82,29 +80,25 @@ public class CityObject extends Model {
   /**
    * fills in generic attributes linked to the city object.
    * @param iriName cityObject IRI
-   * @param kgClient sends the query to the right endpoint.
+   * @param queryResult sends the query to the right endpoint.
    * @param lazyLoad if true only fills genericAttributesIris field; if false also fills genericAttributes field.
    */
-  public void fillGenericAttributes(String iriName, KnowledgeBaseClientInterface kgClient, Boolean lazyLoad)
+  public void fillGenericAttributes(String iriName, String queryResult, Boolean lazyLoad)
       throws NoSuchFieldException, IllegalAccessException {
 
-    String genericAttGraphIri = getNamespace(iriName) + SchemaManagerAdapter.GENERIC_ATTRIB_GARPH + "/";
-
-    Query q = getFetchIrisQuery(iriName, SchemaManagerAdapter.ONTO_CITY_OBJECT_ID, genericAttGraphIri);
-    String queryResultString = kgClient.execute(q.toString());
-    JSONArray queryResult = new JSONArray(queryResultString);
+    JSONArray queryResultJSON = new JSONArray(queryResult);
 
     if (!queryResult.isEmpty()) {
       genericAttributes = new ArrayList<>();
       genericAttributeIris = new ArrayList<>();
 
       for (int index = 0; index < queryResult.length(); index++) {
-        String elementIri = queryResult.getJSONObject(index).getString(COLLECTION_ELEMENT_IRI);
+        String elementIri = queryResultJSON.getJSONObject(index).getString(COLLECTION_ELEMENT_IRI);
         genericAttributeIris.add(elementIri);
 
         if (!lazyLoad) {
           GenericAttribute genericAttribute = new GenericAttribute();
-          genericAttribute.fillScalars(elementIri, kgClient);
+          genericAttribute.fillScalars(elementIri, queryResult);
           genericAttributes.add(genericAttribute);
         }
       }
@@ -112,31 +106,29 @@ public class CityObject extends Model {
   }
 
 
+
   /**
    * fills in external refs linked to the city object.
    * @param iriName cityObject IRI
-   * @param kgClient sends the query to the right endpoint.
+   * @param queryResult sends the query to the right endpoint.
    * @param lazyLoad if true only fills externalReferencesIris field; if false also fills externalReferences field.
    */
-  public void fillExternalReferences(String iriName, KnowledgeBaseClientInterface kgClient, Boolean lazyLoad)
+  public void fillExternalReferences(String iriName, String queryResult, Boolean lazyLoad)
           throws NoSuchFieldException, IllegalAccessException {
 
-    String extRefGraphIri = getNamespace(iriName) + SchemaManagerAdapter.EXTERNAL_REFERENCES_GRAPH + "/";
-    Query q = getFetchIrisQuery(iriName, SchemaManagerAdapter.ONTO_CITY_OBJECT_ID,  extRefGraphIri); //
-    String queryResultString = kgClient.execute(q.toString());
-    JSONArray queryResult = new JSONArray(queryResultString);
+    JSONArray queryResultJSON = new JSONArray(queryResult);
 
     if (!queryResult.isEmpty()) {
       externalReferences = new ArrayList<>();
       externalReferencesIris = new ArrayList<>();
 
       for (int index = 0; index < queryResult.length(); index++) {
-        String elementIri = queryResult.getJSONObject(index).getString(COLLECTION_ELEMENT_IRI);
+        String elementIri = queryResultJSON.getJSONObject(index).getString(COLLECTION_ELEMENT_IRI);
         externalReferencesIris.add(elementIri);
 
         if (!lazyLoad) {
           ExternalReference externalReference = new ExternalReference();
-          externalReference.fillScalars(elementIri, kgClient);
+          externalReference.fillScalars(elementIri, queryResult);
           externalReferences.add(externalReference);
         }
       }

@@ -5,10 +5,10 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import org.json.JSONObject;
 import lombok.Getter;
 import lombok.Setter;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
+import org.json.JSONObject;
 import uk.ac.cam.cares.twa.cities.Model;
 
 /**
@@ -56,7 +56,7 @@ public class GenericAttribute extends Model {
   /**
    * fills in the scalar fields of a generic attribute instance.
    */
-  protected void assignScalarValueByRow(JSONObject row, HashMap<String, Field> fieldMap, String predicate)
+  public void assignScalarValueByRow(JSONObject row, HashMap<String, Field> fieldMap, String predicate)
       throws IllegalAccessException {
 
     if (predicate.equals(SchemaManagerAdapter.ONTO_DATA_TYPE)) {

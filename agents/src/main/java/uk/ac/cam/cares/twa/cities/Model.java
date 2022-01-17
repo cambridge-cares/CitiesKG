@@ -10,7 +10,9 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
+//import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
+import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
+import uk.ac.cam.cares.jps.base.query.StoreRouter;
 
 public class Model {
 
@@ -23,7 +25,7 @@ public class Model {
   protected static final String QM = "?";
   protected HashMap<String, Field> fieldMap = new HashMap<String, Field>();
 
-  protected void assignFieldValues(ArrayList fieldList, HashMap fieldMap) throws NoSuchFieldException {
+  public void assignFieldValues(ArrayList fieldList, HashMap fieldMap) throws NoSuchFieldException {
     for (Object field: fieldList){
       fieldMap.put(field, this.getClass().getDeclaredField(String.valueOf(field)
           .replace(OCGML + ":", "")));
@@ -35,7 +37,7 @@ public class Model {
    * @param iriName object id
    * @return graph uri.
    */
-  protected String getGraphUri(String iriName) {
+  public String getGraphUri(String iriName) {
     String[] splitUri = iriName.split("/");
     return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length-1)) + "/";
   }
@@ -45,7 +47,7 @@ public class Model {
    * @param iriName object id
    * @return namespace as string.
    */
-  protected String getNamespace(String iriName) {
+  public String getNamespace(String iriName) {
     String[] splitUri = iriName.split("/");
     return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length-2)) + "/";
   }
@@ -53,7 +55,7 @@ public class Model {
   /**
    * builds a query to get all city object's scalars.
    */
-  protected Query getFetchScalarsQuery(String iriName){
+  public Query getFetchScalarsQuery(String iriName){
 
     WhereBuilder wb = new WhereBuilder()
         .addPrefix(OCGML, ONTO_CITY_GML)
@@ -70,7 +72,7 @@ public class Model {
    * @param iriName cityObject IRI.
    * @return query
    */
-  protected Query getFetchIrisQuery(String iriName, String wherePredicate, String whereGraph){
+  public Query getFetchIrisQuery(String iriName, String wherePredicate, String whereGraph){
     WhereBuilder wb = new WhereBuilder()
         .addPrefix(OCGML, ONTO_CITY_GML)
         .addWhere(QM + COLLECTION_ELEMENT_IRI, wherePredicate, NodeFactory.createURI(iriName));
@@ -86,7 +88,7 @@ public class Model {
    * @param iriName cityObject IRI.
    * @return query
    */
-  protected Query getFetchIrisQuery(String iriName, String wherePredicate){
+  public Query getFetchIrisQuery(String iriName, String wherePredicate){
 
     return getFetchIrisQuery(iriName, wherePredicate,getGraphUri(iriName));
   }
@@ -94,18 +96,16 @@ public class Model {
   /**
    * fills in the scalar fields of a CityGML model instance.
    * @param iriName IRI of the model instance.
-   * @param kgClient sends the query to the right endpoint.
+   * @param queryResult results of the query executed to get scalar values.
    */
-  public void fillScalars(String iriName, KnowledgeBaseClientInterface kgClient)
+  public void fillScalars(String iriName, String queryResult)
       throws IllegalAccessException {
 
-    Query q = getFetchScalarsQuery(iriName);
-    String queryResultString = kgClient.execute(q.toString());
-    JSONArray queryResult = new JSONArray(queryResultString);
+    JSONArray queryResultJSON =  new JSONArray(queryResult);
 
-    if(!queryResult.isEmpty()){
-      for (int index = 0; index < queryResult.length(); index++){
-        JSONObject row = queryResult.getJSONObject(index);
+    if(!queryResultJSON.isEmpty()){
+      for (int index = 0; index < queryResultJSON.length(); index++){
+        JSONObject row = queryResultJSON.getJSONObject(index);
         String predicate = row.getString(PREDICATE);
         predicate = predicate.replace(ONTO_CITY_GML,OCGML + ":");
         assignScalarValueByRow(row, fieldMap, predicate);
@@ -113,7 +113,7 @@ public class Model {
     }
   }
 
-  protected void assignScalarValueByRow(JSONObject row, HashMap<String, Field> fieldMap, String predicate)
+  public void assignScalarValueByRow(JSONObject row, HashMap<String, Field> fieldMap, String predicate)
           throws IllegalAccessException {
     //to implement in subclasses
   }
