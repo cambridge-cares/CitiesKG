@@ -1,7 +1,12 @@
 package uk.ac.cam.cares.twa.cities.tasks.test;
 
 import junit.framework.TestCase;
+import org.citydb.ImpExp;
 import org.json.JSONObject;
+import org.mockito.ArgumentMatchers;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -11,6 +16,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.util.Objects;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -187,6 +193,8 @@ public class ExporterTaskTest extends TestCase {
 
 
     public void testNewExporterTaskRunMethod() {
+        File testKml = new File(
+                Objects.requireNonNull(this.getClass().getResource("/testoutput.kml")).getFile());
 
         // Test with fake gmlId
         String[] exampleGmlIds = {"BLDG_000300000001c242"};
@@ -200,28 +208,24 @@ public class ExporterTaskTest extends TestCase {
         File actualFile = new File(actualFilePath);
 
         try {
-            task.run();
-        } catch (JPSRuntimeException e) {
-            assertEquals(JPSRuntimeException.class, e.getClass());
-        } finally {
-            assertTrue(actualFile.exists());  // if the task is successfully executed, test_extruded.kml should be generated
-        }
-
-        // After the runnable, the
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder;
-        Document cfg;
-
-        try {
-            builder = factory.newDocumentBuilder();
-            cfg = builder.parse(actualFile);
-            assertEquals(1, cfg.getElementsByTagName("coordinates").getLength());   // if the request gmlId exists in the database, the exported kml should contain "coordinates" information. Otherwise not
-        } catch (ParserConfigurationException | IOException | SAXException e) {
+            Field stop = task.getClass().getDeclaredField("stop");
+            stop.setAccessible(true);
+            try (MockedStatic<ImpExp> mock = Mockito.mockStatic(ImpExp.class)) {
+                mock.when(() -> ImpExp.main(ArgumentMatchers.any())).thenAnswer((Answer<Void>) invocation -> {
+                    Files.copy(testKml.toPath(), actualFile.toPath());
+                    return null;
+                });
+                task.run();
+                assertTrue((Boolean) stop.get(task));
+                assertTrue(actualFile.exists());  // if the task is successfully executed, test_extruded.kml should be generated
+            }
+        } catch (NoSuchFieldException | IllegalAccessException e) {
             fail();
         } finally {
-            if (!actualFile.delete()) { // If the actualFile is not generated, it means Runnable fails
+            if (!actualFile.delete()) {
                 fail();
             }
+            NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
         }
 
     }
