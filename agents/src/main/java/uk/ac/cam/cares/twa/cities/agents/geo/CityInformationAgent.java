@@ -8,9 +8,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import lombok.Getter;
-import org.apache.jena.query.Query;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import org.jooq.JSON;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
@@ -66,7 +64,7 @@ public class CityInformationAgent extends JPSAgent {
 
         //to fill scalars.
         String queryResult = this.query(route, cityObject.getFetchScalarsQuery(cityObjectIri).toString());
-        cityObject.fillScalars(cityObjectIri, queryResult);
+        cityObject.fillScalars(queryResult);
 
         //to fill generic attributes
         String genericAttGraphIri = cityObject.getNamespace(cityObjectIri) + SchemaManagerAdapter.GENERIC_ATTRIB_GARPH + "/";

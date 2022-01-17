@@ -10,9 +10,6 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.json.JSONArray;
 import org.json.JSONObject;
-//import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
-import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
-import uk.ac.cam.cares.jps.base.query.StoreRouter;
 
 public class Model {
 
@@ -95,10 +92,9 @@ public class Model {
 
   /**
    * fills in the scalar fields of a CityGML model instance.
-   * @param iriName IRI of the model instance.
    * @param queryResult results of the query executed to get scalar values.
    */
-  public void fillScalars(String iriName, String queryResult)
+  public void fillScalars(String queryResult)
       throws IllegalAccessException {
 
     JSONArray queryResultJSON =  new JSONArray(queryResult);

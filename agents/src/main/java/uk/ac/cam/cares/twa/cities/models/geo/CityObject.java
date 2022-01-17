@@ -98,7 +98,7 @@ public class CityObject extends Model {
 
         if (!lazyLoad) {
           GenericAttribute genericAttribute = new GenericAttribute();
-          genericAttribute.fillScalars(elementIri, queryResult);
+          genericAttribute.fillScalars(queryResult);
           genericAttributes.add(genericAttribute);
         }
       }
@@ -128,7 +128,7 @@ public class CityObject extends Model {
 
         if (!lazyLoad) {
           ExternalReference externalReference = new ExternalReference();
-          externalReference.fillScalars(elementIri, queryResult);
+          externalReference.fillScalars(queryResult);
           externalReferences.add(externalReference);
         }
       }
