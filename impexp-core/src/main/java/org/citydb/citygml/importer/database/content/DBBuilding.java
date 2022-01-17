@@ -269,10 +269,11 @@ public class DBBuilding implements DBImporter {
 		if (building.isSetFunction()) {
 			valueJoiner.join(building.getFunction(), Code::getValue, Code::getCodeSpace);
 			psBuilding.setString(++index, valueJoiner.result(0));
-			if (valueJoiner.result(1) == null && importer.isBlazegraph()) {
+			String codespace = valueJoiner.result(1);
+			if (importer.isBlazegraph() && codespace == null) { // psBuilding setString for jenastatement requires non-Null and pgstatement doesn't require
 				setBlankNode(psBuilding, ++index);
 			} else {
-				psBuilding.setString(++index, valueJoiner.result(1));
+				psBuilding.setString(++index, codespace);
 			}
 		} else if (importer.isBlazegraph()) {
 			setBlankNode(psBuilding, ++index);
