@@ -24,6 +24,7 @@ public class CityInformationAgent extends JPSAgent {
   public static final String URI_CITY_OBJECT_INFORMATION = "/cityobjectinformation";
   public static final String KEY_REQ_METHOD = "method";
   public static final String KEY_IRIS = "iris";
+  public static String KEY_CONTEXT = "context";
   public static final String KEY_CITY_OBJECT_INFORMATION = "cityobjectinformation";
 
   private KnowledgeBaseClientInterface kgClient;
@@ -43,13 +44,23 @@ public class CityInformationAgent extends JPSAgent {
 
     validateInput(requestParams);
 
+    // for city object iris
     ArrayList<String> uris = new ArrayList<>();
     JSONArray iris = requestParams.getJSONArray(KEY_IRIS);
     for (Object iri : iris) {
       uris.add(iri.toString());
     }
-    JSONArray cityObjectInformation = new JSONArray();
 
+    // for use case context
+    ArrayList<String> agents = new ArrayList<>();
+    JSONArray contexts = requestParams.getJSONArray((KEY_CONTEXT));
+    for (Object context : contexts) {
+      agents.add(context.toString());
+    }
+
+
+
+    JSONArray cityObjectInformation = new JSONArray();
     setKGClient(true);
 
     for (String cityObjectIri : uris) {
@@ -63,6 +74,12 @@ public class CityInformationAgent extends JPSAgent {
         ArrayList<CityObject> cityObjectList = new ArrayList<>();
         cityObjectList.add(cityObject);
         cityObjectInformation.put(cityObjectList);
+
+
+        //pass the information further to the other agents
+
+
+
       } catch (NoSuchFieldException | IllegalAccessException e) {
         e.printStackTrace();
       }
