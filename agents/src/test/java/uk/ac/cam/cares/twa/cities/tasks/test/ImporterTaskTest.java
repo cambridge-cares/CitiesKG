@@ -17,7 +17,12 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import junit.framework.TestCase;
+import org.citydb.ImpExp;
 import org.eclipse.jetty.server.Server;
+import org.mockito.ArgumentMatchers;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -239,14 +244,15 @@ public class ImporterTaskTest extends TestCase {
       Field serverInstances = task.getClass().getDeclaredField("serverInstances");
       stop.setAccessible(true);
       serverInstances.setAccessible(true);
-      new Thread(task).start();
+      try (MockedStatic<ImpExp> mock = Mockito.mockStatic(ImpExp.class)) {
+        mock.when(() -> ImpExp.main(ArgumentMatchers.any())).thenAnswer((Answer<Void>) invocation -> null);
+        task.run();
 
-      while (!(boolean) stop.get(task)) {
-        if (((BlockingQueue<?>) serverInstances.get(task)).size() == 0) {
-          if (Objects.requireNonNull(nqFile).isFile()) {
-            assertTrue(nqFile.delete());
-          }
-        }
+        assertTrue((Boolean) stop.get(task));
+        assertTrue(((BlockingQueue<?>) serverInstances.get(task)).size() == 0);
+        assertTrue(((Server) server.get(serverTask)).isStopped());
+        assertTrue(Objects.requireNonNull(nqFile).isFile());
+        assertTrue(nqFile.delete());
       }
 
     } catch (NoSuchFieldException | IllegalAccessException | InterruptedException e) {
