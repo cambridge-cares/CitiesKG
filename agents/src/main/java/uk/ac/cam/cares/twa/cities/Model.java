@@ -17,7 +17,8 @@ public class Model {
   protected static final String PREDICATE = "predicate";
   protected static final String VALUE =  "value";
   protected static final String COLLECTION_ELEMENT_IRI = "CollectionElementIri";
-  protected static final String ONTO_CITY_GML = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
+  //protected static final String ONTO_CITY_GML = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
+  protected static final String ONTO_CITY_GML = "http://locahost/ontocitygml/";
   protected static final String OCGML = "ocgml";
   protected static final String QM = "?";
   protected HashMap<String, Field> fieldMap = new HashMap<String, Field>();
