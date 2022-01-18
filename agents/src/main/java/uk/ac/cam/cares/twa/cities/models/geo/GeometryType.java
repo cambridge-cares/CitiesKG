@@ -49,7 +49,8 @@ public class GeometryType implements DatatypeModel {
   private static final Map<String, BaseDatatype> datatypes = new HashMap<>();
 
   // Set source crs and metric crs before constructing a GeometryType
-  @Setter @Getter protected static String sourceCrsName = EPSG_4326;
+  // TODO: figure out how to make this work nicer with multithreading
+  @Setter @Getter protected volatile static String sourceCrsName = EPSG_4326;
 
   // At construction, these are saved and initialised from the static settings.
   protected MathTransform transform = null;

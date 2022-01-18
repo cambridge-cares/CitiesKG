@@ -39,8 +39,6 @@ import uk.ac.cam.cares.twa.cities.tasks.geo.ThematicSurfaceDiscoveryTask;
 @WebServlet(urlPatterns = {ThematicSurfaceDiscoveryAgent.URI_LISTEN})
 public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
 
-  private final ExecutorService executor = Executors.newFixedThreadPool(5);
-
   // Agent endpoint and parameter keys
   public static final String URI_LISTEN = "/discovery/thematicsurface";
   public static final String KEY_REQ_METHOD = "method";
@@ -59,11 +57,10 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
   private static final String BUILDING = "bldg";
   private static final String BUILDING_PARENT = "bldgParent";
 
-  private final String kgId;
-
   // Default task parameters
   private static final double DEFAULT_THRESHOLD = 15;
 
+  @Getter private final String kgId;
   @Getter private String buildingIri;
   @Getter private String namespaceIri;
   @Getter private boolean[] lods;
@@ -94,7 +91,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
       for (int i = 0; i < buildingsResponse.length(); i++)
         buildingIris.add(buildingsResponse.getJSONObject(i).getString(BUILDING));
     }
-    executor.execute(new ThematicSurfaceDiscoveryTask(buildingIris, lods, threshold, kgId));
+    Executors.newSingleThreadExecutor().execute(new ThematicSurfaceDiscoveryTask(buildingIris, lods, threshold, kgId));
     return requestParams;
   }
 

@@ -5,6 +5,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -52,11 +53,10 @@ public abstract class Model {
   private static final String OBJECT_NOT_FOUND_EXCEPTION_TEXT = "Object not found in database.";
 
   // Resources for batched execution of updates
-  private static UpdateRequest updateQueue = new UpdateRequest();
-  public static long cumulativeUpdateExecutionNanoseconds = 0;
+  private static final ThreadLocal<UpdateRequest> updateQueue = ThreadLocal.withInitial(UpdateRequest::new);
 
   // Lookup for previously constructed MetaModel.
-  private final static HashMap<Class<?>, MetaModel> metaModelMap = new HashMap<>();
+  private final static ConcurrentHashMap<Class<?>, MetaModel> metaModelMap = new ConcurrentHashMap<>();
   // The MetaModel of this object, which provides FieldInterfaces for interacting with data.
   private final MetaModel metaModel;
 
@@ -123,11 +123,9 @@ public abstract class Model {
    * @param force if false, the updates will only be executed if their cumulative length is >250000 characters.
    */
   public static void executeUpdates(String kgId, boolean force) {
-    String updateString = updateQueue.toString();
+    String updateString = updateQueue.get().toString();
     if (force || updateString.length() > 250000) {
-      Instant start = Instant.now();
       AccessAgentCaller.update(kgId, updateString);
-      cumulativeUpdateExecutionNanoseconds += Duration.between(start, Instant.now()).toNanos();
       clearUpdateQueue();
     }
   }
@@ -136,7 +134,7 @@ public abstract class Model {
    * Clears queued updates without executing.
    */
   public static void clearUpdateQueue() {
-    updateQueue = new UpdateRequest();
+    updateQueue.set(new UpdateRequest());
   }
 
   /**
@@ -170,7 +168,7 @@ public abstract class Model {
       if (field.isList) {
         String valueVar = QM + VALUE;
         WhereBuilder where = new WhereBuilder().addWhere(key.backward ? valueVar : self, predicate, key.backward ? self : valueVar);
-        updateQueue.add(new UpdateBuilder().addGraph(graph, where).buildDeleteWhere());
+        updateQueue.get().add(new UpdateBuilder().addGraph(graph, where).buildDeleteWhere());
         for (Node valueValue : field.getNodes(this))
           currentInsertSubquery.addWhere(key.backward ? valueValue : self, predicate, key.backward ? self : valueValue);
       } else {
@@ -182,8 +180,8 @@ public abstract class Model {
     }
     if (graph == null) return; // nothing happened
     cleanAll();
-    updateQueue.add(scalarDeleteQuery.buildDeleteWhere());
-    updateQueue.add(insertQuery.build());
+    updateQueue.get().add(scalarDeleteQuery.buildDeleteWhere());
+    updateQueue.get().add(insertQuery.build());
   }
 
   /**
@@ -192,8 +190,8 @@ public abstract class Model {
    */
   public void queueDeletionUpdate() {
     Node self = NodeFactory.createURI(getIri().toString());
-    updateQueue.add(new UpdateBuilder().addWhere(QM + VALUE, QM + PREDICATE, self).buildDeleteWhere());
-    updateQueue.add(new UpdateBuilder().addWhere(self, QM + PREDICATE, QM + VALUE).buildDeleteWhere());
+    updateQueue.get().add(new UpdateBuilder().addWhere(QM + VALUE, QM + PREDICATE, self).buildDeleteWhere());
+    updateQueue.get().add(new UpdateBuilder().addWhere(self, QM + PREDICATE, QM + VALUE).buildDeleteWhere());
     dirtyAll();
   }
 
