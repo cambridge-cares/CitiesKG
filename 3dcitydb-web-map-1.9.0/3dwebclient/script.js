@@ -979,6 +979,17 @@ function addNewLayer() {
         _layers.push(new Cesium3DTilesDataLayer(options));
     } else if (['kml', 'kmz', 'json', 'czml'].indexOf(CitydbUtil.get_suffix_from_filename(options.url)) > -1) {
         _layers.push(new CitydbKmlLayer(options));
+    } else if (options.url == '') {  // todo: figure a way to check the directory , alternative pass this to the server side if it is a folder
+        var folderpath = "http://localhost:8000/3dwebclient/exported_data/";
+        var filepathname = "";
+        for (let i = 0; i < 50; i++){
+            filepathname = folderpath + "test_" + i + "_extruded.kml";
+            //console.log(filepathname);
+            options.url = filepathname;
+            options.name = "test_" + i + "_extruded.kml";
+            _layers.push(new CitydbKmlLayer(options));
+        }
+        console.log ('Directory exists!')
     }
 
     loadLayerGroup(_layers);
