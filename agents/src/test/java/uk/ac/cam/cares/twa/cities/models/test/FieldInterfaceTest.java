@@ -1,37 +1,28 @@
-package uk.ac.cam.cares.twa.cities;
+package uk.ac.cam.cares.twa.cities.models.test;
 
 import junit.framework.TestCase;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.json.JSONObject;
 import org.mockito.Mock;
 import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
+import uk.ac.cam.cares.twa.cities.models.FieldInterface;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
-import uk.ac.cam.cares.twa.cities.models.geo.test.TestModel;
+import uk.ac.cam.cares.twa.cities.models.test.TestModel;
 
 import java.io.InvalidClassException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertArrayEquals;
-import static org.mockito.Mockito.verify;
 
 public class FieldInterfaceTest extends TestCase {
 
-  private static final String VALUE = "value";
-  private static final String DATATYPE = "dtype";
-
   TestModel model1 = new TestModel();
   TestModel model2 = new TestModel();
-
-  @Mock
-  StoreClientInterface kgClient;
 
   public void testIntegerInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
@@ -94,7 +85,7 @@ public class FieldInterfaceTest extends TestCase {
       throws NoSuchFieldException, InvalidClassException, NoSuchMethodException {
     FieldInterface field = new FieldInterface(TestModel.class.getDeclaredField(fieldName), 0);
     // Test putting
-    field.put(model1, valueString, datatypeString, kgClient, 0);
+    field.put(model1, valueString, datatypeString, null, 0);
     assertEquals(dataValue, directGetter.apply(model1));
     // Test equality checks
     assertFalse(field.equals(model1, model2)); // a != null
@@ -123,7 +114,7 @@ public class FieldInterfaceTest extends TestCase {
     // Test putting
     assertEquals(0, model1.getForwardVector().size());
     assertTrue(field.equals(model1, model2));
-    field.put(model1, "1.32", "http://www.w3.org/2001/XMLSchema#double", kgClient, 0);
+    field.put(model1, "1.32", "http://www.w3.org/2001/XMLSchema#double", null, 0);
     assertEquals(1, model1.getForwardVector().size());
     assertEquals(1.32, model1.getForwardVector().get(0));
     assertFalse(field.equals(model1, model2));

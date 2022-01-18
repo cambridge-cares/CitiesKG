@@ -12,6 +12,7 @@ import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.twa.cities.agents.geo.DistanceAgent;
 import uk.ac.cam.cares.twa.cities.models.geo.EnvelopeType;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.UUID;
@@ -77,13 +78,19 @@ public class DistanceAgentTest extends TestCase {
         assertTrue(q2.toString().contains("ocgml:metricSrsName"));
     }
 
-    public void testGetObjectSrs() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void testGetObjectSrs() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
 
         DistanceAgent distanceAgent = new DistanceAgent();
+
+        //inject mock kgClient
+        Field kgClientField =  DistanceAgent.class.getDeclaredField("kgClient");
+        kgClientField.setAccessible(true);
+        kgClientField.set(distanceAgent, kgClientMock);
+
         String uri = "http://localhost/berlin/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/";
 
         //test with mocked kgClient and kgRouter when it returns a string.
-        String srs = "[{'srsname': 'EPSG:3414'}]";
+        String srs = "[{'srsName': 'EPSG:3414'}]";
         when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(srs);
         try (MockedStatic<StoreRouter> kgRouterMock = Mockito.mockStatic(StoreRouter.class)) {
             kgRouterMock.when(() -> StoreRouter.getStoreClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
@@ -96,7 +103,7 @@ public class DistanceAgentTest extends TestCase {
         }
 
         //test with mocked kgClient and kgRouter when method is called to return appropriate metric srs.
-        String targetSrs = "[{'srsname': 'EPSG:3414'}]";
+        String targetSrs = "[{'srsName': 'EPSG:3414'}]";
         when(kgClientMock.execute(ArgumentMatchers.anyString())).thenReturn(targetSrs);
         try (MockedStatic<StoreRouter> kgRouterMock = Mockito.mockStatic(StoreRouter.class)) {
             kgRouterMock.when(() -> StoreRouter.getStoreClient(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
@@ -121,9 +128,14 @@ public class DistanceAgentTest extends TestCase {
         }
     }
 
-    public void testGetDistance() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void testGetDistance() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
 
         DistanceAgent distanceAgent = new DistanceAgent();
+
+        //inject mock kgClient
+        Field kgClientField =  DistanceAgent.class.getDeclaredField("kgClient");
+        kgClientField.setAccessible(true);
+        kgClientField.set(distanceAgent, kgClientMock);
 
         //test with mocked kgClient and kgRouter when it returns a string.
         String distance = "[{'distance': 10.0}]";
@@ -205,9 +217,14 @@ public class DistanceAgentTest extends TestCase {
         }
     }
 
-    public void testSetDistance() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+    public void testSetDistance() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, NoSuchFieldException {
 
         DistanceAgent distanceAgent = new DistanceAgent();
+
+        //inject mock kgClient
+        Field kgClientField =  DistanceAgent.class.getDeclaredField("kgClient");
+        kgClientField.setAccessible(true);
+        kgClientField.set(distanceAgent, kgClientMock);
 
         when(kgClientMock.executeUpdate(ArgumentMatchers.any(UpdateRequest.class))).thenReturn(0);
         try (MockedStatic<StoreRouter> kgRouterMock = Mockito.mockStatic(StoreRouter.class)) {

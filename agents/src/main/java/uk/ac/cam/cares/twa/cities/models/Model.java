@@ -1,7 +1,6 @@
-package uk.ac.cam.cares.twa.cities;
+package uk.ac.cam.cares.twa.cities.models;
 
 import java.io.InvalidClassException;
-import java.lang.reflect.*;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
@@ -21,8 +20,19 @@ import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
+import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
+import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 
+/**
+ * {@link Model} is the abstract base for classes which represent objects in Blazegraph. It implements a number of
+ * methods which push data to and pull data from Blazegraph, and also maintains automatic dirty tracking of field values
+ * to only write updates for modified fields on push. Also see {@link MetaModel}.
+ * <p>
+ * Subclasses of {@link Model} should annotate fields meant for database read-write with {@link Getter},
+ * {@link Setter} and {@link FieldAnnotation}.
+ * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
+ * @version $Id$
+ */
 public abstract class Model {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ID) protected URI iri;
@@ -71,7 +81,7 @@ public abstract class Model {
   }
 
   /**
-   * Clears all field of the model instance
+   * Clears all field of the instance
    */
   public void clearAll() {
     for (FieldInterface field : metaModel.fieldMap.values())
@@ -80,7 +90,7 @@ public abstract class Model {
   }
 
   /**
-   * Makes all fields of the model instance dirty
+   * Makes all fields of the instance dirty
    */
   public void dirtyAll() {
     // Object.class is a placeholder which != any valid return of FieldInterface.getMinimised.
@@ -88,35 +98,35 @@ public abstract class Model {
   }
 
   /**
-   * Makes all fields of the model instance clean
+   * Makes all fields of the instance clean
    */
   public void cleanAll() {
-    for(FieldInterface field: metaModel.fieldMap.values())
+    for (FieldInterface field : metaModel.fieldMap.values())
       originalFieldValues[field.index] = field.getMinimised(this);
   }
 
   /**
-   * Sets the object's iri from the specified parameters, retrieving the appropriate graph name from class metadata.
-   * The IRI will have the form [namespace]/[graph]/[UUID]
-   * @param UUID      the UUID of the object, which will become the last part of the iri; typically the same as gmlId.
-   * @param namespace the namespace of the iri.
+   * Sets the object's IRI from the specified parameters, retrieving the appropriate graph name from class metadata.
+   * The IRI will have the form <code>namespace</code>/<code>namespace</code>/<code>UUID</code>.
+   * @param UUID      the UUID of the object, which will become the last part of the IRI; typically the same as gmlId.
+   * @param namespace the namespace of the IRI.
    */
   public void setIri(String UUID, String namespace) {
     ModelAnnotation metadata = this.getClass().getAnnotation(ModelAnnotation.class);
     if (!namespace.endsWith("/")) namespace = namespace + "/";
-    setIri(URI.create(namespace + metadata.nativeGraph() + "/" + UUID));
+    setIri(URI.create(namespace + metadata.nativeGraphName() + "/" + UUID));
   }
 
   /**
-   * Executes queued updates in the updateQueue
-   * @param kgClient the client to execute updates with.
-   * @param force    if false, the updates will only be executed if their cumulative length is >250000 characters.
+   * Executes queued updates in the update queue
+   * @param kgId  the resource ID of the target knowledge graph to query.
+   * @param force if false, the updates will only be executed if their cumulative length is >250000 characters.
    */
-  public static void executeUpdates(StoreClientInterface kgClient, boolean force) {
+  public static void executeUpdates(String kgId, boolean force) {
     String updateString = updateQueue.toString();
     if (force || updateString.length() > 250000) {
       Instant start = Instant.now();
-      kgClient.executeUpdate(updateString);
+      AccessAgentCaller.update(kgId, updateString);
       cumulativeUpdateExecutionNanoseconds += Duration.between(start, Instant.now()).toNanos();
       clearUpdateQueue();
     }
@@ -130,7 +140,7 @@ public abstract class Model {
   }
 
   /**
-   * Queues an update to push properties of this model to the database.
+   * Queues an update to push field values to the database.
    * @param pushForward  whether to push forward properties.
    * @param pushBackward whether to push backward properties.
    */
@@ -150,8 +160,8 @@ public abstract class Model {
       boolean clean = Objects.equals(field.getMinimised(this), originalFieldValues[field.index]);
       if (clean || !directionSupported) continue;
       // If the graph changes, break new subgraphs for insert and scalar delete. Sorted keys make this more efficient.
-      if (graph == null || !graph.getURI().equals(buildGraphIri(key.graph))) {
-        graph = NodeFactory.createURI(buildGraphIri(key.graph));
+      if (graph == null || !graph.getURI().equals(buildGraphIri(key.graphName))) {
+        graph = NodeFactory.createURI(buildGraphIri(key.graphName));
         scalarDeleteQuery.addGraph(graph, currentScalarDeleteSubquery = new WhereBuilder());
         insertQuery.addInsert(graph, currentInsertSubquery = new WhereBuilder());
       }
@@ -178,7 +188,7 @@ public abstract class Model {
 
   /**
    * Queues an update to overwrite entirely delete this object from the database, including all triples which have its
-   * iri as subject or object.
+   * IRI as subject or object, not only those described by the fields of the class.
    */
   public void queueDeletionUpdate() {
     Node self = NodeFactory.createURI(getIri().toString());
@@ -188,44 +198,46 @@ public abstract class Model {
   }
 
   /**
-   * Populates all fields of the model instance with values from the database.
-   * @param kgClient                    the client to execute queries with.
-   * @param recursiveInstantiationDepth the number of levels into the model hierarchy below this to instantiate.
+   * Populates all fields of the model instance with values from the database. In general, this performs better than
+   * <code>pullScalars</code> and <code>pullVector</code>, and should be used for most use cases. The use cases for
+   * <code>pullScalars</code> and <code>pullVector</code> outlined in their respective descriptions.
+   * @param kgId  the resource ID of the target knowledge graph to query.
+   * @param recursiveInstantiationDepth the number of nested levels of {@link Model}s within this to instantiate.
    */
-  public void pullAll(StoreClientInterface kgClient, int recursiveInstantiationDepth) {
+  public void pullAll(String kgId, int recursiveInstantiationDepth) {
     URI iri = getIri();
     clearAll();
     setIri(iri);
-    pullAllInDirection(kgClient, true, recursiveInstantiationDepth);
-    pullAllInDirection(kgClient, false, recursiveInstantiationDepth);
+    pullAllInDirection(kgId, true, recursiveInstantiationDepth);
+    pullAllInDirection(kgId, false, recursiveInstantiationDepth);
     cleanAll();
   }
 
   /**
    * Populates all fields in one direction with values from the database.
-   * @param kgClient                    the client to execute queries with.
+   * @param kgId  the resource ID of the target knowledge graph to query.
    * @param backward                    whether iriName is the object or subject in the rows retrieved.
-   * @param recursiveInstantiationDepth the number of levels into the model hierarchy below this to instantiate.
+   * @param recursiveInstantiationDepth the number of nested levels of {@link Model}s within this to instantiate.
    */
-  private void pullAllInDirection(StoreClientInterface kgClient, boolean backward, int recursiveInstantiationDepth) {
-    Query q = buildPullAllInDirectionQuery(getIri().toString(), backward);
-    String queryResultString = kgClient.execute(q.toString());
-    JSONArray queryResult = new JSONArray(queryResultString);
+  private void pullAllInDirection(String kgId, boolean backward, int recursiveInstantiationDepth) {
+    Query query = buildPullAllInDirectionQuery(getIri().toString(), backward);
+    String queryResultString = AccessAgentCaller.query(kgId, query.toString());
+    JSONArray queryResult = SPARQLUtils.unpackQueryResponse(queryResultString);
     for (int index = 0; index < queryResult.length(); index++) {
       JSONObject row = queryResult.getJSONObject(index);
       FieldInterface field = metaModel.fieldMap.get(new FieldKey(row.getString(GRAPH), row.getString(PREDICATE), backward));
       if (field != null) {
         String valueString = row.getString(VALUE);
         String datatypeString = row.optString(DATATYPE);
-        field.put(this, valueString, datatypeString, kgClient, recursiveInstantiationDepth);
+        field.put(this, valueString, datatypeString, kgId, recursiveInstantiationDepth);
       }
     }
   }
 
   /**
-   * Composes a query to pull all triples relating to this Model instance
-   * @param iriName   the iri from which to pull data.
-   * @param backwards whether to query quads with iriName as the object (true) or subject (false).
+   * Composes a query to pull all triples relating to this instance
+   * @param iriName   the IRI from which to pull data.
+   * @param backwards whether to query quads with <code>iriName</code> as the object (true) or subject (false).
    * @return the composed query.
    */
   public static Query buildPullAllInDirectionQuery(String iriName, boolean backwards) {
@@ -245,11 +257,16 @@ public abstract class Model {
   }
 
   /**
-   * Populates all scalar fields with values from the database.
-   * @param kgClient the client to execute queries with.
+   * Populates all scalar fields with values from the database. Usually less performant than <code>pullAll</code> due to
+   * the additional complexity of the query required to achieve specificity. It should only be used for objects with a
+   * very large number of vector triples. <b>Warning: this can fail due to "Request header is too large" in the current
+   * AccessAgent implementation.</b>
+   * @param kgId  the resource ID of the target knowledge graph to query.
    */
-  public void pullScalars(StoreClientInterface kgClient) {
-    JSONArray scalarResponse = new JSONArray(kgClient.execute(buildScalarsQuery().buildString()));
+  @Deprecated
+  public void pullScalars(String kgId) {
+    String responseString = AccessAgentCaller.query(kgId, buildScalarsQuery().buildString());
+    JSONArray scalarResponse = SPARQLUtils.unpackQueryResponse(responseString);
     if (scalarResponse.length() == 0) {
       throw new JPSRuntimeException(OBJECT_NOT_FOUND_EXCEPTION_TEXT);
     }
@@ -257,14 +274,14 @@ public abstract class Model {
     for (int i = 0; i < metaModel.scalarFieldList.size(); i++) {
       if (row.has(VALUE + i)) {
         FieldInterface field = metaModel.scalarFieldList.get(i).getValue();
-        field.put(this, row.getString(VALUE + i), row.optString(DATATYPE + i), kgClient, 0);
+        field.put(this, row.getString(VALUE + i), row.optString(DATATYPE + i), kgId, 0);
         originalFieldValues[field.index] = field.getMinimised(this);
       }
     }
   }
 
   /**
-   * Composes a query to retrieve the values for all scalar fields of this Model instance.
+   * Composes a query to retrieve the values for all scalar fields of this instance.
    * @return the composed query.
    */
   public SelectBuilder buildScalarsQuery() {
@@ -276,8 +293,8 @@ public abstract class Model {
       SelectBuilder query = new SelectBuilder();
       for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.scalarFieldList) {
         FieldKey key = entry.getKey();
-        if (graph == null || !Objects.equals(graph.getURI(), buildGraphIri(key.graph))) {
-          graph = NodeFactory.createURI(buildGraphIri(key.graph));
+        if (graph == null || !Objects.equals(graph.getURI(), buildGraphIri(key.graphName))) {
+          graph = NodeFactory.createURI(buildGraphIri(key.graphName));
           currentGraphSubquery = new WhereBuilder();
           query.addGraph(graph, currentGraphSubquery);
         }
@@ -298,19 +315,22 @@ public abstract class Model {
   }
 
   /**
-   * Populates the named vector fields with values from the database.
+   * Populates the named vector fields with values from the database. Usually less performant than <code>pullAll</code>
+   * due to the additional complexity of the query required to achieve specificity. It should only be used for objects
+   * with a very large number of triples not in the requested vectors.
    * @param fieldNames the list of vector field names to be populated.
-   * @param kgClient the client to execute queries with.
+   * @param kgId  the resource ID of the target knowledge graph to query.
    */
-  public void pullVector(List<String> fieldNames, StoreClientInterface kgClient) {
+  public void pullVector(List<String> fieldNames, String kgId) {
     // Populate vectors
     for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.vectorFieldList) {
       if (fieldNames.contains(entry.getValue().field.getName())) {
         FieldInterface field = entry.getValue();
-        JSONArray response = new JSONArray(kgClient.execute(buildVectorQuery(entry.getKey()).buildString()));
+        String responseString = AccessAgentCaller.query(kgId, buildVectorQuery(entry.getKey()).buildString());
+        JSONArray response = SPARQLUtils.unpackQueryResponse(responseString);
         for (int i = 0; i < response.length(); i++) {
           JSONObject row = response.getJSONObject(i);
-          field.put(this, row.getString(VALUE), row.optString(DATATYPE), kgClient, 0);
+          field.put(this, row.getString(VALUE), row.optString(DATATYPE), kgId, 0);
         }
         originalFieldValues[field.index] = field.getMinimised(this);
       }
@@ -318,13 +338,13 @@ public abstract class Model {
   }
 
   /**
-   * Composes a query for all matches of a property specification described by a FieldKey, for this Model instance.
-   * @param key the FieldKey describing the property to be queried.
+   * Composes a query for all matches of a property described by a {@link FieldKey}, for this instance.
+   * @param key the {@link FieldKey} describing the property to be queried.
    * @return the composed query.
    */
   public SelectBuilder buildVectorQuery(FieldKey key) {
     Node predicate = NodeFactory.createURI(key.predicate);
-    Node graph = NodeFactory.createURI(buildGraphIri(key.graph));
+    Node graph = NodeFactory.createURI(buildGraphIri(key.graphName));
     Node self = NodeFactory.createURI(getIri().toString());
     try {
       return new SelectBuilder()
@@ -338,7 +358,8 @@ public abstract class Model {
   }
 
   /**
-   * Equality is defined as all fields matching. The cleanCopy does not have to match.
+   * Equality is defined as all {@link Model}-managed fields matching. <code>originalFieldValues</code> and fields
+   * without {@link FieldAnnotation} annotations do not have to match.
    * @param o the object to compare against.
    * @return whether the objects are equal.
    */
@@ -353,8 +374,8 @@ public abstract class Model {
   }
 
   /**
-   * Returns the namespace an iri is in, including a trailing slash.
-   * @param iri object iri.
+   * Returns the namespace an IRI is in, including a trailing slash.
+   * @param iri object IRI.
    * @return namespace as string.
    */
   public static String getNamespace(String iri) {
@@ -364,7 +385,7 @@ public abstract class Model {
   }
 
   /**
-   * Returns the namespace of a model, including a trailing slash.
+   * Returns the namespace of the {@link Model}'s IRI, including a trailing slash.
    * @return namespace as string.
    */
   public String getNamespace() {
@@ -372,20 +393,20 @@ public abstract class Model {
   }
 
   /**
-   * Builds a graph iri, including a trailing slash, from a given namespace and graph name.
+   * Builds a graph IRI, including a trailing slash, from a given namespace and graph name.
    * Equivalent to namespace + graphName + "/".
-   * @param namespace the namespace iri.
+   * @param namespace the namespace IRI.
    * @param graphName the short name of the graph, e.g. "surfacegeometry".
-   * @return graph iri as string
+   * @return graph IRI as string
    */
   public static String buildGraphIri(String namespace, String graphName) {
     return namespace + graphName + "/";
   }
 
   /**
-   * Builds a graph iri, including a trailing slash, from a graph name, using this model's namespace.
+   * Builds a graph IRI, including trailing slash, from a graph name, using the {@link Model}'s IRI's namespace.
    * @param graphName the short name of the graph, e.g. "surfacegeometry".
-   * @return graph iri as string
+   * @return graph IRI as string
    */
   public String buildGraphIri(String graphName) {
     return buildGraphIri(getNamespace(), graphName);

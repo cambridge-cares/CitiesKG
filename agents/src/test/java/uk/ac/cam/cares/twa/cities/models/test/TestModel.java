@@ -1,22 +1,18 @@
-package uk.ac.cam.cares.twa.cities.models.geo.test;
+package uk.ac.cam.cares.twa.cities.models.test;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.jena.update.UpdateRequest;
-import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import uk.ac.cam.cares.twa.cities.FieldAnnotation;
-import uk.ac.cam.cares.twa.cities.MetaModel;
-import uk.ac.cam.cares.twa.cities.Model;
-import uk.ac.cam.cares.twa.cities.ModelAnnotation;
+import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
+import uk.ac.cam.cares.twa.cities.models.Model;
+import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
-import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.UUID;
 
-@ModelAnnotation(nativeGraph = "testmodels")
+@ModelAnnotation(nativeGraphName = "testmodels")
 public class TestModel extends Model {
 
   @Getter @Setter @FieldAnnotation("JPSLAND:stringprop") private String stringProp;

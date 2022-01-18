@@ -3,7 +3,7 @@ package uk.ac.cam.cares.twa.cities.tasks.geo;
 import org.locationtech.jts.geom.Coordinate;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
-import uk.ac.cam.cares.twa.cities.Model;
+import uk.ac.cam.cares.twa.cities.models.Model;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
 
 import java.net.URI;
@@ -12,9 +12,11 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
+/**
+ * TODO: WRITE
+ */
 public class ThematicSurfaceDiscoveryTask implements Runnable {
 
   private static final String UPDATING_PERSON = "ThematicSurfaceDiscoveryAgent";
@@ -23,13 +25,13 @@ public class ThematicSurfaceDiscoveryTask implements Runnable {
 
   private final List<String> buildingIris;
 
-  private final StoreClientInterface kgClient;
+  private final String kgId;
   private final boolean[] thematiciseLod;
   private final double threshold;
   private final Queue<Consumer<Boolean>> deferredPostprocessTasks;
 
-  public ThematicSurfaceDiscoveryTask(List<String> buildingIris, boolean[] thematiciseLod, double threshold, StoreClientInterface kgClient) {
-    this.kgClient = kgClient;
+  public ThematicSurfaceDiscoveryTask(List<String> buildingIris, boolean[] thematiciseLod, double threshold, String kgId) {
+    this.kgId = kgId;
     this.buildingIris = buildingIris;
     this.thematiciseLod = thematiciseLod;
     this.threshold = threshold;
@@ -57,7 +59,7 @@ public class ThematicSurfaceDiscoveryTask implements Runnable {
     // Load building
     Building building = new Building();
     building.setIri(URI.create(buildingIri));
-    building.pullAll(kgClient, 0);
+    building.pullAll(kgId, 0);
     int subFlipBalance = 0;
     for (int i = 0; i < 4; i++)
       if (thematiciseLod[i])
@@ -94,7 +96,7 @@ public class ThematicSurfaceDiscoveryTask implements Runnable {
     if (root == null) return 0;
     Model.cumulativeUpdateExecutionNanoseconds = 0;
     Instant start = Instant.now();
-    root.pullAll(kgClient, 99);
+    root.pullAll(kgId, 99);
     // Sort into thematic surfaces
     List<List<SurfaceGeometry>> topLevelThematicGeometries = Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     List<List<SurfaceGeometry>> bottomLevelThematicGeometries = Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
@@ -170,18 +172,18 @@ public class ThematicSurfaceDiscoveryTask implements Runnable {
         // Push updates
         thematicSurface.queuePushUpdate(true, false);
         tsCityObject.queuePushUpdate(true, false);
-        Model.executeUpdates(kgClient, false);
+        Model.executeUpdates(kgId, false);
         for (SurfaceGeometry geometry : allDescendantGeometries) {
           geometry.queuePushUpdate(true, false);
-          Model.executeUpdates(kgClient, false);
+          Model.executeUpdates(kgId, false);
         }
       }
     }
     for (SurfaceGeometry geometry : mixedGeometries) {
       geometry.queueDeletionUpdate();
-      Model.executeUpdates(kgClient, false);
+      Model.executeUpdates(kgId, false);
     }
-    Model.executeUpdates(kgClient, true);
+    Model.executeUpdates(kgId, true);
   }
 
   enum Theme {

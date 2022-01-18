@@ -20,9 +20,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
-import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
-import uk.ac.cam.cares.twa.cities.PrefixUtils;
+import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
 import uk.ac.cam.cares.twa.cities.tasks.geo.ThematicSurfaceDiscoveryTask;
 
@@ -35,13 +33,13 @@ import uk.ac.cam.cares.twa.cities.tasks.geo.ThematicSurfaceDiscoveryTask;
  * surfaces of the obejct and - if present, returns them - if not present, determines thematic
  * surfaces based on the city obejct type and surface geometries - saves any newly discovered
  * thematic surfaces back to the CKG
- * @author <a href="mailto:arkadiusz.chadzynski@cares.cam.ac.uk">Arkadiusz Chadzynski</a>
+ * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
  * @version $Id$
  */
 @WebServlet(urlPatterns = {ThematicSurfaceDiscoveryAgent.URI_LISTEN})
 public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
 
-  private ExecutorService executor = Executors.newSingleThreadExecutor();
+  private final ExecutorService executor = Executors.newFixedThreadPool(5);
 
   // Agent endpoint and parameter keys
   public static final String URI_LISTEN = "/discovery/thematicsurface";
@@ -61,8 +59,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
   private static final String BUILDING = "bldg";
   private static final String BUILDING_PARENT = "bldgParent";
 
-  private static final String route = ResourceBundle.getBundle("config").getString("uri.route");
-  private final StoreClientInterface kgClient; // AccessAgent should be used instead of this
+  private final String kgId;
 
   // Default task parameters
   private static final double DEFAULT_THRESHOLD = 15;
@@ -74,12 +71,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
 
   public ThematicSurfaceDiscoveryAgent() {
     super();
-    this.kgClient = new RemoteStoreClient(route, route);
-  }
-
-  public ThematicSurfaceDiscoveryAgent(StoreClientInterface kgClient) {
-    super();
-    this.kgClient = kgClient;
+    kgId = ResourceBundle.getBundle("config").getString("uri.route");
   }
 
   @Override
@@ -94,15 +86,15 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
     } else {
       Node buildingObjectClass = NodeFactory.createLiteral(String.valueOf(26), XSDDatatype.XSDinteger);
       SelectBuilder buildingsQuery = new SelectBuilder();
-      PrefixUtils.addPrefix(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID, buildingsQuery);
+      SPARQLUtils.addPrefix(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID, buildingsQuery);
       buildingsQuery.addVar(QM + BUILDING)
           .addWhere(QM + BUILDING, SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID, buildingObjectClass)
           .addWhere(QM + BUILDING, SchemaManagerAdapter.ONTO_BUILDING_PARENT_ID, QM + BUILDING_PARENT);
-      JSONArray buildingsResponse = new JSONArray(kgClient.execute(buildingsQuery.buildString()));
+      JSONArray buildingsResponse = SPARQLUtils.unpackQueryResponse(query(kgId, buildingsQuery.buildString()));
       for (int i = 0; i < buildingsResponse.length(); i++)
         buildingIris.add(buildingsResponse.getJSONObject(i).getString(BUILDING));
     }
-    executor.execute(new ThematicSurfaceDiscoveryTask(buildingIris, lods, threshold, kgClient));
+    executor.execute(new ThematicSurfaceDiscoveryTask(buildingIris, lods, threshold, kgId));
     return requestParams;
   }
 
@@ -129,12 +121,15 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
     throw new BadRequestException();
   }
 
+  /**
+   * Queries the database for the coordinate reference system to use and sets it as the {@link GeometryType} source crs.
+   */
   private void importSrs() throws JPSRuntimeException {
     // TODO: convert ocgml:srsname to a SchemaManagerAdapter constant when it exists.
     SelectBuilder srsQuery = new SelectBuilder();
-    PrefixUtils.addPrefix("ocgml:srsname", srsQuery);
+    SPARQLUtils.addPrefix("ocgml:srsname", srsQuery);
     srsQuery.addVar(QM + SRS).addWhere(NodeFactory.createURI(namespaceIri), "ocgml:srsname", QM + SRS);
-    JSONArray srsResponse = new JSONArray(kgClient.execute(srsQuery.buildString()));
+    JSONArray srsResponse = SPARQLUtils.unpackQueryResponse(query(kgId, srsQuery.buildString()));
     if (srsResponse.length() == 0) {
       throw new JPSRuntimeException(NO_CRS_EXCEPTION_TEXT);
     } else if (srsResponse.length() > 1) {

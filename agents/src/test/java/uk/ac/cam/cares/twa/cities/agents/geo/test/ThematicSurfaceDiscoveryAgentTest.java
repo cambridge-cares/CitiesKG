@@ -3,8 +3,10 @@ package uk.ac.cam.cares.twa.cities.agents.geo.test;
 import junit.framework.TestCase;
 import org.json.JSONObject;
 import org.mockito.Mockito;
+import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
+import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
@@ -96,8 +98,7 @@ public class ThematicSurfaceDiscoveryAgentTest extends TestCase {
 
   public void testImportSrs() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
-    StoreClientInterface kgClient = Mockito.mock(RemoteStoreClient.class);
-    ThematicSurfaceDiscoveryAgent agent = new ThematicSurfaceDiscoveryAgent(kgClient);
+    ThematicSurfaceDiscoveryAgent agent = Mockito.spy(new ThematicSurfaceDiscoveryAgent());
 
     JSONObject requestParams = new JSONObject();
     requestParams.put("method", HttpMethod.GET);
@@ -107,7 +108,7 @@ public class ThematicSurfaceDiscoveryAgentTest extends TestCase {
     Method importSrs = agent.getClass().getDeclaredMethod("importSrs");
     importSrs.setAccessible(true);
 
-    Mockito.doReturn("[{\"srs\": \"EPSG:4326\"}]").when(kgClient).execute(Mockito.anyString());
+    Mockito.doReturn("[{\"srs\": \"EPSG:4326\"}]").when(agent).query(Mockito.anyString(), Mockito.anyString());
     try {
       importSrs.invoke(agent);
       assertEquals("EPSG:4326", GeometryType.getSourceCrsName());
@@ -115,20 +116,25 @@ public class ThematicSurfaceDiscoveryAgentTest extends TestCase {
       fail();
     }
 
-    Mockito.doReturn("[]").when(kgClient).execute(Mockito.anyString());
+    Mockito.doReturn("[]").when(agent).query(Mockito.anyString(), Mockito.anyString());
     try {
       importSrs.invoke(agent);
       fail();
     } catch(Exception ignored) {
     }
 
-    Mockito.doReturn("[{\"srs\": \"EPSG:4326\"}, {\"srs\": \"EPSG:27700\"}]").when(kgClient).execute(Mockito.anyString());
+    Mockito.doReturn("[{\"srs\": \"EPSG:4326\"}, {\"srs\": \"EPSG:27700\"}]").when(agent).query(Mockito.anyString(), Mockito.anyString());
     try {
       importSrs.invoke(agent);
       fail();
     } catch(Exception ignored) {
     }
 
+  }
+
+  public void testAccessAgentCaller() {
+    JPSAgent agent = new ThematicSurfaceDiscoveryAgent();
+    System.err.println("RESULT\n" + AccessAgentCaller.query("http://localhost:48080/local-churchill", "SELECT * WHERE {?a ?b ?c} LIMIT 10"));
   }
 
 }

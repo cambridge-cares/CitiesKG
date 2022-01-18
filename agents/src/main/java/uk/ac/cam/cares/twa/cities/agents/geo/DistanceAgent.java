@@ -22,8 +22,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.locationtech.jts.geom.Coordinate;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
-import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
-import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
+import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 import uk.ac.cam.cares.twa.cities.models.geo.EnvelopeType;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
@@ -40,6 +39,8 @@ public class DistanceAgent extends JPSAgent {
   public static final String KEY_REQ_METHOD = "method";
   public static final String KEY_IRIS = "iris";
   public static final String KEY_DISTANCES = "distances";
+
+  public static final String KEY_QUERY_RESULT = "result";
 
   private static final String RDF_SCHEMA = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
   private static final String XML_SCHEMA = "http://www.w3.org/2001/XMLSchema#";
@@ -71,7 +72,6 @@ public class DistanceAgent extends JPSAgent {
   // Variables fetched from config.properties file.
   private String ocgmlUri;
   private static String unitOntology;
-  private StoreClientInterface kgClient;
   private static String route;
 
   public DistanceAgent() {
@@ -197,26 +197,15 @@ public class DistanceAgent extends JPSAgent {
   private double getDistance(String firstUriString, String secondUriString) {
 
     double distance = -1.0;
-    setKGClient(true);
 
     Query q = getDistanceQuery(firstUriString, secondUriString);
-    String queryResultString = kgClient.execute(q.toString());
-    JSONArray queryResult = new JSONArray(queryResultString);
+    String queryResultString = query(route, q.toString());
+    JSONArray queryResult = SPARQLUtils.unpackQueryResponse(queryResultString);
 
     if (!queryResult.isEmpty()) {
       distance = Double.parseDouble(queryResult.getJSONObject(0).get(DISTANCE_OBJECT).toString());
     }
     return distance;
-  }
-
-  /**
-   * sets KG Client for specific endpoint.
-   *
-   * @param isQuery boolean
-   */
-  private void setKGClient(boolean isQuery) {
-    this.kgClient = new RemoteStoreClient(route, route);
-    // this.kgClient = StoreRouter.getStoreClient(route, isQuery, !isQuery);
   }
 
   /**
@@ -251,10 +240,8 @@ public class DistanceAgent extends JPSAgent {
     if (source) { srs = DEFAULT_SRS; }
     else { srs = DEFAULT_TARGET_SRS; }
 
-    setKGClient(true);
-
     Query q = getObjectSRSQuery(uriString, source);
-    String queryResultString = kgClient.execute(q.toString());
+    String queryResultString = query(route, q.toString());
     JSONArray queryResult = new JSONArray(queryResultString);
 
     if (!queryResult.isEmpty()) {
@@ -273,7 +260,7 @@ public class DistanceAgent extends JPSAgent {
     GeometryType.setSourceCrsName(coordinateSystem);
     CityObject cityObject = new CityObject();
     cityObject.setIri(URI.create(uriString));
-    cityObject.pullAll(kgClient, 0);
+    cityObject.pullAll(route, 0);
     return cityObject.getEnvelopeType();
   }
 
@@ -330,13 +317,9 @@ public class DistanceAgent extends JPSAgent {
    * @param firstUri city object 1
    * @param secondUri city object 2
    * @param distance distance between two city objects
-   * @return confirmation
    */
-  private int setDistance(String firstUri, String secondUri, double distance) {
-
+  private void setDistance(String firstUri, String secondUri, double distance) {
     UpdateRequest ur = getSetDistanceQuery(firstUri, secondUri, distance);
-    setKGClient(false);
-
-    return kgClient.executeUpdate(ur);
+    update(route, ur.toString());
   }
 }

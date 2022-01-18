@@ -5,11 +5,11 @@ import java.net.URI;
 import lombok.Getter;
 import lombok.Setter;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import uk.ac.cam.cares.twa.cities.Model;
-import uk.ac.cam.cares.twa.cities.FieldAnnotation;
-import uk.ac.cam.cares.twa.cities.ModelAnnotation;
+import uk.ac.cam.cares.twa.cities.models.Model;
+import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
+import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 
-@ModelAnnotation(nativeGraph = SchemaManagerAdapter.THEMATIC_SURFACE_GRAPH)
+@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.THEMATIC_SURFACE_GRAPH)
 public class ThematicSurface extends Model {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_BUILDING_ID)  private URI buildingId;

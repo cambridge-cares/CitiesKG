@@ -5,15 +5,15 @@ import java.net.URI;
 import lombok.Getter;
 import lombok.Setter;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import uk.ac.cam.cares.twa.cities.Model;
-import uk.ac.cam.cares.twa.cities.FieldAnnotation;
-import uk.ac.cam.cares.twa.cities.ModelAnnotation;
+import uk.ac.cam.cares.twa.cities.models.Model;
+import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
+import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 
 /**
  * GenericAttribute class represent a java model of GenericCityAttribute module of CityGML. It
  * retrieves GenericCityAttribute attributes and fills equivalent fields in the java model.
  */
-@ModelAnnotation(nativeGraph = SchemaManagerAdapter.GENERIC_ATTRIB_GARPH)
+@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.GENERIC_ATTRIB_GARPH)
 public class GenericAttribute extends Model {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ATTR_NAME) protected String attrName;

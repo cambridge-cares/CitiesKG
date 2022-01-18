@@ -7,11 +7,11 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import uk.ac.cam.cares.twa.cities.Model;
-import uk.ac.cam.cares.twa.cities.FieldAnnotation;
-import uk.ac.cam.cares.twa.cities.ModelAnnotation;
+import uk.ac.cam.cares.twa.cities.models.Model;
+import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
+import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 
-@ModelAnnotation(nativeGraph = SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH)
+@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH)
 public class SurfaceGeometry extends Model {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID) protected URI cityObjectId;

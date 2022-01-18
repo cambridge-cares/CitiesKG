@@ -27,7 +27,6 @@ public class CityInformationAgent extends JPSAgent {
   public static final String KEY_IRIS = "iris";
   public static final String KEY_ATTRIBUTES = "attributes";
 
-  private StoreClientInterface kgClient;
   private static String route;
   private boolean lazyload;
 
@@ -52,12 +51,10 @@ public class CityInformationAgent extends JPSAgent {
 
     System.err.println(iris);
 
-    setKGClient(true);
-
     for (String cityObjectIri : uris) {
       CityObject cityObject = new CityObject();
       cityObject.setIri(URI.create(cityObjectIri));
-      cityObject.pullAll(kgClient, 1);
+      cityObject.pullAll(route, 1);
 
       ArrayList<CityObject> cityObjectList = new ArrayList<>();
       cityObjectList.add(cityObject);
@@ -99,11 +96,4 @@ public class CityInformationAgent extends JPSAgent {
     route = config.getString("uri.route");
   }
 
-  /**
-   * sets KG Client for specific endpoint.
-   * @param isQuery boolean
-   */
-  private void setKGClient(boolean isQuery) {
-    this.kgClient = StoreRouter.getStoreClient(route, isQuery, !isQuery);
-  }
 }

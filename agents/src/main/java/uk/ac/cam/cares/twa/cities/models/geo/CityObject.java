@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import lombok.Getter;
 import lombok.Setter;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import uk.ac.cam.cares.twa.cities.Model;
-import uk.ac.cam.cares.twa.cities.FieldAnnotation;
-import uk.ac.cam.cares.twa.cities.ModelAnnotation;
+import uk.ac.cam.cares.twa.cities.models.Model;
+import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
+import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 
-@ModelAnnotation(nativeGraph = SchemaManagerAdapter.CITY_OBJECT_GRAPH)
+@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.CITY_OBJECT_GRAPH)
 public class CityObject extends Model {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CREATION_DATE) protected String creationDate;

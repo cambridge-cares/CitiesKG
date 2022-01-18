@@ -4,13 +4,16 @@ import java.net.URI;
 import java.util.ArrayList;
 
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import uk.ac.cam.cares.twa.cities.Model;
-import uk.ac.cam.cares.twa.cities.FieldAnnotation;
+import uk.ac.cam.cares.twa.cities.models.Model;
+import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
 import lombok.Getter;
 import lombok.Setter;
-import uk.ac.cam.cares.twa.cities.ModelAnnotation;
+import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 
-@ModelAnnotation(nativeGraph = SchemaManagerAdapter.BUILDING_GRAPH)
+/**
+ *
+ */
+@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.BUILDING_GRAPH)
 public class Building extends Model {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_FUNCTION) protected String function;
