@@ -45,15 +45,12 @@ public class CityInformationAgent extends JPSAgent {
     // for city object iris
     ArrayList<String> uris = new ArrayList<>();
     JSONArray iris = requestParams.getJSONArray(KEY_IRIS);
-    for (Object iri : iris) {
-      uris.add(iri.toString());
+    for (Object iri : iris) { uris.add(iri.toString());
     }
-
     // for use case context
     ArrayList<String> agents = new ArrayList<>();
     JSONArray contexts = requestParams.getJSONArray((KEY_CONTEXT));
-    for (Object context : contexts) {
-      agents.add(context.toString());
+    for (Object context : contexts) { agents.add(context.toString());
     }
 
     JSONArray cityObjectInformation = new JSONArray();
@@ -62,17 +59,14 @@ public class CityInformationAgent extends JPSAgent {
       try {
         CityObject cityObject = new CityObject();
 
-        //to fill scalars.
         String queryResult = this.query(route, cityObject.getFetchScalarsQuery(cityObjectIri).toString());
         cityObject.fillScalars(queryResult);
 
-        //to fill generic attributes
         String genericAttGraphIri = cityObject.getNamespace(cityObjectIri) + SchemaManagerAdapter.GENERIC_ATTRIB_GARPH + "/";
         String genAtrQueryResult = this.query(route, cityObject.getFetchIrisQuery(cityObjectIri,
             SchemaManagerAdapter.ONTO_CITY_OBJECT_ID, genericAttGraphIri).toString());
         cityObject.fillGenericAttributes(cityObjectIri, genAtrQueryResult, lazyload);
 
-        //to fill external references
         String extRefGraphIri = cityObject.getNamespace(cityObjectIri) + SchemaManagerAdapter.EXTERNAL_REFERENCES_GRAPH + "/";
         String extRefQueryResult = this.query(route, cityObject.getFetchIrisQuery(cityObjectIri,
             SchemaManagerAdapter.ONTO_CITY_OBJECT_ID, extRefGraphIri).toString());
