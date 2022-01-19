@@ -79,11 +79,10 @@ public class CityObject extends Model {
 
   /**
    * fills in generic attributes linked to the city object.
-   * @param iriName cityObject IRI
    * @param queryResult sends the query to the right endpoint.
    * @param lazyLoad if true only fills genericAttributesIris field; if false also fills genericAttributes field.
    */
-  public void fillGenericAttributes(String iriName, String queryResult, Boolean lazyLoad)
+  public void fillGenericAttributes(String queryResult, Boolean lazyLoad)
       throws NoSuchFieldException, IllegalAccessException {
 
     JSONArray queryResultJSON = new JSONArray(queryResult);
@@ -109,11 +108,10 @@ public class CityObject extends Model {
 
   /**
    * fills in external refs linked to the city object.
-   * @param iriName cityObject IRI
    * @param queryResult sends the query to the right endpoint.
    * @param lazyLoad if true only fills externalReferencesIris field; if false also fills externalReferences field.
    */
-  public void fillExternalReferences(String iriName, String queryResult, Boolean lazyLoad)
+  public void fillExternalReferences(String queryResult, Boolean lazyLoad)
           throws NoSuchFieldException, IllegalAccessException {
 
     JSONArray queryResultJSON = new JSONArray(queryResult);
