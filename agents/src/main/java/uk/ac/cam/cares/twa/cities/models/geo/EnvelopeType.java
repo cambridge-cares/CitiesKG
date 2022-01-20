@@ -8,6 +8,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
+/**
+ * GeometryType with helper functions for obtaining the bounding envelope of geometries.
+ * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
+ * @version $Id$
+ */
 public class EnvelopeType extends GeometryType {
 
   public EnvelopeType(String data, String structure) {

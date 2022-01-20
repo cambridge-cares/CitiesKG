@@ -11,7 +11,9 @@ import lombok.Setter;
 import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 
 /**
- *
+ * Model representing OntoCityGML Building objects.
+ * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
+ * @version $Id$
  */
 @ModelAnnotation(nativeGraphName = SchemaManagerAdapter.BUILDING_GRAPH)
 public class Building extends Model {
@@ -42,7 +44,7 @@ public class Building extends Model {
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_LOD4_MULTI_CURVE) protected URI lod4MultiCurve; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_MEASURED_HEIGHT) protected Double measuredHeight;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_MEASURED_HEIGHT_UNIT) protected String measuredHeightUnit; // check-type
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID) protected Integer objectClassId;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID) protected Integer objectClassId = 26;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ROOF_TYPE_CODESPACE) protected String roofTypeCodespace; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_ABOVE_GROUND) protected String storeyHeightsAboveGround; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_BELLOW_GROUND) protected String storeyHeightsBelowGround; // check-type

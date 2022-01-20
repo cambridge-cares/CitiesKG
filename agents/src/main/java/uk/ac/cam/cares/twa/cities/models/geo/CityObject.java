@@ -9,6 +9,11 @@ import uk.ac.cam.cares.twa.cities.models.Model;
 import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
 import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 
+/**
+ * Model representing OntoCityGML CityObject objects.
+ * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
+ * @version $Id$
+ */
 @ModelAnnotation(nativeGraphName = SchemaManagerAdapter.CITY_OBJECT_GRAPH)
 public class CityObject extends Model {
 

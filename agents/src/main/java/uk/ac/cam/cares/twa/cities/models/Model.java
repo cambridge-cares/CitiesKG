@@ -62,7 +62,7 @@ public abstract class Model {
 
   // Minimised representations of the original values of fields from the last pull from the database.
   // These are ordered in the same order as metaModel.scalarFieldList and metaModel.vectorFieldList.
-  private Object[] originalFieldValues;
+  private final Object[] originalFieldValues;
 
   public Model() {
     Class<?> thisClass = this.getClass();
@@ -76,7 +76,10 @@ public abstract class Model {
       }
       metaModelMap.put(thisClass, metaModel);
     }
-    clearAll();
+    // Initialise lists to empty lists
+    for (Map.Entry<FieldKey, FieldInterface> vectorEntry : metaModel.vectorFieldList)
+      vectorEntry.getValue().clear(this);
+    originalFieldValues = new Object[metaModel.fieldMap.size()];
     dirtyAll();
   }
 
@@ -86,7 +89,6 @@ public abstract class Model {
   public void clearAll() {
     for (FieldInterface field : metaModel.fieldMap.values())
       field.clear(this);
-    originalFieldValues = new Object[metaModel.fieldMap.size()];
   }
 
   /**
@@ -118,7 +120,7 @@ public abstract class Model {
   }
 
   /**
-   * Executes queued updates in the update queue
+   * Executes queued updates (for this thread) in the update queue
    * @param kgId  the resource ID of the target knowledge graph to query.
    * @param force if false, the updates will only be executed if their cumulative length is >250000 characters.
    */
@@ -131,14 +133,19 @@ public abstract class Model {
   }
 
   /**
-   * Clears queued updates without executing.
+   * Clears queued updates (for this thread) without executing.
    */
   public static void clearUpdateQueue() {
     updateQueue.set(new UpdateRequest());
   }
 
   /**
-   * Queues an update to push field values to the database.
+   * @return returns currently queued updates (for this thread) without modifying the queue.
+   */
+  public static String peekUpdateQueue() { return updateQueue.get().toString(); }
+
+  /**
+   * Queues an update to push field values to the database. Note that each thread has a separate update queue.
    * @param pushForward  whether to push forward properties.
    * @param pushBackward whether to push backward properties.
    */
@@ -196,9 +203,9 @@ public abstract class Model {
   }
 
   /**
-   * Populates all fields of the model instance with values from the database. In general, this performs better than
-   * <code>pullScalars</code> and <code>pullVector</code>, and should be used for most use cases. The use cases for
-   * <code>pullScalars</code> and <code>pullVector</code> outlined in their respective descriptions.
+   * Populates all fields of the model instance with values from the database and sets all fields clean. In general,
+   * this performs better than <code>pullScalars</code> and <code>pullVector</code>, and should be used for most use
+   * cases. See <code>pullScalars</code> and <code>pullVector</code> for more details.
    * @param kgId  the resource ID of the target knowledge graph to query.
    * @param recursiveInstantiationDepth the number of nested levels of {@link Model}s within this to instantiate.
    */
@@ -212,7 +219,7 @@ public abstract class Model {
   }
 
   /**
-   * Populates all fields in one direction with values from the database.
+   * Populates all fields in one direction with values from the database. Does not explicitly clean any fields.
    * @param kgId  the resource ID of the target knowledge graph to query.
    * @param backward                    whether iriName is the object or subject in the rows retrieved.
    * @param recursiveInstantiationDepth the number of nested levels of {@link Model}s within this to instantiate.
@@ -233,7 +240,7 @@ public abstract class Model {
   }
 
   /**
-   * Composes a query to pull all triples relating to this instance
+   * Composes a query to pull all triples relating to this instance.
    * @param iriName   the IRI from which to pull data.
    * @param backwards whether to query quads with <code>iriName</code> as the object (true) or subject (false).
    * @return the composed query.
@@ -258,7 +265,7 @@ public abstract class Model {
    * Populates all scalar fields with values from the database. Usually less performant than <code>pullAll</code> due to
    * the additional complexity of the query required to achieve specificity. It should only be used for objects with a
    * very large number of vector triples. <b>Warning: this can fail due to "Request header is too large" in the current
-   * AccessAgent implementation.</b>
+   * AccessAgent implementation.</b> Does not explicitly clean any fields.
    * @param kgId  the resource ID of the target knowledge graph to query.
    */
   @Deprecated

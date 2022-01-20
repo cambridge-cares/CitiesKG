@@ -11,6 +11,11 @@ import uk.ac.cam.cares.twa.cities.models.Model;
 import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
 import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 
+/**
+ * Model representing OntoCityGML SurfaceGeometry objects.
+ * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
+ * @version $Id$
+ */
 @ModelAnnotation(nativeGraphName = SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH)
 public class SurfaceGeometry extends Model {
 

@@ -64,8 +64,8 @@ public class GeometryType implements DatatypeModel {
   @Getter Vector3D normal;
   @Getter double area = -1;
 
-  public GeometryType() {
-
+  public GeometryType(Polygon polygon) {
+    this.setPolygon(polygon);
   }
 
   public GeometryType(String data, String structure) {
@@ -92,6 +92,11 @@ public class GeometryType implements DatatypeModel {
       throw new JPSRuntimeException(e);
     }
     polygon = factory.createPolygon(exterior, holes);
+    recalculateGeometricProperties();
+  }
+
+  public void setPolygon(Polygon polygon) {
+    this.polygon = polygon;
     recalculateGeometricProperties();
   }
 

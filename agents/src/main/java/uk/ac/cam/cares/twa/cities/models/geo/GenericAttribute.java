@@ -10,8 +10,9 @@ import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
 import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 
 /**
- * GenericAttribute class represent a java model of GenericCityAttribute module of CityGML. It
- * retrieves GenericCityAttribute attributes and fills equivalent fields in the java model.
+ * Model representing OntoCityGML CityObjectGenericAttribute objects.
+ * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
+ * @version $Id$
  */
 @ModelAnnotation(nativeGraphName = SchemaManagerAdapter.GENERIC_ATTRIB_GARPH)
 public class GenericAttribute extends Model {

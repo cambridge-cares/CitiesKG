@@ -1,6 +1,7 @@
 package uk.ac.cam.cares.twa.cities.models.geo;
 
 import java.net.URI;
+import java.util.ArrayList;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -9,6 +10,11 @@ import uk.ac.cam.cares.twa.cities.models.Model;
 import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
 import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 
+/**
+ * Model representing OntoCityGML thematic surface (_BoundarySurface) objects.
+ * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
+ * @version $Id$
+ */
 @ModelAnnotation(nativeGraphName = SchemaManagerAdapter.THEMATIC_SURFACE_GRAPH)
 public class ThematicSurface extends Model {
 
@@ -19,5 +25,10 @@ public class ThematicSurface extends Model {
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_LOD4_MULTI_SURFACE_ID)  private SurfaceGeometry lod4MultiSurfaceId;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID)  private Integer objectClassId;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ROOM_ID)  private URI roomId;
+
+  @Getter @Setter @FieldAnnotation(
+      value = SchemaManagerAdapter.ONTO_OPENING_ID,
+      graphName = "openingtothemsurface",
+      innerType = Opening.class) private ArrayList<Opening> openingId;
 
 }

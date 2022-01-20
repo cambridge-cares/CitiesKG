@@ -181,6 +181,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
         String uuid = UUID.randomUUID().toString();
         // Construct CityObject for the thematic surface
         CityObject tsCityObject = new CityObject();
+        tsCityObject.setObjectClassId(33 + i);
         tsCityObject.setEnvelopeType(new EnvelopeType(topLevelGeometry));
         tsCityObject.setCreationDate(OffsetDateTime.now().toString());
         tsCityObject.setLastModificationDate(OffsetDateTime.now().toString());
