@@ -74,6 +74,29 @@ adjustIonFeatures();
 navigationInitialization('cesiumContainer', cesiumViewer);
 
 var cesiumCamera = cesiumViewer.scene.camera;
+
+//////////////////////////////////////////////////////////////////////////
+// Configuring the Scene
+//////////////////////////////////////////////////////////////////////////
+
+// Create an initial camera view
+var initialPosition = new Cesium.Cartesian3.fromDegrees(13.411141287558147, 52.517479728958044, 534.3099172977386);
+var initialOrientation = new Cesium.HeadingPitchRoll.fromDegrees(345.2992773976952, -44.26228062802528, 359.933888621294);
+var homeCameraView = {
+    destination : initialPosition,
+    orientation : {
+        heading : initialOrientation.heading,
+        pitch : initialOrientation.pitch,
+        roll : initialOrientation.roll
+    }
+};
+// Set the initial view
+cesiumCamera.setView(homeCameraView);
+
+
+///////////////////////////////////// end  //////////////////////////////// Added by Shiying
+
+
 var webMap = new WebMap3DCityDB(cesiumViewer);
 
 // set default input parameter value and bind the view and model
