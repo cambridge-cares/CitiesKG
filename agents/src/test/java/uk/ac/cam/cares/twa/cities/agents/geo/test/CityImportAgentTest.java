@@ -23,6 +23,8 @@ import javax.ws.rs.HttpMethod;
 import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
+import org.mockito.MockedConstruction;
+import org.mockito.Mockito;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
@@ -450,69 +452,50 @@ public class CityImportAgentTest extends TestCase {
       }
     }
 
-    // Case: if the importDir exists with content, but null targetUrl
-    // should return JPSRuntimeException
-    // caused by NullPointerException due to null targetUrl at new URI(targetUrl) in importChunk method
-    try {
-      if (impD.mkdirs()) {
-        Files.copy(testFile.toPath(), impF.toPath());
-        importFiles.invoke(agent, impD);
-      }
-    } catch (InvocationTargetException | IllegalAccessException | IOException e) {
-      if (e.getClass() == InvocationTargetException.class) {
-        assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-            JPSRuntimeException.class);
-      } else {
-        fail();
-      }
-    } finally {
-      NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
-      try {
-        FileUtils.deleteDirectory(impD);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
-/*
-    try {
-      if (impD.mkdirs()) {
-        Files.copy(testFile.toPath(), impF.toPath());
-        targetUrl.set(agent, "test");
-        importFiles.invoke(agent, impD);
-      }
-    } catch (InvocationTargetException | IllegalAccessException | IOException e) {
-      if (e.getClass() == InvocationTargetException.class) {
-        assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-            JPSRuntimeException.class);
-      } else {
-        fail();
-      }
-    } finally {
-      NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
-      try {
-        FileUtils.deleteDirectory(impD);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
+    try (MockedConstruction<BlazegraphServerTask> serverTask = Mockito.mockConstruction(BlazegraphServerTask.class, (mock, context) -> {
+      Mockito.when(mock.isRunning()).thenReturn(true);
+    })) {
 
- */
-
-    // Case: test file is successfully imported
-    try {
-      if (impD.mkdirs()) {
-        Files.copy(testFile.toPath(), impF.toPath());
-        targetUrl.set(agent, "http://localhost/test");
-        assertEquals(importFiles.invoke(agent, impD), "file_part_1.gml \n");    // Initial code: Splitfiles returns null, chunks = null, assume the file is small
-      }
-    } catch (InvocationTargetException | IllegalAccessException | IOException e) {
-      fail();
-    } finally {
-      NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
+      // Case: if the importDir exists with content, but null targetUrl
+      // should return JPSRuntimeException
+      // caused by NullPointerException due to null targetUrl at new URI(targetUrl) in importChunk method
       try {
-        FileUtils.deleteDirectory(impD);
-      } catch (IOException e) {
-        e.printStackTrace();
+        if (impD.mkdirs()) {
+          Files.copy(testFile.toPath(), impF.toPath());
+          importFiles.invoke(agent, impD);
+        }
+      } catch (InvocationTargetException | IllegalAccessException | IOException e) {
+        if (e.getClass() == InvocationTargetException.class) {
+          assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
+                  JPSRuntimeException.class);
+        } else {
+          fail();
+        }
+      } finally {
+        NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
+        try {
+          FileUtils.deleteDirectory(impD);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+
+      // Case: test file is successfully imported
+      try {
+        if (impD.mkdirs()) {
+          Files.copy(testFile.toPath(), impF.toPath());
+          targetUrl.set(agent, "http://localhost/test");
+          assertEquals(importFiles.invoke(agent, impD), "file_part_1.gml \n");    // Initial code: Splitfiles returns null, chunks = null, assume the file is small
+        }
+      } catch (InvocationTargetException | IllegalAccessException | IOException e) {
+        fail();
+      } finally {
+        NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
+        try {
+          FileUtils.deleteDirectory(impD);
+        } catch (IOException e) {
+          fail();
+        }
       }
     }
 
@@ -626,6 +609,7 @@ public class CityImportAgentTest extends TestCase {
     File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
 
     Method startBlazegraphInstance;
+    BlazegraphServerTask task = null;
 
     try {
       if (impD.mkdirs()) {
@@ -634,7 +618,7 @@ public class CityImportAgentTest extends TestCase {
       startBlazegraphInstance = agent.getClass()
           .getDeclaredMethod("startBlazegraphInstance", BlockingQueue.class, String.class);
       startBlazegraphInstance.setAccessible(true);
-      BlazegraphServerTask task = (BlazegraphServerTask) startBlazegraphInstance.invoke(agent,
+     task = (BlazegraphServerTask) startBlazegraphInstance.invoke(agent,
           new LinkedBlockingDeque<>(), impF.getAbsolutePath());
       Field stopF = task.getClass().getDeclaredField("stop");
       stopF.setAccessible(true);
@@ -642,7 +626,13 @@ public class CityImportAgentTest extends TestCase {
     } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IOException | NoSuchFieldException e) {
       fail();
     } finally {
-      NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
+      try {
+        task.stop();
+        FileUtils.deleteDirectory(impD);
+        NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
+      } catch (IOException e) {
+        fail();
+      }
     }
     //other functionality already tested in the corresponding task
   }
