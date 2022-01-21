@@ -33,6 +33,7 @@ public class GeometryType implements DatatypeModel {
   private static final String DATATYPE_IRI_HEAD = "http://localhost/blazegraph/literals/POLYGON-3";
   private static final String VALUE_DELIMITER = "#";
   private static final String STRUCTURE_DELIMITER = "-";
+  private static final String STRUCTURE_PREFIX = "POLYGON-";
   private static final String UTM_FORMAT = "AUTO:42001,1,%s,%s";
   private static final String EPSG_4326 = "urn:x-ogc:def:crs:EPSG:4326";
   private static final CoordinateReferenceSystem epsg4326;
@@ -56,6 +57,7 @@ public class GeometryType implements DatatypeModel {
   protected MathTransform transform = null;
   @Getter protected Coordinate utmAnchor; // EPSG:4326
   @Getter protected CoordinateReferenceSystem sourceCrs;
+  @Getter protected CoordinateReferenceSystem metricCrs;
 
   @Getter protected Polygon polygon;
   @Getter private Coordinate centroid;
@@ -68,14 +70,15 @@ public class GeometryType implements DatatypeModel {
     this.setPolygon(polygon);
   }
 
-  public GeometryType(String data, String structure) {
+  public GeometryType(String data, String datatype) {
     // decode coordinates
     String[] valueStrings = data.split(VALUE_DELIMITER);
     double[] values = new double[valueStrings.length];
     for (int i = 0; i < valueStrings.length; i++) values[i] = Double.parseDouble(valueStrings[i]);
     // Deserialize coordinates into rings based on structure string, which should be e.g. [...]POLYGON-3-24-15-15.
-    String[] ringSizes = structure.split(STRUCTURE_DELIMITER);
-    ringSizes = Arrays.copyOfRange(ringSizes, 2, ringSizes.length);
+    String[] splitDatatypeString = datatype.split(STRUCTURE_PREFIX); // ["...", "3-24-15-15"]
+    String[] splitStructureString = splitDatatypeString[splitDatatypeString.length-1].split(STRUCTURE_DELIMITER); // ["3", "24", "15", "15"]
+    String[] ringSizes = Arrays.copyOfRange(splitStructureString, 1, splitStructureString.length); // // ["24", "15", "15"]
     LinearRing exterior = null;
     LinearRing[] holes = new LinearRing[ringSizes.length - 1];
     int k = 0;
@@ -113,7 +116,7 @@ public class GeometryType implements DatatypeModel {
       MathTransform transformToEpsg4326 = CRS.findMathTransform(sourceCrs, epsg4326, true);
       utmAnchor = JTS.transform(utmAnchorInSourceSrs, utmAnchor, transformToEpsg4326);
       // Provide y, x because EPSG 4326 has a NORTH_EAST (LAT_LON) axis order, but the UTM center is specified LON_LAT.
-      CoordinateReferenceSystem metricCrs = CRS.decode(String.format(UTM_FORMAT, utmAnchor.y, utmAnchor.x));
+      metricCrs = CRS.decode(String.format(UTM_FORMAT, utmAnchor.y, utmAnchor.x));
       transform = CRS.findMathTransform(sourceCrs, metricCrs, true);
       // Calculate properties
       metricPolygon = (Polygon) JTS.transform(polygon, transform);

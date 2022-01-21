@@ -21,7 +21,7 @@ public class GeometryTypeTest extends TestCase {
     assertEquals(1, geometry.getPolygon().getNumInteriorRing());
     // Test serialisation restores original strings
     Node node = geometry.getNode();
-    assertEquals(coords, node.getLiteralValue().toString());
+    assertEquals(coords, node.getLiteralLexicalForm());
     assertEquals(structure, node.getLiteralDatatypeURI());
   }
 

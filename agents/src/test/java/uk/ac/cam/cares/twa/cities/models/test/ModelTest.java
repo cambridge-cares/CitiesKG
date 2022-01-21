@@ -4,6 +4,8 @@ import junit.framework.TestCase;
 import org.apache.jena.update.UpdateRequest;
 import org.json.JSONArray;
 import org.junit.jupiter.api.Disabled;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.models.FieldInterface;
@@ -19,18 +21,20 @@ import java.util.Map;
 
 import static org.junit.Assert.assertNotEquals;
 
+/**
+ * To run ModelTest, you need:
+ * - AccessAgent running on http://localhost:48080
+ * - A Blazegraph namespace at http://localhost:9999/blazegraph/namespace/test/sparql
+ */
 public class ModelTest extends TestCase {
 
   private static final String testResourceId = "http://localhost:48080/local-test";
 
   private final Field metaModel;
-  private final Field updateQueue;
 
   public ModelTest() throws NoSuchFieldException {
     metaModel = Model.class.getDeclaredField("metaModel");
     metaModel.setAccessible(true);
-    updateQueue = Model.class.getDeclaredField("updateQueue");
-    updateQueue.setAccessible(true);
   }
 
   private TestModel clearDatabaseAndPushModel() {
@@ -79,13 +83,13 @@ public class ModelTest extends TestCase {
     Model.clearUpdateQueue();
     Model testModel = new TestModel(2345, 4, 0);
     testModel.queuePushUpdate(true, true);
-    assertNotEquals("", updateQueue.get(null).toString());
+    assertNotEquals("", Model.peekUpdateQueue());
     Model.clearUpdateQueue();
     // A cleaned new model does not push updates.
     testModel = new TestModel(2345, 4, 0);
     testModel.cleanAll();
     testModel.queuePushUpdate(true, true);
-    assertEquals("", updateQueue.get(null).toString());
+    assertEquals("", Model.peekUpdateQueue());
     Model.clearUpdateQueue();
   }
 
@@ -93,10 +97,10 @@ public class ModelTest extends TestCase {
     TestModel testModel = new TestModel(2345, 4, 0);
     testModel.cleanAll();
     testModel.queuePushUpdate(true, true);
-    assertEquals("", updateQueue.get(null).toString());
+    assertEquals("", Model.peekUpdateQueue());
     testModel.dirtyAll();
     testModel.queuePushUpdate(true, true);
-    String updateString = updateQueue.get(null).toString();
+    String updateString = Model.peekUpdateQueue();
     assertNotEquals("", updateString);
     for (FieldKey key : ((MetaModel)metaModel.get(testModel)).fieldMap.keySet()) {
       assertTrue(updateString.contains(key.predicate));
@@ -108,26 +112,26 @@ public class ModelTest extends TestCase {
     TestModel testModel = new TestModel(23456, 5, 0);
     testModel.cleanAll();
     testModel.queuePushUpdate(true, true);
-    assertEquals("", updateQueue.get(null).toString());
+    assertEquals("", Model.peekUpdateQueue());
     // Test scalar dirtying
     testModel.setIntProp(3);
-    assertFalse(updateQueue.get(null).toString().contains("intprop"));
+    assertFalse(Model.peekUpdateQueue().contains("intprop"));
     testModel.queuePushUpdate(true, true);
-    assertTrue(updateQueue.get(null).toString().contains("intprop"));
+    assertTrue(Model.peekUpdateQueue().contains("intprop"));
     // Test pushing again does nothing
-    String updateString = updateQueue.get(null).toString();
+    String updateString = Model.peekUpdateQueue();
     testModel.queuePushUpdate(true, true);
-    assertEquals(updateString, updateQueue.get(null).toString());
+    assertEquals(updateString, Model.peekUpdateQueue());
     // Test vector dirtying: add new element
     testModel.getForwardVector().add(4.0);
-    assertFalse(updateQueue.get(null).toString().contains("forwardvector"));
+    assertFalse(Model.peekUpdateQueue().contains("forwardvector"));
     testModel.queuePushUpdate(true, true);
-    assertTrue(updateQueue.get(null).toString().contains("forwardvector"));
+    assertTrue(Model.peekUpdateQueue().contains("forwardvector"));
     Model.clearUpdateQueue();
     // Test vector dirtying: remove element
     testModel.getForwardVector().remove(0);
     testModel.queuePushUpdate(true, true);
-    assertTrue(updateQueue.get(null).toString().contains("forwardvector"));
+    assertTrue(Model.peekUpdateQueue().contains("forwardvector"));
     Model.clearUpdateQueue();
     // Test vector dirtying: order change should not cause dirtying
     testModel.getForwardVector().add(testModel.getForwardVector().remove(0));
@@ -141,32 +145,32 @@ public class ModelTest extends TestCase {
     assertEquals(URI.create("http://localhost:9999/testnamespace/testmodels/testuuid-12345"), model.getIri());
   }
 
-  public void testExecuteUpdateQueue() throws IllegalAccessException {
-    Model.clearUpdateQueue();
-    assertEquals("", updateQueue.get(null).toString());
-    String updateContents =
-        "INSERT DATA {\n" +
-            "  <http://test/test> <http://test/test2> <http://test/test3> .\n" +
-            "}\n";
-    // Check correctly added
-    ((UpdateRequest)updateQueue.get(null)).add(updateContents);
-    assertEquals(updateContents, updateQueue.get(null).toString());
-    // Short update should not trigger flush without force
-    Model.executeUpdates(testResourceId, false);
-    assertEquals(updateContents, updateQueue.get(null).toString());
-    // Check flush with force option works
-    Model.executeUpdates(testResourceId, true);
-    assertEquals("", updateQueue.get(null).toString());
-    // Try long update (need >250000 characters)
-    for (int i = 0; i < 1000; i++) {
-      ((UpdateRequest)updateQueue.get(null)).add("INSERT DATA {\n" +
-          "  <http://test/test/test/test/test/test/test/test/test/test/test/test/test/test/test/test/test/test/test> " +
-          "  <http://test/test/test/test/test/test/test/test/test/test/test/test/test/test/test/test/test/test" + i
-          + "> <http://test/test/test/test/test/test/test/test/test/test/test/test/test/test/test/test/test3> .\n" +
-          "}\n");
+  public void testExecuteUpdateQueue() {
+    try(MockedStatic<AccessAgentCaller> mock = Mockito.mockStatic(AccessAgentCaller.class)) { // disables executions
+      Model.clearUpdateQueue();
+      assertEquals("", Model.peekUpdateQueue());
+      String updateContents =
+          "INSERT DATA {\n" +
+              "  <http://test/test> <http://test/test2> <http://test/test3> .\n" +
+              "}\n";
+      // Check correctly added
+      Model.queueUpdate(updateContents);
+      assertEquals(updateContents, Model.peekUpdateQueue());
+      // Short update should not trigger flush without force
+      Model.executeUpdates(testResourceId, false);
+      assertEquals(updateContents, Model.peekUpdateQueue());
+      // Check flush with force option works
+      Model.executeUpdates(testResourceId, true);
+      assertEquals("", Model.peekUpdateQueue());
+      // Try long update (need >250000 characters)
+      for (int i = 0; i < 10000; i++) {
+        Model.queueUpdate("INSERT DATA {\n" +
+            "  <http://test/test/test/test/test> <http://test/test/test/test/test" + i + "> <http://test/test3> .\n" +
+            "}\n");
+      }
+      Model.executeUpdates(testResourceId, false);
+      assertEquals("", Model.peekUpdateQueue());
     }
-    Model.executeUpdates(testResourceId, false);
-    assertEquals("", updateQueue.get(null).toString());
   }
 
   public void testClearUpdateQueue() throws IllegalAccessException {
@@ -175,10 +179,10 @@ public class ModelTest extends TestCase {
             "  <http://test/test> <http://test/test2> <http://test/test3> .\n" +
             "}\n";
     // Check correctly added
-    ((UpdateRequest)updateQueue.get(null)).add(updateContents);
-    assertNotEquals("", updateQueue.get(null).toString());
+    Model.queueUpdate(updateContents);
+    assertNotEquals("", Model.peekUpdateQueue());
     Model.clearUpdateQueue();
-    assertEquals("", updateQueue.get(null).toString());
+    assertEquals("", Model.peekUpdateQueue());
   }
 
   public void testPushNewObject() {
@@ -218,21 +222,27 @@ public class ModelTest extends TestCase {
   }
 
   public void testDelete() {
+
     TestModel model1 = clearDatabaseAndPushModel();
     int firstModelCount = countTriples();
+
     TestModel model2 = new TestModel(3152, 8, 1);
     model2.queuePushUpdate(true, true);
     Model.executeUpdates(testResourceId, true);
     int secondModelCount = countTriples();
+
     model1.queueDeletionUpdate();
     Model.executeUpdates(testResourceId, true);
     assertEquals(secondModelCount - firstModelCount, countTriples());
+
     model2.queueDeletionUpdate();
     Model.executeUpdates(testResourceId, true);
     assertEquals(0, countTriples());
+
     model1.queuePushUpdate(true, true);
     Model.executeUpdates(testResourceId, true);
     assertEquals(firstModelCount, countTriples());
+
   }
 
   public void testPullAll() {

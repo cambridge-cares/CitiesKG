@@ -99,7 +99,7 @@ public class FieldInterface {
         URI iri = ((Model) value).getIri();
         return iri == null ? NodeFactory.createBlankNode() : NodeFactory.createURI(iri.toString());
       };
-      minimiser = (Object value) -> ((Model) value).getIri().toString();
+      minimiser = (Object value) -> (((Model) value).getIri() != null) ? ((Model) value).getIri().toString() : null;
     } else if (innerType == URI.class) {
       parser = (String value, String datatype, String kgId, int rid) -> URI.create(value);
       nodeGetter = (Object value) -> NodeFactory.createURI(value.toString());

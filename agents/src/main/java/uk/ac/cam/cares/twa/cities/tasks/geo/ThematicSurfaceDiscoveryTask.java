@@ -1,17 +1,18 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo;
 
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.twa.cities.models.geo.*;
+import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 
-import java.net.URI;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
 
 /**
- * TODO: WRITE
+ * Executes the main function of {@link ThematicSurfaceDiscoveryAgent}: to query a list of buildings for their
+ * lodXMultiSurface geometries, determine components' themes from building geometry, and update the CKG database with a
+ * revised hierarchy structured into thematic surfaces. This agent can only be used for buildings with no interior
+ * geometry and strictly top-down topography.
+ * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
+ * @version $Id$
  */
 public class ThematicSurfaceDiscoveryTask implements Runnable {
 
@@ -22,8 +23,8 @@ public class ThematicSurfaceDiscoveryTask implements Runnable {
   private final double threshold;
   private final String kgId;
 
-  private final BlockingQueue<MultiSurfaceThematicisationTask> lxmsThematicisationTasks = new LinkedBlockingQueue<>();
-  private final List<MultiSurfaceThematicisationTask> lxmsTaskList = new ArrayList<>();
+  private final ConcurrentLinkedQueue<MultiSurfaceThematicisationTask> lxmsThematicisationTaskQueue = new ConcurrentLinkedQueue<>();
+  private final List<MultiSurfaceThematicisationTask> lxmsThematicisationTaskList = new ArrayList<>();
 
   public ThematicSurfaceDiscoveryTask(List<String> buildingIris, boolean[] lods, double threshold, String kgId) {
     this.buildingIris = buildingIris;
@@ -36,75 +37,37 @@ public class ThematicSurfaceDiscoveryTask implements Runnable {
   public void run() {
     try {
       // Parallelised collection of buildings' lodXMultiSurfaces and registration of tasks to process them.
-      Instant start = Instant.now();
-      executor.invokeAll(
-          buildingIris.stream().map(this::registerThematicisationTasksForBuilding).collect(Collectors.toList())
-      );
-      lxmsThematicisationTasks.drainTo(lxmsTaskList);
-      System.err.println("Registry complete. (" + Duration.between(start, Instant.now()).getSeconds() + "s).");
+      List<BuildingHullsRegistrationTask> buildingRegistrationTasks = new ArrayList<>();
+      for (String buildingIri : buildingIris)
+        buildingRegistrationTasks.add(new BuildingHullsRegistrationTask(buildingIri, kgId, lods, threshold, lxmsThematicisationTaskQueue));
+      executor.invokeAll(buildingRegistrationTasks);
+      lxmsThematicisationTaskList.addAll(lxmsThematicisationTaskQueue);
       // Parallelised stage 1: tentative determination of themes and flip if able to determine appropriate
-      start = Instant.now();
-      System.err.println("Starting stage 1:");
-      executor.invokeAll(lxmsTaskList);
-      System.err.println("Stage 1 complete. (" + Duration.between(start, Instant.now()).getSeconds() + "s).");
+      executor.invokeAll(lxmsThematicisationTaskList);
       // Nonparallelised flip resolution for indeterminate case
-      start = Instant.now();
-      System.err.println("Starting resolution:");
       resolveIndeterminateFlips();
-      System.err.println("Resolution complete. (" + Duration.between(start, Instant.now()).toMillis() + "ms).");
       // Parallelised stage 2: restructuring of hierarchy and push to database
-      start = Instant.now();
-      System.err.println("Starting stage 2:");
-      executor.invokeAll(lxmsTaskList);
-      System.err.println("Stage 2 end.");
-      System.err.println("Stage 2 complete. (" + Duration.between(start, Instant.now()).getSeconds() + "s).");
+      executor.invokeAll(lxmsThematicisationTaskList);
     } catch (InterruptedException e) {
       throw new JPSRuntimeException(e);
     }
-    System.out.println(String.format("Thematicised %d lodXMultiSurfaces over %d buildings.",
-        lxmsTaskList.size(), buildingIris.size()));
   }
 
+  /**
+   * Inspects the results of the discovery stage of thematicisation tasks and assesses whether more determined to flip
+   * roofs and grounds than not; if so, flip the tasks which could not determine whether to flip during the first stage.
+   */
   private void resolveIndeterminateFlips() {
     // Did more tasks flip than not flip?
     int flipBalance = 0;
-    for (MultiSurfaceThematicisationTask task : lxmsTaskList)
+    for (MultiSurfaceThematicisationTask task : lxmsThematicisationTaskList)
       if (task.flipped != null)
         flipBalance += task.flipped ? 1 : -1;
     // If so, flip indeterminate cases
     if (flipBalance > 0)
-      for (MultiSurfaceThematicisationTask task : lxmsTaskList)
+      for (MultiSurfaceThematicisationTask task : lxmsThematicisationTaskList)
         if (task.flipped == null)
           task.flip();
-  }
-
-  /**
-   * Technically, this method <i>creates a task to</i> "register thematicisation tasks for building". In that, the
-   * building is queried for its lodXMultiSurfaces, and the multi-surfaces of levels of detail which were requested in
-   * the agent invocation parameters have {@link MultiSurfaceThematicisationTask}s constructed and added to this
-   * {@link ThematicSurfaceDiscoveryTask}'s thematicisation task list.
-   * @param buildingIri the IRI of the building to register thematicisation tasks for.
-   * @return a Runnable which, when executed, registers thematicisation tasks for the building's lodXMultiSurfaces.
-   */
-  private Callable<Void> registerThematicisationTasksForBuilding(String buildingIri) {
-    return () -> {
-      Building building = new Building();
-      building.setIri(URI.create(buildingIri));
-      building.pullAll(kgId, 0);
-      for (int lod = 1; lod <= 4; lod++) {
-        if (!lods[lod - 1]) continue;
-        SurfaceGeometry multiSurface =
-            lod == 1 ? building.getLod1MultiSurfaceId() :
-                lod == 2 ? building.getLod2MultiSurfaceId() :
-                    lod == 3 ? building.getLod3MultiSurfaceId() :
-                        building.getLod4MultiSurfaceId();
-        if (multiSurface != null)
-          lxmsThematicisationTasks.add(
-              new MultiSurfaceThematicisationTask(multiSurface, lod, threshold, kgId));
-      }
-      System.err.println("Building registered (" + lxmsThematicisationTasks.size() + ").");
-      return null;
-    };
   }
 
 }

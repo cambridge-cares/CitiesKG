@@ -140,9 +140,18 @@ public abstract class Model {
   }
 
   /**
+   * Queues an update string in this thread's update queue.
+   */
+  public static void queueUpdate(String update) {
+    updateQueue.get().add(update);
+  }
+
+  /**
    * @return returns currently queued updates (for this thread) without modifying the queue.
    */
-  public static String peekUpdateQueue() { return updateQueue.get().toString(); }
+  public static String peekUpdateQueue() {
+    return updateQueue.get().toString();
+  }
 
   /**
    * Queues an update to push field values to the database. Note that each thread has a separate update queue.
@@ -206,7 +215,7 @@ public abstract class Model {
    * Populates all fields of the model instance with values from the database and sets all fields clean. In general,
    * this performs better than <code>pullScalars</code> and <code>pullVector</code>, and should be used for most use
    * cases. See <code>pullScalars</code> and <code>pullVector</code> for more details.
-   * @param kgId  the resource ID of the target knowledge graph to query.
+   * @param kgId                        the resource ID of the target knowledge graph to query.
    * @param recursiveInstantiationDepth the number of nested levels of {@link Model}s within this to instantiate.
    */
   public void pullAll(String kgId, int recursiveInstantiationDepth) {
@@ -220,7 +229,7 @@ public abstract class Model {
 
   /**
    * Populates all fields in one direction with values from the database. Does not explicitly clean any fields.
-   * @param kgId  the resource ID of the target knowledge graph to query.
+   * @param kgId                        the resource ID of the target knowledge graph to query.
    * @param backward                    whether iriName is the object or subject in the rows retrieved.
    * @param recursiveInstantiationDepth the number of nested levels of {@link Model}s within this to instantiate.
    */
@@ -266,7 +275,7 @@ public abstract class Model {
    * the additional complexity of the query required to achieve specificity. It should only be used for objects with a
    * very large number of vector triples. <b>Warning: this can fail due to "Request header is too large" in the current
    * AccessAgent implementation.</b> Does not explicitly clean any fields.
-   * @param kgId  the resource ID of the target knowledge graph to query.
+   * @param kgId the resource ID of the target knowledge graph to query.
    */
   @Deprecated
   public void pullScalars(String kgId) {
@@ -324,7 +333,7 @@ public abstract class Model {
    * due to the additional complexity of the query required to achieve specificity. It should only be used for objects
    * with a very large number of triples not in the requested vectors.
    * @param fieldNames the list of vector field names to be populated.
-   * @param kgId  the resource ID of the target knowledge graph to query.
+   * @param kgId       the resource ID of the target knowledge graph to query.
    */
   public void pullVector(List<String> fieldNames, String kgId) {
     // Populate vectors

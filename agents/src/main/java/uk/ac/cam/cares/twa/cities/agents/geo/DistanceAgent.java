@@ -18,10 +18,20 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.update.UpdateRequest;
+import org.geotools.geometry.jts.JTS;
+import org.geotools.referencing.CRS;
+import org.geotools.referencing.GeodeticCalculator;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.operation.distance3d.Distance3DOp;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
+import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 import uk.ac.cam.cares.twa.cities.models.geo.EnvelopeType;
@@ -242,7 +252,7 @@ public class DistanceAgent extends JPSAgent {
 
     Query q = getObjectSRSQuery(uriString, source);
     String queryResultString = query(route, q.toString());
-    JSONArray queryResult = new JSONArray(queryResultString);
+    JSONArray queryResult = SPARQLUtils.unpackQueryResponse(queryResultString);
 
     if (!queryResult.isEmpty()) {
       srs = queryResult.getJSONObject(0).get(SRS_NAME_OBJECT).toString();
@@ -272,9 +282,18 @@ public class DistanceAgent extends JPSAgent {
    * @return distance
    */
   public double computeDistance(EnvelopeType envelope1, EnvelopeType envelope2) {
-    Coordinate c1 = envelope1.getMetricCentroid();
-    Coordinate c2 = envelope2.getMetricCentroid();
-    return c1.distance3D(c2);
+    Coordinate centroid1 = envelope1.getCentroid();
+    Coordinate centroid2 = envelope2.getCentroid();
+    CoordinateReferenceSystem crs1 = envelope1.getSourceCrs();
+    CoordinateReferenceSystem crs2 = envelope2.getSourceCrs();
+    CoordinateReferenceSystem targetCrs = envelope1.getMetricCrs();
+    try {
+      Coordinate metricCentroid1 = JTS.transform(centroid1, null, CRS.findMathTransform(crs1, targetCrs));
+      Coordinate metricCentroid2 = JTS.transform(centroid2, null, CRS.findMathTransform(crs2, targetCrs));
+      return metricCentroid1.distance(metricCentroid2);
+    } catch (FactoryException | TransformException e) {
+      throw new JPSRuntimeException(e);
+    }
   }
 
   /**

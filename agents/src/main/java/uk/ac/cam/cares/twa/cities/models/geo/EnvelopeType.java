@@ -20,8 +20,7 @@ public class EnvelopeType extends GeometryType {
   }
 
   public EnvelopeType(SurfaceGeometry surfaceGeometry) {
-    polygon = computeBounds(surfaceGeometry.getFlattenedSubtree(true));
-    recalculateGeometricProperties();
+    super(computeBounds(surfaceGeometry.getFlattenedSubtree(true)));
   }
 
   public static Polygon computeBounds(List<SurfaceGeometry> polygons) {

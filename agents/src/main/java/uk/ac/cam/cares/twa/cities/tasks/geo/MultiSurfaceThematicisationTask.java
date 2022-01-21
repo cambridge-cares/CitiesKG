@@ -10,10 +10,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
 import java.util.stream.Stream;
 
 /**
@@ -34,10 +32,12 @@ import java.util.stream.Stream;
  * passed during construction. It is the responsibility of the task creator to <code>notify()</code> task continuation
  * after inspecting <code>flipped</code> results and calling <code>flip()</code> on tasks with <code>null</code> results
  * if necessary.
+ * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
+ * @version $Id$
  */
 public class MultiSurfaceThematicisationTask implements Callable<Void> {
 
-  enum Theme {
+  public enum Theme {
     UNSET(-1),
     ROOF(0),
     WALL(1),
@@ -54,10 +54,10 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
   private static final String MALFORMED_SURFACE_GEOMETRY_EXCEPTION_TEXT =
       "Malformed building: SurfaceGeometry contains both sub-geometries and explicit GeometryType.";
 
-  private final SurfaceGeometry root;
-  private final String kgId;
-  private final int lod;
-  private final double threshold;
+  public final SurfaceGeometry root;
+  public final String kgId;
+  public final int lod;
+  public final double threshold;
 
   public boolean stage = false;
   public Boolean flipped = null;
@@ -74,26 +74,37 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
   }
 
   public Void call() {
-    if(!stage) {
-      System.err.println("MultiSurface map start.");
-      stage1();
-      System.err.println("MultiSurface mapped.");
+    if (!stage) {
+      tryClassifyGeometries();
       stage = true;
     } else {
-      System.err.println("MultiSurface implement start.");
-      stage2();
-      System.err.println("MultiSurface implemented.");
+      implementChangesAndPush();
     }
     return null;
   }
 
+  /**
+   * Reclassifies all identified roof surfaces as ground surfaces, and vice versa. This operates on the
+   * <code>topLevelThematicGeometries</code> and <code>bottomLevelThematicGeometries</code> collections.
+   */
   public void flip() {
     List<SurfaceGeometry> temp = topLevelThematicGeometries.get(Theme.ROOF.index);
     topLevelThematicGeometries.set(Theme.ROOF.index, topLevelThematicGeometries.get(Theme.GROUND.index));
     topLevelThematicGeometries.set(Theme.GROUND.index, temp);
+    temp = bottomLevelThematicGeometries.get(Theme.ROOF.index);
+    bottomLevelThematicGeometries.set(Theme.ROOF.index, bottomLevelThematicGeometries.get(Theme.GROUND.index));
+    bottomLevelThematicGeometries.set(Theme.GROUND.index, temp);
   }
 
-  private void stage1() {
+  /**
+   * Recursively traverse the geometry tree and populate the collections <code>topLevelThematicGeometries</code>,
+   * <code>bottomLevelThematicGeometries</code>, and <code>mixedGeometries</code>. These classifications are further
+   * described in the Javadoc for <code>recursiveDiscover</code>. Also performs the initial flip assessment, checking
+   * whether the roof surfaces are on average below the ground surfaces, switching their theme assignments if so. The
+   * outcome of this check is recorded in the <code>flipped</code> variable, which is null in the indeterminate case.
+   */
+  private void tryClassifyGeometries() {
+    // TODO: can instead do a custom query for all SurfaceGeometries with ocgml:rootId=root, and build the tree manually.
     root.pullAll(kgId, 99);
     // Sort into thematic surfaces
     recursiveDiscover(root);
@@ -175,7 +186,12 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
     return aggregateTheme;
   }
 
-  private void stage2() {
+  /**
+   * Perform the modifications to transform the geometry tree to a <code>ThematicSurface</code>-based hierarchy, and
+   * then push the changes to the database. This does sever the link between the <code>Building</code> and the root
+   * <code>SurfaceGeometry</code>, and links the new <code>ThematicSurface</code>s and the <code>Building</code>.
+   */
+  private void implementChangesAndPush() {
     for (int i = 0; i < topLevelThematicGeometries.size(); i++) {
       for (SurfaceGeometry topLevelGeometry : topLevelThematicGeometries.get(i)) {
         String uuid = UUID.randomUUID().toString();
@@ -190,9 +206,9 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
         tsCityObject.setIri(uuid, root.getNamespace());
         // Construct ThematicSurface
         ThematicSurface thematicSurface = new ThematicSurface();
-        if(lod <= 2) thematicSurface.setLod2MultiSurfaceId(topLevelGeometry);
-        else if(lod == 3) thematicSurface.setLod3MultiSurfaceId(topLevelGeometry);
-        else if(lod == 4) thematicSurface.setLod4MultiSurfaceId(topLevelGeometry);
+        if (lod <= 2) thematicSurface.setLod2MultiSurfaceId(topLevelGeometry);
+        else if (lod == 3) thematicSurface.setLod3MultiSurfaceId(topLevelGeometry);
+        else if (lod == 4) thematicSurface.setLod4MultiSurfaceId(topLevelGeometry);
         thematicSurface.setObjectClassId(33 + i);
         thematicSurface.setBuildingId(root.getCityObjectId());
         thematicSurface.setIri(uuid, root.getNamespace());
@@ -220,6 +236,12 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
     Model.executeUpdates(kgId, true);
   }
 
+  /**
+   * Compute the average coordinate of the centroids of a number of SurfaaceGeometry objects, i.e. their collcetive
+   * unweighted centroid.
+   * @param surfaceGeometries the objects whose centroids are to be averaged.
+   * @return the collective unweighted centroid.
+   */
   public static Coordinate computeUnweightedCentroid(List<SurfaceGeometry> surfaceGeometries) {
     Stream<Coordinate> subCentroids = surfaceGeometries.stream().map(
         (SurfaceGeometry geometry) -> geometry.getGeometryType().getCentroid());

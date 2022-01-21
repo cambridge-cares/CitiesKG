@@ -26,13 +26,13 @@ import uk.ac.cam.cares.twa.cities.tasks.geo.ThematicSurfaceDiscoveryTask;
 
 
 /**
- * A JPSAgent framework based ThematicSurfaceDiscoveryAgent class used to discover thematic surfaces
- * of city obejcts in the Semantic 3D City Database {@link <a
- * href="https://www.cares.cam.ac.uk/research/cities/">}. The agent: - listens to the GET requests
- * containing IRIs of city objects - checks the type of the city object - attempts to load thematic
- * surfaces of the obejct and - if present, returns them - if not present, determines thematic
- * surfaces based on the city obejct type and surface geometries - saves any newly discovered
- * thematic surfaces back to the CKG
+ * A JPSAgent framework-based ThematicSurfaceDiscoveryAgent class used to discover thematic surfaces
+ * of city objects in the Semantic 3D City Database {@link <a
+ * href="https://www.cares.cam.ac.uk/research/cities/">}. The agent listens to GET requests containing either the IRI
+ * of a building or the IRI of a namespace, and queries the building or buildings in the namespace to discover
+ * lodXMultiSurface geometries, determine their themes from building geometry, and update the CKG database with a
+ * revised hierarchy structured into thematic surfaces. This agent can only be used for buildings with no interior
+ * geometry and strictly top-down topography.
  * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
  * @version $Id$
  */

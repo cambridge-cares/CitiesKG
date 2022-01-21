@@ -104,7 +104,7 @@ public class ThematicSurfaceDiscoveryAgentTest extends TestCase {
     }
   }
 
-  public void testImportSrs() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+  public void testImportSrs() throws NoSuchMethodException {
 
     ThematicSurfaceDiscoveryAgent agent = Mockito.spy(new ThematicSurfaceDiscoveryAgent());
 
@@ -116,7 +116,7 @@ public class ThematicSurfaceDiscoveryAgentTest extends TestCase {
     Method importSrs = agent.getClass().getDeclaredMethod("importSrs");
     importSrs.setAccessible(true);
 
-    Mockito.doReturn("[{\"srs\": \"EPSG:4326\"}]").when(agent).query(Mockito.anyString(), Mockito.anyString());
+    Mockito.doReturn("{ \"result\": \"[{'srs': 'EPSG:4326'}]\" }").when(agent).query(Mockito.anyString(), Mockito.anyString());
     try {
       importSrs.invoke(agent);
       assertEquals("EPSG:4326", GeometryType.getSourceCrsName());
@@ -124,14 +124,14 @@ public class ThematicSurfaceDiscoveryAgentTest extends TestCase {
       fail();
     }
 
-    Mockito.doReturn("[]").when(agent).query(Mockito.anyString(), Mockito.anyString());
+    Mockito.doReturn("{ \"result\": \"[]\" }").when(agent).query(Mockito.anyString(), Mockito.anyString());
     try {
       importSrs.invoke(agent);
       fail();
     } catch (Exception ignored) {
     }
 
-    Mockito.doReturn("[{\"srs\": \"EPSG:4326\"}, {\"srs\": \"EPSG:27700\"}]").when(agent).query(Mockito.anyString(), Mockito.anyString());
+    Mockito.doReturn("{ \"result\": \"[{'srs': 'EPSG:4326'}, {'srs': 'EPSG:27700'}]\" }").when(agent).query(Mockito.anyString(), Mockito.anyString());
     try {
       importSrs.invoke(agent);
       fail();
