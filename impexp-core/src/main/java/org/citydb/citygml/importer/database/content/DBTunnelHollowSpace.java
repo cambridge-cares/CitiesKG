@@ -28,12 +28,10 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
-import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
 import org.citydb.config.Config;
@@ -47,8 +45,6 @@ import org.citygml4j.model.citygml.tunnel.IntTunnelInstallationProperty;
 import org.citygml4j.model.citygml.tunnel.InteriorFurnitureProperty;
 import org.citygml4j.model.citygml.tunnel.TunnelFurniture;
 import org.citygml4j.model.gml.basicTypes.Code;
-import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
-import org.citygml4j.model.gml.geometry.primitives.SolidProperty;
 
 public class DBTunnelHollowSpace extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
@@ -81,18 +77,13 @@ public class DBTunnelHollowSpace extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".tunnel_hollow_space (id, class, class_codespace, function, function_codespace, usage, usage_codespace, tunnel_id, " +
+		return "insert into " + sqlSchema + ".tunnel_hollow_space (id, class, class_codespace, function, function_codespace, usage, usage_codespace, tunnel_id, " +
 				"lod4_multi_surface_id, lod4_solid_id" +
 				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
 	}
 
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
-	}
-	
 	protected long doImport(HollowSpace hollowSpace) throws CityGMLImportException, SQLException {
 		return doImport(hollowSpace, 0);
 	}

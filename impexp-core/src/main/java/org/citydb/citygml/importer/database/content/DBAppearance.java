@@ -48,7 +48,6 @@ import org.citygml4j.model.gml.geometry.primitives.AbstractSurface;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
@@ -89,7 +88,7 @@ public class DBAppearance extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".appearance (id, gmlid, " + (gmlIdCodespace != null ? "gmlid_codespace, " : "") +
+		return "insert into " + sqlSchema + ".appearance (id, gmlid, " + (gmlIdCodespace != null ? "gmlid_codespace, " : "") +
 				"name, name_codespace, description, theme, citymodel_id, cityobject_id) values " +
 				"(?, ?, " + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?)";
 	}
@@ -97,10 +96,10 @@ public class DBAppearance extends AbstractDBImporter {
 	@Override
 	protected String getSPARQLStatement(){
 		String param = "  ?;";
-		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-				"BASE <" + IRI_GRAPH_BASE + "> " +
+		String stmt = "PREFIX ocgml: <" + prefixOntoCityGML + "> " +
+				"BASE <" + iriGraphBase + "> " +
 				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				" { GRAPH <" + iriGraphObjectRel + "> " +
 				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
 				SchemaManagerAdapter.ONTO_GML_ID + param +
 				(gmlIdCodespace != null ? SchemaManagerAdapter.ONTO_GML_ID + param : "") +
@@ -154,7 +153,7 @@ public class DBAppearance extends AbstractDBImporter {
 				if (uuid.isEmpty()) {
 					uuid = importer.generateNewGmlId();
 				}
-				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+				URL url = new URL(iriGraphObject + uuid + "/");
 				preparedStatement.setURL(++index, url);
 				preparedStatement.setURL(++index, url);
 				appearance.setLocalProperty(CoreConstants.OBJECT_URIID, url);

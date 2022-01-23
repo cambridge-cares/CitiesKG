@@ -70,18 +70,13 @@ public class DBLandUse extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".land_use (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
+		return "insert into " + sqlSchema + ".land_use (id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
 				"lod0_multi_surface_id, lod1_multi_surface_id, lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id" +
 				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
 	}
 
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
-	}
-	
 	protected long doImport(LandUse landUse) throws CityGMLImportException, SQLException {
 		FeatureType featureType = importer.getFeatureType(landUse);
 		if (featureType == null)

@@ -28,12 +28,10 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
-import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
 import org.citydb.database.schema.TableEnum;
@@ -71,16 +69,11 @@ public class DBTunnelThematicSurface extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".tunnel_thematic_surface (id, objectclass_id, tunnel_id, tunnel_hollow_space_id, tunnel_installation_id, " +
+		return "insert into " + sqlSchema + ".tunnel_thematic_surface (id, objectclass_id, tunnel_id, tunnel_hollow_space_id, tunnel_installation_id, " +
 				"lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id) values " +
 				"(?, ?, ?, ?, ?, ?, ?, ?)";
 	}
 
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
-	}
-	
 	protected long doImport(AbstractBoundarySurface boundarySurface) throws CityGMLImportException, SQLException {
 		return doImport(boundarySurface, null, 0);
 	}

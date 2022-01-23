@@ -28,7 +28,6 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 
@@ -55,13 +54,8 @@ public class DBWaterBodToWaterBndSrf extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".waterbod_to_waterbnd_srf (waterboundary_surface_id, waterbody_id) values " +
+		return "insert into " + sqlSchema + ".waterbod_to_waterbnd_srf (waterboundary_surface_id, waterbody_id) values " +
 				"(?, ?)";
-	}
-
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
 	}
 
 	protected void doImport(long waterSurfaceId, long waterBodyId) throws CityGMLImportException, SQLException {

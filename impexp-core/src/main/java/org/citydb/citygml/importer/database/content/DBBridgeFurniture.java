@@ -28,7 +28,6 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
@@ -86,17 +85,12 @@ public class DBBridgeFurniture extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".bridge_furniture (id, class, class_codespace, function, function_codespace, usage, usage_codespace, bridge_room_id, " +
+		return "insert into " + sqlSchema + ".bridge_furniture (id, class, class_codespace, function, function_codespace, usage, usage_codespace, bridge_room_id, " +
 				"lod4_brep_id, lod4_other_geom, " +
 				"lod4_implicit_rep_id, lod4_implicit_ref_point, lod4_implicit_transformation" +
 				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
-	}
-
-	@Override
-	protected String getSPARQLStatement() {
-		return "NOT IMPLEMENTED.";
 	}
 
 	protected long doImport(BridgeFurniture bridgeFurniture) throws CityGMLImportException, SQLException {

@@ -45,7 +45,6 @@ import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
@@ -84,17 +83,17 @@ public class DBTexImage extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".tex_image (id, tex_image_uri, tex_mime_type, tex_mime_type_codespace) values " +
+		return "insert into " + sqlSchema + ".tex_image (id, tex_image_uri, tex_mime_type, tex_mime_type_codespace) values " +
 				"(?, ?, ?, ?)";
 	}
 
 	@Override
 	protected String getSPARQLStatement() {
 		String param = "  ?;";
-		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-				"BASE <" + IRI_GRAPH_BASE + "> " +
+		String stmt = "PREFIX ocgml: <" + prefixOntoCityGML + "> " +
+				"BASE <" + iriGraphBase + "> " +
 				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				" { GRAPH <" + iriGraphObjectRel + "> " +
 				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
 				SchemaManagerAdapter.ONTO_TEX_IMAGE_URI + param +
 				SchemaManagerAdapter.ONTO_TEX_MIME_TYPE + param +
@@ -157,7 +156,7 @@ public class DBTexImage extends AbstractDBImporter {
 					if (uuid.isEmpty()) {
 						uuid = importer.generateNewGmlId();
 					}
-					URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
+					URL url = new URL(iriGraphObject + uuid + "/");
 					preparedStatement.setURL(++index, url);
 				} catch (MalformedURLException e) {
 					preparedStatement.setObject(++index, NodeFactory.createBlankNode());

@@ -27,11 +27,7 @@
  */
 package org.citydb.citygml.importer.database.content;
 
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.arq.querybuilder.UpdateBuilder;
-import org.apache.jena.iri.IRI;
-import org.apache.jena.sparql.core.Var;
 import org.citydb.ade.model.LineageProperty;
 import org.citydb.ade.model.ReasonForUpdateProperty;
 import org.citydb.ade.model.UpdatingPersonProperty;
@@ -68,7 +64,6 @@ import org.citygml4j.util.bbox.BoundingBoxOptions;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.*;
-import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -155,7 +150,7 @@ public class DBCityObject extends AbstractDBImporter {
 
 	@Override
 	protected String getSQLStatement() {
-		return "insert into " + SQL_SCHEMA + ".cityobject (id, objectclass_id, gmlid, " + (gmlIdCodespace != null ? "gmlid_codespace, " : "") +
+		return "insert into " + sqlSchema + ".cityobject (id, objectclass_id, gmlid, " + (gmlIdCodespace != null ? "gmlid_codespace, " : "") +
 				"name, name_codespace, description, envelope, creation_date, termination_date, relative_to_terrain, relative_to_water, " +
 				"last_modification_date, updating_person, reason_for_update, lineage) values " +
 				"(?, ?, ?, " + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -164,10 +159,10 @@ public class DBCityObject extends AbstractDBImporter {
 		@Override
 	protected String getSPARQLStatement() {
 		String param = "  ?;";
-		String stmt = "PREFIX ocgml: <" + 	PREFIX_ONTOCITYGML + "> " +
-				"BASE <" + IRI_GRAPH_BASE + "> " +
+		String stmt = "PREFIX ocgml: <" + prefixOntoCityGML + "> " +
+				"BASE <" + iriGraphBase + "> " +
 				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				" { GRAPH <" + iriGraphObjectRel + "> " +
 				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
 				SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID+ param +
 				SchemaManagerAdapter.ONTO_GML_ID + param +
@@ -250,7 +245,7 @@ public class DBCityObject extends AbstractDBImporter {
 
 		if (isBlazegraph) {
 			try {
-				URL url = new URL(IRI_GRAPH_OBJECT + object.getId() + "/");   // need to get the correct path
+				URL url = new URL(iriGraphObject + object.getId() + "/");   // need to get the correct path
 				preparedStatement.setURL(++index, url);		// setURL sets the url into preparedStatement/delegate/sqarqlStr
 				preparedStatement.setURL(++index, url);
 				object.setLocalProperty(CoreConstants.OBJECT_URIID, url);
