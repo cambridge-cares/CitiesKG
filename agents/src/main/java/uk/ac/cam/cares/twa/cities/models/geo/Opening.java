@@ -15,7 +15,7 @@ import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
  * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
  * @version $Id$
  */
-@ModelAnnotation(nativeGraphName = "opening") // TODO: convert to SchemaManagerAdapter.ROOM_GRAPH when it exists
+@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.OPENING_GRAPH) // TODO: convert to SchemaManagerAdapter.ROOM_GRAPH when it exists
 public class Opening extends Model {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID) protected Integer objectClassId;
@@ -29,7 +29,7 @@ public class Opening extends Model {
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_LOD4_IMPLICIT_TRANSFORMATION) protected String lod4ImplicitTransformation;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_LOD4_MULTI_SURFACE_ID) protected SurfaceGeometry lod4MultiSurfaceId;
 
-  @Getter @Setter @FieldAnnotation(value = SchemaManagerAdapter.ONTO_THEMSURFACE_ID, graphName = "openingtothemsurface") protected URI themSurfaceId;
+  @Getter @Setter @FieldAnnotation(value = SchemaManagerAdapter.ONTO_THEMSURFACE_ID, graphName = SchemaManagerAdapter.OPENING_TO_THEM_SURFACE_GRAPH) protected URI themSurfaceId;
 
   public static final Integer WINDOW_CLASS_ID = 38;
   public static final Integer DOOR_CLASS_ID = 39;
