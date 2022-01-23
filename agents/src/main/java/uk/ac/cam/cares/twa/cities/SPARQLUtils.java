@@ -29,10 +29,12 @@ public class SPARQLUtils {
    * @return the same builder that was provided.
    */
   public static <T extends AbstractQueryBuilder<T>> AbstractQueryBuilder<T> addPrefix(String sample, AbstractQueryBuilder<T> builder) {
-    // Find all prefixes referenced in the query
+    // Find all qualified names in the query
     Matcher matcher = qualifiedNamePattern.matcher(sample);
     Set<String> prefixes = new HashSet<>();
     while(matcher.find()) prefixes.add(matcher.group(1));
+    // If sample is itself a prefix, add that as well
+    prefixes.add(sample);
     // Compile prefix statements
     for (String prefix: prefixes) {
       String prefixUrl = getPrefixUrl(prefix);
@@ -53,6 +55,8 @@ public class SPARQLUtils {
     Matcher matcher = qualifiedNamePattern.matcher(sample);
     Set<String> prefixes = new HashSet<>();
     while(matcher.find()) prefixes.add(matcher.group(1));
+    // If sample is itself a prefix, add that as well
+    prefixes.add(sample);
     // Compile prefix statements
     for (String prefix: prefixes) {
       String prefixUrl = getPrefixUrl(prefix);
