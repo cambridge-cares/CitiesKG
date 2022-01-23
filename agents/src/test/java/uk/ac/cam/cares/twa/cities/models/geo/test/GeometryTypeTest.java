@@ -33,7 +33,7 @@ public class GeometryTypeTest extends TestCase {
     assertEquals(new Coordinate(1, 1, 5), geometry.getPolygon().getExteriorRing().getCoordinateN(0));
     assertEquals(new Coordinate(603902.5252167048, 5513703.7177186, 5.0), geometry.getMetricPolygon().getExteriorRing().getCoordinateN(0));
     assertEquals(new Coordinate(2, 3, 5), geometry.getPolygon().getExteriorRing().getCoordinateN(2));
-    assertEquals(new Coordinate(603903.3328829142, 5513705.798364676, 5), geometry.getMetricPolygon().getExteriorRing().getCoordinateN(2));
+    assertEquals(new Coordinate(603903.3328829142, 5513705.798364676, 5.0), geometry.getMetricPolygon().getExteriorRing().getCoordinateN(2));
   }
 
   public void testGeometricPropertyComputations() {
@@ -50,8 +50,8 @@ public class GeometryTypeTest extends TestCase {
     GeometryType unitSquare = new GeometryType(coords, structure);
     assertEquals(0.9962825436959974, unitSquare.getArea());
     // Centroids: the native crs centroid should be at about (0.5,0.5,0.5)
-    assertEquals(new Coordinate(0.5012210839777254, 0.5077971342398087, 0), unitSquare.getCentroid());
-    assertEquals(new Coordinate(603902.0748522265, 5513703.1742914105, 0), unitSquare.getMetricCentroid());
+    assertEquals(new Coordinate(0.5012210839777254, 0.5077971342398087, 0.0), unitSquare.getCentroid());
+    assertEquals(new Coordinate(603902.0748522265, 5513703.1742914105, 0.0), unitSquare.getMetricCentroid());
   }
 
   public void testComputeCentroid() {
