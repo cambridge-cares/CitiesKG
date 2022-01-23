@@ -102,22 +102,22 @@ public abstract class AbstractDBImporter implements DBImporter {
 			if (importer.isBlazegraph()) setBlankNode(preparedStatement, ++index);
 			else preparedStatement.setNull(++index, Types.NULL);
 		} else if (geometryProperty.isSetObject()) {
-			long solidGeometryId =
+			long geometryId =
 					surfaceGeometryImporter.doImport(geometryProperty.getObject(), objectId);
-			if (solidGeometryId != 0) {
+			if (geometryId != 0) {
 				if (importer.isBlazegraph()) {
 					try {
 						preparedStatement.setURL(
 								++index,
 								new URL(
-										surfaceGeometryImporter.IRI_GRAPH_OBJECT
+										DBSurfaceGeometry.IRI_GRAPH_OBJECT
 												+ geometryProperty.getObject().getId()
 												+ "/"));
 					} catch (MalformedURLException e) {
 						new CityGMLImportException(e);
 					}
 				} else {
-					preparedStatement.setLong(++index, solidGeometryId);
+					preparedStatement.setLong(++index, geometryId);
 				}
 			} else {
 				if (importer.isBlazegraph()) setBlankNode(preparedStatement, ++index);
@@ -134,15 +134,15 @@ public abstract class AbstractDBImporter implements DBImporter {
 		return index;
 	}
 
-	protected <T extends GeometryProperty> int importGeometryObjectProperties(
+	protected <T extends GeometryProperty<?>> int importGeometryObjectProperties(
 			T[] geometryProperties, Function<T, GeometryObject> converter, int index)
 			throws CityGMLImportException, SQLException {
-		for (int i = 0; i < geometryProperties.length; i++)
-			index = importGeometryObjectProperty(geometryProperties[i], converter, index);
+		for (T geometryProperty : geometryProperties)
+			index = importGeometryObjectProperty(geometryProperty, converter, index);
 		return index;
 	}
 
-	protected <T extends GeometryProperty> int importGeometryObjectProperty(
+	protected <T extends GeometryProperty<?>> int importGeometryObjectProperty(
 			T geometryProperty, Function<T, GeometryObject> converter, int index)
 			throws CityGMLImportException, SQLException {
 
