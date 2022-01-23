@@ -70,9 +70,45 @@ public class UtilAdapter extends AbstractUtilAdapter {
         return null;
     }
 
+    /* This method is used for boundingbox method for exporting tiles
+    *  2D ST_TRANSFORM */
     @Override
     protected BoundingBox transformBoundingBox(BoundingBox bbox, DatabaseSrs sourceSrs, DatabaseSrs targetSrs, Connection connection) throws SQLException {
-        return null;
+        BoundingBox result = new BoundingBox(bbox);
+        int sourceSrid = sourceSrs.getSrid(); // 4326
+        int targetSrid = targetSrs.getSrid(); // 25833 for berlin // 31466 for testing purpose
+        targetSrid = 31466 ;
+
+        List<Coordinate> bboxCoordList = new ArrayList<>();
+
+        bboxCoordList.add(new Coordinate( bbox.getLowerCorner().getX() , bbox.getLowerCorner().getY()) );
+        bboxCoordList.add(new Coordinate( bbox.getLowerCorner().getX() , bbox.getUpperCorner().getY()) );
+        bboxCoordList.add(new Coordinate( bbox.getUpperCorner().getX() , bbox.getUpperCorner().getY()) );
+        bboxCoordList.add(new Coordinate( bbox.getUpperCorner().getX() , bbox.getLowerCorner().getY()) );
+        bboxCoordList.add(new Coordinate( bbox.getLowerCorner().getX() , bbox.getLowerCorner().getY()) );
+         /**
+        bboxCoordList.add(new Coordinate( 743238, 2967416 ));
+        bboxCoordList.add(new Coordinate( 743238, 2967450 ));
+        bboxCoordList.add(new Coordinate( 743265, 2967450 ));
+        bboxCoordList.add(new Coordinate( 743265.625, 2967416 ));
+        bboxCoordList.add(new Coordinate( 743238, 2967416 ));
+        **/
+        Coordinate[] bboxCoord = bboxCoordList.toArray(bboxCoordList.toArray(new Coordinate[0]));
+        GeometryFactory fac = new GeometryFactory();
+        Geometry bboxPolygon = fac.createPolygon(bboxCoord);
+        GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
+        //Geometry converted = geospatial.Transform(bboxPolygon, 2249, 4326);
+        Geometry converted = geospatial.reProject(bboxPolygon, sourceSrid, targetSrid);
+        Coordinate[] reverseCoord = geospatial.getReversedCoordinates(converted);
+
+        result.getLowerCorner().setX(reverseCoord[0].x);
+        result.getLowerCorner().setY(reverseCoord[0].y);
+        result.getUpperCorner().setX(reverseCoord[2].x);
+        result.getUpperCorner().setY(reverseCoord[2].y);
+
+        result.setSrs(targetSrs);
+
+        return result;
     }
 
     /**

@@ -7,6 +7,10 @@ import org.apache.jena.shacl.lib.G;
 import org.apache.jena.sparql.expr.ExprEvalException;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.registry.ObjectRegistry;
+import org.gdal.ogr.ogr;
+import org.gdal.osr.CoordinateTransformation;
+import org.gdal.osr.SpatialReference;
+import org.gdal.osr.osr;
 import org.geotools.geometry.jts.GeometryBuilder;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
@@ -58,6 +62,40 @@ public class GeoSpatialProcessor {
         //NodeValue result_message = NodeValue.makeString(Arrays.toString(details));
         return details;
     }
+
+    /* Method using osgeo gdal CoordinateTransformation */
+    public Geometry reProject (Geometry sourceGeom, int from_epsg, int to_epsg) {
+
+        Coordinate[] coordinates = sourceGeom.getCoordinates();
+        org.gdal.ogr.Geometry ring = new org.gdal.ogr.Geometry(ogr.wkbLinearRing);
+
+        for ( Coordinate coord : coordinates) {
+            ring.AddPoint(coord.getX(), coord.getY());
+        }
+
+        org.gdal.ogr.Geometry polygon = new org.gdal.ogr.Geometry(ogr.wkbPolygon);
+        polygon.AddGeometry(ring);
+
+        SpatialReference source = new SpatialReference();
+        source.ImportFromEPSG(from_epsg);
+
+        SpatialReference target = new SpatialReference();
+        target.ImportFromEPSG(to_epsg);
+
+        CoordinateTransformation transformMatrix = osr.CreateCoordinateTransformation(source, target);
+
+        polygon.Transform(transformMatrix);
+
+        double[][] convertedPoints = polygon.GetPoints();
+
+        List<Coordinate> convertedCoords = new ArrayList<>();
+        for ( int i = 0; i < convertedPoints[0].length; ++i) {
+            //convertedCoords.add(new Coordinate())
+        }
+
+        return null;
+    }
+
 
 
     /**
