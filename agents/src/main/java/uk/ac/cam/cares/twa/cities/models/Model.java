@@ -165,6 +165,7 @@ public abstract class Model {
     WhereBuilder currentScalarDeleteSubquery = null;
     WhereBuilder currentInsertSubquery = null;
     UpdateBuilder scalarDeleteQuery = new UpdateBuilder();
+    List<UpdateBuilder> vectorDeleteQueries = new ArrayList<>();
     UpdateBuilder insertQuery = new UpdateBuilder();
     for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.fieldMap.entrySet()) {
       FieldInterface field = entry.getValue();
@@ -184,7 +185,7 @@ public abstract class Model {
       if (field.isList) {
         String valueVar = QM + VALUE;
         WhereBuilder where = new WhereBuilder().addWhere(key.backward ? valueVar : self, predicate, key.backward ? self : valueVar);
-        updateQueue.get().add(new UpdateBuilder().addGraph(graph, where).buildDeleteWhere());
+        vectorDeleteQueries.add(new UpdateBuilder().addGraph(graph, where));
         for (Node valueValue : field.getNodes(this))
           currentInsertSubquery.addWhere(key.backward ? valueValue : self, predicate, key.backward ? self : valueValue);
       } else {
@@ -196,7 +197,26 @@ public abstract class Model {
     }
     if (graph == null) return; // nothing happened
     cleanAll();
+    /* Queue prepared queries. Note that the order of deletion is important! Scalars are deleted first to prevent
+     * vector deletions from interfering with the where query. Minimal example:
+     * class Employee extends Model {
+     *     @Getter @Setter @FieldAnnotation(value = "ont:name")
+     *     protected String name;
+     *     @Getter @Setter @FieldAnnotation(value = "ont:manager")
+     *     protected Employee manager;
+     *     @Getter @Setter @FieldAnnotation(value = "ont:manager", backwards = true, innerType = Employee.class)
+     *     ArrayList<Employee> subordinates;
+     * }
+     * An individual
+     *     "jsmith": { "name": "John Smith", "manager": "jsmith", "subordinates": ["jsmith", "ddavis", "mdyson"] }
+     * has a vector field including triples which intersect its scalar fields (self-subordinate, self-manager), so
+     * executing the vector deletion first will cause the scalar deletion query
+     *     "DELETE WHERE { <jsmith> ont:name ?value1; ont:manager ?value2. }"
+     * to not obtain any matches.
+     */
     updateQueue.get().add(scalarDeleteQuery.buildDeleteWhere());
+    for(UpdateBuilder vectorDeleteQuery: vectorDeleteQueries)
+      updateQueue.get().add(vectorDeleteQuery.buildDeleteWhere());
     updateQueue.get().add(insertQuery.build());
   }
 

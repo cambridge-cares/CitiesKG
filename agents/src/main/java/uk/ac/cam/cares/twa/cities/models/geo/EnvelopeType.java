@@ -6,6 +6,7 @@ import org.locationtech.jts.geom.Polygon;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -19,8 +20,12 @@ public class EnvelopeType extends GeometryType {
     super(data, structure);
   }
 
-  public EnvelopeType(SurfaceGeometry surfaceGeometry) {
-    super(computeBounds(surfaceGeometry.getFlattenedSubtree(true)));
+  public EnvelopeType(SurfaceGeometry rootSurfaceGeometry) {
+    super(computeBounds(rootSurfaceGeometry.getFlattenedSubtree(true)));
+  }
+
+  public EnvelopeType(List<SurfaceGeometry> leafSurfaceGeometries) {
+    super(computeBounds(leafSurfaceGeometries));
   }
 
   public static Polygon computeBounds(List<SurfaceGeometry> polygons) {
