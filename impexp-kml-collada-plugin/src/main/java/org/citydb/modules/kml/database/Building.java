@@ -221,9 +221,25 @@ public class Building extends KmlGenericObject{
 
 						try {
 							String query = queries.getBuildingPartQuery(currentLod, lod0FootprintMode, work.getDisplayForm(), true);
+
+							if (isBlazegraph) {
+								query = StatementTransformer.getSPARQLStatement_BuildingPartGeometry();
+							}
+
 							psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-							for (int i = 1; i <= getParameterCount(query); i++)
-								psQuery.setLong(i, Long.class.cast(buildingPartId));
+
+							if (isBlazegraph) {
+								URL url = null;
+								try {
+									url = new URL((String)buildingPartId);
+								} catch (MalformedURLException e) {
+									e.printStackTrace();
+								}
+								psQuery.setURL(1, url);
+							}else{
+								for (int i = 1; i <= getParameterCount(query); i++)
+									psQuery.setLong(i, Long.class.cast(buildingPartId));
+							}
 
 							rs = psQuery.executeQuery();
 							if (rs.isBeforeFirst())
@@ -244,9 +260,25 @@ public class Building extends KmlGenericObject{
 				if (currentLod > 0 && work.getDisplayForm().isAchievableFromLoD(currentLod)) {
 					try {
 						String query = queries.getBuildingPartQuery(currentLod, lod0FootprintMode, work.getDisplayForm(), false);
+
+						if (isBlazegraph) {
+							query = StatementTransformer.getSPARQLStatement_BuildingPartGeometry();
+						}
+
 						psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-						for (int i = 1; i <= getParameterCount(query); i++)
-							psQuery.setLong(i, Long.class.cast(buildingPartId));
+
+						if (isBlazegraph) {
+							URL url = null;
+							try {
+								url = new URL((String)buildingPartId);
+							} catch (MalformedURLException e) {
+								e.printStackTrace();
+							}
+							psQuery.setURL(1, url);
+						}else{
+							for (int i = 1; i <= getParameterCount(query); i++)
+								psQuery.setLong(i, Long.class.cast(buildingPartId));
+						}
 
 						rs = psQuery.executeQuery();
 					} catch (SQLException e) {
@@ -438,19 +470,53 @@ public class Building extends KmlGenericObject{
 				case DisplayForm.GEOMETRY:
 					setGmlId(work.getGmlId());
 					//setId(work.getId());
-					if (work.getDisplayForm().isHighlightingEnabled()) {
-						if (query.isSetTiling()) { // region
-							List<PlacemarkType> hlPlacemarks = createPlacemarksForHighlighting(rs, work, true);
-							hlPlacemarks.addAll(createPlacemarksForGeometry(rs, work, true));
-							return hlPlacemarks;
+					PreparedStatement psQuery3 = null;
+					ResultSet rs3 = null;
+					try {
+						String query1 = queries.getExtrusionHeight();
+
+						psQuery3 = connection.prepareStatement(query1);
+						if (isBlazegraph){
+							URL url = null;
+							try {
+								url = new URL(StatementTransformer.getIriObjectBase() + "cityobject/" + work.getGmlId()+"/");
+							} catch (MalformedURLException e) {
+								e.printStackTrace();
+							}
+							psQuery3.setURL(1, url);
+						} else {
+							for (int i = 1; i <= getParameterCount(query1); i++)
+								psQuery3.setLong(i, Long.class.cast(buildingPartId));
 						}
-						else { // reverse order for single buildings
-							List<PlacemarkType> placemarks = createPlacemarksForGeometry(rs, work, true);
-							placemarks.addAll(createPlacemarksForHighlighting(rs, work, true));
-							return placemarks;
+						rs3 = psQuery3.executeQuery();
+						rs3.next();
+
+						double measuredHeight = 0;
+						if (isBlazegraph) {
+							//log.info("Processing : " + buildingPartId);
+//							String envelop = rs3.getString(1);
+//							measuredHeight = extractHeight(envelop);
+							return createPlacemarksForGeometry_geospatila(rs, work, null);
+						} else {
+							if (work.getDisplayForm().isHighlightingEnabled()) {
+								if (query.isSetTiling()) { // region
+									List<PlacemarkType> hlPlacemarks = createPlacemarksForHighlighting(rs, work, true);
+									hlPlacemarks.addAll(createPlacemarksForGeometry(rs, work, true));
+									return hlPlacemarks;
+								}
+								else { // reverse order for single buildings
+									List<PlacemarkType> placemarks = createPlacemarksForGeometry(rs, work, true);
+									placemarks.addAll(createPlacemarksForHighlighting(rs, work, true));
+									return placemarks;
+								}
+							}
+							return createPlacemarksForGeometry(rs, work, true);
 						}
+
+					} finally {
+						try { if (rs3 != null) rs3.close(); } catch (SQLException e) {}
+						try { if (psQuery3 != null) psQuery3.close(); } catch (SQLException e) {}
 					}
-					return createPlacemarksForGeometry(rs, work, true);
 
 				case DisplayForm.COLLADA:
 					fillGenericObjectForCollada(rs, config.getProject().getKmlExporter().getBuildingColladaOptions().isGenerateTextureAtlases(), true); // fill and refill
