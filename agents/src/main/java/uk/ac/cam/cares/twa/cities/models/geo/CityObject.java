@@ -85,7 +85,7 @@ public class CityObject extends Model {
   public void fillGenericAttributes(String queryResult, Boolean lazyLoad)
       throws NoSuchFieldException, IllegalAccessException {
 
-    JSONArray queryResultJSON = new JSONArray(queryResult);
+    JSONArray queryResultJSON = new JSONArray(new JSONObject(queryResult).getString("result"));
 
     if (!queryResult.isEmpty()) {
       genericAttributes = new ArrayList<>();
@@ -114,7 +114,7 @@ public class CityObject extends Model {
   public void fillExternalReferences(String queryResult, Boolean lazyLoad)
           throws NoSuchFieldException, IllegalAccessException {
 
-    JSONArray queryResultJSON = new JSONArray(queryResult);
+    JSONArray queryResultJSON = new JSONArray(new JSONObject(queryResult).getString("result"));
 
     if (!queryResult.isEmpty()) {
       externalReferences = new ArrayList<>();
