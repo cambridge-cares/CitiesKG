@@ -18,7 +18,6 @@ public class ExternalReference extends Model {
     @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_INFO_SYS) protected String infoSys;
     @Getter @Setter  @FieldAnnotation(SchemaManagerAdapter.ONTO_NAME) protected String name;
     @Getter @Setter  @FieldAnnotation(SchemaManagerAdapter.ONTO_URI) protected String URI;
-    @Getter @Setter  @FieldAnnotation(SchemaManagerAdapter.ONTO_ID) protected URI id;
     @Getter @Setter  @FieldAnnotation(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID) protected URI cityObjectId;
 
 }

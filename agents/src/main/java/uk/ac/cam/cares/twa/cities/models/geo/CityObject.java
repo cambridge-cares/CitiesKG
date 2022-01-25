@@ -38,7 +38,11 @@ public class CityObject extends Model {
       backward = true)
   private ArrayList<GenericAttribute> genericAttributes;
 
-  // @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID, graphName = "placeholder", backward = true)
-  // private ArrayList<ExternalReference> externalReferences;
+  @Getter @Setter @FieldAnnotation(
+      value = SchemaManagerAdapter.ONTO_CITY_OBJECT_ID,
+      graphName = SchemaManagerAdapter.EXTERNAL_REFERENCES_GRAPH,
+      innerType = ExternalReference.class,
+      backward = true)
+   private ArrayList<ExternalReference> externalReferences;
 
  }
