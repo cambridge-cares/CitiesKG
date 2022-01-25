@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
@@ -13,6 +14,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
+import uk.ac.cam.cares.twa.cities.models.geo.GenericAttribute;
 
 
 /**
@@ -56,31 +58,21 @@ public class CityInformationAgent extends JPSAgent {
     JSONArray cityObjectInformation = new JSONArray();
 
     for (String cityObjectIri : uris) {
-      try {
-        CityObject cityObject = new CityObject();
+      CityObject cityObject = new CityObject();
+      cityObject.setIri(URI.create(cityObjectIri));
 
-        String queryResult = this.query(route, cityObject.getFetchScalarsQuery(cityObjectIri).toString());
-        cityObject.fillScalars(queryResult);
-
-        String genericAttGraphIri = cityObject.getNamespace(cityObjectIri) + SchemaManagerAdapter.GENERIC_ATTRIB_GARPH + "/";
-        String genAtrQueryResult = this.query(route, cityObject.getFetchIrisQuery(cityObjectIri,
-            SchemaManagerAdapter.ONTO_CITY_OBJECT_ID, genericAttGraphIri).toString());
-        cityObject.fillGenericAttributes(genAtrQueryResult, lazyload);
-
-        String extRefGraphIri = cityObject.getNamespace(cityObjectIri) + SchemaManagerAdapter.EXTERNAL_REFERENCES_GRAPH + "/";
-        String extRefQueryResult = this.query(route, cityObject.getFetchIrisQuery(cityObjectIri,
-            SchemaManagerAdapter.ONTO_CITY_OBJECT_ID, extRefGraphIri).toString());
-        cityObject.fillExternalReferences(extRefQueryResult, lazyload);
-
-        ArrayList<CityObject> cityObjectList = new ArrayList<>();
-        cityObjectList.add(cityObject);
-        cityObjectInformation.put(cityObjectList);
-
-        //pass the information further to the other agent
-
-      } catch (NoSuchFieldException | IllegalAccessException e) {
-        e.printStackTrace();
+      if (lazyload) {
+        cityObject.pullAll(route, 0);
       }
+      else {
+        cityObject.pullAll(route, 1);
+      }
+
+      ArrayList<CityObject> cityObjectList = new ArrayList<>();
+      cityObjectList.add(cityObject);
+      cityObjectInformation.put(cityObjectList);
+
+      //pass the information further to the other agent
 
     }
     requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);

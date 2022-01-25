@@ -29,20 +29,4 @@ public class GenericAttribute extends Model {
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_DATA_TYPE) protected Integer dataType;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID) protected URI cityObjectId;
 
-  /**
-   * fills in the scalar fields of a generic attribute instance.
-   */
-  public void assignScalarValueByRow(JSONObject row, HashMap<String, Field> fieldMap, String predicate)
-      throws IllegalAccessException {
-
-    if (predicate.equals(SchemaManagerAdapter.ONTO_DATA_TYPE)) {
-      fieldMap.get(predicate).set(this, row.getInt(VALUE));
-    } else if (predicate.equals(SchemaManagerAdapter.ONTO_ID)
-        || predicate.equals(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID)) {
-      fieldMap.get(predicate).set(this, URI.create(row.getString(VALUE)));
-    } else {
-      fieldMap.get(predicate).set(this, row.getString(VALUE));
-    }
-
-  }
 }
