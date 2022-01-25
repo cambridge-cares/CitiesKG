@@ -60,7 +60,7 @@ public class CityImportAgent extends JPSAgent {
 
   public static final String URI_LISTEN = "/import/source";
   public static final String URI_ACTION = "/import/citygml";
-  public static final String KEY_REQ_METHOD = "method";
+  public static final String KEY_REQ_METHOD = "method"; //move this constant to the JPSAgent
   public static final String KEY_REQ_URL = "requestUrl";
   public static final String KEY_DIRECTORY = "directory";
   public static final String KEY_SPLIT = "split";

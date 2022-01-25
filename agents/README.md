@@ -61,11 +61,8 @@ This folder is by default not accessible, in order to make it executable, you ne
 
 ### Install and Build
 
-<<<<<<< HEAD
+
 1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repository. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
-=======
-1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
->>>>>>> release_0.1.0
 
 ```
 cd <main project directory>
@@ -75,22 +72,16 @@ mvn initialize
 
 2. If the initialization is done successful, you should be able to run the following to create the war package
 
-
 ```
 mvn clean install -DskipTests
 ```
 
-<<<<<<< HEAD
 In case building the .war file fails due to the missing `JPS_AWS.jar`, please build this locally first via running the following command within the [JPS_AWS] repository:
 ```
 mvn clean install -DskipTests
 ```
 
 3. There is one dependency `blazegraph-jar-2.1.5.jar` which needs to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
-=======
-
-3. There is one dependency *blazegraph-jar-2.1.5.jar* need to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
->>>>>>> release_0.1.0
 ```
     <dependency>
       <groupId>com.blazegraph</groupId>
@@ -111,7 +102,8 @@ If this step has not been done, the CityImportAgent might not work.
 
 4. Additional dependencies used by agents are JPS_BASE_LIB and JPS_AWS are provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository.
 
-Clone the TWA project from the [TWA repository](https://github.com/cambridge-cares/TheWorldAvatar) and checkout to develop and master branches
+Clone the TWA project from the [TWA repository](https://github.com/cambridge-cares/TheWorldAvatar) and checkout to develop branch, commit 610cfcc8492f65821039a04795625a783e6050e6.
+The most recent master and develop branches have refactored class names for KnowledgeBaseClientInterface and RemoteKnowledgeBaseClient, and will not work with these agents.
 
 Run the command *mvn clean install -DskipTests* on the corresponding directories where the POM file is found.
 * JPS_BASE_LIB project can be found in the [JPS_BASE_LIB directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/JPS_BASE_LIB) from the *master* branch (stable version)

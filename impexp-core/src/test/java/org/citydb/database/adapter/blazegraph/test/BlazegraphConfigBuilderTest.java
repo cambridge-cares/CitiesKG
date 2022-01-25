@@ -10,14 +10,17 @@ import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
-import junit.framework.TestCase;
 import org.apache.log4j.Logger;
 import org.citydb.database.adapter.blazegraph.BlazegraphAdapter;
 import org.citydb.database.adapter.blazegraph.BlazegraphConfigBuilder;
 import org.citydb.database.adapter.blazegraph.BlazegraphGeoDatatype;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class BlazegraphConfigBuilderTest extends TestCase {
+public class BlazegraphConfigBuilderTest {
 
   private final String TEST_URI = "http://localhost/blazegraph/literals/POINT-3-3";
   private final String TEST_GEODATATYPE = "{\"config\":{\"fields\":["

@@ -1,57 +1,33 @@
 package uk.ac.cam.cares.twa.cities.models.geo;
 
-import java.lang.reflect.Field;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
+
 import lombok.Getter;
 import lombok.Setter;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import org.json.JSONObject;
-import uk.ac.cam.cares.twa.cities.Model;
+import uk.ac.cam.cares.twa.cities.models.Model;
+import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
+import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 
 /**
- * GenericAttribute class represent a java model of GenericCityAttribute module of CityGML. It
- * retrieves GenericCityAttribute attributes and fills equivalent fields in the java model.
+ * Model representing OntoCityGML CityObjectGenericAttribute objects.
+ * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
+ * @version $Id$
  */
+@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.GENERIC_ATTRIB_GARPH)
 public class GenericAttribute extends Model {
 
-  @Getter @Setter private String attrName;
-  @Getter @Setter private String uriVal;
-  @Getter @Setter private String strVal;
-  @Getter @Setter private String unit;
-  @Getter @Setter private String rootGenattribId;
-  @Getter @Setter private String realVal;
-  @Getter @Setter private String parentGenattribId;
-  @Getter @Setter private String intVal;
-  @Getter @Setter private String dateVal;
-  @Getter @Setter private URI id;
-  @Getter @Setter private int dataType;
-  @Getter @Setter private URI cityObjectId;
-
-
-  private static final ArrayList<String> FIELD_CONSTANTS =
-      new ArrayList<>(
-          Arrays.asList(
-              SchemaManagerAdapter.ONTO_ATTR_NAME,
-              SchemaManagerAdapter.ONTO_URI_VAL,
-              SchemaManagerAdapter.ONTO_STR_VAL,
-              SchemaManagerAdapter.ONTO_UNIT,
-              SchemaManagerAdapter.ONTO_ROOT_GENATTRIB_ID,
-              SchemaManagerAdapter.ONTO_REAL_VAL,
-              SchemaManagerAdapter.ONTO_PARRENT_GENATTRIB_ID,
-              SchemaManagerAdapter.ONTO_INT_VAL,
-              SchemaManagerAdapter.ONTO_DATE_VAL,
-              SchemaManagerAdapter.ONTO_ID,
-              SchemaManagerAdapter.ONTO_DATA_TYPE,
-              SchemaManagerAdapter.ONTO_CITY_OBJECT_ID));
-
-  //protected HashMap<String, Field> fieldMap = new HashMap<>();
-
-  public GenericAttribute() throws NoSuchFieldException {
-    assignFieldValues(FIELD_CONSTANTS, fieldMap);
-  }
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ATTR_NAME) protected String attrName;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_URI_VAL) protected String uriVal;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_STR_VAL) protected String strVal;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_UNIT) protected String unit;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ROOT_GENATTRIB_ID) protected String rootGenattribId;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_REAL_VAL) protected String realVal;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_PARRENT_GENATTRIB_ID) protected String parentGenattribId;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_INT_VAL) protected String intVal;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_DATE_VAL) protected String dateVal;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_DATA_TYPE) protected Integer dataType;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID) protected URI cityObjectId;
 
   /**
    * fills in the scalar fields of a generic attribute instance.
