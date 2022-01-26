@@ -84,7 +84,7 @@ public class DBAddressToBuilding extends AbstractDBImporter {
 				URL url = new URL(iriGraphObject + uuid + "/");
 				preparedStatement.setURL(++index, url);
 			} catch (MalformedURLException e) {
-				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+				setBlankNode(preparedStatement, ++index);
 			}
 		}
 

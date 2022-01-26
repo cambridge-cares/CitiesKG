@@ -171,7 +171,7 @@ public class DBAddress extends AbstractDBImporter {
 				preparedStatement.setURL(index++, url);
 				address.setLocalProperty(CoreConstants.OBJECT_URIID, url);
 			} catch (MalformedURLException e) {
-				preparedStatement.setObject(index++, NodeFactory.createBlankNode());
+				setBlankNode(preparedStatement, index++);
 			}
 		} else {
 		  preparedStatement.setLong(index++, addressId);

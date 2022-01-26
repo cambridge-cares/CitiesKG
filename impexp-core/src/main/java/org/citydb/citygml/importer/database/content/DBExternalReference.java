@@ -98,8 +98,8 @@ public class DBExternalReference extends AbstractDBImporter {
 				preparedStatement.setURL(++index, url);
 				preparedStatement.setURL(++index, url);
 			} catch (MalformedURLException e) {
-				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
-				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+				setBlankNode(preparedStatement, ++index);
+				setBlankNode(preparedStatement, ++index);
 			}
 		}
 
@@ -117,7 +117,7 @@ public class DBExternalReference extends AbstractDBImporter {
 			if (externalObject.isSetName()) {
 				preparedStatement.setString(++index, externalObject.getName());
 			} else if (isBlazegraph) {
-				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+				setBlankNode(preparedStatement, ++index);
 			} else {
 				preparedStatement.setNull(++index, Types.VARCHAR);
 			}
@@ -129,19 +129,19 @@ public class DBExternalReference extends AbstractDBImporter {
 						URL extURL = new URL(externalObject.getUri());
 						preparedStatement.setURL(++index, extURL);
 					} catch (MalformedURLException e) {
-						preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+						setBlankNode(preparedStatement, ++index);
 					}
         } else {
           preparedStatement.setString(++index, externalObject.getUri());
 				}
 			} else if (isBlazegraph) {
-				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+				setBlankNode(preparedStatement, ++index);
 			} else {
 				preparedStatement.setNull(++index, Types.VARCHAR);
 			}
 		} else if (isBlazegraph) {
-			preparedStatement.setObject(++index, NodeFactory.createBlankNode());
-			preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+			setBlankNode(preparedStatement, ++index);
+			setBlankNode(preparedStatement, ++index);
 		} else {
 			preparedStatement.setNull(++index, Types.VARCHAR);
 			preparedStatement.setNull(++index, Types.VARCHAR);

@@ -158,7 +158,7 @@ public class DBAppearance extends AbstractDBImporter {
 				preparedStatement.setURL(++index, url);
 				appearance.setLocalProperty(CoreConstants.OBJECT_URIID, url);
 			} catch (MalformedURLException e) {
-				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+				setBlankNode(preparedStatement, ++index);
 			}
     } else {
       preparedStatement.setLong(++index, appearanceId);

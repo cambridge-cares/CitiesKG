@@ -87,7 +87,7 @@ public class DBAppearToSurfaceData extends AbstractDBImporter {
 				preparedStatement.setURL(++index, (URL) surfaceDataId);
 				preparedStatement.setURL(++index, (URL) appearanceId);
 			} catch (MalformedURLException e) {
-				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+				setBlankNode(preparedStatement, ++index);
 			}
 		} else {
 			preparedStatement.setLong(++index, (long) surfaceDataId);

@@ -182,13 +182,13 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 				psAtomicGenericAttribute.setURL(index, url);
 				psGenericAttributeMember.setURL(index, url);
 			} catch (MalformedURLException e) {
-				psGenericAttributeSet.setObject(index, NodeFactory.createBlankNode());
-				psAtomicGenericAttribute.setObject(index, NodeFactory.createBlankNode());
-				psGenericAttributeMember.setObject(index, NodeFactory.createBlankNode());
+				setBlankNode(psGenericAttributeSet, index);
+				setBlankNode(psAtomicGenericAttribute, index);
+				setBlankNode(psGenericAttributeMember, index);
 				++index;
-				psGenericAttributeSet.setObject(index, NodeFactory.createBlankNode());
-				psAtomicGenericAttribute.setObject(index, NodeFactory.createBlankNode());
-				psGenericAttributeMember.setObject(index, NodeFactory.createBlankNode());
+				setBlankNode(psGenericAttributeSet, index);
+				setBlankNode(psAtomicGenericAttribute, index);
+				setBlankNode(psGenericAttributeMember, index);
 			}
 		}
 
@@ -243,13 +243,13 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 					ps.setInt(++index, 1);  // SPARQL index = 4
 
 					if (stringAttribute.isSetValue()) { ps.setString(++index, stringAttribute.getValue()); }
-					else{ ps.setObject(++index, NodeFactory.createBlankNode()); }
+					else{ setBlankNode(ps, ++index); }
 
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
 
 				}else{
 					ps.setInt(2, 1); // SQL pos = 2
@@ -270,15 +270,15 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 
 				if (isBlazegraph){
 					ps.setInt(++index, 2); // SPARQL index = 4
-					ps.setObject(++index, NodeFactory.createBlankNode());
+					setBlankNode(ps, ++index);
 
 					if (intAttribute.isSetValue()) {ps.setInt(++index, intAttribute.getValue()); }
-					else{ps.setObject(++index, NodeFactory.createBlankNode()); }
+					else{setBlankNode(ps, ++index); }
 
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
 
 				}else{
 					ps.setInt(2, 2);  // SQL pos = 2
@@ -298,15 +298,15 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 
 				if (isBlazegraph){
 					ps.setInt(++index, 3);  // SPARQL index = 4
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
 
 					if (doubleAttribute.isSetValue()) { ps.setDouble(++index, doubleAttribute.getValue()); }
-					else{ ps.setObject(++index, NodeFactory.createBlankNode());}
+					else{ setBlankNode(ps, ++index);}
 
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
 
 				}else{
 					ps.setInt(2, 3);  // SQL pos = 2
@@ -328,15 +328,15 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 				if (isBlazegraph){
 					ps.setInt(++index, 4);  // SPARQL index = 4
 
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
 
 					if (uriAttribute.isSetValue()) { ps.setString(++index, uriAttribute.getValue());}
-					else { ps.setObject(++index, NodeFactory.createBlankNode());}
+					else { setBlankNode(ps, ++index);}
 
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
 
 				}else{
 					ps.setInt(2, 4); // SQL pos = 2
@@ -358,15 +358,15 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 
 				if (isBlazegraph){
 					ps.setInt(++index, 5);	// SPARQL index = 4
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
 
 					if (dateAttribute.isSetValue()) {ps.setTimestamp(++index, Timestamp.valueOf(dateAttribute.getValue().atStartOfDay()));}
-					else{ ps.setObject(++index, NodeFactory.createBlankNode()); }
+					else{ setBlankNode(ps, ++index); }
 
-					ps.setObject(++index, NodeFactory.createBlankNode());
+					setBlankNode(ps, ++index);
 
 				}else{
 					ps.setInt(2, 5);  // SQL pos = 2
@@ -387,19 +387,19 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 
 				if (isBlazegraph){
 					ps.setInt(++index, 6);	// SPARQL index = 4
-					ps.setObject(++index, NodeFactory.createBlankNode());
-					ps.setObject(++index, NodeFactory.createBlankNode());
+					setBlankNode(ps, ++index);
+					setBlankNode(ps, ++index);
 
 					if (measureAttribute.isSetValue()) {
 						ps.setDouble(5, measureAttribute.getValue().getValue());		// @TODO: to check if SPARQL index = 7
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
+						setBlankNode(ps, ++index);
+						setBlankNode(ps, ++index);
 						ps.setString(8, measureAttribute.getValue().getUom());		// @TODO: to check if SPARQL index = 10
 					}else{
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
-						ps.setObject(++index, NodeFactory.createBlankNode());
+						setBlankNode(ps, ++index);
+						setBlankNode(ps, ++index);
+						setBlankNode(ps, ++index);
+						setBlankNode(ps, ++index);
 					}
 
 				}else{
@@ -423,7 +423,7 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 			default:
 
 				if (isBlazegraph) {
-					ps.setObject(++index, NodeFactory.createBlankNode());
+					setBlankNode(ps, ++index);
 				}else{
 					ps.setNull(2, Types.NUMERIC);
 				}
@@ -440,8 +440,8 @@ public class DBCityObjectGenericAttrib implements DBImporter {
 				ps.setLong(++index, parentId);
 				ps.setLong(++index, rootId);
 			} else if (isBlazegraph) {
-				ps.setObject(++index, NodeFactory.createBlankNode()); //TODO: there is not parentId or rootId in SPARQL??
-				ps.setObject(++index, NodeFactory.createBlankNode());
+				setBlankNode(ps, ++index); //TODO: there is not parentId or rootId in SPARQL??
+				setBlankNode(ps, ++index);
 			}
 
 			ps.addBatch();

@@ -250,7 +250,7 @@ public class DBCityObject extends AbstractDBImporter {
 				preparedStatement.setURL(++index, url);
 				object.setLocalProperty(CoreConstants.OBJECT_URIID, url);
 			} catch (MalformedURLException e) {
-				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+				setBlankNode(preparedStatement, ++index);
 			}
 		} else {
 			preparedStatement.setLong(++index, objectId);
@@ -303,7 +303,7 @@ public class DBCityObject extends AbstractDBImporter {
 
 			preparedStatement.setString(++index, description);
 		} else if (isBlazegraph) {
-			preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+			setBlankNode(preparedStatement, ++index);
 		} else {
 			preparedStatement.setNull(++index, Types.VARCHAR);
 		}
@@ -331,7 +331,7 @@ public class DBCityObject extends AbstractDBImporter {
 			GeometryObject envelope = GeometryObject.createPolygon(coordinates, 3, dbSrid);
 			preparedStatement.setObject(++index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(envelope, batchConn));
 		} 	else if (isBlazegraph) {
-			preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+			setBlankNode(preparedStatement, ++index);
 		} else {
 			preparedStatement.setNull(++index, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
@@ -365,7 +365,7 @@ public class DBCityObject extends AbstractDBImporter {
 
 		if (terminationDate == null) {
 			if (isBlazegraph) {
-				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+				setBlankNode(preparedStatement, ++index);
 			} else {
 				preparedStatement.setNull(++index, Types.TIMESTAMP);
 			}
@@ -376,7 +376,7 @@ public class DBCityObject extends AbstractDBImporter {
 		if (isCityObject && ((AbstractCityObject)object).isSetRelativeToTerrain()) {
 			preparedStatement.setString(++index, ((AbstractCityObject) object).getRelativeToTerrain().getValue());
 		} else if (isBlazegraph) {
-			preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+			setBlankNode(preparedStatement, ++index);
 		} else {
 			preparedStatement.setNull(++index, Types.VARCHAR);
 		}
@@ -385,7 +385,7 @@ public class DBCityObject extends AbstractDBImporter {
 		if (isCityObject && ((AbstractCityObject)object).isSetRelativeToWater()) {
 			preparedStatement.setString(++index, ((AbstractCityObject) object).getRelativeToWater().getValue());
 		} else if (isBlazegraph) {
-			preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+			setBlankNode(preparedStatement, ++index);
 		} else {
 			preparedStatement.setNull(++index, Types.VARCHAR);
 		}
@@ -415,21 +415,21 @@ public class DBCityObject extends AbstractDBImporter {
 
 		// citydb:updatingPerson
 		if (isBlazegraph & updatingPerson == null) {
-			preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+			setBlankNode(preparedStatement, ++index);
 		} else {
 			preparedStatement.setString(++index, updatingPerson);
 		}
 
 		// citydb:reasonForUpdate
 		if (isBlazegraph & reasonForUpdate == null) {
-			preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+			setBlankNode(preparedStatement, ++index);
 		} else {
 			preparedStatement.setString(++index, reasonForUpdate);
 		}
 
 		// citydb:lineage
 		if (isBlazegraph && lineage == null) {
-			preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+			setBlankNode(preparedStatement, ++index);
 		} else {
 			preparedStatement.setString(++index, lineage);
 		}

@@ -159,7 +159,7 @@ public class DBTexImage extends AbstractDBImporter {
 					URL url = new URL(iriGraphObject + uuid + "/");
 					preparedStatement.setURL(++index, url);
 				} catch (MalformedURLException e) {
-					preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+					setBlankNode(preparedStatement, ++index);
 				}
 			}
 
@@ -168,7 +168,7 @@ public class DBTexImage extends AbstractDBImporter {
 			preparedStatement.setString(++index, mimeType);
 
 			if (codeSpace == null && importer.isBlazegraph()) {
-				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+				setBlankNode(preparedStatement, ++index);
 			} else {
 				preparedStatement.setString(++index, codeSpace);
 			}

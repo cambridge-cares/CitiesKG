@@ -159,7 +159,7 @@ public class DBBuildingInstallation extends AbstractDBImporter {
 				}
 				objectURL = new URL(iriGraphObject + uuid + "/");
 			} catch (MalformedURLException e) {
-				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+				setBlankNode(preparedStatement, ++index);
 			}
 			preparedStatement.setURL(++index, objectURL);
 			// primary id
@@ -443,7 +443,7 @@ public class DBBuildingInstallation extends AbstractDBImporter {
 				}
 				objectURL = new URL(iriGraphObject + uuid + "/");
 			} catch (MalformedURLException e) {
-				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+				setBlankNode(preparedStatement, ++index);
 			}
 			preparedStatement.setURL(++index, objectURL);
 			// primary id

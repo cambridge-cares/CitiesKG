@@ -143,7 +143,7 @@ public class DBOpening extends AbstractDBImporter {
 				}
 				objectURL = new URL(iriGraphObject + uuid + "/");
 			} catch (MalformedURLException e) {
-				preparedStatement.setObject(++index, NodeFactory.createBlankNode());
+				setBlankNode(preparedStatement, ++index);
 			}
 			// primary id
 			preparedStatement.setURL(++index, objectURL);
