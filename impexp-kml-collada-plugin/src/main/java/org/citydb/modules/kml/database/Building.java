@@ -242,6 +242,9 @@ public class Building extends KmlGenericObject{
 							}
 
 							rs = psQuery.executeQuery();
+							if(isBlazegraph && rs == null){
+								System.out.println("need further query");
+							}
 							if (rs.isBeforeFirst())
 								break;
 						} catch (SQLException e) {
@@ -281,6 +284,9 @@ public class Building extends KmlGenericObject{
 						}
 
 						rs = psQuery.executeQuery();
+						if(isBlazegraph && rs == null){
+							System.out.println("need further query");
+						}
 					} catch (SQLException e) {
 						log.error("SQL error while querying geometries in LOD " + currentLod + ": " + e.getMessage());
 						try { if (psQuery != null) psQuery.close(); } catch (SQLException sqle) {}

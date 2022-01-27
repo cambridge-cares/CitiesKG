@@ -173,6 +173,7 @@ public class StatementTransformer {
 
         sb.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "objectClassId", "?objectclass_id");
         sb.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "gmlId", "?gmlid");
+//        sb.setLimit(500);//temporal use
         List<PlaceHolder<?>> placeHolders = sqlStatement.getInvolvedPlaceHolders();
 
         applyPredicate(sb, predicateTokens, placeHolders);
