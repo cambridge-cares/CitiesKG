@@ -62,7 +62,7 @@ public class TilingFilterBuilder {
 					if (extentSrs.getSrid() != dbSrs.getSrid()) {
 						try {
 							// @note: change the srid of dbSrs temporary
-							dbSrs.setSrid(31466); // shiying
+							//dbSrs.setSrid(31466); // shiying
 							extent = databaseAdapter.getUtil().transformBoundingBox(extent, extent.getSrs(), dbSrs);
 						} catch (SQLException e) {
 							throw new QueryBuildException("Failed to automatically calculate tile size.", e);
