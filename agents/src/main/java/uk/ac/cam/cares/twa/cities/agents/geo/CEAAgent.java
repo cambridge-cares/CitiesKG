@@ -23,8 +23,6 @@ import org.apache.jena.update.UpdateRequest;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.json.JSONArray;
-import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
-import uk.ac.cam.cares.jps.base.query.StoreRouter;
 
 @WebServlet(
         urlPatterns = {
@@ -38,8 +36,6 @@ public class CEAAgent extends JPSAgent {
     public static final String CITY_OBJECT_GEN_ATT = "cityobjectgenericattrib";
     public static final String BUILDING = "building";
     public static final String ENERGY_PROFILE = "energyprofile";
-
-    private StoreClientInterface kgClient;
 
     public final int NUM_CEA_THREADS = 1;
     private final ThreadPoolExecutor CEAExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_CEA_THREADS);
@@ -81,7 +77,7 @@ public class CEAAgent extends JPSAgent {
                 if (requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.POST)) {
                     try {
                         if (!requestParams.getString(KEY_IRI).isEmpty()){
-                            error = false;
+                        error = false;
                         }
                     } catch (Exception e) {
                         throw new BadRequestException();
@@ -96,6 +92,10 @@ public class CEAAgent extends JPSAgent {
         return true;
     }
 
+    /**
+     * Gets variables from config
+     *
+     */
     private void readConfig() {
         ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
         UPDATE_ROUTE = config.getString("uri.route.local");
@@ -107,6 +107,12 @@ public class CEAAgent extends JPSAgent {
         owlUri = config.getString("uri.ontology.owl");
     }
 
+    /**
+     * runs CEATask on CEAInputData and returns CEAOutputData
+     *
+     * @param buildingData input data on building envelope and height
+     * @return Output data from the CEA
+     */
     private CEAOutputData runCEA(CEAInputData buildingData) {
         RunCEATask task = new RunCEATask(buildingData);
         Future<CEAOutputData> future = CEAExecutor.submit(task);
@@ -163,18 +169,18 @@ public class CEAAgent extends JPSAgent {
     private String getValue(String uriString, String value){
 
         String result = "";
-        setKGClient(true, false);
 
         Query q = getQuery(uriString, value);
 
         //Use access agent
-        //String queryResultString = this.query(QUERY_ROUTE, q.toString());
+        String queryResultString = this.query(QUERY_ROUTE, q.toString());
 
-        String queryResultString = kgClient.execute(q.toString());
-        JSONArray queryResult = new JSONArray(queryResultString);
+        JSONObject queryResultObject = new JSONObject(queryResultString);
+        String resultString = queryResultObject.get("result").toString();
+        JSONArray queryResultArray = new JSONArray(resultString);
 
-        if(!queryResult.isEmpty()){
-            result = queryResult.getJSONObject(0).get(value).toString();
+        if(!queryResultArray.isEmpty()){
+            result = queryResultArray.getJSONObject(0).get(value).toString();
         }
         return result;
     }
@@ -239,25 +245,13 @@ public class CEAAgent extends JPSAgent {
         return sb.build();
     }
 
-    /**
-     * sets KG Client for specific query or update endpoint
-     * @param isQuery
-     * @param isUpdate
-     */
-    private void setKGClient(boolean isQuery, boolean isUpdate){
-        if(isQuery) {
-            this.kgClient = StoreRouter.getStoreClient(QUERY_ROUTE,
-                    isQuery,
-                    isUpdate);
-        }
-        else if(isUpdate){
-            this.kgClient = StoreRouter.getStoreClient(UPDATE_ROUTE,
-                    isQuery,
-                    isUpdate);
-        }
-    }
 
-    public int sparqlUpdate(CEAOutputData output, String uriString) {
+    /**
+     * builds a SPARQL update using output from CEA simulations
+     * @param output the output data from the CEA
+     * @param uriString city object id
+     */
+    public void sparqlUpdate(CEAOutputData output, String uriString) {
         String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
         String heatingUri = outputGraphUri + "UUID_" + UUID.randomUUID() + "/";
         String coolingUri = outputGraphUri + "UUID_" + UUID.randomUUID() + "/";
@@ -293,11 +287,9 @@ public class CEAAgent extends JPSAgent {
         ub.setVar(Var.alloc("graph"), NodeFactory.createURI(outputGraphUri));
 
         UpdateRequest ur = ub.buildRequest();
-        setKGClient(false, true);
-        return kgClient.executeUpdate(ur);
 
         //Use access agent
-        //this.update(UPDATE_ROUTE, ur.toString());
+        this.update(UPDATE_ROUTE, ur.toString());
     }
 
 }
