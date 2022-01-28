@@ -57,8 +57,10 @@ public class RunCEATask implements Callable<CEAOutputData> {
 
         try{
             //parsing a CSV file into BufferedReader class constructor
-            BufferedReader demand_file = new BufferedReader(new FileReader(projectDir+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"demand"+FS+"Total_demand.csv"));
-            BufferedReader PV_file = new BufferedReader(new FileReader(projectDir+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"potentials"+FS+"solar"+FS+"PV_total_buildings.csv"));
+            FileReader demand = new FileReader(projectDir+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"demand"+FS+"Total_demand.csv");
+            FileReader PV = new FileReader(projectDir+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"potentials"+FS+"solar"+FS+"PV_total_buildings.csv");
+            BufferedReader demand_file = new BufferedReader(demand);
+            BufferedReader PV_file = new BufferedReader(PV);
             ArrayList<String[]> demand_columns = new ArrayList<>();
             ArrayList<String[] > PV_columns = new ArrayList<>();
 
@@ -81,6 +83,8 @@ public class RunCEATask implements Callable<CEAOutputData> {
                      result.electricity_demand = demand_columns.get(1)[n];
                  }
             }
+            demand_file.close();
+            demand.close();
             while ((line = PV_file.readLine()) != null)   //returns a Boolean value
             {
                 String[] rows = line.split(splitBy);    // use comma as separator
@@ -94,6 +98,8 @@ public class RunCEATask implements Callable<CEAOutputData> {
                     result.PV_area=PV_columns.get(1)[n];
                 }
             }
+            PV_file.close();
+            PV.close();
         } catch ( IOException e) {
 
         }
