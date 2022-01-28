@@ -9,7 +9,7 @@
 - script: weather-helper
   parameters:
     scenario: scenario_path
-    weather: Singapore-Changi_1990_2010_TMY
+    weather: Zuerich-ETHZ_1990-2010_TMY
 - script: surroundings-helper
   parameters:
     scenario: scenario_path
@@ -20,7 +20,7 @@
 - script: data-initializer
   parameters:
     scenario: scenario_path
-    databases-path: SG
+    databases-path: CH
 - script: archetypes-mapper
   parameters:
     scenario: scenario_path

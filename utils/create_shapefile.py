@@ -55,7 +55,8 @@ def create_shapefile(geometry, height, shapefile):
     geometry = [shapely.geometry.polygon.Polygon(json.loads(g)) for g in df.geometry]
     df.drop('geometry', axis=1)
 
-    crs = CRS.from_user_input(24500)
+    #crs = CRS.from_user_input(24500)
+    crs = CRS.from_user_input(27700)
     gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
     gdf.to_file(shapefile, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
