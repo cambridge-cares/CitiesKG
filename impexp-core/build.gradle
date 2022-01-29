@@ -29,6 +29,7 @@ dependencies {
     compile fileTree(dir: 'lib', include: '*.jar')
 
     implementation ('org.geotools:gt-main:20.1')  // utility class, transform
+    testImplementation 'org.mockito:mockito-inline:3.8.0'
 }
 
 javadoc {
