@@ -36,7 +36,7 @@ public class SurfaceGeometry extends Model {
       value = SchemaManagerAdapter.ONTO_PARENT_ID,
       innerType = SurfaceGeometry.class,
       backward = true)
-  private ArrayList<SurfaceGeometry> surfaceGeometries;
+  private ArrayList<SurfaceGeometry> children;
 
   public List<SurfaceGeometry> getFlattenedSubtree(boolean ignoreNonGeometric) {
     List<SurfaceGeometry> outputList = new ArrayList<>();
@@ -47,7 +47,7 @@ public class SurfaceGeometry extends Model {
   public void getFlattenedSubtree(List<SurfaceGeometry> outputList, boolean ignoreNonGeometric) {
     if (!ignoreNonGeometric || getGeometryType() != null)
       outputList.add(this);
-    for (SurfaceGeometry child : getSurfaceGeometries())
+    for (SurfaceGeometry child : getChildren())
       child.getFlattenedSubtree(outputList, ignoreNonGeometric);
   }
 

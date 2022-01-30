@@ -171,8 +171,9 @@ public class FieldInterface {
 
   /**
    * Gets a minimised representation of the field value that can be used with <code>equals</code> to check equality on a
-   * database representation level (i.e. they return the same on <code>getNode</code>), which is value equality but with
-   * caveats: only IRI is considered for models, and order is ignored for vector fields.
+   * database representation level (i.e. for all <code>getNode(a).equals(getNode(b))</code>,
+   * <code>getMinimised(a).equals(getMinimised(b))</code>), which is value equality but with caveats: only IRI is
+   * considered for models, and order is ignored for vector fields.
    * @param object the object from which to read and minimise the field value.
    * @return the minimised representation.
    */

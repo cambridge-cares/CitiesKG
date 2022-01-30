@@ -2,8 +2,6 @@ package uk.ac.cam.cares.twa.cities.models;
 
 import java.io.InvalidClassException;
 import java.net.URI;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -51,6 +49,8 @@ public abstract class Model {
   private static final String CP = ")";
   // Error text
   private static final String OBJECT_NOT_FOUND_EXCEPTION_TEXT = "Object not found in database.";
+  // Threshold for executeUpdates to execute if "force" is not specified
+  private static final int EXECUTION_CHARACTER_THRESHOLD = 250000;
 
   // Resources for batched execution of updates
   private static final ThreadLocal<UpdateRequest> updateQueue = ThreadLocal.withInitial(UpdateRequest::new);
@@ -60,9 +60,8 @@ public abstract class Model {
   // The MetaModel of this object, which provides FieldInterfaces for interacting with data.
   private final MetaModel metaModel;
 
-  // Minimised representations of the original values of fields from the last pull from the database.
-  // These are ordered in the same order as metaModel.scalarFieldList and metaModel.vectorFieldList.
-  private final Object[] originalFieldValues;
+  // Minimised copies of field values at the last synchronisation with the database, indexed by FieldInterface.index.
+  private final Object[] cleanValues;
 
   public Model() {
     Class<?> thisClass = this.getClass();
@@ -79,7 +78,7 @@ public abstract class Model {
     // Initialise lists to empty lists
     for (Map.Entry<FieldKey, FieldInterface> vectorEntry : metaModel.vectorFieldList)
       vectorEntry.getValue().clear(this);
-    originalFieldValues = new Object[metaModel.fieldMap.size()];
+    cleanValues = new Object[metaModel.fieldMap.size()];
     dirtyAll();
   }
 
@@ -96,7 +95,7 @@ public abstract class Model {
    */
   public void dirtyAll() {
     // Object.class is a placeholder which != any valid return of FieldInterface.getMinimised.
-    Arrays.fill(originalFieldValues, Object.class);
+    Arrays.fill(cleanValues, Object.class);
   }
 
   /**
@@ -104,7 +103,7 @@ public abstract class Model {
    */
   public void cleanAll() {
     for (FieldInterface field : metaModel.fieldMap.values())
-      originalFieldValues[field.index] = field.getMinimised(this);
+      cleanValues[field.index] = field.getMinimised(this);
   }
 
   /**
@@ -126,7 +125,7 @@ public abstract class Model {
    */
   public static void executeUpdates(String kgId, boolean force) {
     String updateString = updateQueue.get().toString();
-    if (force || updateString.length() > 250000) {
+    if (force || updateString.length() > EXECUTION_CHARACTER_THRESHOLD) {
       AccessAgentCaller.update(kgId, updateString);
       clearUpdateQueue();
     }
@@ -172,7 +171,7 @@ public abstract class Model {
       FieldKey key = entry.getKey();
       // Filter for direction and whether the field is dirty.
       boolean directionSupported = ((!key.backward && pushForward) || (key.backward && pushBackward));
-      boolean clean = Objects.equals(field.getMinimised(this), originalFieldValues[field.index]);
+      boolean clean = Objects.equals(field.getMinimised(this), cleanValues[field.index]);
       if (clean || !directionSupported) continue;
       // If the graph changes, break new subgraphs for insert and scalar delete. Sorted keys make this more efficient.
       if (graph == null || !graph.getURI().equals(buildGraphIri(key.graphName))) {
@@ -204,7 +203,7 @@ public abstract class Model {
      *     protected String name;
      *     @Getter @Setter @FieldAnnotation(value = "ont:manager")
      *     protected Employee manager;
-     *     @Getter @Setter @FieldAnnotation(value = "ont:manager", backwards = true, innerType = Employee.class)
+     *     @Getter @Setter @FieldAnnotation(value = "ont:manager", backward = true, innerType = Employee.class)
      *     ArrayList<Employee> subordinates;
      * }
      * An individual
@@ -269,16 +268,18 @@ public abstract class Model {
   }
 
   /**
-   * Composes a query to pull all triples relating to this instance.
+   * Composes a query to pull all triples relating to this instance. If not backward, it will be of form:
+   * {@code SELECT * { GRAPH ?graph { <iriName> ?predicate ?value } }}; if backward, it will be of form:
+   * {@code SELECT * { GRAPH ?graph { ?value ?predicate <iriName> } }}.
    * @param iriName   the IRI from which to pull data.
-   * @param backwards whether to query quads with <code>iriName</code> as the object (true) or subject (false).
+   * @param backward whether to query quads with <code>iriName</code> as the object (true) or subject (false).
    * @return the composed query.
    */
-  public static Query buildPullAllInDirectionQuery(String iriName, boolean backwards) {
+  private static Query buildPullAllInDirectionQuery(String iriName, boolean backward) {
     try {
       WhereBuilder wb = new WhereBuilder()
-          .addWhere(backwards ? (QM + VALUE) : NodeFactory.createURI(iriName),
-              QM + PREDICATE, backwards ? NodeFactory.createURI(iriName) : (QM + VALUE))
+          .addWhere(backward ? (QM + VALUE) : NodeFactory.createURI(iriName),
+              QM + PREDICATE, backward ? NodeFactory.createURI(iriName) : (QM + VALUE))
           .addFilter(NOT_BLANK + OP + QM + VALUE + CP);
       SelectBuilder sb = new SelectBuilder()
           .addVar(QM + PREDICATE).addVar(QM + VALUE).addVar(QM + GRAPH).addVar(QM + DATATYPE)
@@ -309,7 +310,7 @@ public abstract class Model {
       if (row.has(VALUE + i)) {
         FieldInterface field = metaModel.scalarFieldList.get(i).getValue();
         field.put(this, row.getString(VALUE + i), row.optString(DATATYPE + i), kgId, 0);
-        originalFieldValues[field.index] = field.getMinimised(this);
+        cleanValues[field.index] = field.getMinimised(this);
       }
     }
   }
@@ -318,7 +319,7 @@ public abstract class Model {
    * Composes a query to retrieve the values for all scalar fields of this instance.
    * @return the composed query.
    */
-  public SelectBuilder buildScalarsQuery() {
+  private SelectBuilder buildScalarsQuery() {
     try {
       Node self = NodeFactory.createURI(getIri().toString());
       int varCount = 0;
@@ -366,7 +367,7 @@ public abstract class Model {
           JSONObject row = response.getJSONObject(i);
           field.put(this, row.getString(VALUE), row.optString(DATATYPE), kgId, 0);
         }
-        originalFieldValues[field.index] = field.getMinimised(this);
+        cleanValues[field.index] = field.getMinimised(this);
       }
     }
   }
@@ -376,7 +377,7 @@ public abstract class Model {
    * @param key the {@link FieldKey} describing the property to be queried.
    * @return the composed query.
    */
-  public SelectBuilder buildVectorQuery(FieldKey key) {
+  private SelectBuilder buildVectorQuery(FieldKey key) {
     Node predicate = NodeFactory.createURI(key.predicate);
     Node graph = NodeFactory.createURI(buildGraphIri(key.graphName));
     Node self = NodeFactory.createURI(getIri().toString());

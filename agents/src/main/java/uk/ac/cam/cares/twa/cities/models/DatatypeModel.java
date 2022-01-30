@@ -21,6 +21,6 @@ public interface DatatypeModel {
    * Returns a Jena {@link Node} representing the object.
    * @return the {@link Node} representing the object.
    */
-  public Node getNode();
+  Node getNode();
 
 }

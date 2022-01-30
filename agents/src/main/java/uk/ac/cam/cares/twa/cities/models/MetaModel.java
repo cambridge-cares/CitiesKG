@@ -13,13 +13,11 @@ import java.util.*;
  */
 public class MetaModel {
 
-  public final Constructor<?> constructor;
   public final TreeMap<FieldKey, FieldInterface> fieldMap;
   public final List<Map.Entry<FieldKey, FieldInterface>> vectorFieldList;
   public final List<Map.Entry<FieldKey, FieldInterface>> scalarFieldList;
 
   public MetaModel(Class<?> target) throws NoSuchMethodException, InvalidClassException {
-    constructor = target.getConstructor();
     ModelAnnotation modelAnnotation = target.getAnnotation(ModelAnnotation.class);
     // Collect fields through the full inheritance hierarchy
     Class<?> currentClass = target;

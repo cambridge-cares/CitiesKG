@@ -152,7 +152,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
    * @param surface the SurfaceGeometry currently being processed.
    */
   private Theme recursiveDiscover(SurfaceGeometry surface) {
-    List<SurfaceGeometry> children = surface.getSurfaceGeometries();
+    List<SurfaceGeometry> children = surface.getChildren();
     GeometryType geometry = surface.getGeometryType();
     Theme aggregateTheme = Theme.UNSET;
     if (geometry != null && children.size() != 0) {
