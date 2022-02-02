@@ -3,7 +3,6 @@ package uk.ac.cam.cares.twa.cities.agents.geo;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
@@ -39,6 +38,11 @@ import uk.ac.cam.cares.twa.cities.tasks.geo.ThematicSurfaceDiscoveryTask;
 @WebServlet(urlPatterns = {ThematicSurfaceDiscoveryAgent.URI_LISTEN})
 public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
 
+  public enum Mode {
+    RESTRUCTURE,
+    COMMENT
+  }
+
   // Agent endpoint and parameter keys
   public static final String URI_LISTEN = "/discovery/thematicsurface";
   public static final String KEY_REQ_METHOD = "method";
@@ -46,6 +50,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
   public static final String KEY_COBI = "cityObjectIRI";
   public static final String KEY_LOD = "lod";
   public static final String KEY_THRESHOLD = "thresholdAngle";
+  public static final String KEY_COMMENT = "comment";
 
   // Exception and error text
   private static final String NO_CRS_EXCEPTION_TEXT = "Namespace has no CRS specified.";
@@ -60,11 +65,12 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
   // Default task parameters
   private static final double DEFAULT_THRESHOLD = 15;
 
-  @Getter private final String kgId;
+  private final String kgId;
   @Getter private String buildingIri;
   @Getter private String namespaceIri;
   @Getter private boolean[] lods;
   @Getter private double threshold;
+  @Getter private Mode mode;
 
   public ThematicSurfaceDiscoveryAgent() {
     super();
@@ -73,6 +79,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
 
   @Override
   public JSONObject processRequestParameters(JSONObject requestParams) {
+    SPARQLUtils.mockAccessAgentIfConfigured();
     validateInput(requestParams);
     requestParams.put("acceptHeaders", "application/json");
     importSrs();
@@ -91,7 +98,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
       for (int i = 0; i < buildingsResponse.length(); i++)
         buildingIris.add(buildingsResponse.getJSONObject(i).getString(BUILDING));
     }
-    Executors.newSingleThreadExecutor().execute(new ThematicSurfaceDiscoveryTask(buildingIris, lods, threshold, kgId));
+    Executors.newSingleThreadExecutor().execute(new ThematicSurfaceDiscoveryTask(buildingIris, lods, threshold, mode, kgId));
     return requestParams;
   }
 
@@ -101,6 +108,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
         && requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.GET)) {
       try {
         Set<String> keys = requestParams.keySet();
+          mode = keys.contains(KEY_COMMENT) ? Mode.COMMENT : Mode.RESTRUCTURE;
         if (keys.contains(KEY_NAMESPACE)) {
           namespaceIri = new URI(requestParams.getString(KEY_NAMESPACE)).toString();
           buildingIri = keys.contains(KEY_COBI) ? new URI(requestParams.getString(KEY_COBI)).toString() : null;

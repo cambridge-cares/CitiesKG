@@ -1,7 +1,14 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo;
 
+import org.apache.jena.arq.querybuilder.UpdateBuilder;
+import org.apache.jena.arq.querybuilder.WhereBuilder;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.locationtech.jts.geom.Coordinate;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+import uk.ac.cam.cares.twa.cities.SPARQLUtils;
+import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.twa.cities.models.Model;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
 
@@ -58,6 +65,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
   public final String kgId;
   public final int lod;
   public final double threshold;
+  public final ThematicSurfaceDiscoveryAgent.Mode mode;
 
   public boolean stage = false;
   public Boolean flipped = null;
@@ -66,19 +74,24 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
   private final List<List<SurfaceGeometry>> bottomLevelThematicGeometries = Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
   private final List<SurfaceGeometry> mixedGeometries = new ArrayList<>();
 
-  public MultiSurfaceThematicisationTask(SurfaceGeometry root, int lod, double threshold, String kgId) {
+  public MultiSurfaceThematicisationTask(SurfaceGeometry root, int lod, double threshold, ThematicSurfaceDiscoveryAgent.Mode mode, String kgId) {
     this.root = root;
     this.kgId = kgId;
     this.lod = lod;
     this.threshold = threshold;
+    this.mode = mode;
   }
 
   public Void call() {
+    SPARQLUtils.mockAccessAgentIfConfigured();
     if (!stage) {
       tryClassifyGeometries();
       stage = true;
     } else {
-      implementChangesAndPush();
+      if(mode == ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE)
+        restructureAndPush();
+      else
+        commentAndPush();
     }
     return null;
   }
@@ -191,7 +204,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
    * then push the changes to the database. This does sever the link between the <code>Building</code> and the root
    * <code>SurfaceGeometry</code>, and links the new <code>ThematicSurface</code>s and the <code>Building</code>.
    */
-  private void implementChangesAndPush() {
+  private void restructureAndPush() {
     for (int i = 0; i < topLevelThematicGeometries.size(); i++) {
       for (SurfaceGeometry topLevelGeometry : topLevelThematicGeometries.get(i)) {
         String uuid = UUID.randomUUID().toString();
@@ -233,6 +246,27 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
       geometry.queueDeletionUpdate();
       Model.executeUpdates(kgId, false);
     }
+    Model.executeUpdates(kgId, true);
+  }
+
+  /**
+   * Adds rdfs:comment properties to bottom-level thematic geometries. This is done instead of restructureAndPush() if
+   * the mode chosen was Mode.COMMENT.
+   */
+  private void commentAndPush() {
+    WhereBuilder whereBuilder = new WhereBuilder();
+    SPARQLUtils.addPrefix("rdfs", whereBuilder);
+    for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.GROUND.index)) {
+      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri().toString()), "rdfs:comment", NodeFactory.createLiteral("ground"));
+    }
+    for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.WALL.index)) {
+      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri().toString()), "rdfs:comment", NodeFactory.createLiteral("wall"));
+    }
+    for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.ROOF.index)) {
+      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri().toString()), "rdfs:comment", NodeFactory.createLiteral("roof"));
+    }
+    Node graph = NodeFactory.createURI(root.buildGraphIri(SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH));
+    Model.queueUpdate(new UpdateBuilder().addInsert(graph, whereBuilder).build().toString());
     Model.executeUpdates(kgId, true);
   }
 

@@ -1,22 +1,10 @@
 package uk.ac.cam.cares.twa.cities.agents.geo.test;
 
 import junit.framework.TestCase;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.jena.arq.querybuilder.SelectBuilder;
-import org.apache.jena.graph.NodeFactory;
-import org.json.JSONArray;
 import org.json.JSONObject;
-import org.locationtech.jts.geom.*;
-import org.locationtech.jts.geom.impl.CoordinateArraySequence;
 import org.mockito.Mockito;
-import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
-import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
-import uk.ac.cam.cares.twa.cities.models.Model;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
-import uk.ac.cam.cares.twa.cities.models.geo.Opening;
-import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
-import uk.ac.cam.cares.twa.cities.models.geo.ThematicSurface;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
@@ -48,6 +36,7 @@ public class ThematicSurfaceDiscoveryAgentTest extends TestCase {
       assertNull("http://example.org/test", agent.getBuildingIri());
       assertArrayEquals(new boolean[]{true, true, true, true}, agent.getLods());
       assertEquals(15.0, agent.getThreshold());
+      assertEquals(ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE, agent.getMode());
     } catch (BadRequestException ignored) {
       fail();
     }
@@ -99,6 +88,15 @@ public class ThematicSurfaceDiscoveryAgentTest extends TestCase {
       ThematicSurfaceDiscoveryAgent agent = new ThematicSurfaceDiscoveryAgent();
       assertTrue(agent.validateInput(requestParams));
       assertEquals(13.0, agent.getThreshold());
+    } catch (BadRequestException ignored) {
+      fail();
+    }
+    // Comment argument
+    requestParams.put("comment", "1");
+    try {
+      ThematicSurfaceDiscoveryAgent agent = new ThematicSurfaceDiscoveryAgent();
+      assertTrue(agent.validateInput(requestParams));
+      assertEquals(ThematicSurfaceDiscoveryAgent.Mode.COMMENT, agent.getMode());
     } catch (BadRequestException ignored) {
       fail();
     }

@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
+import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
 import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
 import uk.ac.cam.cares.twa.cities.tasks.geo.MultiSurfaceThematicisationTask;
@@ -62,7 +63,7 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
     mixedGeometriesField.setAccessible(true);
 
     // Test bucketing is correct
-    MultiSurfaceThematicisationTask task = new MultiSurfaceThematicisationTask(mockedRoot, 1, 1, "");
+    MultiSurfaceThematicisationTask task = new MultiSurfaceThematicisationTask(mockedRoot, 1, 1, ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE, "");
     task.call();
     List<List<SurfaceGeometry>> topLevels = (List<List<SurfaceGeometry>>) topLevelThematicGeometriesField.get(task);
     List<List<SurfaceGeometry>> bottomLevels = (List<List<SurfaceGeometry>>) bottomLevelThematicGeometriesField.get(task);
@@ -99,7 +100,7 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
     ground1.setGeometryType(new GeometryType("0#0#0#1#0#0#1#1#0#0#1#0#0#0#0", "http://localhost/blazegraph/literals/POLYGON-3-15"));
     ground2.setGeometryType(new GeometryType("0#0#-1#1#0#-1#1#1#-1#0#1#-1#0#0#-1", "http://localhost/blazegraph/literals/POLYGON-3-15"));
 
-    task = new MultiSurfaceThematicisationTask(mockedRoot, 1, 1, "");
+    task = new MultiSurfaceThematicisationTask(mockedRoot, 1, 1, ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE, "");
     task.call();
     topLevels = (List<List<SurfaceGeometry>>) topLevelThematicGeometriesField.get(task);
     bottomLevels = (List<List<SurfaceGeometry>>) bottomLevelThematicGeometriesField.get(task);
@@ -136,7 +137,7 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
     ground1.setGeometryType(new GeometryType("0#0#1#1#0#1#1#1#1#0#1#1#0#0#1", "http://localhost/blazegraph/literals/POLYGON-3-15"));
     ground2.setGeometryType(new GeometryType("0#0#2#1#0#2#1#1#2#0#1#2#0#0#2", "http://localhost/blazegraph/literals/POLYGON-3-15"));
 
-    task = new MultiSurfaceThematicisationTask(mockedRoot, 1, 1, "");
+    task = new MultiSurfaceThematicisationTask(mockedRoot, 1, 1, ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE, "");
     task.call();
     topLevels = (List<List<SurfaceGeometry>>) topLevelThematicGeometriesField.get(task);
     bottomLevels = (List<List<SurfaceGeometry>>) bottomLevelThematicGeometriesField.get(task);
@@ -213,7 +214,7 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
     // Override pull method.
     Mockito.doNothing().when(root).pullAll(Mockito.anyString(), Mockito.anyInt());
 
-    MultiSurfaceThematicisationTask task = new MultiSurfaceThematicisationTask(root, 1, 1, "");
+    MultiSurfaceThematicisationTask task = new MultiSurfaceThematicisationTask(root, 1, 1, ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE, "");
     task.call();
     try(MockedStatic<AccessAgentCaller> mock = Mockito.mockStatic(AccessAgentCaller.class)) { // disables executions
       task.call();

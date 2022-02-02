@@ -4,11 +4,16 @@ import org.apache.jena.arq.querybuilder.AbstractQueryBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.mockito.MockedStatic;
+import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
+import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.jps.base.query.sparql.PrefixToUrlMap;
 
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.mockito.Mockito;
 
 /**
  * A utility class for looking up prefixes in the JPS_BASE_LIB {@link PrefixToUrlMap} and specifications in the
@@ -20,6 +25,38 @@ public class SPARQLUtils {
 
   private static Map<String, String> prefixMap = new HashMap<>();
   private static final Pattern qualifiedNamePattern = Pattern.compile("([A-Za-z0-9]+):([A-Za-z0-9]+)");
+
+  static {
+    mockAccessAgentIfConfigured();
+  }
+
+  public static void mockAccessAgentIfConfigured() {
+    ResourceBundle config = ResourceBundle.getBundle("config");
+    if(config.containsKey("useAccessAgent") && config.getString("useAccessAgent").equals("false")) {
+      try {
+        MockedStatic<AccessAgentCaller> mockAccessAgentCaller = Mockito.mockStatic(AccessAgentCaller.class);
+        mockAccessAgentCaller.when(() -> AccessAgentCaller.query(Mockito.anyString(), Mockito.anyString()))
+            .then((invocation) -> {
+              String resourceId = invocation.getArgument(0, String.class);
+              String query = invocation.getArgument(1, String.class);
+              System.err.println(query);
+              String responseString = new RemoteStoreClient(resourceId).execute(query);
+              JSONObject responseObject = new JSONObject();
+              responseObject.put("result", responseString);
+              return responseObject.toString();
+            });
+        mockAccessAgentCaller.when(() -> AccessAgentCaller.update(Mockito.anyString(), Mockito.anyString()))
+            .then((invocation) -> {
+              String resourceId = invocation.getArgument(0, String.class);
+              String update = invocation.getArgument(1, String.class);
+              System.err.println(update);
+              return new RemoteStoreClient(resourceId, resourceId).executeUpdate(update);
+            });
+      } catch (Exception e) {
+        // has already been mocked in this thread
+      }
+    }
+  }
 
   /**
    * Identifies all qualified names in the sample string provided, looks the prefixes up in {@link PrefixToUrlMap}

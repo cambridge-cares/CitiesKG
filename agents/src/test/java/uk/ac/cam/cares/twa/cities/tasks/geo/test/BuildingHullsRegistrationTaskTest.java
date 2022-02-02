@@ -6,6 +6,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
+import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.twa.cities.tasks.geo.BuildingHullsRegistrationTask;
 import uk.ac.cam.cares.twa.cities.tasks.geo.MultiSurfaceThematicisationTask;
 
@@ -17,7 +18,7 @@ public class BuildingHullsRegistrationTaskTest extends TestCase {
   public void testInvocation() {
     ConcurrentLinkedQueue<MultiSurfaceThematicisationTask> queue = new ConcurrentLinkedQueue<>();
     BuildingHullsRegistrationTask task = new BuildingHullsRegistrationTask(
-        "dummy_iri", "dummy_kgid", new boolean[]{true, false, false, true}, 2.0, queue);
+        "dummy_iri", "dummy_kgid", new boolean[]{true, false, false, true}, 2.0, ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE, queue);
 
     try(MockedStatic<AccessAgentCaller> accessAgentCallerMock = Mockito.mockStatic(AccessAgentCaller.class)) {
       String predicateLod1 = SPARQLUtils.expandQualifiedName(SchemaManagerAdapter.ONTO_LOD1_MULTI_SURFACE_ID);

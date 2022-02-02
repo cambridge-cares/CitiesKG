@@ -145,13 +145,12 @@ public static void main(String[] args) {
     // Push updates
     john.queuePushUpdate(true, true);
     david.queuePushUpdate(true, true);
-    System.out.println(Model.peekUpdateQueue());
     Model.executeUpdates("mycompany", true);
 
 }
 ```
 
-Notice that we have used a new utility function, `Model.peekUpdateQueue()`, to check on the update we are pushing. It should look like:
+The update executed will look like:
 
 [TODO]
 

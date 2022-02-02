@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.tasks.geo.test;
 
 import junit.framework.TestCase;
 import org.mockito.Mockito;
+import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
 import uk.ac.cam.cares.twa.cities.tasks.geo.MultiSurfaceThematicisationTask;
 import uk.ac.cam.cares.twa.cities.tasks.geo.ThematicSurfaceDiscoveryTask;
@@ -18,7 +19,7 @@ public class ThematicSurfaceDiscoveryTaskTest extends TestCase {
   public void testResolveIndeterminateFlips() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
 
     ThematicSurfaceDiscoveryTask task = new ThematicSurfaceDiscoveryTask(
-        Arrays.asList("http://first"), new boolean[]{true, false, false, true}, 0, "");
+        Arrays.asList("http://first"), new boolean[]{true, false, false, true}, 0, ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE, "");
 
     // Collect private fields and methods
     Field lxsmTasksField = ThematicSurfaceDiscoveryTask.class.getDeclaredField("lxmsThematicisationTaskList");

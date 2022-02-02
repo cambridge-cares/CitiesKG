@@ -1,5 +1,7 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo;
 
+import uk.ac.cam.cares.twa.cities.SPARQLUtils;
+import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.twa.cities.models.geo.Building;
 import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
 
@@ -13,38 +15,41 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
  * @version $Id$
  */
-public class BuildingHullsRegistrationTask implements Callable<Void>{
+public class BuildingHullsRegistrationTask implements Callable<Void> {
 
   private final String buildingIri;
   private final String kgId;
   private final boolean[] lods;
   private final double threshold;
+  private final ThematicSurfaceDiscoveryAgent.Mode mode;
   private final ConcurrentLinkedQueue<MultiSurfaceThematicisationTask> outputQueue;
 
-  public BuildingHullsRegistrationTask(String buildingIri, String kgId, boolean[] lods, double threshold, ConcurrentLinkedQueue<MultiSurfaceThematicisationTask> outputQueue) {
+  public BuildingHullsRegistrationTask(String buildingIri, String kgId, boolean[] lods, double threshold, ThematicSurfaceDiscoveryAgent.Mode mode, ConcurrentLinkedQueue<MultiSurfaceThematicisationTask> outputQueue) {
     this.buildingIri = buildingIri;
     this.kgId = kgId;
     this.lods = lods;
     this.threshold = threshold;
     this.outputQueue = outputQueue;
+    this.mode = mode;
   }
 
   public Void call() {
-      Building building = new Building();
-      building.setIri(URI.create(buildingIri));
-      building.pullAll(kgId, 0);
-      for (int lod = 1; lod <= 4; lod++) {
-        if (!lods[lod - 1]) continue;
-        SurfaceGeometry multiSurface =
-            lod == 1 ? building.getLod1MultiSurfaceId() :
-                lod == 2 ? building.getLod2MultiSurfaceId() :
-                    lod == 3 ? building.getLod3MultiSurfaceId() :
-                        building.getLod4MultiSurfaceId();
-        if (multiSurface != null)
-          outputQueue.add(
-              new MultiSurfaceThematicisationTask(multiSurface, lod, threshold, kgId));
-      }
-      return null;
+    SPARQLUtils.mockAccessAgentIfConfigured();
+    Building building = new Building();
+    building.setIri(URI.create(buildingIri));
+    building.pullAll(kgId, 0);
+    for (int lod = 1; lod <= 4; lod++) {
+      if (!lods[lod - 1]) continue;
+      SurfaceGeometry multiSurface =
+          lod == 1 ? building.getLod1MultiSurfaceId() :
+              lod == 2 ? building.getLod2MultiSurfaceId() :
+                  lod == 3 ? building.getLod3MultiSurfaceId() :
+                      building.getLod4MultiSurfaceId();
+      if (multiSurface != null)
+        outputQueue.add(
+            new MultiSurfaceThematicisationTask(multiSurface, lod, threshold, mode, kgId));
     }
+    return null;
+  }
 
 }
