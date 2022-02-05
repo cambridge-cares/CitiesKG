@@ -3,6 +3,7 @@ package uk.ac.cam.cares.twa.cities.agents.geo;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.ResourceBundle;
 import java.util.Set;
 import javax.servlet.annotation.WebServlet;
@@ -13,6 +14,7 @@ import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
 import uk.ac.cam.cares.jps.base.query.StoreRouter;
+import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 
 
@@ -26,9 +28,9 @@ public class CityInformationAgent extends JPSAgent {
   public static final String KEY_REQ_METHOD = "method";
   public static final String KEY_IRIS = "iris";
   public static final String KEY_ATTRIBUTES = "attributes";
+  public static final String SLASH = "/";
 
   private static String route;
-  private boolean lazyload;
 
 
   public CityInformationAgent() {
@@ -52,9 +54,8 @@ public class CityInformationAgent extends JPSAgent {
     System.err.println(iris);
 
     for (String cityObjectIri : uris) {
-      CityObject cityObject = new CityObject();
-      cityObject.setIri(URI.create(cityObjectIri));
-      cityObject.pullAll(route, 1);
+      ModelContext context = new ModelContext(route, getNamespace(cityObjectIri) + "/");
+      CityObject cityObject = context.loadModel(CityObject.class, cityObjectIri);
 
       ArrayList<CityObject> cityObjectList = new ArrayList<>();
       cityObjectList.add(cityObject);
@@ -62,6 +63,11 @@ public class CityInformationAgent extends JPSAgent {
     }
     requestParams.append(KEY_ATTRIBUTES, cityObjectInformation);
     return requestParams;
+  }
+
+  private String getNamespace(String uriString) {
+    String[] splitUri = uriString.split("/");
+    return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 2));
   }
 
   @Override
@@ -92,7 +98,6 @@ public class CityInformationAgent extends JPSAgent {
    */
   private void readConfig() {
     ResourceBundle config = ResourceBundle.getBundle("config");
-    lazyload = Boolean.getBoolean(config.getString("loading.status"));
     route = config.getString("uri.route");
   }
 

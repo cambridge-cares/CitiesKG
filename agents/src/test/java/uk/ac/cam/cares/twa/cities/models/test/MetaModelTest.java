@@ -10,7 +10,7 @@ import java.io.InvalidClassException;
 public class MetaModelTest extends TestCase {
 
   public void testConstructor() throws InvalidClassException, NoSuchMethodException {
-    MetaModel metaModel = new MetaModel(TestModel.class);
+    MetaModel metaModel = MetaModel.get(TestModel.class);
     // test default graph, forward
     assertTrue(metaModel.fieldMap.containsKey(
         new FieldKey("testmodels", SPARQLUtils.expandQualifiedName("JPSLAND:stringpropnull"), false)));

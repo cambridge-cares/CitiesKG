@@ -1,9 +1,12 @@
 package uk.ac.cam.cares.twa.cities.models;
 
+import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+
 import java.io.InvalidClassException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A collection of {@link FieldInterface}s generated from the metadata of a {@link Model} subclass and other
@@ -13,11 +16,13 @@ import java.util.*;
  */
 public class MetaModel {
 
+  private final static ConcurrentHashMap<Class<?>, MetaModel> metaModelMap = new ConcurrentHashMap<>();
+
   public final TreeMap<FieldKey, FieldInterface> fieldMap;
   public final List<Map.Entry<FieldKey, FieldInterface>> vectorFieldList;
   public final List<Map.Entry<FieldKey, FieldInterface>> scalarFieldList;
 
-  public MetaModel(Class<?> target) throws NoSuchMethodException, InvalidClassException {
+  private MetaModel(Class<?> target) throws NoSuchMethodException, InvalidClassException {
     ModelAnnotation modelAnnotation = target.getAnnotation(ModelAnnotation.class);
     // Collect fields through the full inheritance hierarchy
     Class<?> currentClass = target;
@@ -43,6 +48,20 @@ public class MetaModel {
     }
     scalarFieldList = new ArrayList<>(scalarFieldMap.entrySet());
     vectorFieldList = new ArrayList<>(vectorFieldMap.entrySet());
+  }
+
+  public static <T extends Model> MetaModel get(Class<T> ofClass) {
+    if (metaModelMap.containsKey(ofClass)) {
+      return metaModelMap.get(ofClass);
+    } else {
+      try {
+        MetaModel newMetaModel = new MetaModel(ofClass);
+        metaModelMap.put(ofClass, newMetaModel);
+        return newMetaModel;
+      } catch (NoSuchMethodException | InvalidClassException e) {
+        throw new JPSRuntimeException(e);
+      }
+    }
   }
 
 }

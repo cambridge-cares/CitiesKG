@@ -7,40 +7,47 @@ import org.mockito.Mockito;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
+import uk.ac.cam.cares.twa.cities.models.ModelContext;
+import uk.ac.cam.cares.twa.cities.models.geo.Building;
+import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
 import uk.ac.cam.cares.twa.cities.tasks.geo.BuildingHullsRegistrationTask;
 import uk.ac.cam.cares.twa.cities.tasks.geo.MultiSurfaceThematicisationTask;
 
-import java.util.Arrays;
+import java.lang.reflect.Field;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class BuildingHullsRegistrationTaskTest extends TestCase {
 
-  public void testInvocation() {
-    ConcurrentLinkedQueue<MultiSurfaceThematicisationTask> queue = new ConcurrentLinkedQueue<>();
-    BuildingHullsRegistrationTask task = new BuildingHullsRegistrationTask(
-        "dummy_iri", "dummy_kgid", new boolean[]{true, false, false, true}, 2.0, ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE, queue);
+  public void testInvocation() throws NoSuchFieldException, IllegalAccessException {
 
-    try(MockedStatic<AccessAgentCaller> accessAgentCallerMock = Mockito.mockStatic(AccessAgentCaller.class)) {
-      String predicateLod1 = SPARQLUtils.expandQualifiedName(SchemaManagerAdapter.ONTO_LOD1_MULTI_SURFACE_ID);
-      String predicateLod2 = SPARQLUtils.expandQualifiedName(SchemaManagerAdapter.ONTO_LOD2_MULTI_SURFACE_ID);
-      accessAgentCallerMock.when(() -> AccessAgentCaller.query(Mockito.anyString(), Mockito.anyString()))
-          .thenReturn(String.format(
-              "{ \"result\": \"[" +
-                  "{'predicate': '%s', 'value':'http://lod1', 'graph':'building'}," +
-                  "{'predicate': '%s', 'value':'http://lod2', 'graph':'building'}" +
-                  "]\" }",
-              predicateLod1, predicateLod2));
-      task.call();
-    }
+    ConcurrentLinkedQueue<MultiSurfaceThematicisationTask> queue = new ConcurrentLinkedQueue<>();
+    BuildingHullsRegistrationTask task = new BuildingHullsRegistrationTask("",
+        new ThematicSurfaceDiscoveryAgent.Params(
+            "",
+            "",
+            new boolean[]{true, false, false, true},
+            2.0,
+            ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE
+        ), queue);
+
+    ModelContext context = Mockito.spy(new ModelContext("", ""));
+    Building building = context.createNewModel(Building.class, "a");
+    building.setLod1MultiSurfaceId(context.createHollowModel(SurfaceGeometry.class, "b"));
+    building.setLod2MultiSurfaceId(context.createHollowModel(SurfaceGeometry.class, "c"));
+    Mockito.doReturn(building).when(context).loadModel(Mockito.any(), Mockito.anyString());
+    Field contextField = BuildingHullsRegistrationTask.class.getDeclaredField("context");
+    contextField.setAccessible(true);
+    contextField.set(task, context);
+    task.call();
+
     // Only one task created: only lod1 is both existent and asked for.
     assertEquals(1, queue.size());
     // Check task created correctly
-    MultiSurfaceThematicisationTask lxmsTask1 = queue.poll();
-    assertNotNull(lxmsTask1);
-    assertEquals(1, lxmsTask1.lod);
-    assertEquals("http://lod1", lxmsTask1.root.getIri().toString());
-    assertEquals(2.0, lxmsTask1.threshold);
-    assertEquals("dummy_kgid", lxmsTask1.kgId);
+    MultiSurfaceThematicisationTask lxmsTask = queue.poll();
+    assertNotNull(lxmsTask);
+    assertEquals(1, lxmsTask.lod);
+    assertEquals(2.0, lxmsTask.params.threshold);
+    assertEquals("b", lxmsTask.root.getIri());
   }
 
 }

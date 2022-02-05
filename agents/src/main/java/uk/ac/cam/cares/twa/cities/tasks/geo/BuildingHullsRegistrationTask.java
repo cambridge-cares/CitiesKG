@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.tasks.geo;
 
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
+import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.Building;
 import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
 
@@ -18,36 +19,28 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class BuildingHullsRegistrationTask implements Callable<Void> {
 
   private final String buildingIri;
-  private final String kgId;
-  private final boolean[] lods;
-  private final double threshold;
-  private final ThematicSurfaceDiscoveryAgent.Mode mode;
+  private final ModelContext context;
+  private final ThematicSurfaceDiscoveryAgent.Params params;
   private final ConcurrentLinkedQueue<MultiSurfaceThematicisationTask> outputQueue;
 
-  public BuildingHullsRegistrationTask(String buildingIri, String kgId, boolean[] lods, double threshold, ThematicSurfaceDiscoveryAgent.Mode mode, ConcurrentLinkedQueue<MultiSurfaceThematicisationTask> outputQueue) {
+  public BuildingHullsRegistrationTask(String buildingIri, ThematicSurfaceDiscoveryAgent.Params params, ConcurrentLinkedQueue<MultiSurfaceThematicisationTask> outputQueue) {
     this.buildingIri = buildingIri;
-    this.kgId = kgId;
-    this.lods = lods;
-    this.threshold = threshold;
+    this.context = params.makeContext();
+    this.params = params;
     this.outputQueue = outputQueue;
-    this.mode = mode;
   }
 
   public Void call() {
-    SPARQLUtils.mockAccessAgentIfConfigured();
-    Building building = new Building();
-    building.setIri(URI.create(buildingIri));
-    building.pullAll(kgId, 0);
+    Building building = context.loadModel(Building.class, buildingIri);
     for (int lod = 1; lod <= 4; lod++) {
-      if (!lods[lod - 1]) continue;
+      if (!params.lods[lod - 1]) continue;
       SurfaceGeometry multiSurface =
           lod == 1 ? building.getLod1MultiSurfaceId() :
               lod == 2 ? building.getLod2MultiSurfaceId() :
                   lod == 3 ? building.getLod3MultiSurfaceId() :
                       building.getLod4MultiSurfaceId();
       if (multiSurface != null)
-        outputQueue.add(
-            new MultiSurfaceThematicisationTask(multiSurface, lod, threshold, mode, kgId));
+        outputQueue.add(new MultiSurfaceThematicisationTask(multiSurface.getIri(), lod, params));
     }
     return null;
   }

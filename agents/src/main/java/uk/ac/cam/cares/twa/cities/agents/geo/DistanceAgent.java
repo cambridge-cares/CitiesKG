@@ -33,6 +33,7 @@ import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
+import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 import uk.ac.cam.cares.twa.cities.models.geo.EnvelopeType;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
@@ -78,11 +79,13 @@ public class DistanceAgent extends JPSAgent {
   private static final String VALUE_PREDICATE = "hasValue";
   private static final String QST_MARK = "?";
   private static final String COLON = ":";
+  private static final String SLASH = "/";
 
   // Variables fetched from config.properties file.
-  private String ocgmlUri;
+  private static String ocgmlUri;
   private static String unitOntology;
   private static String route;
+  private static ModelContext context;
 
   public DistanceAgent() {
     super();
@@ -99,6 +102,8 @@ public class DistanceAgent extends JPSAgent {
     for (Object iri : iris) {
       uris.add(iri.toString());
     }
+
+    if(uris.size() > 0) new ModelContext(route, getNamespace(uris.get(0)) + "/");
 
     ArrayList<Double> distances = new ArrayList<>();
 
@@ -268,9 +273,7 @@ public class DistanceAgent extends JPSAgent {
    */
   public EnvelopeType getEnvelope(String uriString, String coordinateSystem) {
     GeometryType.setSourceCrsName(coordinateSystem);
-    CityObject cityObject = new CityObject();
-    cityObject.setIri(URI.create(uriString));
-    cityObject.pullAll(route, 0);
+    CityObject cityObject = context.loadModel(CityObject.class, uriString);
     return cityObject.getEnvelopeType();
   }
 
@@ -288,8 +291,8 @@ public class DistanceAgent extends JPSAgent {
     CoordinateReferenceSystem crs2 = envelope2.getSourceCrs();
     CoordinateReferenceSystem targetCrs = envelope1.getMetricCrs();
     try {
-      Coordinate metricCentroid1 = JTS.transform(centroid1, null, CRS.findMathTransform(crs1, targetCrs));
-      Coordinate metricCentroid2 = JTS.transform(centroid2, null, CRS.findMathTransform(crs2, targetCrs));
+      Coordinate metricCentroid1 = JTS.transform(centroid1, null, CRS.findMathTransform(crs1, targetCrs, true));
+      Coordinate metricCentroid2 = JTS.transform(centroid2, null, CRS.findMathTransform(crs2, targetCrs, true));
       return metricCentroid1.distance(metricCentroid2);
     } catch (FactoryException | TransformException e) {
       throw new JPSRuntimeException(e);

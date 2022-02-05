@@ -5,6 +5,7 @@ import lombok.Setter;
 import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
 import uk.ac.cam.cares.twa.cities.models.Model;
 import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
+import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
 
 import java.net.URI;
@@ -42,34 +43,29 @@ public class TestModel extends Model {
   @Getter @Setter @FieldAnnotation(value = "dbpediao:emptyforwardvector", innerType = Double.class) private ArrayList<Double> emptyForwardVector;
   @Getter @Setter @FieldAnnotation(value = "dbpediao:backwardVector", backward = true, innerType = URI.class) private ArrayList<URI> backwardVector;
 
-  private Random random;
-
-  public TestModel() {
-    super();
-  }
-
-  public TestModel(long seed, int vectorSize, int recursiveDepth) {
-    random = new Random(seed);
+  public static TestModel createRandom(ModelContext context, long seed, int vectorSize, int recursiveDepth) {
+    Random random = new Random(seed);
     // Create random UUID deterministically
     byte[] randomBytes = new byte[5];
     random.nextBytes(randomBytes);
-    setIri(UUID.nameUUIDFromBytes(randomBytes).toString(), "https://eg/examplenamespace");
+    TestModel model = context.createNewModel(TestModel.class, "https://eg/examplenamespace/" + UUID.nameUUIDFromBytes(randomBytes));
     // Randomise in scalar properties
-    stringProp = "randomString" + random.nextInt();
-    intProp = random.nextInt();
-    doubleProp = random.nextDouble();
-    uriProp = randomUri();
-    modelProp = recursiveDepth > 0 ? new TestModel(random.nextLong(), vectorSize, recursiveDepth - 1) : null;
-    backUriProp = randomUri();
+    model.stringProp = "randomString" + random.nextInt();
+    model.intProp = random.nextInt();
+    model.doubleProp = random.nextDouble();
+    model.uriProp = randomUri(random);
+    model.modelProp = recursiveDepth > 0 ? TestModel.createRandom(context, random.nextLong(), vectorSize, recursiveDepth - 1) : null;
+    model.backUriProp = randomUri(random);
     // Randomise vector properties
     for (int i = 0; i < vectorSize; i++) {
-      forwardVector.add(random.nextDouble());
-      backwardVector.add(randomUri());
+      model.forwardVector.add(random.nextDouble());
+      model.backwardVector.add(randomUri(random));
     }
+    return model;
   }
 
-  private URI randomUri() {
-    return URI.create(getNamespace() + "testmodels/model" + random.nextInt());
+  private static URI randomUri(Random random) {
+    return URI.create("https://eg/examplenamespace/randomuris/" + random.nextInt());
   }
 
 }

@@ -19,20 +19,14 @@ public class ThematicSurfaceDiscoveryTask implements Runnable {
   ExecutorService executor = Executors.newFixedThreadPool(5);
 
   private final List<String> buildingIris;
-  private final boolean[] lods;
-  private final double threshold;
-  private final ThematicSurfaceDiscoveryAgent.Mode mode;
-  private final String kgId;
+  private final ThematicSurfaceDiscoveryAgent.Params params;
 
   private final ConcurrentLinkedQueue<MultiSurfaceThematicisationTask> lxmsThematicisationTaskQueue = new ConcurrentLinkedQueue<>();
   private final List<MultiSurfaceThematicisationTask> lxmsThematicisationTaskList = new ArrayList<>();
 
-  public ThematicSurfaceDiscoveryTask(List<String> buildingIris, boolean[] lods, double threshold, ThematicSurfaceDiscoveryAgent.Mode mode, String kgId) {
+  public ThematicSurfaceDiscoveryTask(List<String> buildingIris, ThematicSurfaceDiscoveryAgent.Params params) {
     this.buildingIris = buildingIris;
-    this.lods = lods;
-    this.threshold = threshold;
-    this.mode = mode;
-    this.kgId = kgId;
+    this.params = params;
   }
 
   @Override
@@ -41,7 +35,7 @@ public class ThematicSurfaceDiscoveryTask implements Runnable {
       // Parallelised collection of buildings' lodXMultiSurfaces and registration of tasks to process them.
       List<BuildingHullsRegistrationTask> buildingRegistrationTasks = new ArrayList<>();
       for (String buildingIri : buildingIris)
-        buildingRegistrationTasks.add(new BuildingHullsRegistrationTask(buildingIri, kgId, lods, threshold, mode, lxmsThematicisationTaskQueue));
+        buildingRegistrationTasks.add(new BuildingHullsRegistrationTask(buildingIri, params, lxmsThematicisationTaskQueue));
       executor.invokeAll(buildingRegistrationTasks);
       lxmsThematicisationTaskList.addAll(lxmsThematicisationTaskQueue);
       // Parallelised stage 1: tentative determination of themes and flip if able to determine appropriate

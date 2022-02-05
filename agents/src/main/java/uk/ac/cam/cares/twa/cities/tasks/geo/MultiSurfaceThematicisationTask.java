@@ -10,8 +10,10 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.twa.cities.models.Model;
+import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
 
+import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,15 +59,15 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
     }
   }
 
+  private static final String SLASH = "/";
   private static final String UPDATING_PERSON = "ThematicSurfaceDiscoveryAgent";
   private static final String MALFORMED_SURFACE_GEOMETRY_EXCEPTION_TEXT =
       "Malformed building: SurfaceGeometry contains both sub-geometries and explicit GeometryType.";
 
   public final SurfaceGeometry root;
-  public final String kgId;
+  public final ModelContext context;
   public final int lod;
-  public final double threshold;
-  public final ThematicSurfaceDiscoveryAgent.Mode mode;
+  public final ThematicSurfaceDiscoveryAgent.Params params;
 
   public boolean stage = false;
   public Boolean flipped = null;
@@ -74,21 +76,19 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
   private final List<List<SurfaceGeometry>> bottomLevelThematicGeometries = Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
   private final List<SurfaceGeometry> mixedGeometries = new ArrayList<>();
 
-  public MultiSurfaceThematicisationTask(SurfaceGeometry root, int lod, double threshold, ThematicSurfaceDiscoveryAgent.Mode mode, String kgId) {
-    this.root = root;
-    this.kgId = kgId;
+  public MultiSurfaceThematicisationTask(String rootIri, int lod, ThematicSurfaceDiscoveryAgent.Params params) {
+    this.context = params.makeContext();
+    this.root = context.createHollowModel(SurfaceGeometry.class, rootIri);
     this.lod = lod;
-    this.threshold = threshold;
-    this.mode = mode;
+    this.params = params;
   }
 
   public Void call() {
-    SPARQLUtils.mockAccessAgentIfConfigured();
     if (!stage) {
       tryClassifyGeometries();
       stage = true;
     } else {
-      if(mode == ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE)
+      if(params.mode == ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE)
         restructureAndPush();
       else
         commentAndPush();
@@ -117,8 +117,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
    * outcome of this check is recorded in the <code>flipped</code> variable, which is null in the indeterminate case.
    */
   private void tryClassifyGeometries() {
-    // TODO: can instead do a custom query for all SurfaceGeometries with ocgml:rootId=root, and build the tree manually.
-    root.pullAll(kgId, 99);
+    context.recursivePullAll(root, 99);
     // Sort into thematic surfaces
     recursiveDiscover(root);
     // Calculate centroid of detected roofs' centroids and centroid of detected grounds' centroids
@@ -174,7 +173,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
       // "Leaf" SurfaceGeometry with actual polygon: determine based on normal.
       // Note that this considers 0 area polygons into GROUND.
       double z = geometry.getNormal().getZ();
-      aggregateTheme = Math.abs(z) < Math.sin(Math.toRadians(threshold)) ? Theme.WALL : (z > 0 ? Theme.ROOF : Theme.GROUND);
+      aggregateTheme = Math.abs(z) < Math.sin(Math.toRadians(params.threshold)) ? Theme.WALL : (z > 0 ? Theme.ROOF : Theme.GROUND);
       bottomLevelThematicGeometries.get(aggregateTheme.index).add(surface);
     } else {
       // Structural SurfaceGeometry with no actual polygon: determine based on children.
@@ -209,44 +208,35 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
       for (SurfaceGeometry topLevelGeometry : topLevelThematicGeometries.get(i)) {
         String uuid = UUID.randomUUID().toString();
         // Construct CityObject for the thematic surface
-        CityObject tsCityObject = new CityObject();
+        String tsCityObjectIri = params.namespace + SchemaManagerAdapter.CITY_OBJECT_GRAPH + SLASH + uuid;
+        CityObject tsCityObject = context.createNewModel(CityObject.class, tsCityObjectIri);
         tsCityObject.setObjectClassId(33 + i);
         tsCityObject.setEnvelopeType(new EnvelopeType(topLevelGeometry));
         tsCityObject.setCreationDate(OffsetDateTime.now().toString());
         tsCityObject.setLastModificationDate(OffsetDateTime.now().toString());
         tsCityObject.setUpdatingPerson(UPDATING_PERSON);
         tsCityObject.setGmlId(uuid);
-        tsCityObject.setIri(uuid, root.getNamespace());
         // Construct ThematicSurface
-        ThematicSurface thematicSurface = new ThematicSurface();
+        String thematicSurfaceIri = params.namespace + SchemaManagerAdapter.THEMATIC_SURFACE_GRAPH + SLASH + uuid;
+        ThematicSurface thematicSurface = context.createNewModel(ThematicSurface.class, thematicSurfaceIri);
         if (lod <= 2) thematicSurface.setLod2MultiSurfaceId(topLevelGeometry);
         else if (lod == 3) thematicSurface.setLod3MultiSurfaceId(topLevelGeometry);
         else if (lod == 4) thematicSurface.setLod4MultiSurfaceId(topLevelGeometry);
         thematicSurface.setObjectClassId(33 + i);
         thematicSurface.setBuildingId(root.getCityObjectId());
-        thematicSurface.setIri(uuid, root.getNamespace());
         // Reassign SurfaceGeometry hierarchical properties
         topLevelGeometry.setParentId(null);
         List<SurfaceGeometry> allDescendantGeometries = topLevelGeometry.getFlattenedSubtree(false);
         for (SurfaceGeometry geometry : allDescendantGeometries) {
-          geometry.setRootId(topLevelGeometry.getIri());
-          geometry.setCityObjectId(thematicSurface.getIri());
-        }
-        // Push updates
-        thematicSurface.queuePushUpdate(true, false);
-        tsCityObject.queuePushUpdate(true, false);
-        Model.executeUpdates(kgId, false);
-        for (SurfaceGeometry geometry : allDescendantGeometries) {
-          geometry.queuePushUpdate(true, false);
-          Model.executeUpdates(kgId, false);
+          geometry.setRootId(topLevelGeometry.getId());
+          geometry.setCityObjectId(thematicSurface.getId());
         }
       }
     }
     for (SurfaceGeometry geometry : mixedGeometries) {
-      geometry.queueDeletionUpdate();
-      Model.executeUpdates(kgId, false);
+      geometry.delete();
     }
-    Model.executeUpdates(kgId, true);
+    context.pushAllChanges();
   }
 
   /**
@@ -257,17 +247,16 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
     WhereBuilder whereBuilder = new WhereBuilder();
     SPARQLUtils.addPrefix("rdfs", whereBuilder);
     for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.GROUND.index)) {
-      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri().toString()), "rdfs:comment", NodeFactory.createLiteral("ground"));
+      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), "rdfs:comment", NodeFactory.createLiteral("ground"));
     }
     for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.WALL.index)) {
-      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri().toString()), "rdfs:comment", NodeFactory.createLiteral("wall"));
+      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), "rdfs:comment", NodeFactory.createLiteral("wall"));
     }
     for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.ROOF.index)) {
-      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri().toString()), "rdfs:comment", NodeFactory.createLiteral("roof"));
+      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), "rdfs:comment", NodeFactory.createLiteral("roof"));
     }
-    Node graph = NodeFactory.createURI(root.buildGraphIri(SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH));
-    Model.queueUpdate(new UpdateBuilder().addInsert(graph, whereBuilder).build().toString());
-    Model.executeUpdates(kgId, true);
+    Node graph = NodeFactory.createURI(params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH);
+    context.update(new UpdateBuilder().addInsert(graph, whereBuilder).build().toString());
   }
 
   /**

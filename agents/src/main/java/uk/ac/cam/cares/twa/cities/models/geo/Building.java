@@ -15,8 +15,8 @@ import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
  * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
  * @version $Id$
  */
-@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.BUILDING_GRAPH)
-public class Building extends Model {
+@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.BUILDING_GRAPH + "/")
+public class Building extends OntoCityGMLModel {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_FUNCTION) protected String function;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ROOF_TYPE) protected String roofType;
@@ -59,7 +59,7 @@ public class Building extends Model {
 
   @Getter @Setter @FieldAnnotation(
       value = SchemaManagerAdapter.ONTO_BUILDING_ID,
-      graphName = SchemaManagerAdapter.THEMATIC_SURFACE_GRAPH,
+      graphName = SchemaManagerAdapter.THEMATIC_SURFACE_GRAPH + "/",
       innerType = ThematicSurface.class,
       backward = true)
   private ArrayList<ThematicSurface> thematicSurfaces;

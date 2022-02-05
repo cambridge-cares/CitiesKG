@@ -24,10 +24,9 @@ public class FieldKey implements Comparable<FieldKey> {
    * @param predicate full predicate IRI.
    * @param backward  whether the declaring class is the object of the quad.
    */
-  public FieldKey(String graph, String predicate, boolean backward) {
+  public FieldKey(String graphName, String predicate, boolean backward) {
     this.predicate = predicate;
-    String[] splitGraph = graph.split("/");
-    this.graphName = splitGraph[splitGraph.length - 1];
+    this.graphName = graphName;
     this.backward = backward;
   }
 

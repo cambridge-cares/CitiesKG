@@ -20,6 +20,7 @@ import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
+import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
 import uk.ac.cam.cares.twa.cities.tasks.geo.ThematicSurfaceDiscoveryTask;
 
@@ -41,6 +42,24 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
   public enum Mode {
     RESTRUCTURE,
     COMMENT
+  }
+
+  public static class Params {
+    public final String targetResourceId;
+    public final String namespace;
+    public final boolean[] lods;
+    public final double threshold;
+    public final Mode mode;
+    public Params(String targetResourceId, String namespace, boolean[] lods, double threshold, Mode mode) {
+      this.targetResourceId = targetResourceId;
+      this.namespace = namespace;
+      this.lods = lods;
+      this.threshold = threshold;
+      this.mode = mode;
+    }
+    public ModelContext makeContext() {
+      return new ModelContext(targetResourceId, namespace);
+    }
   }
 
   // Agent endpoint and parameter keys
@@ -65,21 +84,18 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
   // Default task parameters
   private static final double DEFAULT_THRESHOLD = 15;
 
-  private final String kgId;
+  private final String targetResourceId;
   @Getter private String buildingIri;
   @Getter private String namespaceIri;
-  @Getter private boolean[] lods;
-  @Getter private double threshold;
-  @Getter private Mode mode;
+  @Getter private Params taskParams;
 
   public ThematicSurfaceDiscoveryAgent() {
     super();
-    kgId = ResourceBundle.getBundle("config").getString("uri.route");
+    targetResourceId = ResourceBundle.getBundle("config").getString("uri.route");
   }
 
   @Override
   public JSONObject processRequestParameters(JSONObject requestParams) {
-    SPARQLUtils.mockAccessAgentIfConfigured();
     validateInput(requestParams);
     requestParams.put("acceptHeaders", "application/json");
     importSrs();
@@ -94,11 +110,11 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
       buildingsQuery.addVar(QM + BUILDING)
           .addWhere(QM + BUILDING, SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID, buildingObjectClass)
           .addWhere(QM + BUILDING, SchemaManagerAdapter.ONTO_BUILDING_PARENT_ID, QM + BUILDING_PARENT);
-      JSONArray buildingsResponse = SPARQLUtils.unpackQueryResponse(query(kgId, buildingsQuery.buildString()));
+      JSONArray buildingsResponse = taskParams.makeContext().query(buildingsQuery.buildString());
       for (int i = 0; i < buildingsResponse.length(); i++)
         buildingIris.add(buildingsResponse.getJSONObject(i).getString(BUILDING));
     }
-    Executors.newSingleThreadExecutor().execute(new ThematicSurfaceDiscoveryTask(buildingIris, lods, threshold, mode, kgId));
+    Executors.newSingleThreadExecutor().execute(new ThematicSurfaceDiscoveryTask(buildingIris, taskParams));
     return requestParams;
   }
 
@@ -108,15 +124,16 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
         && requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.GET)) {
       try {
         Set<String> keys = requestParams.keySet();
-          mode = keys.contains(KEY_COMMENT) ? Mode.COMMENT : Mode.RESTRUCTURE;
+        Mode mode = keys.contains(KEY_COMMENT) ? Mode.COMMENT : Mode.RESTRUCTURE;
         if (keys.contains(KEY_NAMESPACE)) {
           namespaceIri = new URI(requestParams.getString(KEY_NAMESPACE)).toString();
           buildingIri = keys.contains(KEY_COBI) ? new URI(requestParams.getString(KEY_COBI)).toString() : null;
-          threshold = keys.contains(KEY_THRESHOLD) ? requestParams.getDouble(KEY_THRESHOLD) : DEFAULT_THRESHOLD;
-          lods = new boolean[4];
+          double threshold = keys.contains(KEY_THRESHOLD) ? requestParams.getDouble(KEY_THRESHOLD) : DEFAULT_THRESHOLD;
+          boolean[] lods = new boolean[4];
           for (int i = 0; i < 4; i++)
             lods[i] = keys.contains(KEY_LOD + (i + 1)) && requestParams.getBoolean(KEY_LOD + (i + 1));
           if (!(lods[0] || lods[1] || lods[2] || lods[3])) Arrays.fill(lods, true);
+          taskParams = new Params(targetResourceId, namespaceIri, lods, threshold, mode);
           return true;
         }
       } catch (URISyntaxException | JSONException e) {
@@ -134,7 +151,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
     SelectBuilder srsQuery = new SelectBuilder();
     SPARQLUtils.addPrefix("ocgml:srsname", srsQuery);
     srsQuery.addVar(QM + SRS).addWhere(NodeFactory.createURI(namespaceIri), "ocgml:srsname", QM + SRS);
-    JSONArray srsResponse = SPARQLUtils.unpackQueryResponse(query(kgId, srsQuery.buildString()));
+    JSONArray srsResponse = taskParams.makeContext().query(srsQuery.buildString());
     if (srsResponse.length() == 0) {
       throw new JPSRuntimeException(NO_CRS_EXCEPTION_TEXT);
     } else if (srsResponse.length() > 1) {

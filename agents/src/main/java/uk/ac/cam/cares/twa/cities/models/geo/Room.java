@@ -15,8 +15,8 @@ import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
  * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
  * @version $Id$
  */
-@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.ROOM_GRAPH)
-public class Room extends Model {
+@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.ROOM_GRAPH + "/")
+public class Room extends OntoCityGMLModel {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID) protected Integer objectClassId = 41;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_USAGE) protected String usage;

@@ -16,8 +16,8 @@ import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
  * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
  * @version $Id$
  */
-@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH)
-public class SurfaceGeometry extends Model {
+@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH + "/")
+public class SurfaceGeometry extends OntoCityGMLModel {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID) protected URI cityObjectId;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_GEOMETRY_IMPLICIT) protected String implicitGeometryType;
@@ -26,7 +26,7 @@ public class SurfaceGeometry extends Model {
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_SOLID) protected Integer isSolid;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_TRIANGULATED) protected Integer isTriangulated;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_XLINK) protected Integer isXlink;
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_PARENT_ID) protected URI parentId;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_PARENT_ID) protected SurfaceGeometry parentId;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ROOT_ID) protected URI rootId;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_GEOMETRY_SOLID) protected String solidType;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_GEOMETRY) protected GeometryType geometryType;

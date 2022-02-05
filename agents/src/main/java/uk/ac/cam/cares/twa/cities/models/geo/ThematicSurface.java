@@ -15,8 +15,8 @@ import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
  * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
  * @version $Id$
  */
-@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.THEMATIC_SURFACE_GRAPH)
-public class ThematicSurface extends Model {
+@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.THEMATIC_SURFACE_GRAPH + "/")
+public class ThematicSurface extends OntoCityGMLModel {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_BUILDING_ID)  private URI buildingId;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_BUILDING_INSTALLATION_ID)  private URI buildingInstallationId;
@@ -28,7 +28,7 @@ public class ThematicSurface extends Model {
 
   @Getter @Setter @FieldAnnotation(
       value = SchemaManagerAdapter.ONTO_OPENING_ID,
-      graphName = "openingtothemsurface",
+      graphName = SchemaManagerAdapter.OPENING_TO_THEM_SURFACE_GRAPH + "/",
       innerType = Opening.class) private ArrayList<Opening> openingId;
 
 }

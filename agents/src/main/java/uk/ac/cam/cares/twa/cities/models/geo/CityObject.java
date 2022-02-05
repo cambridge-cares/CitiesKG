@@ -14,8 +14,8 @@ import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
  * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
  * @version $Id$
  */
-@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.CITY_OBJECT_GRAPH)
-public class CityObject extends Model {
+@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.CITY_OBJECT_GRAPH + "/")
+public class CityObject extends OntoCityGMLModel {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CREATION_DATE) protected String creationDate;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_DESCRIPTION) protected String description;
@@ -34,12 +34,16 @@ public class CityObject extends Model {
 
   @Getter @Setter @FieldAnnotation(
       value = SchemaManagerAdapter.ONTO_CITY_OBJECT_ID,
-      graphName = SchemaManagerAdapter.GENERIC_ATTRIB_GARPH,
+      graphName = SchemaManagerAdapter.GENERIC_ATTRIB_GARPH + "/",
       innerType = GenericAttribute.class,
       backward = true)
   private ArrayList<GenericAttribute> genericAttributes;
 
-  // @Getter @Setter @ModelField(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID, graphName = "placeholder", backward = true)
-  // private ArrayList<ExternalReference> externalReferences;
+  @Getter @Setter @FieldAnnotation(
+      value = SchemaManagerAdapter.ONTO_CITY_OBJECT_ID,
+      graphName = SchemaManagerAdapter.EXTERNAL_REFERENCES_GRAPH + "/",
+      innerType = ExternalReference.class,
+      backward = true)
+  private ArrayList<ExternalReference> externalReferences;
 
 }

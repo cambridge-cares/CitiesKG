@@ -13,17 +13,6 @@ import static org.junit.Assert.assertNotEquals;
 
 public class FieldKeyTest extends TestCase {
 
-  public void testDirectConstructor() {
-    // Full graph iri should be reduced to last segment.
-    FieldKey key = new FieldKey("http://namespace.com/graph", "http://predicate/iri", true);
-    assertEquals("graph", key.graphName);
-    assertEquals("http://predicate/iri", key.predicate);
-    assertTrue(key.backward);
-    // Single segment should also work.
-    key = new FieldKey("graphfragment", "http://full.predicate/iri", true);
-    assertEquals("graphfragment", key.graphName);
-  }
-
   public void testAnnotationConstructor() throws NoSuchFieldException {
     // Test no graph, forward
     FieldKey key = new FieldKey(

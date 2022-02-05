@@ -26,38 +26,6 @@ public class SPARQLUtils {
   private static Map<String, String> prefixMap = new HashMap<>();
   private static final Pattern qualifiedNamePattern = Pattern.compile("([A-Za-z0-9]+):([A-Za-z0-9]+)");
 
-  static {
-    mockAccessAgentIfConfigured();
-  }
-
-  public static void mockAccessAgentIfConfigured() {
-    ResourceBundle config = ResourceBundle.getBundle("config");
-    if(config.containsKey("useAccessAgent") && config.getString("useAccessAgent").equals("false")) {
-      try {
-        MockedStatic<AccessAgentCaller> mockAccessAgentCaller = Mockito.mockStatic(AccessAgentCaller.class);
-        mockAccessAgentCaller.when(() -> AccessAgentCaller.query(Mockito.anyString(), Mockito.anyString()))
-            .then((invocation) -> {
-              String resourceId = invocation.getArgument(0, String.class);
-              String query = invocation.getArgument(1, String.class);
-              System.err.println(query);
-              String responseString = new RemoteStoreClient(resourceId).execute(query);
-              JSONObject responseObject = new JSONObject();
-              responseObject.put("result", responseString);
-              return responseObject.toString();
-            });
-        mockAccessAgentCaller.when(() -> AccessAgentCaller.update(Mockito.anyString(), Mockito.anyString()))
-            .then((invocation) -> {
-              String resourceId = invocation.getArgument(0, String.class);
-              String update = invocation.getArgument(1, String.class);
-              System.err.println(update);
-              return new RemoteStoreClient(resourceId, resourceId).executeUpdate(update);
-            });
-      } catch (Exception e) {
-        // has already been mocked in this thread
-      }
-    }
-  }
-
   /**
    * Identifies all qualified names in the sample string provided, looks the prefixes up in {@link PrefixToUrlMap}
    * and the <code>config.properties</code> file, and adds any identified prefix-IRI pairs to the provided builder.

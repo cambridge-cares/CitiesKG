@@ -18,8 +18,15 @@ public class ThematicSurfaceDiscoveryTaskTest extends TestCase {
 
   public void testResolveIndeterminateFlips() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
 
-    ThematicSurfaceDiscoveryTask task = new ThematicSurfaceDiscoveryTask(
-        Arrays.asList("http://first"), new boolean[]{true, false, false, true}, 0, ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE, "");
+    ThematicSurfaceDiscoveryTask task = new ThematicSurfaceDiscoveryTask(Arrays.asList("http://first"),
+        new ThematicSurfaceDiscoveryAgent.Params(
+            "",
+            "",
+            new boolean[]{true, false, false, true},
+            0,
+            ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE
+        )
+    );
 
     // Collect private fields and methods
     Field lxsmTasksField = ThematicSurfaceDiscoveryTask.class.getDeclaredField("lxmsThematicisationTaskList");

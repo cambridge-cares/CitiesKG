@@ -7,6 +7,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.mockito.Mock;
 import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
 import uk.ac.cam.cares.twa.cities.models.FieldInterface;
+import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
 import uk.ac.cam.cares.twa.cities.models.test.TestModel;
 
@@ -55,10 +56,8 @@ public class FieldInterfaceTest extends TestCase {
 
   public void testModelInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
-    TestModel dataModel = new TestModel();
-    dataModel.setIri(URI.create("http://example.com/testmodel"));
-    TestModel secondModel = new TestModel();
-    secondModel.setIri(URI.create("http://example.com/model2"));
+    TestModel dataModel = new ModelContext("", "").createNewModel(TestModel.class, "http://example.com/testmodel");
+    TestModel secondModel = new ModelContext("", "").createNewModel(TestModel.class, "http://example.com/model2");
     this.testScalarInterface("modelProp", TestModel::setModelProp, TestModel::getModelProp,
         "http://example.com/testmodel", "", dataModel, secondModel,
         NodeFactory.createURI("http://example.com/model2"), "http://example.com/model2");
@@ -85,7 +84,7 @@ public class FieldInterfaceTest extends TestCase {
       throws NoSuchFieldException, InvalidClassException, NoSuchMethodException {
     FieldInterface field = new FieldInterface(TestModel.class.getDeclaredField(fieldName), 0);
     // Test putting
-    field.put(model1, valueString, datatypeString, null, 0);
+    field.put(model1, valueString, datatypeString);
     assertEquals(dataValue, directGetter.apply(model1));
     // Test equality checks
     assertFalse(field.equals(model1, model2)); // a != null
@@ -102,8 +101,8 @@ public class FieldInterfaceTest extends TestCase {
     assertNull(directGetter.apply(model2));
     // Test getNode
     directSetter.accept(model2, secondValue);
-    assertEquals(secondValueNode, field.getNode(model2));
-    assertTrue(field.getNode(model1).isBlank());
+    assertEquals(secondValueNode, field.getNodes(model2)[0]);
+    assertTrue(field.getNodes(model1)[0].isBlank());
     // Test minimisation
     assertEquals(secondValueMinimised, field.getMinimised(model2));
     assertNull(field.getMinimised(model1));
@@ -114,7 +113,7 @@ public class FieldInterfaceTest extends TestCase {
     // Test putting
     assertEquals(0, model1.getForwardVector().size());
     assertTrue(field.equals(model1, model2));
-    field.put(model1, "1.32", "http://www.w3.org/2001/XMLSchema#double", null, 0);
+    field.put(model1, "1.32", "http://www.w3.org/2001/XMLSchema#double");
     assertEquals(1, model1.getForwardVector().size());
     assertEquals(1.32, model1.getForwardVector().get(0));
     assertFalse(field.equals(model1, model2));
