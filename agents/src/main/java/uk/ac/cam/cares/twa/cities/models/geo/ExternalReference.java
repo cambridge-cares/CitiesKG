@@ -14,7 +14,7 @@ import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
  * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
  * @version $Id$
  */
-@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.EXTERNAL_REFERENCES_GRAPH + "/")
+@ModelAnnotation(defaultGraphName = SchemaManagerAdapter.EXTERNAL_REFERENCES_GRAPH + "/")
 public class ExternalReference extends OntoCityGMLModel {
 
     @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID) private Integer cityObjectId;

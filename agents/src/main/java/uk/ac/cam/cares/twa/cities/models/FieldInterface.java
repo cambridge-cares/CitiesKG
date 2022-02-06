@@ -4,11 +4,12 @@ import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
 
 import java.io.InvalidClassException;
 import java.lang.reflect.*;
 import java.net.URI;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -49,6 +50,8 @@ public class FieldInterface {
     Node get(Object value) throws Exception;
   }
 
+  private static final String INNER_TYPE_OF_ARRAYLIST_NOT_SPECIFIED_ERROR_TEXT = "Inner type of ArrayList field not specified.";
+
   // Convenience metadata
   public final boolean isList;
   public final boolean isModel;
@@ -78,6 +81,7 @@ public class FieldInterface {
     Class<?> outerType = field.getType();
     isList = List.class.isAssignableFrom(outerType);
     Class<?> innerType = isList ? field.getAnnotation(FieldAnnotation.class).innerType() : outerType;
+    if(innerType == Model.class) throw new InvalidClassException(INNER_TYPE_OF_ARRAYLIST_NOT_SPECIFIED_ERROR_TEXT);
     // Get the lombok accessors/modifiers --- we can't access private/protected fields. :(
     String fieldName = field.getName();
     fieldName = fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);

@@ -18,6 +18,7 @@ public class MetaModel {
 
   private final static ConcurrentHashMap<Class<?>, MetaModel> metaModelMap = new ConcurrentHashMap<>();
 
+  public final boolean isQuads;
   public final TreeMap<FieldKey, FieldInterface> fieldMap;
   public final List<Map.Entry<FieldKey, FieldInterface>> vectorFieldList;
   public final List<Map.Entry<FieldKey, FieldInterface>> scalarFieldList;
@@ -37,6 +38,7 @@ public class MetaModel {
     TreeMap<FieldKey, FieldInterface> scalarFieldMap = new TreeMap<>();
     TreeMap<FieldKey, FieldInterface> vectorFieldMap = new TreeMap<>();
     int index = 0;
+    boolean anyGraphs = false;
     for (Field field : fields) {
       FieldAnnotation fieldAnnotation = field.getAnnotation(FieldAnnotation.class);
       if (fieldAnnotation != null) {
@@ -44,10 +46,12 @@ public class MetaModel {
         FieldKey fieldKey = new FieldKey(fieldAnnotation, modelAnnotation);
         fieldMap.put(fieldKey, fieldInterface);
         (fieldInterface.isList ? vectorFieldMap : scalarFieldMap).put(fieldKey, fieldInterface);
+        anyGraphs = anyGraphs || !fieldKey.graphName.equals("");
       }
     }
     scalarFieldList = new ArrayList<>(scalarFieldMap.entrySet());
     vectorFieldList = new ArrayList<>(vectorFieldMap.entrySet());
+    isQuads = anyGraphs;
   }
 
   public static <T extends Model> MetaModel get(Class<T> ofClass) {

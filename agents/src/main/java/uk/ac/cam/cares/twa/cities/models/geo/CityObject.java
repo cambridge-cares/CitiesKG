@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import lombok.Getter;
 import lombok.Setter;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import uk.ac.cam.cares.twa.cities.models.Model;
 import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
 import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 
@@ -14,7 +13,7 @@ import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
  * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
  * @version $Id$
  */
-@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.CITY_OBJECT_GRAPH + "/")
+@ModelAnnotation(defaultGraphName = SchemaManagerAdapter.CITY_OBJECT_GRAPH + "/")
 public class CityObject extends OntoCityGMLModel {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CREATION_DATE) protected String creationDate;

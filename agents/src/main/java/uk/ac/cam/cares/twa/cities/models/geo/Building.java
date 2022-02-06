@@ -4,7 +4,6 @@ import java.net.URI;
 import java.util.ArrayList;
 
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import uk.ac.cam.cares.twa.cities.models.Model;
 import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +14,7 @@ import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
  * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
  * @version $Id$
  */
-@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.BUILDING_GRAPH + "/")
+@ModelAnnotation(defaultGraphName = SchemaManagerAdapter.BUILDING_GRAPH + "/")
 public class Building extends OntoCityGMLModel {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_FUNCTION) protected String function;

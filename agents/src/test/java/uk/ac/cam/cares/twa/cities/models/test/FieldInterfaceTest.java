@@ -4,17 +4,13 @@ import junit.framework.TestCase;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.mockito.Mock;
-import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
 import uk.ac.cam.cares.twa.cities.models.FieldInterface;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
-import uk.ac.cam.cares.twa.cities.models.test.TestModel;
 
 import java.io.InvalidClassException;
 import java.net.URI;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -37,6 +33,16 @@ public class FieldInterfaceTest extends TestCase {
     this.testScalarInterface("doubleProp", TestModel::setDoubleProp, TestModel::getDoubleProp,
         "3.14", "http://www.w3.org/2001/XMLSchema#double", 3.14, 5.1167,
         NodeFactory.createLiteral("5.1167", XSDDatatype.XSDdouble), 5.1167);
+  }
+
+  public void testDateInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
+    // Data to write
+    this.testScalarInterface("dateProp", TestModel::setDateProp, TestModel::getDateProp,
+        "1999-04-21", "http://www.w3.org/2001/XMLSchema#date",
+        new GregorianCalendar(1999, Calendar.APRIL, 21).getTime(),
+        new GregorianCalendar(1201, Calendar.JULY, 12).getTime(),
+        NodeFactory.createLiteral("1201-07-12", XSDDatatype.XSDdate),
+        new GregorianCalendar(1201, Calendar.JULY, 12).getTime());
   }
 
   public void testStringInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {

@@ -1,11 +1,8 @@
 package uk.ac.cam.cares.twa.cities.models.geo;
 
 import java.net.URI;
-import java.util.ArrayList;
 
-import com.hp.hpl.jena.rdf.model.ModelCon;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import uk.ac.cam.cares.twa.cities.models.Model;
 import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,7 +14,7 @@ import uk.ac.cam.cares.twa.cities.models.ModelContext;
  * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
  * @version $Id$
  */
-@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.OPENING_GRAPH + "/")
+@ModelAnnotation(defaultGraphName = SchemaManagerAdapter.OPENING_GRAPH + "/")
 public class Opening extends OntoCityGMLModel {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID) protected Integer objectClassId;

@@ -19,5 +19,5 @@ public @interface ModelAnnotation {
 	 * @return the native graph of the {@link Model}, which will be used for declared fields' default
 	 * <code>FieldKey.graphName</code> if <code>FieldAnnotation.graphName</code> is not explicitly specified.
 	 */
-	String nativeGraphName();
+	String defaultGraphName();
 }

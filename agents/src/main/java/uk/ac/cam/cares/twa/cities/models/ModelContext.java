@@ -6,6 +6,7 @@ import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
@@ -22,7 +23,25 @@ import java.util.*;
 
 public class ModelContext {
 
-  private RecursivePullSession currentPullSession;
+  private static class MemberKey {
+    public final Class<?> ofClass;
+    public final String iri;
+
+    public MemberKey(Class<?> ofClass, String iri) {
+      this.ofClass = ofClass;
+      this.iri = iri;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(ofClass, iri);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof MemberKey && ((MemberKey) obj).ofClass.equals(ofClass) && ((MemberKey) obj).iri.equals(iri);
+    }
+  }
 
   /**
    * {@link RecursivePullSession} operates in a loop where it calls {@link ModelContext#pullAll(Model)} on all items in
@@ -55,7 +74,7 @@ public class ModelContext {
     }
 
     RecursivePullSession(Model origin, int recursionRadius, String... fieldNames) {
-      pendingPullQueue.add(origin);
+      queue(origin);
       this.remainingDegreesOfSeparation = recursionRadius;
       this.partial = true;
       this.fieldNames = fieldNames;
@@ -84,11 +103,7 @@ public class ModelContext {
 
   }
 
-  private static final String KEY_RESULT = "result";
-
-  public final String targetResourceId;
-  public final String graphNamespace;
-  public final Map<String, Model> members = new HashMap<>();
+  private RecursivePullSession currentPullSession;
 
   // SPARQL variable names
   private static final String GRAPH = "graph";
@@ -104,31 +119,75 @@ public class ModelContext {
   private static final String OP = "(";
   private static final String CP = ")";
   // Error text
+  private static final String QUAD_MODEL_IN_TRIPLE_CONTEXT_ERROR_TEXT = "Quad Model cannot be initialised in triple context.";
   private static final String OBJECT_NOT_FOUND_EXCEPTION_TEXT = "Object not found in database.";
   private static final String MODEL_ALREADY_REGISTERED_EXCEPTION_TEXT = "Model already registered for IRI.";
-  private static final String DIFFERENT_MODEL_CLASS_REGISTERED_ERROR_TEXT = "Requested model for IRI but it is registered as a different class.";
   // Threshold for executeUpdates to execute if "force" is not specified
   private static final int EXECUTION_CHARACTER_THRESHOLD = 250000;
 
+  public final String targetResourceId;
+  public final String graphNamespace;
+  public final Map<MemberKey, Model> members;
+
+  public boolean isQuads() {
+    return graphNamespace != null;
+  }
+
   /**
    * Creates a triple store context.
+   * @param targetResourceId the target resource ID passed to AccessAgentCaller for database access.
    */
   public ModelContext(String targetResourceId) {
     this.targetResourceId = targetResourceId;
     this.graphNamespace = null;
+    this.members = new HashMap<>();
   }
 
   /**
-   * Creates a quad store context with the provided graph namespace, i.e. graph IRIs will be formed by
-   * {@code graphNamespace + graphName} where {@code graphName} is that specified in the {@link Model} definition.
+   * Creates a triple store context with the specified initial member capacity.
+   * @param targetResourceId the target resource ID passed to AccessAgentCaller for database access.
+   * @param initialCapacity  the capacity to initialise the context members hashmap with.
+   */
+  public ModelContext(String targetResourceId, int initialCapacity) {
+    this.targetResourceId = targetResourceId;
+    this.graphNamespace = null;
+    this.members = new HashMap<>(initialCapacity);
+  }
+
+  /**
+   * Creates a quad store context.
+   * @param targetResourceId the target resource ID passed to AccessAgentCaller for database access.
+   * @param graphNamespace   the graph namespace to which graph names provided in {@link Model} definitions are appended
+   *                         to obtain the actual graph IRIs.
    */
   public ModelContext(String targetResourceId, String graphNamespace) {
     this.targetResourceId = targetResourceId;
     this.graphNamespace = graphNamespace;
+    this.members = new HashMap<>();
   }
 
-  public <T extends Model> T createPrototypeModel(Class<T> ofClass, String iri) {
-    if (members.containsKey(iri)) {
+  /**
+   * Creates a quad store context with the specified initial member capacity.
+   * @param targetResourceId the target resource ID passed to AccessAgentCaller for database access.
+   * @param graphNamespace   the graph namespace to which graph names provided in {@link Model} definitions are appended
+   *                         to obtain the actual graph IRIs.
+   * @param initialCapacity  the capacity to initialise the context members hashmap with.
+   */
+  public ModelContext(String targetResourceId, String graphNamespace, int initialCapacity) {
+    this.targetResourceId = targetResourceId;
+    this.graphNamespace = graphNamespace;
+    this.members = new HashMap<>(initialCapacity);
+  }
+
+  /**
+   * Creates a model with uninitialised {@code cleanValues}. Only for internal use.
+   */
+  private <T extends Model> T createPrototypeModel(Class<T> ofClass, String iri) {
+    if (MetaModel.get(ofClass).isQuads && !isQuads()) {
+      throw new JPSRuntimeException(QUAD_MODEL_IN_TRIPLE_CONTEXT_ERROR_TEXT);
+    }
+    MemberKey key = new MemberKey(ofClass, iri);
+    if (members.containsKey(key)) {
       throw new JPSRuntimeException(MODEL_ALREADY_REGISTERED_EXCEPTION_TEXT);
     }
     try {
@@ -136,7 +195,7 @@ public class ModelContext {
       T instance = constructor.newInstance();
       instance.iri = iri;
       instance.context = this;
-      members.put(iri, instance);
+      members.put(key, instance);
       return instance;
     } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
       throw new JPSRuntimeException(e);
@@ -211,9 +270,8 @@ public class ModelContext {
    * @return the requested {@link Model}.
    */
   public <T extends Model> T getModel(Class<T> ofClass, String iri) {
-    Model model = members.get(iri);
+    Model model = members.get(new MemberKey(ofClass, iri));
     if (model == null) model = createHollowModel(ofClass, iri);
-    else if (!ofClass.isInstance(model)) throw new JPSRuntimeException(DIFFERENT_MODEL_CLASS_REGISTERED_ERROR_TEXT);
     //
     if (currentPullSession != null) currentPullSession.queue(model);
     return ofClass.cast(model);
@@ -236,28 +294,28 @@ public class ModelContext {
   public void pushAllChanges() {
     UpdateRequest deletions = new UpdateRequest();
     UpdateBuilder insertions = new UpdateBuilder();
-    Stack<String> toBeRemoved = new Stack<>();
+    Stack<MemberKey> toBeRemoved = new Stack<>();
     boolean anyInserts = false;
-    for (Model model : members.values()) {
-      if (model.deleted) {
-        makeDeletionDeltas(model, deletions);
-        toBeRemoved.add(model.iri);
+    for (Map.Entry<MemberKey, Model> entry : members.entrySet()) {
+      if (entry.getValue().deleted) {
+        makeDeletionDeltas(entry.getValue(), deletions);
+        toBeRemoved.add(entry.getKey());
       } else {
         // makeChangeDeltas returns whether any insertions were added
-        anyInserts = makeChangeDeltas(model, deletions, insertions) || anyInserts;
+        anyInserts = makeChangeDeltas(entry.getValue(), deletions, insertions) || anyInserts;
       }
       if (deletions.toString().length() > EXECUTION_CHARACTER_THRESHOLD) {
         update(deletions.add(insertions.build()).toString());
         deletions = new UpdateRequest();
         insertions = new UpdateBuilder();
       }
-      model.setAllClean();
+      entry.getValue().setAllClean();
     }
-    for (String iri: toBeRemoved) members.remove(iri);
+    for (MemberKey key : toBeRemoved) members.remove(key);
     // anyInserts tracking is needed since trying to build an empty UpdateBuilder causes an error, and I cannot find
     // a way to probe whether an UpdateBuilder contains any operations.
-    if(anyInserts) deletions.add(insertions.build());
-    if(deletions.getOperations().size() > 0)
+    if (anyInserts) deletions.add(insertions.build());
+    if (deletions.getOperations().size() > 0)
       update(deletions.toString());
   }
 
@@ -267,10 +325,10 @@ public class ModelContext {
   public void pushChanges(Model model) {
     UpdateRequest deletions = new UpdateRequest();
     UpdateBuilder insertions = new UpdateBuilder();
-    if(makeChangeDeltas(model, deletions, insertions)) // return value is whether insertions were added
+    if (makeChangeDeltas(model, deletions, insertions)) // return value is whether insertions were added
       deletions.add(insertions.build());
     model.setAllClean();
-    if(deletions.getOperations().size() > 0)
+    if (deletions.getOperations().size() > 0)
       update(deletions.toString());
   }
 
@@ -298,16 +356,25 @@ public class ModelContext {
       }
       Node self = NodeFactory.createURI(model.iri);
       Node predicate = NodeFactory.createURI(key.predicate);
-      Node graph = NodeFactory.createURI(graphNamespace + key.graphName);
+      Node graph = isQuads() ? NodeFactory.createURI(graphNamespace + key.graphName) : null;
       // Add deletion
       if (cleanValue != Model.SpecialFieldInstruction.UNSET) {
         WhereBuilder where = new WhereBuilder().addWhere(key.backward ? (QM + VALUE) : self, predicate, key.backward ? self : (QM + VALUE));
-        deletionsOut.add(new UpdateBuilder().addGraph(graph, where).buildDeleteWhere());
+        if (isQuads()) {
+          deletionsOut.add(new UpdateBuilder().addGraph(graph, where).buildDeleteWhere());
+        } else {
+          deletionsOut.add(new UpdateBuilder().addWhere(where).buildDeleteWhere());
+        }
       }
       // Add insertion; technically object properties are duplicate-inserted from both ends, but I don't think it's
       // actually going to be distinguishably more performant if we do a check for this and do it once each instead.
       for (Node valueValue : fieldInterface.getNodes(model)) {
-        insertionsOut.addInsert(new Quad(graph, key.backward ? valueValue : self, predicate, key.backward ? self : valueValue));
+        Triple triple = new Triple(key.backward ? valueValue : self, predicate, key.backward ? self : valueValue);
+        if (isQuads()) {
+          insertionsOut.addInsert(new Quad(graph, triple));
+        } else {
+          insertionsOut.addInsert(triple);
+        }
         anyInserts = true;
       }
     }
@@ -367,13 +434,15 @@ public class ModelContext {
     JSONArray queryResult = query(queryString.toString());
     for (int index = 0; index < queryResult.length(); index++) {
       JSONObject row = queryResult.getJSONObject(index);
-      String graph = row.getString(GRAPH);
-      if(graphNamespace != null && graph.startsWith(graphNamespace))
+      // If using named graphs (quads), decompose the retrieved graph IRI into a graph name
+      String graph = row.optString(GRAPH, "");
+      if (graphNamespace != null && graph.startsWith(graphNamespace))
         graph = graph.substring(graphNamespace.length());
+      // Do the field lookup and put
       FieldKey fieldKey = new FieldKey(graph, row.getString(PREDICATE), backward);
       FieldInterface fieldInterface = model.metaModel.fieldMap.get(fieldKey);
       if (fieldInterface == null) continue;
-      if (row.getBoolean(ISBLANK)) {
+      if (isTruthy(row.getString(ISBLANK))) {
         fieldInterface.clear(model);
       } else {
         fieldInterface.put(model, row.getString(VALUE), row.optString(DATATYPE));
@@ -382,24 +451,29 @@ public class ModelContext {
   }
 
   /**
-   * Composes a query to pull all triples relating to the target IRI. If not backward, it will be of form:
-   * {@code SELECT * { GRAPH ?graph { <iriName> ?predicate ?value } }}; if backward, it will be of form:
-   * {@code SELECT * { GRAPH ?graph { ?value ?predicate <iriName> } }}.
+   * Composes a query to pull all triples relating to the target IRI.
    * @param iri      the IRI from which to pull data.
    * @param backward whether to query quads with <code>iriName</code> as the object (true) or subject (false).
    * @return the composed query.
    */
-  private static Query buildPullAllInDirectionQuery(String iri, boolean backward) {
+  private Query buildPullAllInDirectionQuery(String iri, boolean backward) {
     try {
-      WhereBuilder wb = new WhereBuilder()
+      // SELECT ?value ?predicate ?datatype ?isblank
+      SelectBuilder select = new SelectBuilder()
+          .addVar(QM + VALUE).addVar(QM + PREDICATE).addVar(QM + DATATYPE).addVar(QM + ISBLANK);
+      // WHERE { <self> <predicate> ?value }   or   WHERE { ?value <predicate> <self> }
+      WhereBuilder where = new WhereBuilder()
           .addWhere(backward ? (QM + VALUE) : NodeFactory.createURI(iri),
               QM + PREDICATE, backward ? NodeFactory.createURI(iri) : (QM + VALUE));
-      SelectBuilder sb = new SelectBuilder()
-          .addVar(QM + PREDICATE).addVar(QM + VALUE).addVar(QM + GRAPH)
-          .addVar(QM + DATATYPE).addBind(DATATYPE_FUN + OP + QM + VALUE + CP, QM + DATATYPE)
-          .addVar(QM + ISBLANK).addBind(ISBLANK_FUN + OP + QM + VALUE + CP, QM + ISBLANK)
-          .addGraph(QM + GRAPH, wb);
-      return sb.build();
+      if (isQuads()) {
+        select.addVar(QM + GRAPH).addGraph(QM + GRAPH, where);
+      } else {
+        select.addWhere(where);
+      }
+      // BIND(datatype(?value) AS ?datatype) BIND(isBlank(?value) AS ?isblank)
+      select.addBind(DATATYPE_FUN + OP + QM + VALUE + CP, QM + DATATYPE)
+          .addBind(ISBLANK_FUN + OP + QM + VALUE + CP, QM + ISBLANK);
+      return select.build();
     } catch (ParseException e) {
       throw new JPSRuntimeException(e);
     }
@@ -454,23 +528,22 @@ public class ModelContext {
    * @param fieldNames the names of scalar fields to be populated.
    */
   public void pullScalars(Model model, String... fieldNames) {
+    // Build and execute the query for scalar values
     SelectBuilder query = buildScalarsQuery(model, fieldNames);
-    if(query.getVars().size() == 0) return;
+    if (query.getVars().size() == 0) return;
     JSONArray scalarResponse = query(query.buildString());
-    if (scalarResponse.length() == 0) {
-      throw new JPSRuntimeException(OBJECT_NOT_FOUND_EXCEPTION_TEXT);
-    }
+    if (scalarResponse.length() == 0) throw new JPSRuntimeException(OBJECT_NOT_FOUND_EXCEPTION_TEXT);
+    // Put the query results into the model
     JSONObject row = scalarResponse.getJSONObject(0);
     for (Map.Entry<FieldKey, FieldInterface> entry : model.metaModel.scalarFieldList) {
       FieldInterface field = entry.getValue();
-      if (row.has(VALUE + field.index)) {
-        if (row.getBoolean(ISBLANK + field.index)) {
-          field.clear(model);
-        } else {
-          field.put(model, row.getString(VALUE + field.index), row.optString(DATATYPE + field.index));
-        }
-        model.cleanValues[field.index] = field.getMinimised(model);
+      if (!row.has(VALUE + field.index)) continue;
+      if (isTruthy(row.getString(ISBLANK + field.index))) {
+        field.clear(model);
+      } else {
+        field.put(model, row.getString(VALUE + field.index), row.optString(DATATYPE + field.index));
       }
+      model.cleanValues[field.index] = field.getMinimised(model);
     }
   }
 
@@ -479,24 +552,32 @@ public class ModelContext {
    */
   private SelectBuilder buildScalarsQuery(Model model, String... fieldNames) {
     try {
-      SelectBuilder query = new SelectBuilder();
+      SelectBuilder select = new SelectBuilder();
       for (Map.Entry<FieldKey, FieldInterface> entry : model.metaModel.scalarFieldList) {
+        // Filter for only requested fields
         FieldInterface field = entry.getValue();
-        if (fieldNames.length > 0 && !ArrayUtils.contains(fieldNames, field.field.getName())) continue;
         FieldKey key = entry.getKey();
+        if (fieldNames.length > 0 && !ArrayUtils.contains(fieldNames, field.field.getName())) continue;
+        // Create nodes to use
         Node self = NodeFactory.createURI(model.iri);
-        Node graph = NodeFactory.createURI(graphNamespace + key.graphName);
         Node predicate = NodeFactory.createURI(key.predicate);
         String valueN = QM + VALUE + field.index;
         String datatypeN = QM + DATATYPE + field.index;
         String isBlankN = QM + ISBLANK + field.index;
-        query.addGraph(graph, new SelectBuilder()
-            .addWhere(key.backward ? valueN : self, predicate, key.backward ? self : valueN));
-        query.addVar(valueN)
-            .addVar(datatypeN).addBind(DATATYPE_FUN + OP + valueN + CP, datatypeN)
-            .addVar(isBlankN).addBind(ISBLANK_FUN + OP + valueN + CP, isBlankN);
+        // SELECT ?value ?predicate ?datatype ?isblank
+        select.addVar(valueN).addVar(datatypeN).addVar(isBlankN);
+        // WHERE { <self> <predicate> ?value }   or   WHERE { ?value <predicate> <self> }
+        WhereBuilder where = new WhereBuilder().addWhere(key.backward ? valueN : self, predicate, key.backward ? self : valueN);
+        if (isQuads()) {
+          select.addGraph(NodeFactory.createURI(graphNamespace + key.graphName), where);
+        } else {
+          select.addWhere(where);
+        }
+        // BIND(datatype(?value) AS ?datatype) BIND(isBlank(?value) AS ?isblank)
+        select.addBind(DATATYPE_FUN + OP + valueN + CP, datatypeN)
+            .addBind(ISBLANK_FUN + OP + valueN + CP, isBlankN);
       }
-      return query;
+      return select;
     } catch (ParseException e) {
       throw new JPSRuntimeException(e);
     }
@@ -514,15 +595,16 @@ public class ModelContext {
    * @param fieldNames the names of vector fields to be populated.
    */
   public void pullVectors(Model model, String... fieldNames) {
-    // Populate vectors
     for (Map.Entry<FieldKey, FieldInterface> entry : model.metaModel.vectorFieldList) {
+      // Filter for only requested fields
       FieldInterface field = entry.getValue();
-      System.out.println(field.field.getName());
       if (fieldNames.length > 0 && !ArrayUtils.contains(fieldNames, field.field.getName())) continue;
+      // Query: the vector query guaranteed to be non-empty, unlike in pullScalars, so no need to perform check
       JSONArray response = query(buildVectorQuery(model, entry.getKey()).buildString());
+      // Put response values into model
       for (int i = 0; i < response.length(); i++) {
         JSONObject row = response.getJSONObject(i);
-        if (row.getBoolean(ISBLANK)) {
+        if (isTruthy(row.getString(ISBLANK))) {
           field.clear(model);
         } else {
           field.put(model, row.getString(VALUE), row.optString(DATATYPE));
@@ -538,14 +620,22 @@ public class ModelContext {
   private SelectBuilder buildVectorQuery(Model model, FieldKey key) {
     Node self = NodeFactory.createURI(model.iri);
     Node predicate = NodeFactory.createURI(key.predicate);
-    Node graph = NodeFactory.createURI(graphNamespace + key.graphName);
     try {
-      return new SelectBuilder()
-          .addVar(QM + VALUE).addVar(QM + DATATYPE).addVar(QM + ISBLANK)
-          .addBind(DATATYPE_FUN + OP + QM + VALUE + CP, QM + DATATYPE)
-          .addBind(ISBLANK_FUN + OP + QM + VALUE + CP, QM + ISBLANK)
-          .addGraph(graph, new WhereBuilder()
-              .addWhere(key.backward ? (QM + VALUE) : self, predicate, key.backward ? self : (QM + VALUE)));
+      // SELECT ?value ?predicate ?datatype ?isblank
+      SelectBuilder select = new SelectBuilder().addVar(QM + VALUE).addVar(QM + DATATYPE).addVar(QM + ISBLANK);
+      // WHERE { <self> <predicate> ?value }   or   WHERE { ?value <predicate> <self> }
+      WhereBuilder where = new WhereBuilder()
+          .addWhere(key.backward ? (QM + VALUE) : self, predicate, key.backward ? self : (QM + VALUE));
+      if (isQuads()) {
+        Node graph = NodeFactory.createURI(graphNamespace + key.graphName);
+        select.addGraph(graph, where);
+      } else {
+        select.addWhere(where);
+      }
+      // BIND(datatype(?value) AS ?datatype) BIND(isBlank(?value) AS ?isblank)
+      select.addBind(DATATYPE_FUN + OP + QM + VALUE + CP, QM + DATATYPE)
+          .addBind(ISBLANK_FUN + OP + QM + VALUE + CP, QM + ISBLANK);
+      return select;
     } catch (ParseException e) {
       throw new JPSRuntimeException(e);
     }
@@ -557,14 +647,14 @@ public class ModelContext {
    * @return the deserialised {@link JSONArray} of rows in the response.
    */
   public JSONArray query(String query) {
-    System.err.println(query);
     if (targetResourceId.startsWith("HARDCODE:")) {
       String endpoint = targetResourceId.substring(9);
-      return new JSONArray(new RemoteStoreClient(endpoint).execute(query));
+      String responseString = new RemoteStoreClient(endpoint).execute(query);
+      return new JSONArray(responseString);
     } else {
       String responseString = AccessAgentCaller.query(targetResourceId, query);
       JSONObject response = new JSONObject(responseString);
-      return new JSONArray(response.getString(KEY_RESULT));
+      return new JSONArray(response.getString("result"));
     }
   }
 
@@ -573,13 +663,16 @@ public class ModelContext {
    * @param update the update string.
    */
   public void update(String update) {
-    System.err.println(update);
     if (targetResourceId.startsWith("HARDCODE:")) {
       String endpoint = targetResourceId.substring(9);
       new RemoteStoreClient(endpoint, endpoint).executeUpdate(update);
     } else {
       AccessAgentCaller.update(targetResourceId, update);
     }
+  }
+
+  public boolean isTruthy(String str) {
+    return str.equals("true") || str.equals("1");
   }
 
 }

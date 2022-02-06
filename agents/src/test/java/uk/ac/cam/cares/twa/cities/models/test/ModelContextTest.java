@@ -1,18 +1,17 @@
 package uk.ac.cam.cares.twa.cities.models.test;
 
 import junit.framework.TestCase;
+import lombok.Getter;
+import lombok.Setter;
 import org.json.JSONArray;
 import org.mockito.Mockito;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
-import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.models.*;
 
-import java.lang.reflect.Field;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertNotEquals;
 
@@ -25,12 +24,7 @@ public class ModelContextTest extends TestCase {
   private static final String testResourceId = "HARDCODE:http://localhost:9999/blazegraph/namespace/test/sparql";
   private static final String testNamespace = "http://localhost:9999/blazegraph/namespace/test/sparql/";
 
-  private final Field metaModel;
-
-  public ModelContextTest() throws NoSuchFieldException {
-    metaModel = Model.class.getDeclaredField("metaModel");
-    metaModel.setAccessible(true);
-  }
+  private static final MetaModel metaModel = MetaModel.get(TestModel.class);
 
   private int countTriples(ModelContext context) {
     JSONArray response = context.query("SELECT (COUNT(*) AS ?count) WHERE { ?a ?b ?c }");
@@ -42,7 +36,7 @@ public class ModelContextTest extends TestCase {
     context.update("CLEAR ALL");
     TestModel.createRandom(context, 12345, 3, 3).pushChanges();
     Mockito.verify(context, Mockito.never()).query(Mockito.contains("DELETE"));
-    assertEquals(19 + 3 * 2, countTriples(context));
+    assertEquals(metaModel.scalarFieldList.size() + (metaModel.vectorFieldList.size() - 1) * 3, countTriples(context));
   }
 
   public void testPushChanges() {
@@ -51,13 +45,12 @@ public class ModelContextTest extends TestCase {
     TestModel model = TestModel.createRandom(context, 12345, 3, 3);
     model.pushChanges();
     Mockito.verify(context, Mockito.never()).query(Mockito.contains("DELETE"));
-    assertEquals(19 + 3 * 2, countTriples(context));
     model.setDoubleProp(7.77);
     model.pushChanges();
     Mockito.verify(context, Mockito.times(1)).update(Mockito.contains("DELETE"));
     Mockito.verify(context, Mockito.times(2)).update(Mockito.contains("doubleprop"));
     Mockito.verify(context, Mockito.times(1)).update(Mockito.contains("stringprop"));
-    assertEquals(19 + 3 * 2, countTriples(context));
+    assertEquals(metaModel.scalarFieldList.size() + (metaModel.vectorFieldList.size() - 1) * 3, countTriples(context));
   }
 
   public void testPushPartialChanges() {
@@ -144,7 +137,7 @@ public class ModelContextTest extends TestCase {
     assertEquals(comparisonModel, pullModel.getModelProp().getModelProp().getModelProp());
   }
 
-  public void testPullScalars() throws IllegalAccessException {
+  public void testPullScalars() {
     ModelContext pushContext = new ModelContext(testResourceId, testNamespace);
     pushContext.update("CLEAR ALL");
     TestModel pushModel = TestModel.createRandom(pushContext, 12345, 3, 3);
@@ -157,12 +150,12 @@ public class ModelContextTest extends TestCase {
     assertEquals(pushModel.getUriProp(), pullModel.getUriProp());
     assertNotEquals(pushModel.getStringProp(), pullModel.getStringProp());
     pullModel.pullScalars();
-    for (Map.Entry<FieldKey, FieldInterface> entry : ((MetaModel)metaModel.get(pullModel)).scalarFieldList) {
+    for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.scalarFieldList) {
       assertTrue(entry.getValue().equals(pushModel, pullModel));
     }
   }
 
-  public void testPullVector() throws IllegalAccessException {
+  public void testPullVector() {
     ModelContext pushContext = new ModelContext(testResourceId, testNamespace);
     pushContext.update("CLEAR ALL");
     TestModel pushModel = TestModel.createRandom(pushContext, 12345, 3, 3);
@@ -175,7 +168,7 @@ public class ModelContextTest extends TestCase {
     assertEquals(new HashSet<>(pushModel.getEmptyForwardVector()), new HashSet<>(pullModel.getEmptyForwardVector()));
     assertNotEquals(new HashSet<>(pushModel.getForwardVector()), new HashSet<>(pullModel.getForwardVector()));
     pullModel.pullVectors();
-    for (Map.Entry<FieldKey, FieldInterface> entry : ((MetaModel)metaModel.get(pullModel)).vectorFieldList) {
+    for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.vectorFieldList) {
       assertTrue(entry.getValue().equals(pushModel, pullModel));
     }
   }
@@ -189,7 +182,6 @@ public class ModelContextTest extends TestCase {
     model2.getModelProp().setStringProp("modified string 1");
     assertEquals(model1, model2);
     model2.setModelProp(TestModel.createRandom(context2, 12, 0, 1));
-    System.out.println(model1.getModelProp().getIri() + " vs. " + model2.getModelProp().getIri());
     assertNotEquals(model1, model2);
     model1.setModelProp(TestModel.createRandom(context1, 12, 0, 1));
     assertEquals(model1, model2);
@@ -199,12 +191,62 @@ public class ModelContextTest extends TestCase {
 
   public void testIRICollision() {
     ModelContext context = new ModelContext(testResourceId, testNamespace);
-    context.createPrototypeModel(TestModel.class, "test");
+    context.createNewModel(TestModel.class, "test");
     try {
-      context.createPrototypeModel(TestModel.class, "test");
+      context.createNewModel(TestModel.class, "test");
       fail();
     } catch (JPSRuntimeException ignored) {
     }
+  }
+
+  public void testQuadModelInTripleContext() {
+    ModelContext context = new ModelContext(testResourceId);
+    try {
+      context.createNewModel(TestModel.class, "test");
+      fail();
+    } catch (JPSRuntimeException ignored) {
+    }
+  }
+
+  public static class TripleTestModel extends Model {
+    @Getter @Setter @FieldAnnotation("JPSLAND:stringprop") private String stringProp;
+    @Getter @Setter @FieldAnnotation("dbpediao:intprop") private Integer intProp;
+    @Getter @Setter @FieldAnnotation("dbpediao:doubleprop") private Double doubleProp;
+    @Getter @Setter @FieldAnnotation(value = "dbpediao:forwardvector", innerType = Double.class) private ArrayList<Double> forwardVector;
+    @Getter @Setter @FieldAnnotation(value = "dbpediao:emptyforwardvector", innerType = Double.class) private ArrayList<Double> emptyForwardVector;
+    @Getter @Setter @FieldAnnotation(value = "dbpediao:backwardVector", backward = true, innerType = URI.class) private ArrayList<URI> backwardVector;
+  }
+
+  public void testTripleModelPushPullAll() {
+    ModelContext pushContext = new ModelContext(testResourceId);
+    pushContext.update("CLEAR ALL");
+    TripleTestModel pushModel = pushContext.createNewModel(TripleTestModel.class, "http://testiri.com/test");
+    pushModel.setStringProp("teststring");
+    pushModel.getForwardVector().add(2.77);
+    pushContext.pushAllChanges();
+
+    ModelContext pullContext = new ModelContext(testResourceId);
+    TripleTestModel pullModel = pullContext.loadModel(TripleTestModel.class, pushModel.getIri());
+    assertEquals(pushModel, pullModel);
+  }
+
+  public void testTripleModelPullScalarsVectors() {
+    ModelContext pushContext = new ModelContext(testResourceId);
+    pushContext.update("CLEAR ALL");
+    TripleTestModel pushModel = pushContext.createNewModel(TripleTestModel.class, "http://testiri.com/test");
+    pushModel.setStringProp("teststring");
+    pushModel.setDoubleProp(77.11);
+    pushModel.getForwardVector().add(2.77);
+    pushModel.getBackwardVector().add(URI.create("http://testiri.com/testuri"));
+    pushContext.pushAllChanges();
+
+    ModelContext pullContext = new ModelContext(testResourceId);
+    TripleTestModel pullModel = pullContext.loadPartialModel(TripleTestModel.class, pushModel.getIri(), "stringProp", "forwardVector");
+    assertNotEquals(pushModel, pullModel);
+    assertEquals(pushModel.getStringProp(), pullModel.getStringProp());
+    assertNotEquals(pushModel.getDoubleProp(), pullModel.getDoubleProp());
+    assertEquals(pushModel.getForwardVector(), pullModel.getForwardVector());
+    assertNotEquals(pushModel.getBackwardVector(), pullModel.getBackwardVector());
   }
 
 }

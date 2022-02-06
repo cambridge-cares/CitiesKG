@@ -10,10 +10,11 @@ import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Random;
 import java.util.UUID;
 
-@ModelAnnotation(nativeGraphName = "testmodels")
+@ModelAnnotation(defaultGraphName = "testmodels")
 public class TestModel extends Model {
 
   @Getter @Setter @FieldAnnotation("JPSLAND:stringprop") private String stringProp;
@@ -22,6 +23,7 @@ public class TestModel extends Model {
   @Getter @Setter @FieldAnnotation("dbpediao:uriprop") private URI uriProp;
   @Getter @Setter @FieldAnnotation("dbpediao:modelprop") private TestModel modelProp;
   @Getter @Setter @FieldAnnotation("JPSLAND:geometryprop") private GeometryType geometryProp;
+  @Getter @Setter @FieldAnnotation("JPSLAND:dateprop") private Date dateProp;
 
   @Getter @Setter @FieldAnnotation("JPSLAND:stringpropnull") private String stringNullProp;
   @Getter @Setter @FieldAnnotation("dbpediao:intpropnull") private Integer intNullProp;
