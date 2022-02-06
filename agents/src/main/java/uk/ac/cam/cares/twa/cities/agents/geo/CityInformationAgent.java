@@ -9,12 +9,12 @@ import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import lombok.Getter;
-import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
+import org.apache.http.client.methods.HttpPost;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
-import uk.ac.cam.cares.twa.cities.models.geo.GenericAttribute;
+import uk.ac.cam.cares.jps.base.http.Http;
 
 
 /**
@@ -43,39 +43,53 @@ public class CityInformationAgent extends JPSAgent {
   public JSONObject processRequestParameters(JSONObject requestParams) {
 
     validateInput(requestParams);
-
-    // for city object iris
     ArrayList<String> uris = new ArrayList<>();
     JSONArray iris = requestParams.getJSONArray(KEY_IRIS);
-    for (Object iri : iris) { uris.add(iri.toString());
+
+    for (Object iri : iris) {
+      uris.add(iri.toString());
     }
-    // for use case context
-    //ArrayList<String> agents = new ArrayList<>();
-    //JSONArray contexts = requestParams.getJSONArray((KEY_CONTEXT));
-    //for (Object context : contexts) { agents.add(context.toString());
-    //}
-
     JSONArray cityObjectInformation = new JSONArray();
-
     for (String cityObjectIri : uris) {
       CityObject cityObject = new CityObject();
       cityObject.setIri(URI.create(cityObjectIri));
-
       if (lazyload) {
         cityObject.pullAll(route, 0);
       }
       else {
         cityObject.pullAll(route, 1);
       }
-
       ArrayList<CityObject> cityObjectList = new ArrayList<>();
       cityObjectList.add(cityObject);
       cityObjectInformation.put(cityObjectList);
-
-      //pass the information further to the other agent
-
     }
+
     requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
+
+    //{"iris": ["http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/BLDG_0003000000a50c90/"],
+    //  "context": {"http://www.theworldavatar.com:83/citieskg/otheragentIRI": {"key1":"value1", "key2": value2"},
+    //  "http://www.theworldavatar.com:83/citieskg/anotheragentIRI": {"key3":"value3", "key4": value4"},}
+    //  }
+
+    // passing information from original request to other agents mentioned in the context.
+    if (requestParams.keySet().contains(KEY_CONTEXT)) {
+      Set<String> agentURLs = requestParams.getJSONObject(KEY_CONTEXT).keySet();
+      for (String agentURL : agentURLs) {
+        JSONObject requestBody =  new JSONObject();
+        requestBody.put(KEY_IRIS, requestParams.getJSONArray(KEY_IRIS));
+        JSONObject agentKeyValuePairs = requestParams.getJSONObject(KEY_CONTEXT).getJSONObject(agentURL);
+        for (String key : agentKeyValuePairs.keySet()) {
+          requestBody.put(key,agentKeyValuePairs.get(key));
+        }
+        HttpPost request =  Http.post(agentURL, requestBody, "application/json","application/json", null);
+        JSONObject response = new JSONObject(Http.execute(request));
+
+        // specific agent response added to the city information response.
+        requestParams.append(agentURL, response);
+      }
+    }
+
+
     return requestParams;
   }
 
@@ -89,6 +103,14 @@ public class CityInformationAgent extends JPSAgent {
             JSONArray iris = requestParams.getJSONArray(KEY_IRIS);
             for (Object iri : iris) {
               new URL((String) iri);
+            }
+
+            //to check if agent iris are valid URL.
+            if (keys.contains(KEY_CONTEXT)){
+              Set<String> agentURLs = requestParams.getJSONObject(KEY_CONTEXT).keySet();
+              for (String agentURL : agentURLs) {
+                new URL(agentURL);
+              }
             }
             return true;
 
