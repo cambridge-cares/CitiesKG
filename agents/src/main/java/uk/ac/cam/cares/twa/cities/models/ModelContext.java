@@ -52,7 +52,8 @@ public class ModelContext {
    * Each round of pulling retrieves nodes one step away from the previous round's nodes, i.e. an additional degree of
    * separation from the origin provided in the session construction. Repeat visits are prevented by tracking the set of
    * traversed nodes. The number of rounds of pulling thus defines the maximum separation radius from the origin to
-   * retrieve, which is our interpretation of {@code recursionRadius} for a non-acyclic graph.
+   * retrieve, which is our interpretation of {@code recursionRadius} for a non-acyclic graph. The breadth-first
+   * strategy is necessary to prevent paths from cutting each other off.
    * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
    * @version $Id$
    */
@@ -207,7 +208,7 @@ public class ModelContext {
    */
   public <T extends Model> T createNewModel(Class<T> ofClass, String iri) {
     T instance = createPrototypeModel(ofClass, iri);
-    Arrays.fill(instance.cleanValues, Model.SpecialFieldInstruction.UNSET);
+    Arrays.fill(instance.cleanValues, Model.SpecialFieldInstruction.NEW);
     return instance;
   }
 
@@ -349,7 +350,7 @@ public class ModelContext {
       Object cleanValue = model.cleanValues[fieldInterface.index];
       if (cleanValue == Model.SpecialFieldInstruction.UNPULLED) {
         continue;
-      } else if (cleanValue != Model.SpecialFieldInstruction.UNSET) {
+      } else if (cleanValue != Model.SpecialFieldInstruction.NEW) {
         // Check if dirty
         if (Objects.equals(fieldInterface.getMinimised(model), cleanValue))
           continue;
@@ -358,7 +359,7 @@ public class ModelContext {
       Node predicate = NodeFactory.createURI(key.predicate);
       Node graph = isQuads() ? NodeFactory.createURI(graphNamespace + key.graphName) : null;
       // Add deletion
-      if (cleanValue != Model.SpecialFieldInstruction.UNSET) {
+      if (cleanValue != Model.SpecialFieldInstruction.NEW) {
         WhereBuilder where = new WhereBuilder().addWhere(key.backward ? (QM + VALUE) : self, predicate, key.backward ? self : (QM + VALUE));
         if (isQuads()) {
           deletionsOut.add(new UpdateBuilder().addGraph(graph, where).buildDeleteWhere());
@@ -461,7 +462,7 @@ public class ModelContext {
       // SELECT ?value ?predicate ?datatype ?isblank
       SelectBuilder select = new SelectBuilder()
           .addVar(QM + VALUE).addVar(QM + PREDICATE).addVar(QM + DATATYPE).addVar(QM + ISBLANK);
-      // WHERE { <self> <predicate> ?value }   or   WHERE { ?value <predicate> <self> }
+      // WHERE { <self> ?predicate ?value }   or   WHERE { ?value ?predicate <self> }
       WhereBuilder where = new WhereBuilder()
           .addWhere(backward ? (QM + VALUE) : NodeFactory.createURI(iri),
               QM + PREDICATE, backward ? NodeFactory.createURI(iri) : (QM + VALUE));
@@ -527,7 +528,7 @@ public class ModelContext {
    * @param model      the {@link Model} to populate.
    * @param fieldNames the names of scalar fields to be populated.
    */
-  public void pullScalars(Model model, String... fieldNames) {
+  private void pullScalars(Model model, String... fieldNames) {
     // Build and execute the query for scalar values
     SelectBuilder query = buildScalarsQuery(model, fieldNames);
     if (query.getVars().size() == 0) return;
@@ -594,7 +595,7 @@ public class ModelContext {
    * @param model      the {@link Model} to populate.
    * @param fieldNames the names of vector fields to be populated.
    */
-  public void pullVectors(Model model, String... fieldNames) {
+  private void pullVectors(Model model, String... fieldNames) {
     for (Map.Entry<FieldKey, FieldInterface> entry : model.metaModel.vectorFieldList) {
       // Filter for only requested fields
       FieldInterface field = entry.getValue();

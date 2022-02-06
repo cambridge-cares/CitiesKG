@@ -39,7 +39,7 @@ public class ModelDemo {
   public static void createOrgChart() {
 
     // Create context to work in, and also clear any old existing data
-    ModelContext context = new ModelContext("HARDCODE:http://localhost:9999/blazegraph/namespace/test/sparql");
+    ModelContext context = new ModelContext("HARDCODE:http://localhost:9999/blazegraph/namespace/test/sparql", "http://graph");
     context.update("CLEAR ALL");
 
     // Random data source
@@ -79,7 +79,7 @@ public class ModelDemo {
   private static void fireAllExecutives() {
 
     // Start completely fresh with a new context, to simulate operating on a previously existing knowledge graph.
-    ModelContext context = new ModelContext("HARDCODE:http://localhost:9999/blazegraph/namespace/test/sparql");
+    ModelContext context = new ModelContext("HARDCODE:http://localhost:9999/blazegraph/namespace/test/sparql", "http://graph");
 
     // Load data from the database
     Employee ceo = context.recursiveLoadPartialModel(
@@ -138,7 +138,10 @@ public class ModelDemo {
      *   if(this.manager != null) this.manager.subordinates.remove(this);
      *   this.manager = newParent;
      *   if(newParent != null) newParent.subordinates.add(this);
-     * }                                                                                                              */
+     * }
+     *
+     * Alternatively, omit the "manager" fieldName in the recursivePartialLoadModel invocation to be absolutely sure
+     * that the "manages" triples will never be updated from the subordinate end. */
 
     context.pushAllChanges();
 

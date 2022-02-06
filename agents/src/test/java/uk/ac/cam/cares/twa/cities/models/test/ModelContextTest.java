@@ -61,7 +61,7 @@ public class ModelContextTest extends TestCase {
 
     ModelContext pullContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
     TestModel pullModel = pullContext.createHollowModel(TestModel.class, pushModel.getIri());
-    pullModel.pullScalars("doubleProp", "uriProp");
+    pullModel.pull("doubleProp", "uriProp");
     pullModel.setDoubleProp(7.77);
     pullModel.setStringProp("modified");
     pullModel.pushChanges();
@@ -70,7 +70,7 @@ public class ModelContextTest extends TestCase {
     Mockito.verify(pullContext, Mockito.never()).update(Mockito.contains("stringprop"));
     Mockito.verify(pullContext, Mockito.never()).update(Mockito.contains("uriprop"));
     // If we pull the string field, we should afterwards be able to change and push it.
-    pullModel.pullScalars("stringProp");
+    pullModel.pull("stringProp");
     pullModel.pushChanges();
     Mockito.verify(pullContext, Mockito.never()).update(Mockito.contains("stringProp"));
     pullModel.setStringProp("modified2");
@@ -145,11 +145,11 @@ public class ModelContextTest extends TestCase {
 
     ModelContext pullContext = new ModelContext(testResourceId, testNamespace);
     TestModel pullModel = pullContext.createHollowModel(TestModel.class, pushModel.getIri());
-    pullModel.pullScalars("doubleProp", "uriProp");
+    pullModel.pull("doubleProp", "uriProp");
     assertEquals(pushModel.getDoubleProp(), pullModel.getDoubleProp());
     assertEquals(pushModel.getUriProp(), pullModel.getUriProp());
     assertNotEquals(pushModel.getStringProp(), pullModel.getStringProp());
-    pullModel.pullScalars();
+    pullModel.pull();
     for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.scalarFieldList) {
       assertTrue(entry.getValue().equals(pushModel, pullModel));
     }
@@ -163,11 +163,11 @@ public class ModelContextTest extends TestCase {
 
     ModelContext pullContext = new ModelContext(testResourceId, testNamespace);
     TestModel pullModel = pullContext.createHollowModel(TestModel.class, pushModel.getIri());
-    pullModel.pullVectors("backwardVector", "emptyForwardVector");
+    pullModel.pull("backwardVector", "emptyForwardVector");
     assertEquals(new HashSet<>(pushModel.getBackwardVector()), new HashSet<>(pullModel.getBackwardVector()));
     assertEquals(new HashSet<>(pushModel.getEmptyForwardVector()), new HashSet<>(pullModel.getEmptyForwardVector()));
     assertNotEquals(new HashSet<>(pushModel.getForwardVector()), new HashSet<>(pullModel.getForwardVector()));
-    pullModel.pullVectors();
+    pullModel.pull();
     for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.vectorFieldList) {
       assertTrue(entry.getValue().equals(pushModel, pullModel));
     }

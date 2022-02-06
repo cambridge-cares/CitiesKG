@@ -20,7 +20,7 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 public abstract class Model {
 
   enum SpecialFieldInstruction {
-    UNSET,
+    NEW,
     UNPULLED,
     FORCE_PUSH
   }
@@ -115,20 +115,6 @@ public abstract class Model {
    */
   public void pull(String... fieldNames) {
     context.pullPartial(this, fieldNames);
-  }
-
-  /**
-   * Wraps {@link ModelContext#pullScalars(Model, String...)}.
-   */
-  public void pullScalars(String... fieldNames) {
-    context.pullScalars(this, fieldNames);
-  }
-
-  /**
-   * Wraps @link ModelContext#pullVectors(Model, String...)}.
-   */
-  public void pullVectors(String... fieldNames) {
-    context.pullVectors(this, fieldNames);
   }
 
   /**
