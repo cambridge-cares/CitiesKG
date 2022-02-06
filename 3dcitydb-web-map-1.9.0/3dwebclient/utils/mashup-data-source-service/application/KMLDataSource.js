@@ -90,7 +90,7 @@ var KMLDataSource = /** @class */ (function (_super) {
                 default:
                     value = object["strVal"];
             }
-            result["GenAttr: " + name] = value;
+            result[name] = value;
         }
 
     };
@@ -100,7 +100,7 @@ var KMLDataSource = /** @class */ (function (_super) {
             var object = data[index];
             var name = object["infoSys"];
             var value = object["URI"];
-            result["ExtRef: " + name] = value;
+            result[name] = value;
         }
     };
 
