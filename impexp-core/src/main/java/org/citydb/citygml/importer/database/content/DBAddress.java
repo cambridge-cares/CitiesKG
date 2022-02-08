@@ -158,7 +158,7 @@ public class DBAddress extends AbstractDBImporter {
 				address.setId(importer.generateNewGmlId());
 		}
 
-		int index = 1;
+		int index = 0;
 
 		if (importer.isBlazegraph()) {
 			try {
@@ -167,18 +167,18 @@ public class DBAddress extends AbstractDBImporter {
 					uuid = importer.generateNewGmlId();
 				}
 				URL url = new URL(iriGraphObject + uuid + "/");
-				preparedStatement.setURL(index++, url);
-				preparedStatement.setURL(index++, url);
+				preparedStatement.setURL(++index, url);
+				preparedStatement.setURL(++index, url);
 				address.setLocalProperty(CoreConstants.OBJECT_URIID, url);
 			} catch (MalformedURLException e) {
-				setBlankNode(preparedStatement, index++);
+				setBlankNode(preparedStatement, ++index);
 			}
 		} else {
-		  preparedStatement.setLong(index++, addressId);
+		  preparedStatement.setLong(++index, addressId);
 		}
 
 		if (hasGmlIdColumn)
-			preparedStatement.setString(index++, address.getId());
+			preparedStatement.setString(++index, address.getId());
 
 		// get address details
 		addressWalker.reset();
@@ -187,42 +187,42 @@ public class DBAddress extends AbstractDBImporter {
 
 		if (importer.isBlazegraph()) {
 			if (addressWalker.street != null) {
-				preparedStatement.setString(index++, addressWalker.street.toString());
+				preparedStatement.setString(++index, addressWalker.street.toString());
 			} else {
-				setBlankNode(preparedStatement, index++);
+				setBlankNode(preparedStatement, ++index);
 			}
 			if (addressWalker.houseNo  != null) {
-				preparedStatement.setString(index++, addressWalker.houseNo.toString());
+				preparedStatement.setString(++index, addressWalker.houseNo.toString());
 			} else {
-				setBlankNode(preparedStatement, index++);
+				setBlankNode(preparedStatement, ++index);
 			}
 			if (addressWalker.poBox != null) {
-				preparedStatement.setString(index++, addressWalker.poBox.toString());
+				preparedStatement.setString(++index, addressWalker.poBox.toString());
 			} else {
-				setBlankNode(preparedStatement, index++);
+				setBlankNode(preparedStatement, ++index);
 			}
 			if (addressWalker.zipCode != null) {
-				preparedStatement.setString(index++, addressWalker.zipCode.toString());
+				preparedStatement.setString(++index, addressWalker.zipCode.toString());
 			} else {
-				setBlankNode(preparedStatement, index++);
+				setBlankNode(preparedStatement, ++index);
 			}
 			if (addressWalker.city != null) {
-				preparedStatement.setString(index++, addressWalker.city.toString());
+				preparedStatement.setString(++index, addressWalker.city.toString());
 			} else {
-				setBlankNode(preparedStatement, index++);
+				setBlankNode(preparedStatement, ++index);
 			}
 			if (addressWalker.country != null) {
-				preparedStatement.setString(index++, addressWalker.country.toString());
+				preparedStatement.setString(++index, addressWalker.country.toString());
 			} else {
-				setBlankNode(preparedStatement, index++);
+				setBlankNode(preparedStatement, ++index);
 			}
 		} else {
-			preparedStatement.setString(index++, addressWalker.street != null ? addressWalker.street.toString() : null);
-			preparedStatement.setString(index++, addressWalker.houseNo != null ? addressWalker.houseNo.toString() : null);
-			preparedStatement.setString(index++, addressWalker.poBox != null ? addressWalker.poBox.toString() : null);
-			preparedStatement.setString(index++, addressWalker.zipCode != null ? addressWalker.zipCode.toString() : null);
-			preparedStatement.setString(index++, addressWalker.city != null ? addressWalker.city.toString() : null);
-			preparedStatement.setString(index++, addressWalker.country != null ? addressWalker.country.toString() : null);
+			preparedStatement.setString(++index, addressWalker.street != null ? addressWalker.street.toString() : null);
+			preparedStatement.setString(++index, addressWalker.houseNo != null ? addressWalker.houseNo.toString() : null);
+			preparedStatement.setString(++index, addressWalker.poBox != null ? addressWalker.poBox.toString() : null);
+			preparedStatement.setString(++index, addressWalker.zipCode != null ? addressWalker.zipCode.toString() : null);
+			preparedStatement.setString(++index, addressWalker.city != null ? addressWalker.city.toString() : null);
+			preparedStatement.setString(++index, addressWalker.country != null ? addressWalker.country.toString() : null);
 		}
 
 		// multiPoint geometry
@@ -234,11 +234,11 @@ public class DBAddress extends AbstractDBImporter {
 			xalSource = importer.marshalObject(address.getXalAddress().getAddressDetails(), XALModuleType.CORE);
 
 		if (xalSource != null && !xalSource.isEmpty()) {
-			preparedStatement.setString(index++, xalSource);
+			preparedStatement.setString(++index, xalSource);
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(preparedStatement, index++);
+			setBlankNode(preparedStatement, ++index);
 		}  else {
-			preparedStatement.setNull(index++, Types.CLOB);
+			preparedStatement.setNull(++index, Types.CLOB);
 		}
 
 		preparedStatement.addBatch();
