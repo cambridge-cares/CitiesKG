@@ -171,6 +171,9 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String SURFACE_GEOMETRY_GRAPH = "surfacegeometry";
     public static final String THEMATIC_SURFACE_GRAPH = "thematicsurface";
     public static final String BUILDING_INSTALLATION_GRAPH = "buildinginstallation";
+    public static final String ROOM_GRAPH = "room";
+    public static final String OPENING_GRAPH = "opening";
+    public static final String OPENING_TO_THEM_SURFACE_GRAPH = "openingtothemsurface";
 
 
     //@TODO: NOT IN ONTOCITYGML - need to be added:

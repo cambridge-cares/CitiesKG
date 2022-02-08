@@ -1,11 +1,14 @@
 package org.citydb.database.adapter.blazegraph.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
-import junit.framework.TestCase;
 import org.apache.jena.datatypes.BaseDatatype;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.graph.Node;
@@ -13,7 +16,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.citydb.database.adapter.blazegraph.BlazegraphGeoDatatype;
 import org.junit.jupiter.api.Test;
 
-public class BlazegraphGeoDatatypeTest   extends TestCase {
+public class BlazegraphGeoDatatypeTest {
   private final String TEST_URI = "http://localhost/blazegraph/literals/POINT-1-3";
   private final String TEST_GEOLITERAL = "1#2#3";
   private final String TEST_GEODATATYPE = "{\"config\":{\"fields\":["

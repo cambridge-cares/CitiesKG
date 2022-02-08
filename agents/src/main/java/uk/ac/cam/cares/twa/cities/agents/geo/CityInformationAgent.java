@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
@@ -7,12 +8,13 @@ import java.util.Set;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
+import lombok.Getter;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
-import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
-import uk.ac.cam.cares.jps.base.query.KGRouter;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
+import uk.ac.cam.cares.twa.cities.models.geo.GenericAttribute;
 
 
 /**
@@ -24,12 +26,11 @@ public class CityInformationAgent extends JPSAgent {
   public static final String URI_CITY_OBJECT_INFORMATION = "/cityobjectinformation";
   public static final String KEY_REQ_METHOD = "method";
   public static final String KEY_IRIS = "iris";
+  public static String KEY_CONTEXT = "context";
   public static final String KEY_CITY_OBJECT_INFORMATION = "cityobjectinformation";
 
-  private KnowledgeBaseClientInterface kgClient;
-  private static String route;
+  @Getter private String route;
   private boolean lazyload;
-
 
 
   public CityInformationAgent() {
@@ -43,29 +44,35 @@ public class CityInformationAgent extends JPSAgent {
 
     validateInput(requestParams);
 
+    // for city object iris
     ArrayList<String> uris = new ArrayList<>();
     JSONArray iris = requestParams.getJSONArray(KEY_IRIS);
-    for (Object iri : iris) {
-      uris.add(iri.toString());
+    for (Object iri : iris) { uris.add(iri.toString());
     }
+    // for use case context
+    //ArrayList<String> agents = new ArrayList<>();
+    //JSONArray contexts = requestParams.getJSONArray((KEY_CONTEXT));
+    //for (Object context : contexts) { agents.add(context.toString());
+    //}
+
     JSONArray cityObjectInformation = new JSONArray();
 
-    setKGClient(true);
-
     for (String cityObjectIri : uris) {
-      try {
-        CityObject cityObject = new CityObject();
+      CityObject cityObject = new CityObject();
+      cityObject.setIri(URI.create(cityObjectIri));
 
-        cityObject.fillScalars(cityObjectIri, kgClient);
-        cityObject.fillGenericAttributes(cityObjectIri, kgClient, lazyload);
-        cityObject.fillExternalReferences(cityObjectIri, kgClient, lazyload);
-
-        ArrayList<CityObject> cityObjectList = new ArrayList<>();
-        cityObjectList.add(cityObject);
-        cityObjectInformation.put(cityObjectList);
-      } catch (NoSuchFieldException | IllegalAccessException e) {
-        e.printStackTrace();
+      if (lazyload) {
+        cityObject.pullAll(route, 0);
       }
+      else {
+        cityObject.pullAll(route, 1);
+      }
+
+      ArrayList<CityObject> cityObjectList = new ArrayList<>();
+      cityObjectList.add(cityObject);
+      cityObjectInformation.put(cityObjectList);
+
+      //pass the information further to the other agent
 
     }
     requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
@@ -102,13 +109,5 @@ public class CityInformationAgent extends JPSAgent {
     ResourceBundle config = ResourceBundle.getBundle("config");
     lazyload = Boolean.getBoolean(config.getString("loading.status"));
     route = config.getString("uri.route");
-  }
-
-  /**
-   * sets KG Client for specific endpoint.
-   * @param isQuery boolean
-   */
-  private void setKGClient(boolean isQuery) {
-    this.kgClient = KGRouter.getKnowledgeBaseClient(route, isQuery, !isQuery);
   }
 }

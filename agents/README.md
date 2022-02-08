@@ -61,6 +61,7 @@ This folder is by default not accessible, in order to make it executable, you ne
 
 ### Install and Build
 
+
 1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repository. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
 
 ```
@@ -69,7 +70,7 @@ cd <main project directory>
 mvn initialize
 ```
 
-2. If the initialization is done successful, you should be able to run the following to create the .war package
+2. If the initialization is done successful, you should be able to run the following to create the war package
 
 ```
 mvn clean install -DskipTests
@@ -101,7 +102,8 @@ If this step has not been done, the CityImportAgent might not work.
 
 4. Additional dependencies used by agents are JPS_BASE_LIB and JPS_AWS are provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository.
 
-Clone the TWA project from the [TWA repository](https://github.com/cambridge-cares/TheWorldAvatar) and checkout to develop and master branches
+Clone the TWA project from the [TWA repository](https://github.com/cambridge-cares/TheWorldAvatar) and checkout to develop branch, commit 610cfcc8492f65821039a04795625a783e6050e6.
+The most recent master and develop branches have refactored class names for KnowledgeBaseClientInterface and RemoteKnowledgeBaseClient, and will not work with these agents.
 
 Run the command *mvn clean install -DskipTests* on the corresponding directories where the POM file is found.
 * JPS_BASE_LIB project can be found in the [JPS_BASE_LIB directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/JPS_BASE_LIB) from the *master* branch (stable version)
@@ -149,6 +151,31 @@ Content-Type: application/json
 Executing this request, will create a directory at the specified location. When placing any `.gml` file into this folder, this file will automatically be imported into the specified triple store. For further details, please see the "Semantic 3D City Agents - an intelligent automation for Dynamic Geospatial Knowledge Graphs" [preprint].
 
 Please note that splitting of large files into smaller chunks to improve performance will not work if the `.gml` file contains the `core:` namespace tag in front of CityGML features. Please remove those manually beforehand.
+
+## 3DCityDB-Web-Map-Client
+
+We use the 3DCityDB-Web-Map-Client to visualise *CityExportAgent* exported .kml data. We extended original code with new functions and interface elements for displaying analytical capabilities of the *DistanceAgent*. The extended Web-Map-client version can be found in CitiesKG project directory `/CitiesKG/3dcitydb-web-map-1.9.0/`.
+
+### Documentation
+
+A complete and comprehensive documentation on the 3DCityDB-Web-Map-Client is available online here (https://github.com/3dcitydb/3dcitydb-web-map) and here (https://3dcitydb-docs.readthedocs.io/en/release-v4.2.3/webmap/index.html).
+
+ ### Getting Started
+
+In order to use the extended 3DCityDB-Web-Map-Client for city agents make sure that:
+
+* your browser support WebGL (visit http://get.webgl.org/ for checking it).
+* open source JavaScript runtime environment Node.js is installed on your machine (visit https://nodejs.org/en/ to download the latest version). 
+* the extended web-map-client does not have node_modules folder thus, download original web-map-client via the following GitHub link (https://github.com/3dcitydb/3dcitydb-web-map/releases) and copy node_modules folder in `/CitiesKG/3dcitydb-web-map-1.9.0/`.
+
+To run the web-map-client, in a shell environment navigate to the folder where *server.js* file is located `/CitiesKG/3dcitydb-web-map-1.9.0/` and simply run the following command to launch the server:
+
+```
+ node server.js
+```
+
+The web-map-client is now available via the URL (http://localhost:8080/3dwebclient/index.html). Place the .kml file in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/` and add the web link of the .kml file in `URL(*)` input field of the web-map-client Toolbox widget. In the input field `Name(*)`, a proper layer name must be specified as well. After clicking AddLayer, the .kml file will be visualised in the web-map-client.
+
 
 ## Contributing
 
