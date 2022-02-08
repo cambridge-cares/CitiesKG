@@ -129,6 +129,7 @@ Cesium.knockout.applyBindings(addSplashWindowModel, document.getElementById('cit
 
 // Splash controller
 var splashController = new SplashController(addSplashWindowModel);
+splashController.setCookie("ignoreSplashWindow", "true")
 
 /*---------------------------------  Load Configurations and Layers  ----------------------------------------*/
 
@@ -194,6 +195,10 @@ function initClient() {
 
     // display current infos of active layer in the main menu
     observeActiveLayer();
+
+    // load city based on input in url
+    var city = (new URL(window.location.href)).searchParams.get('city');
+    loadCity(city);
 
     // Zoom to desired camera position and load layers if encoded in the url...	
     zoomToDefaultCameraPosition().then(function (info) {
@@ -278,6 +283,69 @@ function initClient() {
     cesiumHomeButton.onclick = function () {
         zoomToDefaultCameraPosition();
     }
+}
+
+function loadCity(city) {
+    if (city == 'pirmasens') {
+        loadPirmasens();
+    }
+}
+
+function loadPirmasens() {
+    // set title
+    document.title = 'Pirmasens';
+
+    // set camera view
+    var cameraPostion = {
+        latitude: 49.194269,
+        longitude: 7.5981472,
+        height: 534.3099172951087,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+    flyToCameraPosition(cameraPostion);
+
+    // find relevant files and load layers
+    getAndLoadLayers('exported_pirmasens');
+}
+
+// send get request to server to discover files in specified folder, create and load layers
+function getAndLoadLayers(folder) {
+    var url = this.location.origin;
+    var _layers = new Array();
+    var folderpath = url + '/3dwebclient/' + folder + '/';
+    var filepathname = '';
+    var options = {
+        url: '',
+        name: '',
+        layerDataType: 'COLLADA/KML/gTIF',
+        layerProxy: false,
+        layerClampToGround: false,
+        gltfVersion: '2.0',
+        thematicDataUrl: '',
+        thematicDataSource: 'GoogleSheets',
+        tableType: 'Horizontal',
+        cityobjectsJsonUrl: '',
+        minLodPixels: '',
+        maxLodPixels: '',
+        maxSizeOfCachedTiles: 200,
+        maxCountOfVisibleTiles: 200
+    }
+
+    var reqUrl = url + '/files/';
+
+    $.get(reqUrl + folder, function (data) {
+        for (let i = 0; i < data.length; i++) {
+            filepathname = folderpath + data[i];
+            options.url = filepathname;
+            options.name = data[i];
+            _layers.push(new CitydbKmlLayer(options));
+            if (i == data.length - 1) {
+                loadLayerGroup(_layers);
+            }
+        }
+    });
 }
 
 function observeActiveLayer() {
