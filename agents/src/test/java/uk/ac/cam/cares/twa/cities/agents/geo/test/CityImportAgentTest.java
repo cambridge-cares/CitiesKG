@@ -18,8 +18,13 @@ import java.util.concurrent.LinkedBlockingDeque;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import junit.framework.TestCase;
+import kong.unirest.HttpResponse;
+import kong.unirest.Unirest;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
+import org.mockito.ArgumentMatchers;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
@@ -46,7 +51,7 @@ public class CityImportAgentTest extends TestCase {
   public void testNewCityImportAgentFields() {
     CityImportAgent agent = new CityImportAgent();
 
-    assertEquals(20, agent.getClass().getDeclaredFields().length);
+    assertEquals(33, agent.getClass().getDeclaredFields().length);
 
     Field URI_LISTEN;
     Field URI_ACTION;
@@ -68,6 +73,19 @@ public class CityImportAgentTest extends TestCase {
     Field importerExecutor;
     Field nqExportExecutor;
     Field nqUploadExecutor;
+    Field KEY_SRID;
+    Field KEY_SRSNAME;
+    Field CTYPE_SPARQLUPDATE;
+    Field srid;
+    Field srsname;
+    Field OCGML_PREFIX;
+    Field OCGML_SCHEMA;
+    Field GRAPH_DATABASESRS;
+    Field QN_MARK;
+    Field SUB_SRID;
+    Field SUB_SRSNAME;
+    Field OB_SRID;
+    Field OB_SRSNAME;
 
     try {
       URI_LISTEN = agent.getClass().getDeclaredField("URI_LISTEN");
@@ -120,6 +138,34 @@ public class CityImportAgentTest extends TestCase {
       nqUploadExecutor = agent.getClass().getDeclaredField("nqUploadExecutor");
       nqUploadExecutor.setAccessible(true);
       assertFalse(((ExecutorService) nqUploadExecutor.get(agent)).isTerminated());
+      KEY_SRID = agent.getClass().getDeclaredField("KEY_SRID");
+      assertEquals(KEY_SRID.get(agent), "srid");
+      KEY_SRSNAME = agent.getClass().getDeclaredField("KEY_SRSNAME");
+      assertEquals(KEY_SRSNAME.get(agent), "srsName");
+      CTYPE_SPARQLUPDATE = agent.getClass().getDeclaredField("CTYPE_SPARQLUPDATE");
+      assertEquals(CTYPE_SPARQLUPDATE.get(agent), "application/sparql-update");
+      srid = agent.getClass().getDeclaredField("srid");
+      srid.setAccessible(true);
+      assertNull(srid.get(agent));
+      srsname = agent.getClass().getDeclaredField("srsname");
+      srsname.setAccessible(true);
+      assertNull(srsname.get(agent));
+      OCGML_PREFIX = agent.getClass().getDeclaredField("OCGML_PREFIX");
+      assertEquals(OCGML_PREFIX.get(agent), "ocgml");
+      OCGML_SCHEMA = agent.getClass().getDeclaredField("OCGML_SCHEMA");
+      assertEquals(OCGML_SCHEMA.get(agent), "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#");
+      GRAPH_DATABASESRS = agent.getClass().getDeclaredField("GRAPH_DATABASESRS");
+      assertEquals(GRAPH_DATABASESRS.get(agent), "/databasesrs/");
+      QN_MARK = agent.getClass().getDeclaredField("QN_MARK");
+      assertEquals(QN_MARK.get(agent), "?");
+      SUB_SRID = agent.getClass().getDeclaredField("SUB_SRID");
+      assertEquals(SUB_SRID.get(agent), "srid");
+      SUB_SRSNAME = agent.getClass().getDeclaredField("SUB_SRSNAME");
+      assertEquals(SUB_SRSNAME.get(agent), "srsname");
+      OB_SRID = agent.getClass().getDeclaredField("OB_SRID");
+      assertEquals(OB_SRID.get(agent), "currentSrid");
+      OB_SRSNAME = agent.getClass().getDeclaredField("OB_SRSNAME");
+      assertEquals(OB_SRSNAME.get(agent), "currentSrsname");
     } catch (NoSuchFieldException | IllegalAccessException e) {
       fail();
     }
@@ -127,7 +173,7 @@ public class CityImportAgentTest extends TestCase {
 
   public void testNewCityImportAgentMethods() {
     CityImportAgent agent = new CityImportAgent();
-    assertEquals(15, agent.getClass().getDeclaredMethods().length);
+    assertEquals(18, agent.getClass().getDeclaredMethods().length);
   }
 
   public void testValidateListenInput() {
@@ -188,6 +234,60 @@ public class CityImportAgentTest extends TestCase {
     }
   }
 
+  public void testValidateDatabaseSrsInput() {
+    CityImportAgent agent = new CityImportAgent();
+    Method validateDatabaseSrsInput = null;
+
+    try {
+      validateDatabaseSrsInput = agent.getClass().getDeclaredMethod("validateDatabaseSrsInput", JSONObject.class, Set.class);
+      validateDatabaseSrsInput.setAccessible(true);
+    } catch (NoSuchMethodException e) {
+      fail();
+    }
+
+    JSONObject requestParams = new JSONObject();
+    JSONObject requestParamsSridError = new JSONObject();
+    JSONObject requestParamsSrsnameError = new JSONObject();
+    Set<String> keys = new HashSet<>();
+
+    try {
+      //test case when KEY_SRID and KEY_SRSNAME not available
+      assertTrue((Boolean) validateDatabaseSrsInput.invoke(agent, requestParams, keys));
+      keys.add(CityImportAgent.KEY_SRID);
+      keys.add(CityImportAgent.KEY_SRSNAME);
+
+      //test case when both srid and srsname are correct
+      requestParams.put(CityImportAgent.KEY_SRID, "123");
+      requestParams.put(CityImportAgent.KEY_SRSNAME, "srsname");
+
+      assertFalse((Boolean) validateDatabaseSrsInput.invoke(agent, requestParams, keys));
+    } catch (Exception e) {
+      fail();
+    }
+
+    try {
+      //testcase when srid is not a number
+      requestParamsSridError.put(CityImportAgent.KEY_SRID, "srid");
+      requestParamsSridError.put(CityImportAgent.KEY_SRSNAME, "srsname");
+
+      validateDatabaseSrsInput.invoke(agent, requestParamsSridError, keys);
+    } catch (Exception e) {
+      assert e instanceof InvocationTargetException;
+      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
+              JPSRuntimeException.class);
+    }
+
+    try {
+      //testcase when srsname is empty
+      requestParamsSrsnameError.put(CityImportAgent.KEY_SRID, "123");
+      requestParamsSrsnameError.put(CityImportAgent.KEY_SRSNAME, "");
+
+      assertTrue((Boolean) validateDatabaseSrsInput.invoke(agent, requestParamsSrsnameError, keys));
+    } catch (Exception e) {
+      fail();
+    }
+  }
+
   public void testValidateInput() {
     CityImportAgent agent = new CityImportAgent();
     Method validateInput = null;
@@ -210,6 +310,7 @@ public class CityImportAgentTest extends TestCase {
       assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
           BadRequestException.class);
     }
+    /*
 
     try {
       validateInput.invoke(agent, requestParams);
@@ -234,6 +335,8 @@ public class CityImportAgentTest extends TestCase {
       assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
           BadRequestException.class);
     }
+
+     */
 
     requestParams.put(CityImportAgent.KEY_REQ_METHOD, HttpMethod.GET);
 
@@ -309,7 +412,9 @@ public class CityImportAgentTest extends TestCase {
           BadRequestException.class);
     }
 
-    requestParams.put(CityImportAgent.KEY_DIRECTORY, System.getProperty("java.io.tmpdir"));
+    requestParams.put(CityImportAgent.KEY_SRID, "123");
+    requestParams.put(CityImportAgent.KEY_SRSNAME, "srsname");
+    //requestParams.put(CityImportAgent.KEY_DIRECTORY, System.getProperty("java.io.tmpdir"));
 
     try {
       assertTrue((Boolean) validateInput.invoke(agent, requestParams));
@@ -355,6 +460,15 @@ public class CityImportAgentTest extends TestCase {
       assertTrue((Boolean) validateInput.invoke(agent, requestParams));
     } catch (Exception e) {
       fail();
+    }
+
+    requestParams.put(CityImportAgent.KEY_SRSNAME, "");
+    try {
+      validateInput.invoke(agent, requestParams);
+    } catch (Exception e) {
+      assert e instanceof InvocationTargetException;
+      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
+              BadRequestException.class);
     }
 
   }
@@ -724,6 +838,91 @@ public class CityImportAgentTest extends TestCase {
     }
 
     //other functionality already tested in the corresponding task
+  }
+
+  public void testSetDatabaseSrs() {
+    CityImportAgent agent = new CityImportAgent();
+    Field targetUrl = null;
+    Method setDatabaseSrs = null;
+
+    try {
+      targetUrl = agent.getClass().getDeclaredField("targetUrl");
+      targetUrl.setAccessible(true);
+      targetUrl.set(agent, "http://localhost");
+      setDatabaseSrs = agent.getClass().getDeclaredMethod("setDatabaseSrs");
+      setDatabaseSrs.setAccessible(true);
+    } catch (NoSuchMethodException | IllegalAccessException | NoSuchFieldException e) {
+      fail();
+    }
+
+    try {
+      setDatabaseSrs.invoke(agent);
+    } catch (Exception e) {
+      assert e instanceof InvocationTargetException;
+      assertEquals(((InvocationTargetException) e).getTargetException().getClass(), JPSRuntimeException.class);
+    }
+
+    try {
+      HttpResponse<?> response = Mockito.mock(HttpResponse.class);
+      try (MockedStatic<Unirest> unirest = Mockito.mockStatic(Unirest.class, Mockito.RETURNS_MOCKS)) {
+        unirest.when(() -> Unirest.post(ArgumentMatchers.anyString())
+                .header(ArgumentMatchers.anyString(), ArgumentMatchers.anyString())
+                .body(ArgumentMatchers.anyString())
+                .socketTimeout(ArgumentMatchers.anyInt())
+                .asEmpty())
+                .thenReturn(response);
+        setDatabaseSrs.invoke(agent);
+      } catch (Exception e) {
+        assert e instanceof InvocationTargetException;
+        assertEquals(((InvocationTargetException) e).getTargetException().getClass(), JPSRuntimeException.class);
+        assertEquals(((InvocationTargetException) e).getTargetException().getCause().getMessage(), "http://localhost 0");
+      }
+    } catch (Exception e) {
+      fail();
+    }
+  }
+
+  public void testGetSetDatabaseSrsUpdate() {
+    CityImportAgent agent = new CityImportAgent();
+
+    try {
+      Field targetUrl = agent.getClass().getDeclaredField("targetUrl");
+      targetUrl.setAccessible(true);
+      targetUrl.set(agent, "http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql");
+      Field srid = agent.getClass().getDeclaredField("srid");
+      srid.setAccessible(true);
+      srid.set(agent, "123");
+      Field srsname = agent.getClass().getDeclaredField("srsname");
+      srsname.setAccessible(true);
+      srsname.set(agent, "test");
+    } catch (Exception e) {
+      fail();
+    }
+
+    String updateString = "PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>\n" +
+            "\n" +
+            "WITH <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/databasesrs/>\n" +
+            "DELETE {\n" +
+            "  ?srid ocgml:srid ?currentSrid .\n" +
+            "  ?srsname ocgml:srsname ?currentSrsname .\n" +
+            "}\n" +
+            "INSERT {\n" +
+            "  <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> ocgml:srid 123 .\n" +
+            "  <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> ocgml:srsname \"test\" .\n" +
+            "}\n" +
+            "WHERE\n" +
+            "  { OPTIONAL\n" +
+            "      { ?srid  ocgml:srid  ?currentSrid}\n" +
+            "    OPTIONAL\n" +
+            "      { ?srsname  ocgml:srsname  ?currentSrsname}\n" +
+            "  }\n";
+    try {
+      Method getSetDatabaseSrsUpdate = agent.getClass().getDeclaredMethod("getSetDatabaseSrsUpdate");
+      getSetDatabaseSrsUpdate.setAccessible(true);
+      assertEquals(getSetDatabaseSrsUpdate.invoke(agent).toString(), updateString);
+    } catch (Exception e) {
+      fail();
+    }
   }
 
   public void testArchiveImportFiles() {
