@@ -25,21 +25,14 @@ public class ModelDemo {
   }
 
   public static void main(String[] args) {
-    createOrgChart();
+    foundCompany();
     fireAllExecutives();
   }
 
-  private static final String[] givenNames = {"Stanley", "Anthony", "George", "Alexander", "Alice", "Elizabeth", "Jacqueline", "Ellen"};
-  private static final String[] surnames = {"Bragg", "Fresnel", "Feynman", "Kepler", "Goodall", "Franklin", "Curie", "Turing"};
-
-  private static String randomName(Random random) {
-    return givenNames[random.nextInt(8)] + " " + surnames[random.nextInt(8)];
-  }
-
-  public static void createOrgChart() {
+  public static void foundCompany() {
 
     // Create context to work in, and also clear any old existing data
-    ModelContext context = new ModelContext("HARDCODE:http://localhost:9999/blazegraph/namespace/test/sparql", "http://graph");
+    ModelContext context = new ModelContext("HARDCODE:http://localhost:9999/blazegraph/namespace/test/sparql");
     context.update("CLEAR ALL");
 
     // Random data source
@@ -53,15 +46,14 @@ public class ModelDemo {
     ceo.subordinates.add(ceo);
     // There are 8 directors working under Albert Einstein.
     int employeeId = 1;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 3; i++) {
       Employee director = context.createNewModel(Employee.class, "http://mycompany.org/people/" + (employeeId++));
       director.name = randomName(random);
       director.age = 25 + random.nextInt(20);
       director.manager = ceo;
       ceo.subordinates.add(director);
-
       // Each director has 5 analysts working under them.
-      for (int j = 0; j < 5; j++) {
+      for (int j = 0; j < 4; j++) {
         Employee analyst = context.createNewModel(Employee.class, "http://mycompany.org/people/" + (employeeId++));
         analyst.name = randomName(random);
         analyst.age = 20 + random.nextInt(20);
@@ -79,12 +71,12 @@ public class ModelDemo {
   private static void fireAllExecutives() {
 
     // Start completely fresh with a new context, to simulate operating on a previously existing knowledge graph.
-    ModelContext context = new ModelContext("HARDCODE:http://localhost:9999/blazegraph/namespace/test/sparql", "http://graph");
+    ModelContext context = new ModelContext("HARDCODE:http://localhost:9999/blazegraph/namespace/test/sparql");
 
     // Load data from the database
     Employee ceo = context.recursiveLoadPartialModel(
         Employee.class,
-        "http://mycompany.org/people/0", // assume that we know a priori that this is the CEO
+        "http://mycompany.org/people/0", // the CEO
         99,                    // our tree is only 3 layers deep, so any number here >= 3 is equivalent.
         "manager", "subordinates", "age"); // specify to only load hierarchy and age data for now
 
@@ -96,8 +88,8 @@ public class ModelDemo {
      * requested, and to a much lesser extent the number of fields in the Model. Partial pull with all Model fields
      * requested (no fieldNames requested will do this) has a valid use case if the latter time complexity is needed. */
 
-    // Let's say that the company is restructuring. Albert Einstein has fired all the directors under him, and wants
-    // to promote the analyst under each deposed director to replace them.
+    // Albert Einstein has gone mad with power. He has fired all the directors under him,
+    // and wants to promote the oldest analyst under each deposed director to replace them.
 
     for (Employee director : new ArrayList<>(ceo.subordinates)) {
       if(director == ceo) continue;
@@ -106,20 +98,19 @@ public class ModelDemo {
       for (Employee analyst : director.subordinates)
         if (analyst.age > oldestAnalyst.age)
           oldestAnalyst = analyst;
-      // Erase director
-      ceo.subordinates.remove(director);   // *----------------------- can be omitted: redundant with director.delete()
-      director.delete();
       // Reassign promoted analyst to work directly under CEO.
-      ceo.subordinates.add(oldestAnalyst);  // *---------------------- can be omitted: redundant with oldestAnalyst.manager = ceo
+      // ceo.subordinates.add(oldestAnalyst);  // *---------------------- redundant with oldestAnalyst.manager = ceo
       oldestAnalyst.manager = ceo;
       // Reassign other analyst to be managed by promoted analyst.
-      assert oldestAnalyst.subordinates.size() == 0;
       for (Employee analyst : director.subordinates) {
         if (analyst != oldestAnalyst) {
-          oldestAnalyst.subordinates.add(analyst);  // *-------------- can be omitted: redundant with analyst.manager = oldestAnalyst
+          // oldestAnalyst.subordinates.add(analyst);  // *-------------- redundant with analyst.manager = oldestAnalyst
           analyst.manager = oldestAnalyst;
         }
       }
+      // Erase director
+      // ceo.subordinates.remove(director);   // *----------------------- redundant with director.delete()
+      director.delete();
     }
 
     /* When we push, the context will identify only fields which have changed and write those updates.
@@ -127,7 +118,7 @@ public class ModelDemo {
      * disabled. The exception is if the model was created by context.createNewModel, in which case all fields will be
      * written even if they are not changed (default values are null if not specified, which become blank nodes).
      *
-     * This is why the three lines highlighted above may be omitted: only one end of a triple which is doubly described
+     * This is why the three lines indicated above may be omitted: only one end of a triple which is doubly described
      * in the system needs to be changed; the outdated end will not create a conflicting update because if left alone it
      * will not be observed as having been changed. However, if both were changed but not concordantly, then a conflict
      * *will* arise, resulting in undefined behaviour, so one must be careful, especially in more complex manipulations.
@@ -139,12 +130,19 @@ public class ModelDemo {
      *   this.manager = newParent;
      *   if(newParent != null) newParent.subordinates.add(this);
      * }
-     *
-     * Alternatively, omit the "manager" fieldName in the recursivePartialLoadModel invocation to be absolutely sure
-     * that the "manages" triples will never be updated from the subordinate end. */
+     *  */
 
     context.pushAllChanges();
 
+  }
+
+  // Helper functions for generating random data
+
+  private static final String[] givenNames = {"Stanley", "Anthony", "George", "Alexander", "Alice", "Elizabeth", "Jacqueline", "Ellen"};
+  private static final String[] surnames = {"Bragg", "Fresnel", "Feynman", "Kepler", "Goodall", "Franklin", "Curie", "Turing"};
+
+  private static String randomName(Random random) {
+    return givenNames[random.nextInt(8)] + " " + surnames[random.nextInt(8)];
   }
 
 }

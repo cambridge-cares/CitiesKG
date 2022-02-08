@@ -1,7 +1,7 @@
 The Model framework is a lightweight framework for the concise creation of Java classes to interact with structured data
 in a knowledge graph. This document outlines how to use it, how it works, and how to extend its functionality. 
 
-# Using the Model framework
+# Model Framework User Guide
 
 ## Demo
 
@@ -161,7 +161,7 @@ Once a `ModelContext` is created, `Model`s should be created through factory fun
   the named fields. If `fieldNames` is empty, all fields are populated; this is not the same as `pullAll`: see 
   [Pulling data from the knowledge graph](#Pulling data from the knowledge graph).
 
-###Pulling data from the knowledge graph
+### Pulling data from the knowledge graph
 
 `Model`s may be populated with data from the database using one of the four pull methods, the last two of which are 
 recursive wrappers for the first two.
@@ -189,7 +189,7 @@ recursive wrappers for the first two.
   }
   ```
   
-- pullPartial(Model model, String... fieldNames)
+- `pullPartial(Model model, String... fieldNames)`
 
   Constructs specific queries for the named fields, executes it, and populates fields in the `Model`. Scalar (non-list) 
   fields are collected in one query, then each vector (list) field in a separate query. 
@@ -273,7 +273,7 @@ certain fields of a `Model` is perhaps the least salient. The critical differenc
 
 For example, querying DBpedia with `pullAll` will generally cause you to hit a response row limit.
 
-###Pushing changes
+### Pushing changes
 
 Pushing changes to the database is easy. Data values may be modified directly in the models, and then simply call 
 `ModelContext.pushChanges(Model model)` to write the modifications to the database. Alternatively, `ModelContext.
@@ -331,7 +331,7 @@ DELETE WHERE { <model_iri> ?predicate ?value      } ;
 DELETE WHERE { ?value      ?predicate <model_iri> } ;
 ```
 
-###Model wrappers for ModelContext methods
+### Model wrappers for ModelContext methods
 
 Many `ModelContext` methods have wrapping methods in `Model`, such as `model.pushChanges()` being equivalent to
 `model.getContext().pushChanges(model)`. Use of either is entirely cosmetic.
@@ -367,9 +367,11 @@ A `DatatypeModel` must implement the following:
 
 For an example, see `uk.ac.cam.cares.twa.cities.models.geo.GeometryType`.
 
-#How it works
+# Model Framework Developer Guide
 
-## FieldKey
+## How it works
+
+### FieldKey
 
 A `FieldKey` is a hashable, comparable object encoding the quad characterisation information in a `FieldAnnotation`. It
 has fields:
@@ -382,7 +384,7 @@ has fields:
 It serves as (a) a lookup key and (b) a sorting key for fields, the latter of which facilitates graph-based grouping 
 in queries.
 
-## FieldInterface
+### FieldInterface
 
 A `FieldInterface` is a class, not an interface in the Java language sense. One is created for each field with a
 `FieldAnnotation`. During construction, it builds and stores a collection of functions to interact with its target
@@ -408,7 +410,7 @@ The methods exposed by `FieldInterface` wrap these functions for streamlined use
   list of the outputs of `minimiser` on each element.
 - `getNodes`: returns the outputs of `nodeGetter` on elements of the field value; for non-lists, this has length 1.
 
-## MetaModel
+### MetaModel
 
 A `MetaModel` is created for each `Model` subclass the first time an instance thereof is created; all future instances
 will then link back to the same `MetaModel`. Conceptually, it may be thought of as the collected output of 
@@ -423,7 +425,7 @@ and vector (list) entries in `fieldMap` extracted for convenience.
 
 The use of `TreeMap` is deliberate so the entries are sorted by key.
 
-## Bringing it all together
+### Tying it all together
 
 `MetaModel`, `FieldKey` and `FieldInterface` are leveraged together in the main methods provided by the `Model` base
 class.
@@ -447,11 +449,11 @@ class.
    `fieldInterface.getNode(s)`.
   - Minimised values are written to `cleanValues`.
 
-#Extending functionality
+##Extending functionality
 
-##Adding new types
+###Adding new types
 
-###Direct addition to FieldInterface
+####Method 1: Direct addition to FieldInterface
 
 Support for different types is implemented in the constructor of `FieldInterface`. Simply add an additional 
 condition to the `innerType` interrogation section, capturing the type to be added and setting their `parser`, 
@@ -463,7 +465,12 @@ abstracted to make this quick and easy.
 
 This method is appropriate for relatively common types such as date and time types, numeric types, etc.
 
-###Creation of a DatatypeModel
+####Method 2: Creation of a DatatypeModel
 
 See [Defining a DatatypeModel](#Defining a DatatypeModel). This is more appropriate if you need behaviour for a 
 particular use case.
+
+##Why does this work like X? I think it should work like Y
+
+###Deletion part of change updates
+
