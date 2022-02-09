@@ -234,7 +234,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
       }
     }
     for (SurfaceGeometry geometry : mixedGeometries) {
-      geometry.delete();
+      geometry.delete(true);
     }
     context.pushAllChanges();
   }

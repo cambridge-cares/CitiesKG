@@ -5,6 +5,9 @@ import java.util.*;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.jena.arq.querybuilder.UpdateBuilder;
+import org.apache.jena.update.UpdateRequest;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 
 /**
@@ -25,10 +28,19 @@ public abstract class Model {
     FORCE_PUSH
   }
 
+  enum LifeCycle {
+    LIVE,
+    TO_DELETE,
+    TO_DELETE_ZEALOUS,
+    DESTROYED,
+  }
+
+  private static final String FIELD_NOT_FOUND_ERROR_TEXT = "No field of name found in Model.";
+
   @Getter String iri;
   @Getter ModelContext context;
   final MetaModel metaModel;
-  boolean deleted;
+  LifeCycle state;
 
   // Minimised copies of field values at the last synchronisation with the database, indexed by FieldInterface.index.
   final Object[] cleanValues;
@@ -39,6 +51,7 @@ public abstract class Model {
    */
   public Model() {
     metaModel = MetaModel.get(this.getClass());
+    state = LifeCycle.LIVE;
     cleanValues = new Object[metaModel.fieldMap.size()];
     // Initialise lists to empty lists if they haven't already been initialised
     for (Map.Entry<FieldKey, FieldInterface> vectorEntry : metaModel.vectorFieldList) {
@@ -54,24 +67,59 @@ public abstract class Model {
   /**
    * Clears all field of the instance
    */
-  public void clearAll() {
+  public void clear(String ... fieldNames) {
     for (FieldInterface field : metaModel.fieldMap.values())
-      field.clear(this);
+      if (fieldNames.length == 0 || ArrayUtils.contains(fieldNames, field.field.getName()))
+        field.clear(this);
   }
 
   /**
-   * Makes all fields of the instance clean, so they will not be written on push unless changed again.
+   * Makes the specified fields of the instance clean, so they will not be written on push unless changed again.
+   * @param fieldNames the fields to clean. If empty, all fields are cleaned.
    */
-  public void setAllClean() {
+  public void setClean(String... fieldNames) {
     for (FieldInterface field : metaModel.fieldMap.values())
-      cleanValues[field.index] = field.getMinimised(this);
+      if (fieldNames.length == 0 || ArrayUtils.contains(fieldNames, field.field.getName()))
+        cleanValues[field.index] = field.getMinimised(this);
   }
 
   /**
-   * Makes all fields of the instance dirty, so they will be written on push.
+   * Makes the specified fields of the instance dirty, so they will be written on push.
+   * @param fieldNames the fields to clean. If empty, all fields are dirtied.
    */
-  public void setAllDirty() {
-    Arrays.fill(cleanValues, SpecialFieldInstruction.FORCE_PUSH);
+  public void setDirty(String... fieldNames) {
+    for (FieldInterface field : metaModel.fieldMap.values())
+      if (fieldNames.length == 0 || ArrayUtils.contains(fieldNames, field.field.getName()))
+        cleanValues[field.index] = SpecialFieldInstruction.FORCE_PUSH;
+  }
+
+  /**
+   * @return if the named field is clean; fields immediately after {@link ModelContext#createNewModel(Class, String)}
+   * before first push are not considered clean. Dirty fields are pushed to the database on
+   * {@link ModelContext#pushChanges(Model)}.
+   */
+  public boolean isClean(String fieldName) {
+    for (FieldInterface field : metaModel.fieldMap.values())
+      if (field.field.getName().equals(fieldName))
+        return !shouldWriteInsert(field);
+    throw new JPSRuntimeException(FIELD_NOT_FOUND_ERROR_TEXT);
+  }
+
+  /**
+   * Internal function for use by {@link ModelContext} for determining updates to push
+   */
+  boolean shouldWriteInsert(FieldInterface field) {
+    if (cleanValues[field.index] == SpecialFieldInstruction.UNPULLED) return false;
+    if (cleanValues[field.index] == SpecialFieldInstruction.NEW) return true;
+    if (cleanValues[field.index] == SpecialFieldInstruction.FORCE_PUSH) return true;
+    return !Objects.equals(cleanValues[field.index], field.getMinimised(this));
+  }
+
+  /**
+   * Internal function for use by {@link ModelContext} for determining updates to push
+   */
+  boolean shouldWriteDelete(FieldInterface field) {
+    return shouldWriteInsert(field) && cleanValues[field.index] != SpecialFieldInstruction.NEW;
   }
 
   /**
@@ -82,10 +130,10 @@ public abstract class Model {
   }
 
   /**
-   * Wraps {@link ModelContext#delete(Model)}.
+   * Wraps {@link ModelContext#delete(Model, boolean)}.
    */
-  public void delete() {
-    context.delete(this);
+  public void delete(boolean zealous) {
+    context.delete(this, zealous);
   }
 
   /**

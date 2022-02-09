@@ -3,14 +3,19 @@ package uk.ac.cam.cares.twa.cities.models.test;
 import junit.framework.TestCase;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.jena.arq.querybuilder.WhereBuilder;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.json.JSONArray;
 import org.mockito.Mockito;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.models.*;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertNotEquals;
@@ -86,25 +91,48 @@ public class ModelContextTest extends TestCase {
     context.update("CLEAR ALL");
 
     TestModel model1 = TestModel.createRandom(context, 12345, 3, 0);
-    model1.pushChanges();
-    int firstModelCount = countTriples(context);
+
+    context.update("INSERT DATA { <" + model1.getIri() + "> <test> <data> }");
+    int baseCount = countTriples(context);
+
     context.pushAllChanges();
+    int firstModelCount = countTriples(context);
 
     TestModel model2 = TestModel.createRandom(context, 3152, 8, 0);
     context.pushAllChanges();
     int secondModelCount = countTriples(context);
 
-    model1.delete();
+    model1.delete(false);
     context.pushAllChanges();
-    assertEquals(secondModelCount - firstModelCount, countTriples(context));
+    assertEquals(baseCount + secondModelCount - firstModelCount, countTriples(context));
 
-    model2.delete();
+    model2.delete(false);
     context.pushAllChanges();
-    assertEquals(0, countTriples(context));
+    assertEquals(baseCount, countTriples(context));
 
     model1 = TestModel.createRandom(context, 12345, 3, 0);
     model1.pushChanges();
     assertEquals(firstModelCount, countTriples(context));
+
+  }
+
+  public void testDeleteZealous() {
+
+    ModelContext context = new ModelContext(testResourceId, testNamespace);
+    context.update("CLEAR ALL");
+
+    TestModel model1 = TestModel.createRandom(context, 12345, 3, 0);
+    context.pushAllChanges();
+    context.update("INSERT DATA { <" + model1.getIri() + "> <test> <data> }");
+    int firstModelCount = countTriples(context);
+
+    TestModel model2 = TestModel.createRandom(context, 3152, 8, 0);
+    context.pushAllChanges();
+    int secondModelCount = countTriples(context);
+
+    model1.delete(true);
+    context.pushAllChanges();
+    assertEquals(secondModelCount - firstModelCount, countTriples(context));
 
   }
 
@@ -115,7 +143,7 @@ public class ModelContextTest extends TestCase {
     pushContext.pushAllChanges();
 
     ModelContext pullContext = new ModelContext(testResourceId, testNamespace);
-    TestModel pullModel = pullContext.loadModel(TestModel.class, pushModel.getIri());
+    TestModel pullModel = pullContext.loadAll(TestModel.class, pushModel.getIri());
     assertEquals(pushModel, pullModel);
   }
 
@@ -126,7 +154,7 @@ public class ModelContextTest extends TestCase {
     pushContext.pushAllChanges();
 
     ModelContext pullContext = new ModelContext(testResourceId, testNamespace);
-    TestModel pullModel = pullContext.recursiveLoadModel(TestModel.class, pushModel.getIri(), 2);
+    TestModel pullModel = pullContext.recursiveLoadAll(TestModel.class, pushModel.getIri(), 2);
     assertEquals(pushModel, pullModel);
     assertEquals(pushModel.getModelProp(), pullModel.getModelProp());
     assertEquals(pushModel.getModelProp().getModelProp(), pullModel.getModelProp().getModelProp());
@@ -170,6 +198,75 @@ public class ModelContextTest extends TestCase {
     pullModel.pull();
     for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.vectorFieldList) {
       assertTrue(entry.getValue().equals(pushModel, pullModel));
+    }
+  }
+
+  public void testLoadAllWhere() throws ParseException {
+    ModelContext pushContext = new ModelContext(testResourceId, testNamespace);
+    pushContext.update("CLEAR ALL");
+    TestModel.createRandom(pushContext, 12345, 0, 20);
+    pushContext.pushAllChanges();
+
+    ModelContext pullContext = new ModelContext(testResourceId, testNamespace);
+    List<TestModel> pullModels = pullContext.loadAllWhere(TestModel.class,
+        new WhereBuilder().addWhere(
+            ModelContext.getModelVar(),
+            NodeFactory.createURI(SPARQLUtils.expandQualifiedName("dbpediao:intprop")),
+            "?intprop"
+        ).addFilter("?intprop > 0")
+    );
+    for(Model pm: pushContext.members.values()) {
+      TestModel pushModel = (TestModel) pm;
+      TestModel pullModelMatch = null;
+      for(TestModel pullModel: pullModels) {
+        if(pullModel.getIri().equals(pushModel.getIri())) {
+          if(pullModelMatch != null) fail();
+          pullModelMatch = pullModel;
+        }
+      }
+      if(pushModel.getIntProp() > 0) {
+        assertNotNull(pullModelMatch);
+        assertEquals(pullModelMatch, pushModel);
+      } else {
+        assertNull(pullModelMatch);
+      }
+    }
+  }
+
+  public void testLoadPartialWhere() throws ParseException {
+    ModelContext pushContext = new ModelContext(testResourceId, testNamespace);
+    pushContext.update("CLEAR ALL");
+    TestModel.createRandom(pushContext, 12345, 0, 20);
+    pushContext.pushAllChanges();
+
+    ModelContext pullContext = new ModelContext(testResourceId, testNamespace);
+    List<TestModel> pullModels = pullContext.loadPartialWhere(TestModel.class,
+        new WhereBuilder().addWhere(
+            ModelContext.getModelVar(),
+            NodeFactory.createURI(SPARQLUtils.expandQualifiedName("dbpediao:intprop")),
+            "?intprop"
+        ).addFilter("?intprop > 0"),
+        "intProp",
+        "backwardVector"
+    );
+    for(Model pm: pushContext.members.values()) {
+      TestModel pushModel = (TestModel) pm;
+      TestModel pullModelMatch = null;
+      for(TestModel pullModel: pullModels) {
+        if(pullModel.getIri().equals(pushModel.getIri())) {
+          if(pullModelMatch != null) fail();
+          pullModelMatch = pullModel;
+        }
+      }
+      if(pushModel.getIntProp() > 0) {
+        assertNotNull(pullModelMatch);
+        assertEquals(pullModelMatch.getBackwardVector(), pushModel.getBackwardVector());
+        assertEquals(pullModelMatch.getIntProp(), pushModel.getIntProp());
+        assertNull(pullModelMatch.getStringProp());
+        assertEquals(new ArrayList<Double>(), pullModelMatch.getForwardVector());
+      } else {
+        assertNull(pullModelMatch);
+      }
     }
   }
 
@@ -226,7 +323,7 @@ public class ModelContextTest extends TestCase {
     pushContext.pushAllChanges();
 
     ModelContext pullContext = new ModelContext(testResourceId);
-    TripleTestModel pullModel = pullContext.loadModel(TripleTestModel.class, pushModel.getIri());
+    TripleTestModel pullModel = pullContext.loadAll(TripleTestModel.class, pushModel.getIri());
     assertEquals(pushModel, pullModel);
   }
 
@@ -241,7 +338,7 @@ public class ModelContextTest extends TestCase {
     pushContext.pushAllChanges();
 
     ModelContext pullContext = new ModelContext(testResourceId);
-    TripleTestModel pullModel = pullContext.loadPartialModel(TripleTestModel.class, pushModel.getIri(), "stringProp", "forwardVector");
+    TripleTestModel pullModel = pullContext.loadPartial(TripleTestModel.class, pushModel.getIri(), "stringProp", "forwardVector");
     assertNotEquals(pushModel, pullModel);
     assertEquals(pushModel.getStringProp(), pullModel.getStringProp());
     assertNotEquals(pushModel.getDoubleProp(), pullModel.getDoubleProp());

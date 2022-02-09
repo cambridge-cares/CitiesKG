@@ -1,12 +1,10 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo;
 
-import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.Building;
 import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
 
-import java.net.URI;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -31,7 +29,7 @@ public class BuildingHullsRegistrationTask implements Callable<Void> {
   }
 
   public Void call() {
-    Building building = context.loadModel(Building.class, buildingIri);
+    Building building = context.loadAll(Building.class, buildingIri);
     for (int lod = 1; lod <= 4; lod++) {
       if (!params.lods[lod - 1]) continue;
       SurfaceGeometry multiSurface =

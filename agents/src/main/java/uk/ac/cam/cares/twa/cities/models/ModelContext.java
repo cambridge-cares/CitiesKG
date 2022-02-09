@@ -7,7 +7,6 @@ import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.query.Query;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.update.UpdateRequest;
@@ -20,6 +19,7 @@ import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ModelContext {
 
@@ -107,13 +107,13 @@ public class ModelContext {
   private RecursivePullSession currentPullSession;
 
   // SPARQL variable names
+  private static final String MODEL = "model";
   private static final String GRAPH = "graph";
   private static final String PREDICATE = "predicate";
   private static final String VALUE = "value";
   private static final String DATATYPE = "datatype";
   private static final String ISBLANK = "isblank";
   // Helper constants for constructing SPARQL queries
-  private static final String NOT = "NOT";
   private static final String ISBLANK_FUN = "ISBLANK";
   private static final String DATATYPE_FUN = "DATATYPE";
   private static final String QM = "?";
@@ -130,6 +130,9 @@ public class ModelContext {
   public final String graphNamespace;
   public final Map<MemberKey, Model> members;
 
+  /**
+   * @return whether the context is for a quad or triple store.
+   */
   public boolean isQuads() {
     return graphNamespace != null;
   }
@@ -224,46 +227,6 @@ public class ModelContext {
   }
 
   /**
-   * Convenience wrapper for {@link #createHollowModel(Class, String)} followed by {@link #pullPartial(Model, String...)}.
-   * @return the partially loaded model.
-   */
-  public <T extends Model> T loadPartialModel(Class<T> ofClass, String iri, String... fieldNames) {
-    T model = createHollowModel(ofClass, iri);
-    pullPartial(model, fieldNames);
-    return model;
-  }
-
-  /**
-   * Convenience wrapper for {@link #createHollowModel(Class, String)} followed by {@link #recursivePullPartial(Model, int, String...)}.
-   * @return the partially loaded model.
-   */
-  public <T extends Model> T recursiveLoadPartialModel(Class<T> ofClass, String iri, int recursionRadius, String... fieldNames) {
-    T model = createHollowModel(ofClass, iri);
-    recursivePullPartial(model, recursionRadius, fieldNames);
-    return model;
-  }
-
-  /**
-   * Convenience wrapper for {@link #createHollowModel(Class, String)} followed by {@link #pullAll(Model)}.
-   * @return the loaded model.
-   */
-  public <T extends Model> T loadModel(Class<T> ofClass, String iri) {
-    T model = createHollowModel(ofClass, iri);
-    pullAll(model);
-    return model;
-  }
-
-  /**
-   * Convenience wrapper for {@link #createHollowModel(Class, String)} followed by {@link #recursivePullAll(Model, int)}.
-   * @return the loaded model.
-   */
-  public <T extends Model> T recursiveLoadModel(Class<T> ofClass, String iri, int recursionRadius) {
-    T model = createHollowModel(ofClass, iri);
-    recursivePullAll(model, recursionRadius);
-    return model;
-  }
-
-  /**
    * If this context already has registered a {@link Model} of the given IRI, return that. Otherwise, create a hollow
    * model for it. If this context has a {@link RecursivePullSession} active, i.e. this is a downstream request of a
    * {@link #recursivePullAll(Model, int)} or {@link #recursivePullPartial(Model, int, String...)}  call), this fetch
@@ -279,116 +242,127 @@ public class ModelContext {
   }
 
   /**
-   * Flags the specified model to be (a) destroyed in the target resource, including all quads described or not
-   * described in the Java class definition, and (b) removed from the context's registry, the next time a context-wide
-   * push is requested. Note that it is an error to delete a model and create a new one of the same IRI before first
-   * pushing the change; the model is still registered to the context between this and the {@link #pushChanges(Model)}.
+   * Convenience wrapper for {@link #createHollowModel(Class, String)} followed by {@link #pullAll(Model)}.
+   * @return the loaded model.
    */
-  public void delete(Model model) {
-    model.deleted = true;
+  public <T extends Model> T loadAll(Class<T> ofClass, String iri) {
+    T model = createHollowModel(ofClass, iri);
+    pullAll(model);
+    return model;
   }
 
   /**
-   * Pushes all changes in the context. Equivalent to {@link #pushChanges(Model)}} on every member of the context, but more
-   * optimised.
+   * Convenience wrapper for {@link #createHollowModel(Class, String)} followed by {@link #recursivePullAll(Model, int)}.
+   * @return the loaded model.
    */
-  public void pushAllChanges() {
-    UpdateRequest deletions = new UpdateRequest();
-    UpdateBuilder insertions = new UpdateBuilder();
-    Stack<MemberKey> toBeRemoved = new Stack<>();
-    boolean anyInserts = false;
-    for (Map.Entry<MemberKey, Model> entry : members.entrySet()) {
-      if (entry.getValue().deleted) {
-        makeDeletionDeltas(entry.getValue(), deletions);
-        toBeRemoved.add(entry.getKey());
-      } else {
-        // makeChangeDeltas returns whether any insertions were added
-        anyInserts = makeChangeDeltas(entry.getValue(), deletions, insertions) || anyInserts;
-      }
-      if (deletions.toString().length() > EXECUTION_CHARACTER_THRESHOLD) {
-        update(deletions.add(insertions.build()).toString());
-        deletions = new UpdateRequest();
-        insertions = new UpdateBuilder();
-      }
-      entry.getValue().setAllClean();
-    }
-    for (MemberKey key : toBeRemoved) members.remove(key);
-    // anyInserts tracking is needed since trying to build an empty UpdateBuilder causes an error, and I cannot find
-    // a way to probe whether an UpdateBuilder contains any operations.
-    if (anyInserts) deletions.add(insertions.build());
-    if (deletions.getOperations().size() > 0)
-      update(deletions.toString());
+  public <T extends Model> T recursiveLoadAll(Class<T> ofClass, String iri, int recursionRadius) {
+    T model = createHollowModel(ofClass, iri);
+    recursivePullAll(model, recursionRadius);
+    return model;
   }
 
   /**
-   * Pushes all dirty field values to the database for a model.
+   * Convenience wrapper for {@link #createHollowModel(Class, String)} followed by {@link #pullPartial(Model, String...)}.
+   * @return the partially loaded model.
    */
-  public void pushChanges(Model model) {
-    UpdateRequest deletions = new UpdateRequest();
-    UpdateBuilder insertions = new UpdateBuilder();
-    if (makeChangeDeltas(model, deletions, insertions)) // return value is whether insertions were added
-      deletions.add(insertions.build());
-    model.setAllClean();
-    if (deletions.getOperations().size() > 0)
-      update(deletions.toString());
+  public <T extends Model> T loadPartial(Class<T> ofClass, String iri, String... fieldNames) {
+    T model = createHollowModel(ofClass, iri);
+    pullPartial(model, fieldNames);
+    return model;
   }
 
   /**
-   * Determines the changes in a model which should be pushed, and add necessary deletion updates and insertion quads
-   * to the given output update builders.
-   * @param model         the model to make deltas for.
-   * @param deletionsOut  the output destination for deletion updates.
-   * @param insertionsOut the output destination for insertion quads.
-   * @return whether any insertions were performed.
+   * Convenience wrapper for {@link #createHollowModel(Class, String)} followed by {@link #recursivePullPartial(Model, int, String...)}.
+   * @return the partially loaded model.
    */
-  private boolean makeChangeDeltas(Model model, UpdateRequest deletionsOut, UpdateBuilder insertionsOut) {
-    boolean anyInserts = false;
-    for (Map.Entry<FieldKey, FieldInterface> entry : model.metaModel.fieldMap.entrySet()) {
-      FieldInterface fieldInterface = entry.getValue();
-      FieldKey key = entry.getKey();
-      // Check for special instructions
-      Object cleanValue = model.cleanValues[fieldInterface.index];
-      if (cleanValue == Model.SpecialFieldInstruction.UNPULLED) {
-        continue;
-      } else if (cleanValue != Model.SpecialFieldInstruction.NEW) {
-        // Check if dirty
-        if (Objects.equals(fieldInterface.getMinimised(model), cleanValue))
-          continue;
-      }
-      Node self = NodeFactory.createURI(model.iri);
-      Node predicate = NodeFactory.createURI(key.predicate);
-      Node graph = isQuads() ? NodeFactory.createURI(graphNamespace + key.graphName) : null;
-      // Add deletion
-      if (cleanValue != Model.SpecialFieldInstruction.NEW) {
-        WhereBuilder where = new WhereBuilder().addWhere(key.backward ? (QM + VALUE) : self, predicate, key.backward ? self : (QM + VALUE));
-        if (isQuads()) {
-          deletionsOut.add(new UpdateBuilder().addGraph(graph, where).buildDeleteWhere());
-        } else {
-          deletionsOut.add(new UpdateBuilder().addWhere(where).buildDeleteWhere());
+  public <T extends Model> T recursiveLoadPartial(Class<T> ofClass, String iri, int recursionRadius, String... fieldNames) {
+    T model = createHollowModel(ofClass, iri);
+    recursivePullPartial(model, recursionRadius, fieldNames);
+    return model;
+  }
+
+  /**
+   * Loads all models which match the given WHERE condition using the {@link #pullAll} query pattern. The condition
+   * should use the {@link Node} from {@link #getModelVar()} to represent the models to be captured. Note that
+   * this can only be used for {@link Model}s of a single class. Note that an insufficiently specific WHERE may result
+   * in entities not of your target class being misidentified as targets, resulting in excess false results.
+   */
+  public <T extends Model> List<T> loadAllWhere(Class<T> ofClass, WhereBuilder condition) {
+    Node modelNode = NodeFactory.createVariable(MODEL);
+    Set<String> resultIris = new HashSet<>();
+    for (boolean backward : new boolean[]{false, true}) {
+      // Execute query
+      SelectBuilder query = buildPullAllInDirectionQuery(modelNode, backward);
+      query.addWhere(condition).addVar(modelNode).addOrderBy(modelNode);
+      JSONArray response = query(query.buildString());
+      if (response.length() == 0) continue;
+      // Identify intervals corresponding to single Model and read the intervals in
+      String previousIri = response.getJSONObject(0).getString(MODEL);
+      int end, start = 0;
+      for (end = 1; end < response.length(); end++) {
+        String nextIri = response.getJSONObject(end).getString(MODEL);
+        if (!nextIri.equals(previousIri)) {
+          readPullAllInDirectionResponse(getModel(ofClass, previousIri), response, backward, start, end);
+          resultIris.add(previousIri);
+          start = end;
+          previousIri = nextIri;
         }
       }
-      // Add insertion; technically object properties are duplicate-inserted from both ends, but I don't think it's
-      // actually going to be distinguishably more performant if we do a check for this and do it once each instead.
-      for (Node valueValue : fieldInterface.getNodes(model)) {
-        Triple triple = new Triple(key.backward ? valueValue : self, predicate, key.backward ? self : valueValue);
-        if (isQuads()) {
-          insertionsOut.addInsert(new Quad(graph, triple));
-        } else {
-          insertionsOut.addInsert(triple);
-        }
-        anyInserts = true;
-      }
+      // Last interval
+      readPullAllInDirectionResponse(getModel(ofClass, previousIri), response, backward, start, end);
+      resultIris.add(previousIri);
     }
-    return anyInserts;
+    // Note that we do not directly use a HashSet<T> to avoid expensive equals() invocations on Model classes.
+    return resultIris.stream().map((resultIri) -> getModel(ofClass, resultIri)).collect(Collectors.toList());
   }
 
   /**
-   * Adds the updates for the deletion of a model to an output update request.
+   * Loads all models which match the given WHERE condition using the {@link #pullPartial} query pattern. The condition
+   * should use the {@link Node} from {@link #getModelVar()} to represent the models to be captured. Note that
+   * this can only be used for {@link Model}s of a single class. Note that an insufficiently specific WHERE may result
+   * in entities not of your target class being misidentified as targets, resulting in excess false results.
    */
-  private void makeDeletionDeltas(Model model, UpdateRequest deletionsOut) {
-    Node self = NodeFactory.createURI(model.iri);
-    deletionsOut.add(new UpdateBuilder().addWhere(QM + VALUE, QM + PREDICATE, self).buildDeleteWhere());
-    deletionsOut.add(new UpdateBuilder().addWhere(self, QM + PREDICATE, QM + VALUE).buildDeleteWhere());
+  public <T extends Model> List<T> loadPartialWhere(Class<T> ofClass, WhereBuilder condition, String... fieldNames) {
+    Node modelNode = NodeFactory.createVariable(MODEL);
+    MetaModel metaModel = MetaModel.get(ofClass);
+    Set<String> resultIris = new HashSet<>();
+    // Scalars
+    SelectBuilder scalarsQuery = buildScalarsQuery(modelNode, metaModel, fieldNames);
+    if (scalarsQuery.getVars().size() > 0) {
+      scalarsQuery.addWhere(condition).addVar(modelNode);
+      JSONArray scalarsResponse = query(scalarsQuery.buildString());
+      for (int i = 0; i < scalarsResponse.length(); i++) {
+        JSONObject row = scalarsResponse.getJSONObject(i);
+        T model = getModel(ofClass, row.getString(MODEL));
+        readScalarsResponse(model, row);
+        resultIris.add(model.iri);
+      }
+    }
+    // Vectors
+    for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.vectorFieldList) {
+      // Check field was named
+      FieldInterface field = entry.getValue();
+      if (fieldNames.length > 0 && !ArrayUtils.contains(fieldNames, field.field.getName())) continue;
+      // Build and execute query for this field
+      SelectBuilder vectorQuery = buildVectorQuery(modelNode, entry.getKey());
+      vectorQuery.addWhere(condition).addVar(modelNode).addOrderBy(modelNode);
+      JSONArray response = query(vectorQuery.buildString());
+      if (response.length() == 0) continue;
+      // Identify intervals corresponding to each single Model and read the intervals in
+      String previousIri = response.getJSONObject(0).getString(MODEL);
+      int end, start = 0;
+      for (end = 1; end < response.length(); end++) {
+        String nextIri = response.getJSONObject(end).getString(MODEL);
+        if (!nextIri.equals(previousIri)) {
+          readPullVectorsResponse(getModel(ofClass, previousIri), field, response, start, end);
+          resultIris.add(previousIri);
+          start = end;
+          previousIri = nextIri;
+        }
+      }
+    }
+    // Note that we do not directly use a HashSet<T> to avoid expensive equals() invocations on Model classes.
+    return resultIris.stream().map((resultIri) -> getModel(ofClass, resultIri)).collect(Collectors.toList());
   }
 
   /**
@@ -419,53 +393,49 @@ public class ModelContext {
    * {@link #pullPartial(Model, String...)}.
    */
   public void pullAll(Model model) {
-    model.clearAll();
-    pullAllInDirection(model, true);
-    pullAllInDirection(model, false);
-    model.setAllClean();
+    model.clear();
+    for (boolean forward : new boolean[]{false, true}) {
+      SelectBuilder query = buildPullAllInDirectionQuery(NodeFactory.createURI(model.iri), forward);
+      JSONArray response = query(query.buildString());
+      readPullAllInDirectionResponse(model, response, forward, 0, response.length());
+    }
+    model.setClean();
   }
 
   /**
-   * Populates all fields in one direction with values from the database.
-   * @param model    the model instance to populate.
-   * @param backward whether iriName is the object or subject in the rows retrieved.
+   * Reads the query results of a pull-all-in-direction-query into the fields of the {@link Model}.
+   * @param start    the first index (inclusive) to start reading in rows at.
+   * @param end      the index (exclusive) to stop reading in rows at.
    */
-  private void pullAllInDirection(Model model, boolean backward) {
-    Query queryString = buildPullAllInDirectionQuery(model.iri, backward);
-    JSONArray queryResult = query(queryString.toString());
-    for (int index = 0; index < queryResult.length(); index++) {
-      JSONObject row = queryResult.getJSONObject(index);
+  private void readPullAllInDirectionResponse(Model model, JSONArray response, boolean backward, int start, int end) {
+    for (int index = start; index < end; index++) {
+      JSONObject row = response.getJSONObject(index);
       // If using named graphs (quads), decompose the retrieved graph IRI into a graph name
       String graph = row.optString(GRAPH, "");
       if (graphNamespace != null && graph.startsWith(graphNamespace))
         graph = graph.substring(graphNamespace.length());
       // Do the field lookup and put
-      FieldKey fieldKey = new FieldKey(graph, row.getString(PREDICATE), backward);
-      FieldInterface fieldInterface = model.metaModel.fieldMap.get(fieldKey);
-      if (fieldInterface == null) continue;
-      if (isTruthy(row.getString(ISBLANK))) {
-        fieldInterface.clear(model);
-      } else {
-        fieldInterface.put(model, row.getString(VALUE), row.optString(DATATYPE));
-      }
+      FieldKey key = new FieldKey(graph, row.getString(PREDICATE), backward);
+      FieldInterface field = model.metaModel.fieldMap.get(key);
+      if (field == null) continue;
+      field.put(model, isTruthy(row.getString(ISBLANK)) ? null : row.getString(VALUE), row.optString(DATATYPE));
     }
   }
 
   /**
    * Composes a query to pull all triples relating to the target IRI.
-   * @param iri      the IRI from which to pull data.
+   * @param model    the {@link Node} of the model for which data is being pulled.
    * @param backward whether to query quads with <code>iriName</code> as the object (true) or subject (false).
    * @return the composed query.
    */
-  private Query buildPullAllInDirectionQuery(String iri, boolean backward) {
+  private SelectBuilder buildPullAllInDirectionQuery(Node model, boolean backward) {
     try {
       // SELECT ?value ?predicate ?datatype ?isblank
       SelectBuilder select = new SelectBuilder()
           .addVar(QM + VALUE).addVar(QM + PREDICATE).addVar(QM + DATATYPE).addVar(QM + ISBLANK);
       // WHERE { <self> ?predicate ?value }   or   WHERE { ?value ?predicate <self> }
       WhereBuilder where = new WhereBuilder()
-          .addWhere(backward ? (QM + VALUE) : NodeFactory.createURI(iri),
-              QM + PREDICATE, backward ? NodeFactory.createURI(iri) : (QM + VALUE));
+          .addWhere(backward ? (QM + VALUE) : model, QM + PREDICATE, backward ? model : (QM + VALUE));
       if (isQuads()) {
         select.addVar(QM + GRAPH).addGraph(QM + GRAPH, where);
       } else {
@@ -474,7 +444,7 @@ public class ModelContext {
       // BIND(datatype(?value) AS ?datatype) BIND(isBlank(?value) AS ?isblank)
       select.addBind(DATATYPE_FUN + OP + QM + VALUE + CP, QM + DATATYPE)
           .addBind(ISBLANK_FUN + OP + QM + VALUE + CP, QM + ISBLANK);
-      return select.build();
+      return select;
     } catch (ParseException e) {
       throw new JPSRuntimeException(e);
     }
@@ -530,20 +500,23 @@ public class ModelContext {
    */
   private void pullScalars(Model model, String... fieldNames) {
     // Build and execute the query for scalar values
-    SelectBuilder query = buildScalarsQuery(model, fieldNames);
+    SelectBuilder query = buildScalarsQuery(NodeFactory.createURI(model.iri), model.metaModel, fieldNames);
     if (query.getVars().size() == 0) return;
-    JSONArray scalarResponse = query(query.buildString());
-    if (scalarResponse.length() == 0) throw new JPSRuntimeException(OBJECT_NOT_FOUND_EXCEPTION_TEXT);
-    // Put the query results into the model
-    JSONObject row = scalarResponse.getJSONObject(0);
+    JSONArray response = query(query.buildString());
+    if (response.length() == 0) throw new JPSRuntimeException(OBJECT_NOT_FOUND_EXCEPTION_TEXT);
+    readScalarsResponse(model, response.getJSONObject(0));
+  }
+
+  /**
+   * Reads the query results of a scalars query into the fields of the {@link Model}.
+   */
+  private void readScalarsResponse(Model model, JSONObject row) {
     for (Map.Entry<FieldKey, FieldInterface> entry : model.metaModel.scalarFieldList) {
       FieldInterface field = entry.getValue();
       if (!row.has(VALUE + field.index)) continue;
-      if (isTruthy(row.getString(ISBLANK + field.index))) {
-        field.clear(model);
-      } else {
-        field.put(model, row.getString(VALUE + field.index), row.optString(DATATYPE + field.index));
-      }
+      field.put(model,
+          isTruthy(row.getString(ISBLANK + field.index)) ? null : row.getString(VALUE + field.index),
+          row.optString(DATATYPE + field.index));
       model.cleanValues[field.index] = field.getMinimised(model);
     }
   }
@@ -551,37 +524,36 @@ public class ModelContext {
   /**
    * Composes a query to retrieve the values for named scalar fields of this instance.
    */
-  private SelectBuilder buildScalarsQuery(Model model, String... fieldNames) {
-    try {
-      SelectBuilder select = new SelectBuilder();
-      for (Map.Entry<FieldKey, FieldInterface> entry : model.metaModel.scalarFieldList) {
-        // Filter for only requested fields
-        FieldInterface field = entry.getValue();
-        FieldKey key = entry.getKey();
-        if (fieldNames.length > 0 && !ArrayUtils.contains(fieldNames, field.field.getName())) continue;
-        // Create nodes to use
-        Node self = NodeFactory.createURI(model.iri);
-        Node predicate = NodeFactory.createURI(key.predicate);
-        String valueN = QM + VALUE + field.index;
-        String datatypeN = QM + DATATYPE + field.index;
-        String isBlankN = QM + ISBLANK + field.index;
-        // SELECT ?value ?predicate ?datatype ?isblank
-        select.addVar(valueN).addVar(datatypeN).addVar(isBlankN);
-        // WHERE { <self> <predicate> ?value }   or   WHERE { ?value <predicate> <self> }
-        WhereBuilder where = new WhereBuilder().addWhere(key.backward ? valueN : self, predicate, key.backward ? self : valueN);
-        if (isQuads()) {
-          select.addGraph(NodeFactory.createURI(graphNamespace + key.graphName), where);
-        } else {
-          select.addWhere(where);
-        }
+  private SelectBuilder buildScalarsQuery(Node model, MetaModel metaModel, String... fieldNames) {
+    SelectBuilder select = new SelectBuilder();
+    for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.scalarFieldList) {
+      // Filter for only requested fields
+      FieldInterface field = entry.getValue();
+      FieldKey key = entry.getKey();
+      if (fieldNames.length > 0 && !ArrayUtils.contains(fieldNames, field.field.getName())) continue;
+      // Create nodes to use
+      Node predicate = NodeFactory.createURI(key.predicate);
+      String valueN = QM + VALUE + field.index;
+      String datatypeN = QM + DATATYPE + field.index;
+      String isBlankN = QM + ISBLANK + field.index;
+      // SELECT ?value ?predicate ?datatype ?isblank
+      select.addVar(valueN).addVar(datatypeN).addVar(isBlankN);
+      // WHERE { <self> <predicate> ?value }   or   WHERE { ?value <predicate> <self> }
+      WhereBuilder where = new WhereBuilder().addWhere(key.backward ? valueN : model, predicate, key.backward ? model : valueN);
+      if (isQuads()) {
+        select.addGraph(NodeFactory.createURI(graphNamespace + key.graphName), where);
+      } else {
+        select.addWhere(where);
+      }
+      try {
         // BIND(datatype(?value) AS ?datatype) BIND(isBlank(?value) AS ?isblank)
         select.addBind(DATATYPE_FUN + OP + valueN + CP, datatypeN)
             .addBind(ISBLANK_FUN + OP + valueN + CP, isBlankN);
+      } catch (ParseException e) {
+        throw new JPSRuntimeException(e);
       }
-      return select;
-    } catch (ParseException e) {
-      throw new JPSRuntimeException(e);
     }
+    return select;
   }
 
   /**
@@ -597,42 +569,45 @@ public class ModelContext {
    */
   private void pullVectors(Model model, String... fieldNames) {
     for (Map.Entry<FieldKey, FieldInterface> entry : model.metaModel.vectorFieldList) {
-      // Filter for only requested fields
       FieldInterface field = entry.getValue();
       if (fieldNames.length > 0 && !ArrayUtils.contains(fieldNames, field.field.getName())) continue;
-      // Query: the vector query guaranteed to be non-empty, unlike in pullScalars, so no need to perform check
-      JSONArray response = query(buildVectorQuery(model, entry.getKey()).buildString());
-      // Put response values into model
-      for (int i = 0; i < response.length(); i++) {
-        JSONObject row = response.getJSONObject(i);
-        if (isTruthy(row.getString(ISBLANK))) {
-          field.clear(model);
-        } else {
-          field.put(model, row.getString(VALUE), row.optString(DATATYPE));
-        }
-      }
-      model.cleanValues[field.index] = field.getMinimised(model);
+      SelectBuilder query = buildVectorQuery(NodeFactory.createURI(model.iri), entry.getKey());
+      JSONArray response = query(query.buildString());
+      readPullVectorsResponse(model, field, response, 0, response.length());
     }
+  }
+
+  /**
+   * Reads the query results of a vector query into the fields of the {@link Model}.
+   * @param start    the first index (inclusive) to start reading in rows at.
+   * @param end      the index (exclusive) to stop reading in rows at.
+   */
+  private void readPullVectorsResponse(Model model, FieldInterface field, JSONArray response, int start, int end) {
+    field.clear(model);
+    for (int i = start; i < end; i++) {
+      JSONObject row = response.getJSONObject(i);
+      field.put(model, isTruthy(row.getString(ISBLANK)) ? null : row.getString(VALUE), row.optString(DATATYPE));
+    }
+    model.cleanValues[field.index] = field.getMinimised(model);
   }
 
   /**
    * Composes a query for all matches of a property described by a {@link FieldKey}, for this instance.
    */
-  private SelectBuilder buildVectorQuery(Model model, FieldKey key) {
-    Node self = NodeFactory.createURI(model.iri);
+  private SelectBuilder buildVectorQuery(Node model, FieldKey key) {
     Node predicate = NodeFactory.createURI(key.predicate);
+    // SELECT ?value ?predicate ?datatype ?isblank
+    SelectBuilder select = new SelectBuilder().addVar(QM + VALUE).addVar(QM + DATATYPE).addVar(QM + ISBLANK);
+    // WHERE { <self> <predicate> ?value }   or   WHERE { ?value <predicate> <self> }
+    WhereBuilder where = new WhereBuilder()
+        .addWhere(key.backward ? (QM + VALUE) : model, predicate, key.backward ? model : (QM + VALUE));
+    if (isQuads()) {
+      Node graph = NodeFactory.createURI(graphNamespace + key.graphName);
+      select.addGraph(graph, where);
+    } else {
+      select.addWhere(where);
+    }
     try {
-      // SELECT ?value ?predicate ?datatype ?isblank
-      SelectBuilder select = new SelectBuilder().addVar(QM + VALUE).addVar(QM + DATATYPE).addVar(QM + ISBLANK);
-      // WHERE { <self> <predicate> ?value }   or   WHERE { ?value <predicate> <self> }
-      WhereBuilder where = new WhereBuilder()
-          .addWhere(key.backward ? (QM + VALUE) : self, predicate, key.backward ? self : (QM + VALUE));
-      if (isQuads()) {
-        Node graph = NodeFactory.createURI(graphNamespace + key.graphName);
-        select.addGraph(graph, where);
-      } else {
-        select.addWhere(where);
-      }
       // BIND(datatype(?value) AS ?datatype) BIND(isBlank(?value) AS ?isblank)
       select.addBind(DATATYPE_FUN + OP + QM + VALUE + CP, QM + DATATYPE)
           .addBind(ISBLANK_FUN + OP + QM + VALUE + CP, QM + ISBLANK);
@@ -640,6 +615,144 @@ public class ModelContext {
     } catch (ParseException e) {
       throw new JPSRuntimeException(e);
     }
+  }
+
+  /**
+   * Flags the specified model to be (a) destroyed in the target resource, including all quads described or not
+   * described in the Java class definition, and (b) removed from the context's registry, the next time a context-wide
+   * push is requested. Note that it is an error to delete a model and create a new one of the same IRI before first
+   * pushing the change; the model is still registered to the context between this and the {@link #pushChanges(Model)}.
+   */
+  public void delete(Model model, boolean zealous) {
+    model.state = zealous ? Model.LifeCycle.TO_DELETE_ZEALOUS : Model.LifeCycle.TO_DELETE;
+  }
+
+  /**
+   * Pushes all changes in the context. Equivalent to {@link #pushChanges(Model)}} on every member of the context, but more
+   * optimised.
+   */
+  public void pushAllChanges() {
+    UpdateRequest deletions = new UpdateRequest();
+    UpdateBuilder insertions = new UpdateBuilder();
+    Stack<MemberKey> toBeRemoved = new Stack<>();
+    boolean anyInserts = false;
+    for (Map.Entry<MemberKey, Model> entry : members.entrySet()) {
+      Model model = entry.getValue();
+      switch (model.state) {
+        case LIVE:
+          // makeChangeDeltas returns whether any insertions were added
+          anyInserts = makeChangeDeltas(model, deletions, insertions) || anyInserts;
+          break;
+        case TO_DELETE:
+          makeDeleteDeltas(model, deletions);
+          model.state = Model.LifeCycle.DESTROYED;
+          toBeRemoved.add(entry.getKey());
+          break;
+        case TO_DELETE_ZEALOUS:
+          makeDeleteZealousDeltas(model, deletions);
+          model.state = Model.LifeCycle.DESTROYED;
+          toBeRemoved.add(entry.getKey());
+          break;
+        case DESTROYED:
+          toBeRemoved.add(entry.getKey());
+      }
+      if (deletions.toString().length() > EXECUTION_CHARACTER_THRESHOLD) {
+        update(deletions.add(insertions.build()).toString());
+        deletions = new UpdateRequest();
+        insertions = new UpdateBuilder();
+      }
+      entry.getValue().setClean();
+    }
+    for (MemberKey key : toBeRemoved) members.remove(key);
+    // anyInserts tracking is needed since trying to build an empty UpdateBuilder causes an error, and I cannot find
+    // a way to probe whether an UpdateBuilder contains any operations.
+    if (anyInserts) deletions.add(insertions.build());
+    if (deletions.getOperations().size() > 0)
+      update(deletions.toString());
+  }
+
+  /**
+   * Pushes all dirty field values to the database for a model.
+   */
+  public void pushChanges(Model model) {
+    UpdateRequest deletions = new UpdateRequest();
+    UpdateBuilder insertions = new UpdateBuilder();
+    if (makeChangeDeltas(model, deletions, insertions)) // return value is whether insertions were added
+      deletions.add(insertions.build());
+    model.setClean();
+    if (deletions.getOperations().size() > 0)
+      update(deletions.toString());
+  }
+
+  /**
+   * Determines the changes in a model which should be pushed, and add necessary deletion updates and insertion quads
+   * to the given output update builders.
+   * @param model         the model to make deltas for.
+   * @param deletionsOut  the output destination for deletion updates.
+   * @param insertionsOut the output destination for insertion quads.
+   * @return whether any insertions were performed.
+   */
+  private boolean makeChangeDeltas(Model model, UpdateRequest deletionsOut, UpdateBuilder insertionsOut) {
+    boolean anyInserts = false;
+    for (Map.Entry<FieldKey, FieldInterface> entry : model.metaModel.fieldMap.entrySet()) {
+      FieldInterface fieldInterface = entry.getValue();
+      FieldKey key = entry.getKey();
+      Node self = NodeFactory.createURI(model.iri);
+      Node predicate = NodeFactory.createURI(key.predicate);
+      Node graph = isQuads() ? NodeFactory.createURI(graphNamespace + key.graphName) : null;
+      // Add deletion
+      if (model.shouldWriteDelete(fieldInterface)) {
+        WhereBuilder where = new WhereBuilder().addWhere(key.backward ? (QM + VALUE) : self, predicate, key.backward ? self : (QM + VALUE));
+        if (isQuads()) {
+          deletionsOut.add(new UpdateBuilder().addGraph(graph, where).buildDeleteWhere());
+        } else {
+          deletionsOut.add(new UpdateBuilder().addWhere(where).buildDeleteWhere());
+        }
+      }
+      // Add insertion; technically object properties are duplicate-inserted from both ends, but I don't think it's
+      // actually going to be distinguishably more performant if we do a check for this and do it once each instead.
+      if (model.shouldWriteInsert(fieldInterface)) {
+        for (Node valueValue : fieldInterface.getNodes(model)) {
+          Triple triple = new Triple(key.backward ? valueValue : self, predicate, key.backward ? self : valueValue);
+          if (isQuads()) {
+            insertionsOut.addInsert(new Quad(graph, triple));
+          } else {
+            insertionsOut.addInsert(triple);
+          }
+          anyInserts = true;
+        }
+      }
+    }
+    return anyInserts;
+  }
+
+  /**
+   * Adds the updates for the deletion of a model to an output update request. This deletes only quads described in the
+   * {@link Model} definition.
+   */
+  private void makeDeleteDeltas(Model model, UpdateRequest deletionsOut) {
+    for (Map.Entry<FieldKey, FieldInterface> entry : model.metaModel.fieldMap.entrySet()) {
+      FieldKey key = entry.getKey();
+      Node self = NodeFactory.createURI(model.iri);
+      Node predicate = NodeFactory.createURI(key.predicate);
+      Node graph = isQuads() ? NodeFactory.createURI(graphNamespace + key.graphName) : null;
+      WhereBuilder where = new WhereBuilder().addWhere(key.backward ? (QM + VALUE) : self, predicate, key.backward ? self : (QM + VALUE));
+      if (isQuads()) {
+        deletionsOut.add(new UpdateBuilder().addGraph(graph, where).buildDeleteWhere());
+      } else {
+        deletionsOut.add(new UpdateBuilder().addWhere(where).buildDeleteWhere());
+      }
+    }
+  }
+
+  /**
+   * Adds the updates for the zealous deletion of a model to an output update request. This deletes all quads with the
+   * {@link Model}'s IRI as subject or object, not only those described by the {@link Model} definition.
+   */
+  private void makeDeleteZealousDeltas(Model model, UpdateRequest deletionsOut) {
+    Node self = NodeFactory.createURI(model.iri);
+    deletionsOut.add(new UpdateBuilder().addWhere(QM + VALUE, QM + PREDICATE, self).buildDeleteWhere());
+    deletionsOut.add(new UpdateBuilder().addWhere(self, QM + PREDICATE, QM + VALUE).buildDeleteWhere());
   }
 
   /**
@@ -672,8 +785,17 @@ public class ModelContext {
     }
   }
 
-  public boolean isTruthy(String str) {
+  /**
+   * @return true if the string is <code>true</code> or <code>1</code>.
+   */
+  public static boolean isTruthy(String str) {
     return str.equals("true") || str.equals("1");
   }
+
+  /**
+   * @return the {@link Node} which should be used for the {@link Model} variable in construction of WHERE statements
+   * for {@link #loadAllWhere(Class, WhereBuilder)} and {@link #loadPartialWhere(Class, WhereBuilder, String...)}.
+   */
+  public static Node getModelVar() { return NodeFactory.createVariable(MODEL); }
 
 }

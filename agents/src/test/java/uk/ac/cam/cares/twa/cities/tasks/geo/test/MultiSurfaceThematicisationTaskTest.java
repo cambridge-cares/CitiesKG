@@ -246,16 +246,16 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
     task.call();
     task.call();
 
-    Mockito.verify(root).delete();
-    Mockito.verify(roofAndGround).delete();
-    Mockito.verify(walls, Mockito.never()).delete();
-    Mockito.verify(roofs, Mockito.never()).delete();
-    Mockito.verify(wall1, Mockito.never()).delete();
-    Mockito.verify(wall2, Mockito.never()).delete();
-    Mockito.verify(roof1, Mockito.never()).delete();
-    Mockito.verify(roof2, Mockito.never()).delete();
-    Mockito.verify(ground1, Mockito.never()).delete();
-    Mockito.verify(ground2, Mockito.never()).delete();
+    Mockito.verify(root).delete(true);
+    Mockito.verify(roofAndGround).delete(true);
+    Mockito.verify(walls, Mockito.never()).delete(true);
+    Mockito.verify(roofs, Mockito.never()).delete(true);
+    Mockito.verify(wall1, Mockito.never()).delete(true);
+    Mockito.verify(wall2, Mockito.never()).delete(true);
+    Mockito.verify(roof1, Mockito.never()).delete(true);
+    Mockito.verify(roof2, Mockito.never()).delete(true);
+    Mockito.verify(ground1, Mockito.never()).delete(true);
+    Mockito.verify(ground2, Mockito.never()).delete(true);
 
     // Roof tree
     assertNull(roofs.getParentId());

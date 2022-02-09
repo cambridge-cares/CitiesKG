@@ -1,11 +1,7 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo.test;
 
 import junit.framework.TestCase;
-import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
-import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.Building;
@@ -34,7 +30,7 @@ public class BuildingHullsRegistrationTaskTest extends TestCase {
     Building building = context.createNewModel(Building.class, "a");
     building.setLod1MultiSurfaceId(context.createHollowModel(SurfaceGeometry.class, "b"));
     building.setLod2MultiSurfaceId(context.createHollowModel(SurfaceGeometry.class, "c"));
-    Mockito.doReturn(building).when(context).loadModel(Mockito.any(), Mockito.anyString());
+    Mockito.doReturn(building).when(context).loadAll(Mockito.any(), Mockito.anyString());
     Field contextField = BuildingHullsRegistrationTask.class.getDeclaredField("context");
     contextField.setAccessible(true);
     contextField.set(task, context);

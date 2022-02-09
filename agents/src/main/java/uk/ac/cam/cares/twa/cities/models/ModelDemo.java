@@ -2,8 +2,12 @@ package uk.ac.cam.cares.twa.cities.models;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.jena.arq.querybuilder.WhereBuilder;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class ModelDemo {
@@ -24,9 +28,10 @@ public class ModelDemo {
 
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws ParseException {
     foundCompany();
     fireAllExecutives();
+    changeNamesWhereYoungerThan30();
   }
 
   public static void foundCompany() {
@@ -74,10 +79,10 @@ public class ModelDemo {
     ModelContext context = new ModelContext("HARDCODE:http://localhost:9999/blazegraph/namespace/test/sparql");
 
     // Load data from the database
-    Employee ceo = context.recursiveLoadPartialModel(
+    Employee ceo = context.recursiveLoadPartial(
         Employee.class,
-        "http://mycompany.org/people/0", // the CEO
-        99,                    // our tree is only 3 layers deep, so any number here >= 3 is equivalent.
+        "http://mycompany.org/people/0",            // the CEO
+        99,                              // our tree is only 3 layers deep, so any number here >= 3 is equivalent.
         "manager", "subordinates", "age"); // specify to only load hierarchy and age data for now
 
     /* Since our knowledge graph is pretty sparse, we could also use recursiveLoadModel to load all properties at not
@@ -92,7 +97,7 @@ public class ModelDemo {
     // and wants to promote the oldest analyst under each deposed director to replace them.
 
     for (Employee director : new ArrayList<>(ceo.subordinates)) {
-      if(director == ceo) continue;
+      if (director == ceo) continue;
       // Identify oldest analyst under director
       Employee oldestAnalyst = director.subordinates.get(0);
       for (Employee analyst : director.subordinates)
@@ -110,7 +115,7 @@ public class ModelDemo {
       }
       // Erase director
       // ceo.subordinates.remove(director);   // *----------------------- redundant with director.delete()
-      director.delete();
+      director.delete(true);
     }
 
     /* When we push, the context will identify only fields which have changed and write those updates.
@@ -132,6 +137,26 @@ public class ModelDemo {
      * }
      *  */
 
+    context.pushAllChanges();
+
+  }
+
+  private static void changeNamesWhereYoungerThan30() throws ParseException {
+
+    // After firing all the executives, Albert Einstein has gone mad with power. He has decided that anyone younger
+    // than 30 in the company must prepend their name with "Whippersnapper". We can use loadAllWhere or loadPartialWhere
+    // to execute this order.
+
+    ModelContext context = new ModelContext("HARDCODE:http://localhost:9999/blazegraph/namespace/test/sparql");
+
+    WhereBuilder condition = new WhereBuilder()
+      .addWhere(ModelContext.getModelVar(), "<http://example.org/ontology#hasAge>", "?age")
+      .addFilter("?age < 30");
+
+    List<Employee> youngsters = context.loadPartialWhere(Employee.class, condition, "name");
+    for(Employee youngster: youngsters)
+      youngster.name = "Whippersnapper " + youngster.name;
+    
     context.pushAllChanges();
 
   }

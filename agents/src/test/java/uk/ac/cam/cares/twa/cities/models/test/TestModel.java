@@ -23,7 +23,6 @@ public class TestModel extends Model {
   @Getter @Setter @FieldAnnotation("dbpediao:uriprop") private URI uriProp;
   @Getter @Setter @FieldAnnotation("dbpediao:modelprop") private TestModel modelProp;
   @Getter @Setter @FieldAnnotation("JPSLAND:geometryprop") private GeometryType geometryProp;
-  @Getter @Setter @FieldAnnotation("JPSLAND:dateprop") private Date dateProp;
 
   @Getter @Setter @FieldAnnotation("JPSLAND:stringpropnull") private String stringNullProp;
   @Getter @Setter @FieldAnnotation("dbpediao:intpropnull") private Integer intNullProp;
@@ -60,8 +59,8 @@ public class TestModel extends Model {
     model.backUriProp = randomUri(random);
     // Randomise vector properties
     for (int i = 0; i < vectorSize; i++) {
-      model.forwardVector.add(random.nextDouble());
-      model.backwardVector.add(randomUri(random));
+      model.forwardVector.add(i % 2 == 0 ? random.nextDouble() : null);
+      model.backwardVector.add(i % 2 == 1 ? randomUri(random) : null);
     }
     return model;
   }

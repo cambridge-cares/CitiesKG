@@ -18,8 +18,8 @@ import static org.junit.Assert.assertArrayEquals;
 
 public class FieldInterfaceTest extends TestCase {
 
-  TestModel model1 = new TestModel();
-  TestModel model2 = new TestModel();
+  TestModel model1 = new ModelContext("", "").createNewModel(TestModel.class, "http://m1");
+  TestModel model2 = new ModelContext("", "").createNewModel(TestModel.class, "http://m2");
 
   public void testIntegerInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
@@ -33,16 +33,6 @@ public class FieldInterfaceTest extends TestCase {
     this.testScalarInterface("doubleProp", TestModel::setDoubleProp, TestModel::getDoubleProp,
         "3.14", "http://www.w3.org/2001/XMLSchema#double", 3.14, 5.1167,
         NodeFactory.createLiteral("5.1167", XSDDatatype.XSDdouble), 5.1167);
-  }
-
-  public void testDateInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
-    // Data to write
-    this.testScalarInterface("dateProp", TestModel::setDateProp, TestModel::getDateProp,
-        "1999-04-21", "http://www.w3.org/2001/XMLSchema#date",
-        new GregorianCalendar(1999, Calendar.APRIL, 21).getTime(),
-        new GregorianCalendar(1201, Calendar.JULY, 12).getTime(),
-        NodeFactory.createLiteral("1201-07-12", XSDDatatype.XSDdate),
-        new GregorianCalendar(1201, Calendar.JULY, 12).getTime());
   }
 
   public void testStringInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {

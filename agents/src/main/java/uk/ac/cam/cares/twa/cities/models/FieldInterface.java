@@ -8,8 +8,6 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import java.io.InvalidClassException;
 import java.lang.reflect.*;
 import java.net.URI;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -142,7 +140,7 @@ public class FieldInterface {
    */
   public void put(Model model, String valueString, String datatypeString) {
     try {
-      putter.consume(model, parser.parse(valueString, datatypeString, model.context));
+      putter.consume(model, valueString == null ? null : parser.parse(valueString, datatypeString, model.context));
     } catch (Exception e) {
       e.printStackTrace();
     }

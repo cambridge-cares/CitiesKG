@@ -1,6 +1,5 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,8 +11,6 @@ import javax.ws.rs.HttpMethod;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
-import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
-import uk.ac.cam.cares.jps.base.query.StoreRouter;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 
@@ -55,7 +52,7 @@ public class CityInformationAgent extends JPSAgent {
 
     for (String cityObjectIri : uris) {
       ModelContext context = new ModelContext(route, getNamespace(cityObjectIri) + "/");
-      CityObject cityObject = context.loadModel(CityObject.class, cityObjectIri);
+      CityObject cityObject = context.loadAll(CityObject.class, cityObjectIri);
 
       ArrayList<CityObject> cityObjectList = new ArrayList<>();
       cityObjectList.add(cityObject);

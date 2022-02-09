@@ -1,6 +1,5 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,15 +19,11 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.update.UpdateRequest;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
-import org.geotools.referencing.GeodeticCalculator;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.operation.distance3d.Distance3DOp;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -273,7 +268,7 @@ public class DistanceAgent extends JPSAgent {
    */
   public EnvelopeType getEnvelope(String uriString, String coordinateSystem) {
     GeometryType.setSourceCrsName(coordinateSystem);
-    CityObject cityObject = context.loadModel(CityObject.class, uriString);
+    CityObject cityObject = context.loadAll(CityObject.class, uriString);
     return cityObject.getEnvelopeType();
   }
 
