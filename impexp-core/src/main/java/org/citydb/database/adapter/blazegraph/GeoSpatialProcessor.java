@@ -1,12 +1,8 @@
 package org.citydb.database.adapter.blazegraph;
 
-import static org.junit.Assert.assertTrue;
-
 import org.apache.jena.datatypes.DatatypeFormatException;
-import org.apache.jena.shacl.lib.G;
 import org.apache.jena.sparql.expr.ExprEvalException;
 import org.citydb.config.geometry.GeometryObject;
-import org.citydb.registry.ObjectRegistry;
 import org.gdal.ogr.ogr;
 import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
@@ -23,8 +19,6 @@ import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
-
-import javax.xml.crypto.dsig.Transform;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
