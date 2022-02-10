@@ -156,7 +156,7 @@ public class ModelDemo {
     List<Employee> youngsters = context.loadPartialWhere(Employee.class, condition, "name");
     for(Employee youngster: youngsters)
       youngster.name = "Whippersnapper " + youngster.name;
-    
+
     context.pushAllChanges();
 
   }

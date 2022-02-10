@@ -121,7 +121,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
   @Override
   public boolean validateInput(JSONObject requestParams) throws BadRequestException {
     if (!requestParams.isEmpty()
-        && requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.GET)) {
+        && requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.PUT)) {
       try {
         Set<String> keys = requestParams.keySet();
         Mode mode = keys.contains(KEY_COMMENT) ? Mode.COMMENT : Mode.RESTRUCTURE;

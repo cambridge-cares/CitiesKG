@@ -9,11 +9,9 @@ import org.locationtech.jts.geom.Coordinate;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
-import uk.ac.cam.cares.twa.cities.models.Model;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
 
-import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,6 +58,10 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
   }
 
   private static final String SLASH = "/";
+  public static final String COMMENT_PREDICATE = "<http://www.w3.org/2000/01/rdf-schema#comment>";
+  public static final String GROUND_COMMENT = "ground";
+  public static final String WALL_COMMENT = "wall";
+  public static final String ROOF_COMMENT = "roof";
   private static final String UPDATING_PERSON = "ThematicSurfaceDiscoveryAgent";
   private static final String MALFORMED_SURFACE_GEOMETRY_EXCEPTION_TEXT =
       "Malformed building: SurfaceGeometry contains both sub-geometries and explicit GeometryType.";
@@ -117,7 +119,14 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
    * outcome of this check is recorded in the <code>flipped</code> variable, which is null in the indeterminate case.
    */
   private void tryClassifyGeometries() {
-    context.recursivePullAll(root, 99);
+    context.loadAllWhere(
+        SurfaceGeometry.class,
+        new WhereBuilder().addWhere(
+            ModelContext.getModelVar(),
+            NodeFactory.createURI(SPARQLUtils.expandQualifiedName(SchemaManagerAdapter.ONTO_ROOT_ID)),
+            NodeFactory.createURI(root.getIri())
+        )
+    );
     // Sort into thematic surfaces
     recursiveDiscover(root);
     // Calculate centroid of detected roofs' centroids and centroid of detected grounds' centroids
@@ -245,15 +254,14 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
    */
   private void commentAndPush() {
     WhereBuilder whereBuilder = new WhereBuilder();
-    SPARQLUtils.addPrefix("rdfs", whereBuilder);
     for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.GROUND.index)) {
-      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), "rdfs:comment", NodeFactory.createLiteral("ground"));
+      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), COMMENT_PREDICATE, NodeFactory.createLiteral(GROUND_COMMENT));
     }
     for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.WALL.index)) {
-      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), "rdfs:comment", NodeFactory.createLiteral("wall"));
+      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), COMMENT_PREDICATE, NodeFactory.createLiteral(WALL_COMMENT));
     }
     for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.ROOF.index)) {
-      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), "rdfs:comment", NodeFactory.createLiteral("roof"));
+      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), COMMENT_PREDICATE, NodeFactory.createLiteral(ROOF_COMMENT));
     }
     Node graph = NodeFactory.createURI(params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH);
     context.update(new UpdateBuilder().addInsert(graph, whereBuilder).build().toString());

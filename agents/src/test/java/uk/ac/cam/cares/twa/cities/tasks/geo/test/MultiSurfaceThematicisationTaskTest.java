@@ -10,6 +10,7 @@ import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
 import uk.ac.cam.cares.twa.cities.tasks.geo.MultiSurfaceThematicisationTask;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -42,7 +43,7 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
 
   public ModelContext makeMockContext() {
     ModelContext mockContext = Mockito.spy(params.makeContext());
-    Mockito.doNothing().when(mockContext).recursivePullAll(Mockito.any(), Mockito.anyInt());
+    Mockito.doReturn(new ArrayList<SurfaceGeometry>()).when(mockContext).loadAllWhere(Mockito.any(), Mockito.any());
     return mockContext;
   }
 

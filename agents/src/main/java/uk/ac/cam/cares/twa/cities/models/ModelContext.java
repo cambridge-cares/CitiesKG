@@ -282,10 +282,10 @@ public class ModelContext {
   }
 
   /**
-   * Loads all models which match the given WHERE condition using the {@link #pullAll} query pattern. The condition
-   * should use the {@link Node} from {@link #getModelVar()} to represent the models to be captured. Note that
-   * this can only be used for {@link Model}s of a single class. Note that an insufficiently specific WHERE may result
-   * in entities not of your target class being misidentified as targets, resulting in excess false results.
+   * Loads all objects which match the given search condition as {@code ofClass}, using the {@link #pullAll} query
+   * pattern. The condition should use the {@link Node} from {@link #getModelVar()} to represent the models to be
+   * captured. Note that this can only be used for {@link Model}s of a single class. Note that an insufficiently
+   * specific WHERE may result in entities not of your target class being misidentified and loaded in.
    */
   public <T extends Model> List<T> loadAllWhere(Class<T> ofClass, WhereBuilder condition) {
     Node modelNode = NodeFactory.createVariable(MODEL);
@@ -302,8 +302,9 @@ public class ModelContext {
       for (end = 1; end < response.length(); end++) {
         String nextIri = response.getJSONObject(end).getString(MODEL);
         if (!nextIri.equals(previousIri)) {
-          readPullAllInDirectionResponse(getModel(ofClass, previousIri), response, backward, start, end);
-          resultIris.add(previousIri);
+          Model model = getModel(ofClass, previousIri);
+          if(resultIris.add(previousIri)) model.clear();
+          readPullAllInDirectionResponse(model, response, backward, start, end);
           start = end;
           previousIri = nextIri;
         }
@@ -313,14 +314,18 @@ public class ModelContext {
       resultIris.add(previousIri);
     }
     // Note that we do not directly use a HashSet<T> to avoid expensive equals() invocations on Model classes.
-    return resultIris.stream().map((resultIri) -> getModel(ofClass, resultIri)).collect(Collectors.toList());
+    return resultIris.stream().map((resultIri) -> {
+      T model = getModel(ofClass, resultIri);
+      model.setClean();
+      return model;
+    }).collect(Collectors.toList());
   }
 
   /**
-   * Loads all models which match the given WHERE condition using the {@link #pullPartial} query pattern. The condition
-   * should use the {@link Node} from {@link #getModelVar()} to represent the models to be captured. Note that
-   * this can only be used for {@link Model}s of a single class. Note that an insufficiently specific WHERE may result
-   * in entities not of your target class being misidentified as targets, resulting in excess false results.
+   * Loads all objects which match the given search condition as {@code ofClass}, using the {@link #pullPartial} query
+   * pattern. The condition should use the {@link Node} from {@link #getModelVar()} to represent the models to be
+   * captured. Note that this can only be used for {@link Model}s of a single class. Note that an insufficiently
+   * specific WHERE may result in entities not of your target class being misidentified and loaded in.
    */
   public <T extends Model> List<T> loadPartialWhere(Class<T> ofClass, WhereBuilder condition, String... fieldNames) {
     Node modelNode = NodeFactory.createVariable(MODEL);
@@ -483,28 +488,20 @@ public class ModelContext {
    * @param fieldNames the names of vector and scalar fields to be populated.
    */
   public void pullPartial(Model model, String... fieldNames) {
-    pullScalars(model, fieldNames);
-    pullVectors(model, fieldNames);
-  }
-
-  /**
-   * Populates the named scalar fields from the target resource. {@link Model} references are instantiated as
-   * hollow models if not already present in the context; to recursively instantiate/update, see
-   * {@link #recursivePullPartial(Model, int, String...)}.
-   * <p>
-   * If {@code fieldNames} is empty, all scalar fields are pulled; this is different behaviour from
-   * {@link #pullAll(Model)} as this uses a specific query for desired values, not a general query for all quads linked
-   * to the IRI, and may be more performant when only a small subset is defined in the {@link Model}.
-   * @param model      the {@link Model} to populate.
-   * @param fieldNames the names of scalar fields to be populated.
-   */
-  private void pullScalars(Model model, String... fieldNames) {
-    // Build and execute the query for scalar values
-    SelectBuilder query = buildScalarsQuery(NodeFactory.createURI(model.iri), model.metaModel, fieldNames);
-    if (query.getVars().size() == 0) return;
-    JSONArray response = query(query.buildString());
-    if (response.length() == 0) throw new JPSRuntimeException(OBJECT_NOT_FOUND_EXCEPTION_TEXT);
-    readScalarsResponse(model, response.getJSONObject(0));
+    // Scalars
+    SelectBuilder scalarsQuery = buildScalarsQuery(NodeFactory.createURI(model.iri), model.metaModel, fieldNames);
+    if (scalarsQuery.getVars().size() == 0) return;
+    JSONArray scalarsResponse = query(scalarsQuery.buildString());
+    if (scalarsResponse.length() == 0) throw new JPSRuntimeException(OBJECT_NOT_FOUND_EXCEPTION_TEXT);
+    readScalarsResponse(model, scalarsResponse.getJSONObject(0));
+    // Vectors
+    for (Map.Entry<FieldKey, FieldInterface> entry : model.metaModel.vectorFieldList) {
+      FieldInterface field = entry.getValue();
+      if (fieldNames.length > 0 && !ArrayUtils.contains(fieldNames, field.field.getName())) continue;
+      SelectBuilder vectorQuery = buildVectorQuery(NodeFactory.createURI(model.iri), entry.getKey());
+      JSONArray vectorResponse = query(vectorQuery.buildString());
+      readPullVectorsResponse(model, field, vectorResponse, 0, vectorResponse.length());
+    }
   }
 
   /**
@@ -554,27 +551,6 @@ public class ModelContext {
       }
     }
     return select;
-  }
-
-  /**
-   * Populates the named vector fields from the target resource. {@link Model} references are instantiated as
-   * hollow models if not already present in the context; to recursively instantiate/update, see
-   * {@link #recursivePullPartial(Model, int, String...)}.
-   * <p>
-   * If {@code fieldNames} is empty, all scalar vector are pulled; this is different behaviour from
-   * {@link #pullAll(Model)} as this uses a specific query for desired values, not a general query for all quads linked
-   * to the IRI, and may be more performant when only a small subset is defined in the {@link Model}.
-   * @param model      the {@link Model} to populate.
-   * @param fieldNames the names of vector fields to be populated.
-   */
-  private void pullVectors(Model model, String... fieldNames) {
-    for (Map.Entry<FieldKey, FieldInterface> entry : model.metaModel.vectorFieldList) {
-      FieldInterface field = entry.getValue();
-      if (fieldNames.length > 0 && !ArrayUtils.contains(fieldNames, field.field.getName())) continue;
-      SelectBuilder query = buildVectorQuery(NodeFactory.createURI(model.iri), entry.getKey());
-      JSONArray response = query(query.buildString());
-      readPullVectorsResponse(model, field, response, 0, response.length());
-    }
   }
 
   /**

@@ -146,20 +146,25 @@ Once a `ModelContext` is created, `Model`s should be created through factory fun
   becomes enabled (resumes normal change tracking behaviour) once it has been populated by a pull method. See 
   [Pushing changes](#Pushing changes).
 
-- `loadModel(Class<T> ofClass, String iri)`
+- `loadAll(Class<T> ofClass, String iri)`
 
-  `recursiveLoadModel(Class<T> ofClass, String iri, int recursionRadius)`
+  `loadPartialModel(Class<T> ofClass, String iri, String... fieldNames)`
 
-  Creates a hollow model with `createHollowModel` and invokes `pullAll` or `recursivePullAll` on it, populating all 
-  `Model` fields (recursively). See [Pulling data from the knowledge graph](#Pulling data from the knowledge graph).
+  `recursiveLoadAll(Class<T> ofClass, String iri, int recursionRadius)`
 
-- `loadPartialModel(Class<T> ofClass, String iri, String... fieldNames)`
+  `recursiveLoadPartial(Class<T> ofClass, String iri, int recursionRadius, String... fieldNames)`
 
-  `recursiveLoadPartialModel(Class<T> ofClass, String iri, int recursionRadius, String... fieldNames)`
+  Creates a hollow model with `createHollowModel` and invokes `pullAll`, `pullPartial`, `recursivePullAll` or 
+  `recursivePullPartial` on it, populating `Model` fields (recursively) with the respective pull algorithms. See 
+  [Pulling data from the knowledge graph](#Pulling data from the knowledge graph) for detail on behaviour.
 
-  Creates a hollow model with `createHollowModel` and invokes `pullPartial` or `recursivePullPartial` on it, populating 
-  the named fields. If `fieldNames` is empty, all fields are populated; this is not the same as `pullAll`: see 
-  [Pulling data from the knowledge graph](#Pulling data from the knowledge graph).
+- `loadAllWhere(Class<T> ofClass, WhereBuilder condition)`
+
+  `loadPartialWhere(Class<T> ofClass, WhereBuilder condition, String... fieldNames)`
+
+  Loads or pulls all models which match the given search condition, using the `pullAll` and `pullPartial` query 
+  patterns modified with the condition. The condition should use the `ModelContext.getModelVar()` node to represent the 
+  search target. Also [Pulling data from the knowledge graph](#Pulling data from the knowledge graph).
 
 ### Pulling data from the knowledge graph
 
@@ -197,13 +202,13 @@ recursive wrappers for the first two.
   ```
   SELECT ?value1 ?datatype1 ?isblank1 ?value3 ?datatype3 ?isblank3 ?value6 ?datatype6 ?isblank6
   WHERE {
-    GRAPH ?graph { <model_iri> <scalar_role_1> ?value1 }
+    GRAPH <graph_1> { <model_iri> <scalar_role_1> ?value1 }
     BIND(DATATYPE(?value1) AS ?datatype1)
     BIND(ISBLANK(?value1) AS ?isblank1)
-    GRAPH ?graph { <model_iri> <scalar_role_3> ?value3 }
+    GRAPH <graph_3> { <model_iri> <scalar_role_3> ?value3 }
     BIND(DATATYPE(?value3) AS ?datatype3)
     BIND(ISBLANK(?value3) AS ?isblank3)
-    GRAPH ?graph { ?value6 <scalar_role_6> <model_iri> }
+    GRAPH <graph_6> { ?value6 <scalar_role_6> <model_iri> }
     BIND(DATATYPE(?value6) AS ?datatype6)
     BIND(ISBLANK(?value6) AS ?isblank6)
   }
@@ -211,7 +216,7 @@ recursive wrappers for the first two.
   ```
   SELECT ?value ?datatype ?isblank
   WHERE {
-    GRAPH ?graph { ?value <vector_role_2> <model_iri> }
+    GRAPH <graph_2> { ?value <vector_role_2> <model_iri> }
     BIND(DATATYPE(?value) AS ?datatype)
     BIND(ISBLANK(?value) AS ?isblank)
   }
@@ -219,7 +224,7 @@ recursive wrappers for the first two.
   ```
   SELECT ?value ?datatype ?isblank
   WHERE {
-    GRAPH ?graph { ?value <vector_role_3> <model_iri> }
+    GRAPH <graph_3> { ?value <vector_role_3> <model_iri> }
     BIND(DATATYPE(?value) AS ?datatype)
     BIND(ISBLANK(?value) AS ?isblank)
   }
@@ -233,45 +238,45 @@ recursive wrappers for the first two.
   values retrieved in the invocation, and so on recursively to an extent of `recursionRadius` degrees of separation 
   from the original target.
 
-  To fully explain the behaviour of these methods, we must first explain how `Model`-type fields are pulled. The raw 
-  data returned by the SPARQL query for such a field is an IRI. To convert this into a `Model` reference, the IRI is 
-  looked up in the `ModelContext`. If there is a match, the existing `Model` is returned; else, `ModelContext` 
-  constructs a hollow `Model` for the IRI and returns that.
+  To elaborate: when a field of `Model` type is pulled, the IRI is looked up in the `ModelContext`. If there is a 
+  match, the existing `Model` is returned; else, `ModelContext` constructs a hollow `Model` for the IRI and returns 
+  that. For a non-recursive pull, the hollow `Model` can then be itself pulled to populate its fields.
 
-  Starting from a fresh context, non-recursive loads and pulls thus result in a populated `Model` whose object 
-  properties point to hollow (unpopulated) instances. In a context with some pre-existing data, any object property 
-  referencing an IRI already instantiated will point to the existing instance instead. 
+  The recursive versions listen to the lookup step above (specifically, `ModelContext.getModel`) and queue the 
+  requested `Model`s to also be pulled later (repeating until exhaustion of `recursionRadius`). What is important to 
+  note from this is that even a `Model` pre-existing in the context will be pulled (updated) if it falls within the 
+  radius of a recursive pull, since the trigger is the lookup, not the creation. *Therefore, a recursive pull on a 
+  `Model` may cause changes in neighbouring `Model`s you are working on to be overwritten.* 
 
-  The recursive versions do the same, but also listen to the lookup step above (specifically, `ModelContext.getModel`)
-  and queue the requested `Model`s to also be pulled later (repeating until exhaustion of `recursionRadius`). What is 
-  important to note from this is that even a `Model` pre-existing in the context will be updated (pulled) if it 
-  falls within the radius of a recursive pull, since it listens to the lookup, not the creation. *Therefore, a 
-  recursive pull on a `Model` may cause changes in neighbouring `Model`s you are working on to be lost.*
+  `Model`s one step past the recursion radius will be hollow, as secondary `Model`s would be for a non-recursive pull.
 
-  `Model`s one step past the recursion radius will be hollow, as `Model` references would be for a non-recursive pull.
+From the example queries above, it is seen that `pullAll` and `pullPartial` are significantly different in terms of 
+their performance profile:
 
-`pullAll` and `pullPartial` are significantly different, in ways of which the latter's ability to selectively pull only
-certain fields of a `Model` is perhaps the least salient. The critical difference is how their performances scale.
+|               | number of queries           | amount of data returned by query              |
+|---------------|-----------------------------|-----------------------------------------------|
+| `pullAll`     | 2                           | all triples in DB with IRI as subject/object. |
+| `pullPartial` | 1 + number of vector fields | only the values actually desired.             |
 
-|               | number of queries           | amount of data returned by query                 |
-|---------------|-----------------------------|--------------------------------------------------|
-| `pullAll`     | 2                           | no. of triples in DB with IRI as subject/object. |
-| `pullPartial` | 1 + number of vector fields | no. of values actually desired.                  |
+`pullAll` is usually more efficient in terms of number of queries (constant vs. scaling with vector field count), but 
+`pullPartial` decouples performance from the presence of extraneous target-associated triples. Therefore,
 
-`pullAll` is usually more efficient in terms of number of queries (constant vs. scaling with vector fields), but 
-`pullPartial` decouples performance from the volume of extraneous target-associated triples. Therefore,
-
-- `pullAll` should be used when *query latency* is a performance bottleneck and there is more than one vector field, 
-  as long as the number of target-associated triples in the database is not prohibitively larger than the number we are
-  interested in—even if we are only interested in a small subset of fields defined in the `Model`.
-- `pullPartial` should be used when `pullAll` would return too many triples, as long as we are not querying a 
-  prohibitively large number of vector fields; an empty `fieldNames` list can be provided to instruct to pull all 
+- `pullAll` should be preferred when *query latency* is a performance bottleneck and there is more than one vector 
+  field, 
+  so long as the number of target-associated triples in the database is not prohibitively larger than the number we are
+  interested in.
+- `pullPartial` should be preferred when the former would return too many triples, so long as we are not querying a 
+  prohibitively large number of vector fields; an empty list of field names can be provided to instruct to pull all 
   fields in the model.
-- `recursivePullPartial` may also be of particular interest as a shortcut for directional discovery, e.g. selecting to 
-  only recursively pull a "father" property in a "Person" class to investigate patrilineal lineage without loading 
-  an exponential number of relatives.
+- `recursivePullPartial` may also be of particular interest over its `all` counterpart as a shortcut for directional 
+  discovery, e.g. selecting to only recursively pull a "father" property in a "Person" class to investigate 
+  patrilineal lineage without loading an exponential number of relatives.
 
 For example, querying DBpedia with `pullAll` will generally cause you to hit a response row limit.
+
+The names `pullAll` and `pullPartial` and their method signatures superficially seem to refer to pulling all or some 
+of a `Model`'s properties, but in practice can be equivalently—and more descriptively—interpreted as querying all or 
+the specific relevant set of an IRI's connected triples in the graph.
 
 ### Pushing changes
 
@@ -285,9 +290,9 @@ field is different from the cached "clean" value will an update for it be create
 fields) will take the form of:
 
 ```
-DELETE WHERE { GRAPH <graph_1> { <model_iri> <scalar_role_5> ?value      . } } ;
-DELETE WHERE { GRAPH <graph_2> { ?value <scalar_role_7> <model_iri>      . } } ;
-DELETE WHERE { GRAPH <graph_2> { <model_iri> <vector_role_3> ?value      . } } ;
+DELETE WHERE { GRAPH <graph_1> { <model_iri> <scalar_role_5> ?value . } } ;
+DELETE WHERE { GRAPH <graph_2> { ?value <scalar_role_7> <model_iri> . } } ;
+DELETE WHERE { GRAPH <graph_2> { <model_iri> <vector_role_3> ?value . } } ;
 INSERT DATA {
   GRAPH <graph_1> { <model_iri> <scalar_role_5> <scalar_5_value> }
   GRAPH <graph_2> { 
@@ -310,21 +315,25 @@ treatment during push.
 
 When a field is pushed or pulled—synchronised with the database—its `cleanValues` entry is set to the current value 
 (the implementation is actually slightly more complicated than this). If it was previously `NEW` or `UNPULLED`, it thus 
-loses that special state and adopts ordinary comparison-based change tracking for push behaviour.
+loses that special state and adopts ordinary comparison-based change tracking for push behaviour. Any `Model`s 
+returned by `load` methods will therefore have relevant fields (all, or those named to be pulled) active and 
+change-tracking already.
 
-A Model may be manually "cleaned"—its `cleanValues` set to match its current values—by calling `setAllClean()` on it. 
-It may also be forcefully "dirtied" with `setAllDirty()`, which sets its `cleanValues` to yet another special state, 
-`FORCE_PUSH`, which causes fields to always be pushed regardless of current value (with deletion, unlike the `NEW` 
-state).
+A `Model` may be manually "cleaned"—its `cleanValues` set to match its current values—by calling `setClean()` on it, 
+with optional specification of field names to clean. Similarly, it may also be forcefully "dirtied" with `setDirty()`, 
+which sets the chosen `cleanValues` to yet another special state, `FORCE_PUSH`, which causes fields to always be 
+written regardless of current value (*with* deletion, unlike the `NEW` state).
 
 Note that `Model` fields are treated as their IRIs for change-tracking purposes; changes within a referenced `Model` 
-will not trigger a push of the referencing object property, this not actually resulting in any modification to the 
-database. Nor is there any recursive or propagative behaviour to `pushChanges(Model model)`; to push across multiple 
+will not trigger a push of the referencing object property, as this would not actually result in any modification to 
+the database. Nor is there any recursive or propagative behaviour to `pushChanges(Model model)`; to push across multiple 
 objects, call them individually or use the context-wide `pushChanges()`.
 
-To delete an object, use `ModelContext.delete(Model model)` to **flag** an `Model` for deletion. The deletion will
-only be actually executed on the next `ModelContext.pushAllChanges()`. Note that this will delete all triples/quads 
-linked to the object in the database, not only those described by the `Model`. The update looks like:
+To delete an object, use `ModelContext.delete(Model model, boolean zealous)` to **flag** an `Model` for deletion. The 
+deletion will only be actually executed on the next `ModelContext.pushAllChanges()`. The zealous argument 
+determines the deletion mode; if true, this will delete all triples/quads linked to the object in the database; 
+otherwise, only fields described by the `Model` will be deleted. The non-zealous update is identical to the 
+deletion part of `pushChanges`, and the zealous update looks like:
 
 ```
 DELETE WHERE { <model_iri> ?predicate ?value      } ;
@@ -334,7 +343,7 @@ DELETE WHERE { ?value      ?predicate <model_iri> } ;
 ### Model wrappers for ModelContext methods
 
 Many `ModelContext` methods have wrapping methods in `Model`, such as `model.pushChanges()` being equivalent to
-`model.getContext().pushChanges(model)`. Use of either is entirely cosmetic.
+`model.getContext().pushChanges(model)`. The difference is entirely cosmetic.
 
 ## Defining a DatatypeModel
 
@@ -348,10 +357,10 @@ A `DatatypeModel` must implement the following:
 - `constructor with arguments (String value, String datatype)`
 
   This is not explicitly described in the interface definition due to language limitations, but it is retrieved by
-  reflection at runtime and used by the framework. The `value` and `datatype` provided in invocation are respectively
-  the `?value` and `DATATYPE(?value)` strings returned by a query to the database.
+  reflection at runtime and used by the framework. The `value` and `datatype` provided in the invocation are 
+  respectively the `?value` and `DATATYPE(?value)` strings returned by a query to the database.
 
-- `org.apache.jena.graph.Node getNode()`
+- `Node getNode()`
 
   Returns a Jena `Node` object encoding this object. This should be reversible with the constructor in the sense that if
 
@@ -449,9 +458,14 @@ class.
    `fieldInterface.getNode(s)`.
   - Minimised values are written to `cleanValues`.
 
-##Extending functionality
+The `loadAllWhere` and `loadPartial` methods use the same query builders as `pullAll` and `pullPartial`, but replace 
+the `Model` IRI with a `?model` variable Node, and then append (a) search condition to describe `?model`, and (b) `ORDER 
+BY ?model`. The response is decomposed into segments corresponding to different individuals, and each segment read 
+in by the same response processors as `pullAll` and `pullPartial`. 
 
-###Adding new types
+##Notes for future development
+
+###How to add new types
 
 ####Method 1: Direct addition to FieldInterface
 
@@ -470,7 +484,25 @@ This method is appropriate for relatively common types such as date and time typ
 See [Defining a DatatypeModel](#Defining a DatatypeModel). This is more appropriate if you need behaviour for a 
 particular use case.
 
-##Why does this work like X? I think it should work like Y
+###Why does deletion work like that?
 
-###Deletion part of change updates
+`DELETE WHERE` is used in place of `DELETE DATA` in the deletion parts of the change-pushing updates. This is, I 
+think, justified by there being a change-tracking system: properties which have not modified will not be republished 
+and overwrite changes by other agents or uses; modified properties will overwrite other changes; this is standard 
+behaviour for many systems. Some alternative behaviours are:
 
+- Properties which have been changed are not overwritten, and instead silently duplicated, keeping both the old and 
+  new triple. This is undesirable as it will silently create violations of ontologies and necessitate clean-up agents or 
+  routines. An advantage is that it will likely perform better than the current deletion algorithm, but the benefits 
+  are slim.
+
+- Trying to write to properties which have been changed in the database since last pull throws an exception. This 
+  theoretically enables an almost superset of current behaviour, since the end-user developer may catch that 
+  exception and in response do an override or pull and re-push. However, it is clunky and introduces a lot of new 
+  degrees of complexity into both the framework and the user experience; the one must not only interact with current 
+  values and a simple clean/dirty state, but also micromanage congruence between the clean reference and the 
+  database. Finally, querying every time we push is likely to be expensive, so an option will have to be included to 
+  skip this step. All in all, such a solution would introduce significant complexity to enable a feature which few 
+  would use due to the performance impact and limited use case.
+
+It is possible there is an elegant solution I have not thought of. If so, feel free to implement it.

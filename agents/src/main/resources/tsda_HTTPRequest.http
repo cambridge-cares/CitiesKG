@@ -1,0 +1,12 @@
+PUT http://localhost:8080/agents/discovery/thematicsurface
+Content-Type: application/json
+
+// specification of no lod arguments -> all of lods 1, 2, 3, 4 "true".
+// specify "cityObjectIRI": "http://localhost:9999/blazegraph/namespace/building/..../" to only process one building.
+// specify "comment": "true" to use comment instead of restructure mode; omit argument to use restructure mode.
+
+{"namespace": "http://localhost:9999/blazegraph/namespace/churchill/sparql/",
+  "lod1": "true",
+  "lod2": "true",
+  "threshold": "5",
+  "comment": "true"}

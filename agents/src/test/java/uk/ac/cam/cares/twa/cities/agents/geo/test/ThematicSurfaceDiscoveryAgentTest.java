@@ -22,7 +22,7 @@ public class ThematicSurfaceDiscoveryAgentTest extends TestCase {
   public void testValidateInput() {
     // Empty params
     JSONObject requestParams = new JSONObject();
-    requestParams.put("method", HttpMethod.GET);
+    requestParams.put("method", HttpMethod.PUT);
     try {
       assertFalse(new ThematicSurfaceDiscoveryAgent().validateInput(requestParams));
       fail();
@@ -111,7 +111,7 @@ public class ThematicSurfaceDiscoveryAgentTest extends TestCase {
     ThematicSurfaceDiscoveryAgent agent = Mockito.spy(new ThematicSurfaceDiscoveryAgent());;
 
     JSONObject requestParams = new JSONObject();
-    requestParams.put("method", HttpMethod.GET);
+    requestParams.put("method", HttpMethod.PUT);
     requestParams.put("namespace", "http://example.org/test/");
     agent.validateInput(requestParams);
 
