@@ -58,6 +58,7 @@ public class GeoSpatialProcessor {
     }
 
     /* Method using osgeo gdal CoordinateTransformation */
+
     public Geometry reProject (Geometry sourceGeom, int from_epsg, int to_epsg) {
 
         Coordinate[] coordinates = sourceGeom.getCoordinates();
@@ -79,13 +80,16 @@ public class GeoSpatialProcessor {
         CoordinateTransformation transformMatrix = osr.CreateCoordinateTransformation(source, target);
 
         polygon.Transform(transformMatrix);
+        double[] testenvelope = new double[4];
+        polygon.GetEnvelope(testenvelope);
+        System.out.println("TestEnvelop: "  + testenvelope[0] + " " + testenvelope[1] + " " + testenvelope[2] + " " + testenvelope[3]);
 
-        double[][] convertedPoints = polygon.GetPoints();
+        //double[][] convertedPoints = polygon.GetPoints();
 
-        List<Coordinate> convertedCoords = new ArrayList<>();
-        for ( int i = 0; i < convertedPoints[0].length; ++i) {
-            //convertedCoords.add(new Coordinate())
-        }
+        //List<Coordinate> convertedCoords = new ArrayList<>();
+        //for ( int i = 0; i < convertedPoints[0].length; ++i) {
+        //    //convertedCoords.add(new Coordinate())
+        //}
 
         return null;
     }

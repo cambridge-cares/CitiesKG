@@ -97,8 +97,8 @@ public class UtilAdapter extends AbstractUtilAdapter {
         GeometryFactory fac = new GeometryFactory();
         Geometry bboxPolygon = fac.createPolygon(bboxCoord);
         GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
-        //Geometry converted = geospatial.Transform(bboxPolygon, 2249, 4326);
-        Geometry converted = geospatial.reProject(bboxPolygon, sourceSrid, targetSrid);
+        Geometry converted = geospatial.Transform(bboxPolygon, sourceSrid, sourceSrid);
+        //Geometry testconverted = geospatial.reProject(bboxPolygon, sourceSrid, sourceSrid);
         Coordinate[] reverseCoord = geospatial.getReversedCoordinates(converted);
 
         result.getLowerCorner().setX(reverseCoord[0].x);
@@ -131,6 +131,9 @@ public class UtilAdapter extends AbstractUtilAdapter {
 
         if (geometry.getSrid() == 0){
             geometry.setSrid(25833);  // 25833 for berlin data // 28992 for the hague
+        }
+        if (targetSrs.getSrid() == 0) {
+            targetSrs.setSrid(4326);
         }
 
         GeometryFactory fac = new GeometryFactory();  // no polygonZ
