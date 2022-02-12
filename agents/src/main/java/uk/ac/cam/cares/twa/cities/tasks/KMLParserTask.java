@@ -1,4 +1,4 @@
-package uk.ac.cam.cares.twa.cities.agents.geo;
+package uk.ac.cam.cares.twa.cities.tasks;
 
 
 import gov.nasa.worldwind.geom.Position.PositionList;
@@ -7,8 +7,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import javax.xml.stream.XMLStreamException;
+import uk.ac.cam.cares.twa.cities.model.geo.EnvelopeCentroid;
 
-public class KMLParser {
+public class KMLParserTask {
 
   public static void printPlacemarks(KMLAbstractFeature feature)
   {
@@ -34,7 +35,9 @@ public class KMLParser {
         ArrayList geometries = (ArrayList) multiGeometry.getGeometries();
         KMLPolygon polygon = (KMLPolygon) multiGeometry.getGeometries().toArray()[0];
         ArrayList positionL = (ArrayList) polygon.getOuterBoundary().getCoordinates().list;
-        //System.out.println("MulitiGeometry placemark at: " + ((KMLMultiGeometry) geom).getCoordinates());
+        System.out.println("MulitiGeometry placemark at: " + positionL);
+        double[] envelope = EnvelopeCentroid.getEnvelope(geom, name);
+        System.out.println("Envelop: "  + envelope[0] + " " + envelope[1] + " " + envelope[2] + " " + envelope[3]);
       }
       else if (geom instanceof KMLPolygon){
 
@@ -72,7 +75,7 @@ public class KMLParser {
       style = (KMLStyle)document.getStyleSelectors().toArray()[0];
 
 
-      KMLParser.printPlacemarks(kmlRoot.getFeature());
+      KMLParserTask.printPlacemarks(kmlRoot.getFeature());
       System.out.println(kmlRoot.getFeature());
     }
 
