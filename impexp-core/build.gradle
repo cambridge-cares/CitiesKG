@@ -27,7 +27,8 @@ dependencies {
     compile fileTree(dir: 'lib', include: '*.jar')
 
     implementation ('org.geotools:gt-main:20.1')  // utility class, transform
-    implementation 'org.gdal:gdal:3.4.0'
+    implementation ('org.gdal:gdal:2.2.0')
+
 }
 
 javadoc {

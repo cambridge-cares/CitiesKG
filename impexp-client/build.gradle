@@ -69,8 +69,7 @@ javadoc {
 
 jar {
     manifest {
-        attributes('Main-Class': mainClassName,
-                'Class-Path': configurations.runtimeClasspath.collect{ it.name }.join(' ')
+        attributes('Main-Class': mainClassName, 'Class-Path': configurations.runtimeClasspath.collect{ it.name }.join(' ')
         )
         into('META-INF') {
             from processReadme
