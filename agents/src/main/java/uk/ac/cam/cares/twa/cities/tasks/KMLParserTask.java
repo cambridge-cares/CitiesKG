@@ -6,25 +6,39 @@ import gov.nasa.worldwind.ogc.kml.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import javax.xml.stream.XMLStreamException;
 import uk.ac.cam.cares.twa.cities.model.geo.EnvelopeCentroid;
 
-public class KMLParserTask {
+// the output of running this class should be the generation of the summary file in csv (gmlid, envelope[xmin, xmax, ymin, ymax], envelopeCentroid, corresponding file)
+public class KMLParserTask implements Runnable{
 
-  public static void printPlacemarks(KMLAbstractFeature feature)
+  // filename
+  // Some essential section of KML for the creation
+  // <Placemark> --> id
+  //
+
+  private String filename = "";
+  private List<String[]> csvData = new ArrayList();
+  private String outCsvFile = "";
+
+
+
+
+  public static void getPlacemarks(KMLAbstractFeature feature)
   {
     if (feature instanceof KMLAbstractContainer)
     {
       KMLAbstractContainer container = (KMLAbstractContainer) feature;
       for (KMLAbstractFeature f : container.getFeatures())
       {
-        printPlacemarks(f); // recursive
+        getPlacemarks(f); // recursive
       }
     }
     else if (feature instanceof KMLPlacemark)
     {
       KMLAbstractGeometry geom = ((KMLPlacemark) feature).getGeometry();
-      String name = ((KMLPlacemark) feature).getName();
+      String buildingId = ((KMLPlacemark) feature).getName();
       if (geom instanceof KMLPoint)
       {
         System.out.println("Point placemark at: " + ((KMLPoint) geom).getCoordinates());
@@ -36,10 +50,13 @@ public class KMLParserTask {
         KMLPolygon polygon = (KMLPolygon) multiGeometry.getGeometries().toArray()[0];
         ArrayList positionL = (ArrayList) polygon.getOuterBoundary().getCoordinates().list;
         System.out.println("MulitiGeometry placemark at: " + positionL);
-        double[] envelope = EnvelopeCentroid.getEnvelope(geom, name);
+        double[] envelope = EnvelopeCentroid.getEnvelope(geom);
+        double[] centroid = EnvelopeCentroid.getCentroid(envelope);
+
         System.out.println("Envelop: "  + envelope[0] + " " + envelope[1] + " " + envelope[2] + " " + envelope[3]);
       }
-      else if (geom instanceof KMLPolygon){
+      else if (geom instanceof KMLPolygon)
+      {
 
       }
       else if (geom instanceof KMLLinearRing)
@@ -75,9 +92,22 @@ public class KMLParserTask {
       style = (KMLStyle)document.getStyleSelectors().toArray()[0];
 
 
-      KMLParserTask.printPlacemarks(kmlRoot.getFeature());
+      KMLParserTask.getPlacemarks(kmlRoot.getFeature());
       System.out.println(kmlRoot.getFeature());
     }
 
+  private static List<String[]> createCSVDataSimple(List<String[]> dataContent) {
+    String[] header = {"gmlid", "envelope", "envelopeCentroid", "filename"};
+
+    List<String[]> csvContent = new ArrayList<>();
+    csvContent.add(header);
+    csvContent.addAll(dataContent);
+
+    return csvContent;
+  }
+
+  @Override
+  public void run() {
 
   }
+}
