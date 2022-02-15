@@ -6,15 +6,10 @@ import gov.nasa.worldwind.ogc.kml.KMLAbstractGeometry;
 import gov.nasa.worldwind.ogc.kml.KMLLineString;
 import gov.nasa.worldwind.ogc.kml.KMLLinearRing;
 import gov.nasa.worldwind.ogc.kml.KMLMultiGeometry;
-import gov.nasa.worldwind.ogc.kml.KMLPlacemark;
-import gov.nasa.worldwind.ogc.kml.KMLPoint;
 import gov.nasa.worldwind.ogc.kml.KMLPolygon;
 import java.util.ArrayList;
 import org.gdal.ogr.Geometry;
 import org.gdal.ogr.ogr;
-import org.gdal.osr.CoordinateTransformation;
-import org.gdal.osr.SpatialReference;
-import org.gdal.osr.osr;
 
 
 public class EnvelopeCentroid {
@@ -51,7 +46,6 @@ public class EnvelopeCentroid {
         polygon.AddGeometry(ring);
         multiPolygon.AddGeometry(polygon);
       }
-
       multiPolygon.GetEnvelope(envelope);
 
     } else if (kmlGeom instanceof KMLLinearRing) {
@@ -73,8 +67,8 @@ public class EnvelopeCentroid {
   public static double[] getCentroid(double[] envelope) { // return point // envelope = [Xmin, Xmax, Ymin, Ymax]
     //Geometry centroid = new Geometry(ogr.wkbPoint);
     double[] centroid = new double[2]; // {centroidX, centroidY}
-    centroid[0] = (envelope[1] - envelope[0]) / 2 ;
-    centroid[1] = (envelope[3] - envelope[2]) / 2 ;
+    centroid[0] = envelope[0] + (envelope[1] - envelope[0]) / 2 ;
+    centroid[1] = envelope[2] + (envelope[3] - envelope[2]) / 2 ;
     //centroid.AddPoint(centroidX, centroidY);
     return centroid;
   }

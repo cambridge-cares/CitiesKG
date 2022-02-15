@@ -21,7 +21,7 @@ public class KmlTiling {
 
   /*
   * Update the boundary of the extent */
-  public void updateExtent(double[] geomEnvelope){
+  public static void updateExtent(double[] geomEnvelope){
 
   }
 
