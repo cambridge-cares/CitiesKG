@@ -39,7 +39,6 @@ import net.opengis.kml._2.MultiGeometryType;
 import net.opengis.kml._2.OrientationType;
 import net.opengis.kml._2.PlacemarkType;
 import net.opengis.kml._2.PolygonType;
-import org.apache.jena.base.Sys;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.ElementType;
 import org.citydb.config.geometry.GeometryObject;
@@ -78,6 +77,7 @@ import org.citygml4j.geometry.Point;
 import org.citygml4j.model.citygml.CityGMLClass;
 import org.citygml4j.model.citygml.appearance.Color;
 import org.citygml4j.model.citygml.appearance.X3DMaterial;
+import org.citygml4j.model.citygml.texturedsurface._AbstractAppearance;
 import org.collada._2005._11.colladaschema.Accessor;
 import org.collada._2005._11.colladaschema.Asset;
 import org.collada._2005._11.colladaschema.BindMaterial;
@@ -122,7 +122,6 @@ import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
 import org.gdal.ogr.ogrConstants;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -142,7 +141,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -1937,31 +1935,30 @@ public abstract class KmlGenericObject<T> {
 					|| Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.TUNNEL_CLOSURE_SURFACE))
 				continue;
 
-			PreparedStatement geometryQuery = null;
-			ResultSet rsGeom = null;
+			PreparedStatement srsnameQuery = null;
+			ResultSet rsSrsname = null;
 
 			try {
+				Object rsGeometry = _rs.getObject("geomtype");
 				String query = queries.getSurfaceGeometries(false, transformer != null);
 
-//				for (int i = 1; i <= getParameterCount(query); i++)
-//					geometryQuery.setLong(i, rootId);
-				query = StatementTransformer.getSPARQLStatement_SurfaceGeometry();
-				geometryQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-				URL url = _rs.getURL(1);
-				geometryQuery.setURL(1, url);
-				rsGeom = geometryQuery.executeQuery();
-				if(rsGeom == null){
-					System.out.println(work.getGmlId() + "geometry empty");
+				String srsname = null;
+				String query_srsname = StatementTransformer.getSrname();
+				srsnameQuery = connection.prepareStatement(query_srsname, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+				rsSrsname = srsnameQuery.executeQuery();
+				while (rsSrsname.next()){
+					srsname = rsSrsname.getObject("srsname").toString();
 				}
+
 				SpatialReference nativeSr = new SpatialReference("");
-				nativeSr.SetFromUserInput("EPSG:3857");//need to get srid from blazegraph
+				nativeSr.SetFromUserInput(srsname);//need to get srid from blazegraph
 				SpatialReference tagetSr = new SpatialReference("");
 				tagetSr.SetFromUserInput("EPSG:4326"); // WGS84
 				CoordinateTransformation transform = CoordinateTransformation.CreateCoordinateTransformation(nativeSr, tagetSr);
 
 //				double zOffset = getZOffsetFromConfigOrDB((long)work.getId());
 				double zOffset = 0;
-				List<Point3d> lowestPointCandidates = getLowestPointsCoordinates_unconvert(rsGeom, (zOffset == Double.MAX_VALUE));
+				List<Point3d> lowestPointCandidates = getLowestPointsCoordinates_unconvert(rsGeometry, (zOffset == Double.MAX_VALUE));
 				if (zOffset == Double.MAX_VALUE)
 					zOffset = getZOffsetFromGEService((long)work.getId(), lowestPointCandidates);
 
@@ -1985,28 +1982,28 @@ public abstract class KmlGenericObject<T> {
 				}
 
 
-				rsGeom.beforeFirst(); // return cursor to beginning
+//				rsGeom.beforeFirst(); // return cursor to beginning
 				org.gdal.ogr.Geometry geom_poly = new org.gdal.ogr.Geometry(ogrConstants.wkbPolygon);
-				while (rsGeom.next()) {
+//				while (rsGeom.next()) {
 					// skip duplicate geometries
 //					String gmlId = rsGeom.getString("gmlid");
 //					boolean isXlink = rs.getBoolean("is_xlink");
 //					if (isXlink && gmlId != null && !exportedGmlIds.add(gmlId))
 //						continue;
 
-//					Object buildingGeometryObj = rsGeom.getObject("geom");
-					Coordinate[] coordinates = geospatial.str2coords(rsGeom.getObject("geom").toString()).toArray(new Coordinate[0]);
-					org.gdal.ogr.Geometry geomRing = new org.gdal.ogr.Geometry(ogr.wkbLinearRing);
+//				Coordinate[] coordinates = geospatial.str2coords(rsGeom.getObject("geom").toString()).toArray(new Coordinate[0]);
+				Coordinate[] coordinates = geospatial.str2coords(rsGeometry.toString()).toArray(new Coordinate[0]);
+				org.gdal.ogr.Geometry geomRing = new org.gdal.ogr.Geometry(ogr.wkbLinearRing);
 
-					for (int i = 0; i < coordinates.length; i++) {
-						double[] unconvertPoint = new double[]{coordinates[i].getX(), coordinates[i].getY(), coordinates[i].getZ()};
-						transform.TransformPoint(unconvertPoint);
-						geomRing.AddPoint(unconvertPoint[0], unconvertPoint[1], unconvertPoint[2]);
-					}
-
-					geom_poly.AddGeometry(geomRing);
-
+				for (int i = 0; i < coordinates.length; i++) {
+					double[] unconvertPoint = new double[]{coordinates[i].getX(), coordinates[i].getY(), coordinates[i].getZ()};
+					transform.TransformPoint(unconvertPoint);
+					geomRing.AddPoint(unconvertPoint[0], unconvertPoint[1], unconvertPoint[2]);
 				}
+
+				geom_poly.AddGeometry(geomRing);
+
+//				}
 					eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
 
 					polygon = kmlFactory.createPolygonType();
@@ -2136,10 +2133,12 @@ public abstract class KmlGenericObject<T> {
 			} catch (SQLException e) {
 				log.error(work.getGmlId()+ "SQL error while querying surface geometries: " + e.getMessage());
 			} finally {
-				if (rsGeom != null)
-					try { rsGeom.close(); } catch (SQLException e) {}
-				if (geometryQuery != null)
-					try { geometryQuery.close(); } catch (SQLException e) {}
+				if (rsSrsname != null)
+					try {
+						rsSrsname.close();
+					} catch (SQLException e) {
+						log.error("No coordinate system information." + e.getMessage());
+					}
 			}
 		}
 
@@ -2959,19 +2958,20 @@ public abstract class KmlGenericObject<T> {
 		return coords;
 	}
 
-	protected List<Point3d> getLowestPointsCoordinates_unconvert(ResultSet rs, boolean willCallGEService) throws SQLException {
+	protected List<Point3d> getLowestPointsCoordinates_unconvert(Object buildingGeometryObj, boolean willCallGEService) throws SQLException {
 		double currentlyLowestZCoordinate = Double.MAX_VALUE;
 		List<Point3d> coords = new ArrayList<Point3d>();
 		GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
 
-		while (rs.next()) {
-			Object buildingGeometryObj = rs.getObject(1);
+//		while (rs.next()) {
+//			Object buildingGeometryObj = rs.getObject(1);
 
 			if (buildingGeometryObj != null) {
 //				org.gdal.ogr.Geometry geomRing = null;
-				buildingGeometryObj = rs.getObject("geom");
-				String datatype = rs.getString("datatype");
-				Coordinate[] coordinates = geospatial.str2coords(rs.getObject("geom").toString()).toArray(new Coordinate[0]);
+//				buildingGeometryObj = rs.getObject("geom");
+//				String datatype = rs.getString("datatype");
+//				Coordinate[] coordinates = geospatial.str2coords(rs.getObject("geom").toString()).toArray(new Coordinate[0]);
+				Coordinate[] coordinates = geospatial.str2coords(buildingGeometryObj.toString()).toArray(new Coordinate[0]);
 				org.gdal.ogr.Geometry geomRing = new org.gdal.ogr.Geometry(ogrConstants.wkbLinearRing);
 
 				for(int i = 0; i < coordinates.length; i++){
@@ -3004,7 +3004,7 @@ public abstract class KmlGenericObject<T> {
 					}
 				}
 			}
-		}
+//		}
 
 		return coords;
 	}
