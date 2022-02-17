@@ -77,7 +77,7 @@ mvn initialize
 
 
 ```
-mvn clean install -DskipTests
+mvn clean install
 ```
 
 <<<<<<< HEAD
@@ -184,6 +184,9 @@ To run the web-map-client, in a shell environment navigate to the folder where *
 
 The web-map-client is now available via the URL (http://localhost:8080/3dwebclient/index.html). Place the .kml file in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/` and add the web link of the .kml file in `URL(*)` input field of the web-map-client Toolbox widget. In the input field `Name(*)`, a proper layer name must be specified as well. After clicking AddLayer, the .kml file will be visualised in the web-map-client.
 
+Solutions to common issues:
+* DistanceAgent URL, used in POST request, is hardcoded in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/script.js`. If agents are deployed on another port than 8080, agent URL needs to be updated accordingly in *script.js*.
+* If *DistanceAgent* is used with .kml files that were generated not by *ExporterAgent*, .kml file should have `<name>` value exactly same way as it is stored in the KG.
 
 ## Contributing
 
