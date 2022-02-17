@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import junit.framework.TestCase;
 import org.apache.jena.query.Query;
 import org.json.JSONException;
-import org.junit.Assert;
 import org.locationtech.jts.geom.Point;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
@@ -79,7 +78,7 @@ public class EnvelopeTest extends TestCase {
                     .thenReturn(kgClientMock);
             try {
                 envelope.getEnvelopeString(uri);
-                Assert.fail();
+                fail();
             }
             catch (JSONException error){
                 assertEquals("JSONArray[0] not found.", error.getMessage());
@@ -95,7 +94,7 @@ public class EnvelopeTest extends TestCase {
         String envelopeString5 = "";
         try {
             envelope.extractEnvelopePoints(envelopeString5);
-            Assert.fail();
+            fail();
         }
         catch (IllegalArgumentException error){
             assertEquals("empty String", error.getMessage());
@@ -105,7 +104,7 @@ public class EnvelopeTest extends TestCase {
         String envelopeString6 = "1 1 1 1 2 1 2 2 1 2 1 1 1 1 1";
         try {
             envelope.extractEnvelopePoints(envelopeString6);
-            Assert.fail();
+            fail();
         }
         catch (IllegalArgumentException error){
             assertEquals("Does not contain #", error.getMessage());
@@ -115,7 +114,7 @@ public class EnvelopeTest extends TestCase {
         String envelopeString4 = "1#1#1#1#2";
         try {
             envelope.extractEnvelopePoints(envelopeString4);
-            Assert.fail();
+            fail();
         }
         catch (IllegalArgumentException error){
             assertEquals("Number of points is not divisible by 3 or 2", error.getMessage());
@@ -125,7 +124,7 @@ public class EnvelopeTest extends TestCase {
         String envelopeString8 = "1#1#1#1#2#1#2#2#1";
         try {
             envelope.extractEnvelopePoints(envelopeString8);
-            Assert.fail();
+            fail();
         }
         catch  (IllegalArgumentException error){
             assertEquals("Polygon has less than 4 points", error.getMessage());
