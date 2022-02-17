@@ -138,10 +138,26 @@ public class StatementTransformer {
         StringBuilder sparqlString = new StringBuilder();
 
         sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-                "SELECT distinct ?surf " +
+                "SELECT distinct ?surf ?geomtype " +
                 "WHERE { ?surf ocgml:cityObjectId ? ;" +
-                "ocgml:GeometryType ?geom ." +
-                "FILTER (!isBlank(?geom)) }");
+                "ocgml:GeometryType ?geomtype ." +
+                "FILTER (!isBlank(?geomtype)) }");
+
+        return sparqlString.toString();
+    }
+
+    public static String getSPARQLStatement_BuildingPartGeometry_part2 () {
+        StringBuilder sparqlString = new StringBuilder();
+
+        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+                "SELECT distinct ?surf ?geomtype " +
+                "WHERE { " +
+                "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> " +
+                "{?themsurf ocgml:buildingId ? .} " +
+                "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> " +
+                "{?surf ocgml:cityObjectId ?themsurf; " +
+                "ocgml:GeometryType ?geomtype . " +
+                "FILTER (!isBlank(?geomtype)) }}");
 
         return sparqlString.toString();
     }
@@ -157,6 +173,18 @@ public class StatementTransformer {
         return sparqlString.toString();
     }
 
+    public static String getSrname()
+    {
+        StringBuilder sparqlString = new StringBuilder();
+
+        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+                "SELECT ?s ?srid ?srsname {\n" +
+                "    ?s ocgml:srid ?srid;\n" +
+                "        ocgml:srsname ?srsname\n" +
+                "}");
+
+        return sparqlString.toString();
+    }
     // Analyze SQL statement and transform it to a SPARQL query (Normal usuage: single gmlid or multiple gmlid or *)
     public static String getTopFeatureId (SQLStatement sqlStatement) throws ParseException {
         Select select = (Select) sqlStatement;
