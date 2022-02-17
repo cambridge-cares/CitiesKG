@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import javax.xml.stream.XMLStreamException;
 import uk.ac.cam.cares.twa.cities.model.geo.EnvelopeCentroid;
+import uk.ac.cam.cares.twa.cities.model.geo.KmlTiling;
 
 // the output of running this class should be the generation of the summary file in csv (gmlid, envelope[xmin, xmax, ymin, ymax], envelopeCentroid, corresponding file)
 public class KMLParserTask implements Runnable{
@@ -29,6 +30,7 @@ public class KMLParserTask implements Runnable{
   private String inputPath;
   public List<String[]> dataContent = new ArrayList<>();
   private List<String> gmlidList = new ArrayList<>();
+  private KmlTiling kmltiling = new KmlTiling("4326");
 
   public KMLParserTask(String inputPath){
     this.inputPath = inputPath;
@@ -63,6 +65,7 @@ public class KMLParserTask implements Runnable{
       System.out.println("Checking if the gmlidList is unique: " + isUnique(this.gmlidList));
       System.out.println("Saving the file in : " + this.outputDir + this.outCsvFile);
       this.createCSVFile(this.dataContent);
+      System.out.println("Updated Extent: " + kmltiling.getExtent()[0] + " " + kmltiling.getExtent()[1] + " " + kmltiling.getExtent()[2] + " " + kmltiling.getExtent()[3]);
     }
   }
   public void getPlacemarks(KMLAbstractFeature feature)
@@ -96,6 +99,7 @@ public class KMLParserTask implements Runnable{
         this.gmlidList.add(buildingId);
         String[] row = {buildingId, convert2Str(envelope), convert2Str(centroid), this.currFile}; //{"gmlid", "envelope", "envelopeCentroid", "filename"};
         this.dataContent.add(row);
+        kmltiling.updateExtent(envelope);
         //System.out.println("Envelop: "  + envelope[0] + " " + envelope[1] + " " + envelope[2] + " " + envelope[3]);
       }
       else if (geom instanceof KMLPolygon)
