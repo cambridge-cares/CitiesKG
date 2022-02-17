@@ -284,8 +284,21 @@ public class Building extends KmlGenericObject{
 						}
 
 						rs = psQuery.executeQuery();
-						if(isBlazegraph && rs == null){
-							System.out.println("need further query");
+
+						rs.last();
+						int rowCount = rs.getRow();
+						rs.beforeFirst();
+						if(isBlazegraph && rowCount == 0){
+							query = StatementTransformer.getSPARQLStatement_BuildingPartGeometry_part2();
+							psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+							URL url = null;
+							try {
+								url = new URL((String)buildingPartId);
+							} catch (MalformedURLException e) {
+								e.printStackTrace();
+							}
+							psQuery.setURL(1, url);
+							rs = psQuery.executeQuery();
 						}
 					} catch (SQLException e) {
 						log.error("SQL error while querying geometries in LOD " + currentLod + ": " + e.getMessage());
@@ -476,28 +489,10 @@ public class Building extends KmlGenericObject{
 				case DisplayForm.GEOMETRY:
 					setGmlId(work.getGmlId());
 					//setId(work.getId());
-					PreparedStatement psQuery3 = null;
-					ResultSet rs3 = null;
+//					PreparedStatement psQuery3 = null;
+//					ResultSet rs3 = null;
 					try {
-						String query1 = queries.getExtrusionHeight();
 
-						psQuery3 = connection.prepareStatement(query1);
-						if (isBlazegraph){
-							URL url = null;
-							try {
-								url = new URL(StatementTransformer.getIriObjectBase() + "cityobject/" + work.getGmlId()+"/");
-							} catch (MalformedURLException e) {
-								e.printStackTrace();
-							}
-							psQuery3.setURL(1, url);
-						} else {
-							for (int i = 1; i <= getParameterCount(query1); i++)
-								psQuery3.setLong(i, Long.class.cast(buildingPartId));
-						}
-						rs3 = psQuery3.executeQuery();
-						rs3.next();
-
-						double measuredHeight = 0;
 						if (isBlazegraph) {
 							//log.info("Processing : " + buildingPartId);
 //							String envelop = rs3.getString(1);
@@ -519,10 +514,11 @@ public class Building extends KmlGenericObject{
 							return createPlacemarksForGeometry(rs, work, true);
 						}
 
-					} finally {
-						try { if (rs3 != null) rs3.close(); } catch (SQLException e) {}
-						try { if (psQuery3 != null) psQuery3.close(); } catch (SQLException e) {}
-					}
+					} catch (SQLException e) {
+						log.error("SQL error while querying geometry " + work.getGmlId() + ": " + e.getMessage());
+						return null;
+			}
+
 
 				case DisplayForm.COLLADA:
 					fillGenericObjectForCollada(rs, config.getProject().getKmlExporter().getBuildingColladaOptions().isGenerateTextureAtlases(), true); // fill and refill
