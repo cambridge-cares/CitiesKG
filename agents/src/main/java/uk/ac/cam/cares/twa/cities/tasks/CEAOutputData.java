@@ -7,5 +7,6 @@ public class CEAOutputData {
     public String cooling_demand;
     public String PV_area;
     public String PV_supply;
+    public String targetUrl;
 
 }

@@ -2,20 +2,19 @@ package uk.ac.cam.cares.twa.cities.agents.geo;
 
 import org.apache.jena.sparql.core.Var;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
-import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.twa.cities.tasks.CEAInputData;
-import uk.ac.cam.cares.twa.cities.tasks.CEAOutputData;
-import uk.ac.cam.cares.twa.cities.tasks.RunCEATask;
+import uk.ac.cam.cares.twa.cities.tasks.*;
 import org.json.JSONObject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
+import java.net.URI;
+import java.net.URL;
 import java.util.Set;
 import javax.servlet.annotation.WebServlet;
 import java.util.concurrent.*;
 import java.util.UUID;
 import java.util.ResourceBundle;
 import java.util.Arrays;
-
+import java.net.URISyntaxException;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
@@ -26,16 +25,26 @@ import org.json.JSONArray;
 
 @WebServlet(
         urlPatterns = {
-                CEAAgent.URI_ACTION
+                CEAAgent.URI_ACTION,
+                CEAAgent.URI_UPDATE
         })
 public class CEAAgent extends JPSAgent {
     public static final String KEY_REQ_METHOD = "method";
-    public static final String URI_ACTION = "/cea";
+    public static final String URI_ACTION = "/cea/run";
+    public static final String URI_UPDATE = "/cea/update";
+    public static final String KEY_REQ_URL = "requestUrl";
+    public static final String KEY_TARGET_URL = "targetUrl";
     public static final String KEY_IRI = "iri";
     public static final String CITY_OBJECT = "cityobject";
     public static final String CITY_OBJECT_GEN_ATT = "cityobjectgenericattrib";
     public static final String BUILDING = "building";
     public static final String ENERGY_PROFILE = "energyprofile";
+    public static final String KEY_GRID_DEMAND = "grid_demand";
+    public static final String KEY_ELECTRICITY_DEMAND = "electricity_demand";
+    public static final String KEY_HEATING_DEMAND = "heating_demand";
+    public static final String KEY_COOLING_DEMAND = "cooling_demand";
+    public static final String KEY_PV_AREA = "PV_area";
+    public static final String KEY_PV_SUPPLY= "PV_supply";
 
     public final int NUM_CEA_THREADS = 1;
     private final ThreadPoolExecutor CEAExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_CEA_THREADS);
@@ -48,21 +57,31 @@ public class CEAAgent extends JPSAgent {
     private static String unitOntology;
     private static String QUERY_ROUTE;
     private static String UPDATE_ROUTE;
-
+    private String requestUrl;
+    private String targetUrl;
     public CEAAgent() {
         readConfig();
     }
 
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
-
         if (validateInput(requestParams)) {
-            String uri = requestParams.getString("iri");
+            requestUrl = requestParams.getString(KEY_REQ_URL);
+            targetUrl = requestParams.getString(KEY_TARGET_URL);
 
-            CEAInputData testData = new CEAInputData(getValue(uri, "Envelope"), getValue(uri, "Height"));
-            CEAOutputData outputs = runCEA(testData);
+            if (requestUrl.contains(URI_UPDATE)) {
+                //sparqlUpdate(outputs, uri);
+            } else if (requestUrl.contains(URI_ACTION)) {
+                String uriArrayString = requestParams.get("iri").toString();
+                JSONArray uriArray = new JSONArray(uriArrayString);
 
-            //sparqlUpdate(outputs, uri);
+                for(int i=0; i<uriArray.length(); i++) {
+                    String uri = uriArray.getString(i);
+                    CEAInputData testData = new CEAInputData(getValue(uri, "Envelope"), getValue(uri, "Height"));
+                    runCEA(testData, i);
+                }
+            }
+
         }
         return requestParams;
     }
@@ -73,11 +92,16 @@ public class CEAAgent extends JPSAgent {
 
         if (!requestParams.isEmpty()) {
             Set<String> keys = requestParams.keySet();
-            if (keys.contains(KEY_REQ_METHOD) && keys.contains(KEY_IRI)) {
+            if (keys.contains(KEY_REQ_METHOD) && keys.contains(KEY_REQ_URL) && keys.contains(
+                    KEY_TARGET_URL)) {
                 if (requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.POST)) {
                     try {
-                        if (!requestParams.getString(KEY_IRI).isEmpty()){
-                        error = false;
+                        URL reqUrl = new URL(requestParams.getString(KEY_REQ_URL));
+                        new URL(requestParams.getString(KEY_TARGET_URL));
+                        if (reqUrl.getPath().contains(URI_UPDATE)) {
+                            error = validateUpdateInput(requestParams);
+                        } else if (reqUrl.getPath().contains(URI_ACTION)) {
+                            error = validateActionInput(requestParams);
                         }
                     } catch (Exception e) {
                         throw new BadRequestException();
@@ -85,12 +109,48 @@ public class CEAAgent extends JPSAgent {
                 }
             }
         }
+
         if (error) {
             throw new BadRequestException();
         }
 
         return true;
     }
+
+    /**
+     * Validates input specific to requests coming to URI_UPDATE
+     *
+     * @param requestParams - request body in JSON format
+     * @return boolean saying if request is valid or not
+     */
+    private boolean validateUpdateInput(JSONObject requestParams) {
+        boolean error = true;
+        if (!requestParams.getString(KEY_GRID_DEMAND).isEmpty() ||
+                !requestParams.getString(KEY_ELECTRICITY_DEMAND).isEmpty() ||
+                !requestParams.getString(KEY_HEATING_DEMAND).isEmpty() ||
+                !requestParams.getString(KEY_COOLING_DEMAND).isEmpty() ||
+                !requestParams.getString(KEY_PV_AREA).isEmpty() ||
+                !requestParams.getString(KEY_PV_SUPPLY).isEmpty() ){
+            error = false;
+        }
+
+        return error;
+    }
+
+    /**
+     * Validates input specific to requests coming to URI_ACTION
+     *
+     * @param requestParams - request body in JSON format
+     * @return boolean saying if request is valid or not
+     */
+    private boolean validateActionInput(JSONObject requestParams) {
+        boolean error = true;
+        if (!requestParams.get(KEY_IRI).toString().isEmpty()){
+            error = false;
+        }
+        return error;
+    }
+
 
     /**
      * Gets variables from config
@@ -111,19 +171,14 @@ public class CEAAgent extends JPSAgent {
      * runs CEATask on CEAInputData and returns CEAOutputData
      *
      * @param buildingData input data on building envelope and height
-     * @return Output data from the CEA
      */
-    private CEAOutputData runCEA(CEAInputData buildingData) {
-        RunCEATask task = new RunCEATask(buildingData);
-        Future<CEAOutputData> future = CEAExecutor.submit(task);
-        CEAOutputData result;
+    private void runCEA(CEAInputData buildingData, int threadNumber) {
         try {
-             result = future.get();
-        } catch( InterruptedException | ExecutionException| CancellationException e) {
-            e.printStackTrace();
-            throw new JPSRuntimeException(e);
+            RunCEATask task = new RunCEATask(buildingData, new URI(targetUrl), threadNumber);
+            CEAExecutor.execute(task);
         }
-        return result;
+        catch(URISyntaxException e){
+        }
     }
 
     /**

@@ -1,37 +1,60 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
+import kong.unirest.HttpResponse;
+import kong.unirest.Unirest;
+import kong.unirest.UnirestException;
+import org.apache.http.HttpException;
+import org.apache.http.protocol.HTTP;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import com.google.gson.Gson;
 
 import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.lang.Process;
 import java.util.Objects;
-import java.util.concurrent.Callable;
 
-public class RunCEATask implements Callable<CEAOutputData> {
+public class RunCEATask implements Runnable {
     private final CEAInputData inputs;
+    private final URI endpointUri;
+    private final int threadNumber;
+    public static final String CTYPE_JSON = "application/json";
     private Boolean stop = false;
     private static final String SHAPEFILE_SCRIPT = "create_shapefile.py";
     private static final String WORKFLOW_SCRIPT = "workflow.yml";
     private static final String CREATE_WORKFLOW_SCRIPT = "create_cea_workflow.py";
     private static final String FS = System.getProperty("file.separator");
 
-    public RunCEATask(CEAInputData buildingData) {  this.inputs = buildingData; }
+    public RunCEATask(CEAInputData buildingData, URI endpointUri, int thread) {
+        this.inputs = buildingData;
+        this.endpointUri = endpointUri;
+        this.threadNumber = thread;
+    }
 
     public void stop() {
         stop = true;
     }
 
-    public void runProcess(ArrayList<String> args) {
+    public Process runProcess(ArrayList<String> args) {
         ProcessBuilder builder = new ProcessBuilder(args);
         builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        builder.redirectErrorStream(true);
+
 
         // starting the process
         try {
             Process p = builder.start();
-            p.waitFor();
+            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            int ch;
+            while ((ch = br.read()) != -1)
+                System.out.println((char)ch);
+            br.close();
+            int exitVal = p.waitFor();
+            System.out.println("Process exitValue: " + exitVal);
+            return p;
+
         } catch ( IOException | InterruptedException e) {
             e.printStackTrace();
             throw new JPSRuntimeException(e);
@@ -49,11 +72,11 @@ public class RunCEATask implements Callable<CEAOutputData> {
         }
     }
 
-    public CEAOutputData extractOutputs() {
+    public CEAOutputData extractOutputs(String tmpDir) {
         String line = "";
         String splitBy = ",";
         CEAOutputData result = new CEAOutputData();
-        String projectDir = System.getProperty("java.io.tmpdir")+FS+"testProject";
+        String projectDir = tmpDir+FS+"testProject";
 
         try{
             //parsing a CSV file into BufferedReader class constructor
@@ -103,22 +126,48 @@ public class RunCEATask implements Callable<CEAOutputData> {
         } catch ( IOException e) {
 
         }
-        File file = new File(projectDir);
+        result.targetUrl=endpointUri.toString();
+        File file = new File(tmpDir);
         deleteDirectoryContents(file);
         file.delete();
 
         return result;
     }
 
+    public void returnOutputs(CEAOutputData output) {
+        try {
+            String JSONOutput = new Gson().toJson(output);
+            if (!JSONOutput.isEmpty()) {
+                HttpResponse<?> response = Unirest.post(endpointUri.toString())
+                        .header(HTTP.CONTENT_TYPE, CTYPE_JSON)
+                        .body(JSONOutput)
+                        .socketTimeout(300000)
+                        .asEmpty();
+                int responseStatus = response.getStatus();
+                if (responseStatus != HttpURLConnection.HTTP_OK) {
+                    throw new HttpException(endpointUri + " " + responseStatus);
+                }
+            }
+
+        } catch ( HttpException | UnirestException e) {
+            throw new JPSRuntimeException(e);
+        }
+    }
+
     @Override
-    public CEAOutputData call() {
+    public void run() {
         while (!stop) {
 
             try {
                 //Parse input data to JSON
                 String dataString = new Gson().toJson(inputs);
 
-                String strTmp = System.getProperty("java.io.tmpdir");
+                String strTmp = System.getProperty("java.io.tmpdir")+FS+"thread_"+threadNumber;
+
+                File dir = new File(strTmp);
+                if (!dir.exists() && !dir.mkdirs()) {
+                    throw new JPSRuntimeException(new FileNotFoundException(strTmp));
+                }
 
                 ArrayList<String> args = new ArrayList<>();
                 args.add("python");
@@ -151,6 +200,8 @@ public class RunCEATask implements Callable<CEAOutputData> {
                 // Run workflow that runs all CEA scripts
                 runProcess(args3);
 
+                returnOutputs(extractOutputs(strTmp));
+
             } catch ( NullPointerException | URISyntaxException e) {
                 e.printStackTrace();
                 throw new JPSRuntimeException(e);
@@ -158,6 +209,5 @@ public class RunCEATask implements Callable<CEAOutputData> {
                 stop();
             }
         }
-        return extractOutputs();
     }
 }

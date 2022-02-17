@@ -8,13 +8,16 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class RunCEATaskTest extends TestCase {
     public void testRunCEATask() {
         RunCEATask task;
 
         try {
-            task = new RunCEATask(new CEAInputData("test","test"));
+            URI testURI = new URI("http://localhost/test");
+            task = new RunCEATask(new CEAInputData("test","test"), testURI, 0);
             assertNotNull(task);
         } catch (Exception e) {
             fail();
@@ -22,8 +25,10 @@ public class RunCEATaskTest extends TestCase {
     }
 
     public void testRunCEATaskFields() {
+        try {
         CEAInputData testData = new CEAInputData("test","test");
-        RunCEATask task = new RunCEATask(testData);
+        URI testURI = new URI("http://localhost/test");
+        RunCEATask task = new RunCEATask(testData, testURI, 0);
 
         assertEquals(6, task.getClass().getDeclaredFields().length);
 
@@ -34,7 +39,7 @@ public class RunCEATaskTest extends TestCase {
         Field CREATE_WORKFLOW_SCRIPT;
         Field FS;
 
-        try {
+
             inputs = task.getClass().getDeclaredField("inputs");
             inputs.setAccessible(true);
             assertEquals(inputs.get(task), testData);
@@ -54,20 +59,27 @@ public class RunCEATaskTest extends TestCase {
             FS.setAccessible(true);
             assertEquals(FS.get(task), System.getProperty("file.separator"));
 
-        } catch (NoSuchFieldException | IllegalAccessException e) {
+        } catch (NoSuchFieldException | IllegalAccessException | URISyntaxException e) {
             fail();
         }
     }
 
     public void testRunCEATaskMethods() {
-        RunCEATask task = new RunCEATask(new CEAInputData("test","test"));
+        try{
+        URI testURI = new URI("http://localhost/test");
+        RunCEATask task = new RunCEATask(new CEAInputData("test","test"), testURI, 0);
         assertEquals(6, task.getClass().getDeclaredMethods().length);
+        } catch (URISyntaxException e) {
+            fail();
+        }
+
     }
 
     public void testRunCEATaskStopMethod() {
-        RunCEATask task = new RunCEATask(new CEAInputData("test","test"));
-
         try {
+            URI testURI = new URI("http://localhost/test");
+            RunCEATask task = new RunCEATask(new CEAInputData("test","test"), testURI, 0);
+
             Field stopField = task.getClass().getDeclaredField("stop");
             stopField.setAccessible(true);
             assertFalse((Boolean) stopField.get(task));
@@ -75,14 +87,16 @@ public class RunCEATaskTest extends TestCase {
             stopMethod.setAccessible(true);
             stopMethod.invoke(task);
             assertTrue((Boolean) stopField.get(task));
-        } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+        } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException | URISyntaxException e) {
             fail();
         }
 
     }
     public void testRunCEATaskDeleteDirectoryContentsMethod() {
-        RunCEATask task = new RunCEATask(new CEAInputData("test","test"));
         try {
+            URI testURI = new URI("http://localhost/test");
+            RunCEATask task = new RunCEATask(new CEAInputData("test","test"), testURI, 0);
+
             File myTempDir = new File(System.getProperty("java.io.tmpdir"));
             File newDirectory = new File(myTempDir, "new_directory");
             assertTrue(newDirectory.mkdir() || newDirectory.isDirectory());
@@ -95,7 +109,7 @@ public class RunCEATaskTest extends TestCase {
 
             assertFalse(tempFile.isFile());
 
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | IOException e) {
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | IOException | URISyntaxException e) {
             System.out.println(e.getMessage());
             fail();
         }
