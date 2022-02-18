@@ -8,12 +8,9 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.net.URI;
 import java.net.URL;
-import java.util.Set;
+import java.util.*;
 import javax.servlet.annotation.WebServlet;
 import java.util.concurrent.*;
-import java.util.UUID;
-import java.util.ResourceBundle;
-import java.util.Arrays;
 import java.net.URISyntaxException;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
@@ -74,12 +71,12 @@ public class CEAAgent extends JPSAgent {
             } else if (requestUrl.contains(URI_ACTION)) {
                 String uriArrayString = requestParams.get("iri").toString();
                 JSONArray uriArray = new JSONArray(uriArrayString);
-
+                ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
                 for(int i=0; i<uriArray.length(); i++) {
                     String uri = uriArray.getString(i);
-                    CEAInputData testData = new CEAInputData(getValue(uri, "Envelope"), getValue(uri, "Height"));
-                    runCEA(testData, i);
+                    testData.add(new CEAInputData(getValue(uri, "Envelope"), getValue(uri, "Height")));
                 }
+                runCEA(testData, 0);
             }
 
         }
@@ -125,12 +122,12 @@ public class CEAAgent extends JPSAgent {
      */
     private boolean validateUpdateInput(JSONObject requestParams) {
         boolean error = true;
-        if (!requestParams.getString(KEY_GRID_DEMAND).isEmpty() ||
-                !requestParams.getString(KEY_ELECTRICITY_DEMAND).isEmpty() ||
-                !requestParams.getString(KEY_HEATING_DEMAND).isEmpty() ||
-                !requestParams.getString(KEY_COOLING_DEMAND).isEmpty() ||
-                !requestParams.getString(KEY_PV_AREA).isEmpty() ||
-                !requestParams.getString(KEY_PV_SUPPLY).isEmpty() ){
+        if (!requestParams.get(KEY_GRID_DEMAND).toString().isEmpty() ||
+                !requestParams.get(KEY_ELECTRICITY_DEMAND).toString().isEmpty() ||
+                !requestParams.get(KEY_HEATING_DEMAND).toString().isEmpty() ||
+                !requestParams.get(KEY_COOLING_DEMAND).toString().isEmpty() ||
+                !requestParams.get(KEY_PV_AREA).toString().isEmpty() ||
+                !requestParams.get(KEY_PV_SUPPLY).toString().isEmpty() ){
             error = false;
         }
 
@@ -171,8 +168,9 @@ public class CEAAgent extends JPSAgent {
      * runs CEATask on CEAInputData and returns CEAOutputData
      *
      * @param buildingData input data on building envelope and height
+     * @param threadNumber int tracking thread that is running
      */
-    private void runCEA(CEAInputData buildingData, int threadNumber) {
+    private void runCEA(ArrayList<CEAInputData> buildingData, int threadNumber) {
         try {
             RunCEATask task = new RunCEATask(buildingData, new URI(targetUrl), threadNumber);
             CEAExecutor.execute(task);

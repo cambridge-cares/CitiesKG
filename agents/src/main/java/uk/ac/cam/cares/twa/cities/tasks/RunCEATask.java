@@ -17,7 +17,7 @@ import java.lang.Process;
 import java.util.Objects;
 
 public class RunCEATask implements Runnable {
-    private final CEAInputData inputs;
+    private final ArrayList<CEAInputData> inputs;
     private final URI endpointUri;
     private final int threadNumber;
     public static final String CTYPE_JSON = "application/json";
@@ -27,7 +27,7 @@ public class RunCEATask implements Runnable {
     private static final String CREATE_WORKFLOW_SCRIPT = "create_cea_workflow.py";
     private static final String FS = System.getProperty("file.separator");
 
-    public RunCEATask(CEAInputData buildingData, URI endpointUri, int thread) {
+    public RunCEATask(ArrayList<CEAInputData> buildingData, URI endpointUri, int thread) {
         this.inputs = buildingData;
         this.endpointUri = endpointUri;
         this.threadNumber = thread;
@@ -94,16 +94,24 @@ public class RunCEATask implements Runnable {
             }
             for(int n=0; n<demand_columns.get(0).length; n++) {
                  if(demand_columns.get(0)[n].equals("GRID_MWhyr")) {
-                     result.grid_demand = demand_columns.get(1)[n];
+                     for(int m=1; m<demand_columns.size(); m++){
+                         result.grid_demand.add(demand_columns.get(m)[n]);
+                     }
                  }
                  else if(demand_columns.get(0)[n].equals("QH_sys_MWhyr")) {
-                     result.heating_demand = demand_columns.get(1)[n];
+                     for(int m=1; m<demand_columns.size(); m++) {
+                         result.heating_demand.add(demand_columns.get(m)[n]);
+                     }
                  }
                  else if(demand_columns.get(0)[n].equals("QC_sys_MWhyr")) {
-                     result.cooling_demand = demand_columns.get(1)[n];
+                     for(int m=1; m<demand_columns.size(); m++) {
+                         result.cooling_demand.add(demand_columns.get(m)[n]);
+                     }
                  }
                  else if(demand_columns.get(0)[n].equals("E_sys_MWhyr")) {
-                     result.electricity_demand = demand_columns.get(1)[n];
+                     for(int m=1; m<demand_columns.size(); m++) {
+                         result.electricity_demand.add(demand_columns.get(m)[n]);
+                     }
                  }
             }
             demand_file.close();
@@ -115,10 +123,14 @@ public class RunCEATask implements Runnable {
             }
             for(int n=0; n<PV_columns.get(0).length; n++) {
                 if(PV_columns.get(0)[n].equals("E_PVT_gen_kWh")) {
-                    result.PV_supply=PV_columns.get(1)[n];
+                    for(int m=1; m<PV_columns.size(); m++) {
+                        result.PV_supply.add(PV_columns.get(m)[n]);
+                    }
                 }
                 else if(PV_columns.get(0)[n].equals("Area_PVT_m2")) {
-                    result.PV_area=PV_columns.get(1)[n];
+                    for(int m=1; m<PV_columns.size(); m++) {
+                        result.PV_area.add(PV_columns.get(m)[n]);
+                    }
                 }
             }
             PV_file.close();
@@ -160,8 +172,12 @@ public class RunCEATask implements Runnable {
 
             try {
                 //Parse input data to JSON
-                String dataString = new Gson().toJson(inputs);
-
+                String dataString="[";
+                for(int i=0; i<inputs.size(); i++) {
+                    dataString += new Gson().toJson(inputs.get(i));
+                    if(i!=inputs.size()-1) dataString += ", ";
+                }
+                dataString+="]";
                 String strTmp = System.getProperty("java.io.tmpdir")+FS+"thread_"+threadNumber;
 
                 File dir = new File(strTmp);

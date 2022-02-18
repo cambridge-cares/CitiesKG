@@ -24,23 +24,18 @@
 - script: archetypes-mapper
   parameters:
     scenario: scenario_path
-    buildings: ['B001']
 - script: radiation
   parameters:
     scenario: scenario_path
-    buildings: ['B001']
 - script: schedule-maker
   parameters:
     scenario: scenario_path
-    buildings: ['B001']
 - script: demand
   parameters:
     scenario: scenario_path
-    buildings: ['B001']
     loads-output: ['GRID', 'QH_sys', 'QC_sys', 'E_sys']
     massflows-output: []
     temperatures-output: []
 - script: photovoltaic
   parameters:
     scenario: scenario_path
-    buildings: ['B001']

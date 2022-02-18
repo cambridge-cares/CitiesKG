@@ -10,6 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 
 public class RunCEATaskTest extends TestCase {
     public void testRunCEATask() {
@@ -17,7 +18,9 @@ public class RunCEATaskTest extends TestCase {
 
         try {
             URI testURI = new URI("http://localhost/test");
-            task = new RunCEATask(new CEAInputData("test","test"), testURI, 0);
+            ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
+            testData.add(new CEAInputData("test","test"));
+            task = new RunCEATask(testData, testURI, 0);
             assertNotNull(task);
         } catch (Exception e) {
             fail();
@@ -26,18 +29,19 @@ public class RunCEATaskTest extends TestCase {
 
     public void testRunCEATaskFields() {
         try {
-        CEAInputData testData = new CEAInputData("test","test");
-        URI testURI = new URI("http://localhost/test");
-        RunCEATask task = new RunCEATask(testData, testURI, 0);
+            ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
+            testData.add(new CEAInputData("test","test"));
+            URI testURI = new URI("http://localhost/test");
+            RunCEATask task = new RunCEATask(testData, testURI, 0);
 
-        assertEquals(6, task.getClass().getDeclaredFields().length);
+            assertEquals(6, task.getClass().getDeclaredFields().length);
 
-        Field inputs;
-        Field stop;
-        Field SHAPEFILE_SCRIPT;
-        Field WORKFLOW_SCRIPT;
-        Field CREATE_WORKFLOW_SCRIPT;
-        Field FS;
+            Field inputs;
+            Field stop;
+            Field SHAPEFILE_SCRIPT;
+            Field WORKFLOW_SCRIPT;
+            Field CREATE_WORKFLOW_SCRIPT;
+            Field FS;
 
 
             inputs = task.getClass().getDeclaredField("inputs");
@@ -66,9 +70,11 @@ public class RunCEATaskTest extends TestCase {
 
     public void testRunCEATaskMethods() {
         try{
-        URI testURI = new URI("http://localhost/test");
-        RunCEATask task = new RunCEATask(new CEAInputData("test","test"), testURI, 0);
-        assertEquals(6, task.getClass().getDeclaredMethods().length);
+            URI testURI = new URI("http://localhost/test");
+            ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
+            testData.add(new CEAInputData("test","test"));
+            RunCEATask task = new RunCEATask(testData, testURI, 0);
+            assertEquals(6, task.getClass().getDeclaredMethods().length);
         } catch (URISyntaxException e) {
             fail();
         }
@@ -78,7 +84,9 @@ public class RunCEATaskTest extends TestCase {
     public void testRunCEATaskStopMethod() {
         try {
             URI testURI = new URI("http://localhost/test");
-            RunCEATask task = new RunCEATask(new CEAInputData("test","test"), testURI, 0);
+            ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
+            testData.add(new CEAInputData("test","test"));
+            RunCEATask task = new RunCEATask(testData, testURI, 0);
 
             Field stopField = task.getClass().getDeclaredField("stop");
             stopField.setAccessible(true);
@@ -95,7 +103,9 @@ public class RunCEATaskTest extends TestCase {
     public void testRunCEATaskDeleteDirectoryContentsMethod() {
         try {
             URI testURI = new URI("http://localhost/test");
-            RunCEATask task = new RunCEATask(new CEAInputData("test","test"), testURI, 0);
+            ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
+            testData.add(new CEAInputData("test","test"));
+            RunCEATask task = new RunCEATask(testData, testURI, 0);
 
             File myTempDir = new File(System.getProperty("java.io.tmpdir"));
             File newDirectory = new File(myTempDir, "new_directory");

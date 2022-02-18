@@ -1,12 +1,14 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
+import java.util.ArrayList;
+
 public class CEAOutputData {
-    public String grid_demand;
-    public String electricity_demand;
-    public String heating_demand;
-    public String cooling_demand;
-    public String PV_area;
-    public String PV_supply;
+    public ArrayList<String> grid_demand = new ArrayList<>();
+    public ArrayList<String> electricity_demand = new ArrayList<>();
+    public ArrayList<String> heating_demand = new ArrayList<>();
+    public ArrayList<String> cooling_demand = new ArrayList<>();
+    public ArrayList<String> PV_area = new ArrayList<>();
+    public ArrayList<String> PV_supply = new ArrayList<>();
     public String targetUrl;
 
 }
