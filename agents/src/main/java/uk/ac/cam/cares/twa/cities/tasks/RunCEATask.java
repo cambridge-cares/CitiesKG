@@ -5,6 +5,7 @@ import kong.unirest.Unirest;
 import kong.unirest.UnirestException;
 import org.apache.http.HttpException;
 import org.apache.http.protocol.HTTP;
+import org.json.JSONArray;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import com.google.gson.Gson;
 
@@ -18,6 +19,7 @@ import java.util.Objects;
 
 public class RunCEATask implements Runnable {
     private final ArrayList<CEAInputData> inputs;
+    private final ArrayList<String> uris;
     private final URI endpointUri;
     private final int threadNumber;
     public static final String CTYPE_JSON = "application/json";
@@ -27,9 +29,10 @@ public class RunCEATask implements Runnable {
     private static final String CREATE_WORKFLOW_SCRIPT = "create_cea_workflow.py";
     private static final String FS = System.getProperty("file.separator");
 
-    public RunCEATask(ArrayList<CEAInputData> buildingData, URI endpointUri, int thread) {
+    public RunCEATask(ArrayList<CEAInputData> buildingData, URI endpointUri, ArrayList<String> uris, int thread) {
         this.inputs = buildingData;
         this.endpointUri = endpointUri;
+        this.uris = uris;
         this.threadNumber = thread;
     }
 
@@ -95,22 +98,26 @@ public class RunCEATask implements Runnable {
             for(int n=0; n<demand_columns.get(0).length; n++) {
                  if(demand_columns.get(0)[n].equals("GRID_MWhyr")) {
                      for(int m=1; m<demand_columns.size(); m++){
-                         result.grid_demand.add(demand_columns.get(m)[n]);
+                         Double value = Double.valueOf(demand_columns.get(m)[n])*1000;
+                         result.grid_demand.add(value.toString());
                      }
                  }
                  else if(demand_columns.get(0)[n].equals("QH_sys_MWhyr")) {
                      for(int m=1; m<demand_columns.size(); m++) {
-                         result.heating_demand.add(demand_columns.get(m)[n]);
+                         Double value = Double.valueOf(demand_columns.get(m)[n])*1000;
+                         result.heating_demand.add(value.toString());
                      }
                  }
                  else if(demand_columns.get(0)[n].equals("QC_sys_MWhyr")) {
                      for(int m=1; m<demand_columns.size(); m++) {
-                         result.cooling_demand.add(demand_columns.get(m)[n]);
+                         Double value = Double.valueOf(demand_columns.get(m)[n])*1000;
+                         result.cooling_demand.add(value.toString());
                      }
                  }
                  else if(demand_columns.get(0)[n].equals("E_sys_MWhyr")) {
                      for(int m=1; m<demand_columns.size(); m++) {
-                         result.electricity_demand.add(demand_columns.get(m)[n]);
+                         Double value = Double.valueOf(demand_columns.get(m)[n])*1000;
+                         result.electricity_demand.add(value.toString());
                      }
                  }
             }
@@ -122,12 +129,12 @@ public class RunCEATask implements Runnable {
                 PV_columns.add(rows);
             }
             for(int n=0; n<PV_columns.get(0).length; n++) {
-                if(PV_columns.get(0)[n].equals("E_PVT_gen_kWh")) {
+                if(PV_columns.get(0)[n].equals("E_PV_gen_kWh")) {
                     for(int m=1; m<PV_columns.size(); m++) {
                         result.PV_supply.add(PV_columns.get(m)[n]);
                     }
                 }
-                else if(PV_columns.get(0)[n].equals("Area_PVT_m2")) {
+                else if(PV_columns.get(0)[n].equals("Area_PV_m2")) {
                     for(int m=1; m<PV_columns.size(); m++) {
                         result.PV_area.add(PV_columns.get(m)[n]);
                     }
@@ -139,6 +146,7 @@ public class RunCEATask implements Runnable {
 
         }
         result.targetUrl=endpointUri.toString();
+        result.iri=uris;
         File file = new File(tmpDir);
         deleteDirectoryContents(file);
         file.delete();

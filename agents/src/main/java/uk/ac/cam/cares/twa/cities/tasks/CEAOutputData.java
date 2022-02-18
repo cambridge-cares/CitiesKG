@@ -1,5 +1,7 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
+import org.json.JSONArray;
+
 import java.util.ArrayList;
 
 public class CEAOutputData {
@@ -10,5 +12,6 @@ public class CEAOutputData {
     public ArrayList<String> PV_area = new ArrayList<>();
     public ArrayList<String> PV_supply = new ArrayList<>();
     public String targetUrl;
+    public ArrayList<String> iri = new ArrayList<>();
 
 }

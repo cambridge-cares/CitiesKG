@@ -51,7 +51,10 @@ public class CEAAgent extends JPSAgent {
     private String ontoUBEMMPUri;
     private String rdfUri;
     private String owlUri;
-    private static String unitOntology;
+    private String purlUri;
+    private String semancoUri;
+    private String thinkhomeUri;
+    private static String unitOntologyUri;
     private static String QUERY_ROUTE;
     private static String UPDATE_ROUTE;
     private String requestUrl;
@@ -65,18 +68,28 @@ public class CEAAgent extends JPSAgent {
         if (validateInput(requestParams)) {
             requestUrl = requestParams.getString(KEY_REQ_URL);
             targetUrl = requestParams.getString(KEY_TARGET_URL);
+            String uriArrayString = requestParams.get(KEY_IRI).toString();
+            JSONArray uriArray = new JSONArray(uriArrayString);
 
             if (requestUrl.contains(URI_UPDATE)) {
-                //sparqlUpdate(outputs, uri);
+               /* for(int i=0; i<uriArray.length(); i++) {
+                    String uri = uriArray.getString(i);
+                    sparqlUpdate(requestParams.get(KEY_GRID_DEMAND).toString(),
+                            requestParams.get(KEY_ELECTRICITY_DEMAND).toString(),
+                            requestParams.get(KEY_HEATING_DEMAND).toString(),
+                            requestParams.get(KEY_COOLING_DEMAND).toString(),
+                            requestParams.get(KEY_PV_AREA).toString(),
+                            requestParams.get(KEY_PV_SUPPLY).toString(), uri);
+                }*/
             } else if (requestUrl.contains(URI_ACTION)) {
-                String uriArrayString = requestParams.get("iri").toString();
-                JSONArray uriArray = new JSONArray(uriArrayString);
-                ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
+                ArrayList<CEAInputData> testData = new ArrayList<>();
+                ArrayList<String> uriStringArray = new ArrayList<>();
                 for(int i=0; i<uriArray.length(); i++) {
                     String uri = uriArray.getString(i);
+                    uriStringArray.add(uri);
                     testData.add(new CEAInputData(getValue(uri, "Envelope"), getValue(uri, "Height")));
                 }
-                runCEA(testData, 0);
+                runCEA(testData, uriStringArray,0);
             }
 
         }
@@ -90,7 +103,7 @@ public class CEAAgent extends JPSAgent {
         if (!requestParams.isEmpty()) {
             Set<String> keys = requestParams.keySet();
             if (keys.contains(KEY_REQ_METHOD) && keys.contains(KEY_REQ_URL) && keys.contains(
-                    KEY_TARGET_URL)) {
+                    KEY_TARGET_URL) && keys.contains(KEY_IRI)) {
                 if (requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.POST)) {
                     try {
                         URL reqUrl = new URL(requestParams.getString(KEY_REQ_URL));
@@ -158,10 +171,13 @@ public class CEAAgent extends JPSAgent {
         UPDATE_ROUTE = config.getString("uri.route.local");
         QUERY_ROUTE = config.getString("uri.route.local");
         ocgmlUri = config.getString("uri.ontology.ontocitygml");
-        unitOntology = config.getString("uri.ontology.om");
+        unitOntologyUri = config.getString("uri.ontology.om");
         ontoUBEMMPUri = config.getString("uri.ontology.ontoubemmp");
         rdfUri = config.getString("uri.ontology.rdf");
         owlUri = config.getString("uri.ontology.owl");
+        purlUri=config.getString("uri.ontology.purl");
+        semancoUri=config.getString("uri.ontology.semanco");
+        thinkhomeUri=config.getString("uri.ontology.thinkhome");
     }
 
     /**
@@ -170,9 +186,9 @@ public class CEAAgent extends JPSAgent {
      * @param buildingData input data on building envelope and height
      * @param threadNumber int tracking thread that is running
      */
-    private void runCEA(ArrayList<CEAInputData> buildingData, int threadNumber) {
+    private void runCEA(ArrayList<CEAInputData> buildingData, ArrayList<String> uris, int threadNumber) {
         try {
-            RunCEATask task = new RunCEATask(buildingData, new URI(targetUrl), threadNumber);
+            RunCEATask task = new RunCEATask(buildingData, new URI(targetUrl), uris, threadNumber);
             CEAExecutor.execute(task);
         }
         catch(URISyntaxException e){
@@ -301,42 +317,101 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * builds a SPARQL update using output from CEA simulations
-     * @param output the output data from the CEA
+     * @param grid_demand the output data from the CEA
      * @param uriString city object id
      */
-    public void sparqlUpdate(CEAOutputData output, String uriString) {
+    public void sparqlUpdate(String grid_demand, String electricity_demand, String heating_demand, String cooling_demand, String PV_area, String PV_supply, String uriString) {
         String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
-        String heatingUri = outputGraphUri + "UUID_" + UUID.randomUUID() + "/";
+        String buildingUri = getGraph(uriString,BUILDING);
+        String heatingUri = outputGraphUri + "HeatingSystem_UUID_" + UUID.randomUUID() + "/";
         String coolingUri = outputGraphUri + "UUID_" + UUID.randomUUID() + "/";
         String pvCellsUri = outputGraphUri + "UUID_" + UUID.randomUUID()+ "/";
+        String gridConsumptionUri = outputGraphUri + "GridConsumption_UUID_" + UUID.randomUUID()+ "/";
+        String gridConsumptionValueUri = outputGraphUri + "GridConsumptionValue_UUID_" + UUID.randomUUID()+ "/";
+        String electricityConsumptionUri = outputGraphUri + "ElectricityConsumption_UUID_" + UUID.randomUUID()+ "/";
+        String electricityConsumptionValueUri = outputGraphUri + "ElectricityConsumptionValue_UUID_" + UUID.randomUUID()+ "/";
+        String heatingConsumptionUri = outputGraphUri + "HeatingConsumption_UUID_" + UUID.randomUUID()+ "/";
+        String heatingConsumptionValueUri = outputGraphUri + "HeatingConsumptionValue_UUID_" + UUID.randomUUID()+ "/";
+        String coolingConsumptionUri = outputGraphUri + "CoolingConsumption_UUID_" + UUID.randomUUID()+ "/";
+        String coolingConsumptionValueUri = outputGraphUri + "CoolingConsumptionValue_UUID_" + UUID.randomUUID()+ "/";
+        String PVAreaUri = outputGraphUri + "PVArea_UUID_" + UUID.randomUUID()+ "/";
+        String PVAreaValueUri = outputGraphUri + "PVAreaValue_UUID_" + UUID.randomUUID()+ "/";
+        String PVSupplyUri = outputGraphUri + "PVSupply_UUID_" + UUID.randomUUID()+ "/";
+        String PVSupplyValueUri = outputGraphUri + "PVSupplyValue_UUID_" + UUID.randomUUID()+ "/";
 
         UpdateBuilder ub =
                 new UpdateBuilder()
                         .addPrefix("ontoubemmp", ontoUBEMMPUri)
                         .addPrefix("rdf", rdfUri)
                         .addPrefix("owl", owlUri)
-                        .addInsert("?graph", NodeFactory.createURI(uriString), "rdf:type", "ontoubemmp:building")
-                        .addInsert("?graph", NodeFactory.createURI(uriString), "ontoubemmp:hasYearlyEnergyDemand", output.grid_demand)
-                        .addInsert("?graph", NodeFactory.createURI(uriString), "ontoubemmp:hasEnergyUnit", "megawattHour")
-                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "rdf:type", "ontoubemmp:EnergyConsumer")
+                        .addPrefix("purl", purlUri)
+                        .addPrefix("om", unitOntologyUri)
+                        .addPrefix("semanco", semancoUri)
+                        .addPrefix("thinkhome", thinkhomeUri)
+                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "rdf:type", "purl:infrastructure/Building")
+                        .addInsert("?graph", NodeFactory.createURI(gridConsumptionUri), "rdf:type", "ontoubemmp:GridConsumption")
+                        .addInsert("?graph", NodeFactory.createURI(gridConsumptionUri), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(gridConsumptionUri), "om:hasDimension", "om:energy-Dimension")
+                        .addInsert("?graph", NodeFactory.createURI(gridConsumptionUri), "om:hasValue", NodeFactory.createURI(gridConsumptionValueUri))
+                        .addInsert("?graph", NodeFactory.createURI(gridConsumptionValueUri), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(gridConsumptionValueUri), "rdf:type", "om:Measure")
+                        .addInsert("?graph", NodeFactory.createURI(gridConsumptionValueUri), "om:hasNumericalValue", grid_demand)
+                        .addInsert("?graph", NodeFactory.createURI(gridConsumptionValueUri), "om:hasUnit", "om:kilowattHour")
+                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "purl:enaeq/consumesEnergy", gridConsumptionUri)
+                        .addInsert("?graph", NodeFactory.createURI(electricityConsumptionUri), "rdf:type", "ontoubemmp:ElectricityConsumption")
+                        .addInsert("?graph", NodeFactory.createURI(electricityConsumptionUri), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(electricityConsumptionUri), "om:hasDimension", "om:energy-Dimension")
+                        .addInsert("?graph", NodeFactory.createURI(electricityConsumptionUri), "om:hasValue", NodeFactory.createURI(electricityConsumptionValueUri))
+                        .addInsert("?graph", NodeFactory.createURI(electricityConsumptionValueUri), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(electricityConsumptionValueUri), "rdf:type", "om:Measure")
+                        .addInsert("?graph", NodeFactory.createURI(electricityConsumptionValueUri), "om:hasNumericalValue", electricity_demand)
+                        .addInsert("?graph", NodeFactory.createURI(electricityConsumptionValueUri), "om:hasUnit", "om:kilowattHour")
+                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "purl:enaeq/consumesEnergy", electricityConsumptionUri)
+                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "onotubemmp:hasDevice", heatingUri)
+                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "rdf:type", "purl:enaeq/HeatingSystem")
                         .addInsert("?graph", NodeFactory.createURI(heatingUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "ontoubemmp:isConsumerType", "heating")
-                        .addInsert("?graph", NodeFactory.createURI(uriString), "ontoubemmp:hasEnergyConsumer", NodeFactory.createURI(heatingUri))
-                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "ontoubemmp:hasEnergyUnit", "megawattHour")
-                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "ontoubemmp:hasYearlyEnergyDemand", output.heating_demand)
-                        .addInsert("?graph", NodeFactory.createURI(coolingUri), "rdf:type", "ontoubemmp:EnergyConsumer")
+                        .addInsert("?graph", NodeFactory.createURI(heatingConsumptionUri), "rdf:type", "ontoubemmp:ThermalConsumption")
+                        .addInsert("?graph", NodeFactory.createURI(heatingConsumptionUri), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(heatingConsumptionUri), "om:hasDimension", "om:energy-Dimension")
+                        .addInsert("?graph", NodeFactory.createURI(heatingConsumptionUri), "om:hasValue", NodeFactory.createURI(heatingConsumptionValueUri))
+                        .addInsert("?graph", NodeFactory.createURI(heatingConsumptionValueUri), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(heatingConsumptionValueUri), "rdf:type", "om:Measure")
+                        .addInsert("?graph", NodeFactory.createURI(heatingConsumptionValueUri), "om:hasNumericalValue", heating_demand)
+                        .addInsert("?graph", NodeFactory.createURI(heatingConsumptionValueUri), "om:hasUnit", "om:kilowattHour")
+                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "purl:enaeq/consumesEnergy", heatingConsumptionUri)
+                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "onotubemmp:hasDevice", coolingUri)
+                        .addInsert("?graph", NodeFactory.createURI(coolingUri), "rdf:type", "ontoubemmp:CoolingSystem")
                         .addInsert("?graph", NodeFactory.createURI(coolingUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(coolingUri), "ontoubemmp:isConsumerType", "cooling")
-                        .addInsert("?graph", NodeFactory.createURI(uriString), "ontoubemmp:hasEnergyConsumer", NodeFactory.createURI(coolingUri))
-                        .addInsert("?graph", NodeFactory.createURI(coolingUri), "ontoubemmp:hasEnergyUnit", "megawattHour")
-                        .addInsert("?graph", NodeFactory.createURI(coolingUri), "ontoubemmp:hasYearlyEnergyDemand", output.cooling_demand)
-                        .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "rdf:type", "ontoubemmp:PVCells")
+                        .addInsert("?graph", NodeFactory.createURI(coolingConsumptionUri), "rdf:type", "ontoubemmp:ThermalConsumption")
+                        .addInsert("?graph", NodeFactory.createURI(coolingConsumptionUri), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(coolingConsumptionUri), "om:hasDimension", "om:energy-Dimension")
+                        .addInsert("?graph", NodeFactory.createURI(coolingConsumptionUri), "om:hasValue", NodeFactory.createURI(coolingConsumptionValueUri))
+                        .addInsert("?graph", NodeFactory.createURI(coolingConsumptionValueUri), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(coolingConsumptionValueUri), "rdf:type", "om:Measure")
+                        .addInsert("?graph", NodeFactory.createURI(coolingConsumptionValueUri), "om:hasNumericalValue", cooling_demand)
+                        .addInsert("?graph", NodeFactory.createURI(coolingConsumptionValueUri), "om:hasUnit", "om:kilowattHour")
+                        .addInsert("?graph", NodeFactory.createURI(coolingUri), "purl:enaeq/consumesEnergy", coolingConsumptionUri)
+                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "onotubemmp:hasDevice", pvCellsUri)
+                        .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "rdf:type", "semanco:PVSystem")
                         .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(uriString), "ontoubemmp:hasPotentialPVCells", NodeFactory.createURI(pvCellsUri))
-                        .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "ontoubemmp:hasEnergyUnit", "kilowattHour")
-                        .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "ontoubemmp:hasYearlyEnergySupply", output.PV_supply)
-                        .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "ontoubemmp:hasAreaUnit", "squareMeter")
-                        .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "ontoubemmp:hasSurfaceArea", output.PV_area);
+                        .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "ontoubemmp:hasArea", NodeFactory.createURI(PVAreaUri))
+                        .addInsert("?graph", NodeFactory.createURI(PVAreaUri), "rdf:type", "ontoubemmp:PVSystemArea")
+                        .addInsert("?graph", NodeFactory.createURI(PVAreaUri), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(PVAreaUri), "om:hasDimension", "om:area-Dimension")
+                        .addInsert("?graph", NodeFactory.createURI(PVAreaUri), "om:hasValue", NodeFactory.createURI(PVAreaValueUri))
+                        .addInsert("?graph", NodeFactory.createURI(PVAreaValueUri), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(PVAreaValueUri), "rdf:type", "om:Measure")
+                        .addInsert("?graph", NodeFactory.createURI(PVAreaValueUri), "om:hasNumericalValue", PV_area)
+                        .addInsert("?graph", NodeFactory.createURI(PVAreaValueUri), "om:hasUnit", "om:squareMetre")
+                        .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "thinkhome:producesEnergy", NodeFactory.createURI(PVSupplyUri))
+                        .addInsert("?graph", NodeFactory.createURI(PVSupplyUri), "rdf:type", "ontoubemmp:ElectricitySupply")
+                        .addInsert("?graph", NodeFactory.createURI(PVSupplyUri), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(PVSupplyUri), "om:hasDimension", "om:energy-Dimension")
+                        .addInsert("?graph", NodeFactory.createURI(PVSupplyUri), "om:hasValue", NodeFactory.createURI(PVSupplyValueUri))
+                        .addInsert("?graph", NodeFactory.createURI(PVSupplyValueUri), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(PVSupplyValueUri), "rdf:type", "om:Measure")
+                        .addInsert("?graph", NodeFactory.createURI(PVSupplyValueUri), "om:hasNumericalValue", PV_supply)
+                        .addInsert("?graph", NodeFactory.createURI(PVSupplyValueUri), "om:hasUnit", "om:kilowattHour");
         ub.setVar(Var.alloc("graph"), NodeFactory.createURI(outputGraphUri));
 
         UpdateRequest ur = ub.buildRequest();

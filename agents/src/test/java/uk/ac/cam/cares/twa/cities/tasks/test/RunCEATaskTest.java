@@ -1,6 +1,7 @@
 package uk.ac.cam.cares.twa.cities.tasks.test;
 
 import junit.framework.TestCase;
+import org.json.JSONArray;
 import uk.ac.cam.cares.twa.cities.tasks.CEAInputData;
 import uk.ac.cam.cares.twa.cities.tasks.RunCEATask;
 import java.io.File;
@@ -20,7 +21,8 @@ public class RunCEATaskTest extends TestCase {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
             testData.add(new CEAInputData("test","test"));
-            task = new RunCEATask(testData, testURI, 0);
+            ArrayList<String> testArray = new ArrayList<String>();
+            task = new RunCEATask(testData, testURI, testArray,0);
             assertNotNull(task);
         } catch (Exception e) {
             fail();
@@ -32,7 +34,8 @@ public class RunCEATaskTest extends TestCase {
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
             testData.add(new CEAInputData("test","test"));
             URI testURI = new URI("http://localhost/test");
-            RunCEATask task = new RunCEATask(testData, testURI, 0);
+            ArrayList<String> testArray = new ArrayList<String>();
+            RunCEATask task = new RunCEATask(testData, testURI, testArray,0);
 
             assertEquals(6, task.getClass().getDeclaredFields().length);
 
@@ -73,7 +76,8 @@ public class RunCEATaskTest extends TestCase {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
             testData.add(new CEAInputData("test","test"));
-            RunCEATask task = new RunCEATask(testData, testURI, 0);
+            ArrayList<String> testArray = new ArrayList<String>();
+            RunCEATask task = new RunCEATask(testData, testURI, testArray,0);
             assertEquals(6, task.getClass().getDeclaredMethods().length);
         } catch (URISyntaxException e) {
             fail();
@@ -86,7 +90,8 @@ public class RunCEATaskTest extends TestCase {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
             testData.add(new CEAInputData("test","test"));
-            RunCEATask task = new RunCEATask(testData, testURI, 0);
+            ArrayList<String> testArray = new ArrayList<String>();
+            RunCEATask task = new RunCEATask(testData, testURI, testArray,0);
 
             Field stopField = task.getClass().getDeclaredField("stop");
             stopField.setAccessible(true);
@@ -105,7 +110,8 @@ public class RunCEATaskTest extends TestCase {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
             testData.add(new CEAInputData("test","test"));
-            RunCEATask task = new RunCEATask(testData, testURI, 0);
+            ArrayList<String> testArray = new ArrayList<String>();
+            RunCEATask task = new RunCEATask(testData, testURI, testArray,0);
 
             File myTempDir = new File(System.getProperty("java.io.tmpdir"));
             File newDirectory = new File(myTempDir, "new_directory");
