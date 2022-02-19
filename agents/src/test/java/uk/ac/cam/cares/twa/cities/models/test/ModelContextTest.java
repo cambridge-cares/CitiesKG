@@ -233,6 +233,47 @@ public class ModelContextTest extends TestCase {
     }
   }
 
+  public void testRecursiveLoadAllWhere() throws ParseException {
+    ModelContext pushContext = new ModelContext(testResourceId, testNamespace);
+    pushContext.update("CLEAR ALL");
+    TestModel.createRandom(pushContext, 12345, 0, 20);
+    pushContext.pushAllChanges();
+
+    ModelContext pullContext = new ModelContext(testResourceId, testNamespace);
+    List<TestModel> pullModels = pullContext.recursiveLoadAllWhere(TestModel.class,
+        new WhereBuilder().addWhere(
+            ModelContext.getModelVar(),
+            NodeFactory.createURI(SPARQLUtils.expandQualifiedName("dbpediao:intprop")),
+            "?intprop"
+        ).addFilter("?intprop > 0"),
+        1
+    );
+    for(Model pm: pushContext.members.values()) {
+      TestModel pushModel = (TestModel) pm;
+      TestModel pullModelMatch = null;
+      for(TestModel pullModel: pullModels) {
+        if(pullModel.getIri().equals(pushModel.getIri())) {
+          if(pullModelMatch != null) fail();
+          pullModelMatch = pullModel;
+        }
+      }
+      if(pushModel.getIntProp() > 0) {
+        assertNotNull(pullModelMatch);
+        assertEquals(pullModelMatch, pushModel);
+        assertFalse(pushModel.isHollow("modelProp"));
+        if(pushModel.getModelProp() != null) {
+          if (pushModel.getIntProp() <= 0 && pushModel.getModelProp().getIntProp() <= 0) {
+            assertTrue(pushModel.getModelProp().isHollow("modelProp"));
+          } else {
+            assertFalse(pushModel.getModelProp().isHollow("modelProp"));
+          }
+        }
+      } else {
+        assertNull(pullModelMatch);
+      }
+    }
+  }
+
   public void testLoadPartialWhere() throws ParseException {
     ModelContext pushContext = new ModelContext(testResourceId, testNamespace);
     pushContext.update("CLEAR ALL");
@@ -264,6 +305,52 @@ public class ModelContextTest extends TestCase {
         assertEquals(pullModelMatch.getIntProp(), pushModel.getIntProp());
         assertNull(pullModelMatch.getStringProp());
         assertEquals(new ArrayList<Double>(), pullModelMatch.getForwardVector());
+      } else {
+        assertNull(pullModelMatch);
+      }
+    }
+  }
+
+  public void testRecursiveLoadPartialWhere() throws ParseException {
+    ModelContext pushContext = new ModelContext(testResourceId, testNamespace);
+    pushContext.update("CLEAR ALL");
+    TestModel.createRandom(pushContext, 12345, 0, 20);
+    pushContext.pushAllChanges();
+
+    ModelContext pullContext = new ModelContext(testResourceId, testNamespace);
+    List<TestModel> pullModels = pullContext.loadPartialWhere(TestModel.class,
+        new WhereBuilder().addWhere(
+            ModelContext.getModelVar(),
+            NodeFactory.createURI(SPARQLUtils.expandQualifiedName("dbpediao:intprop")),
+            "?intprop"
+        ).addFilter("?intprop > 0"),
+        "intProp",
+        "modelProp",
+        "backwardVector"
+    );
+    for(Model pm: pushContext.members.values()) {
+      TestModel pushModel = (TestModel) pm;
+      TestModel pullModelMatch = null;
+      for(TestModel pullModel: pullModels) {
+        if(pullModel.getIri().equals(pushModel.getIri())) {
+          if(pullModelMatch != null) fail();
+          pullModelMatch = pullModel;
+        }
+      }
+      if(pushModel.getIntProp() > 0) {
+        assertNotNull(pullModelMatch);
+        assertEquals(pullModelMatch.getBackwardVector(), pushModel.getBackwardVector());
+        assertEquals(pullModelMatch.getIntProp(), pushModel.getIntProp());
+        assertNull(pullModelMatch.getStringProp());
+        assertEquals(new ArrayList<Double>(), pullModelMatch.getForwardVector());
+        assertFalse(pushModel.isHollow("modelProp"));
+        if(pushModel.getModelProp() != null) {
+          if (pushModel.getIntProp() <= 0 && pushModel.getModelProp().getIntProp() <= 0) {
+            assertTrue(pushModel.getModelProp().isHollow("modelProp"));
+          } else {
+            assertFalse(pushModel.getModelProp().isHollow("modelProp"));
+          }
+        }
       } else {
         assertNull(pullModelMatch);
       }

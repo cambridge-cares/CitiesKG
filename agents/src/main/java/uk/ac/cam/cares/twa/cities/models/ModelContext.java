@@ -67,15 +67,13 @@ public class ModelContext {
     private final boolean partial;
     private final String[] fieldNames;
 
-    RecursivePullSession(Model origin, int recursionRadius) {
-      pendingPullQueue.add(origin);
+    RecursivePullSession(int recursionRadius) {
       this.remainingDegreesOfSeparation = recursionRadius;
       this.partial = false;
       this.fieldNames = null;
     }
 
-    RecursivePullSession(Model origin, int recursionRadius, String... fieldNames) {
-      queue(origin);
+    RecursivePullSession(int recursionRadius, String... fieldNames) {
       this.remainingDegreesOfSeparation = recursionRadius;
       this.partial = true;
       this.fieldNames = fieldNames;
@@ -227,7 +225,7 @@ public class ModelContext {
   }
 
   /**
-   * If this context already has registered a {@link Model} of the given IRI, return that. Otherwise, create a hollow
+   * If this context already has registered a {@link Model} of the given IRI, returns that. Otherwise, creates a hollow
    * model for it. If this context has a {@link RecursivePullSession} active, i.e. this is a downstream request of a
    * {@link #recursivePullAll(Model, int)} or {@link #recursivePullPartial(Model, int, String...)}  call), this fetch
    * request is reported to the pull session.
@@ -239,6 +237,13 @@ public class ModelContext {
     //
     if (currentPullSession != null) currentPullSession.queue(model);
     return ofClass.cast(model);
+  }
+
+  /**
+   * If this context already has registered a {@link Model} of the given IRI, returns that. Otherwise, returns null.
+   */
+  public <T extends Model> T optGetModel(Class<T> ofClass, String iri) {
+    return ofClass.cast(members.get(new MemberKey(ofClass, iri)));
   }
 
   /**
@@ -282,6 +287,19 @@ public class ModelContext {
   }
 
   /**
+   * Equivalent to {@link #loadAllWhere}, but also recursively loads to the specified recursion radius the retrieved
+   * objects in the normal {@link #loadAll(Class, String)} behaviour.
+   */
+  public <T extends Model> List<T> recursiveLoadAllWhere(Class<T> ofClass, WhereBuilder condition, int recursionRadius) {
+    currentPullSession = new RecursivePullSession(recursionRadius);
+    List<T> models = loadAllWhere(ofClass, condition);
+    for (T model : models) currentPullSession.queue(model);
+    currentPullSession.execute();
+    currentPullSession = null;
+    return models;
+  }
+
+  /**
    * Loads all objects which match the given search condition as {@code ofClass}, using the {@link #pullAll} query
    * pattern. The condition should use the {@link Node} from {@link #getModelVar()} to represent the models to be
    * captured. Note that this can only be used for {@link Model}s of a single class. Note that an insufficiently
@@ -293,7 +311,8 @@ public class ModelContext {
     for (boolean backward : new boolean[]{false, true}) {
       // Execute query
       SelectBuilder query = buildPullAllInDirectionQuery(modelNode, backward);
-      query.addWhere(condition).addVar(modelNode).addOrderBy(modelNode);
+      if (condition != null) query.addWhere(condition);
+      query.addVar(modelNode).addOrderBy(modelNode);
       JSONArray response = query(query.buildString());
       if (response.length() == 0) continue;
       // Identify intervals corresponding to single Model and read the intervals in
@@ -303,7 +322,7 @@ public class ModelContext {
         String nextIri = response.getJSONObject(end).getString(MODEL);
         if (!nextIri.equals(previousIri)) {
           Model model = getModel(ofClass, previousIri);
-          if(resultIris.add(previousIri)) model.clear();
+          if (resultIris.add(previousIri)) model.clear();
           readPullAllInDirectionResponse(model, response, backward, start, end);
           start = end;
           previousIri = nextIri;
@@ -322,6 +341,19 @@ public class ModelContext {
   }
 
   /**
+   * Equivalent to {@link #loadPartialWhere}, but also recursively loads to the specified recursion radius the retrieved
+   * objects, using the same field names in the normal {@link #loadPartial(Class, String, String...)} behaviour.
+   */
+  public <T extends Model> List<T> recursiveLoadPartialWhere(Class<T> ofClass, WhereBuilder condition, int recursionRadius, String... fieldNames) {
+    currentPullSession = new RecursivePullSession(recursionRadius);
+    List<T> models = loadPartialWhere(ofClass, condition, fieldNames);
+    for (T model : models) currentPullSession.queue(model);
+    currentPullSession.execute();
+    currentPullSession = null;
+    return models;
+  }
+
+  /**
    * Loads all objects which match the given search condition as {@code ofClass}, using the {@link #pullPartial} query
    * pattern. The condition should use the {@link Node} from {@link #getModelVar()} to represent the models to be
    * captured. Note that this can only be used for {@link Model}s of a single class. Note that an insufficiently
@@ -334,7 +366,8 @@ public class ModelContext {
     // Scalars
     SelectBuilder scalarsQuery = buildScalarsQuery(modelNode, metaModel, fieldNames);
     if (scalarsQuery.getVars().size() > 0) {
-      scalarsQuery.addWhere(condition).addVar(modelNode);
+      if (condition != null) scalarsQuery.addWhere(condition);
+      scalarsQuery.addVar(modelNode);
       JSONArray scalarsResponse = query(scalarsQuery.buildString());
       for (int i = 0; i < scalarsResponse.length(); i++) {
         JSONObject row = scalarsResponse.getJSONObject(i);
@@ -350,7 +383,8 @@ public class ModelContext {
       if (fieldNames.length > 0 && !ArrayUtils.contains(fieldNames, field.field.getName())) continue;
       // Build and execute query for this field
       SelectBuilder vectorQuery = buildVectorQuery(modelNode, entry.getKey());
-      vectorQuery.addWhere(condition).addVar(modelNode).addOrderBy(modelNode);
+      if (condition != null) vectorQuery.addWhere(condition);
+      vectorQuery.addVar(modelNode).addOrderBy(modelNode);
       JSONArray response = query(vectorQuery.buildString());
       if (response.length() == 0) continue;
       // Identify intervals corresponding to each single Model and read the intervals in
@@ -359,8 +393,9 @@ public class ModelContext {
       for (end = 1; end < response.length(); end++) {
         String nextIri = response.getJSONObject(end).getString(MODEL);
         if (!nextIri.equals(previousIri)) {
-          readPullVectorsResponse(getModel(ofClass, previousIri), field, response, start, end);
-          resultIris.add(previousIri);
+          // Only pull objects which have a scalar match
+          if (resultIris.contains(previousIri))
+            readPullVectorsResponse(getModel(ofClass, previousIri), field, response, start, end);
           start = end;
           previousIri = nextIri;
         }
@@ -383,7 +418,8 @@ public class ModelContext {
    *                        a hollow model if not already registered in the context, but not pulled.
    */
   public void recursivePullAll(Model model, int recursionRadius) {
-    currentPullSession = new RecursivePullSession(model, recursionRadius);
+    currentPullSession = new RecursivePullSession(recursionRadius);
+    currentPullSession.queue(model);
     currentPullSession.execute();
     currentPullSession = null;
   }
@@ -409,8 +445,8 @@ public class ModelContext {
 
   /**
    * Reads the query results of a pull-all-in-direction-query into the fields of the {@link Model}.
-   * @param start    the first index (inclusive) to start reading in rows at.
-   * @param end      the index (exclusive) to stop reading in rows at.
+   * @param start the first index (inclusive) to start reading in rows at.
+   * @param end   the index (exclusive) to stop reading in rows at.
    */
   private void readPullAllInDirectionResponse(Model model, JSONArray response, boolean backward, int start, int end) {
     for (int index = start; index < end; index++) {
@@ -472,7 +508,8 @@ public class ModelContext {
    *                        model does not have a named field, that name is ignored.
    */
   public void recursivePullPartial(Model model, int recursionRadius, String... fieldNames) {
-    currentPullSession = new RecursivePullSession(model, recursionRadius, fieldNames);
+    currentPullSession = new RecursivePullSession(recursionRadius, fieldNames);
+    currentPullSession.queue(model);
     currentPullSession.execute();
     currentPullSession = null;
   }
@@ -490,10 +527,11 @@ public class ModelContext {
   public void pullPartial(Model model, String... fieldNames) {
     // Scalars
     SelectBuilder scalarsQuery = buildScalarsQuery(NodeFactory.createURI(model.iri), model.metaModel, fieldNames);
-    if (scalarsQuery.getVars().size() == 0) return;
-    JSONArray scalarsResponse = query(scalarsQuery.buildString());
-    if (scalarsResponse.length() == 0) throw new JPSRuntimeException(OBJECT_NOT_FOUND_EXCEPTION_TEXT);
-    readScalarsResponse(model, scalarsResponse.getJSONObject(0));
+    if (scalarsQuery.getVars().size() > 0) {
+      JSONArray scalarsResponse = query(scalarsQuery.buildString());
+      if (scalarsResponse.length() == 0) throw new JPSRuntimeException(OBJECT_NOT_FOUND_EXCEPTION_TEXT);
+      readScalarsResponse(model, scalarsResponse.getJSONObject(0));
+    }
     // Vectors
     for (Map.Entry<FieldKey, FieldInterface> entry : model.metaModel.vectorFieldList) {
       FieldInterface field = entry.getValue();
@@ -555,8 +593,8 @@ public class ModelContext {
 
   /**
    * Reads the query results of a vector query into the fields of the {@link Model}.
-   * @param start    the first index (inclusive) to start reading in rows at.
-   * @param end      the index (exclusive) to stop reading in rows at.
+   * @param start the first index (inclusive) to start reading in rows at.
+   * @param end   the index (exclusive) to stop reading in rows at.
    */
   private void readPullVectorsResponse(Model model, FieldInterface field, JSONArray response, int start, int end) {
     field.clear(model);
@@ -772,6 +810,8 @@ public class ModelContext {
    * @return the {@link Node} which should be used for the {@link Model} variable in construction of WHERE statements
    * for {@link #loadAllWhere(Class, WhereBuilder)} and {@link #loadPartialWhere(Class, WhereBuilder, String...)}.
    */
-  public static Node getModelVar() { return NodeFactory.createVariable(MODEL); }
+  public static Node getModelVar() {
+    return NodeFactory.createVariable(MODEL);
+  }
 
 }

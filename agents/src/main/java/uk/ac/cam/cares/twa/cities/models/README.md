@@ -475,7 +475,8 @@ condition to the `innerType` interrogation section, capturing the type to be add
 
 The new type should also be added to the tests for the package. Add a field of the new type to `TestModel`, and add 
 a new test to `FieldInterfaceTests` following the pattern of other types. `FieldInterfaceTests` is already nicely 
-abstracted to make this quick and easy.
+abstracted to make this quick and easy. The field counts in MetaModelTest must also be incremented to reflect the 
+increased size of TestModel.
 
 This method is appropriate for relatively common types such as date and time types, numeric types, etc.
 

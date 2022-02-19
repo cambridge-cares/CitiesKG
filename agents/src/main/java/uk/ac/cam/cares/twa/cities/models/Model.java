@@ -106,6 +106,18 @@ public abstract class Model {
   }
 
   /**
+   * @return if the named field is clean; fields immediately after {@link ModelContext#createNewModel(Class, String)}
+   * before first push are not considered clean. Dirty fields are pushed to the database on
+   * {@link ModelContext#pushChanges(Model)}.
+   */
+  public boolean isHollow(String fieldName) {
+    for (FieldInterface field : metaModel.fieldMap.values())
+      if (field.field.getName().equals(fieldName))
+        return cleanValues[field.index] == SpecialFieldInstruction.UNPULLED;
+    throw new JPSRuntimeException(FIELD_NOT_FOUND_ERROR_TEXT);
+  }
+
+  /**
    * Internal function for use by {@link ModelContext} for determining updates to push
    */
   boolean shouldWriteInsert(FieldInterface field) {

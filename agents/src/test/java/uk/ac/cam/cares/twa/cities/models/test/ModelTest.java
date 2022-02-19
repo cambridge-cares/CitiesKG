@@ -46,6 +46,18 @@ public class ModelTest extends TestCase {
     assertFalse(newModel.isClean("forwardVector"));
   }
 
+  public void testIsHollow() {
+    ModelContext context = new ModelContext("", "");
+    TestModel newModel = context.createNewModel(TestModel.class, "a");
+    assertFalse(newModel.isHollow("doubleProp"));
+    TestModel hollowModel = context.createHollowModel(TestModel.class, "b");
+    assertTrue(hollowModel.isHollow("doubleProp"));
+    hollowModel.setDoubleProp(5.2);
+    assertTrue(hollowModel.isHollow("doubleProp"));
+    hollowModel.setClean("doubleProp");
+    assertFalse(hollowModel.isHollow("doubleProp"));
+  }
+
   public void testClear() {
     ModelContext context = new ModelContext("", "");
     TestModel newModel = context.createNewModel(TestModel.class, "a");
