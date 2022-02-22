@@ -1,20 +1,20 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
 import de.micromata.opengis.kml.v_2_2_0.*;
-import it.unimi.dsi.fastutil.Hash;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 
-import javax.print.Doc;
-import java.io.*;
-import java.lang.reflect.Field;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 public class KMLSorterTask implements Runnable {
-
-    //TODO replace all / with system file separator
 
     private String name; // project name, need to match the layer name in master json
     private int rows; // the number of tile rows
@@ -32,55 +32,21 @@ public class KMLSorterTask implements Runnable {
         long start = System.currentTimeMillis();
         // directory of unsorted kml files
         File directory = new File("C:\\Users\\HTAI01\\Documents\\KMLpostprocessing\\src\\main\\resources\\exported_data_whole");
-
-        /*
         // file location of master json file
         File masterJson = new File("C:\\Users\\HTAI01\\Documents\\KMLpostprocessing\\src\\main\\resources" +
                 "\\metadata_export_charlottenburg\\test_extruded_MasterJSON.json");
         // file location of summary json file describing which building is in which tile
         File summaryJson = new File("C:\\Users\\HTAI01\\Documents\\KMLpostprocessing\\src\\main\\resources" +
                 "\\metadata_export_charlottenburg\\test.json");
-
-        // needs to match the layer name defined in master json
-        //TODO read from json
-        String projName = "test";
-         */
-        // file location of one unsorted kml file
-        //TODO: replace by getting one file from dirList
+        // file location of one unsorted kml file, can be replaced later by getting one file from dirList
         File test0 = new File("C:\\Users\\HTAI01\\Documents\\KMLpostprocessing\\src\\main\\resources" +
                 "\\exported_data_some\\test_0_extruded.kml");
-        // file location of where the tiles should be created
-        String outDir = "C:\\Users\\HTAI01\\Documents\\GitHub\\CitiesKG\\3dcitydb-web-map-1.9.0\\3dwebclient\\test";
-        File summaryCSVdir = new File("C:\\Users\\HTAI01\\Documents\\Sorted berlin\\summary_tiles");
-        this.dirList = summaryCSVdir.listFiles();
+        // file location of where the tiles should be created, for now need to manually make the parent Tiles folder
+        String outDir = "C:\\Users\\HTAI01\\Documents\\GitHub\\CitiesKG\\3dcitydb-web-map-1.9.0" +
+                "\\3dwebclient\\metadata_export_charlottenburg\\Tiles\\";
+        // needs to match the layer name defined in master json
+        String projName = "test";
 
-
-        List<StyleSelector> styles = getStylesFromKml(test0);
-
-        rows = 280;
-        cols = 368;
-        name = "test";
-        createFolders(outDir);
-        for (int i = 0; i < rows; i++) {
-            for (int k = 0; k < cols; k++) {
-                HashMap<String, ArrayList<String>> map = getBuildingsInTile(i, k);
-                List<Feature> features = getFeaturesInTile(map);
-                String name = this.name + "_Tile_" + i + "_" + k + "_extruded";
-                File out = new File(outDir + "\\Tiles\\" + i + "\\" + k + "\\" + name + ".kml");
-                writeKml(out, features, styles, name);
-                System.out.println("finished writing " + out.getAbsolutePath());
-            }
-        }
-
-
-
-
-
-
-
-
-        /*
-        // Hashmap method
         setFields(directory, masterJson, summaryJson, projName);
         createFeatureLists();
         createFolders(outDir);
@@ -101,76 +67,12 @@ public class KMLSorterTask implements Runnable {
                 System.out.println(name);
             }
         }
-        */
         long end = System.currentTimeMillis();
         long duration = (end - start);
         System.out.println(duration + " ms");
         System.out.println("start: " + start + " ms\nend: " + end + " ms");
         System.out.println("buildings: " + this.count);
-        //System.out.println("files sorted: " + this.files);
-
-    }
-
-    // return list of features belonging to the tile, input tile map, output list of features
-    private List<Feature> getFeaturesInTile(HashMap<String, ArrayList<String>> map) {
-        List<Feature> featuresInTile = new ArrayList<>();
-        // loop through for each kml file that has buildings in this tile
-        for (String filepath : map.keySet()) {
-            // get all the buildings in the kml file
-            List<Feature> allFeaturesInKml = getFeaturesFromKml(new File(filepath));
-            // loop through all the buildings in the kml file
-            for (Feature feature : allFeaturesInKml) {
-                // if the building belongs to this tile, get feature info
-                if (map.get(filepath).contains(feature.getName())) {
-                    Placemark placemark = (Placemark) feature;
-                    MultiGeometry geoms = (MultiGeometry) placemark.getGeometry();
-                    for (Geometry geom : geoms.getGeometry()) {
-                        Polygon polygon = (Polygon) geom;
-                        polygon.setExtrude(true);
-                        polygon.setTessellate(true);
-                    }
-                    // put feature info into list to be returned
-                    featuresInTile.add(feature);
-                }
-            }
-        }
-        return featuresInTile;
-    }
-
-    // read csv file, input tile number, output hashmap of file locations and array of gmlIds per file location
-    private HashMap<String, ArrayList<String>> getBuildingsInTile(int rowNum, int colNum) {
-        // key is the file location, value is an array of gmlIds in this file location that belongs to this tile
-        HashMap<String, ArrayList<String>> buildings = new HashMap<>();
-        // TODO remove this hardcoding
-        for (int i = 0; i < this.dirList.length; i++) {
-            try (Scanner scanner = new Scanner(new File(this.dirList[i].getAbsolutePath()))) {
-                // read the csv line by line
-                while (scanner.hasNext()) {
-                    String[] rowInfo = (scanner.next().replace("\"", "")).split(",");
-                    // if the building tile number is the same as the current tile, add it to map
-                    if (rowInfo[3].equals(rowNum + "#" + colNum)) {
-                        String filepath = "C:\\Users\\HTAI01\\Documents" +
-                                "\\KMLpostprocessing\\src\\main" +
-                                "\\resources\\exported_data_whole" +
-                                "\\" + rowInfo[4].substring(58); // TODO change this hardcoding and substring
-                        if (buildings.containsKey(filepath)) {
-                            // if this file location has already been added to map, add the gmlId to existing array
-                            buildings.get(filepath).add(rowInfo[0]);
-                            this.count++;
-                        } else {
-                            // if the file location is not in the map, add it to map
-                            ArrayList<String> mapValue = new ArrayList<>();
-                            mapValue.add(rowInfo[0]);
-                            buildings.put(filepath, mapValue);
-                            this.count++;
-                        }
-                    }
-                }
-            } catch (FileNotFoundException e) {
-                throw new JPSRuntimeException("CSV file does not exist");
-            }
-        }
-        return buildings;
+        System.out.println("files sorted: " + this.files);
     }
 
     // set inputs as fields
@@ -192,7 +94,7 @@ public class KMLSorterTask implements Runnable {
         for (int i = 0; i < this.rows; i++) {
             for (int k = 0; k < this.cols; k++) {
                 String key = this.name + "_Tile_" + i + "_" + k + "_extruded";
-                this.tileFeatureMap.put(key, new ArrayList<>());
+                this.tileFeatureMap.put(key, new LinkedList<>());
             }
         }
     }
@@ -205,11 +107,11 @@ public class KMLSorterTask implements Runnable {
         // loop through all features in the kml file
         for (Feature feature : features) {
             if (buildings.contains(feature.getName())) {
-                this.count++;
+                this.count ++;
                 // manually set extruded and tessellate to true
                 Placemark placemark = (Placemark) feature;
                 MultiGeometry geoms = (MultiGeometry) placemark.getGeometry();
-                for (Geometry geom : geoms.getGeometry()) {
+                for (Geometry geom: geoms.getGeometry()) {
                     Polygon polygon = (Polygon) geom;
                     polygon.setExtrude(true);
                     polygon.setTessellate(true);
@@ -232,6 +134,24 @@ public class KMLSorterTask implements Runnable {
         return features;
     }
 
+    /*
+    private ArrayList<Point> getEnvelopeFromFeature(Feature feature) {
+        ArrayList<Point> envelope = new ArrayList<>();
+        Placemark placemark = (Placemark) feature;
+        MultiGeometry geoms = (MultiGeometry) placemark.getGeometry();
+        for (Geometry geom: geoms.getGeometry()) {
+            Boundary boundary = ((Polygon) geom).getOuterBoundaryIs();
+            List<Coordinate> coordinates = boundary.getLinearRing().getCoordinates();
+            for (Coordinate coordinate : coordinates) {
+                coordinate.getLatitude();
+                coordinate.getLongitude();
+            }
+        }
+        return envelope;
+    }
+
+     */
+
     // get style list from one kml file
     private List<StyleSelector> getStylesFromKml(File file) {
         Kml kml = Kml.unmarshal(file);
@@ -242,23 +162,19 @@ public class KMLSorterTask implements Runnable {
 
     // create folders for tiles
     private void createFolders(String dir) {
-        File parentFolder = new File(dir + "\\Tiles");
-        if (parentFolder.mkdir()) {
-            for (int i = 0; i < this.rows; i++) {
-                File rowFolder = new File(parentFolder.getAbsolutePath() + "\\" + i);
-                if (rowFolder.mkdir()) {
-                    for (int k = 0; k < this.cols; k++) {
-                        File colFolder = new File(rowFolder.getAbsolutePath() + "\\" + k);
-                        if (!colFolder.mkdir()) {
-                            throw new JPSRuntimeException("Failed to make column folder " + colFolder.getAbsolutePath());
-                        }
+        for (int i = 0; i < this.rows; i++) {
+            File rowFolder = new File(dir + i);
+            if (rowFolder.mkdir()) {
+                for (int k = 0; k < this.cols; k++) {
+                    File colFolder = new File(rowFolder.getAbsolutePath() + "\\" + k);
+                    if (!colFolder.mkdir()) {
+                        throw new JPSRuntimeException("Failed to make column folder");
                     }
-                } else {
-                    throw new JPSRuntimeException("failed to make row folder " + rowFolder.getAbsolutePath());
                 }
+            } else {
+                throw new JPSRuntimeException("failed to make row folder");
             }
         }
-
     }
 
     // write new kml files
