@@ -204,9 +204,16 @@ public class KmlTiling {
     }
 
   }
+
+  public String getFileName(String inputStr, String keyword){
+    int i = inputStr.indexOf(keyword);
+    String filename = inputStr.substring(i, inputStr.length());
+    return filename;
+  }
+
   public static void main(String[] args) {
 
-    String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\summary_folder\\";
+    String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\summary_chunk5000\\";
     File directoryPath = new File(inputDir);
     String[] filelist = directoryPath.list();
 
@@ -215,10 +222,10 @@ public class KmlTiling {
     kmltiling.updateExtent(new double[]{13.09278683392157, 13.758936971880468, 52.339762874361156,
         52.662766032905616});
     int[] numRowCol = kmltiling.getNumRowCol();
-    kmltiling.createMasterJson();
+    //kmltiling.createMasterJson();
+    long start0 = System.currentTimeMillis();
 
     for (String inputfile : filelist) {
-
       try (CSVReader reader = new CSVReader(new FileReader(inputDir + inputfile))) {
         csvData = reader.readAll();
         //r.forEach(x -> System.out.println(Arrays.toString(x)));
@@ -228,7 +235,8 @@ public class KmlTiling {
         e.printStackTrace();
       }
 
-      Integer[] tilePosition = new Integer[2];
+      Integer[] tilePosition;
+
       List<String[]> outputData = new ArrayList<>();
       String[] header = {"gmlid", "envelope", "envelopeCentroid", "tiles", "filename"};
       outputData.add(header);
@@ -237,25 +245,27 @@ public class KmlTiling {
       for (int i = 0; i < csvData.size(); ++i) {  // skip the header
         tilePosition = kmltiling.assignTiles(csvData.get(i)[2]);
         String[] outRow = {csvData.get(i)[0], csvData.get(i)[1], csvData.get(i)[2],
-            kmltiling.arr2str(tilePosition), csvData.get(i)[3]};
+            kmltiling.arr2str(tilePosition), kmltiling.getFileName(csvData.get(i)[3], "test")};
         outputData.add(outRow);
 
-        //System.out.println("Finished processing " + i + " items at " + csvData.get(i)[0]);
-
       }
+      System.out.println("Finished processing " + inputfile);
       long finish1 = System.currentTimeMillis();
       try (CSVWriter writer = new CSVWriter(new FileWriter(
-          kmltiling.outputDir + "new_" +inputfile))) {
+          kmltiling.outputDir + "new_" + inputfile))) {
         writer.writeAll(outputData);
-
+        outputData = new ArrayList<>(); // empty outputData
         finish1 = System.currentTimeMillis();
 
       } catch (IOException e) {
         e.printStackTrace();
       }
-      System.out.println("Total time: " + (finish1 - start1));
+      System.out.println("Process time: " + (finish1 - start1));
     }
-
+    long finish0 = System.currentTimeMillis();
+    System.out.println("Total time: " + (finish0 - start0));
+  }
   }
 
-}
+
+
