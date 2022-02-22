@@ -9,6 +9,7 @@ import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
 
 import java.io.InvalidClassException;
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -24,8 +25,15 @@ public class FieldInterfaceTest extends TestCase {
   public void testIntegerInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
     this.testScalarInterface("intProp", TestModel::setIntProp, TestModel::getIntProp,
-        "1", "http://www.w3.org/2001/XMLSchema#integer", 1, 2,
-        NodeFactory.createLiteral(String.valueOf(2), XSDDatatype.XSDinteger), 2);
+        "1", "http://www.w3.org/2001/XMLSchema#int", 1, 2,
+        NodeFactory.createLiteral(String.valueOf(2), XSDDatatype.XSDint), 2);
+  }
+
+  public void testBigIntegerInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
+    // Data to write
+    this.testScalarInterface("bigIntProp", TestModel::setBigIntProp, TestModel::getBigIntProp,
+        "1", "http://www.w3.org/2001/XMLSchema#integer", BigInteger.valueOf(1), BigInteger.valueOf(2),
+        NodeFactory.createLiteral(String.valueOf(2), XSDDatatype.XSDinteger), BigInteger.valueOf(2));
   }
 
   public void testDoubleInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {

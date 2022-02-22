@@ -149,6 +149,13 @@ public abstract class Model {
   }
 
   /**
+   * Wraps {@link ModelContext#retire(Model)}.
+   */
+  public void retire() {
+    context.retire(this);
+  }
+
+  /**
    * Wraps {@link ModelContext#recursivePullAll(Model, int)}.
    */
   public void recursivePullAll(int recursionRadius) {

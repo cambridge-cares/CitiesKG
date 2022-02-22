@@ -7,6 +7,7 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 
 import java.io.InvalidClassException;
 import java.lang.reflect.*;
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.List;
 import java.util.ArrayList;
@@ -107,7 +108,10 @@ public class FieldInterface {
       minimiser = (Object value) -> value;
       if (innerType == Integer.class) {
         parser = (String value, String datatype, ModelContext context) -> Integer.valueOf(value);
-        nodeGetter = (Object value) -> NodeFactory.createLiteral(String.valueOf((int) value), XSDDatatype.XSDinteger);
+        nodeGetter = (Object value) -> NodeFactory.createLiteral(String.valueOf((int) value), XSDDatatype.XSDint);
+      } else if (innerType == BigInteger.class) {
+        parser = (String value, String datatype, ModelContext context) -> new BigInteger(value);
+        nodeGetter = (Object value) -> NodeFactory.createLiteral(value.toString(), XSDDatatype.XSDinteger);
       } else if (innerType == Double.class) {
         parser = (String value, String datatype, ModelContext context) -> Double.valueOf(value);
         nodeGetter = (Object value) -> NodeFactory.createLiteral(String.valueOf((double) value), XSDDatatype.XSDdouble);

@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.models.geo;
 
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.ArrayList;
 
@@ -43,7 +44,7 @@ public class Building extends OntoCityGMLModel {
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_LOD4_MULTI_CURVE) protected URI lod4MultiCurve; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_MEASURED_HEIGHT) protected Double measuredHeight;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_MEASURED_HEIGHT_UNIT) protected String measuredHeightUnit; // check-type
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID) protected Integer objectClassId = 26;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID) protected BigInteger objectClassId = OBJECT_CLASS_ID;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ROOF_TYPE_CODESPACE) protected String roofTypeCodespace; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_ABOVE_GROUND) protected String storeyHeightsAboveGround; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_BELLOW_GROUND) protected String storeyHeightsBelowGround; // check-type
@@ -62,5 +63,7 @@ public class Building extends OntoCityGMLModel {
       innerType = ThematicSurface.class,
       backward = true)
   private ArrayList<ThematicSurface> thematicSurfaces;
+
+  public static final BigInteger OBJECT_CLASS_ID = BigInteger.valueOf(26);
 
 }

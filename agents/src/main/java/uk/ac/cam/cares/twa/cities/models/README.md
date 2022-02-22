@@ -1,4 +1,4 @@
-The Model framework is a lightweight framework for the concise creation of Java classes to interact with structured data
+The Model Framework is a lightweight Framework for the concise creation of Java classes to interact with structured data
 in a knowledge graph. This document outlines how to use it, how it works, and how to extend its functionality. 
 
 # Model Framework User Guide
@@ -6,13 +6,13 @@ in a knowledge graph. This document outlines how to use it, how it works, and ho
 ## Demo
 
 There is a short, heavily annotated file `ModelDemo.java` in this folder which showcases the key features of the 
-framework and walks through some of the typical design decisions and usage patterns that one may encounter. It and the 
-[Using the Model framework](#Using the Model framework) section of this README may be read in any order. Also see 
+Framework and walks through some of the typical design decisions and usage patterns that one may encounter. It and the 
+[Using the Model Framework](#Using the Model Framework) section of this README may be read in any order. Also see 
 the diagrammatic overview of the classes and methods on offer in `diagram.xml`.
 
 ## Defining a Model
 
-The `Model` class is the main class used in the framework to interact with structured data. In general,
+The `Model` class is the main class used in the Framework to interact with structured data. In general,
 
 - each `Model` subclass (henceforth "a model") corresponds to a class in the knowledge graph ontology, or a part of such
   an ontological class;
@@ -77,6 +77,9 @@ corresponds to in its arguments:
 The `ModelAnnotation` just provides the `defaultGraphName` as a fallback for fields with unspecified `graphName`. The
 Lombok `Getter` and `Setter` are mandatory.
 
+Note that the choice of access level for the annotated fields is purely a stylistic choice. `FieldInterface` uses 
+the Lombok accessors and mutators.
+
 An example of compliant data for an Employee "John Smith", formatted in TriG:
 
 ```
@@ -98,7 +101,8 @@ An example of compliant data for an Employee "John Smith", formatted in TriG:
 Currently supported types for `FieldAnnotation`-annotated fields are:
 
 - `String`
-- `Integer`
+- `Integer` (corresponds to `xsd:int`)
+- `BigInteger` (corresponds to `xsd:integer`)
 - `Double`
 - `java.net.URI`
 - Any subclass of `Model`
@@ -158,133 +162,130 @@ Once a `ModelContext` is created, `Model`s should be created through factory fun
   `recursivePullPartial` on it, populating `Model` fields (recursively) with the respective pull algorithms. See 
   [Pulling data from the knowledge graph](#Pulling data from the knowledge graph) for detail on behaviour.
 
-- `loadAllWhere(Class<T> ofClass, WhereBuilder condition)`
-
-  `loadPartialWhere(Class<T> ofClass, WhereBuilder condition, String... fieldNames)`
-
-  Loads or pulls all models which match the given search condition, using the `pullAll` and `pullPartial` query 
-  patterns modified with the condition. The condition should use the `ModelContext.getModelVar()` node to represent the 
-  search target. Also [Pulling data from the knowledge graph](#Pulling data from the knowledge graph).
-
 ### Pulling data from the knowledge graph
 
-`Model`s may be populated with data from the database using one of the four pull methods, the last two of which are 
-recursive wrappers for the first two.
+`Model`s may be populated with data from the database using one of the eight pull methods, which vary on three axes:
 
-- `pullAll(Model model)`
+#### AXIS 1:  Algorithm: `all` vs. `partial`
 
-  Queries all triples/quads linked to the IRI, scans the results on the Java side for matches with the fields 
-  defined in the `Model`, and populates the fields in the `Model`. The queries look like:
+The `all` algorithm queries all triples or quads linked to the IRI in question and filters them Java-side for 
+field matches:
 
-  ```
-  SELECT ?value ?predicate ?datatype ?isblank
-  WHERE {
-    GRAPH ?graph { <model_iri> ?predicate ?value }
-    BIND(DATATYPE(?value) AS ?datatype)
-    BIND(ISBLANK(?value) AS ?isblank)
-  }
-  ```
+```
+SELECT ?graph ?value ?predicate ?datatype ?isblank
+WHERE {
+  GRAPH ?graph { <model_iri> ?predicate ?value }
+  BIND(DATATYPE(?value) AS ?datatype)
+  BIND(ISBLANK(?value) AS ?isblank)
+}
+```
+```
+SELECT ?graph ?value ?predicate ?datatype ?isblank
+WHERE {
+  GRAPH ?graph { ?value ?predicate <model_iri> }
+  BIND(DATATYPE(?value) AS ?datatype)
+  BIND(ISBLANK(?value) AS ?isblank)
+}
+```
 
-  ```
-  SELECT ?value ?predicate ?datatype ?isblank
-  WHERE {
-    GRAPH ?graph { ?value ?predicate <model_iri> }
-    BIND(DATATYPE(?value) AS ?datatype)
-    BIND(ISBLANK(?value) AS ?isblank)
-  }
-  ```
-  
-- `pullPartial(Model model, String... fieldNames)`
+while the `partial` algorithm builds a specific query for target fields:
 
-  Constructs specific queries for the named fields, executes it, and populates fields in the `Model`. Scalar (non-list) 
-  fields are collected in one query, then each vector (list) field in a separate query. 
+```
+SELECT ?value1 ?datatype1 ?isblank1 ?value3 ?datatype3 ?isblank3 ?value6 ?datatype6 ?isblank6
+WHERE {
+  GRAPH <graph_1> { <model_iri> <scalar_role_1> ?value1 }
+  BIND(DATATYPE(?value1) AS ?datatype1)
+  BIND(ISBLANK(?value1) AS ?isblank1)
+  GRAPH <graph_3> { <model_iri> <scalar_role_3> ?value3 }
+  BIND(DATATYPE(?value3) AS ?datatype3)
+  BIND(ISBLANK(?value3) AS ?isblank3)
+  GRAPH <graph_6> { ?value6 <scalar_role_6> <model_iri> }
+  BIND(DATATYPE(?value6) AS ?datatype6)
+  BIND(ISBLANK(?value6) AS ?isblank6)
+}
+```
+```
+SELECT ?value ?datatype ?isblank
+WHERE {
+  GRAPH <graph_2> { ?value <vector_role_2> <model_iri> }
+  BIND(DATATYPE(?value) AS ?datatype)
+  BIND(ISBLANK(?value) AS ?isblank)
+}
+```
+```
+SELECT ?value ?datatype ?isblank
+WHERE {
+  GRAPH <graph_3> { ?value <vector_role_3> <model_iri> }
+  BIND(DATATYPE(?value) AS ?datatype)
+  BIND(ISBLANK(?value) AS ?isblank)
+}
+```
 
-  ```
-  SELECT ?value1 ?datatype1 ?isblank1 ?value3 ?datatype3 ?isblank3 ?value6 ?datatype6 ?isblank6
-  WHERE {
-    GRAPH <graph_1> { <model_iri> <scalar_role_1> ?value1 }
-    BIND(DATATYPE(?value1) AS ?datatype1)
-    BIND(ISBLANK(?value1) AS ?isblank1)
-    GRAPH <graph_3> { <model_iri> <scalar_role_3> ?value3 }
-    BIND(DATATYPE(?value3) AS ?datatype3)
-    BIND(ISBLANK(?value3) AS ?isblank3)
-    GRAPH <graph_6> { ?value6 <scalar_role_6> <model_iri> }
-    BIND(DATATYPE(?value6) AS ?datatype6)
-    BIND(ISBLANK(?value6) AS ?isblank6)
-  }
-  ```
-  ```
-  SELECT ?value ?datatype ?isblank
-  WHERE {
-    GRAPH <graph_2> { ?value <vector_role_2> <model_iri> }
-    BIND(DATATYPE(?value) AS ?datatype)
-    BIND(ISBLANK(?value) AS ?isblank)
-  }
-  ```
-  ```
-  SELECT ?value ?datatype ?isblank
-  WHERE {
-    GRAPH <graph_3> { ?value <vector_role_3> <model_iri> }
-    BIND(DATATYPE(?value) AS ?datatype)
-    BIND(ISBLANK(?value) AS ?isblank)
-  }
-  ```
-
-- `recursivePullAll(Model model, int recursionRadius)`
-
-  `recursivePullPartial(Model model, int recursionRadius, String... fieldNames)`
-
-  TL;DR: Invokes either `pullAll` or `pullPartial` on the target `Model`, and then also on any `Model`-type fields' 
-  values retrieved in the invocation, and so on recursively to an extent of `recursionRadius` degrees of separation 
-  from the original target.
-
-  To elaborate: when a field of `Model` type is pulled, the IRI is looked up in the `ModelContext`. If there is a 
-  match, the existing `Model` is returned; else, `ModelContext` constructs a hollow `Model` for the IRI and returns 
-  that. For a non-recursive pull, the hollow `Model` can then be itself pulled to populate its fields.
-
-  The recursive versions listen to the lookup step above (specifically, `ModelContext.getModel`) and queue the 
-  requested `Model`s to also be pulled later (repeating until exhaustion of `recursionRadius`). What is important to 
-  note from this is that even a `Model` pre-existing in the context will be pulled (updated) if it falls within the 
-  radius of a recursive pull, since the trigger is the lookup, not the creation. *Therefore, a recursive pull on a 
-  `Model` may cause changes in neighbouring `Model`s you are working on to be overwritten.* 
-
-  `Model`s one step past the recursion radius will be hollow, as secondary `Model`s would be for a non-recursive pull.
-
-From the example queries above, it is seen that `pullAll` and `pullPartial` are significantly different in terms of 
-their performance profile:
+Aside from allowing users to selectively populate fields, the differences have performance implications:
 
 |               | number of queries           | amount of data returned by query              |
 |---------------|-----------------------------|-----------------------------------------------|
-| `pullAll`     | 2                           | all triples in DB with IRI as subject/object. |
-| `pullPartial` | 1 + number of vector fields | only the values actually desired.             |
+| `all`     | 2                           | all triples in DB with IRI as subject/object. |
+| `partial` | 1 + number of vector fields | only the values actually desired.             |
 
-`pullAll` is usually more efficient in terms of number of queries (constant vs. scaling with vector field count), but 
-`pullPartial` decouples performance from the presence of extraneous target-associated triples. Therefore,
+`all` is usually more efficient in terms of number of queries (constant vs. scaling with vector field count), but
+`partial` decouples performance from the presence of extraneous target-associated triples. Therefore,
 
-- `pullAll` should be preferred when *query latency* is a performance bottleneck and there is more than one vector 
-  field, 
-  so long as the number of target-associated triples in the database is not prohibitively larger than the number we are
-  interested in.
-- `pullPartial` should be preferred when the former would return too many triples, so long as we are not querying a 
-  prohibitively large number of vector fields; an empty list of field names can be provided to instruct to pull all 
+- `pullAll` should be preferred when *query latency* is a performance bottleneck and there is more than one vector
+  field, so long as the number of target-associated triples in the database is not prohibitively larger than the number
+- we are interested in.
+- `pullPartial` should be preferred when the former would return too many triples, so long as we are not querying a
+  prohibitively large number of vector fields; an empty list of field names can be provided to instruct to pull all
   fields in the model.
-- `recursivePullPartial` may also be of particular interest over its `all` counterpart as a shortcut for directional 
-  discovery, e.g. selecting to only recursively pull a "father" property in a "Person" class to investigate 
-  patrilineal lineage without loading an exponential number of relatives.
+- `recursivePullPartial` may also be of particular interest over its `all` counterpart as a shortcut for directional
+  discovery, e.g. selecting to only recursively pull a "father" property in a "Person" class to investigate
+  patrilineal lineage without loading an exponential number of relatives; see the next part for information on 
+  recursive methods.
 
-For example, querying DBpedia with `pullAll` will generally cause you to hit a response row limit.
+#### AXIS 2: Recursion: `recursive` vs. non-recursive
 
-The names `pullAll` and `pullPartial` and their method signatures superficially seem to refer to pulling all or some 
-of a `Model`'s properties, but in practice can be equivalently—and more descriptively—interpreted as querying all or 
-the specific relevant set of an IRI's connected triples in the graph.
+Non-recursive (normal) pulls straightforwardly populate the specified model, while recursive pulls also go on to 
+execute more recursive pulls on model objects linked in the pull. This is repeated until a specified
+"recursion radius" from the original target. A breadth-first traversal with tracking of visited nodes is used to
+prevent duplicate pulls or early truncation due to path intersection in non-acyclic graphs.
+
+The way this works is that by default, model-type fields are crosslinked by object reference via IRI lookup within 
+the context; if none are found, a hollow model is created for that IRI and that linked.
+
+The recursive methods listen to the lookup step (specifically, `ModelContext.getModel`) and queue the
+requested `Model`s to also be pulled later (repeating until exhaustion of `recursionRadius`). What is important to
+note from this is that even a `Model` pre-existing in the context will be pulled (updated) if it falls within the
+radius of a recursive pull, since the trigger is the lookup, not the creation. *Therefore, a recursive pull on a
+`Model` may cause changes in neighbouring `Model`s you are working on to be overwritten.*
+
+`Model`s one step past the recursion radius will be hollow, as secondary `Model`s would be for a non-recursive pull.
+
+#### AXIS 3: Targeting: by name vs. conditional search (`where`)
+
+The base pulls (by name) accept a `Model` argument to populate. Pulls suffixed with `where` accept a SPARQL WHERE 
+statement in place of a `Model` instance, and query for all matches for it by replacing the fixed model IRI with a 
+variable that is constrained by the WHERE. The number of queries a `where` pull executes is the same as the 
+equivalent non-`where` pull, although it retrieves more data and is a bit more complex.
+
+#### Examples
+
+``pullAll`` is implicitly non-recursive and name-targeting. A `Model` instance is provided, and its fields are 
+populated with the `all` algorithm, by querying all triples linked to the IRI in the database.
+
+``recursivePullPartialWhere`` accepts a SPARQL WHERE condition and pulls all matches in the database, but only 
+pulling the specified fields, using the `partial` algorithm. The returned matches then have their linked models 
+recursively `pullPartial`ed until a the given recursion radius. Note that only the fields specified in the pulled 
+fields will trigger the recursive pull, although a field which is requested but is not actually modified by the pull 
+*will* be caught by the recursive pull. The WHERE condition does not apply to the pulls after the initial search, but 
+the field name specified for the `partial` algorithm will be passed on and used in the recursive pulls.
 
 ### Pushing changes
 
-Pushing changes to the database is easy. Data values may be modified directly in the models, and then simply call 
+Pushing changes to the database is easy. Modify data values directly in the models, and then simply call 
 `ModelContext.pushChanges(Model model)` to write the modifications to the database. Alternatively, `ModelContext.
 pushAllChanges()` does this for all `Model`s in the context.
 
-When publishing changes, the framework has a system for determining what updates to write. Each `Model` keeps a 
+When publishing changes, the Framework has a system for determining what updates to write. Each `Model` keeps a 
 cache of its field values on last synchronisation with the database (pull or push), and only if the current value of a 
 field is different from the cached "clean" value will an update for it be created. The update (collected between 
 fields) will take the form of:
@@ -357,7 +358,7 @@ A `DatatypeModel` must implement the following:
 - `constructor with arguments (String value, String datatype)`
 
   This is not explicitly described in the interface definition due to language limitations, but it is retrieved by
-  reflection at runtime and used by the framework. The `value` and `datatype` provided in the invocation are 
+  reflection at runtime and used by the Framework. The `value` and `datatype` provided in the invocation are 
   respectively the `?value` and `DATATYPE(?value)` strings returned by a query to the database.
 
 - `Node getNode()`
@@ -375,6 +376,124 @@ A `DatatypeModel` must implement the following:
   then `obj1.equals(obj2)` should be `true`.
 
 For an example, see `uk.ac.cam.cares.twa.cities.models.geo.GeometryType`.
+
+## Notes on design and use
+
+### Model inheritance and IRI-sharing
+
+While it is an error to attempt to create an instance of the same class and IRI as an existing instance in a 
+context, two models of the same IRI but different class are allowed. Lookups will work as normal, since all lookup 
+methods take bot IRI and class as argument.
+
+Similarly, it is legal and supported for a non-abstract `Model` to extend another non-abstract `Model`, and they 
+will be consequently considered different classes. This means that it is possible to have the same object with 
+duplicated properties in a single context: e.g. if John is instantiated as an `Employee` and also as a `Manager 
+extends Employee`, then there will be two sets of `Employee` fields being tracked and managed separately.
+
+This is not recommended. Two options are suggested:
+
+- Always keep an object as the most derived class in the ontology. If an object is originally instantiated as a 
+  superclass and then later identified as a subclass, the old instance can be deregistered with the `retire` method 
+  on the `Model` or `ModelContext`. The disadvantage of this pattern is that if, for example, John is represented as 
+  a `Manager extends Employee`, and his boss is loaded into the context, then his boss' `subordinates` field of type 
+  `ArrayList<Employee>` will look up John's IRI as the *Employee* class, resulting in a hollow **Employee** of John 
+  being created in parallel with the `Manager` John we are maintaining. It is easy for accidental duplication to 
+  sneak in.
+
+Alternatively, one can:
+
+- Not use inheritance. Even if, in the OWL ontology, *Manager* is a subclass of *Employee*, define the `Manager` 
+  Java class as only the fields that *Manager* adds to *Employee* and inherit directly from `Model`. Then, work with 
+  both `Manager` and `Employee` of John instantiated in the context, and cross-lookup with e.g. `context.getModel
+  (Manager.class, employee.getIri())` where necessary.
+
+### Doubly described triples
+
+This is also partially covered in the `ModelDemo` example. Many triples may be described from both ends, e.g. 
+`subordinates` and `manager` are mutually inverse, or `parent` and `child`. Since `parent.getChildren()` and `child.
+getParents()` are both useful, I do not consider it an antipattern to have triples thus "doubly described".
+
+The problem comes in where we want to mutate the system. There are two approaches:
+
+- Mutate the triple from both ends. If `john.manager = sam`, then `sam.subordinates.add(john)`. This can be 
+  implemented via a function e.g. `Employee.reassign(Employee newManager)` which consistently unsubordinates an 
+  employee from their previous manager, subordinates them to their new manager, and sets their manager to the new 
+  manager.
+  
+  Advantages:
+  - No need to worry about conflicting updates or internal inconsistencies in the system.
+  - If the action is encapsulated as above, then the code is not significantly complicated.
+  
+  Disadvantages:
+  - The performance of updates is very slightly worsened due to having to process the duplicated update.
+  - Less granular control of update behaivour.
+
+- Mutate the triple from a single end, and do not modify the other end. For example, only set *john.manager*. Since 
+  *sam.subordinates* has not been modified, it will not trigger the updater, and there will be no conflicting update 
+  written to the database.
+
+  Advantages:
+  - Slightly improved performance.
+  - Somewhat shorter code on first glance.
+  - More granular control of update behaviour.
+  
+  Disadvantages:
+  - Difficult for the developer to keep track of as use cases grow larger.
+  - Silent desynchronisation of data in Java and in the database: after pushing an update, `sam` believes that they 
+    are synchronised, but in reality the database has changed.
+
+The mentions of `control of update behaviour` may be confusing, as it may appear that there should be no difference 
+in database-side function. This is not precisely true: for one, silent desynchronisation may ruin your day, as 
+mentioned in the disadvantages of the second scheme. If `john` has quietly reassigned himself to `sam` without 
+updating `sam.subordinates` and pushes, and then `jessica` reassigns herself to `sam` and *does* update `sam.
+subordinates` and pushes (all of this discussion of agency being figurative; we are all operating within the same 
+context and agent), then `sam` will push his `john`-free subordinate list to the database, and `john` will be abruptly 
+orphaned.
+
+More in general, this is most notably a problem with many-to-one relationships, and not strictly an intra-agent 
+problem. *Adding something to a list causes the whole list to be written, potentially overwriting other changes, 
+both from within your program and by other agents*. Take for example a knowledge graph keeping track of people's 
+preferences. The models are simply `Person.likes.ArrayList<Fruit>` and `Fruit.isLikedBy.ArrayList<Person>`, 
+respectively the predicates `ontofruit:likes` and `inverse(ontofruit:likes)` in the OWL ontology.
+Each real-life person is responsible for maintaining their `Person` in the graph.
+
+Jeff decides he likes bananas and wants to add his like in the graph. He **does not** want to do
+```
+Fruit banana = context.loadAll(Fruit.class, "banana");
+Person jeff = context.getModel(Person.class, "jeff");
+banana.isLikedBy.add(jeff);
+banana.pushChanges();
+```
+because this code performs e.g.
+```
+DELETE WHERE { ?any ontofruit:likes <banana> }
+INSERT DATA {
+  <jeff> ontofruit:likes <banana> . 
+  <alice> ontofruit:likes <banana> .
+  <eve> ontofruit:likes <banana> .
+}
+```
+and if between Jeff's pull and push, Eve removed her like of bananas, or Edith added a like of bananas, those 
+changes would be overwritten. Instead, he should do
+```
+Person jeff = context.loadAll(Person.class, "jeff");
+Fruit banana = context.getModel(Fruit.class, "banana");
+jeff.likes.add(banana);
+jeff.pushChanges();
+```
+because this will execute
+```
+DELETE WHERE { <jeff> ontofruit:likes ?any }
+INSERT DATA {
+  <jeff> ontofruit:likes <banana> .
+  <jeff> ontofruit:likes <apple> .
+  <jeff> ontofruit:likes <pear> .
+}
+```
+and Jeff knows that this will not lead to overwriting anyone's changes, because everyone is supposed to be only 
+responsible for their own likes. In this specific case, doing a bilateral mutation still lets you do selective 
+updating in this fashion because we are calling `pushChanges` on a particular instance instead of
+`context.pushAllChanges()`, but in a more complicated routine, that may not e always possible.
 
 # Model Framework Developer Guide
 
@@ -500,7 +619,7 @@ behaviour for many systems. Some alternative behaviours are:
 - Trying to write to properties which have been changed in the database since last pull throws an exception. This 
   theoretically enables an almost superset of current behaviour, since the end-user developer may catch that 
   exception and in response do an override or pull and re-push. However, it is clunky and introduces a lot of new 
-  degrees of complexity into both the framework and the user experience; the one must not only interact with current 
+  degrees of complexity into both the Framework and the user experience; the one must not only interact with current 
   values and a simple clean/dirty state, but also micromanage congruence between the clean reference and the 
   database. Finally, querying every time we push is likely to be expensive, so an option will have to be included to 
   skip this step. All in all, such a solution would introduce significant complexity to enable a feature which few 

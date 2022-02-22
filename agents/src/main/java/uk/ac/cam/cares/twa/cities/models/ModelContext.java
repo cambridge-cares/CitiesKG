@@ -160,7 +160,7 @@ public class ModelContext {
    * Creates a quad store context.
    * @param targetResourceId the target resource ID passed to AccessAgentCaller for database access.
    * @param graphNamespace   the graph namespace to which graph names provided in {@link Model} definitions are appended
-   *                         to obtain the actual graph IRIs.
+   *                         to obtain the actual graph IRIs. Do include the trailing # or /.
    */
   public ModelContext(String targetResourceId, String graphNamespace) {
     this.targetResourceId = targetResourceId;
@@ -172,7 +172,7 @@ public class ModelContext {
    * Creates a quad store context with the specified initial member capacity.
    * @param targetResourceId the target resource ID passed to AccessAgentCaller for database access.
    * @param graphNamespace   the graph namespace to which graph names provided in {@link Model} definitions are appended
-   *                         to obtain the actual graph IRIs.
+   *                         to obtain the actual graph IRIs. Do include the trailing # or /.
    * @param initialCapacity  the capacity to initialise the context members hashmap with.
    */
   public ModelContext(String targetResourceId, String graphNamespace, int initialCapacity) {
@@ -287,12 +287,12 @@ public class ModelContext {
   }
 
   /**
-   * Equivalent to {@link #loadAllWhere}, but also recursively loads to the specified recursion radius the retrieved
+   * Equivalent to {@link #pullAllWhere}, but also recursively loads to the specified recursion radius the retrieved
    * objects in the normal {@link #loadAll(Class, String)} behaviour.
    */
-  public <T extends Model> List<T> recursiveLoadAllWhere(Class<T> ofClass, WhereBuilder condition, int recursionRadius) {
+  public <T extends Model> List<T> recursivePullAllWhere(Class<T> ofClass, WhereBuilder condition, int recursionRadius) {
     currentPullSession = new RecursivePullSession(recursionRadius);
-    List<T> models = loadAllWhere(ofClass, condition);
+    List<T> models = pullAllWhere(ofClass, condition);
     for (T model : models) currentPullSession.queue(model);
     currentPullSession.execute();
     currentPullSession = null;
@@ -305,7 +305,7 @@ public class ModelContext {
    * captured. Note that this can only be used for {@link Model}s of a single class. Note that an insufficiently
    * specific WHERE may result in entities not of your target class being misidentified and loaded in.
    */
-  public <T extends Model> List<T> loadAllWhere(Class<T> ofClass, WhereBuilder condition) {
+  public <T extends Model> List<T> pullAllWhere(Class<T> ofClass, WhereBuilder condition) {
     Node modelNode = NodeFactory.createVariable(MODEL);
     Set<String> resultIris = new HashSet<>();
     for (boolean backward : new boolean[]{false, true}) {
@@ -341,12 +341,12 @@ public class ModelContext {
   }
 
   /**
-   * Equivalent to {@link #loadPartialWhere}, but also recursively loads to the specified recursion radius the retrieved
+   * Equivalent to {@link #pullPartialWhere}, but also recursively loads to the specified recursion radius the retrieved
    * objects, using the same field names in the normal {@link #loadPartial(Class, String, String...)} behaviour.
    */
-  public <T extends Model> List<T> recursiveLoadPartialWhere(Class<T> ofClass, WhereBuilder condition, int recursionRadius, String... fieldNames) {
+  public <T extends Model> List<T> recursivePullPartialWhere(Class<T> ofClass, WhereBuilder condition, int recursionRadius, String... fieldNames) {
     currentPullSession = new RecursivePullSession(recursionRadius);
-    List<T> models = loadPartialWhere(ofClass, condition, fieldNames);
+    List<T> models = pullPartialWhere(ofClass, condition, fieldNames);
     for (T model : models) currentPullSession.queue(model);
     currentPullSession.execute();
     currentPullSession = null;
@@ -359,7 +359,7 @@ public class ModelContext {
    * captured. Note that this can only be used for {@link Model}s of a single class. Note that an insufficiently
    * specific WHERE may result in entities not of your target class being misidentified and loaded in.
    */
-  public <T extends Model> List<T> loadPartialWhere(Class<T> ofClass, WhereBuilder condition, String... fieldNames) {
+  public <T extends Model> List<T> pullPartialWhere(Class<T> ofClass, WhereBuilder condition, String... fieldNames) {
     Node modelNode = NodeFactory.createVariable(MODEL);
     MetaModel metaModel = MetaModel.get(ofClass);
     Set<String> resultIris = new HashSet<>();
@@ -642,6 +642,16 @@ public class ModelContext {
   }
 
   /**
+   * Deregisters the model from the context. The model values may still be inspected, pulled and pushed by direct
+   * reference, but pushChanges() will no longer scan the model, and crosslinking and fetching by IRI will no longer see
+   * the deregistered model and instead instantiate a new one. The principal use case for this method is "upgrading" an
+   * object from a superclass to a subclass; the subclass is instantiated and the old superclass is retired.
+   */
+  public void retire(Model model) {
+    members.remove(new MemberKey(model.getClass(), model.iri));
+  }
+
+  /**
    * Pushes all changes in the context. Equivalent to {@link #pushChanges(Model)}} on every member of the context, but more
    * optimised.
    */
@@ -775,6 +785,7 @@ public class ModelContext {
    * @return the deserialised {@link JSONArray} of rows in the response.
    */
   public JSONArray query(String query) {
+    //System.err.println(query);
     if (targetResourceId.startsWith("HARDCODE:")) {
       String endpoint = targetResourceId.substring(9);
       String responseString = new RemoteStoreClient(endpoint).execute(query);
@@ -791,6 +802,7 @@ public class ModelContext {
    * @param update the update string.
    */
   public void update(String update) {
+    //System.err.println(update);
     if (targetResourceId.startsWith("HARDCODE:")) {
       String endpoint = targetResourceId.substring(9);
       new RemoteStoreClient(endpoint, endpoint).executeUpdate(update);
@@ -808,7 +820,7 @@ public class ModelContext {
 
   /**
    * @return the {@link Node} which should be used for the {@link Model} variable in construction of WHERE statements
-   * for {@link #loadAllWhere(Class, WhereBuilder)} and {@link #loadPartialWhere(Class, WhereBuilder, String...)}.
+   * for {@link #pullAllWhere(Class, WhereBuilder)} and {@link #pullPartialWhere(Class, WhereBuilder, String...)}.
    */
   public static Node getModelVar() {
     return NodeFactory.createVariable(MODEL);

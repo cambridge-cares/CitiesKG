@@ -8,9 +8,9 @@ import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
 
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Random;
 import java.util.UUID;
 
@@ -19,6 +19,7 @@ public class TestModel extends Model {
 
   @Getter @Setter @FieldAnnotation("JPSLAND:stringprop") private String stringProp;
   @Getter @Setter @FieldAnnotation("dbpediao:intprop") private Integer intProp;
+  @Getter @Setter @FieldAnnotation("dbpediao:bigintprop") private BigInteger bigIntProp;
   @Getter @Setter @FieldAnnotation("dbpediao:doubleprop") private Double doubleProp;
   @Getter @Setter @FieldAnnotation("dbpediao:uriprop") private URI uriProp;
   @Getter @Setter @FieldAnnotation("dbpediao:modelprop") private TestModel modelProp;

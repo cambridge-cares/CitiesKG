@@ -3,7 +3,6 @@ package uk.ac.cam.cares.twa.cities.models;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 
 import java.util.ArrayList;
@@ -104,17 +103,17 @@ public class ModelDemo {
         if (analyst.age > oldestAnalyst.age)
           oldestAnalyst = analyst;
       // Reassign promoted analyst to work directly under CEO.
-      // ceo.subordinates.add(oldestAnalyst);  // *---------------------- redundant with oldestAnalyst.manager = ceo
+      ceo.subordinates.add(oldestAnalyst);  // *---------------------- redundant with oldestAnalyst.manager = ceo
       oldestAnalyst.manager = ceo;
       // Reassign other analyst to be managed by promoted analyst.
       for (Employee analyst : director.subordinates) {
         if (analyst != oldestAnalyst) {
-          // oldestAnalyst.subordinates.add(analyst);  // *-------------- redundant with analyst.manager = oldestAnalyst
+          oldestAnalyst.subordinates.add(analyst);  // *-------------- redundant with analyst.manager = oldestAnalyst
           analyst.manager = oldestAnalyst;
         }
       }
       // Erase director
-      // ceo.subordinates.remove(director);   // *----------------------- redundant with director.delete()
+      ceo.subordinates.remove(director);   // *----------------------- redundant with director.delete()
       director.delete(true);
     }
 
@@ -153,7 +152,7 @@ public class ModelDemo {
       .addWhere(ModelContext.getModelVar(), "<http://example.org/ontology#hasAge>", "?age")
       .addFilter("?age < 30");
 
-    List<Employee> youngsters = context.loadPartialWhere(Employee.class, condition, "name");
+    List<Employee> youngsters = context.pullPartialWhere(Employee.class, condition, "name");
     for(Employee youngster: youngsters)
       youngster.name = "Whippersnapper " + youngster.name;
 

@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.models.geo;
 
+import java.math.BigInteger;
 import java.net.URI;
 
 import lombok.Getter;
@@ -25,7 +26,7 @@ public class GenericAttribute extends OntoCityGMLModel {
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_PARRENT_GENATTRIB_ID) protected String parentGenattribId;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_INT_VAL) protected String intVal;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_DATE_VAL) protected String dateVal;
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_DATA_TYPE) protected Integer dataType;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_DATA_TYPE) protected BigInteger dataType;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID) protected URI cityObjectId;
 
 }

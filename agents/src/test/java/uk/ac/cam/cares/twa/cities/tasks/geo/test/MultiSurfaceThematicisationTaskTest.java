@@ -3,13 +3,14 @@ package uk.ac.cam.cares.twa.cities.tasks.geo.test;
 import junit.framework.TestCase;
 import org.mockito.Mockito;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
-import uk.ac.cam.cares.twa.cities.models.Model;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
 import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
 import uk.ac.cam.cares.twa.cities.tasks.geo.MultiSurfaceThematicisationTask;
 
 import java.lang.reflect.Field;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -43,7 +44,7 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
 
   public ModelContext makeMockContext() {
     ModelContext mockContext = Mockito.spy(params.makeContext());
-    Mockito.doReturn(new ArrayList<SurfaceGeometry>()).when(mockContext).loadAllWhere(Mockito.any(), Mockito.any());
+    Mockito.doReturn(new ArrayList<SurfaceGeometry>()).when(mockContext).pullAllWhere(Mockito.any(), Mockito.any());
     return mockContext;
   }
 
@@ -77,10 +78,10 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
     roof2.setGeometryType(new GeometryType("0#0#2#1#0#2#1#1#2#0#1#2#0#0#2", "http://localhost/blazegraph/literals/POLYGON-3-15"));
     ground1.setGeometryType(new GeometryType("0#0#0#0#1#0#1#1#0#1#0#0#0#0#0", "http://localhost/blazegraph/literals/POLYGON-3-15"));
     ground2.setGeometryType(new GeometryType("0#0#-1#0#1#-1#1#1#-1#1#0#-1#0#0#-1", "http://localhost/blazegraph/literals/POLYGON-3-15"));
-    root.getChildren().addAll(Arrays.asList(walls, roofAndGround));
-    walls.getChildren().addAll(Arrays.asList(wall1, wall2));
-    roofAndGround.getChildren().addAll(Arrays.asList(roofs, ground1, ground2));
-    roofs.getChildren().addAll(Arrays.asList(roof1, roof2));
+    root.getChildGeometries().addAll(Arrays.asList(walls, roofAndGround));
+    walls.getChildGeometries().addAll(Arrays.asList(wall1, wall2));
+    roofAndGround.getChildGeometries().addAll(Arrays.asList(roofs, ground1, ground2));
+    roofs.getChildGeometries().addAll(Arrays.asList(roof1, roof2));
 
     // Collect field access
     Field topLevelThematicGeometriesField = MultiSurfaceThematicisationTask.class.getDeclaredField("topLevelThematicGeometries");
@@ -204,7 +205,7 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
 
   }
 
-  public void testImplementChangesAndPush() throws IllegalAccessException {
+  public void testImplementChangesAndPush() throws IllegalAccessException, URISyntaxException {
 
     ModelContext context = makeMockContext();
 
@@ -234,10 +235,11 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
     roof2.setGeometryType(new GeometryType("0#0#2#1#0#2#1#1#2#0#1#2#0#0#2", "http://localhost/blazegraph/literals/POLYGON-3-15"));
     ground1.setGeometryType(new GeometryType("0#0#0#0#1#0#1#1#0#1#0#0#0#0#0", "http://localhost/blazegraph/literals/POLYGON-3-15"));
     ground2.setGeometryType(new GeometryType("0#0#-1#0#1#-1#1#1#-1#1#0#-1#0#0#-1", "http://localhost/blazegraph/literals/POLYGON-3-15"));
-    root.getChildren().addAll(Arrays.asList(walls, roofAndGround));
-    walls.getChildren().addAll(Arrays.asList(wall1, wall2));
-    roofAndGround.getChildren().addAll(Arrays.asList(roofs, ground1, ground2));
-    roofs.getChildren().addAll(Arrays.asList(roof1, roof2));
+    root.setCityObjectId(new URI("http://dummyiri"));
+    root.getChildGeometries().addAll(Arrays.asList(walls, roofAndGround));
+    walls.getChildGeometries().addAll(Arrays.asList(wall1, wall2));
+    roofAndGround.getChildGeometries().addAll(Arrays.asList(roofs, ground1, ground2));
+    roofs.getChildGeometries().addAll(Arrays.asList(roof1, roof2));
 
     Mockito.doNothing().when(context).pushAllChanges();
 
@@ -260,27 +262,27 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
 
     // Roof tree
     assertNull(roofs.getParentId());
-    assertEquals(2, roofs.getChildren().size());
-    assertSame(roof1, roofs.getChildren().get(0));
-    assertSame(roof2, roofs.getChildren().get(1));
+    assertEquals(2, roofs.getChildGeometries().size());
+    assertSame(roof1, roofs.getChildGeometries().get(0));
+    assertSame(roof2, roofs.getChildGeometries().get(1));
     assertEquals(roofs.getId(), roof1.getRootId());
     assertEquals(roofs.getId(), roof2.getRootId());
-    assertEquals(0, roof1.getChildren().size());
-    assertEquals(0, roof2.getChildren().size());
+    assertEquals(0, roof1.getChildGeometries().size());
+    assertEquals(0, roof2.getChildGeometries().size());
     // Wall tree
     assertNull(walls.getParentId());
-    assertEquals(2, walls.getChildren().size());
-    assertSame(wall1, walls.getChildren().get(0));
-    assertSame(wall2, walls.getChildren().get(1));
+    assertEquals(2, walls.getChildGeometries().size());
+    assertSame(wall1, walls.getChildGeometries().get(0));
+    assertSame(wall2, walls.getChildGeometries().get(1));
     assertEquals(walls.getId(), wall1.getRootId());
     assertEquals(walls.getId(), wall2.getRootId());
-    assertEquals(0, wall1.getChildren().size());
-    assertEquals(0, wall2.getChildren().size());
+    assertEquals(0, wall1.getChildGeometries().size());
+    assertEquals(0, wall2.getChildGeometries().size());
     // Ground tree
     assertEquals(ground1.getId(), ground1.getRootId());
     assertEquals(ground2.getId(), ground2.getRootId());
-    assertEquals(0, ground1.getChildren().size());
-    assertEquals(0, ground2.getChildren().size());
+    assertEquals(0, ground1.getChildGeometries().size());
+    assertEquals(0, ground2.getChildGeometries().size());
     // Check created thematic surfaces
     assertNotNull(roofs.getCityObjectId());
     assertEquals(roofs.getCityObjectId(), roof1.getCityObjectId());

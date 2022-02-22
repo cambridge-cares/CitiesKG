@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.models.geo;
 
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,11 +21,11 @@ public class SurfaceGeometry extends OntoCityGMLModel {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CITY_OBJECT_ID) protected URI cityObjectId;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_GEOMETRY_IMPLICIT) protected String implicitGeometryType;
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_COMPOSITE) protected Integer isComposite;
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_REVERSE) protected Integer isReverse;
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_SOLID) protected Integer isSolid;
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_TRIANGULATED) protected Integer isTriangulated;
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_XLINK) protected Integer isXlink;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_COMPOSITE) protected BigInteger isComposite;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_REVERSE) protected BigInteger isReverse;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_SOLID) protected BigInteger isSolid;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_TRIANGULATED) protected BigInteger isTriangulated;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_IS_XLINK) protected BigInteger isXlink;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_PARENT_ID) protected SurfaceGeometry parentId;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ROOT_ID) protected URI rootId;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_GEOMETRY_SOLID) protected String solidType;
@@ -35,7 +36,7 @@ public class SurfaceGeometry extends OntoCityGMLModel {
       value = SchemaManagerAdapter.ONTO_PARENT_ID,
       innerType = SurfaceGeometry.class,
       backward = true)
-  private ArrayList<SurfaceGeometry> children;
+  private ArrayList<SurfaceGeometry> childGeometries;
 
   public List<SurfaceGeometry> getFlattenedSubtree(boolean ignoreNonGeometric) {
     List<SurfaceGeometry> outputList = new ArrayList<>();
@@ -46,7 +47,7 @@ public class SurfaceGeometry extends OntoCityGMLModel {
   public void getFlattenedSubtree(List<SurfaceGeometry> outputList, boolean ignoreNonGeometric) {
     if (!ignoreNonGeometric || getGeometryType() != null)
       outputList.add(this);
-    for (SurfaceGeometry child : getChildren())
+    for (SurfaceGeometry child : getChildGeometries())
       child.getFlattenedSubtree(outputList, ignoreNonGeometric);
   }
 

@@ -208,7 +208,7 @@ public class ModelContextTest extends TestCase {
     pushContext.pushAllChanges();
 
     ModelContext pullContext = new ModelContext(testResourceId, testNamespace);
-    List<TestModel> pullModels = pullContext.loadAllWhere(TestModel.class,
+    List<TestModel> pullModels = pullContext.pullAllWhere(TestModel.class,
         new WhereBuilder().addWhere(
             ModelContext.getModelVar(),
             NodeFactory.createURI(SPARQLUtils.expandQualifiedName("dbpediao:intprop")),
@@ -240,7 +240,7 @@ public class ModelContextTest extends TestCase {
     pushContext.pushAllChanges();
 
     ModelContext pullContext = new ModelContext(testResourceId, testNamespace);
-    List<TestModel> pullModels = pullContext.recursiveLoadAllWhere(TestModel.class,
+    List<TestModel> pullModels = pullContext.recursivePullAllWhere(TestModel.class,
         new WhereBuilder().addWhere(
             ModelContext.getModelVar(),
             NodeFactory.createURI(SPARQLUtils.expandQualifiedName("dbpediao:intprop")),
@@ -281,7 +281,7 @@ public class ModelContextTest extends TestCase {
     pushContext.pushAllChanges();
 
     ModelContext pullContext = new ModelContext(testResourceId, testNamespace);
-    List<TestModel> pullModels = pullContext.loadPartialWhere(TestModel.class,
+    List<TestModel> pullModels = pullContext.pullPartialWhere(TestModel.class,
         new WhereBuilder().addWhere(
             ModelContext.getModelVar(),
             NodeFactory.createURI(SPARQLUtils.expandQualifiedName("dbpediao:intprop")),
@@ -318,7 +318,7 @@ public class ModelContextTest extends TestCase {
     pushContext.pushAllChanges();
 
     ModelContext pullContext = new ModelContext(testResourceId, testNamespace);
-    List<TestModel> pullModels = pullContext.loadPartialWhere(TestModel.class,
+    List<TestModel> pullModels = pullContext.pullPartialWhere(TestModel.class,
         new WhereBuilder().addWhere(
             ModelContext.getModelVar(),
             NodeFactory.createURI(SPARQLUtils.expandQualifiedName("dbpediao:intprop")),
@@ -355,6 +355,19 @@ public class ModelContextTest extends TestCase {
         assertNull(pullModelMatch);
       }
     }
+  }
+
+  public void testRetire() {
+    ModelContext context = new ModelContext(testResourceId, testNamespace);
+    TestModel model1 = TestModel.createRandom(context, 1234, 7, 0);
+    try {
+      TestModel.createRandom(context, 1234, 7, 0);
+      fail();
+    } catch (JPSRuntimeException ignored) {
+    }
+    model1.retire();
+    TestModel model2 = TestModel.createRandom(context, 1234, 7, 0);
+    assertNotSame(model1, model2);
   }
 
   public void testEquals() {

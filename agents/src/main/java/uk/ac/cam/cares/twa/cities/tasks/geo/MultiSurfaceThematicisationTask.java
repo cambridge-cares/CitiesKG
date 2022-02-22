@@ -12,6 +12,7 @@ import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
 
+import java.math.BigInteger;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -119,7 +120,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
    * outcome of this check is recorded in the <code>flipped</code> variable, which is null in the indeterminate case.
    */
   private void tryClassifyGeometries() {
-    context.loadAllWhere(
+    context.pullAllWhere(
         SurfaceGeometry.class,
         new WhereBuilder().addWhere(
             ModelContext.getModelVar(),
@@ -173,7 +174,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
    * @param surface the SurfaceGeometry currently being processed.
    */
   private Theme recursiveDiscover(SurfaceGeometry surface) {
-    List<SurfaceGeometry> children = surface.getChildren();
+    List<SurfaceGeometry> children = surface.getChildGeometries();
     GeometryType geometry = surface.getGeometryType();
     Theme aggregateTheme = Theme.UNSET;
     if (geometry != null && children.size() != 0) {
@@ -219,7 +220,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
         // Construct CityObject for the thematic surface
         String tsCityObjectIri = params.namespace + SchemaManagerAdapter.CITY_OBJECT_GRAPH + SLASH + uuid;
         CityObject tsCityObject = context.createNewModel(CityObject.class, tsCityObjectIri);
-        tsCityObject.setObjectClassId(33 + i);
+        tsCityObject.setObjectClassId(BigInteger.valueOf(33 + i));
         tsCityObject.setEnvelopeType(new EnvelopeType(topLevelGeometry));
         tsCityObject.setCreationDate(OffsetDateTime.now().toString());
         tsCityObject.setLastModificationDate(OffsetDateTime.now().toString());
@@ -231,8 +232,8 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
         if (lod <= 2) thematicSurface.setLod2MultiSurfaceId(topLevelGeometry);
         else if (lod == 3) thematicSurface.setLod3MultiSurfaceId(topLevelGeometry);
         else if (lod == 4) thematicSurface.setLod4MultiSurfaceId(topLevelGeometry);
-        thematicSurface.setObjectClassId(33 + i);
-        thematicSurface.setBuildingId(root.getCityObjectId());
+        thematicSurface.setObjectClassId(BigInteger.valueOf(33 + i));
+        thematicSurface.setBuildingId(context.getModel(Building.class, root.getCityObjectId().toString()));
         // Reassign SurfaceGeometry hierarchical properties
         topLevelGeometry.setParentId(null);
         List<SurfaceGeometry> allDescendantGeometries = topLevelGeometry.getFlattenedSubtree(false);

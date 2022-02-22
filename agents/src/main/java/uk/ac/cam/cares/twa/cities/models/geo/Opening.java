@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.models.geo;
 
+import java.math.BigInteger;
 import java.net.URI;
 
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
@@ -17,7 +18,7 @@ import uk.ac.cam.cares.twa.cities.models.ModelContext;
 @ModelAnnotation(defaultGraphName = SchemaManagerAdapter.OPENING_GRAPH + "/")
 public class Opening extends OntoCityGMLModel {
 
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID) protected Integer objectClassId;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID) protected BigInteger objectClassId;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ADDRESS_ID) protected URI addressId;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_LOD3_IMPLICIT_REF_POINT) protected URI lod3ImplicitRefPoint;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_LOD3_IMPLICIT_REP_ID) protected String lod3ImplicitRepId;
@@ -33,8 +34,8 @@ public class Opening extends OntoCityGMLModel {
       graphName = SchemaManagerAdapter.OPENING_TO_THEM_SURFACE_GRAPH + "/")
   protected URI themSurfaceId;
 
-  public static final Integer WINDOW_CLASS_ID = 38;
-  public static final Integer DOOR_CLASS_ID = 39;
+  public static final BigInteger WINDOW_CLASS_ID = BigInteger.valueOf(38);
+  public static final BigInteger DOOR_CLASS_ID = BigInteger.valueOf(39);
 
   public static Opening newWindow(ModelContext context, String iri) {
     Opening window = context.createNewModel(Opening.class, iri);

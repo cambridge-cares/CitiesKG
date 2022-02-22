@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.models.geo;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 
 import lombok.Getter;
@@ -18,13 +19,13 @@ public class CityObject extends OntoCityGMLModel {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CREATION_DATE) protected String creationDate;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_DESCRIPTION) protected String description;
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ENVELOPE_TYPE) protected EnvelopeType EnvelopeType;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ENVELOPE_TYPE) protected EnvelopeType envelopeType;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_GML_ID) protected String gmlId;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_LAST_MODIFICATION_DATE) protected String lastModificationDate;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_LINEAGE) protected String lineage;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_NAME) protected String name;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_NAME_CODESPACE) protected String nameCodespace;
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID) protected Integer objectClassId;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID) protected BigInteger objectClassId;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_REASON_FOR_UPDATE) protected String reasonForUpdate;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_RELATIVE_TO_TERRAIN) protected String relativeToTerrain;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_RELATIVE_TO_WATER) protected String relativeToWater;
