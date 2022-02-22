@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-public class KMLSorterTask implements Runnable {
+public class KMLSorterTask_backup implements Runnable {
 
     private String name; // project name, need to match the layer name in master json
     private int rows; // the number of tile rows

@@ -26,34 +26,23 @@ public class KMLSorterTask implements Runnable {
     // and a list of features for that tile as the value
     private int count = 0; // count the number of buildings
     private int files = 0; // count the number of kml files sorted
-
+    //private HashMap<String, String[]> summaryCSV;
+    private File summaryCSV;
     @Override
     public void run() {
         long start = System.currentTimeMillis();
         // directory of unsorted kml files
-        File directory = new File("C:\\Users\\HTAI01\\Documents\\KMLpostprocessing\\src\\main\\resources\\exported_data_whole");
+        File directory = new File("C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\");
+        this.dirList = directory.listFiles();
 
-        /*
-        // file location of master json file
-        File masterJson = new File("C:\\Users\\HTAI01\\Documents\\KMLpostprocessing\\src\\main\\resources" +
-                "\\metadata_export_charlottenburg\\test_extruded_MasterJSON.json");
-        // file location of summary json file describing which building is in which tile
-        File summaryJson = new File("C:\\Users\\HTAI01\\Documents\\KMLpostprocessing\\src\\main\\resources" +
-                "\\metadata_export_charlottenburg\\test.json");
-
-        // needs to match the layer name defined in master json
-        //TODO read from json
-        String projName = "test";
-         */
         // file location of one unsorted kml file
         //TODO: replace by getting one file from dirList
-        File test0 = new File("C:\\Users\\HTAI01\\Documents\\KMLpostprocessing\\src\\main\\resources" +
-                "\\exported_data_some\\test_0_extruded.kml");
-        // file location of where the tiles should be created
-        String outDir = "C:\\Users\\HTAI01\\Documents\\GitHub\\CitiesKG\\3dcitydb-web-map-1.9.0\\3dwebclient\\test";
-        File summaryCSVdir = new File("C:\\Users\\HTAI01\\Documents\\Sorted berlin\\summary_tiles");
-        this.dirList = summaryCSVdir.listFiles();
+        File test0 = new File("C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\test_0_extruded.kml");
 
+        // file location of where the tiles should be created
+        String outDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\sorted_whole_berlin\\";
+
+        this.summaryCSV = new File("C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\sorted_tiles_summary.csv");
 
         List<StyleSelector> styles = getStylesFromKml(test0);
 
@@ -270,6 +259,12 @@ public class KMLSorterTask implements Runnable {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void main(String[] args) {
+        KMLSorterTask kmlSorter = new KMLSorterTask();
+        kmlSorter.run();
+
     }
 }
 
