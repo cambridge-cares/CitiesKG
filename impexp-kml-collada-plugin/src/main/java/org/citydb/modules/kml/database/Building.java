@@ -36,6 +36,7 @@ import org.citydb.config.project.kmlExporter.DisplayForm;
 import org.citydb.config.project.kmlExporter.Lod0FootprintMode;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.BlobExportAdapter;
+import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.database.connection.DatabaseConnectionPool;
 import org.citydb.event.EventDispatcher;
@@ -43,6 +44,8 @@ import org.citydb.log.Logger;
 import org.citydb.modules.kml.util.BalloonTemplateHandler;
 import org.citydb.modules.kml.util.ElevationServiceHandler;
 import org.citydb.query.Query;
+import org.gdal.osr.CoordinateTransformation;
+import org.gdal.osr.SpatialReference;
 
 import javax.vecmath.Point3d;
 import javax.xml.bind.JAXBException;
@@ -109,6 +112,39 @@ public class Building extends KmlGenericObject{
 		PreparedStatement psQuery = null;
 		ResultSet rs = null;
 
+		PreparedStatement srsnameQuery = null;
+		ResultSet rsSrsname = null;
+		String srsname = null;
+		CoordinateTransformation transform = null;
+		if(isBlazegraph)
+		{
+			try {
+
+				String query_srsname = StatementTransformer.getSrname();
+				srsnameQuery = connection.prepareStatement(query_srsname);
+				rsSrsname = srsnameQuery.executeQuery();
+				while (rsSrsname.next()){
+					srsname = rsSrsname.getObject("srsname").toString();
+				}
+
+				SpatialReference nativeSr = new SpatialReference("");
+				nativeSr.SetFromUserInput(srsname);//need to get srid from blazegraph
+				SpatialReference tagetSr = new SpatialReference("");
+				tagetSr.SetFromUserInput("EPSG:4326"); // WGS84
+				transform = CoordinateTransformation.CreateCoordinateTransformation(nativeSr, tagetSr);
+
+			}catch (SQLException e) {
+				log.error(work.getGmlId()+ "SQL error while querying srs info: " + e.getMessage());
+			} finally {
+				if (rsSrsname != null)
+					try {
+						rsSrsname.close();
+					} catch (SQLException e) {
+						log.error("No coordinate system information." + e.getMessage());
+					}
+			}
+		}
+
 		try {
 			String query = queries.getBuildingPartsFromBuilding();
 
@@ -140,10 +176,10 @@ public class Building extends KmlGenericObject{
 
 				if (isBlazegraph){
 					String buildingPartId = rs.getString(1);
-					placemarkBPart = readBuildingPart(buildingPartId, work);
+					placemarkBPart = readBuildingPart(buildingPartId, work, transform);
 				}else{
 					long buildingPartId = rs.getLong(1);
-					placemarkBPart = readBuildingPart(buildingPartId, work);
+					placemarkBPart = readBuildingPart(buildingPartId, work, transform);
 				}
 
 				if (placemarkBPart != null)
@@ -196,8 +232,9 @@ public class Building extends KmlGenericObject{
 		}
 	}
 
-	private <T> List<PlacemarkType> readBuildingPart(T buildingPartId, KmlSplittingResult work) {
+	private <T> List<PlacemarkType> readBuildingPart(T buildingPartId, KmlSplittingResult work, CoordinateTransformation transform) {
 		PreparedStatement psQuery = null;
+		PreparedStatement psQueryG2 = null;
 		ResultSet rs = null;
 		boolean reversePointOrder = false;
 		// Shiying: we need to add a variable to differentiate two different cases in FOOTPRINT/EXTRUDED, if GroundSurface exists
@@ -288,21 +325,23 @@ public class Building extends KmlGenericObject{
 						rs.last();
 						int rowCount = rs.getRow();
 						rs.beforeFirst();
+
 						if(isBlazegraph && rowCount == 0){
-							query = StatementTransformer.getSPARQLStatement_BuildingPartGeometry_part2();
-							psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+							String query2 = StatementTransformer.getSPARQLStatement_BuildingPartGeometry_part2();
+							psQueryG2 = connection.prepareStatement(query2, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 							URL url = null;
 							try {
 								url = new URL((String)buildingPartId);
 							} catch (MalformedURLException e) {
 								e.printStackTrace();
 							}
-							psQuery.setURL(1, url);
-							rs = psQuery.executeQuery();
+							psQueryG2.setURL(1, url);
+							rs = psQueryG2.executeQuery();
 						}
 					} catch (SQLException e) {
 						log.error("SQL error while querying geometries in LOD " + currentLod + ": " + e.getMessage());
 						try { if (psQuery != null) psQuery.close(); } catch (SQLException sqle) {}
+						try { if (psQueryG2 != null) psQueryG2.close(); } catch (SQLException sqle) {}
 						try { connection.commit(); } catch (SQLException sqle) {}
 						rs = null;
 					}
@@ -497,7 +536,7 @@ public class Building extends KmlGenericObject{
 							//log.info("Processing : " + buildingPartId);
 //							String envelop = rs3.getString(1);
 //							measuredHeight = extractHeight(envelop);
-							return createPlacemarksForGeometry_geospatila(rs, work, null);
+							return createPlacemarksForGeometry_geospatila(rs, work, transform);
 						} else {
 							if (work.getDisplayForm().isHighlightingEnabled()) {
 								if (query.isSetTiling()) { // region

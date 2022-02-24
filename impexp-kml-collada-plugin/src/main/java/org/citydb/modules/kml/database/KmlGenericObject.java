@@ -1899,35 +1899,51 @@ public abstract class KmlGenericObject<T> {
 		return placemarkList;
 	}
 
-	protected List<PlacemarkType> createPlacemarksForGeometry_geospatila(ResultSet _rs, KmlSplittingResult work, AffineTransformer globalTransformer) throws SQLException {
+	protected List<PlacemarkType> createPlacemarksForGeometry_geospatila(ResultSet _rs, KmlSplittingResult work, CoordinateTransformation transform) throws SQLException {
 
 		HashSet<String> exportedGmlIds = new HashSet<String>();
 		HashMap<String, MultiGeometryType> multiGeometries = new HashMap<String, MultiGeometryType>();
 		MultiGeometryType multiGeometry = null;
 		PolygonType polygon = null;
+//		PreparedStatement srsnameQuery = null;
+//		ResultSet rsSrsname = null;
+//		String srsname = null;
+//		CoordinateTransformation transform = null;
 
 		GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
+//		try {
+//
+//			String query_srsname = StatementTransformer.getSrname();
+//			srsnameQuery = connection.prepareStatement(query_srsname, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+//			rsSrsname = srsnameQuery.executeQuery();
+//			while (rsSrsname.next()){
+//				srsname = rsSrsname.getObject("srsname").toString();
+//			}
+//
+//			SpatialReference nativeSr = new SpatialReference("");
+//			nativeSr.SetFromUserInput(srsname);//need to get srid from blazegraph
+//			SpatialReference tagetSr = new SpatialReference("");
+//			tagetSr.SetFromUserInput("EPSG:4326"); // WGS84
+//			transform = CoordinateTransformation.CreateCoordinateTransformation(nativeSr, tagetSr);
+//
+//		}catch (SQLException e) {
+//			log.error(work.getGmlId()+ "SQL error while querying srs info: " + e.getMessage());
+//		} finally {
+//			if (rsSrsname != null)
+//				try {
+//					rsSrsname.close();
+//				} catch (SQLException e) {
+//					log.error("No coordinate system information." + e.getMessage());
+//				}
+//		}
+
+
 
 		_rs.beforeFirst(); // return cursor to beginning
 
 		while (_rs.next()) {
-			AffineTransformer transformer = globalTransformer;
+//			AffineTransformer transformer = globalTransformer;
 
-//			long rootId = _rs.getLong(1);
-
-//			if (rootId == 0) {
-//				// get nested implicit geometry
-////				if (supportsNestedImplicitGeometries) {
-////					rootId = _rs.getLong(3);
-////					transformer = getAffineTransformer(_rs, 4, 5);
-////				}
-//
-//				if (rootId == 0 || transformer == null)
-//					continue;
-//			}
-
-			// skip closure surfaces
-//			int surfaceTypeID = rs.getInt("objectclass_id");
 			int surfaceTypeID = 0; //temporary use
 			if (surfaceTypeID != 0
 					&& (Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BUILDING_CLOSURE_SURFACE
@@ -1935,26 +1951,10 @@ public abstract class KmlGenericObject<T> {
 					|| Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.TUNNEL_CLOSURE_SURFACE))
 				continue;
 
-			PreparedStatement srsnameQuery = null;
-			ResultSet rsSrsname = null;
-
-			try {
 				Object rsGeometry = _rs.getObject("geomtype");
-				String query = queries.getSurfaceGeometries(false, transformer != null);
+				String query = null;
 
-				String srsname = null;
-				String query_srsname = StatementTransformer.getSrname();
-				srsnameQuery = connection.prepareStatement(query_srsname, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-				rsSrsname = srsnameQuery.executeQuery();
-				while (rsSrsname.next()){
-					srsname = rsSrsname.getObject("srsname").toString();
-				}
 
-				SpatialReference nativeSr = new SpatialReference("");
-				nativeSr.SetFromUserInput(srsname);//need to get srid from blazegraph
-				SpatialReference tagetSr = new SpatialReference("");
-				tagetSr.SetFromUserInput("EPSG:4326"); // WGS84
-				CoordinateTransformation transform = CoordinateTransformation.CreateCoordinateTransformation(nativeSr, tagetSr);
 
 //				double zOffset = getZOffsetFromConfigOrDB((long)work.getId());
 				double zOffset = 0;
@@ -1981,17 +1981,8 @@ public abstract class KmlGenericObject<T> {
 							lowestPointCandidates.get(0).z}) [2];
 				}
 
-
-//				rsGeom.beforeFirst(); // return cursor to beginning
 				org.gdal.ogr.Geometry geom_poly = new org.gdal.ogr.Geometry(ogrConstants.wkbPolygon);
-//				while (rsGeom.next()) {
-					// skip duplicate geometries
-//					String gmlId = rsGeom.getString("gmlid");
-//					boolean isXlink = rs.getBoolean("is_xlink");
-//					if (isXlink && gmlId != null && !exportedGmlIds.add(gmlId))
-//						continue;
 
-//				Coordinate[] coordinates = geospatial.str2coords(rsGeom.getObject("geom").toString()).toArray(new Coordinate[0]);
 				Coordinate[] coordinates = geospatial.str2coords(rsGeometry.toString()).toArray(new Coordinate[0]);
 				org.gdal.ogr.Geometry geomRing = new org.gdal.ogr.Geometry(ogr.wkbLinearRing);
 
@@ -2130,17 +2121,7 @@ public abstract class KmlGenericObject<T> {
 						multiGeometries.put(surfaceType, multiGeometry);
 					}
 					multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
-			} catch (SQLException e) {
-				log.error(work.getGmlId()+ "SQL error while querying surface geometries: " + e.getMessage());
-			} finally {
-				if (rsSrsname != null)
-					try {
-						rsSrsname.close();
-					} catch (SQLException e) {
-						log.error("No coordinate system information." + e.getMessage());
-					}
 			}
-		}
 
 
 		List<PlacemarkType> placemarkList = new ArrayList<PlacemarkType>();
