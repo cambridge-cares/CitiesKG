@@ -28,7 +28,6 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
@@ -41,30 +40,39 @@ import org.citygml4j.model.citygml.relief.RasterRelief;
 import org.citygml4j.model.citygml.relief.ReliefComponentProperty;
 import org.citygml4j.model.citygml.relief.ReliefFeature;
 
-public class DBReliefFeature implements DBImporter {
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psReliefFeature;
+public class DBReliefFeature extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
 	private DBReliefComponent reliefComponentImporter;
 
 	private boolean hasObjectClassIdColumn;
-	private int batchCounter;
 
 	public DBReliefFeature(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.importer = importer;
-
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
+		super(batchConn, config, importer);
+		cityObjectImporter = importer.getImporter(DBCityObject.class);
+		reliefComponentImporter = importer.getImporter(DBReliefComponent.class);
+	}
+	
+	@Override
+	protected void preconstructor(Config config) {
 		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
+	}
+	
+	@Override
+	protected String getTableName() {
+		return TableEnum.RELIEF_FEATURE.getName();
+	}
 
-		String stmt = "insert into " + schema + ".relief_feature (id, lod" +
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "relieffeature/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + sqlSchema + ".relief_feature (id, lod" +
 				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
 				"values (?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
-		psReliefFeature = batchConn.prepareStatement(stmt);
-
-		cityObjectImporter = importer.getImporter(DBCityObject.class);
-		reliefComponentImporter = importer.getImporter(DBReliefComponent.class);
 	}
 
 	protected long doImport(ReliefFeature reliefFeature) throws CityGMLImportException, SQLException {
@@ -77,20 +85,20 @@ public class DBReliefFeature implements DBImporter {
 
 		// import relief feature information
 		// primary id
-		psReliefFeature.setLong(1, reliefFeatureId);
+		preparedStatement.setLong(1, reliefFeatureId);
 
 		// dem:lod
-		psReliefFeature.setInt(2, reliefFeature.getLod());
+		preparedStatement.setInt(2, reliefFeature.getLod());
 
 		// objectclass id
 		if (hasObjectClassIdColumn)
-			psReliefFeature.setLong(3, featureType.getObjectClassId());
+			preparedStatement.setLong(3, featureType.getObjectClassId());
 
-		psReliefFeature.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.RELIEF_FEATURE);
 
-		// dem:eliefComponent
+		// dem:reliefComponent
 		if (reliefFeature.isSetReliefComponent()) {
 			for (ReliefComponentProperty property : reliefFeature.getReliefComponent()) {
 				AbstractReliefComponent component = property.getReliefComponent();
@@ -122,19 +130,6 @@ public class DBReliefFeature implements DBImporter {
 			importer.delegateToADEImporter(reliefFeature, reliefFeatureId, featureType);
 
 		return reliefFeatureId;
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psReliefFeature.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psReliefFeature.close();
 	}
 
 }
