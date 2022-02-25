@@ -112,39 +112,6 @@ public class Building extends KmlGenericObject{
 		PreparedStatement psQuery = null;
 		ResultSet rs = null;
 
-		PreparedStatement srsnameQuery = null;
-		ResultSet rsSrsname = null;
-		String srsname = null;
-		CoordinateTransformation transform = null;
-		if(isBlazegraph)
-		{
-			try {
-
-				String query_srsname = StatementTransformer.getSrname();
-				srsnameQuery = connection.prepareStatement(query_srsname);
-				rsSrsname = srsnameQuery.executeQuery();
-				while (rsSrsname.next()){
-					srsname = rsSrsname.getObject("srsname").toString();
-				}
-
-				SpatialReference nativeSr = new SpatialReference("");
-				nativeSr.SetFromUserInput(srsname);//need to get srid from blazegraph
-				SpatialReference tagetSr = new SpatialReference("");
-				tagetSr.SetFromUserInput("EPSG:4326"); // WGS84
-				transform = CoordinateTransformation.CreateCoordinateTransformation(nativeSr, tagetSr);
-
-			}catch (SQLException e) {
-				log.error(work.getGmlId()+ "SQL error while querying srs info: " + e.getMessage());
-			} finally {
-				if (rsSrsname != null)
-					try {
-						rsSrsname.close();
-					} catch (SQLException e) {
-						log.error("No coordinate system information." + e.getMessage());
-					}
-			}
-		}
-
 		try {
 			String query = queries.getBuildingPartsFromBuilding();
 
@@ -176,20 +143,20 @@ public class Building extends KmlGenericObject{
 
 				if (isBlazegraph){
 					String buildingPartId = rs.getString(1);
-					placemarkBPart = readBuildingPart(buildingPartId, work, transform);
+					placemarkBPart = readBuildingPart(buildingPartId, work);
 				}else{
 					long buildingPartId = rs.getLong(1);
-					placemarkBPart = readBuildingPart(buildingPartId, work, transform);
+					placemarkBPart = readBuildingPart(buildingPartId, work);
 				}
 
 				if (placemarkBPart != null)
 					placemarks.addAll(placemarkBPart);
 			}
 		} catch (SQLException sqlEx) {
-			log.error("SQL error while getting building parts for building " + work.getGmlId() + ": " + sqlEx.getMessage());
+			log.error("Read: SQL error while getting building parts for building " + work.getGmlId() + ": " + sqlEx.getMessage());
 			return;
 		} finally {
-			try { if (rs != null) rs.close(); } catch (SQLException sqle) {} 
+			try { if (rs != null) rs.close(); } catch (SQLException sqle) {}
 			try { if (psQuery != null) psQuery.close(); } catch (SQLException sqle) {}
 		}
 
@@ -232,9 +199,8 @@ public class Building extends KmlGenericObject{
 		}
 	}
 
-	private <T> List<PlacemarkType> readBuildingPart(T buildingPartId, KmlSplittingResult work, CoordinateTransformation transform) {
+	private <T> List<PlacemarkType> readBuildingPart(T buildingPartId, KmlSplittingResult work) {
 		PreparedStatement psQuery = null;
-		PreparedStatement psQueryG2 = null;
 		ResultSet rs = null;
 		boolean reversePointOrder = false;
 		// Shiying: we need to add a variable to differentiate two different cases in FOOTPRINT/EXTRUDED, if GroundSurface exists
@@ -288,7 +254,7 @@ public class Building extends KmlGenericObject{
 							log.error("SQL error while querying the highest available LOD: " + e.getMessage());
 							try { connection.commit(); } catch (SQLException sqle) {}
 						} finally {
-							try { if (rs != null) rs.close(); } catch (SQLException sqle) {} 
+							try { if (rs != null) rs.close(); } catch (SQLException sqle) {}
 							try { if (psQuery != null) psQuery.close(); } catch (SQLException sqle) {}
 							rs = null;
 						}
@@ -298,53 +264,50 @@ public class Building extends KmlGenericObject{
 				// ok, if we have an LOD to export from, we issue a heavy-weight query to get 
 				// the building geometry including sub-features and appearances 
 				if (currentLod > 0 && work.getDisplayForm().isAchievableFromLoD(currentLod)) {
-					try {
-						String query = queries.getBuildingPartQuery(currentLod, lod0FootprintMode, work.getDisplayForm(), false);
+				try{
+					String query = queries.getBuildingPartQuery(currentLod, lod0FootprintMode, work.getDisplayForm(), false);
 
-						if (isBlazegraph) {
-							query = StatementTransformer.getSPARQLStatement_BuildingPartGeometry();
-						}
-
-						psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-
-						if (isBlazegraph) {
-							URL url = null;
-							try {
-								url = new URL((String)buildingPartId);
-							} catch (MalformedURLException e) {
-								e.printStackTrace();
-							}
-							psQuery.setURL(1, url);
-						}else{
-							for (int i = 1; i <= getParameterCount(query); i++)
-								psQuery.setLong(i, Long.class.cast(buildingPartId));
-						}
-
-						rs = psQuery.executeQuery();
-
-						rs.last();
-						int rowCount = rs.getRow();
-						rs.beforeFirst();
-
-						if(isBlazegraph && rowCount == 0){
-							String query2 = StatementTransformer.getSPARQLStatement_BuildingPartGeometry_part2();
-							psQueryG2 = connection.prepareStatement(query2, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-							URL url = null;
-							try {
-								url = new URL((String)buildingPartId);
-							} catch (MalformedURLException e) {
-								e.printStackTrace();
-							}
-							psQueryG2.setURL(1, url);
-							rs = psQueryG2.executeQuery();
-						}
-					} catch (SQLException e) {
-						log.error("SQL error while querying geometries in LOD " + currentLod + ": " + e.getMessage());
-						try { if (psQuery != null) psQuery.close(); } catch (SQLException sqle) {}
-						try { if (psQueryG2 != null) psQueryG2.close(); } catch (SQLException sqle) {}
-						try { connection.commit(); } catch (SQLException sqle) {}
-						rs = null;
+					if (isBlazegraph) {
+						query = StatementTransformer.getSPARQLStatement_BuildingPartGeometry();
 					}
+
+					psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
+					if (isBlazegraph) {
+						URL url = null;
+						try {
+							url = new URL((String)buildingPartId);
+						} catch (MalformedURLException e) {
+							e.printStackTrace();
+						}
+						psQuery.setURL(1, url);
+					}else{
+						for (int i = 1; i <= getParameterCount(query); i++)
+							psQuery.setLong(i, Long.class.cast(buildingPartId));
+					}
+
+					rs = psQuery.executeQuery();
+
+					rs.last();
+					int rowCount = rs.getRow();
+					rs.beforeFirst();
+
+					if(isBlazegraph && rowCount == 0){
+						query = StatementTransformer.getSPARQLStatement_BuildingPartGeometry_part2();
+						psQuery = connection.prepareStatement(query);
+						URL url = null;
+						try {
+							url = new URL((String)buildingPartId);
+						} catch (MalformedURLException e) {
+							e.printStackTrace();
+						}
+						psQuery.setURL(1, url);
+						rs = psQuery.executeQuery();
+					}
+				}catch (SQLException e) {
+					log.error(work.getGmlId() + ": " + e.getCause().getMessage());
+				}
+
 				}
 			}
 			// DisplayForm: FOOTPRINT/EXTRUDED
@@ -415,7 +378,7 @@ public class Building extends KmlGenericObject{
 						try { rs.close(); } catch (SQLException sqle) {} 
 						try { psQuery.close(); } catch (SQLException sqle) {}
 					} catch (SQLException e) {
-						log.error("SQL error while querying geometries in LOD " + currentLod + ": " + e.getMessage());
+						log.error("r2: SQL error while querying geometries in LOD " + currentLod + ": " + e.getMessage());
 						try { if (rs != null) rs.close(); } catch (SQLException sqle) {} 
 						try { if (psQuery != null) psQuery.close(); } catch (SQLException sqle) {}
 						try { connection.commit(); } catch (SQLException sqle) {}
@@ -467,7 +430,7 @@ public class Building extends KmlGenericObject{
 							rs = null;
 						} catch (SQLException e) {
 							log.error("Error at : " + buildingPartId);
-							log.error("SQL error while aggregating geometries in LOD " + currentLod + ": " + e.getMessage());
+							log.error("r3: SQL error while aggregating geometries in LOD " + currentLod + ": " + e.getMessage());
 							try { if (rs != null) rs.close(); } catch (SQLException sqle) {} 
 							try { if (psQuery != null) psQuery.close(); } catch (SQLException sqle) {}
 							try { connection.commit(); } catch (SQLException sqle) {}
@@ -527,16 +490,13 @@ public class Building extends KmlGenericObject{
 
 				case DisplayForm.GEOMETRY:
 					setGmlId(work.getGmlId());
-					//setId(work.getId());
-//					PreparedStatement psQuery3 = null;
-//					ResultSet rs3 = null;
 					try {
 
 						if (isBlazegraph) {
 							//log.info("Processing : " + buildingPartId);
 //							String envelop = rs3.getString(1);
 //							measuredHeight = extractHeight(envelop);
-							return createPlacemarksForGeometry_geospatila(rs, work, transform);
+							return createPlacemarksForGeometry_geospatila(rs, work);
 						} else {
 							if (work.getDisplayForm().isHighlightingEnabled()) {
 								if (query.isSetTiling()) { // region
@@ -552,11 +512,9 @@ public class Building extends KmlGenericObject{
 							}
 							return createPlacemarksForGeometry(rs, work, true);
 						}
-
-					} catch (SQLException e) {
-						log.error("SQL error while querying geometry " + work.getGmlId() + ": " + e.getMessage());
-						return null;
-			}
+					} catch (Exception ioe) {
+						log.logStackTrace(ioe);
+					}
 
 
 				case DisplayForm.COLLADA:

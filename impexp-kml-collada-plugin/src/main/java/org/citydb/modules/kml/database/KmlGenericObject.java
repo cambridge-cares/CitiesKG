@@ -1899,45 +1899,21 @@ public abstract class KmlGenericObject<T> {
 		return placemarkList;
 	}
 
-	protected List<PlacemarkType> createPlacemarksForGeometry_geospatila(ResultSet _rs, KmlSplittingResult work, CoordinateTransformation transform) throws SQLException {
+	protected List<PlacemarkType> createPlacemarksForGeometry_geospatila(ResultSet _rs, KmlSplittingResult work) throws SQLException {
 
 		HashSet<String> exportedGmlIds = new HashSet<String>();
 		HashMap<String, MultiGeometryType> multiGeometries = new HashMap<String, MultiGeometryType>();
 		MultiGeometryType multiGeometry = null;
 		PolygonType polygon = null;
-//		PreparedStatement srsnameQuery = null;
-//		ResultSet rsSrsname = null;
-//		String srsname = null;
-//		CoordinateTransformation transform = null;
 
 		GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
-//		try {
-//
-//			String query_srsname = StatementTransformer.getSrname();
-//			srsnameQuery = connection.prepareStatement(query_srsname, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-//			rsSrsname = srsnameQuery.executeQuery();
-//			while (rsSrsname.next()){
-//				srsname = rsSrsname.getObject("srsname").toString();
-//			}
-//
-//			SpatialReference nativeSr = new SpatialReference("");
-//			nativeSr.SetFromUserInput(srsname);//need to get srid from blazegraph
-//			SpatialReference tagetSr = new SpatialReference("");
-//			tagetSr.SetFromUserInput("EPSG:4326"); // WGS84
-//			transform = CoordinateTransformation.CreateCoordinateTransformation(nativeSr, tagetSr);
-//
-//		}catch (SQLException e) {
-//			log.error(work.getGmlId()+ "SQL error while querying srs info: " + e.getMessage());
-//		} finally {
-//			if (rsSrsname != null)
-//				try {
-//					rsSrsname.close();
-//				} catch (SQLException e) {
-//					log.error("No coordinate system information." + e.getMessage());
-//				}
-//		}
 
-
+		SpatialReference nativeSr = new SpatialReference("");
+		DatabaseSrs srs = databaseAdapter.getConnectionMetaData().getReferenceSystem();
+		nativeSr.SetFromUserInput(srs.getDatabaseSrsName());//need to get srid from blazegraph
+		SpatialReference tagetSr = new SpatialReference("");
+		tagetSr.SetFromUserInput("EPSG:4326"); // WGS84
+		CoordinateTransformation transform = CoordinateTransformation.CreateCoordinateTransformation(nativeSr, tagetSr);;
 
 		_rs.beforeFirst(); // return cursor to beginning
 

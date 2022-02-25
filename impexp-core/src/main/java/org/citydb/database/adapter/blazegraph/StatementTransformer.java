@@ -173,18 +173,6 @@ public class StatementTransformer {
         return sparqlString.toString();
     }
 
-    public static String getSrname()
-    {
-        StringBuilder sparqlString = new StringBuilder();
-
-        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-                "SELECT ?s ?srid ?srsname {\n" +
-                "    ?s ocgml:srid ?srid;\n" +
-                "        ocgml:srsname ?srsname\n" +
-                "}");
-
-        return sparqlString.toString();
-    }
     // Analyze SQL statement and transform it to a SPARQL query (Normal usuage: single gmlid or multiple gmlid or *)
     public static String getTopFeatureId (SQLStatement sqlStatement) throws ParseException {
         Select select = (Select) sqlStatement;
@@ -201,7 +189,7 @@ public class StatementTransformer {
 
         sb.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "objectClassId", "?objectclass_id");
         sb.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "gmlId", "?gmlid");
-        sb.setLimit(1500);//temporal use
+//        sb.setLimit(3000);//temporal use
 //        sb.setOffset(1501);
         List<PlaceHolder<?>> placeHolders = sqlStatement.getInvolvedPlaceHolders();
 
