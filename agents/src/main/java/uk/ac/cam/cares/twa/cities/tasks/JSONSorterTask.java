@@ -1,6 +1,9 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvException;
 import java.io.File;
@@ -62,7 +65,7 @@ public class JSONSorterTask {
   public static void main(String[] args) {
 
     //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\after_tiles_assignment\\";
-    String inputFile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\new_summary_1.csv";
+    String inputFile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\tiles_summary.csv";
     JSONSorterTask jsonSorter = new JSONSorterTask(inputFile);
     File directoryPath = new File(inputFile);
     String[] filelist = directoryPath.list();
@@ -72,8 +75,9 @@ public class JSONSorterTask {
     int numRow = 0;
     long start = System.currentTimeMillis();
 
+    CSVParser csvParser = new CSVParserBuilder().withEscapeChar('\0').build();
     for (String inputfile : jsonSorter.filelist) {
-      try (CSVReader reader = new CSVReader(new FileReader(jsonSorter.inputDir + "/" + inputfile))) {
+      try (CSVReader reader = new CSVReaderBuilder(new FileReader(jsonSorter.inputDir + "/" + inputfile)).withCSVParser(csvParser).build()) {
         String[] header = reader.readNext();
         csvData = reader.readAll();
       } catch (IOException e) {
@@ -85,6 +89,7 @@ public class JSONSorterTask {
       csvList.addAll(csvData);
     }
     long finish = System.currentTimeMillis();
+    System.out.println(numRow + " rows are processed.");
     System.out.println("Total reading time: " + (finish-start));
 
 
@@ -103,6 +108,8 @@ public class JSONSorterTask {
 
     try (CSVWriter writer = new CSVWriter(new FileWriter(
         "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\" + "sorted_tiles_summary.csv"))) {
+      String[] header = {"gmlid", "envelope", "envelopeCentroid", "tiles", "filename"};
+      writer.writeNext(header);
       writer.writeAll(csvList);
 
     } catch (IOException e) {

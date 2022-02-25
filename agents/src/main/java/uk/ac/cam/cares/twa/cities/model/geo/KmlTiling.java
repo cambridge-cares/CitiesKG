@@ -2,8 +2,6 @@ package uk.ac.cam.cares.twa.cities.model.geo;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
@@ -18,26 +16,24 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import org.gdal.ogr.Geometry;
 import org.gdal.ogr.ogr;
-import org.gdal.osr.CoordinateTransformation;
-import org.gdal.osr.SpatialReference;
-import org.gdal.osr.osr;
-import org.json.JSONObject;
 
 public class KmlTiling {
 
   private int nRow;
   private int nCol;
   private String crs;
-  private double extent_Xmin = Double.POSITIVE_INFINITY;
-  private double extent_Xmax = Double.NEGATIVE_INFINITY;
-  private double extent_Ymin = Double.POSITIVE_INFINITY;
-  private double extent_Ymax = Double.NEGATIVE_INFINITY;
+  private double extent_Xmin;
+  private double extent_Xmax;
+  private double extent_Ymin;
+  private double extent_Ymax;
+  private double Textent_Xmin;
+  private double Textent_Xmax;
+  private double Textent_Ymin;
+  private double Textent_Ymax;
   private double initTileSize = 125;
   private double tileLength;  // RowNumber
   private double tileWidth;  // ColNumber
@@ -49,31 +45,38 @@ public class KmlTiling {
 
 
   public KmlTiling(String crs) {
+
     this.crs = crs;
+    extent_Xmin = Double.POSITIVE_INFINITY;
+    extent_Xmax = Double.NEGATIVE_INFINITY;
+    extent_Ymin = Double.POSITIVE_INFINITY;
+    extent_Ymax = Double.NEGATIVE_INFINITY;
+
+    Textent_Xmin = Double.POSITIVE_INFINITY;
+    Textent_Xmax = Double.NEGATIVE_INFINITY;
+    Textent_Ymin = Double.POSITIVE_INFINITY;
+    Textent_Ymax = Double.NEGATIVE_INFINITY;
   }
 
   // Updated Extent: 13.09278683392157 13.758936971880468 52.339762874361156 52.662766032905616
   /*
    * Update the boundary of the extent */
-  public void updateExtent(double[] geomEnvelope) {
+  public void updateExtent(double[] geomEnvelope) {  //[xmin, xmax, ymin, ymax]
 
-    double xmin = geomEnvelope[0];
-    double xmax = geomEnvelope[1];
-    double ymin = geomEnvelope[2];
-    double ymax = geomEnvelope[3];
+    // updateExtent in 4236
+    if (geomEnvelope[0] <= this.extent_Xmin) { this.extent_Xmin = geomEnvelope[0]; }
+    if (geomEnvelope[1] >= this.extent_Xmax) { this.extent_Xmax = geomEnvelope[1]; }
+    if (geomEnvelope[2] <= this.extent_Ymin) { this.extent_Ymin = geomEnvelope[2]; }
+    if (geomEnvelope[3] >= this.extent_Ymax) { this.extent_Ymax = geomEnvelope[3]; }
 
-    if (xmin <= this.extent_Xmin) {
-      this.extent_Xmin = xmin;
-    }
-    if (xmax >= this.extent_Xmax) {
-      this.extent_Xmax = xmax;
-    }
-    if (ymin <= this.extent_Ymin) {
-      this.extent_Ymin = ymin;
-    }
-    if (ymax >= this.extent_Ymax) {
-      this.extent_Ymax = ymax;
-    }
+    // updateExtent in 25833
+    double[] Tenvelope = Transform.reprojectEnvelope(geomEnvelope, 4326, 25833);
+
+    if (Tenvelope[0] <= this.Textent_Xmin) { this.Textent_Xmin = Tenvelope[0]; }
+    if (Tenvelope[1] >= this.Textent_Xmax) { this.Textent_Xmax = Tenvelope[1]; }
+    if (Tenvelope[2] <= this.Textent_Ymin) { this.Textent_Ymin = Tenvelope[2]; }
+    if (Tenvelope[3] >= this.Textent_Ymax) { this.Textent_Ymax = Tenvelope[3]; }
+
   }
 
   // Return the latest status of the Extent
@@ -83,7 +86,7 @@ public class KmlTiling {
 
   /* The input is extentDim with 4326 */
   public int[] getNumRowCol() {
-
+    /*
     // translate the lowerCorner and upperCorner to 25833 for dividing 125
     Geometry lowerCorner = new Geometry(ogr.wkbPoint); // [xmin, ymin]
     lowerCorner.AddPoint(this.extent_Xmin, this.extent_Ymin);
@@ -91,9 +94,9 @@ public class KmlTiling {
     Geometry upperCorner = new Geometry(ogr.wkbPoint); // [xmax, ymax]
     upperCorner.AddPoint(this.extent_Xmax, this.extent_Ymax);
 
-    double[] clowerCorner = reprojectPoint(new double[]{this.extent_Xmin, this.extent_Ymin}, 4326,
+    double[] clowerCorner = Transform.reprojectPoint(new double[]{this.extent_Xmin, this.extent_Ymin}, 4326,
         25833);
-    double[] cupperCorner = reprojectPoint(new double[]{this.extent_Xmax, this.extent_Ymax}, 4326,
+    double[] cupperCorner = Transform.reprojectPoint(new double[]{this.extent_Xmax, this.extent_Ymax}, 4326,
         25833);
 
     transformedExtent = new double[]{clowerCorner[0], cupperCorner[0], clowerCorner[1],
@@ -115,72 +118,20 @@ public class KmlTiling {
     }
 
     return new int[]{nRow, nCol};
+    */
+    this.nRow = (int) (Math.ceil(
+        (this.Textent_Ymax - this.Textent_Ymin) / this.initTileSize));
+    this.nCol = (int) (Math.ceil(
+        (this.Textent_Xmax - this.Textent_Xmin) / this.initTileSize));
+
+    this.tileWidth = (this.Textent_Xmax - this.Textent_Xmin) / this.nCol;
+    this.tileLength = (this.Textent_Ymax - this.Textent_Ymin) / this.nRow;
+
+    return new int[]{nRow, nCol};
+
   }
 
-  public double[] reprojectPoint(double[] centroid, int from_epsg, int to_epsg) {
-    Geometry point = new Geometry(ogr.wkbPoint);
 
-    SpatialReference source = new SpatialReference();
-    source.ImportFromEPSG(from_epsg);
-
-    SpatialReference target = new SpatialReference();
-    target.ImportFromEPSG(to_epsg);
-
-    CoordinateTransformation transformMatrix = osr.CreateCoordinateTransformation(source, target);
-    point.AddPoint(centroid[0], centroid[1]);
-    double[] transformed = transformMatrix.TransformPoint(point.GetX(),
-        point.GetY()); //  transform seems to be for more than a point
-
-    return transformed;
-  }
-
-  public double[] reprojectEnvelope(double[] envelope, int from_epsg, int to_epsg) { //[xmin, xmax, ymin, ymax]
-
-    SpatialReference source = new SpatialReference();
-    source.ImportFromEPSG(from_epsg);
-
-    SpatialReference target = new SpatialReference();
-    target.ImportFromEPSG(to_epsg);
-
-    CoordinateTransformation transformMatrix = osr.CreateCoordinateTransformation(source, target);
-
-    double xmin = envelope[0];
-    double xmax = envelope[1];
-    double ymin = envelope[2];
-    double ymax = envelope[3];
-
-    Geometry ring = new Geometry(ogr.wkbLinearRing);
-    ring.AddPoint(xmin, ymax);
-    ring.AddPoint(xmin, ymin);
-    ring.AddPoint(xmax, ymin);
-    ring.AddPoint(xmax, ymax);
-    ring.AddPoint(xmin, ymax);
-    Geometry polygon = new Geometry(ogr.wkbPolygon);
-    polygon.AddGeometry(ring);
-
-    polygon.Transform(transformMatrix);
-
-    double[][] points = polygon.GetBoundary().GetPoints();
-
-    List<Double> xCoords = new ArrayList<>();
-    List<Double> yCoords = new ArrayList<>();
-    List<Double> zCoords = new ArrayList<>();
-
-    for (double[] coords : points){
-      xCoords.add(coords[0]);
-      yCoords.add(coords[1]);
-      zCoords.add(coords[2]);
-    }
-
-    double new_xmin = Collections.min(xCoords);
-    double new_xmax = Collections.max(xCoords);
-    double new_ymin = Collections.min(yCoords);
-    double new_ymax = Collections.max(yCoords);
-
-    double[] transformed = new double[]{new_xmin, new_xmax, new_ymin, new_ymax};
-
-    return transformed;
-  }
 
   public double[] reproject(String geomStr, int from_epsg, int to_epsg) {
     String[] splitStr = geomStr.split("#");
@@ -193,11 +144,11 @@ public class KmlTiling {
 
     if (geomArr.length == 2) {
       // This is a centroid
-      transformedGeom = reprojectPoint(geomArr, from_epsg, to_epsg);
+      transformedGeom = Transform.reprojectPoint(geomArr, from_epsg, to_epsg);
 
     } else if (geomArr.length == 4) {
       // This is an envelope with [xmin, xmax, ymin, ymax]
-      transformedGeom = reprojectEnvelope(geomArr, from_epsg, to_epsg);
+      transformedGeom = Transform.reprojectEnvelope(geomArr, from_epsg, to_epsg);
     } else {
       // this is a polygon in general
       System.out.println("The input parameter is neither a point or envelop with 4 indicators");
@@ -210,26 +161,25 @@ public class KmlTiling {
   public Integer[] assignTiles(String centroidStr) {
     double[] transformedCentroid = reproject(centroidStr, 4326, 25833);
     Integer col = (int) (Math.floor(
+        (transformedCentroid[0] - this.Textent_Xmin) / this.tileWidth));
+    Integer row = (int) (Math.floor(
+        (transformedCentroid[1] - this.Textent_Ymin) / this.tileLength));
+    if (col < 0 || row < 0) {
+      System.out.println(centroidStr + " is located " + row + ", " + col); }
+    return new Integer[]{row, col};
+    /*
+    double[] transformedCentroid = reproject(centroidStr, 4326, 25833);
+    Integer col = (int) (Math.floor(
         (transformedCentroid[0] - this.transformedExtent[0]) / this.tileWidth));
     Integer row = (int) (Math.floor(
         (transformedCentroid[1] - this.transformedExtent[2]) / this.tileLength));
     if (col < 0 || row < 0) {
       System.out.println(centroidStr + " is located " + row + ", " + col); }
     return new Integer[]{row, col};
+    */
+
   }
 
-
-  public Integer[] assignTiles(String centroidStr, String envelopeStr) {
-    double[] transformedCentroid = reproject(centroidStr, 4326, 25833);
-    double[] transformedEnvelope = reproject(envelopeStr, 4326, 25833);
-    Integer col = (int) (Math.floor(
-        (transformedCentroid[0] - this.transformedExtent[0]) / this.tileLength)) ;
-    Integer row = (int) (Math.floor(
-        (transformedCentroid[1] - this.transformedExtent[2]) / this.tileLength)) ;
-    if (col < 0 || row < 0) {
-      System.out.println(centroidStr + " is located " + row + ", " + col); }
-    return new Integer[]{row, col};
-  }
 
   private <T> String arr2str(T[] arr) {
     String output = "";
@@ -270,7 +220,7 @@ public class KmlTiling {
     String prettyJsonString = gson.toJson(masterjson, masterjson.getClass());
     System.out.println(prettyJsonString);
 
-    String fileName = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\test1_extruded_MasterJSON.json";
+    String fileName = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\test1_extruded_MasterJSON.json";
     try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(fileName))) {
       writer.write(prettyJsonString);
     } catch (Exception ex) {
@@ -309,7 +259,7 @@ public class KmlTiling {
 
     //kmltiling.updateExtent(new double[]{13.188898996667495, 13.34393752497554, 52.46509432020338, 52.549388879408454}); // postgis
     int[] numRowCol = kmltiling.getNumRowCol();
-    //kmltiling.createMasterJson();
+    kmltiling.createMasterJson();
     long start0 = System.currentTimeMillis();
     CSVParser csvParser = new CSVParserBuilder().withEscapeChar('\0').build(); // with this '\0' can read backslash; with '\\' can not read backslash
     for (File inputfile : filelist) {
@@ -331,7 +281,7 @@ public class KmlTiling {
 
       long start1 = System.currentTimeMillis();
       for (int i = 0; i < csvData.size(); ++i) {  // skip the header
-        tilePosition = kmltiling.assignTiles(csvData.get(i)[2], csvData.get(i)[1]);
+        tilePosition = kmltiling.assignTiles(csvData.get(i)[2]);
         String[] outRow = {csvData.get(i)[0], csvData.get(i)[1], csvData.get(i)[2],
             kmltiling.arr2str(tilePosition), csvData.get(i)[3]};  //kmltiling.getFileName(csvData.get(i)[3], "test")
         outputData.add(outRow);
@@ -339,11 +289,11 @@ public class KmlTiling {
       System.out.println("Finished processing " + inputfile);
       long finish1 = System.currentTimeMillis();
       try (CSVWriter writer = new CSVWriter(new FileWriter(
-          kmltiling.outputDir + "new_summary.csv"))) { //inputfile
+          kmltiling.outputDir + "tiles_summary.csv"))) { //inputfile
         writer.writeAll(outputData);
         outputData = new ArrayList<>(); // empty outputData
         finish1 = System.currentTimeMillis();
-
+        System.out.println("The tiles information is stored in " + kmltiling.outputDir + "tiles_summary.csv");
       } catch (IOException e) {
         e.printStackTrace();
       }

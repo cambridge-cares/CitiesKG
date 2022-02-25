@@ -34,7 +34,8 @@ public class KMLSorterTask implements Runnable {
     private String[] csvHeader;
     private HashMap<String, ArrayList<String[]>> csvData;
     private String unsortedDir;
-
+    private List<Feature> allFeatures;
+    private int buildingInTiles = 0;
     @Override
     public void run() {
         long start = System.currentTimeMillis();
@@ -54,11 +55,16 @@ public class KMLSorterTask implements Runnable {
 
         List<StyleSelector> styles = getStylesFromKml(test0);
 
-        rows = 71;  //280
+        rows = 75;  //280
         cols = 84;   // 368
         name = "test";
         createFolders(outDir);
         this.csvData = readCSV2Map(this.summaryCSV);
+
+        // Read the one kml file to allFeatures
+
+        Kml kml = Kml.unmarshal(new File(unsortedDir));
+        allFeatures = ((Document) kml.getFeature()).getFeature();
 
         for (int i = 0; i < rows; i++) {
             for (int k = 0; k < cols; k++) {
@@ -110,6 +116,7 @@ public class KMLSorterTask implements Runnable {
         System.out.println(duration + " ms");
         System.out.println("start: " + start + " ms\nend: " + end + " ms"); // @todo: need to genrate the run journal file
         System.out.println("buildings: " + this.count);
+        System.out.println("Features have written: " + this.buildingInTiles);
         //System.out.println("files sorted: " + this.files);
 
     }
@@ -129,8 +136,10 @@ public class KMLSorterTask implements Runnable {
         }
         String currKey = "";
         ArrayList<String[]> currValue = new ArrayList<>();
+        ArrayList<String> gmlidList = new ArrayList<>();
         for (String[] row : csvData) {
-            System.out.println("Processing " + row[3]);
+            gmlidList.add(row[0]);
+
             if (currKey.isEmpty() && currValue.isEmpty()) {
                 currKey = row[3];
                 currValue.add(row);
@@ -145,8 +154,23 @@ public class KMLSorterTask implements Runnable {
                 // update the currKey and currValue
                 currKey = row[3];
                 currValue.add(row);
+            }else{
+                System.out.println("Not Processing " + row[0]);
             }
         }
+        // need to check if the last row is added
+        if (!CSVRows.containsKey(currKey)) {
+            CSVRows.put(currKey, currValue);
+        }
+
+        int csvrowSize = 0;
+        for ( String key : CSVRows.keySet() ) {
+            csvrowSize += CSVRows.get(key).size();
+        }
+        System.out.println("gmlidList has the size of " + gmlidList.size());
+        System.out.println("gmlidList is unique : " + isUnique(gmlidList));
+        System.out.println("CSVRows has the size of " + csvrowSize);
+
         return CSVRows;
     }
 
@@ -156,7 +180,8 @@ public class KMLSorterTask implements Runnable {
         // loop through for each kml file that has buildings in this tile
         for (String filepath : map.keySet()) {
             // get all the buildings in the kml file
-            List<Feature> allFeaturesInKml = getFeaturesFromKml(new File(filepath));
+            //List<Feature> allFeaturesInKml = getFeaturesFromKml(new File(filepath));
+            List<Feature> allFeaturesInKml = allFeatures;
             // loop through all the buildings in the kml file
             for (Feature feature : allFeaturesInKml) {
                 // if the building belongs to this tile, get feature info
@@ -180,6 +205,7 @@ public class KMLSorterTask implements Runnable {
     private HashMap<String, ArrayList<String>> getBuildingsInTile(int rowNum, int colNum) {
         // key is the file location, value is an array of gmlIds in this file location that belongs to this tile
         HashMap<String, ArrayList<String>> buildings = new HashMap<>();   // building hashmap contains filename (key) and gmlids (value)
+
         if (this.csvData.containsKey(rowNum + "#" + colNum)) {
             // add buildings
             for (String[] rowInfo : csvData.get(rowNum + "#" + colNum)){
@@ -292,6 +318,7 @@ public class KMLSorterTask implements Runnable {
 
     // write new kml files
     private void writeKml(File file, List<Feature> list, List<StyleSelector> styles, String name) {
+        this.buildingInTiles += list.size();
         Kml kml = new Kml();
         kml.createAndSetDocument().withName(name).withOpen(false).withFeature(list).withStyleSelector(styles);
         try {
@@ -299,6 +326,18 @@ public class KMLSorterTask implements Runnable {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+    }
+    private boolean isUnique (List<String> gmlidList) {
+        Set<String> gmlidSet = new HashSet<String>(gmlidList);
+        boolean unique = false;
+        if (gmlidSet.size() < gmlidList.size()) {
+            unique = false;
+        } else if (gmlidSet.size() == gmlidList.size()) {
+            unique = true;
+        }
+        System.out.println("gmlidSet has size : " + gmlidSet.size());
+        System.out.println("gmlidList has size : " + gmlidList.size());
+        return unique;
     }
 
     public static void main(String[] args){
