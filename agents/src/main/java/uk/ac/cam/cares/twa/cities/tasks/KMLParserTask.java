@@ -28,37 +28,40 @@ public class KMLParserTask implements Runnable{
   //
 
   private String[] filelist;
-  private String currFile;
+  private File currFile;
   private String outCsvFile = "summary";
-  private String filetype = ".csv";
+  private String outFileExt = ".csv";
   private String outputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\";
-  private String inputPath;
+  private String inputDir;
   public List<String[]> dataContent = new ArrayList<>();
   private List<String> gmlidList = new ArrayList<>();
   private KmlTiling kmltiling = new KmlTiling("4326");
 
-  public KMLParserTask(String inputPath){
-    this.inputPath = inputPath;
-    File path = new File(inputPath);
+  public KMLParserTask(String path){
 
-    if (path.isFile()) {
+    File inputPath = new File(path);
+
+    if (inputPath.isFile()) {
       this.filelist = new String[1];
-      this.filelist[0] = inputPath;
+      this.inputDir = inputPath.getParent();
+      this.filelist[0] = inputPath.getName();
     }
-    else if (path.isDirectory()) {
-      this.filelist = path.list();
+    else if (inputPath.isDirectory()) {
+      this.inputDir = inputPath.getPath();
+      this.filelist = inputPath.list();
+    } else {
+      System.out.println("The inputpath does not exists!");
     }
   }
 
   @Override
   public void run() {
     for (String file : this.filelist){
-      this.currFile = this.inputPath + file;
+      this.currFile = new File(this.inputDir, file);
       System.out.println("Reading the file: " + this.currFile);
       KMLRoot kmlRoot = null;
       try {
-        File myObj = new File(this.currFile);
-        kmlRoot = KMLRoot.create(myObj);
+        kmlRoot = KMLRoot.create(this.currFile);
         kmlRoot.parse();
       } catch (IOException | XMLStreamException e) {
         e.printStackTrace();
@@ -102,7 +105,7 @@ public class KMLParserTask implements Runnable{
         double[] envelope = EnvelopeCentroid.getEnvelope(geom);
         double[] centroid = EnvelopeCentroid.getCentroid(envelope);
         this.gmlidList.add(buildingId);
-        String[] row = {buildingId, convert2Str(envelope), convert2Str(centroid), this.currFile}; //{"gmlid", "envelope", "envelopeCentroid", "filename"};
+        String[] row = {buildingId, convert2Str(envelope), convert2Str(centroid), this.currFile.getPath()}; //{"gmlid", "envelope", "envelopeCentroid", "filename"};
         this.dataContent.add(row);
         kmltiling.updateExtent(envelope);
         //System.out.println("Envelop: "  + envelope[0] + " " + envelope[1] + " " + envelope[2] + " " + envelope[3]);
@@ -129,12 +132,13 @@ public class KMLParserTask implements Runnable{
 
       //String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\CitiesKG\\3dcitydb-web-map-1.9.0\\3dwebclient\\test_tiles2\\Tiles\\0\\1\\test_Tile_0_1_extruded.kml";
 
-      String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\test_0_extruded.kml";
+      String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\charlottenberg_extruded_blaze.kml";
       String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
       File directoryPath = new File(inputDir);
       String[] filelist = directoryPath.list();
-      KMLParserTask parserTask = new KMLParserTask(inputDir);
+      KMLParserTask parserTask = new KMLParserTask(inputfile);
       parserTask.run();
+
 
 /*
       String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\summary.csv";
@@ -193,7 +197,7 @@ public class KMLParserTask implements Runnable{
       csvContent.add(header);
       csvContent.addAll(dataContent);
 
-      try (CSVWriter writer = new CSVWriter(new FileWriter(this.outputDir + this.outCsvFile))) {
+      try (CSVWriter writer = new CSVWriter(new FileWriter(this.outputDir + this.outCsvFile + this.outFileExt))) {
         writer.writeAll(csvContent);
       } catch (IOException e) {
         e.printStackTrace();

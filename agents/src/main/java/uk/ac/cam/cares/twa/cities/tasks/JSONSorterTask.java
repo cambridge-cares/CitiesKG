@@ -18,6 +18,30 @@ import uk.ac.cam.cares.twa.cities.model.geo.KmlTiling;
 
 public class JSONSorterTask {
 
+  private String[] filelist;
+  private File currFile;
+  private String outCsvFile = "sorted_summary";
+  private String outFileExt = ".csv";
+  private String outputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\";
+  private String inputDir;
+
+  public JSONSorterTask(String path){
+
+    File inputPath = new File(path);
+
+    if (inputPath.isFile()) {
+      this.filelist = new String[1];
+      this.inputDir = inputPath.getParent();
+      this.filelist[0] = inputPath.getName();
+    }
+    else if (inputPath.isDirectory()) {
+      this.inputDir = inputPath.getPath();
+      this.filelist = inputPath.list();
+    } else {
+      System.out.println("The inputpath does not exists!");
+    }
+  }
+
   public static HashMap convertList2Map(List<String[]> inputList){
     HashMap<String, String[]> csvMap = new HashMap<String, String[]>();
 
@@ -37,8 +61,10 @@ public class JSONSorterTask {
 
   public static void main(String[] args) {
 
-    String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\after_tiles_assignment\\";
-    File directoryPath = new File(inputDir);
+    //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\after_tiles_assignment\\";
+    String inputFile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\new_summary_1.csv";
+    JSONSorterTask jsonSorter = new JSONSorterTask(inputFile);
+    File directoryPath = new File(inputFile);
     String[] filelist = directoryPath.list();
 
     List<String[]> csvData = new ArrayList<>();
@@ -46,8 +72,8 @@ public class JSONSorterTask {
     int numRow = 0;
     long start = System.currentTimeMillis();
 
-    for (String inputfile : filelist) {
-      try (CSVReader reader = new CSVReader(new FileReader(inputDir + inputfile))) {
+    for (String inputfile : jsonSorter.filelist) {
+      try (CSVReader reader = new CSVReader(new FileReader(jsonSorter.inputDir + "/" + inputfile))) {
         String[] header = reader.readNext();
         csvData = reader.readAll();
       } catch (IOException e) {
@@ -76,12 +102,12 @@ public class JSONSorterTask {
     System.out.println(csvList.get(3));
 
     try (CSVWriter writer = new CSVWriter(new FileWriter(
-        "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\" + "sorted_tiles_summary.csv"))) {
+        "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\" + "sorted_tiles_summary.csv"))) {
       writer.writeAll(csvList);
 
     } catch (IOException e) {
       e.printStackTrace();
     }
-    
+
   }
 }

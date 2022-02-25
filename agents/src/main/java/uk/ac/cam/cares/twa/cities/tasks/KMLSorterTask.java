@@ -1,5 +1,8 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvException;
+import com.opencsv.exceptions.CsvValidationException;
 import de.micromata.opengis.kml.v_2_2_0.*;
 import it.unimi.dsi.fastutil.Hash;
 import org.json.JSONArray;
@@ -28,34 +31,45 @@ public class KMLSorterTask implements Runnable {
     private int files = 0; // count the number of kml files sorted
     //private HashMap<String, String[]> summaryCSV;
     private File summaryCSV;
+    private String[] csvHeader;
+    private HashMap<String, ArrayList<String[]>> csvData;
+    private String unsortedDir;
+
     @Override
     public void run() {
         long start = System.currentTimeMillis();
         // directory of unsorted kml files
-        File directory = new File("C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\");
-        this.dirList = directory.listFiles();
+        //unsortedDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
+        unsortedDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\charlottenberg_extruded_blaze.kml";
+        this.dirList = new File(unsortedDir).listFiles();
 
         // file location of one unsorted kml file
         //TODO: replace by getting one file from dirList
         File test0 = new File("C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\test_0_extruded.kml");
 
         // file location of where the tiles should be created
-        String outDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\sorted_whole_berlin\\";
+        String outDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\sorted_charlottenberg\\";
 
-        this.summaryCSV = new File("C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\sorted_tiles_summary.csv");
+        this.summaryCSV = new File("C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\sorted_tiles_summary.csv");
 
         List<StyleSelector> styles = getStylesFromKml(test0);
 
-        rows = 280;
-        cols = 368;
+        rows = 71;  //280
+        cols = 84;   // 368
         name = "test";
         createFolders(outDir);
+        this.csvData = readCSV2Map(this.summaryCSV);
+
         for (int i = 0; i < rows; i++) {
             for (int k = 0; k < cols; k++) {
-                HashMap<String, ArrayList<String>> map = getBuildingsInTile(i, k);
-                List<Feature> features = getFeaturesInTile(map);
+
                 String name = this.name + "_Tile_" + i + "_" + k + "_extruded";
                 File out = new File(outDir + "\\Tiles\\" + i + "\\" + k + "\\" + name + ".kml");
+                if (out.exists()){
+                    continue;
+                }
+                HashMap<String, ArrayList<String>> map = getBuildingsInTile(i, k);
+                List<Feature> features = getFeaturesInTile(map);
                 writeKml(out, features, styles, name);
                 System.out.println("finished writing " + out.getAbsolutePath());
             }
@@ -94,10 +108,46 @@ public class KMLSorterTask implements Runnable {
         long end = System.currentTimeMillis();
         long duration = (end - start);
         System.out.println(duration + " ms");
-        System.out.println("start: " + start + " ms\nend: " + end + " ms");
+        System.out.println("start: " + start + " ms\nend: " + end + " ms"); // @todo: need to genrate the run journal file
         System.out.println("buildings: " + this.count);
         //System.out.println("files sorted: " + this.files);
 
+    }
+
+    /*Could not use tiles as Hashmap key, as there is repeatness.
+    * if used, add all String[] as list */
+    private HashMap<String, ArrayList<String[]>> readCSV2Map(File csvfile) {
+        HashMap<String, ArrayList<String[]>> CSVRows = new HashMap<>();
+        List<String[]> csvData = new ArrayList<>();
+        try (CSVReader reader = new CSVReader(new FileReader(csvfile))) {
+            csvHeader = reader.readNext();
+            csvData = reader.readAll();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (CsvException e) {
+            e.printStackTrace();
+        }
+        String currKey = "";
+        ArrayList<String[]> currValue = new ArrayList<>();
+        for (String[] row : csvData) {
+            System.out.println("Processing " + row[3]);
+            if (currKey.isEmpty() && currValue.isEmpty()) {
+                currKey = row[3];
+                currValue.add(row);
+            }
+            else if (currKey.equals(row[3])) {
+                currValue.add(row);
+            }else if (!currKey.equals(row[3]) && !currValue.isEmpty()){
+                // clean the currKey and currValues by putting them into map
+                CSVRows.put(currKey, currValue);
+                currKey = "";
+                currValue = new ArrayList<>();
+                // update the currKey and currValue
+                currKey = row[3];
+                currValue.add(row);
+            }
+        }
+        return CSVRows;
     }
 
     // return list of features belonging to the tile, input tile map, output list of features
@@ -129,34 +179,24 @@ public class KMLSorterTask implements Runnable {
     // read csv file, input tile number, output hashmap of file locations and array of gmlIds per file location
     private HashMap<String, ArrayList<String>> getBuildingsInTile(int rowNum, int colNum) {
         // key is the file location, value is an array of gmlIds in this file location that belongs to this tile
-        HashMap<String, ArrayList<String>> buildings = new HashMap<>();
-        // TODO remove this hardcoding
-        for (int i = 0; i < this.dirList.length; i++) {
-            try (Scanner scanner = new Scanner(new File(this.dirList[i].getAbsolutePath()))) {
-                // read the csv line by line
-                while (scanner.hasNext()) {
-                    String[] rowInfo = (scanner.next().replace("\"", "")).split(",");
-                    // if the building tile number is the same as the current tile, add it to map
-                    if (rowInfo[3].equals(rowNum + "#" + colNum)) {
-                        String filepath = "C:\\Users\\HTAI01\\Documents" +
-                                "\\KMLpostprocessing\\src\\main" +
-                                "\\resources\\exported_data_whole" +
-                                "\\" + rowInfo[4].substring(58); // TODO change this hardcoding and substring
-                        if (buildings.containsKey(filepath)) {
-                            // if this file location has already been added to map, add the gmlId to existing array
-                            buildings.get(filepath).add(rowInfo[0]);
-                            this.count++;
-                        } else {
-                            // if the file location is not in the map, add it to map
-                            ArrayList<String> mapValue = new ArrayList<>();
-                            mapValue.add(rowInfo[0]);
-                            buildings.put(filepath, mapValue);
-                            this.count++;
-                        }
-                    }
+        HashMap<String, ArrayList<String>> buildings = new HashMap<>();   // building hashmap contains filename (key) and gmlids (value)
+        if (this.csvData.containsKey(rowNum + "#" + colNum)) {
+            // add buildings
+            for (String[] rowInfo : csvData.get(rowNum + "#" + colNum)){
+                String filename = "";//rowInfo[4];
+                String filepath = unsortedDir + filename;
+                if (buildings.containsKey(filepath)){
+                    // if this file location has already been added to map, add the gmlId to existing array
+                    buildings.get(filepath).add(rowInfo[0]);
+                    this.count++;
+                }else{
+                    // if the file location is not in the map, add it to map
+                    ArrayList<String> mapValue = new ArrayList<>();
+                    mapValue.add(rowInfo[0]);
+                    buildings.put(filepath, mapValue);
+                    this.count++;
                 }
-            } catch (FileNotFoundException e) {
-                throw new JPSRuntimeException("CSV file does not exist");
+
             }
         }
         return buildings;
@@ -261,10 +301,10 @@ public class KMLSorterTask implements Runnable {
         }
     }
 
-    public static void main(String[] args) {
-        KMLSorterTask kmlSorter = new KMLSorterTask();
-        kmlSorter.run();
+    public static void main(String[] args){
+    KMLSorterTask kmlSorter=new KMLSorterTask();
+    kmlSorter.run();
 
     }
-}
+    }
 
