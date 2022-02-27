@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import org.gdal.ogr.Geometry;
-import org.gdal.ogr.ogr;
 
 public class KmlTiling {
 
@@ -37,6 +36,7 @@ public class KmlTiling {
   private double initTileSize = 125;
   private double tileLength;  // RowNumber
   private double tileWidth;  // ColNumber
+  private String MasterJson = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\test_extruded_MasterJSON.json";
 
   private double[] transformedExtent = new double[4]; // [Xmin, Xmax, Ymin, Ymax]  // 25833
   public String outCsvFile = "new_summary";
@@ -220,8 +220,7 @@ public class KmlTiling {
     String prettyJsonString = gson.toJson(masterjson, masterjson.getClass());
     System.out.println(prettyJsonString);
 
-    String fileName = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\test1_extruded_MasterJSON.json";
-    try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(fileName))) {
+    try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(MasterJson))) {
       writer.write(prettyJsonString);
     } catch (Exception ex) {
       System.err.println("Couldn't write masterjson\n" + ex.getMessage());
@@ -239,7 +238,8 @@ public class KmlTiling {
 
     //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\summary_chunk5000\\";
     String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\summary.csv";
-    
+
+
     File directoryPath = new File(inputDir);
     File[] filelist = new File[0];
     

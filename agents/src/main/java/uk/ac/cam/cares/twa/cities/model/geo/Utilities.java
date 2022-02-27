@@ -1,4 +1,4 @@
-package uk.ac.cam.cares.twa.cities.tasks;
+package uk.ac.cam.cares.twa.cities.model.geo;
 
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
@@ -15,34 +15,57 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import org.apache.jena.base.Sys;
-import org.openrdf.query.algebra.Str;
-import uk.ac.cam.cares.twa.cities.model.geo.KmlTiling;
 
-public class JSONSorterTask {
+public class Utilities {
 
-  private String[] filelist;
+  private String[] filesList;
   private File currFile;
   private String outCsvFile = "sorted_summary";
   private String outFileExt = ".csv";
   private String outputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\";
   private String inputDir;
 
-  public JSONSorterTask(String path){
+  public Utilities(String path) {
 
+    this.filesList = getInputFiles(path);
+    this.inputDir = getInputDir(path);
+  }
+
+  public static String[] getInputFiles(String path){
     File inputPath = new File(path);
+    String[] filesList = null;
 
     if (inputPath.isFile()) {
-      this.filelist = new String[1];
-      this.inputDir = inputPath.getParent();
-      this.filelist[0] = inputPath.getName();
+      filesList = new String[1];
+      filesList[0] = inputPath.getAbsolutePath();
     }
     else if (inputPath.isDirectory()) {
-      this.inputDir = inputPath.getPath();
-      this.filelist = inputPath.list();
+      File[] files = inputPath.listFiles();
+      filesList = new String[inputPath.list().length];
+
+      for (int i = 0; i < inputPath.list().length; ++i){
+          filesList[i] = files[i].getAbsolutePath();
+      }
+
     } else {
-      System.out.println("The inputpath does not exists!");
+      System.out.println("Utilities.getInputFiles: The input does not exists!");
     }
+    return filesList;
+  }
+
+  public static String getInputDir(String path){
+    File inputPath = new File(path);
+    String inputDir = null;
+
+    if (inputPath.isFile()) {
+      inputDir = inputPath.getParent();
+    }
+    else if (inputPath.isDirectory()) {
+      inputDir = inputPath.getPath();
+    } else {
+      System.out.println("Utilities.getInputDir: The input does not exists!");
+    }
+    return inputDir;
   }
 
   public static HashMap convertList2Map(List<String[]> inputList){
@@ -53,6 +76,7 @@ public class JSONSorterTask {
     }
     return csvMap;
   }
+
   public static int[] str2int(String inputstr){
     int[] output = new int[2];
     String[] splitStr = inputstr.split("#");
@@ -61,12 +85,11 @@ public class JSONSorterTask {
     return output;
   }
 
-
   public static void main(String[] args) {
 
     //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\after_tiles_assignment\\";
-    String inputFile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\tiles_summary.csv";
-    JSONSorterTask jsonSorter = new JSONSorterTask(inputFile);
+    String inputFile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder_1\\tiles_summary.csv";
+    Utilities jsonSorter = new Utilities(inputFile);
     File directoryPath = new File(inputFile);
     String[] filelist = directoryPath.list();
 
@@ -76,7 +99,7 @@ public class JSONSorterTask {
     long start = System.currentTimeMillis();
 
     CSVParser csvParser = new CSVParserBuilder().withEscapeChar('\0').build();
-    for (String inputfile : jsonSorter.filelist) {
+    for (String inputfile : jsonSorter.filesList) {
       try (CSVReader reader = new CSVReaderBuilder(new FileReader(jsonSorter.inputDir + "/" + inputfile)).withCSVParser(csvParser).build()) {
         String[] header = reader.readNext();
         csvData = reader.readAll();
