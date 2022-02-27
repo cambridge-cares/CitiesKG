@@ -2,16 +2,11 @@ package uk.ac.cam.cares.twa.cities.tasks;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
-import com.opencsv.exceptions.CsvValidationException;
 import de.micromata.opengis.kml.v_2_2_0.*;
-import it.unimi.dsi.fastutil.Hash;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-
-import javax.print.Doc;
 import java.io.*;
-import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.*;
 
@@ -30,7 +25,7 @@ public class KMLSorterTask implements Runnable {
     private int count = 0; // count the number of buildings
     private int files = 0; // count the number of kml files sorted
     //private HashMap<String, String[]> summaryCSV;
-    private File summaryCSV;
+    private String summaryCSV;
     private String[] csvHeader;
     private HashMap<String, ArrayList<String[]>> csvData;
     private String unsortedDir;
@@ -51,7 +46,7 @@ public class KMLSorterTask implements Runnable {
         // file location of where the tiles should be created
         String outDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\sorted_charlottenberg\\";
 
-        this.summaryCSV = new File("C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\sorted_tiles_summary.csv");
+        this.summaryCSV = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\sorted_tiles_summary.csv";
 
         List<StyleSelector> styles = getStylesFromKml(test0);
 
@@ -80,11 +75,6 @@ public class KMLSorterTask implements Runnable {
                 System.out.println("finished writing " + out.getAbsolutePath());
             }
         }
-
-
-
-
-
 
 
 
@@ -123,7 +113,7 @@ public class KMLSorterTask implements Runnable {
 
     /*Could not use tiles as Hashmap key, as there is repeatness.
     * if used, add all String[] as list */
-    private HashMap<String, ArrayList<String[]>> readCSV2Map(File csvfile) {
+    private HashMap<String, ArrayList<String[]>> readCSV2Map(String csvfile) {
         HashMap<String, ArrayList<String[]>> CSVRows = new HashMap<>();
         List<String[]> csvData = new ArrayList<>();
         try (CSVReader reader = new CSVReader(new FileReader(csvfile))) {

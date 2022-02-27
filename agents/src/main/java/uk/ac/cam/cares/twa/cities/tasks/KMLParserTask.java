@@ -1,14 +1,9 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
-
-import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
-import com.opencsv.exceptions.CsvException;
 import gov.nasa.worldwind.geom.Position.PositionList;
 import gov.nasa.worldwind.ogc.kml.*;
 import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,47 +12,33 @@ import java.util.List;
 import java.util.Set;
 import javax.xml.stream.XMLStreamException;
 import uk.ac.cam.cares.twa.cities.model.geo.EnvelopeCentroid;
-import uk.ac.cam.cares.twa.cities.model.geo.KmlTiling;
+import uk.ac.cam.cares.twa.cities.model.geo.Utilities;
 
 // the output of running this class should be the generation of the summary file in csv (gmlid, envelope[xmin, xmax, ymin, ymax], envelopeCentroid, corresponding file)
 public class KMLParserTask implements Runnable{
 
-  // filename
-  // Some essential section of KML for the creation
-  // <Placemark> --> id
-  //
-
   private String[] filelist;
   private File currFile;
-  private String outCsvFile = "summary";
-  private String outFileExt = ".csv";
-  private String outputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\";
+  private final String outCsvFile = "summary_";
+  private final String outFileExt = ".csv";
+  private final String outputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\";
   private String inputDir;
   public List<String[]> dataContent = new ArrayList<>();
   private List<String> gmlidList = new ArrayList<>();
-  private KmlTiling kmltiling = new KmlTiling("4326");
+  private KMLTilingTask kmltiling = new KMLTilingTask("4326", "25833");
 
   public KMLParserTask(String path){
 
-    File inputPath = new File(path);
+    this.filelist = Utilities.getInputFiles(path);
+    this.inputDir = Utilities.getInputDir(path);
 
-    if (inputPath.isFile()) {
-      this.filelist = new String[1];
-      this.inputDir = inputPath.getParent();
-      this.filelist[0] = inputPath.getName();
-    }
-    else if (inputPath.isDirectory()) {
-      this.inputDir = inputPath.getPath();
-      this.filelist = inputPath.list();
-    } else {
-      System.out.println("The inputpath does not exists!");
-    }
   }
 
   @Override
   public void run() {
+    long start = System.currentTimeMillis();
     for (String file : this.filelist){
-      this.currFile = new File(this.inputDir, file);
+      this.currFile = new File(file);
       System.out.println("Reading the file: " + this.currFile);
       KMLRoot kmlRoot = null;
       try {
@@ -68,17 +49,24 @@ public class KMLParserTask implements Runnable{
       }
       this.getPlacemarks(kmlRoot.getFeature());
     }
+    long end1 = System.currentTimeMillis();
 
     if (this.dataContent.size() != 0) {
+      String outputFile = this.createCSVFile(this.dataContent);
+
       System.out.println("Checking if the gmlidList is unique: " + isUnique(this.gmlidList));
-      System.out.println("Saving the file in : " + this.outputDir + this.outCsvFile);
-      this.createCSVFile(this.dataContent);
+      System.out.println("Saving the file in : " + outputFile);
       System.out.println("Updated Extent: " + kmltiling.getExtent()[0] + " " + kmltiling.getExtent()[1] + " " + kmltiling.getExtent()[2] + " " + kmltiling.getExtent()[3]);
     }
+
+    long end2 = System.currentTimeMillis();
+    System.out.println("Reading " + this.filelist.length + " files takes " + (end1 - start) + " ms");
+    System.out.println("The KMLParserTask took " + (end2 - start) + " ms");
   }
+
+
   public void getPlacemarks(KMLAbstractFeature feature)
   {
-
     if (feature instanceof KMLAbstractContainer)
     {
       KMLAbstractContainer container = (KMLAbstractContainer) feature;
@@ -90,7 +78,7 @@ public class KMLParserTask implements Runnable{
     else if (feature instanceof KMLPlacemark)
     {
       KMLAbstractGeometry geom = ((KMLPlacemark) feature).getGeometry();
-      String buildingId = ((KMLPlacemark) feature).getName();
+      String buildingId = feature.getName();
       if (geom instanceof KMLPoint)
       {
         System.out.println("Point placemark at: " + ((KMLPoint) geom).getCoordinates());
@@ -98,26 +86,21 @@ public class KMLParserTask implements Runnable{
       else if (geom instanceof KMLMultiGeometry) // most common for buildings
       {
         KMLMultiGeometry multiGeometry = ((KMLMultiGeometry) geom);
-        ArrayList geometries = (ArrayList) multiGeometry.getGeometries();
         KMLPolygon polygon = (KMLPolygon) multiGeometry.getGeometries().toArray()[0];
-        ArrayList positionL = (ArrayList) polygon.getOuterBoundary().getCoordinates().list;
-        //System.out.println("MulitiGeometry placemark at: " + positionL);
         double[] envelope = EnvelopeCentroid.getEnvelope(geom);
         double[] centroid = EnvelopeCentroid.getCentroid(envelope);
         this.gmlidList.add(buildingId);
-        String[] row = {buildingId, convert2Str(envelope), convert2Str(centroid), this.currFile.getPath()}; //{"gmlid", "envelope", "envelopeCentroid", "filename"};
+        // {"gmlid", "envelope", "envelopeCentroid", "filename"};
+        String[] row = {buildingId, arr2str(envelope), arr2str(centroid), this.currFile.getName()};
         this.dataContent.add(row);
         kmltiling.updateExtent(envelope);
         //System.out.println("Envelop: "  + envelope[0] + " " + envelope[1] + " " + envelope[2] + " " + envelope[3]);
+        //ArrayList geometries = (ArrayList) multiGeometry.getGeometries();
+        //ArrayList positionL = (ArrayList) polygon.getOuterBoundary().getCoordinates().list;
+        //System.out.println("MulitiGeometry placemark at: " + positionL);
       }
-      else if (geom instanceof KMLPolygon)
-      {
-
-      }
-      else if (geom instanceof KMLLinearRing)
-      {
-        // Handle line, polygon, etc placemarks
-      }
+      else if (geom instanceof KMLPolygon) {}
+      else if (geom instanceof KMLLinearRing) {} // Handle line, polygon, etc placemarks
       else if (geom instanceof KMLLineString)
       {
         // Handle LineString
@@ -128,16 +111,56 @@ public class KMLParserTask implements Runnable{
     }
   }
 
+  private String arr2str (double[] arr){
+    String output = "";
+    String sep = "#";
+
+    for (int j = 0; j < arr.length; j++) {
+      output += String.valueOf(arr[j]);
+      if (j != arr.length -1) {
+        output += sep;
+      }
+    }
+
+    return output;
+  }
+
+  private String createCSVFile(List<String[]> dataContent) {
+    String[] header = {"gmlid", "envelope", "envelopeCentroid", "filename"};
+
+    List<String[]> csvContent = new ArrayList<>();
+    csvContent.add(header);
+    csvContent.addAll(dataContent);
+    String outputPath = this.outputDir + this.outCsvFile + dataContent.size() + this.outFileExt;
+    try (CSVWriter writer = new CSVWriter(new FileWriter(outputPath))) {
+      writer.writeAll(csvContent);
+      System.out.println("The summary has " + dataContent.size() + " rows.");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return outputPath;
+  }
+
+
+  private boolean isUnique (List<String> itemList) {
+    Set<String> itemSet = new HashSet<>(itemList);
+    boolean unique = false;
+    if (itemSet.size() < itemList.size()) {
+      unique = false;
+    } else if (itemSet.size() == itemList.size()) {
+      unique = true;
+    }
+    return unique;
+  }
+
     public static void main(String[] args) {
 
-      //String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\CitiesKG\\3dcitydb-web-map-1.9.0\\3dwebclient\\test_tiles2\\Tiles\\0\\1\\test_Tile_0_1_extruded.kml";
-
-      String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\charlottenberg_extruded_blaze.kml";
+      String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder_1\\charlottenberg_extruded_blaze.kml";
       String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
-      File directoryPath = new File(inputDir);
-      String[] filelist = directoryPath.list();
-      KMLParserTask parserTask = new KMLParserTask(inputfile);
+
+      KMLParserTask parserTask = new KMLParserTask(inputDir);
       parserTask.run();
+
 
 
 /*
@@ -174,46 +197,6 @@ public class KMLParserTask implements Runnable{
       }
 
  */
-    }
-
-    private String convert2Str (double[] arr){
-      String output = "";
-      String sep = "#";
-
-      for (int j = 0; j < arr.length; j++) {
-        output += String.valueOf(arr[j]);
-        if (j != arr.length -1) {
-          output += sep;
-        }
-      }
-
-      return output;
-    }
-
-    private void createCSVFile(List<String[]> dataContent) {
-      String[] header = {"gmlid", "envelope", "envelopeCentroid", "filename"};
-
-      List<String[]> csvContent = new ArrayList<>();
-      csvContent.add(header);
-      csvContent.addAll(dataContent);
-
-      try (CSVWriter writer = new CSVWriter(new FileWriter(this.outputDir + this.outCsvFile + this.outFileExt))) {
-        writer.writeAll(csvContent);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
-
-
-    private boolean isUnique (List<String> gmlidList) {
-      Set<String> gmlidSet = new HashSet<String>(gmlidList);
-      boolean unique = false;
-      if (gmlidSet.size() < gmlidList.size()) {
-        unique = false;
-      } else if (gmlidSet.size() == gmlidList.size()) {
-        unique = true;
-      }
-      return unique;
     }
 
 }

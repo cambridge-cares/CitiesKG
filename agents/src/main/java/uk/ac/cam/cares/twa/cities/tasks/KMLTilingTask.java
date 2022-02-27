@@ -1,4 +1,4 @@
-package uk.ac.cam.cares.twa.cities.model.geo;
+package uk.ac.cam.cares.twa.cities.tasks;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -9,22 +9,26 @@ import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvException;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import org.gdal.ogr.Geometry;
+import uk.ac.cam.cares.twa.cities.model.geo.Transform;
+import uk.ac.cam.cares.twa.cities.model.geo.Utilities;
 
-public class KmlTiling {
+public class KMLTilingTask implements Runnable{
 
   private int nRow;
   private int nCol;
-  private String crs;
+  private String kmlSRID;
+  private String transformSRID;
   private double extent_Xmin;
   private double extent_Xmax;
   private double extent_Ymin;
@@ -33,20 +37,22 @@ public class KmlTiling {
   private double Textent_Xmax;
   private double Textent_Ymin;
   private double Textent_Ymax;
-  private double initTileSize = 125;
+  private double initTileSize = 250;  //125
   private double tileLength;  // RowNumber
   private double tileWidth;  // ColNumber
-  private String MasterJson = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\test_extruded_MasterJSON.json";
+  private String MasterJson = "test_extruded_MasterJSON.json";
 
   private double[] transformedExtent = new double[4]; // [Xmin, Xmax, Ymin, Ymax]  // 25833
-  public String outCsvFile = "new_summary";
-  public String typecsv = ".csv";
-  public String outputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\";
+  private String outCsvFile = "new_summary";
+  private String typecsv = ".csv";
+  private String outputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\";
+  public String[] filesList;
+  private String[] CSVHeader;
 
+  public KMLTilingTask(String kmlCRS, String computeCRS) {
 
-  public KmlTiling(String crs) {
-
-    this.crs = crs;
+    this.kmlSRID = kmlCRS;
+    this.transformSRID = computeCRS;
     extent_Xmin = Double.POSITIVE_INFINITY;
     extent_Xmax = Double.NEGATIVE_INFINITY;
     extent_Ymin = Double.POSITIVE_INFINITY;
@@ -56,6 +62,62 @@ public class KmlTiling {
     Textent_Xmax = Double.NEGATIVE_INFINITY;
     Textent_Ymin = Double.POSITIVE_INFINITY;
     Textent_Ymax = Double.NEGATIVE_INFINITY;
+  }
+
+  @Override
+  public void run() {
+
+    long start1 = System.currentTimeMillis();
+    List<String[]> csvData = new ArrayList<>();
+    CSVParser csvParser = new CSVParserBuilder().withEscapeChar('\0').build(); // with this '\0' can read backslash; with '\\' can not read backslash
+
+    for (String inputfile : filesList) {
+      try (CSVReader reader = new CSVReaderBuilder(new FileReader(inputfile)).withCSVParser(csvParser).build()) {
+        CSVHeader = reader.readNext();
+        csvData = reader.readAll();
+      } catch (IOException e) {
+        e.printStackTrace();
+      } catch (CsvException e) {
+        e.printStackTrace();
+      }
+
+      Integer[] tilePosition;
+
+      List<String[]> outCSVData = new ArrayList<>();
+      String[] header = {"gmlid", "envelope", "envelopeCentroid", "tiles", "filename"};
+
+      for (String[] inputRow : csvData) {  // skip the header
+        tilePosition = assignTiles(inputRow[2]);
+        String[] outRow = {inputRow[0], inputRow[1], inputRow[2],
+            arr2str(tilePosition), inputRow[3]};  //kmltiling.getFileName(csvData.get(i)[3], "test")
+        outCSVData.add(outRow);
+      }
+      long finish1 = System.currentTimeMillis();
+      System.out.println("Reading the files took " + (finish1 - start1) + " ms");
+      Collections.sort(outCSVData, new Comparator<String[]>()
+          {
+            public int compare(String[] o1, String[] o2)
+            {
+              //compare two object and return an integer
+              return o1[3].compareTo(o2[3]);}
+
+          }
+      );
+
+      try (CSVWriter writer = new CSVWriter(new FileWriter(
+          outputDir + "sorted_tiles_summary.csv"))) { //inputfile
+        writer.writeNext(header);
+        writer.writeAll(outCSVData);
+        outCSVData = new ArrayList<>(); // empty outputData
+        finish1 = System.currentTimeMillis();
+        System.out.println("The tiles information is stored in " + outputDir + "tiles_summary.csv");
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+    long finish2 = System.currentTimeMillis();
+
+    System.out.println("KMLTilingTask took total time: " + (finish2 - start1) + " ms");
   }
 
   // Updated Extent: 13.09278683392157 13.758936971880468 52.339762874361156 52.662766032905616
@@ -220,7 +282,7 @@ public class KmlTiling {
     String prettyJsonString = gson.toJson(masterjson, masterjson.getClass());
     System.out.println(prettyJsonString);
 
-    try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(MasterJson))) {
+    try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(outputDir + MasterJson))) {
       writer.write(prettyJsonString);
     } catch (Exception ex) {
       System.err.println("Couldn't write masterjson\n" + ex.getMessage());
@@ -228,81 +290,25 @@ public class KmlTiling {
 
   }
 
-  public String getFileName(String inputStr, String keyword){
-    int i = inputStr.indexOf(keyword);
-    String filename = inputStr.substring(i, inputStr.length());
-    return filename;
-  }
-
   public static void main(String[] args) {
 
-    //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\summary_chunk5000\\";
-    String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\summary.csv";
+    //String inputPath = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\summary_chunk5000\\";
+    String inputPath = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\summary_532051.csv";
 
+    KMLTilingTask kmltiling = new KMLTilingTask("4326", "25833");
+    kmltiling.filesList = Utilities.getInputFiles(inputPath);
+    kmltiling.updateExtent(new double[]{13.09278683392157, 13.758936971880468, 52.339762874361156, 52.662766032905616});  // whole berlin
 
-    File directoryPath = new File(inputDir);
-    File[] filelist = new File[0];
-    
-    if (directoryPath.isFile()){
-      filelist = new File[1];
-      filelist[0] = directoryPath;
-    }else if (directoryPath.isDirectory()){
-      filelist = directoryPath.listFiles();
-    }
-
-    List<String[]> csvData = new ArrayList<>();
-    KmlTiling kmltiling = new KmlTiling("4326");
-    //kmltiling.updateExtent(new double[]{13.09278683392157, 13.758936971880468, 52.339762874361156,
-    //    52.662766032905616});  // whole berlin
-
-    kmltiling.updateExtent(new double[]{13.19134362161867, 13.342529716588182, 52.46676146536689, 52.54844920036194}); // charlottenberg self_estimate
-
+    //kmltiling.updateExtent(new double[]{13.19134362161867, 13.342529716588182, 52.46676146536689, 52.54844920036194}); // charlottenberg self_estimate
     //kmltiling.updateExtent(new double[]{13.188898996667495, 13.34393752497554, 52.46509432020338, 52.549388879408454}); // postgis
+
     int[] numRowCol = kmltiling.getNumRowCol();
     kmltiling.createMasterJson();
-    long start0 = System.currentTimeMillis();
-    CSVParser csvParser = new CSVParserBuilder().withEscapeChar('\0').build(); // with this '\0' can read backslash; with '\\' can not read backslash
-    for (File inputfile : filelist) {
-      try (CSVReader reader = new CSVReaderBuilder(new FileReader(inputfile)).withCSVParser(csvParser).build()) {
-        String[] header = reader.readNext();
-        csvData = reader.readAll();
-        //r.forEach(x -> System.out.println(Arrays.toString(x)));
-      } catch (IOException e) {
-        e.printStackTrace();
-      } catch (CsvException e) {
-        e.printStackTrace();
-      }
-
-      Integer[] tilePosition;
-
-      List<String[]> outputData = new ArrayList<>();
-      String[] header = {"gmlid", "envelope", "envelopeCentroid", "tiles", "filename"};
-      outputData.add(header);
-
-      long start1 = System.currentTimeMillis();
-      for (int i = 0; i < csvData.size(); ++i) {  // skip the header
-        tilePosition = kmltiling.assignTiles(csvData.get(i)[2]);
-        String[] outRow = {csvData.get(i)[0], csvData.get(i)[1], csvData.get(i)[2],
-            kmltiling.arr2str(tilePosition), csvData.get(i)[3]};  //kmltiling.getFileName(csvData.get(i)[3], "test")
-        outputData.add(outRow);
-      }
-      System.out.println("Finished processing " + inputfile);
-      long finish1 = System.currentTimeMillis();
-      try (CSVWriter writer = new CSVWriter(new FileWriter(
-          kmltiling.outputDir + "tiles_summary.csv"))) { //inputfile
-        writer.writeAll(outputData);
-        outputData = new ArrayList<>(); // empty outputData
-        finish1 = System.currentTimeMillis();
-        System.out.println("The tiles information is stored in " + kmltiling.outputDir + "tiles_summary.csv");
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-      System.out.println("Process time: " + (finish1 - start1));
-    }
-    long finish0 = System.currentTimeMillis();
-    System.out.println("Total time: " + (finish0 - start0));
+    kmltiling.run();
   }
-  }
+
+
+}
 
 
 
