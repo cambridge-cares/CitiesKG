@@ -54,7 +54,7 @@ public class KMLParserTask implements Runnable{
     if (this.dataContent.size() != 0) {
       String outputFile = this.createCSVFile(this.dataContent);
 
-      System.out.println("Checking if the gmlidList is unique: " + isUnique(this.gmlidList));
+      System.out.println("Checking if the gmlidList is unique: " + Utilities.isUnique(this.gmlidList));
       System.out.println("Saving the file in : " + outputFile);
       System.out.println("Updated Extent: " + kmltiling.getExtent()[0] + " " + kmltiling.getExtent()[1] + " " + kmltiling.getExtent()[2] + " " + kmltiling.getExtent()[3]);
     }
@@ -139,18 +139,6 @@ public class KMLParserTask implements Runnable{
       e.printStackTrace();
     }
     return outputPath;
-  }
-
-
-  private boolean isUnique (List<String> itemList) {
-    Set<String> itemSet = new HashSet<>(itemList);
-    boolean unique = false;
-    if (itemSet.size() < itemList.size()) {
-      unique = false;
-    } else if (itemSet.size() == itemList.size()) {
-      unique = true;
-    }
-    return unique;
   }
 
     public static void main(String[] args) {

@@ -14,7 +14,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Utilities {
 
@@ -83,6 +85,31 @@ public class Utilities {
     output[0] = Integer.valueOf(splitStr[0]);
     output[1] = Integer.valueOf(splitStr[1]);  
     return output;
+  }
+
+  public static <T> String arr2str(T[] arr) {
+    String output = "";
+    String sep = "#";
+
+    for (int j = 0; j < arr.length; j++) {
+      output += String.valueOf(arr[j]);
+      if (j != arr.length - 1) {
+        output += sep;
+      }
+    }
+
+    return output;
+  }
+
+  public static boolean isUnique (List<String> itemList) {
+    Set<String> itemSet = new HashSet<>(itemList);
+    boolean unique = false;
+    if (itemSet.size() < itemList.size()) {
+      unique = false;
+    } else if (itemSet.size() == itemList.size()) {
+      unique = true;
+    }
+    return unique;
   }
 
   public static void main(String[] args) {

@@ -9,6 +9,7 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
+import uk.ac.cam.cares.twa.cities.model.geo.Utilities;
 
 public class KMLSorterTask implements Runnable {
 
@@ -24,42 +25,49 @@ public class KMLSorterTask implements Runnable {
     // and a list of features for that tile as the value
     private int count = 0; // count the number of buildings
     private int files = 0; // count the number of kml files sorted
-    //private HashMap<String, String[]> summaryCSV;
-    private String summaryCSV;
+
     private String[] csvHeader;
     private HashMap<String, ArrayList<String[]>> csvData;
     private String unsortedDir;
     private List<Feature> allFeatures;
+    private HashMap<String, Feature> featuresMap = new HashMap<>();// <gmlid, features>
     private int buildingInTiles = 0;
+
+    private String outDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\sorted_berlin\\";
+    private String summaryCSV = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\sorted_tiles_summary.csv";
+
+
     @Override
     public void run() {
         long start = System.currentTimeMillis();
-        // directory of unsorted kml files
-        //unsortedDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
-        unsortedDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\charlottenberg_extruded_blaze.kml";
+        /* directory of unsorted kml files */
+        unsortedDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
+        //unsortedDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\charlottenberg_extruded_blaze.kml";
         this.dirList = new File(unsortedDir).listFiles();
 
-        // file location of one unsorted kml file
+        /* file location of one unsorted kml file */
         //TODO: replace by getting one file from dirList
         File test0 = new File("C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\test_0_extruded.kml");
 
-        // file location of where the tiles should be created
-        String outDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\sorted_charlottenberg\\";
-
-        this.summaryCSV = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\sorted_tiles_summary.csv";
+        /* file location of where the tiles should be created */
+        String outDir = this.outDir;
 
         List<StyleSelector> styles = getStylesFromKml(test0);
 
-        rows = 75;  //280
-        cols = 84;   // 368
+        //String masterJSON = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\test_extruded_MasterJSON.json";
+
+        // @todo: read this from a masterjson
+        rows = 148;  //280  // [rows, cols] = [75, 84]
+        cols = 184;   // 368
         name = "test";
         createFolders(outDir);
         this.csvData = readCSV2Map(this.summaryCSV);
 
-        // Read the one kml file to allFeatures
-
-        Kml kml = Kml.unmarshal(new File(unsortedDir));
-        allFeatures = ((Document) kml.getFeature()).getFeature();
+        // Read the one kml file to allFeatures, else we will use the hashmap to store the features
+        if (new File(unsortedDir).isFile()){
+            Kml kml = Kml.unmarshal(new File(unsortedDir));
+            allFeatures = ((Document) kml.getFeature()).getFeature();
+        }
 
         for (int i = 0; i < rows; i++) {
             for (int k = 0; k < cols; k++) {
@@ -70,7 +78,7 @@ public class KMLSorterTask implements Runnable {
                     continue;
                 }
                 HashMap<String, ArrayList<String>> map = getBuildingsInTile(i, k);
-                List<Feature> features = getFeaturesInTile(map);
+                List<Feature> features = getFeaturesInTile(map);  // read the features from the files
                 writeKml(out, features, styles, name);
                 System.out.println("finished writing " + out.getAbsolutePath());
             }
@@ -111,7 +119,7 @@ public class KMLSorterTask implements Runnable {
 
     }
 
-    /*Could not use tiles as Hashmap key, as there is repeatness.
+    /* Could not use tiles as Hashmap key, as there is repeatness.
     * if used, add all String[] as list */
     private HashMap<String, ArrayList<String[]>> readCSV2Map(String csvfile) {
         HashMap<String, ArrayList<String[]>> CSVRows = new HashMap<>();
@@ -158,20 +166,26 @@ public class KMLSorterTask implements Runnable {
             csvrowSize += CSVRows.get(key).size();
         }
         System.out.println("gmlidList has the size of " + gmlidList.size());
-        System.out.println("gmlidList is unique : " + isUnique(gmlidList));
+        System.out.println("gmlidList is unique : " + Utilities.isUnique(gmlidList));
         System.out.println("CSVRows has the size of " + csvrowSize);
 
         return CSVRows;
     }
 
-    // return list of features belonging to the tile, input tile map, output list of features
+    /**
+     * Given a hashmap with filename (Key) and Array of gmlIds (Values),
+     * return a list of features belonging to the tile
+     *
+     * @param map a hashmap with filename (Key) and Array of gmlIds (Values)
+     * @return List of features
+     */
     private List<Feature> getFeaturesInTile(HashMap<String, ArrayList<String>> map) {
         List<Feature> featuresInTile = new ArrayList<>();
-        // loop through for each kml file that has buildings in this tile
+        /* loop through for each kml file that has buildings in this tile */
         for (String filepath : map.keySet()) {
-            // get all the buildings in the kml file
-            //List<Feature> allFeaturesInKml = getFeaturesFromKml(new File(filepath));
-            List<Feature> allFeaturesInKml = allFeatures;
+            /* get all the buildings in the kml file */
+            List<Feature> allFeaturesInKml = getFeaturesFromKml(new File(filepath));
+            //List<Feature> allFeaturesInKml = allFeatures;
             // loop through all the buildings in the kml file
             for (Feature feature : allFeaturesInKml) {
                 // if the building belongs to this tile, get feature info
@@ -191,7 +205,13 @@ public class KMLSorterTask implements Runnable {
         return featuresInTile;
     }
 
-    // read csv file, input tile number, output hashmap of file locations and array of gmlIds per file location
+    /**
+     * Given tile position, create a hashmap with filename (Key) and Array of gmlIds (Values)
+     *
+     * @param rowNum the row number of the tile
+     * @param colNum the column number of the tile
+     * @return hashmap with <filename (Key) , Array of gmlIds (Values) >
+     */
     private HashMap<String, ArrayList<String>> getBuildingsInTile(int rowNum, int colNum) {
         // key is the file location, value is an array of gmlIds in this file location that belongs to this tile
         HashMap<String, ArrayList<String>> buildings = new HashMap<>();   // building hashmap contains filename (key) and gmlids (value)
@@ -199,7 +219,7 @@ public class KMLSorterTask implements Runnable {
         if (this.csvData.containsKey(rowNum + "#" + colNum)) {
             // add buildings
             for (String[] rowInfo : csvData.get(rowNum + "#" + colNum)){
-                String filename = "";//rowInfo[4];
+                String filename = rowInfo[4];
                 String filepath = unsortedDir + filename;
                 if (buildings.containsKey(filepath)){
                     // if this file location has already been added to map, add the gmlId to existing array
@@ -271,9 +291,22 @@ public class KMLSorterTask implements Runnable {
     }
 
     // get all features from one kml file
+    /*
     private List<Feature> getFeaturesFromKml(File file) {
         Kml kml = Kml.unmarshal(file);
         List<Feature> features = ((Document) kml.getFeature()).getFeature();
+        return features;
+    }*/
+
+    // Shiying: get all features from one kml file
+    private List<Feature> getFeaturesFromKml(File file) {
+        HashMap<String, Feature> featuresMap = new HashMap<>();
+        Kml kml = Kml.unmarshal(file);
+        List<Feature> features = ((Document) kml.getFeature()).getFeature();
+        for (Feature feat: features){
+            String gmlid = feat.getName();
+            featuresMap.put(gmlid, feat);
+        }
         return features;
     }
 
@@ -316,18 +349,6 @@ public class KMLSorterTask implements Runnable {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-    }
-    private boolean isUnique (List<String> gmlidList) {
-        Set<String> gmlidSet = new HashSet<String>(gmlidList);
-        boolean unique = false;
-        if (gmlidSet.size() < gmlidList.size()) {
-            unique = false;
-        } else if (gmlidSet.size() == gmlidList.size()) {
-            unique = true;
-        }
-        System.out.println("gmlidSet has size : " + gmlidSet.size());
-        System.out.println("gmlidList has size : " + gmlidList.size());
-        return unique;
     }
 
     public static void main(String[] args){

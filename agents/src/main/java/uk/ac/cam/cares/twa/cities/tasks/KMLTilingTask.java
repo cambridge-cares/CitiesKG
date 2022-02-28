@@ -45,9 +45,11 @@ public class KMLTilingTask implements Runnable{
   private double[] transformedExtent = new double[4]; // [Xmin, Xmax, Ymin, Ymax]  // 25833
   private String outCsvFile = "new_summary";
   private String typecsv = ".csv";
+  private String[] CSVHeader = {"gmlid", "envelope", "envelopeCentroid", "tiles", "filename"};
   private String outputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\";
   public String[] filesList;
-  private String[] CSVHeader;
+
+
 
   public KMLTilingTask(String kmlCRS, String computeCRS) {
 
@@ -84,12 +86,11 @@ public class KMLTilingTask implements Runnable{
       Integer[] tilePosition;
 
       List<String[]> outCSVData = new ArrayList<>();
-      String[] header = {"gmlid", "envelope", "envelopeCentroid", "tiles", "filename"};
 
       for (String[] inputRow : csvData) {  // skip the header
         tilePosition = assignTiles(inputRow[2]);
         String[] outRow = {inputRow[0], inputRow[1], inputRow[2],
-            arr2str(tilePosition), inputRow[3]};  //kmltiling.getFileName(csvData.get(i)[3], "test")
+            Utilities.arr2str(tilePosition), inputRow[3]};  //kmltiling.getFileName(csvData.get(i)[3], "test")
         outCSVData.add(outRow);
       }
       long finish1 = System.currentTimeMillis();
@@ -106,7 +107,7 @@ public class KMLTilingTask implements Runnable{
 
       try (CSVWriter writer = new CSVWriter(new FileWriter(
           outputDir + "sorted_tiles_summary.csv"))) { //inputfile
-        writer.writeNext(header);
+        writer.writeNext(CSVHeader);
         writer.writeAll(outCSVData);
         outCSVData = new ArrayList<>(); // empty outputData
         finish1 = System.currentTimeMillis();
@@ -148,39 +149,7 @@ public class KMLTilingTask implements Runnable{
 
   /* The input is extentDim with 4326 */
   public int[] getNumRowCol() {
-    /*
-    // translate the lowerCorner and upperCorner to 25833 for dividing 125
-    Geometry lowerCorner = new Geometry(ogr.wkbPoint); // [xmin, ymin]
-    lowerCorner.AddPoint(this.extent_Xmin, this.extent_Ymin);
 
-    Geometry upperCorner = new Geometry(ogr.wkbPoint); // [xmax, ymax]
-    upperCorner.AddPoint(this.extent_Xmax, this.extent_Ymax);
-
-    double[] clowerCorner = Transform.reprojectPoint(new double[]{this.extent_Xmin, this.extent_Ymin}, 4326,
-        25833);
-    double[] cupperCorner = Transform.reprojectPoint(new double[]{this.extent_Xmax, this.extent_Ymax}, 4326,
-        25833);
-
-    transformedExtent = new double[]{clowerCorner[0], cupperCorner[0], clowerCorner[1],
-        cupperCorner[1]};
-
-    if (transformedExtent[1] - transformedExtent[0] < 0
-        || transformedExtent[3] - transformedExtent[2] < 0) {
-      System.out.println("the input parameter are invalid");
-    } else {
-
-      this.nRow = (int) (Math.ceil(
-          (transformedExtent[3] - transformedExtent[2]) / this.initTileSize));
-      this.nCol = (int) (Math.ceil(
-          (transformedExtent[1] - transformedExtent[0]) / this.initTileSize));
-
-      this.tileWidth = (transformedExtent[1] - transformedExtent[0]) / this.nCol;
-      this.tileLength = (transformedExtent[3] - transformedExtent[2]) / this.nRow;
-
-    }
-
-    return new int[]{nRow, nCol};
-    */
     this.nRow = (int) (Math.ceil(
         (this.Textent_Ymax - this.Textent_Ymin) / this.initTileSize));
     this.nCol = (int) (Math.ceil(
@@ -192,8 +161,6 @@ public class KMLTilingTask implements Runnable{
     return new int[]{nRow, nCol};
 
   }
-
-
 
   public double[] reproject(String geomStr, int from_epsg, int to_epsg) {
     String[] splitStr = geomStr.split("#");
@@ -213,7 +180,7 @@ public class KMLTilingTask implements Runnable{
       transformedGeom = Transform.reprojectEnvelope(geomArr, from_epsg, to_epsg);
     } else {
       // this is a polygon in general
-      System.out.println("The input parameter is neither a point or envelop with 4 indicators");
+      System.err.println("The input parameter is neither a point or envelop with 4 indicators");
     }
 
     return transformedGeom;
@@ -221,7 +188,7 @@ public class KMLTilingTask implements Runnable{
 
   /* Compute the tile location based on the transformed extent (based on meter)*/
   public Integer[] assignTiles(String centroidStr) {
-    double[] transformedCentroid = reproject(centroidStr, 4326, 25833);
+    double[] transformedCentroid = reproject(centroidStr, Integer.valueOf(kmlSRID), Integer.valueOf(transformSRID));
     Integer col = (int) (Math.floor(
         (transformedCentroid[0] - this.Textent_Xmin) / this.tileWidth));
     Integer row = (int) (Math.floor(
@@ -229,32 +196,6 @@ public class KMLTilingTask implements Runnable{
     if (col < 0 || row < 0) {
       System.out.println(centroidStr + " is located " + row + ", " + col); }
     return new Integer[]{row, col};
-    /*
-    double[] transformedCentroid = reproject(centroidStr, 4326, 25833);
-    Integer col = (int) (Math.floor(
-        (transformedCentroid[0] - this.transformedExtent[0]) / this.tileWidth));
-    Integer row = (int) (Math.floor(
-        (transformedCentroid[1] - this.transformedExtent[2]) / this.tileLength));
-    if (col < 0 || row < 0) {
-      System.out.println(centroidStr + " is located " + row + ", " + col); }
-    return new Integer[]{row, col};
-    */
-
-  }
-
-
-  private <T> String arr2str(T[] arr) {
-    String output = "";
-    String sep = "#";
-
-    for (int j = 0; j < arr.length; j++) {
-      output += String.valueOf(arr[j]);
-      if (j != arr.length - 1) {
-        output += sep;
-      }
-    }
-
-    return output;
   }
 
 
