@@ -288,6 +288,8 @@ function initClient() {
 function loadCity(city) {
     if (city == 'pirmasens') {
         loadPirmasens();
+    } else if (city == 'berlin') {
+        loadBerlin();
     }
 }
 
@@ -308,6 +310,25 @@ function loadPirmasens() {
 
     // find relevant files and load layers
     getAndLoadLayers('exported_pirmasens');
+}
+
+function loadBerlin() {
+    // set title
+    document.title = 'Berlin';
+
+    // set camera view
+    var cameraPostion = {
+        latitude: 52.517479728958044,
+        longitude: 13.411141287558161,
+        height: 534.3099172951087,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+    flyToCameraPosition(cameraPostion);
+
+    // find relevant files and load layers
+    getAndLoadLayers('exported_berlin');
 }
 
 // send get request to server to discover files in specified folder, create and load layers
@@ -336,13 +357,27 @@ function getAndLoadLayers(folder) {
     var reqUrl = url + '/files/';
 
     $.get(reqUrl + folder, function (data) {
-        for (let i = 0; i < data.length; i++) {
-            filepathname = folderpath + data[i];
-            options.url = filepathname;
-            options.name = data[i];
-            _layers.push(new CitydbKmlLayer(options));
-            if (i == data.length - 1) {
-                loadLayerGroup(_layers);
+        // if data includes 'Tiles', only add MasterJSON as layer, else add all files
+        if (data.includes("Tiles")) {
+            for (let i = 0; i < data.length; i++) {
+                if (data[i].match(new RegExp("\\w*_extruded_MasterJSON.json"))) {
+                    filepathname = folderpath + data[i]
+                    options.url = filepathname;
+                    options.name = (new URL(window.location.href)).searchParams.get('city');
+                    _layers.push(new CitydbKmlLayer(options));
+                    loadLayerGroup(_layers);
+                    break;
+                }
+            }
+        } else {
+            for (let i = 0; i < data.length; i++) {
+                filepathname = folderpath + data[i];
+                options.url = filepathname;
+                options.name = data[i];
+                _layers.push(new CitydbKmlLayer(options));
+                if (i == data.length - 1) {
+                    loadLayerGroup(_layers);
+                }
             }
         }
     });
