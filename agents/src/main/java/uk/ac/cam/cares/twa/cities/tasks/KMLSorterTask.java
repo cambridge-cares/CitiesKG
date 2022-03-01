@@ -35,7 +35,7 @@ public class KMLSorterTask implements Runnable {
 
     private String outDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\sorted_berlin\\";
     private String summaryCSV = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\sorted_tiles_summary.csv";
-
+    private HashMap<String, Boolean> fileStatus = new HashMap<>();
 
     @Override
     public void run() {
@@ -62,6 +62,7 @@ public class KMLSorterTask implements Runnable {
         name = "test";
         createFolders(outDir);
         this.csvData = readCSV2Map(this.summaryCSV);
+        initFilesStatus(unsortedDir);
 
         // Read the one kml file to allFeatures, else we will use the hashmap to store the features
         if (new File(unsortedDir).isFile()){
@@ -84,39 +85,31 @@ public class KMLSorterTask implements Runnable {
             }
         }
 
-
-
-        /*
-        // Hashmap method
-        setFields(directory, masterJson, summaryJson, projName);
-        createFeatureLists();
-        createFolders(outDir);
-        List<StyleSelector> styles = getStylesFromKml(test0);
-
-        // for each unsorted kml files in the dirList, sort the buildings
-        for (File file : this.dirList) {
-            sortBuildings(file);
-            this.files++;
-        }
-
-        for (int i = 0; i < this.rows; i++) {
-            for (int k = 0; k < this.cols; k++) {
-                String name = this.name + "_Tile_" + i + "_" + k + "_extruded";
-                File file = new File(outDir + i + "\\" + k + "\\" + name + ".kml");
-                List<Feature> features = this.tileFeatureMap.get(name);
-                writeKml(file, features, styles, name);
-                System.out.println(name);
-            }
-        }
-        */
         long end = System.currentTimeMillis();
         long duration = (end - start);
-        System.out.println(duration + " ms");
+        System.out.println("KMLSorterTask takes: " + duration + " ms");
         System.out.println("start: " + start + " ms\nend: " + end + " ms"); // @todo: need to genrate the run journal file
         System.out.println("buildings: " + this.count);
         System.out.println("Features have written: " + this.buildingInTiles);
         //System.out.println("files sorted: " + this.files);
 
+    }
+
+    // Only execute one time in the beginning
+    private void initFilesStatus(String inputDir){
+        String[] filesList = Utilities.getInputFiles(inputDir);
+
+        for (String filepath : filesList){
+            this.fileStatus.put(filepath, false);
+        }
+    }
+
+    // Check the import status of the files
+    private boolean isImported(String filepath){
+        return this.fileStatus.get(filepath);
+    }
+    private void updateFileStatus(String filepath, boolean status){
+        this.fileStatus.replace(filepath, status);
     }
 
     /* Could not use tiles as Hashmap key, as there is repeatness.
@@ -179,17 +172,22 @@ public class KMLSorterTask implements Runnable {
      * @param map a hashmap with filename (Key) and Array of gmlIds (Values)
      * @return List of features
      */
+
     private List<Feature> getFeaturesInTile(HashMap<String, ArrayList<String>> map) {
         List<Feature> featuresInTile = new ArrayList<>();
-        /* loop through for each kml file that has buildings in this tile */
+        // loop through for each kml file that has buildings in this tile
         for (String filepath : map.keySet()) {
-            /* get all the buildings in the kml file */
-            List<Feature> allFeaturesInKml = getFeaturesFromKml(new File(filepath));
-            //List<Feature> allFeaturesInKml = allFeatures;
-            // loop through all the buildings in the kml file
-            for (Feature feature : allFeaturesInKml) {
-                // if the building belongs to this tile, get feature info
-                if (map.get(filepath).contains(feature.getName())) {
+            HashMap<String, Feature> featuresInKml = new HashMap<>();
+            if (!isImported(filepath)){
+                // get all the buildings in the current kml file
+                featuresInKml = getFeaturesFromKml(new File(filepath));
+                this.featuresMap.putAll(featuresInKml);
+                updateFileStatus(filepath, true);
+            }
+            // Find the corresponding features from global featuresMap
+            for (String buildingId : map.get(filepath)) {
+                if (this.featuresMap.containsKey(buildingId)){
+                    Feature feature = this.featuresMap.get(buildingId);
                     Placemark placemark = (Placemark) feature;
                     MultiGeometry geoms = (MultiGeometry) placemark.getGeometry();
                     for (Geometry geom : geoms.getGeometry()) {
@@ -199,9 +197,13 @@ public class KMLSorterTask implements Runnable {
                     }
                     // put feature info into list to be returned
                     featuresInTile.add(feature);
+                    this.featuresMap.remove(buildingId);
+                } else{
+                    System.err.println(buildingId + "does not exist in the featuresMap");
+                    break;
+                }
                 }
             }
-        }
         return featuresInTile;
     }
 
@@ -262,6 +264,7 @@ public class KMLSorterTask implements Runnable {
         }
     }
 
+    /*
     // sort buildings for one kml file
     private void sortBuildings(File file) {
         List<Feature> features = getFeaturesFromKml(file);
@@ -289,6 +292,7 @@ public class KMLSorterTask implements Runnable {
         }
         System.out.println(file.getAbsolutePath());
     }
+     */
 
     // get all features from one kml file
     /*
@@ -299,7 +303,7 @@ public class KMLSorterTask implements Runnable {
     }*/
 
     // Shiying: get all features from one kml file
-    private List<Feature> getFeaturesFromKml(File file) {
+    private HashMap<String, Feature> getFeaturesFromKml(File file) {
         HashMap<String, Feature> featuresMap = new HashMap<>();
         Kml kml = Kml.unmarshal(file);
         List<Feature> features = ((Document) kml.getFeature()).getFeature();
@@ -307,7 +311,7 @@ public class KMLSorterTask implements Runnable {
             String gmlid = feat.getName();
             featuresMap.put(gmlid, feat);
         }
-        return features;
+        return featuresMap;
     }
 
     // get style list from one kml file
