@@ -43,7 +43,7 @@ public class BuildingHullsRegistrationTaskTest extends TestCase {
     assertNotNull(lxmsTask);
     assertEquals(1, lxmsTask.lod);
     assertEquals(2.0, lxmsTask.params.threshold);
-    assertEquals("b", lxmsTask.root.getIri());
+    assertEquals("b", lxmsTask.roots[0].getIri());
   }
 
 }

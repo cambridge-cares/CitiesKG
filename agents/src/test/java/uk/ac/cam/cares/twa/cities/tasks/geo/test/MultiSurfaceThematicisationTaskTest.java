@@ -21,7 +21,7 @@ import static org.junit.Assert.assertNotEquals;
 public class MultiSurfaceThematicisationTaskTest extends TestCase {
 
   static Field contextField;
-  static Field rootField;
+  static Field rootsField;
   static ThematicSurfaceDiscoveryAgent.Params params = new ThematicSurfaceDiscoveryAgent.Params(
       "",
       "",
@@ -34,9 +34,9 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
     try {
       contextField = MultiSurfaceThematicisationTask.class.getDeclaredField("context");
       contextField.setAccessible(true);
-      rootField = MultiSurfaceThematicisationTask.class.getDeclaredField("root");
-      rootField.setAccessible(false);
-      rootField.setAccessible(true);
+      rootsField = MultiSurfaceThematicisationTask.class.getDeclaredField("roots");
+      rootsField.setAccessible(false);
+      rootsField.setAccessible(true);
     } catch (NoSuchFieldException e) {
       e.printStackTrace();
     }
@@ -45,6 +45,7 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
   public ModelContext makeMockContext() {
     ModelContext mockContext = Mockito.spy(params.makeContext());
     Mockito.doReturn(new ArrayList<SurfaceGeometry>()).when(mockContext).pullAllWhere(Mockito.any(), Mockito.any());
+    Mockito.doNothing().when(mockContext).pushAllChanges();
     return mockContext;
   }
 
@@ -92,9 +93,9 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
     mixedGeometriesField.setAccessible(true);
 
     // Test bucketing is correct
-    MultiSurfaceThematicisationTask task = new MultiSurfaceThematicisationTask("", 1, params);
+    MultiSurfaceThematicisationTask task = new MultiSurfaceThematicisationTask(1, params, "");
     contextField.set(task, context);
-    rootField.set(task, root);
+    rootsField.set(task, new SurfaceGeometry[]{root});
     task.call();
     List<List<SurfaceGeometry>> topLevels = (List<List<SurfaceGeometry>>) topLevelThematicGeometriesField.get(task);
     List<List<SurfaceGeometry>> bottomLevels = (List<List<SurfaceGeometry>>) bottomLevelThematicGeometriesField.get(task);
@@ -131,9 +132,9 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
     ground1.setGeometryType(new GeometryType("0#0#0#1#0#0#1#1#0#0#1#0#0#0#0", "http://localhost/blazegraph/literals/POLYGON-3-15"));
     ground2.setGeometryType(new GeometryType("0#0#-1#1#0#-1#1#1#-1#0#1#-1#0#0#-1", "http://localhost/blazegraph/literals/POLYGON-3-15"));
 
-    task = new MultiSurfaceThematicisationTask("", 1, params);
+    task = new MultiSurfaceThematicisationTask(1, params, "");
     contextField.set(task, makeMockContext());
-    rootField.set(task, root);
+    rootsField.set(task, new SurfaceGeometry[]{root});
     task.call();
     topLevels = (List<List<SurfaceGeometry>>) topLevelThematicGeometriesField.get(task);
     bottomLevels = (List<List<SurfaceGeometry>>) bottomLevelThematicGeometriesField.get(task);
@@ -170,9 +171,9 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
     ground1.setGeometryType(new GeometryType("0#0#1#1#0#1#1#1#1#0#1#1#0#0#1", "http://localhost/blazegraph/literals/POLYGON-3-15"));
     ground2.setGeometryType(new GeometryType("0#0#2#1#0#2#1#1#2#0#1#2#0#0#2", "http://localhost/blazegraph/literals/POLYGON-3-15"));
 
-    task = new MultiSurfaceThematicisationTask("", 1, params);
+    task = new MultiSurfaceThematicisationTask(1, params, "");
     contextField.set(task, makeMockContext());
-    rootField.set(task, root);
+    rootsField.set(task, new SurfaceGeometry[]{root});
     task.call();
     topLevels = (List<List<SurfaceGeometry>>) topLevelThematicGeometriesField.get(task);
     bottomLevels = (List<List<SurfaceGeometry>>) bottomLevelThematicGeometriesField.get(task);
@@ -235,7 +236,10 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
     roof2.setGeometryType(new GeometryType("0#0#2#1#0#2#1#1#2#0#1#2#0#0#2", "http://localhost/blazegraph/literals/POLYGON-3-15"));
     ground1.setGeometryType(new GeometryType("0#0#0#0#1#0#1#1#0#1#0#0#0#0#0", "http://localhost/blazegraph/literals/POLYGON-3-15"));
     ground2.setGeometryType(new GeometryType("0#0#-1#0#1#-1#1#1#-1#1#0#-1#0#0#-1", "http://localhost/blazegraph/literals/POLYGON-3-15"));
-    root.setCityObjectId(new URI("http://dummyiri"));
+    walls.setCityObjectId(new URI("http://dummyiri"));
+    roofs.setCityObjectId(new URI("http://dummyiri"));
+    ground1.setCityObjectId(new URI("http://dummyiri"));
+    ground2.setCityObjectId(new URI("http://dummyiri"));
     root.getChildGeometries().addAll(Arrays.asList(walls, roofAndGround));
     walls.getChildGeometries().addAll(Arrays.asList(wall1, wall2));
     roofAndGround.getChildGeometries().addAll(Arrays.asList(roofs, ground1, ground2));
@@ -243,9 +247,9 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
 
     Mockito.doNothing().when(context).pushAllChanges();
 
-    MultiSurfaceThematicisationTask task = new MultiSurfaceThematicisationTask("", 1, params);
-    contextField.set(task, context);
-    rootField.set(task, root);
+    MultiSurfaceThematicisationTask task = new MultiSurfaceThematicisationTask(1, params, "");
+    contextField.set(task, makeMockContext());
+    rootsField.set(task, new SurfaceGeometry[]{root});
     task.call();
     task.call();
 

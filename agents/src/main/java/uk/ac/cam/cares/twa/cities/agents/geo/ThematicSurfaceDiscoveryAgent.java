@@ -41,7 +41,8 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
 
   public enum Mode {
     RESTRUCTURE,
-    COMMENT
+    COMMENT,
+    VALIDATE
   }
 
   public static class Params {
@@ -69,11 +70,12 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
   public static final String KEY_COBI = "cityObjectIRI";
   public static final String KEY_LOD = "lod";
   public static final String KEY_THRESHOLD = "thresholdAngle";
-  public static final String KEY_COMMENT = "comment";
+  public static final String KEY_MODE = "mode";
 
   // Exception and error text
   private static final String NO_CRS_EXCEPTION_TEXT = "Namespace has no CRS specified.";
   private static final String MULTIPLE_CRS_EXCEPTION_TEXT = "Namespace has more than one CRS specified.";
+  private static final String MODE_NOT_RECOGNIZED_EXCEPTION_TEXT = "Mode not recognised.";
 
   // Query labels
   private static final String QM = "?";
@@ -124,7 +126,11 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
         && requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.PUT)) {
       try {
         Set<String> keys = requestParams.keySet();
-        Mode mode = keys.contains(KEY_COMMENT) ? Mode.COMMENT : Mode.RESTRUCTURE;
+        Mode mode = !keys.contains(KEY_MODE) ? Mode.RESTRUCTURE :
+            Objects.equals(requestParams.getString(KEY_MODE), "comment") ? Mode.COMMENT :
+                Objects.equals(requestParams.getString(KEY_MODE), "validate") ? Mode.VALIDATE :
+                    Objects.equals(requestParams.getString(KEY_MODE), "restructure") ? Mode.RESTRUCTURE : null;
+        if(mode == null) throw new BadRequestException(MODE_NOT_RECOGNIZED_EXCEPTION_TEXT);
         if (keys.contains(KEY_NAMESPACE)) {
           namespaceIri = new URI(requestParams.getString(KEY_NAMESPACE)).toString();
           buildingIri = keys.contains(KEY_COBI) ? new URI(requestParams.getString(KEY_COBI)).toString() : null;

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -67,7 +68,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
   private static final String MALFORMED_SURFACE_GEOMETRY_EXCEPTION_TEXT =
       "Malformed building: SurfaceGeometry contains both sub-geometries and explicit GeometryType.";
 
-  public final SurfaceGeometry root;
+  public final SurfaceGeometry[] roots;
   public final ModelContext context;
   public final int lod;
   public final ThematicSurfaceDiscoveryAgent.Params params;
@@ -79,9 +80,11 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
   private final List<List<SurfaceGeometry>> bottomLevelThematicGeometries = Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
   private final List<SurfaceGeometry> mixedGeometries = new ArrayList<>();
 
-  public MultiSurfaceThematicisationTask(String rootIri, int lod, ThematicSurfaceDiscoveryAgent.Params params) {
+  public MultiSurfaceThematicisationTask(int lod, ThematicSurfaceDiscoveryAgent.Params params, String ... rootIris) {
     this.context = params.makeContext();
-    this.root = context.createHollowModel(SurfaceGeometry.class, rootIri);
+    this.roots = Arrays.stream(rootIris).map(
+        (rootIri) -> context.createHollowModel(SurfaceGeometry.class, rootIri)
+    ).toArray((size) -> new SurfaceGeometry[size]);
     this.lod = lod;
     this.params = params;
   }
@@ -120,16 +123,18 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
    * outcome of this check is recorded in the <code>flipped</code> variable, which is null in the indeterminate case.
    */
   private void tryClassifyGeometries() {
-    context.pullAllWhere(
-        SurfaceGeometry.class,
-        new WhereBuilder().addWhere(
-            ModelContext.getModelVar(),
-            NodeFactory.createURI(SPARQLUtils.expandQualifiedName(SchemaManagerAdapter.ONTO_ROOT_ID)),
-            NodeFactory.createURI(root.getIri())
-        )
-    );
-    // Sort into thematic surfaces
-    recursiveDiscover(root);
+    for(SurfaceGeometry root: roots) {
+      context.pullAllWhere(
+          SurfaceGeometry.class,
+          new WhereBuilder().addWhere(
+              ModelContext.getModelVar(),
+              NodeFactory.createURI(SPARQLUtils.expandQualifiedName(SchemaManagerAdapter.ONTO_ROOT_ID)),
+              NodeFactory.createURI(root.getIri())
+          )
+      );
+      // Sort into thematic surfaces
+      recursiveDiscover(root);
+    }
     // Calculate centroid of detected roofs' centroids and centroid of detected grounds' centroids
     double averageRoofZ = computeUnweightedCentroid(bottomLevelThematicGeometries.get(Theme.ROOF.index)).getZ();
     double averageGroundZ = computeUnweightedCentroid(bottomLevelThematicGeometries.get(Theme.GROUND.index)).getZ();
@@ -233,7 +238,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
         else if (lod == 3) thematicSurface.setLod3MultiSurfaceId(topLevelGeometry);
         else if (lod == 4) thematicSurface.setLod4MultiSurfaceId(topLevelGeometry);
         thematicSurface.setObjectClassId(BigInteger.valueOf(33 + i));
-        thematicSurface.setBuildingId(context.getModel(Building.class, root.getCityObjectId().toString()));
+        thematicSurface.setBuildingId(context.getModel(Building.class, topLevelGeometry.getCityObjectId().toString()));
         // Reassign SurfaceGeometry hierarchical properties
         topLevelGeometry.setParentId(null);
         List<SurfaceGeometry> allDescendantGeometries = topLevelGeometry.getFlattenedSubtree(false);
