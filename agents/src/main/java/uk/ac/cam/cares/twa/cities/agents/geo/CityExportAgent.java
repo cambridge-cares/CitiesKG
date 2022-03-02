@@ -18,6 +18,9 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import uk.ac.cam.cares.twa.cities.tasks.KMLParserTask;
+import uk.ac.cam.cares.twa.cities.tasks.KMLSorterTask;
+import uk.ac.cam.cares.twa.cities.tasks.KMLTilingTask;
 
 @WebServlet(
         urlPatterns = {
@@ -224,6 +227,42 @@ public class CityExportAgent extends JPSAgent {
         ExporterTask task = new ExporterTask(gmlIds, outputpath, serverInfo);
         exporterExecutor.execute(task);
         return actualPath;
+    }
+
+    /**
+     * Re-arrange and tiling the unsorted KMLs output from ImpExp tool
+     *
+     * @param path2unsortedKML the path of the directory that contains the unsorted KMLs
+     */
+    private static void tilingKML(String path2unsortedKML, String outputDir){
+        //String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder_1\\charlottenberg_extruded_blaze.kml";
+        //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
+
+        // 1. KMLParserTask
+        KMLParserTask parserTask = new KMLParserTask(path2unsortedKML, outputDir);
+        parserTask.run();
+        double[] updatedExtent = parserTask.getUpdatedExtent();
+        String summaryCSV = parserTask.getOutFile();
+
+        // 2. KMLTilingTask
+        KMLTilingTask kmltiling = new KMLTilingTask("4326", "25833", outputDir);
+        kmltiling.setUp(summaryCSV);
+        kmltiling.updateExtent(updatedExtent);  // whole berlin: new double[]{13.09278683392157, 13.758936971880468, 52.339762874361156, 52.662766032905616}
+        kmltiling.run();
+        String masterJSONFile = kmltiling.getmasterJSONFile();
+        String sortedCSVFile = kmltiling.getsortedCSVFile();
+
+
+        // 3. KMLSorterTask
+        KMLSorterTask kmlSorter=new KMLSorterTask(path2unsortedKML, outputDir, masterJSONFile, sortedCSVFile);
+        kmlSorter.run();
+
+
+    }
+    public static void main(String[] args) {
+        String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
+        String outputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\";
+        tilingKML(inputDir, outputDir);
     }
 
 }

@@ -1,37 +1,38 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
 import com.opencsv.CSVWriter;
-import gov.nasa.worldwind.geom.Position.PositionList;
 import gov.nasa.worldwind.ogc.kml.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import javax.xml.stream.XMLStreamException;
 import uk.ac.cam.cares.twa.cities.model.geo.EnvelopeCentroid;
 import uk.ac.cam.cares.twa.cities.model.geo.Utilities;
 
-// the output of running this class should be the generation of the summary file in csv (gmlid, envelope[xmin, xmax, ymin, ymax], envelopeCentroid, corresponding file)
+// the output of running this class should be the generation of the summary file in csv
+// (gmlid, envelope[xmin, xmax, ymin, ymax], envelopeCentroid, corresponding file)
 public class KMLParserTask implements Runnable{
 
   private String[] filelist;
   private File currFile;
-  private final String outCsvFile = "summary_";
+  private final String outCsvName = "summary_";
   private final String outFileExt = ".csv";
-  private final String outputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\";
+  private final String outputDir;
   private String inputDir;
   public List<String[]> dataContent = new ArrayList<>();
   private List<String> gmlidList = new ArrayList<>();
-  private KMLTilingTask kmltiling = new KMLTilingTask("4326", "25833");
+  private KMLTilingTask kmltiling;
+  private String outputFile;
 
-  public KMLParserTask(String path){
+  public KMLParserTask(String intputDir, String outputDir){
 
-    this.filelist = Utilities.getInputFiles(path);
-    this.inputDir = Utilities.getInputDir(path);
+    this.filelist = Utilities.getInputFiles(intputDir);
+    this.inputDir = Utilities.getInputDir(intputDir);
 
+    this.outputDir = Utilities.createDir(outputDir);
+    this.kmltiling = new KMLTilingTask("4326", "25833", outputDir);
   }
 
   @Override
@@ -52,7 +53,7 @@ public class KMLParserTask implements Runnable{
     long end1 = System.currentTimeMillis();
 
     if (this.dataContent.size() != 0) {
-      String outputFile = this.createCSVFile(this.dataContent);
+      this.outputFile = this.createCSVFile(this.dataContent);
 
       System.out.println("Checking if the gmlidList is unique: " + Utilities.isUnique(this.gmlidList));
       System.out.println("Saving the file in : " + outputFile);
@@ -64,6 +65,13 @@ public class KMLParserTask implements Runnable{
     System.out.println("The KMLParserTask took " + (end2 - start) + " ms");
   }
 
+  public double[] getUpdatedExtent(){
+    return kmltiling.getExtent();
+  }
+
+  public String getOutFile(){
+    return this.outputFile;
+  }
 
   public void getPlacemarks(KMLAbstractFeature feature)
   {
@@ -99,15 +107,7 @@ public class KMLParserTask implements Runnable{
         //ArrayList positionL = (ArrayList) polygon.getOuterBoundary().getCoordinates().list;
         //System.out.println("MulitiGeometry placemark at: " + positionL);
       }
-      else if (geom instanceof KMLPolygon) {}
-      else if (geom instanceof KMLLinearRing) {} // Handle line, polygon, etc placemarks
-      else if (geom instanceof KMLLineString)
-      {
-        // Handle LineString
-        PositionList coordinates = ((KMLLineString) geom).getCoordinates();
-        ArrayList positionL = (ArrayList) coordinates.list;
-        System.out.println("LineString placemark at: " + ((KMLLineString) geom).getCoordinates());
-      }
+
     }
   }
 
@@ -121,7 +121,6 @@ public class KMLParserTask implements Runnable{
         output += sep;
       }
     }
-
     return output;
   }
 
@@ -131,7 +130,7 @@ public class KMLParserTask implements Runnable{
     List<String[]> csvContent = new ArrayList<>();
     csvContent.add(header);
     csvContent.addAll(dataContent);
-    String outputPath = this.outputDir + this.outCsvFile + dataContent.size() + this.outFileExt;
+    String outputPath = this.outputDir + "\\" +this.outCsvName + dataContent.size() + this.outFileExt;
     try (CSVWriter writer = new CSVWriter(new FileWriter(outputPath))) {
       writer.writeAll(csvContent);
       System.out.println("The summary has " + dataContent.size() + " rows.");
@@ -145,77 +144,11 @@ public class KMLParserTask implements Runnable{
 
       String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder_1\\charlottenberg_extruded_blaze.kml";
       String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
+      String outputDir = null;
 
-      KMLParserTask parserTask = new KMLParserTask(inputDir);
+      KMLParserTask parserTask = new KMLParserTask(inputDir, outputDir);
       parserTask.run();
 
-
-
-/*
-      String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\summary.csv";
-      List<String[]> csvData = new ArrayList<>();
-      try (CSVReader reader = new CSVReader(new FileReader(inputfile))) {
-        String[] header = reader.readNext();
-        csvData = reader.readAll();
-        //r.forEach(x -> System.out.println(Arrays.toString(x)));
-      } catch (IOException e) {
-        e.printStackTrace();
-      } catch (CsvException e) {
-        e.printStackTrace();
-      }
-      int index = 0;
-      String outputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\summary_folder\\";
-
-      while (index < csvData.size() && index + 5000 < csvData.size()) {
-        List<String[]> newList = csvData.subList(index, index + 5000);
-        try (CSVWriter writer = new CSVWriter(
-            new FileWriter(outputDir + "summary_" + index + ".csv"))) {
-          writer.writeAll(newList);
-          index += 5000;
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
-      List<String[]> lastList = csvData.subList(index, csvData.size());
-      try (CSVWriter writer = new CSVWriter(
-          new FileWriter(outputDir + "summary_" + index + ".csv"))) {
-        writer.writeAll(lastList);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-
- */
     }
 
 }
-/*// re-arrange the generated file and split it into chunk with a size of 50000
-      String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\summary.csv";
-      List<String[]> csvData = new ArrayList<>();
-      try (CSVReader reader = new CSVReader(new FileReader(inputfile))) {
-        csvData = reader.readAll();
-        //r.forEach(x -> System.out.println(Arrays.toString(x)));
-      } catch (IOException e) {
-        e.printStackTrace();
-      } catch (CsvException e) {
-        e.printStackTrace();
-      }
-      int index = 0;
-      String outputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\summary_folder\\";
-
-      while (index < csvData.size() && index + 5000 < csvData.size()) {
-        List<String[]> newList = csvData.subList(index, index + 5000);
-        try (CSVWriter writer = new CSVWriter(
-            new FileWriter(outputDir + "summary_" + index + ".csv"))) {
-          writer.writeAll(newList);
-          index += 5000;
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
-      List<String[]> lastList = csvData.subList(index, csvData.size() - 1);
-      try (CSVWriter writer = new CSVWriter(
-          new FileWriter(outputDir + "summary_" + index + ".csv"))) {
-        writer.writeAll(lastList);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }*/

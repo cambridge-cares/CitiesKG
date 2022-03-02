@@ -101,6 +101,16 @@ public class Utilities {
     return output;
   }
 
+  public static String createDir(String dirPath){
+    File directory = new File(dirPath);
+    if (! directory.exists()){
+      directory.mkdir();
+      // If you require it to make the entire directory path including parents,
+      // use directory.mkdirs(); here instead.
+    }
+    return directory.getAbsolutePath();
+
+  }
   public static boolean isUnique (List<String> itemList) {
     Set<String> itemSet = new HashSet<>(itemList);
     boolean unique = false;

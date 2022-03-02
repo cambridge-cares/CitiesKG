@@ -3,8 +3,13 @@ package uk.ac.cam.cares.twa.cities.tasks;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import de.micromata.opengis.kml.v_2_2_0.*;
+
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import java.io.*;
 import java.nio.file.Files;
@@ -20,7 +25,7 @@ public class KMLSorterTask implements Runnable {
     private int cols; // the number of tile columns
     private File[] dirList; // list of unsorted kml files
     private JSONObject summaryJSON; // json file that describes which building is in which tile
-    private JSONObject masterJSON; // master json file
+
     private HashMap<String, List<Feature>> tileFeatureMap = new HashMap<>(); // hashmap containing tile name as key,
     // and a list of features for that tile as the value
     private int count = 0; // count the number of buildings
@@ -28,39 +33,43 @@ public class KMLSorterTask implements Runnable {
 
     private String[] csvHeader;
     private HashMap<String, ArrayList<String[]>> csvData;
-    private String unsortedDir;
+
     private List<Feature> allFeatures;
     private HashMap<String, Feature> featuresMap = new HashMap<>();// <gmlid, features>
     private int buildingInTiles = 0;
+    private String tilesFolder = "sorted\\";
 
-    private String outDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\sorted_berlin\\";
-    private String summaryCSV = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\sorted_tiles_summary.csv";
+    private String unsortedDir;  // "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\"
+    private String projectFolder; // "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\"
+    private String outputDir; // "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\sorted_berlin\\"
+    private String summaryCSV; // "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\sorted_tiles_summary.csv";
+    private String masterJSON; // "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\test_extruded_MasterJSON.json";
+
     private HashMap<String, Boolean> fileStatus = new HashMap<>();
+
+    public KMLSorterTask(String unsortedDir, String projectFolder, String masterJSON, String sortedSummary){
+        this.unsortedDir = unsortedDir;
+        this.projectFolder = projectFolder;
+        this.masterJSON = masterJSON;
+        this.summaryCSV = sortedSummary;
+        this.outputDir = Utilities.createDir(projectFolder + tilesFolder);
+
+    }
 
     @Override
     public void run() {
         long start = System.currentTimeMillis();
         /* directory of unsorted kml files */
-        unsortedDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
         //unsortedDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\charlottenberg_extruded_blaze.kml";
         this.dirList = new File(unsortedDir).listFiles();
 
-        /* file location of one unsorted kml file */
-        //TODO: replace by getting one file from dirList
-        File test0 = new File("C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\test_0_extruded.kml");
+        List<StyleSelector> styles = getStylesFromKml(dirList[0]);
 
-        /* file location of where the tiles should be created */
-        String outDir = this.outDir;
-
-        List<StyleSelector> styles = getStylesFromKml(test0);
-
-        //String masterJSON = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\test_extruded_MasterJSON.json";
-
-        // @todo: read this from a masterjson
-        rows = 148;  //280  // [rows, cols] = [75, 84]
-        cols = 184;   // 368
+        setFields(new File(unsortedDir), masterJSON, new File(summaryCSV), "test");
+        //rows = 148;  //280  // [rows, cols] = [75, 84]
+        //cols = 184;   // 368
         name = "test";
-        createFolders(outDir);
+        createFolders(this.outputDir);
         this.csvData = readCSV2Map(this.summaryCSV);
         initFilesStatus(unsortedDir);
 
@@ -72,9 +81,8 @@ public class KMLSorterTask implements Runnable {
 
         for (int i = 0; i < rows; i++) {
             for (int k = 0; k < cols; k++) {
-
                 String name = this.name + "_Tile_" + i + "_" + k + "_extruded";
-                File out = new File(outDir + "\\Tiles\\" + i + "\\" + k + "\\" + name + ".kml");
+                File out = new File(this.outputDir + "\\Tiles\\" + i + "\\" + k + "\\" + name + ".kml");
                 if (out.exists()){
                     continue;
                 }
@@ -93,6 +101,15 @@ public class KMLSorterTask implements Runnable {
         System.out.println("Features have written: " + this.buildingInTiles);
         //System.out.println("files sorted: " + this.files);
 
+        // Copy MasterJson to the outputDir
+        Path src = Paths.get(this.masterJSON);
+        String masterFile = new File(this.masterJSON).getName();
+        Path dest = Paths.get(this.outputDir + "\\" + this.tilesFolder + "\\" + masterFile);
+        try {
+            Files.copy(src, dest);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     // Only execute one time in the beginning
@@ -241,18 +258,25 @@ public class KMLSorterTask implements Runnable {
     }
 
     // set inputs as fields
-    private void setFields(File dir, File masterJSON, File summaryJSON, String projName) {
+    private void setFields(File dir, String masterJSON, File summaryJSON, String projName) {
         this.name = projName;
         this.dirList = dir.listFiles();
+        JSONObject test;
         try {
-            this.masterJSON = new JSONObject(new String(Files.readAllBytes(masterJSON.toPath())));
-            this.summaryJSON = new JSONObject(new String(Files.readAllBytes(summaryJSON.toPath())));
+            test = new JSONObject(new String(Files.readAllBytes(new File(masterJSON).toPath())));
+            //this.summaryJSON = new JSONObject(new String(Files.readAllBytes(summaryJSON.toPath())));
         } catch (IOException e) {
             throw new JPSRuntimeException(e);
         }
-        this.rows = this.masterJSON.getInt("rownum");
-        this.cols = this.masterJSON.getInt("colnum");
+        this.rows = test.getInt("rownum");
+        this.cols = test.getInt("colnum");
+        System.out.println("Reading from MasterJSON: " + masterJSON);
+        System.out.println("colnum:" + cols + ", rownum: " + rows);
+        if (rows == 0 || cols == 0) {
+            throw new RuntimeException("Colnum and Rownum are invalid!");
+        }
     }
+
 
     // create one List<Feature> for each tile
     private void createFeatureLists() {
@@ -264,35 +288,6 @@ public class KMLSorterTask implements Runnable {
         }
     }
 
-    /*
-    // sort buildings for one kml file
-    private void sortBuildings(File file) {
-        List<Feature> features = getFeaturesFromKml(file);
-        // get all buildings from summary json file
-        ArrayList<String> buildings = new ArrayList<>(this.summaryJSON.keySet());
-        // loop through all features in the kml file
-        for (Feature feature : features) {
-            if (buildings.contains(feature.getName())) {
-                this.count++;
-                // manually set extruded and tessellate to true
-                Placemark placemark = (Placemark) feature;
-                MultiGeometry geoms = (MultiGeometry) placemark.getGeometry();
-                for (Geometry geom : geoms.getGeometry()) {
-                    Polygon polygon = (Polygon) geom;
-                    polygon.setExtrude(true);
-                    polygon.setTessellate(true);
-                }
-                // get name of tile that feature belongs to
-                JSONObject building = summaryJSON.getJSONObject(feature.getName());
-                JSONArray tile = (JSONArray) building.get("tile");
-                String listName = this.name + "_Tile_" + tile.getInt(0) + "_" + tile.getInt(1) + "_extruded";
-                // put feature in correct list
-                (this.tileFeatureMap.get(listName)).add(feature);
-            }
-        }
-        System.out.println(file.getAbsolutePath());
-    }
-     */
 
     // get all features from one kml file
     /*
@@ -356,9 +351,13 @@ public class KMLSorterTask implements Runnable {
     }
 
     public static void main(String[] args){
-    KMLSorterTask kmlSorter=new KMLSorterTask();
-    kmlSorter.run();
+        String unsortedDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
+        String projectFolder = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\";
+        String summaryCSV = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\sorted_tiles_summary.csv";
+        String masterJSON = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\test_extruded_MasterJSON.json";
+        KMLSorterTask kmlSorter=new KMLSorterTask(unsortedDir, projectFolder, masterJSON, summaryCSV);
+        kmlSorter.run();
 
     }
-    }
+}
 

@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import org.apache.commons.lang3.ObjectUtils.Null;
 import org.gdal.ogr.Geometry;
 import uk.ac.cam.cares.twa.cities.model.geo.Transform;
 import uk.ac.cam.cares.twa.cities.model.geo.Utilities;
@@ -40,18 +41,24 @@ public class KMLTilingTask implements Runnable{
   private double initTileSize = 250;  //125
   private double tileLength;  // RowNumber
   private double tileWidth;  // ColNumber
-  private String MasterJson = "test_extruded_MasterJSON.json";
+  private String masterJSONName = "test_extruded_MasterJSON.json";
+  public String sortedCSVname = "sorted_tiles_summary.csv";
 
   private double[] transformedExtent = new double[4]; // [Xmin, Xmax, Ymin, Ymax]  // 25833
   private String outCsvFile = "new_summary";
   private String typecsv = ".csv";
   private String[] CSVHeader = {"gmlid", "envelope", "envelopeCentroid", "tiles", "filename"};
-  private String outputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\";
+  private String outputDir;
   public String[] filesList;
+  public String sortedCSVFile;
+  private String masterJSONFile;
 
 
 
-  public KMLTilingTask(String kmlCRS, String computeCRS) {
+/* This class will help to
+ * 1. calculate the NumColRow (number of rows and columns) based on the initial tile size
+ * 2. */
+  public KMLTilingTask(String kmlCRS, String computeCRS, String outputDir) {
 
     this.kmlSRID = kmlCRS;
     this.transformSRID = computeCRS;
@@ -64,11 +71,22 @@ public class KMLTilingTask implements Runnable{
     Textent_Xmax = Double.NEGATIVE_INFINITY;
     Textent_Ymin = Double.POSITIVE_INFINITY;
     Textent_Ymax = Double.NEGATIVE_INFINITY;
+
+    this.outputDir = outputDir;
+    this.sortedCSVFile = this.outputDir + sortedCSVname;
+    this.masterJSONFile = this.outputDir + masterJSONName;
+
+
   }
 
   @Override
   public void run() {
 
+    // Prepare the parameter (number of columns and rows) and update tileWidth and tileLength that it needs for the following tiling
+    int[] numRowCol = getNumRowCol();
+    createMasterJson();
+
+    // Start calculating tile position
     long start1 = System.currentTimeMillis();
     List<String[]> csvData = new ArrayList<>();
     CSVParser csvParser = new CSVParserBuilder().withEscapeChar('\0').build(); // with this '\0' can read backslash; with '\\' can not read backslash
@@ -101,17 +119,15 @@ public class KMLTilingTask implements Runnable{
             {
               //compare two object and return an integer
               return o1[3].compareTo(o2[3]);}
-
           }
       );
 
-      try (CSVWriter writer = new CSVWriter(new FileWriter(
-          outputDir + "sorted_tiles_summary.csv"))) { //inputfile
+      try (CSVWriter writer = new CSVWriter(new FileWriter(this.sortedCSVFile))) { //inputfile
         writer.writeNext(CSVHeader);
         writer.writeAll(outCSVData);
         outCSVData = new ArrayList<>(); // empty outputData
         finish1 = System.currentTimeMillis();
-        System.out.println("The tiles information is stored in " + outputDir + "tiles_summary.csv");
+        System.out.println("The tiles information is stored in " + this.sortedCSVFile);
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -119,6 +135,10 @@ public class KMLTilingTask implements Runnable{
     long finish2 = System.currentTimeMillis();
 
     System.out.println("KMLTilingTask took total time: " + (finish2 - start1) + " ms");
+  }
+
+  public void setUp(String summaryCSV){
+    this.filesList = Utilities.getInputFiles(summaryCSV);
   }
 
   // Updated Extent: 13.09278683392157 13.758936971880468 52.339762874361156 52.662766032905616
@@ -148,7 +168,7 @@ public class KMLTilingTask implements Runnable{
   }
 
   /* The input is extentDim with 4326 */
-  public int[] getNumRowCol() {
+  private int[] getNumRowCol() {
 
     this.nRow = (int) (Math.ceil(
         (this.Textent_Ymax - this.Textent_Ymin) / this.initTileSize));
@@ -162,7 +182,7 @@ public class KMLTilingTask implements Runnable{
 
   }
 
-  public double[] reproject(String geomStr, int from_epsg, int to_epsg) {
+  private double[] reproject(String geomStr, int from_epsg, int to_epsg) {
     String[] splitStr = geomStr.split("#");
     double[] geomArr = new double[splitStr.length];
     for (int i = 0; i < splitStr.length; i++) {
@@ -187,7 +207,7 @@ public class KMLTilingTask implements Runnable{
   }
 
   /* Compute the tile location based on the transformed extent (based on meter)*/
-  public Integer[] assignTiles(String centroidStr) {
+  private Integer[] assignTiles(String centroidStr) {
     double[] transformedCentroid = reproject(centroidStr, Integer.valueOf(kmlSRID), Integer.valueOf(transformSRID));
     Integer col = (int) (Math.floor(
         (transformedCentroid[0] - this.Textent_Xmin) / this.tileWidth));
@@ -199,7 +219,7 @@ public class KMLTilingTask implements Runnable{
   }
 
 
-  public void createMasterJson(){
+  private void createMasterJson(){
 
     LinkedHashMap masterjson = new LinkedHashMap();
     masterjson.put("version", "1.0.0");
@@ -223,7 +243,7 @@ public class KMLTilingTask implements Runnable{
     String prettyJsonString = gson.toJson(masterjson, masterjson.getClass());
     System.out.println(prettyJsonString);
 
-    try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(outputDir + MasterJson))) {
+    try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(this.masterJSONFile))) {
       writer.write(prettyJsonString);
     } catch (Exception ex) {
       System.err.println("Couldn't write masterjson\n" + ex.getMessage());
@@ -231,13 +251,21 @@ public class KMLTilingTask implements Runnable{
 
   }
 
+  public String getsortedCSVFile(){
+    return this.sortedCSVFile;
+  }
+  public String getmasterJSONFile() {
+    return this.masterJSONFile;
+  }
+
   public static void main(String[] args) {
 
     //String inputPath = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\summary_chunk5000\\";
     String inputPath = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\summary_532051.csv";
+    String outputDir ="C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\";
+    KMLTilingTask kmltiling = new KMLTilingTask("4326", "25833", outputDir);
+    kmltiling.setUp(inputPath);
 
-    KMLTilingTask kmltiling = new KMLTilingTask("4326", "25833");
-    kmltiling.filesList = Utilities.getInputFiles(inputPath);
     kmltiling.updateExtent(new double[]{13.09278683392157, 13.758936971880468, 52.339762874361156, 52.662766032905616});  // whole berlin
 
     //kmltiling.updateExtent(new double[]{13.19134362161867, 13.342529716588182, 52.46676146536689, 52.54844920036194}); // charlottenberg self_estimate
