@@ -4,16 +4,11 @@ import org.apache.jena.arq.querybuilder.AbstractQueryBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.mockito.MockedStatic;
-import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
-import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.jps.base.query.sparql.PrefixToUrlMap;
 
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.mockito.Mockito;
 
 /**
  * A utility class for looking up prefixes in the JPS_BASE_LIB {@link PrefixToUrlMap} and specifications in the

@@ -180,13 +180,11 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>3.11.2</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-inline</artifactId>
             <version>3.11.2</version>
-            <scope>compile</scope>
         </dependency>
         <!-- https://repo.osgeo.org/repository/release/org.geotools/gt-main -->
         <dependency>
