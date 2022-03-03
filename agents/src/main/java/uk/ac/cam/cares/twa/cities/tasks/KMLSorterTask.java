@@ -104,7 +104,7 @@ public class KMLSorterTask implements Runnable {
         // Copy MasterJson to the outputDir
         Path src = Paths.get(this.masterJSON);
         String masterFile = new File(this.masterJSON).getName();
-        Path dest = Paths.get(this.outputDir + "\\" + this.tilesFolder + "\\" + masterFile);
+        Path dest = Paths.get(this.outputDir + "\\" + masterFile);
         try {
             Files.copy(src, dest);
         } catch (IOException e) {
