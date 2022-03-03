@@ -153,10 +153,9 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
    * Queries the database for the coordinate reference system to use and sets it as the {@link GeometryType} source crs.
    */
   private void importSrs() throws JPSRuntimeException {
-    // TODO: convert ocgml:srsname to a SchemaManagerAdapter constant when it exists.
     SelectBuilder srsQuery = new SelectBuilder();
-    SPARQLUtils.addPrefix("ocgml:srsname", srsQuery);
-    srsQuery.addVar(QM + SRS).addWhere(NodeFactory.createURI(namespaceIri), "ocgml:srsname", QM + SRS);
+    SPARQLUtils.addPrefix(SchemaManagerAdapter.ONTO_SRSNAME, srsQuery);
+    srsQuery.addVar(QM + SRS).addWhere(NodeFactory.createURI(namespaceIri), SchemaManagerAdapter.ONTO_SRSNAME, QM + SRS);
     JSONArray srsResponse = taskParams.makeContext().query(srsQuery.buildString());
     if (srsResponse.length() == 0) {
       throw new JPSRuntimeException(NO_CRS_EXCEPTION_TEXT);
