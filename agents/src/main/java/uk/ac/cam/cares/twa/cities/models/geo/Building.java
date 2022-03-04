@@ -25,8 +25,8 @@ public class Building extends OntoCityGMLModel {
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CLASS) protected String classID; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CLASS_CODESPACE) protected String classCodespace; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_FUNCTION_CODESPACE) protected String functionCodespace; // check-type
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_FOOTPRINT_ID) protected String lod0FootprintId; // check-type
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ROOFPRINT_ID) protected String lod0RoofprintId; // check-type
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_FOOTPRINT_ID) protected SurfaceGeometry lod0FootprintId; // check-type
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ROOFPRINT_ID) protected SurfaceGeometry lod0RoofprintId; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_LOD1_MULTI_SURFACE_ID) protected SurfaceGeometry lod1MultiSurfaceId; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_LOD2_MULTI_SURFACE_ID) protected SurfaceGeometry lod2MultiSurfaceId; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_LOD3_MULTI_SURFACE_ID) protected SurfaceGeometry lod3MultiSurfaceId; // check-type

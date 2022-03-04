@@ -13,6 +13,7 @@ import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
 
 import java.math.BigInteger;
+import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -219,6 +220,9 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
    * <code>SurfaceGeometry</code>, and links the new <code>ThematicSurface</code>s and the <code>Building</code>.
    */
   private void restructureAndPush() {
+    // Initialise ground (Multi-)Surface
+    SurfaceGeometry ground = null;
+
     for (int i = 0; i < topLevelThematicGeometries.size(); i++) {
       for (SurfaceGeometry topLevelGeometry : topLevelThematicGeometries.get(i)) {
         String uuid = UUID.randomUUID().toString();
@@ -239,12 +243,25 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
         else if (lod == 4) thematicSurface.setLod4MultiSurfaceId(topLevelGeometry);
         thematicSurface.setObjectClassId(BigInteger.valueOf(33 + i));
         thematicSurface.setBuildingId(context.getModel(Building.class, topLevelGeometry.getCityObjectId().toString()));
+        // Get Building and create Ground MultiSurface
+        if (i == Theme.GROUND.index) {
+          Building bldg = context.getModel(Building.class, topLevelGeometry.getCityObjectId().toString());
+          bldg.pullAll();
+          String groundSurfaceIri = params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH + SLASH + uuid;
+          ground = context.createNewModel(SurfaceGeometry.class, groundSurfaceIri);
+          ground.setCityObjectId(URI.create(bldg.getIri()));
+          ground.setGmlId(uuid);
+          bldg.setLod0FootprintId(ground);
+        }
         // Reassign SurfaceGeometry hierarchical properties
         topLevelGeometry.setParentId(null);
         List<SurfaceGeometry> allDescendantGeometries = topLevelGeometry.getFlattenedSubtree(false);
         for (SurfaceGeometry geometry : allDescendantGeometries) {
           geometry.setRootId(topLevelGeometry.getId());
           geometry.setCityObjectId(thematicSurface.getId());
+          if (i == Theme.GROUND.index) {
+            geometry.setParentId(ground);
+          }
         }
       }
     }
