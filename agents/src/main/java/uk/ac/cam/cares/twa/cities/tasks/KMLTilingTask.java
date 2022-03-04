@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import org.apache.commons.lang3.ObjectUtils.Null;
 import org.gdal.ogr.Geometry;
+import org.openrdf.query.algebra.In;
 import uk.ac.cam.cares.twa.cities.model.geo.Transform;
 import uk.ac.cam.cares.twa.cities.model.geo.Utilities;
 
@@ -38,7 +39,7 @@ public class KMLTilingTask implements Runnable{
   private double Textent_Xmax;
   private double Textent_Ymin;
   private double Textent_Ymax;
-  private double initTileSize = 250;  //125
+  private double initTileSize;  //125, 250
   private double tileLength;  // RowNumber
   private double tileWidth;  // ColNumber
   private String masterJSONName = "test_extruded_MasterJSON.json";
@@ -53,12 +54,10 @@ public class KMLTilingTask implements Runnable{
   public String sortedCSVFile;
   private String masterJSONFile;
 
-
-
 /* This class will help to
  * 1. calculate the NumColRow (number of rows and columns) based on the initial tile size
  * 2. */
-  public KMLTilingTask(String kmlCRS, String computeCRS, String outputDir) {
+  public KMLTilingTask(String kmlCRS, String computeCRS, String outputDir, int initTileSize) {
 
     this.kmlSRID = kmlCRS;
     this.transformSRID = computeCRS;
@@ -75,7 +74,7 @@ public class KMLTilingTask implements Runnable{
     this.outputDir = outputDir;
     this.sortedCSVFile = this.outputDir + sortedCSVname;
     this.masterJSONFile = this.outputDir + masterJSONName;
-
+    this.initTileSize = initTileSize;
 
   }
 
@@ -93,7 +92,7 @@ public class KMLTilingTask implements Runnable{
 
     for (String inputfile : filesList) {
       try (CSVReader reader = new CSVReaderBuilder(new FileReader(inputfile)).withCSVParser(csvParser).build()) {
-        CSVHeader = reader.readNext();
+        String[] header = reader.readNext();
         csvData = reader.readAll();
       } catch (IOException e) {
         e.printStackTrace();
@@ -102,7 +101,6 @@ public class KMLTilingTask implements Runnable{
       }
 
       Integer[] tilePosition;
-
       List<String[]> outCSVData = new ArrayList<>();
 
       for (String[] inputRow : csvData) {  // skip the header
@@ -141,6 +139,12 @@ public class KMLTilingTask implements Runnable{
     this.filesList = Utilities.getInputFiles(summaryCSV);
   }
 
+  public String getsortedCSVFile(){
+    return this.sortedCSVFile;
+  }
+  public String getmasterJSONFile() {
+    return this.masterJSONFile;
+  }
   // Updated Extent: 13.09278683392157 13.758936971880468 52.339762874361156 52.662766032905616
   /*
    * Update the boundary of the extent */
@@ -153,7 +157,7 @@ public class KMLTilingTask implements Runnable{
     if (geomEnvelope[3] >= this.extent_Ymax) { this.extent_Ymax = geomEnvelope[3]; }
 
     // updateExtent in 25833
-    double[] Tenvelope = Transform.reprojectEnvelope(geomEnvelope, 4326, 25833);
+    double[] Tenvelope = Transform.reprojectEnvelope(geomEnvelope, Integer.valueOf(kmlSRID), Integer.valueOf(transformSRID));
 
     if (Tenvelope[0] <= this.Textent_Xmin) { this.Textent_Xmin = Tenvelope[0]; }
     if (Tenvelope[1] >= this.Textent_Xmax) { this.Textent_Xmax = Tenvelope[1]; }
@@ -251,13 +255,9 @@ public class KMLTilingTask implements Runnable{
 
   }
 
-  public String getsortedCSVFile(){
-    return this.sortedCSVFile;
-  }
-  public String getmasterJSONFile() {
-    return this.masterJSONFile;
-  }
 
+
+  /*
   public static void main(String[] args) {
 
     //String inputPath = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\summary_chunk5000\\";
@@ -275,6 +275,7 @@ public class KMLTilingTask implements Runnable{
     kmltiling.createMasterJson();
     kmltiling.run();
   }
+   */
 
 
 }

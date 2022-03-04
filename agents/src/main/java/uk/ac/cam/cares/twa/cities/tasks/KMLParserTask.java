@@ -26,13 +26,13 @@ public class KMLParserTask implements Runnable{
   private KMLTilingTask kmltiling;
   private String outputFile;
 
-  public KMLParserTask(String intputDir, String outputDir){
+  public KMLParserTask(String intputPath, String outputDir, String CRSinDegree, String CRSinMeter, int initTileSize){
 
-    this.filelist = Utilities.getInputFiles(intputDir);
-    this.inputDir = Utilities.getInputDir(intputDir);
+    this.filelist = Utilities.getInputFiles(intputPath);
+    this.inputDir = Utilities.getInputDir(intputPath);
 
     this.outputDir = Utilities.createDir(outputDir);
-    this.kmltiling = new KMLTilingTask("4326", "25833", outputDir);
+    this.kmltiling = new KMLTilingTask(CRSinDegree, CRSinMeter, outputDir, initTileSize); // 4326 --> 25833 or 4326 --> 3414
   }
 
   @Override
@@ -140,6 +140,7 @@ public class KMLParserTask implements Runnable{
     return outputPath;
   }
 
+/*
     public static void main(String[] args) {
 
       String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder_1\\charlottenberg_extruded_blaze.kml";
@@ -150,5 +151,6 @@ public class KMLParserTask implements Runnable{
       parserTask.run();
 
     }
+ */
 
 }

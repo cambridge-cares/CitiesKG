@@ -140,6 +140,7 @@ public class CityExportAgent extends JPSAgent {
         String outputPath = outTmpDir + "/test_" + index + ".kml";
         return outputPath;
     }
+
     /**
      * retrieves the server information from the endpointUri -- host, port, namespace
      *
@@ -237,15 +238,19 @@ public class CityExportAgent extends JPSAgent {
     private static void tilingKML(String path2unsortedKML, String outputDir){
         //String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder_1\\charlottenberg_extruded_blaze.kml";
         //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
+        String CRSinDegree = "4326";  // global WGS 84
+        String CRSinMeter = "25833";//"32648"; "25833"
+        int initTileSize = 250;
+        long start = System.currentTimeMillis();
 
         // 1. KMLParserTask
-        KMLParserTask parserTask = new KMLParserTask(path2unsortedKML, outputDir);
+        KMLParserTask parserTask = new KMLParserTask(path2unsortedKML, outputDir, CRSinDegree, CRSinMeter, initTileSize);
         parserTask.run();
         double[] updatedExtent = parserTask.getUpdatedExtent();
         String summaryCSV = parserTask.getOutFile();
 
         // 2. KMLTilingTask
-        KMLTilingTask kmltiling = new KMLTilingTask("4326", "25833", outputDir);
+        KMLTilingTask kmltiling = new KMLTilingTask(CRSinDegree, CRSinMeter, outputDir, initTileSize);  // 25833
         kmltiling.setUp(summaryCSV);
         kmltiling.updateExtent(updatedExtent);  // whole berlin: new double[]{13.09278683392157, 13.758936971880468, 52.339762874361156, 52.662766032905616}
         kmltiling.run();
@@ -256,11 +261,15 @@ public class CityExportAgent extends JPSAgent {
         // 3. KMLSorterTask
         KMLSorterTask kmlSorter=new KMLSorterTask(path2unsortedKML, outputDir, masterJSONFile, sortedCSVFile);
         kmlSorter.run();
-
+        long end = System.currentTimeMillis();
+        System.out.println("The re-arrangement of KMLs takes: " + (end - start) / 1000 + " seconds.");
 
     }
+
     public static void main(String[] args) {
         String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
+        //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\ura_all_footprint.kml";
+        //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\charlottenberg_extruded_blaze.kml";
         String outputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\";
         tilingKML(inputDir, outputDir);
     }
