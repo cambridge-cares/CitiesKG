@@ -14,9 +14,12 @@ import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
+import org.geotools.referencing.CRS;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
@@ -75,6 +78,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
   // Exception and error text
   private static final String NO_CRS_EXCEPTION_TEXT = "Namespace has no CRS specified.";
   private static final String MULTIPLE_CRS_EXCEPTION_TEXT = "Namespace has more than one CRS specified.";
+  private static final String CRS_NOT_RECOGNIZED_EXCEPTION_TEXT = "CRS not recognised.";
   private static final String MODE_NOT_RECOGNIZED_EXCEPTION_TEXT = "Mode not recognised.";
 
   // Query labels
@@ -162,7 +166,13 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
     } else if (srsResponse.length() > 1) {
       throw new JPSRuntimeException(MULTIPLE_CRS_EXCEPTION_TEXT);
     } else {
-      GeometryType.setSourceCrsName(srsResponse.getJSONObject(0).getString(SRS));
+      try {
+        // Ensure exception is raised in case CRS is not recognised
+        CRS.decode(srsResponse.getJSONObject(0).getString(SRS));
+        GeometryType.setSourceCrsName(srsResponse.getJSONObject(0).getString(SRS));
+      } catch (FactoryException e) {
+        throw new JPSRuntimeException(CRS_NOT_RECOGNIZED_EXCEPTION_TEXT);
+      }
     }
   }
 
