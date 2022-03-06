@@ -272,13 +272,9 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
       bldg.setLod0FootprintId(ground);
 
       // Create LOD0 ground surfaces and append to Ground MultiSurface
-      SurfaceGeometry lodx;
       SurfaceGeometry lod0;
       for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.GROUND.index)) {
-        // Get properties from LODX geometry ...
-        lodx = context.getModel(SurfaceGeometry.class, geometry.getIri().toString());
-        context.pullPartial(lodx, "geometryType");
-        // ... and construct LOD0 copy
+        // Construct LOD0 copy of geometry
         uuid = "UUID_" + UUID.randomUUID().toString();
         String lod0SurfaceIri = params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH + SLASH + uuid;
         lod0 = context.createNewModel(SurfaceGeometry.class, lod0SurfaceIri);
@@ -286,7 +282,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
         lod0.setParentId(ground);
         lod0.setRootId(URI.create(ground.getIri()));
         lod0.setGmlId(uuid);
-        lod0.setGeometryType(lodx.getGeometryType());
+        lod0.setGeometryType(geometry.getGeometryType());
         lod0.setIsComposite(BigInteger.valueOf(0));
       }
 
