@@ -9,7 +9,7 @@ Content-Type: application/json
 //               : "validate" to do "comment" behaviour, but on thematic surfaces instead of lodXMultiSurfaces
 
 {"namespace": "http://localhost:9999/blazegraph/namespace/churchill/sparql/",
-  "lod1": "true",
+  "cityObjectIRI": "http://localhost:9999/blazegraph/namespace/churchill/sparql/building/UUID_d4068704-504a-4873-9a92-2d483876cb92/",
   "lod2": "true",
   "threshold": "5",
   "mode": "validate"}

@@ -22,6 +22,8 @@ import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
+import org.mockito.MockedConstruction;
+import org.mockito.Mockito;
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -498,13 +500,13 @@ public class CityImportAgentTest extends TestCase {
   }
 
   public void testImportFiles() {
-    //String fs = System.getProperty("file.separator");
-    String fs = "/";
+    String fs = System.getProperty("file.separator");
+    String forwardSlash = "/";
     CityImportAgent agent = new CityImportAgent();
     Field targetUrl = null;
     Field importDir = null;
     Method importFiles = null;
-    File testFile = new File(Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
+    File testFile = new File(Objects.requireNonNull(this.getClass().getResource(forwardSlash + "test.gml")).getFile());
     File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
     File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
 
@@ -530,7 +532,8 @@ public class CityImportAgentTest extends TestCase {
       }
     }
 
-    // Case: if the importDir doesn't not exist
+    // Case: if the importDir doesn't exist
+    // should return NullPointerException at Objects.requireNonNull(dirContent)
     try {
       importDir.set(agent, impD);
       importFiles.invoke(agent, impD);
@@ -544,76 +547,12 @@ public class CityImportAgentTest extends TestCase {
     }
 
     // Case: if the importDir exists but no content, the directory is deletable.
+    // should return empty string as it skips the if block at if (Objects.requireNonNull(dirContent).length > 0)
     try {
       if (impD.mkdirs()) {  // FILE.mkdirs() only return true for the first time, otherwise false
-        importFiles.invoke(agent, impD);
+        assertEquals(importFiles.invoke(agent, impD), "");
       }
-    } catch (InvocationTargetException | IllegalAccessException e) {
-      if (e.getClass() == InvocationTargetException.class) {
-        assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-            JPSRuntimeException.class);
-      } else {
-        fail();
-      }
-    } finally {
-      NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
-      try {
-        FileUtils.deleteDirectory(impD);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
-    // Case: with content
-    try {
-      if (impD.mkdirs()) {
-        Files.copy(testFile.toPath(), impF.toPath());
-        importFiles.invoke(agent, impD);
-      }
-    } catch (InvocationTargetException | IllegalAccessException | IOException e) {
-      if (e.getClass() == InvocationTargetException.class) {
-        assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-            JPSRuntimeException.class);
-      } else {
-        fail();
-      }
-    } finally {
-      NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
-      try {
-        FileUtils.deleteDirectory(impD);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
-
-    try {
-      if (impD.mkdirs()) {
-        Files.copy(testFile.toPath(), impF.toPath());
-        targetUrl.set(agent, "test");
-        importFiles.invoke(agent, impD);
-      }
-    } catch (InvocationTargetException | IllegalAccessException | IOException e) {
-      if (e.getClass() == InvocationTargetException.class) {
-        assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-            JPSRuntimeException.class);
-      } else {
-        fail();
-      }
-    } finally {
-      NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
-      try {
-        FileUtils.deleteDirectory(impD);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
-
-    try {
-      if (impD.mkdirs()) {
-        Files.copy(testFile.toPath(), impF.toPath());
-        targetUrl.set(agent, "http://localhost/test");
-        assertEquals(importFiles.invoke(agent, impD), "");    // Initial code: Splitfiles returns null, chunks = null, assume the file is small
-      }
-    } catch (InvocationTargetException | IllegalAccessException | IOException e) {
+    } catch (Exception e) {
       fail();
     } finally {
       NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
@@ -624,15 +563,62 @@ public class CityImportAgentTest extends TestCase {
       }
     }
 
+    try (MockedConstruction<BlazegraphServerTask> serverTask = Mockito.mockConstruction(BlazegraphServerTask.class, (mock, context) -> {
+      Mockito.when(mock.isRunning()).thenReturn(true);
+    })) {
+
+      // Case: if the importDir exists with content, but null targetUrl
+      // should return JPSRuntimeException
+      // caused by NullPointerException due to null targetUrl at new URI(targetUrl) in importChunk method
+      try {
+        if (impD.mkdirs()) {
+          Files.copy(testFile.toPath(), impF.toPath());
+          importFiles.invoke(agent, impD);
+        }
+      } catch (InvocationTargetException | IllegalAccessException | IOException e) {
+        if (e.getClass() == InvocationTargetException.class) {
+          assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
+                  JPSRuntimeException.class);
+        } else {
+          fail();
+        }
+      } finally {
+        NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
+        try {
+          FileUtils.deleteDirectory(impD);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+
+      // Case: test file is successfully imported
+      try {
+        if (impD.mkdirs()) {
+          Files.copy(testFile.toPath(), impF.toPath());
+          targetUrl.set(agent, "http://localhost/test");
+          assertEquals(importFiles.invoke(agent, impD), "file_part_1.gml \n");    // Initial code: Splitfiles returns null, chunks = null, assume the file is small
+        }
+      } catch (InvocationTargetException | IllegalAccessException | IOException e) {
+        fail();
+      } finally {
+        NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
+        try {
+          FileUtils.deleteDirectory(impD);
+        } catch (IOException e) {
+          fail();
+        }
+      }
+    }
+
     //other import functionality already tested in the corresponding tasks' tests
   }
 
   public void testSplitFile() {
-    //String fs = System.getProperty("file.separator");
-    String fs = "/";
+    String fs = System.getProperty("file.separator");
+    String forwardSlash = "/";
     CityImportAgent agent = new CityImportAgent();
     File testFile = new File(
-        Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
+        Objects.requireNonNull(this.getClass().getResource(forwardSlash + "test.gml")).getFile());
     File impF = new File(System.getProperty("java.io.tmpdir") + fs + "test.gml");
     Method splitFile;
 
@@ -671,11 +657,11 @@ public class CityImportAgentTest extends TestCase {
   }
 
   public void testImportChunk() {
-    //String fs = System.getProperty("file.separator");
-    String fs = "/";
+    String fs = System.getProperty("file.separator");
+    String forwardSlash = "/";
     CityImportAgent agent = new CityImportAgent();
     File testFile = new File(
-        Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
+        Objects.requireNonNull(this.getClass().getResource(forwardSlash + "test.gml")).getFile());
     File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
     File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
 
@@ -725,15 +711,16 @@ public class CityImportAgentTest extends TestCase {
   }
 
   public void testStartBlazegraphInstance() {
-    //String fs = System.getProperty("file.separator");
-    String fs = "/";
+    String fs = System.getProperty("file.separator");
+    String forwardSlash = "/";
     CityImportAgent agent = new CityImportAgent();
     File testFile = new File(
-        Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
+        Objects.requireNonNull(this.getClass().getResource(forwardSlash + "test.gml")).getFile());
     File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
     File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
 
     Method startBlazegraphInstance;
+    BlazegraphServerTask task = null;
 
     try {
       if (impD.mkdirs()) {
@@ -742,7 +729,7 @@ public class CityImportAgentTest extends TestCase {
       startBlazegraphInstance = agent.getClass()
           .getDeclaredMethod("startBlazegraphInstance", BlockingQueue.class, String.class);
       startBlazegraphInstance.setAccessible(true);
-      BlazegraphServerTask task = (BlazegraphServerTask) startBlazegraphInstance.invoke(agent,
+     task = (BlazegraphServerTask) startBlazegraphInstance.invoke(agent,
           new LinkedBlockingDeque<>(), impF.getAbsolutePath());
       Field stopF = task.getClass().getDeclaredField("stop");
       stopF.setAccessible(true);
@@ -750,17 +737,23 @@ public class CityImportAgentTest extends TestCase {
     } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IOException | NoSuchFieldException e) {
       fail();
     } finally {
-      NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
+      try {
+        task.stop();
+        FileUtils.deleteDirectory(impD);
+        NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
+      } catch (IOException e) {
+        fail();
+      }
     }
     //other functionality already tested in the corresponding task
   }
 
   public void testImportToLocalBlazegraphInstance() {
-    //String fs = System.getProperty("file.separator");
-    String fs = "/";
+    String fs = System.getProperty("file.separator");
+    String forwardSlash = "/";
     CityImportAgent agent = new CityImportAgent();
     File testFile = new File(
-        Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
+        Objects.requireNonNull(this.getClass().getResource(forwardSlash + "test.gml")).getFile());
     File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
     File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
 
@@ -787,11 +780,11 @@ public class CityImportAgentTest extends TestCase {
   }
 
   public void testExportToNquads() {
-    //String fs = System.getProperty("file.separator");
-    String fs = "/";
+    String fs = System.getProperty("file.separator");
+    String forwardSlash = "/";
     CityImportAgent agent = new CityImportAgent();
     File testFile = new File(
-        Objects.requireNonNull(this.getClass().getResource(fs + "test.gml")).getFile());
+        Objects.requireNonNull(this.getClass().getResource(forwardSlash + "test.gml")).getFile());
     File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
     File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
 

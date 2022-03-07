@@ -18,7 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 /**
  * To run ModelContextTest, you need:

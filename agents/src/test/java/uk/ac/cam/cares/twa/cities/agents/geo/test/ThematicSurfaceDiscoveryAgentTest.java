@@ -1,6 +1,5 @@
 package uk.ac.cam.cares.twa.cities.agents.geo.test;
 
-import com.hp.hpl.jena.rdf.model.ModelCon;
 import junit.framework.TestCase;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -15,7 +14,8 @@ import javax.ws.rs.HttpMethod;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+
 
 public class ThematicSurfaceDiscoveryAgentTest extends TestCase {
 

@@ -28,12 +28,10 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
-import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.AttributeValueJoiner;
 import org.citydb.config.Config;
@@ -52,39 +50,36 @@ import org.citygml4j.model.gml.geometry.complexes.GeometricComplexProperty;
 import org.citygml4j.model.gml.geometry.primitives.AbstractGeometricPrimitive;
 import org.citygml4j.model.gml.geometry.primitives.GeometricPrimitiveProperty;
 
-public class DBTransportationComplex implements DBImporter {
-	private final Connection batchConn;
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psTransComplex;
+public class DBTransportationComplex extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
-	private DBSurfaceGeometry surfaceGeometryImporter;
 	private DBTrafficArea trafficAreaImporter;
 	private GeometryConverter geometryConverter;
 	private AttributeValueJoiner valueJoiner;
-	private int batchCounter;
-
-	private int nullGeometryType;
-	private String nullGeometryTypeName;
 
 	public DBTransportationComplex(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.batchConn = batchConn;
-		this.importer = importer;
-
-		nullGeometryType = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType();
-		nullGeometryTypeName = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName();
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-
-		String stmt = "insert into " + schema + ".transportation_complex (id, objectclass_id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
-				"lod0_network, lod1_multi_surface_id, lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id) values " +
-				"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-		psTransComplex = batchConn.prepareStatement(stmt);
-
+		super(batchConn, config, importer);
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
 		trafficAreaImporter = importer.getImporter(DBTrafficArea.class);
 		geometryConverter = importer.getGeometryConverter();
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	@Override
+	protected String getTableName() {
+		return TableEnum.TRANSPORTATION_COMPLEX.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "transportationcomplex/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + sqlSchema + ".transportation_complex (id, objectclass_id, class, class_codespace, function, function_codespace, usage, usage_codespace, " +
+				"lod0_network, lod1_multi_surface_id, lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id) values " +
+				"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	}
 
 	protected long doImport(TransportationComplex transportationComplex) throws CityGMLImportException, SQLException {
@@ -97,38 +92,38 @@ public class DBTransportationComplex implements DBImporter {
 
 		// import transportation complex information
 		// primary id
-		psTransComplex.setLong(1, transportationComplexId);
+		preparedStatement.setLong(1, transportationComplexId);
 
 		// objectclass id
-		psTransComplex.setInt(2, featureType.getObjectClassId());
+		preparedStatement.setInt(2, featureType.getObjectClassId());
 
 		// tran:class
 		if (transportationComplex.isSetClazz() && transportationComplex.getClazz().isSetValue()) {
-			psTransComplex.setString(3, transportationComplex.getClazz().getValue());
-			psTransComplex.setString(4, transportationComplex.getClazz().getCodeSpace());
+			preparedStatement.setString(3, transportationComplex.getClazz().getValue());
+			preparedStatement.setString(4, transportationComplex.getClazz().getCodeSpace());
 		} else {
-			psTransComplex.setNull(3, Types.VARCHAR);
-			psTransComplex.setNull(4, Types.VARCHAR);
+			preparedStatement.setNull(3, Types.VARCHAR);
+			preparedStatement.setNull(4, Types.VARCHAR);
 		}
 
 		// tran:function
 		if (transportationComplex.isSetFunction()) {
 			valueJoiner.join(transportationComplex.getFunction(), Code::getValue, Code::getCodeSpace);
-			psTransComplex.setString(5, valueJoiner.result(0));
-			psTransComplex.setString(6, valueJoiner.result(1));
+			preparedStatement.setString(5, valueJoiner.result(0));
+			preparedStatement.setString(6, valueJoiner.result(1));
 		} else {
-			psTransComplex.setNull(5, Types.VARCHAR);
-			psTransComplex.setNull(6, Types.VARCHAR);
+			preparedStatement.setNull(5, Types.VARCHAR);
+			preparedStatement.setNull(6, Types.VARCHAR);
 		}
 
 		// tran:usage
 		if (transportationComplex.isSetUsage()) {
 			valueJoiner.join(transportationComplex.getUsage(), Code::getValue, Code::getCodeSpace);
-			psTransComplex.setString(7, valueJoiner.result(0));
-			psTransComplex.setString(8, valueJoiner.result(1));
+			preparedStatement.setString(7, valueJoiner.result(0));
+			preparedStatement.setString(8, valueJoiner.result(1));
 		} else {
-			psTransComplex.setNull(7, Types.VARCHAR);
-			psTransComplex.setNull(8, Types.VARCHAR);
+			preparedStatement.setNull(7, Types.VARCHAR);
+			preparedStatement.setNull(8, Types.VARCHAR);
 		}
 
 		// tran:lod0Network
@@ -178,53 +173,19 @@ public class DBTransportationComplex implements DBImporter {
 		}
 
 		if (multiCurve != null)
-			psTransComplex.setObject(9, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(multiCurve, batchConn));
+			preparedStatement.setObject(9, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(multiCurve, batchConn));
 		else
-			psTransComplex.setNull(9, nullGeometryType, nullGeometryTypeName);
+			preparedStatement.setNull(9, nullGeometryType, nullGeometryTypeName);
 
 		// tran:lodXMultiSurface
-		for (int i = 0; i < 4; i++) {
-			MultiSurfaceProperty multiSurfaceProperty = null;
-			long multiGeometryId = 0;
+		importSurfaceGeometryProperties(new MultiSurfaceProperty[]{
+				transportationComplex.getLod1MultiSurface(),
+				transportationComplex.getLod2MultiSurface(),
+				transportationComplex.getLod3MultiSurface(),
+				transportationComplex.getLod4MultiSurface()
+		}, new int[]{1, 2, 3, 4}, "_multi_surface_id", 10);
 
-			switch (i) {
-			case 0:
-				multiSurfaceProperty = transportationComplex.getLod1MultiSurface();
-				break;
-			case 1:
-				multiSurfaceProperty = transportationComplex.getLod2MultiSurface();
-				break;
-			case 2:
-				multiSurfaceProperty = transportationComplex.getLod3MultiSurface();
-				break;
-			case 3:
-				multiSurfaceProperty = transportationComplex.getLod4MultiSurface();
-				break;
-			}
-
-			if (multiSurfaceProperty != null) {
-				if (multiSurfaceProperty.isSetMultiSurface()) {
-					multiGeometryId = surfaceGeometryImporter.doImport(multiSurfaceProperty.getMultiSurface(), transportationComplexId);
-					multiSurfaceProperty.unsetMultiSurface();
-				} else {
-					String href = multiSurfaceProperty.getHref();
-					if (href != null && href.length() != 0) {
-						importer.propagateXlink(new DBXlinkSurfaceGeometry(
-								TableEnum.TRANSPORTATION_COMPLEX.getName(),
-								transportationComplexId, 
-								href, 
-								"lod" + (i + 1) + "_multi_surface_id"));
-					}
-				}
-			}
-
-			if (multiGeometryId != 0)
-				psTransComplex.setLong(10 + i, multiGeometryId);
-			else
-				psTransComplex.setNull(10 + i, Types.NULL);
-		}		
-
-		psTransComplex.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.TRANSPORTATION_COMPLEX);
 
@@ -275,19 +236,6 @@ public class DBTransportationComplex implements DBImporter {
 			importer.delegateToADEImporter(transportationComplex, transportationComplexId, featureType);
 
 		return transportationComplexId;
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psTransComplex.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psTransComplex.close();
 	}
 
 }

@@ -15,7 +15,7 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 public class FieldInterfaceTest extends TestCase {
 

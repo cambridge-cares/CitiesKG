@@ -136,13 +136,14 @@ public class BlazegraphServerTaskTest extends TestCase {
   public void testNewBlazegraphServerTaskSetupPathsMethod() {
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(),
         "/test/test.jnl");
+    String fs = System.getProperty("file.separator");
 
     try {
       Field PROPERTY_FILE = task.getClass().getDeclaredField("PROPERTY_FILE");
       PROPERTY_FILE.setAccessible(true);
       Method setupPaths = task.getClass().getDeclaredMethod("setupPaths");
       setupPaths.setAccessible(true);
-      assertEquals(setupPaths.invoke(task), "/test/test" + PROPERTY_FILE.get(task));   // Note: Difference of path between windows and mac
+      assertEquals(setupPaths.invoke(task), fs + "test" + fs + "test" + PROPERTY_FILE.get(task));
 
     } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       fail();
@@ -150,9 +151,9 @@ public class BlazegraphServerTaskTest extends TestCase {
   }
 
   public void testNewBlazegraphServerTaskSetupFilesMethod() {
-    BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(),
-        "/test/test.jnl");
     String fs = System.getProperty("file.separator");
+    BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(),
+            fs + "test" + fs + "test.jnl");
     File sysTmp = new File(System.getProperty("java.io.tmpdir"));
     File propFile = null;
 
@@ -181,8 +182,12 @@ public class BlazegraphServerTaskTest extends TestCase {
         setupFiles.invoke(task, propFilePath + fs + propFile.getName());
         fail();
       } catch (InvocationTargetException e) {
-        assertEquals(e.getTargetException().getClass().getSuperclass().getName(),
-            IOException.class.getName());
+        Class errorSuperclass = e.getTargetException().getClass().getSuperclass();
+        if ((errorSuperclass == IOException.class) || (errorSuperclass.getSuperclass() == IOException.class)) {
+          assertTrue(true);
+        } else {
+          fail();
+        }
       }
 
     } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException |

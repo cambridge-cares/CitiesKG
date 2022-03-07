@@ -8,8 +8,8 @@ import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 
 import java.util.Arrays;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class FieldKeyTest extends TestCase {
 
