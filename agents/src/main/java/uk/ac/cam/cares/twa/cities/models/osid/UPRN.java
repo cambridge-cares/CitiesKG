@@ -9,6 +9,7 @@ import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.ArrayList;
 
@@ -17,7 +18,7 @@ public class UPRN extends Model {
 
   @Getter @Setter
   @FieldAnnotation("http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoOSID.owl#hasValue")
-  private Integer value;
+  private BigInteger value;
 
   @Getter @Setter
   @FieldAnnotation("http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoOSID.owl#hasLatitudeLongitude")
@@ -28,11 +29,11 @@ public class UPRN extends Model {
   private CoordinateType eastingNorthingCoordinate; // EPSG:27700
 
   @Getter @Setter
-  @FieldAnnotation(value = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoOSID.owl#intersectsFeature", innerType = URI.class)
+  @FieldAnnotation(value = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoOSID.owl#intersectsFeature", innerType = CityObject.class)
   private ArrayList<CityObject> intersects;
 
   @Getter @Setter
-  @FieldAnnotation(value = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoOSID.owl#representsFeature", innerType = URI.class)
+  @FieldAnnotation(value = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoOSID.owl#representsFeature", innerType = CityObject.class)
   private ArrayList<CityObject> represents;
 
   /**
@@ -41,13 +42,13 @@ public class UPRN extends Model {
    */
   public static UPRN loadFromJson(ModelContext context, JSONObject jsonData) {
     JSONObject properties = jsonData.getJSONObject("properties");
-    String iri = context.graphNamespace + "identifiers/" + properties.getInt("UPRN");
+    String iri = context.graphNamespace + "identifiers/" + properties.getBigInteger("UPRN");
     // Check does not already exist
     UPRN existing = context.optGetModel(UPRN.class, iri);
     if(existing != null) return existing;
     // Construct new UPRN
     UPRN uprn = context.createNewModel(UPRN.class, iri);
-    uprn.setValue(properties.getInt("UPRN"));
+    uprn.setValue(properties.getBigInteger("UPRN"));
     uprn.setLatLonCoordinate(new CoordinateType(
         properties.getDouble("Latitude"), properties.getDouble("Longitude"), CoordinateType.LATLON_DATATYPE));
     uprn.setEastingNorthingCoordinate(new CoordinateType(

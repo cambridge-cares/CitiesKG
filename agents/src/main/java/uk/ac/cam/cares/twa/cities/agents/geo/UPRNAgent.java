@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.Executors;
 
 @WebServlet(urlPatterns = {UPRNAgent.URI_LISTEN})
 public class UPRNAgent extends JPSAgent {
@@ -78,67 +79,73 @@ public class UPRNAgent extends JPSAgent {
 
     importSrs(context);
 
-    // Query ground surfaces
-    WhereBuilder condition = new WhereBuilder();
-    SPARQLUtils.addPrefix("ocgml", condition);
-    condition.addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID, ThematicSurface.GROUND_SURFACE);
-    if (buildingIri != null)
-      condition.addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_BUILDING_ID, NodeFactory.createURI(buildingIri));
-    context.pullPartialWhere(ThematicSurface.class, condition,"buildingId");
+    Executors.newSingleThreadExecutor().execute(() -> {
 
-    // Query leaf geometries
-    condition = new WhereBuilder();
-    SPARQLUtils.addPrefix("ocgml", condition);
-    condition.addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_CITY_OBJECT_ID, QM + THEMSURF)
-        .addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_IS_COMPOSITE, BigInteger.valueOf(0))
-        .addWhere(QM + THEMSURF, SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID, ThematicSurface.GROUND_SURFACE);
-    if (buildingIri != null)
-      condition.addWhere(QM + THEMSURF, SchemaManagerAdapter.ONTO_BUILDING_ID, NodeFactory.createURI(buildingIri));
-    List<SurfaceGeometry> geometries = context.pullPartialWhere(SurfaceGeometry.class, condition,"cityObjectId", "geometryType");
+      // Query ground surfaces
+      WhereBuilder condition = new WhereBuilder();
+      SPARQLUtils.addPrefix("ocgml", condition);
+      condition.addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID, ThematicSurface.GROUND_SURFACE);
+      if (buildingIri != null)
+        condition.addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_BUILDING_ID, NodeFactory.createURI(buildingIri));
+      context.pullPartialWhere(ThematicSurface.class, condition, "buildingId");
 
-    // Query building cityobjects, which have envelopes
-    condition = new WhereBuilder();
-    SPARQLUtils.addPrefix("ocgml", condition);
-    condition.addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID, Building.OBJECT_CLASS_ID);
-    if (buildingIri != null)
-      condition.addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_GML_ID, getTail(buildingIri));
-    List<CityObject> buildings = new ArrayList<>(context.pullPartialWhere(CityObject.class, condition, "envelopeType", "gmlId"));
+      // Query leaf geometries
+      condition = new WhereBuilder();
+      SPARQLUtils.addPrefix("ocgml", condition);
+      condition.addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_CITY_OBJECT_ID, QM + THEMSURF)
+          .addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_IS_COMPOSITE, BigInteger.valueOf(0))
+          .addWhere(QM + THEMSURF, SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID, ThematicSurface.GROUND_SURFACE);
+      if (buildingIri != null)
+        condition.addWhere(QM + THEMSURF, SchemaManagerAdapter.ONTO_BUILDING_ID, NodeFactory.createURI(buildingIri));
+      List<SurfaceGeometry> geometries = context.pullPartialWhere(SurfaceGeometry.class, condition, "cityObjectId", "geometryType");
 
-    // Sort geometries surfaces by pertinent building via thematic surface
-    HashMap<String, ArrayList<SurfaceGeometry>> footprints = new HashMap<>();
-    for (SurfaceGeometry geometry: geometries) {
-      ThematicSurface parentSurface = context.optGetModel(ThematicSurface.class, geometry.getCityObjectId().toString());
-      if(parentSurface == null) throw new JPSRuntimeException(geometry.getCityObjectId().toString());
-      String gmlId = getTail(parentSurface.getBuildingId().getIri());
-      if (!footprints.containsKey(gmlId)) footprints.put(gmlId, new ArrayList<>());
-      footprints.get(gmlId).add(geometry);
-    }
+      // Query building cityobjects, which have envelopes
+      condition = new WhereBuilder();
+      SPARQLUtils.addPrefix("ocgml", condition);
+      condition.addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID, Building.OBJECT_CLASS_ID);
+      if (buildingIri != null)
+        condition.addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_GML_ID, getTail(buildingIri));
+      List<CityObject> buildings = new ArrayList<>(context.pullPartialWhere(CityObject.class, condition, "envelopeType", "gmlId"));
 
-    // Obtain UPRNs for each building by envelope, then geometrically test for only intersects to actually store.
-    for (CityObject building : buildings) {
-      Coordinate lower = building.getEnvelopeType().getLowerBound();
-      Coordinate upper = building.getEnvelopeType().getUpperBound();
-      UPRN[] uprns = queryUprns(lower.x, lower.y, upper.x, upper.y, GeometryType.getSourceCrsName());
-      for (UPRN uprn : uprns) {
-        Coordinate coord = uprn.getEastingNorthingCoordinate().coordinate;
-        for (SurfaceGeometry geometry : footprints.get(building.getGmlId())) {
-          try {
-            GeometryType geometryType = geometry.getGeometryType();
-            MathTransform epsg27700ToPolygonMetric = CRS.findMathTransform(epsg27700, geometryType.getMetricCrs());
-            Coordinate polygonMetricCrsCoord = new Coordinate();
-            JTS.transform(uprn.getLatLonCoordinate().coordinate, polygonMetricCrsCoord, epsg27700ToPolygonMetric);
-            if(geometryType.getMetricPolygon().intersects(geometryFactory.createPoint(polygonMetricCrsCoord)))
-              uprn.getIntersects().add(building);
-          } catch (FactoryException | TransformException e) {
-            throw new JPSRuntimeException(e);
-          }
-        }
+      // Sort geometries surfaces by pertinent building via thematic surface
+      HashMap<String, ArrayList<SurfaceGeometry>> footprints = new HashMap<>();
+      for (SurfaceGeometry geometry : geometries) {
+        ThematicSurface parentSurface = context.optGetModel(ThematicSurface.class, geometry.getCityObjectId().toString());
+        if (parentSurface == null) throw new JPSRuntimeException(geometry.getCityObjectId().toString());
+        String gmlId = getTail(parentSurface.getBuildingId().getIri());
+        if (!footprints.containsKey(gmlId)) footprints.put(gmlId, new ArrayList<>());
+        footprints.get(gmlId).add(geometry);
       }
-    }
 
-    context.pushAllChanges();
+      // Obtain UPRNs for each building by envelope, then geometrically test for only intersects to actually store.
+      for (CityObject building : buildings) {
+        Coordinate lower = building.getEnvelopeType().getLowerBound();
+        Coordinate upper = building.getEnvelopeType().getUpperBound();
+        UPRN[] uprns = queryUprns(lower.x, lower.y, upper.x, upper.y, GeometryType.getSourceCrsName());
+        for (UPRN uprn : uprns)
+          for (SurfaceGeometry geometry : footprints.get(building.getGmlId()))
+            if (uprnIntersectsGeometry(uprn, geometry.getGeometryType()))
+              uprn.getIntersects().add(building);
+      }
+
+      context.pushAllChanges();
+
+    });
 
     return requestParams;
+  }
+
+  public static boolean uprnIntersectsGeometry(UPRN uprn, GeometryType geometryType) {
+    try {
+      MathTransform epsg27700ToPolygonMetric = CRS.findMathTransform(epsg27700, geometryType.getMetricCrs());
+      Coordinate polygonMetricCrsCoord = new Coordinate();
+      JTS.transform(uprn.getEastingNorthingCoordinate().coordinate, polygonMetricCrsCoord, epsg27700ToPolygonMetric);
+      if(geometryType.getMetricPolygon().intersects(geometryFactory.createPoint(polygonMetricCrsCoord)))
+        return true;
+    } catch (FactoryException | TransformException e) {
+      throw new JPSRuntimeException(e);
+    }
+    return false;
   }
 
   private String getTail(String str) {
