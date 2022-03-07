@@ -97,10 +97,10 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
     } else {
       if(params.mode == ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE)
         restructureAndPush();
-      else if(params.mode == ThematicSurfaceDiscoveryAgent.Mode.VALIDATE)
-        commentAndPush();
-      else
+      else if(params.mode == ThematicSurfaceDiscoveryAgent.Mode.FOOTPRINT)
         addFootprintAndPush();
+      else
+        commentAndPush();
     }
     return null;
   }
@@ -285,7 +285,17 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
 
     if (bottomLevelThematicGeometries.get(Theme.GROUND.index).size() > 0) {
       // Get Building and create Ground MultiSurface
-      Building bldg = context.getModel(Building.class, bottomLevelThematicGeometries.get(0).get(0).getCityObjectId().toString());
+      Building bldg;
+      String cityObjectId = bottomLevelThematicGeometries.get(0).get(0).getCityObjectId().toString();
+      if (cityObjectId.contains(params.namespace + SchemaManagerAdapter.THEMATIC_SURFACE_GRAPH)) {
+        // Get parent building in case thematic surfaces already exist ...
+        ThematicSurface thematicSurface = context.getModel(ThematicSurface.class, cityObjectId);
+        context.pullPartial(thematicSurface, "buildingId");
+        bldg = context.getModel(Building.class, thematicSurface.getBuildingId().getIri());
+      } else {
+        // ... otherwise fetch building as CityObjectId of surfaces directly
+        bldg = context.getModel(Building.class, bottomLevelThematicGeometries.get(0).get(0).getCityObjectId().toString());
+      }
       bldg.setDirty("lod0FootprintId");
       String uuid = "UUID_" + UUID.randomUUID().toString();
       String groundSurfaceIri = params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH + SLASH + uuid;
