@@ -38,15 +38,17 @@ public class BuildingHullsRegistrationTask implements Callable<Void> {
   }
 
   public Void call() {
-    if (params.mode == ThematicSurfaceDiscoveryAgent.Mode.VALIDATE) {
+    // Pull thematic surfaces belonging to the target building
+    WhereBuilder where = new WhereBuilder();
+    SPARQLUtils.addPrefix(SchemaManagerAdapter.ONTO_BUILDING_ID, where);
+    where.addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_BUILDING_ID, NodeFactory.createURI(buildingIri));
+    List<ThematicSurface> thematicSurfaces = context.pullAllWhere(ThematicSurface.class, where);
+
+    if (params.mode == ThematicSurfaceDiscoveryAgent.Mode.VALIDATE ||
+            (params.mode == ThematicSurfaceDiscoveryAgent.Mode.FOOTPRINT && thematicSurfaces.size() > 0)) {
       // One root list for each level of detail from 2-4
       List<List<String>> roots = new ArrayList<>();
       for(int i = 0; i < 3; i++) roots.add(new ArrayList<>());
-      // Pull thematic surfaces belonging to the target building
-      WhereBuilder where = new WhereBuilder();
-      SPARQLUtils.addPrefix(SchemaManagerAdapter.ONTO_BUILDING_ID, where);
-      where.addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_BUILDING_ID, NodeFactory.createURI(buildingIri));
-      List<ThematicSurface> thematicSurfaces = context.pullAllWhere(ThematicSurface.class, where);
       // Populate virtual parents with thematic surface multisurfaces
       for (ThematicSurface themSurf: thematicSurfaces) {
         if(params.lods[1] && themSurf.getLod2MultiSurfaceId() != null)
