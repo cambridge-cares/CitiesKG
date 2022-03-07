@@ -1,7 +1,5 @@
 package org.citydb.database.adapter.blazegraph.test;
 
-import junit.framework.TestCase;
-
 import org.citydb.citygml.importer.database.content.DBObjectTestHelper;
 import org.citydb.config.project.database.DatabaseSrs;
 import org.citydb.config.project.database.DatabaseSrsType;
@@ -18,9 +16,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.*;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class UtilAdapterTest extends TestCase {
+public class UtilAdapterTest {
 
     @Mock
     Connection conn = Mockito.mock(Connection.class, RETURNS_MOCKS);

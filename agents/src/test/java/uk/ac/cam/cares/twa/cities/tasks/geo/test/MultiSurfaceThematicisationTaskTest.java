@@ -15,9 +15,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-@SuppressWarnings("unchecked")
 public class MultiSurfaceThematicisationTaskTest extends TestCase {
 
   static Field contextField;

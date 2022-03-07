@@ -1,4 +1,0 @@
-PUT http://localhost:8080/agents/uprn
-Content-Type: application/json
-
-{"namespace":"http://localhost:9999/blazegraph/namespace/churchill/sparql/","cityObjectIRI":"http://localhost:9999/blazegraph/namespace/churchill/sparql/building/UUID_5b0d1c78-32cc-48c7-a9a4-e9c3901c77a7/"}

@@ -785,7 +785,7 @@ public class ModelContext {
    * @return the deserialised {@link JSONArray} of rows in the response.
    */
   public JSONArray query(String query) {
-    //System.err.println(query);
+    System.err.println(query);
     if (targetResourceId.startsWith("HARDCODE:")) {
       String endpoint = targetResourceId.substring(9);
       String responseString = new RemoteStoreClient(endpoint).execute(query);
@@ -802,7 +802,7 @@ public class ModelContext {
    * @param update the update string.
    */
   public void update(String update) {
-    //System.err.println(update);
+    System.err.println(update);
     if (targetResourceId.startsWith("HARDCODE:")) {
       String endpoint = targetResourceId.substring(9);
       new RemoteStoreClient(endpoint, endpoint).executeUpdate(update);

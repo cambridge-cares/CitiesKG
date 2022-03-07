@@ -61,10 +61,10 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
   }
 
   private static final String SLASH = "/";
-  public static final String COMMENT_PREDICATE = "<http://www.w3.org/2000/01/rdf-schema#comment>";
-  public static final String GROUND_COMMENT = "ground";
-  public static final String WALL_COMMENT = "wall";
-  public static final String ROOF_COMMENT = "roof";
+  private static final String COMMENT_PREDICATE = "<http://www.w3.org/2000/01/rdf-schema#comment>";
+  private static final String GROUND_COMMENT = "ground";
+  private static final String WALL_COMMENT = "wall";
+  private static final String ROOF_COMMENT = "roof";
   private static final String UPDATING_PERSON = "ThematicSurfaceDiscoveryAgent";
   private static final String MALFORMED_SURFACE_GEOMETRY_EXCEPTION_TEXT =
       "Malformed building: SurfaceGeometry contains both sub-geometries and explicit GeometryType.";
@@ -85,7 +85,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
     this.context = params.makeContext();
     this.roots = Arrays.stream(rootIris).map(
         (rootIri) -> context.createHollowModel(SurfaceGeometry.class, rootIri)
-    ).toArray((size) -> new SurfaceGeometry[size]);
+    ).toArray(SurfaceGeometry[]::new);
     this.lod = lod;
     this.params = params;
   }
@@ -237,9 +237,9 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
         // Construct ThematicSurface
         String thematicSurfaceIri = params.namespace + SchemaManagerAdapter.THEMATIC_SURFACE_GRAPH + SLASH + uuid;
         ThematicSurface thematicSurface = context.createNewModel(ThematicSurface.class, thematicSurfaceIri);
-        if (lod <= 2) thematicSurface.setLod2MultiSurfaceId(topLevelGeometry);
-        else if (lod == 3) thematicSurface.setLod3MultiSurfaceId(topLevelGeometry);
-        else if (lod == 4) thematicSurface.setLod4MultiSurfaceId(topLevelGeometry);
+        if (lod <= 1) thematicSurface.setLod2MultiSurfaceId(topLevelGeometry);
+        else if (lod == 2) thematicSurface.setLod3MultiSurfaceId(topLevelGeometry);
+        else if (lod == 3) thematicSurface.setLod4MultiSurfaceId(topLevelGeometry);
         thematicSurface.setObjectClassId(BigInteger.valueOf(33 + i));
         thematicSurface.setBuildingId(context.getModel(Building.class, topLevelGeometry.getCityObjectId().toString()));
         // Reassign SurfaceGeometry hierarchical properties
@@ -255,6 +255,25 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
       geometry.delete(true);
     }
     context.pushAllChanges();
+  }
+
+  /**
+   * Adds rdfs:comment properties to bottom-level thematic geometries. This is done instead of restructureAndPush() if
+   * the mode chosen was Mode.VALIDATE.
+   */
+  private void commentAndPush() {
+    WhereBuilder whereBuilder = new WhereBuilder();
+    for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.GROUND.index)) {
+      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), COMMENT_PREDICATE, NodeFactory.createLiteral(GROUND_COMMENT));
+    }
+    for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.WALL.index)) {
+      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), COMMENT_PREDICATE, NodeFactory.createLiteral(WALL_COMMENT));
+    }
+    for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.ROOF.index)) {
+      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), COMMENT_PREDICATE, NodeFactory.createLiteral(ROOF_COMMENT));
+    }
+    Node graph = NodeFactory.createURI(params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH);
+    context.update(new UpdateBuilder().addInsert(graph, whereBuilder).build().toString());
   }
 
   /**
@@ -304,25 +323,6 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
 
       context.pushAllChanges();
     }
-  }
-
-  /**
-   * Adds rdfs:comment properties to bottom-level thematic geometries. This is done instead of restructureAndPush() if
-   * the mode chosen was Mode.COMMENT.
-   */
-  private void commentAndPush() {
-    WhereBuilder whereBuilder = new WhereBuilder();
-    for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.GROUND.index)) {
-      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), COMMENT_PREDICATE, NodeFactory.createLiteral(GROUND_COMMENT));
-    }
-    for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.WALL.index)) {
-      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), COMMENT_PREDICATE, NodeFactory.createLiteral(WALL_COMMENT));
-    }
-    for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.ROOF.index)) {
-      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), COMMENT_PREDICATE, NodeFactory.createLiteral(ROOF_COMMENT));
-    }
-    Node graph = NodeFactory.createURI(params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH);
-    context.update(new UpdateBuilder().addInsert(graph, whereBuilder).build().toString());
   }
 
   /**

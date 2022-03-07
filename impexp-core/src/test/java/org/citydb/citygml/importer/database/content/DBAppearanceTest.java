@@ -20,15 +20,11 @@ public class DBAppearanceTest extends DBTest {
 
             // Create an object
             DBAppearance dbAppearance = new DBAppearance(batchConn, config, importer);
-            assertNotNull(dbAppearance.getClass().getDeclaredMethod("getSPARQLStatement", String.class));
-            Method getsparqlMethod = DBAppearance.class.getDeclaredMethod("getSPARQLStatement", String.class);
+            assertNotNull(dbAppearance.getClass().getDeclaredMethod("getSPARQLStatement"));
+            Method getsparqlMethod = DBAppearance.class.getDeclaredMethod("getSPARQLStatement");
             getsparqlMethod.setAccessible(true);
 
-            String gmlIdCodespace = config.getInternal().getCurrentGmlIdCodespace();
-            if (gmlIdCodespace != null)
-                gmlIdCodespace = "'" + gmlIdCodespace + "', ";
-
-            generated = (String) getsparqlMethod.invoke(dbAppearance, gmlIdCodespace);
+            generated = (String) getsparqlMethod.invoke(dbAppearance);
 
             assertEquals(expected, generated);
         } catch(Exception e) {
