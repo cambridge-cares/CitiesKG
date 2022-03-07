@@ -13,6 +13,7 @@ import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
 
 import java.math.BigInteger;
+import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,10 +61,6 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
   }
 
   private static final String SLASH = "/";
-  public static final String COMMENT_PREDICATE = "<http://www.w3.org/2000/01/rdf-schema#comment>";
-  public static final String GROUND_COMMENT = "ground";
-  public static final String WALL_COMMENT = "wall";
-  public static final String ROOF_COMMENT = "roof";
   private static final String UPDATING_PERSON = "ThematicSurfaceDiscoveryAgent";
   private static final String MALFORMED_SURFACE_GEOMETRY_EXCEPTION_TEXT =
       "Malformed building: SurfaceGeometry contains both sub-geometries and explicit GeometryType.";
@@ -97,7 +94,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
       if(params.mode == ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE)
         restructureAndPush();
       else
-        commentAndPush();
+        addFootprintAndPush();
     }
     return null;
   }
@@ -255,22 +252,42 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
   }
 
   /**
-   * Adds rdfs:comment properties to bottom-level thematic geometries. This is done instead of restructureAndPush() if
-   * the mode chosen was Mode.COMMENT.
+   * Creates one MultiSurface with copies of all bottom-level thematic geometries identified as ground as direct children
+   * and assigns this surface as lod0FootprintId to the parent building. This is done instead of restructureAndPush() if
+   * the mode chosen was Mode.FOOTPRINT.
    */
-  private void commentAndPush() {
-    WhereBuilder whereBuilder = new WhereBuilder();
-    for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.GROUND.index)) {
-      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), COMMENT_PREDICATE, NodeFactory.createLiteral(GROUND_COMMENT));
+  private void addFootprintAndPush() {
+
+    if (bottomLevelThematicGeometries.get(Theme.GROUND.index).size() > 0) {
+      // Get Building and create Ground MultiSurface
+      Building bldg = context.getModel(Building.class, bottomLevelThematicGeometries.get(0).get(0).getCityObjectId().toString());
+      bldg.setDirty("lod0FootprintId");
+      String uuid = "UUID_" + UUID.randomUUID().toString();
+      String groundSurfaceIri = params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH + SLASH + uuid;
+      SurfaceGeometry ground = context.createNewModel(SurfaceGeometry.class, groundSurfaceIri);
+      ground.setCityObjectId(URI.create(bldg.getIri()));
+      ground.setRootId(URI.create(ground.getIri()));
+      ground.setGmlId(uuid);
+      ground.setIsComposite(BigInteger.valueOf(1));
+      bldg.setLod0FootprintId(ground);
+
+      // Create LOD0 ground surfaces and append to Ground MultiSurface
+      SurfaceGeometry lod0;
+      for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.GROUND.index)) {
+        // Construct LOD0 copy of geometry
+        uuid = "UUID_" + UUID.randomUUID().toString();
+        String lod0SurfaceIri = params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH + SLASH + uuid;
+        lod0 = context.createNewModel(SurfaceGeometry.class, lod0SurfaceIri);
+        lod0.setCityObjectId(URI.create(bldg.getIri()));
+        lod0.setParentId(ground);
+        lod0.setRootId(URI.create(ground.getIri()));
+        lod0.setGmlId(uuid);
+        lod0.setGeometryType(geometry.getGeometryType());
+        lod0.setIsComposite(BigInteger.valueOf(0));
+      }
+
+      context.pushAllChanges();
     }
-    for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.WALL.index)) {
-      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), COMMENT_PREDICATE, NodeFactory.createLiteral(WALL_COMMENT));
-    }
-    for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.ROOF.index)) {
-      whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), COMMENT_PREDICATE, NodeFactory.createLiteral(ROOF_COMMENT));
-    }
-    Node graph = NodeFactory.createURI(params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH);
-    context.update(new UpdateBuilder().addInsert(graph, whereBuilder).build().toString());
   }
 
   /**
