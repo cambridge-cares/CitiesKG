@@ -14,9 +14,12 @@ import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
+import org.geotools.referencing.CRS;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
@@ -41,7 +44,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
 
   public enum Mode {
     RESTRUCTURE,
-    COMMENT,
+    FOOTPRINT,
     VALIDATE
   }
 
@@ -75,6 +78,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
   // Exception and error text
   private static final String NO_CRS_EXCEPTION_TEXT = "Namespace has no CRS specified.";
   private static final String MULTIPLE_CRS_EXCEPTION_TEXT = "Namespace has more than one CRS specified.";
+  private static final String CRS_NOT_RECOGNIZED_EXCEPTION_TEXT = "CRS not recognised.";
   private static final String MODE_NOT_RECOGNIZED_EXCEPTION_TEXT = "Mode not recognised.";
 
   // Query labels
@@ -127,7 +131,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
       try {
         Set<String> keys = requestParams.keySet();
         Mode mode = !keys.contains(KEY_MODE) ? Mode.RESTRUCTURE :
-            Objects.equals(requestParams.getString(KEY_MODE), "comment") ? Mode.COMMENT :
+            Objects.equals(requestParams.getString(KEY_MODE), "footprint") ? Mode.FOOTPRINT :
                 Objects.equals(requestParams.getString(KEY_MODE), "validate") ? Mode.VALIDATE :
                     Objects.equals(requestParams.getString(KEY_MODE), "restructure") ? Mode.RESTRUCTURE : null;
         if(mode == null) throw new BadRequestException(MODE_NOT_RECOGNIZED_EXCEPTION_TEXT);
@@ -153,17 +157,22 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
    * Queries the database for the coordinate reference system to use and sets it as the {@link GeometryType} source crs.
    */
   private void importSrs() throws JPSRuntimeException {
-    // TODO: convert ocgml:srsname to a SchemaManagerAdapter constant when it exists.
     SelectBuilder srsQuery = new SelectBuilder();
-    SPARQLUtils.addPrefix("ocgml:srsname", srsQuery);
-    srsQuery.addVar(QM + SRS).addWhere(NodeFactory.createURI(namespaceIri), "ocgml:srsname", QM + SRS);
+    SPARQLUtils.addPrefix(SchemaManagerAdapter.ONTO_SRSNAME, srsQuery);
+    srsQuery.addVar(QM + SRS).addWhere(NodeFactory.createURI(namespaceIri), SchemaManagerAdapter.ONTO_SRSNAME, QM + SRS);
     JSONArray srsResponse = taskParams.makeContext().query(srsQuery.buildString());
     if (srsResponse.length() == 0) {
       throw new JPSRuntimeException(NO_CRS_EXCEPTION_TEXT);
     } else if (srsResponse.length() > 1) {
       throw new JPSRuntimeException(MULTIPLE_CRS_EXCEPTION_TEXT);
     } else {
-      GeometryType.setSourceCrsName(srsResponse.getJSONObject(0).getString(SRS));
+      try {
+        // Ensure exception is raised in case CRS is not recognised
+        CRS.decode(srsResponse.getJSONObject(0).getString(SRS));
+        GeometryType.setSourceCrsName(srsResponse.getJSONObject(0).getString(SRS));
+      } catch (FactoryException e) {
+        throw new JPSRuntimeException(CRS_NOT_RECOGNIZED_EXCEPTION_TEXT);
+      }
     }
   }
 

@@ -94,11 +94,11 @@ public class ThematicSurfaceDiscoveryAgentTest extends TestCase {
       fail();
     }
     // Comment argument
-    requestParams.put("comment", "1");
+    requestParams.put("footprint", "1");
     try {
       ThematicSurfaceDiscoveryAgent agent = new ThematicSurfaceDiscoveryAgent();
       assertTrue(agent.validateInput(requestParams));
-      assertEquals(ThematicSurfaceDiscoveryAgent.Mode.COMMENT, agent.getTaskParams().mode);
+      assertEquals(ThematicSurfaceDiscoveryAgent.Mode.FOOTPRINT, agent.getTaskParams().mode);
     } catch (BadRequestException ignored) {
       fail();
     }
