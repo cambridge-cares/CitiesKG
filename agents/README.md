@@ -61,9 +61,7 @@ This folder is by default not accessible, in order to make it executable, you ne
 
 ### Install and Build
 
-
-1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repository. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
-
+1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
 
 ```
 cd <main project directory>
@@ -115,6 +113,8 @@ Run the command *mvn clean install -DskipTests* on the corresponding directories
 ### Deployment (for users)
 
 If the build is successful, you should be able to find the war artifact under ${projectDir}/${tomcatPath}/webapps/agents##0.1.0.war
+
+#### Tomcat setup for Windows
 
 Start the tomcat service by clicking on the executable *C:\Program Files\Apache Software Foundation\Tomcat 9.0\bin\Tomcat9w.exe*
 and click on *Start*. After that, you can see the startup page on the browser under [http://localhost:8080].

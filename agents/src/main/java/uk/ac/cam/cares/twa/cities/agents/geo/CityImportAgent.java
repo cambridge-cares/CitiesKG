@@ -111,6 +111,8 @@ public class CityImportAgent extends JPSAgent {
     if (validateInput(requestParams)) {
       requestUrl = requestParams.getString(KEY_REQ_URL);
       targetUrl = requestParams.getString(KEY_TARGET_URL);
+      // Ensure that targetUrl does not end with slash
+      targetUrl = targetUrl.endsWith("/") ? targetUrl.substring(0, targetUrl.length()-1) : targetUrl;
       srid = requestParams.getString(KEY_SRID);
       srsname = requestParams.getString(KEY_SRSNAME);
       if (requestUrl.contains(URI_LISTEN)) {
@@ -442,8 +444,8 @@ public class CityImportAgent extends JPSAgent {
             .with(NodeFactory.createURI(targetUrl + GRAPH_DATABASESRS))
             .addDelete(QN_MARK + SUB_SRID, SchemaManagerAdapter.ONTO_SRID, QN_MARK + OB_SRID)
             .addDelete(QN_MARK + SUB_SRSNAME, SchemaManagerAdapter.ONTO_SRSNAME, QN_MARK + OB_SRSNAME)
-            .addInsert(NodeFactory.createURI(targetUrl), SchemaManagerAdapter.ONTO_SRID, srid)
-            .addInsert(NodeFactory.createURI(targetUrl),SchemaManagerAdapter.ONTO_SRSNAME, srsname)
+            .addInsert(NodeFactory.createURI(targetUrl + "/"), SchemaManagerAdapter.ONTO_SRID, srid)
+            .addInsert(NodeFactory.createURI(targetUrl + "/"),SchemaManagerAdapter.ONTO_SRSNAME, srsname)
             .addOptional(QN_MARK + SUB_SRID, SchemaManagerAdapter.ONTO_SRID, QN_MARK + OB_SRID)
             .addOptional(QN_MARK + SUB_SRSNAME, SchemaManagerAdapter.ONTO_SRSNAME, QN_MARK + OB_SRSNAME);
     UpdateRequest update = builder.buildRequest();
