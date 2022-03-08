@@ -1,6 +1,7 @@
 package uk.ac.cam.cares.twa.cities.agents.geo.test;
 
 import junit.framework.TestCase;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityExportAgent;
 import javax.ws.rs.BadRequestException;
@@ -14,7 +15,9 @@ import java.util.Set;
 
 public class CityExportAgentTest extends TestCase {
 
-    public String testGmlIds = "abc";
+    public String[] data = {"abc", "def"};
+    public JSONArray testGmlIds = new JSONArray(data);
+
     public String outFileName = "/test.kml";
     public String outTmpDir = "java.io.tmpdir";
 
@@ -151,20 +154,22 @@ public class CityExportAgentTest extends TestCase {
         CityExportAgent agent = new CityExportAgent();
         Method exportKml = null;
         try {
-            exportKml = agent.getClass().getDeclaredMethod("exportKml", String.class, String.class);
+            exportKml = agent.getClass().getDeclaredMethod("exportKml", String[].class, String.class, JSONObject.class);
             exportKml.setAccessible(true);
         } catch (NoSuchMethodException e) {
-            e.printStackTrace();
+            fail();
         }
 
-        String gmlIds = testGmlIds;
+        String[] gmlIds = data;
+        JSONObject serverInfo = new JSONObject();
+
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath = outputFile.getAbsolutePath();
         String actualPath = outputPath.replace(".kml", "_extruded.kml");
 
         try {
             assert exportKml != null;
-            assertEquals(actualPath, exportKml.invoke(agent, gmlIds, outputPath));
+            assertEquals(actualPath, exportKml.invoke(agent, gmlIds, outputPath, serverInfo));
         } catch (Exception e) {
             fail();
         }

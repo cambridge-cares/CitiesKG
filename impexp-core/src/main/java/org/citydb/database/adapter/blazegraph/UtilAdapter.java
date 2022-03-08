@@ -1,11 +1,13 @@
 package org.citydb.database.adapter.blazegraph;
 
 import java.util.Arrays;
+import org.citydb.citygml.exporter.util.Metadata;
 import org.citydb.config.geometry.BoundingBox;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.config.geometry.GeometryType;
 import org.citydb.config.geometry.MultiPolygon;
 import org.citydb.config.project.database.DatabaseSrs;
+import org.citydb.config.project.database.DatabaseSrsType;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.AbstractUtilAdapter;
 import org.citydb.database.adapter.IndexStatusInfo;
@@ -17,6 +19,9 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,12 +52,118 @@ public class UtilAdapter extends AbstractUtilAdapter {
 
     @Override
     protected void getSrsInfo(DatabaseSrs srs, Connection connection) throws SQLException {
-
+        getSrsInfo(srs);
     }
 
     @Override
-    protected void changeSrs(DatabaseSrs srs, boolean doTransform, String schema, Connection connection) throws SQLException {
+    public void getSrsInfo(DatabaseSrs srs) throws SQLException {
+        String connectionStr = databaseAdapter.getJDBCUrl(databaseAdapter.getConnectionDetails().getServer(), databaseAdapter.getConnectionDetails().getPort(), databaseAdapter.getConnectionDetails().getSid());
+        //extract the endpoint url of public namespace
+        //remove / at the end of endpoint if any - if endpoint ends with /, existsEndpoint will fail even if public namespace exists
+        String endpointUrl = connectionStr.substring(23, connectionStr.indexOf("&"));
+        if (endpointUrl.endsWith("/")) {
+            endpointUrl = endpointUrl.substring(0, endpointUrl.length() - 1);
+        }
+        String schema = databaseAdapter.getConnectionDetails().getSchema();
+        StringBuilder sparqlString = new StringBuilder();
 
+        sparqlString.append("PREFIX ocgml: <" + schema + "> " +
+                "SELECT ?s ?srid ?srsname {\n" +
+                "    ?s ocgml:srid ?srid;\n" +
+                "        ocgml:srsname ?srsname\n" +
+                "}");
+
+        String query = sparqlString.toString();
+
+        //check if public namespace exists at endpoint
+        Boolean exists = existsEndpoint(endpointUrl);
+
+        if (exists) {
+            try (Connection conn = DriverManager.getConnection(connectionStr);
+                 PreparedStatement statement = conn.prepareStatement(query);
+                 ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    srs.setSupported(true);
+                    if ((rs.getString(1) == null) && (rs.getString(2) == null)) { //srs is supported but no wktext
+                        srs.setDatabaseSrsName("");
+                        srs.setType(getSrsType(""));
+                        srs.setWkText("");
+                    } else { //srs is supported and has wktext
+                        srs.setGMLSrsName(rs.getString(1));
+                        srs.setSrid(rs.getInt(2));
+                        srs.setDatabaseSrsName(rs.getString(3));
+                        srs.setDescription(rs.getString(3));
+                        databaseAdapter.getConnectionMetaData().setReferenceSystem(srs);
+                    }
+                } else { //srs is not supported
+                    DatabaseSrs tmp = DatabaseSrs.createDefaultSrs();
+                    srs.setDatabaseSrsName(tmp.getDatabaseSrsName());
+                    srs.setType(tmp.getType());
+                    srs.setSupported(false);
+                }
+            }
+        } else { //public namespace is not available at endpoint
+            DatabaseSrs tmp = DatabaseSrs.createDefaultSrs();
+            srs.setDatabaseSrsName(tmp.getDatabaseSrsName());
+            srs.setType(tmp.getType());
+            srs.setSupported(false);
+        }
+        srsInfoMap.put(srs.getSrid(), srs);
+    }
+
+    public Boolean existsEndpoint(String endpointUrl) {
+        Boolean exists = true;
+        try {
+            URL url = new URL(endpointUrl);
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("HEAD");
+            if (con.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                exists = false;
+            }
+        } catch (IOException e) {
+            exists = false;
+        }
+        return exists;
+    }
+
+    @Override
+    public void changeSrs(DatabaseSrs srs, boolean doTransform, String schema) throws SQLException {
+        String connectionStr = databaseAdapter.getJDBCUrl(databaseAdapter.getConnectionDetails().getServer(), databaseAdapter.getConnectionDetails().getPort(), databaseAdapter.getConnectionDetails().getSid());
+        Connection connection = DriverManager.getConnection(connectionStr);
+        changeSrs(srs, doTransform, schema, connection);
+    }
+
+    //the postgis implementation is to call citydb_pkg.change_schema_srid
+    @Override
+    protected void changeSrs(DatabaseSrs srs, boolean doTransform, String schema, Connection connection) throws SQLException {
+        DatabaseSrs checkSrs = DatabaseSrs.createDefaultSrs();
+        checkSrs.setSrid(srs.getSrid());
+        getSrsInfo(checkSrs);
+
+        String endpoint = "http://".concat(databaseAdapter.getConnectionDetails().getServer()).concat(":").concat(String.valueOf(databaseAdapter.getConnectionDetails().getPort())).concat(databaseAdapter.getConnectionDetails().getSid());
+
+        if (checkSrs.isSupported()) {
+            try (Statement stmt = connection.createStatement()) {
+                stmt.executeUpdate(getChangeSrsUpdateStatement(schema, endpoint, srs));
+            }
+        } else {
+            throw new SQLException("Graph spatialrefsys does not contain the SRID " + srs.getSrid() + ". Insert commands for missing SRIDs can be found at spatialreference.org");
+        }
+    }
+
+    protected String getChangeSrsUpdateStatement(String schema, String endpoint, DatabaseSrs srs) {
+        if (endpoint.endsWith("/")) {
+            endpoint = endpoint.substring(0, endpoint.length() - 1);
+        }
+        String updateStatement = "PREFIX " + SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + " <" + schema + ">\n" +
+                "WITH <" + endpoint + "/databasesrs/>\n" +
+                "DELETE { ?srid " + SchemaManagerAdapter.ONTO_SRID + " ?currentSrid .\n" +
+                "?srsname " + SchemaManagerAdapter.ONTO_SRSNAME + " ?currentSrsname }\n" +
+                "INSERT { <" + endpoint + "> " + SchemaManagerAdapter.ONTO_SRID + " " + srs.getSrid() + ";\n" +
+                SchemaManagerAdapter.ONTO_SRSNAME + " \"" + srs.getGMLSrsName() + "\" }\n" +
+                "WHERE { OPTIONAL { ?srid " + SchemaManagerAdapter.ONTO_SRID + " ?currentSrid }\n" +
+                "OPTIONAL { ?srsname " + SchemaManagerAdapter.ONTO_SRSNAME + " ?currentSrsname } }";
+        return updateStatement;
     }
 
     @Override
@@ -196,5 +307,24 @@ public class UtilAdapter extends AbstractUtilAdapter {
         boolean isIndexed = true;
 
         return isIndexed;
+    }
+
+    private DatabaseSrsType getSrsType(String srsType) {
+        if ("PROJCS".equals(srsType))
+            return DatabaseSrsType.PROJECTED;
+        else if ("GEOGCS".equals(srsType))
+            return DatabaseSrsType.GEOGRAPHIC2D;
+        else if ("GEOCCS".equals(srsType))
+            return DatabaseSrsType.GEOCENTRIC;
+        else if ("VERT_CS".equals(srsType))
+            return DatabaseSrsType.VERTICAL;
+        else if ("LOCAL_CS".equals(srsType))
+            return DatabaseSrsType.ENGINEERING;
+        else if ("COMPD_CS".equals(srsType))
+            return DatabaseSrsType.COMPOUND;
+        else if ("GEOGCS3D".equals(srsType))
+            return DatabaseSrsType.GEOGRAPHIC3D;
+        else
+            return DatabaseSrsType.UNKNOWN;
     }
 }
