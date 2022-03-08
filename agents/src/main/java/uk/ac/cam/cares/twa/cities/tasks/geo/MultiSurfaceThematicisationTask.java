@@ -272,7 +272,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
     for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.ROOF.index)) {
       whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), COMMENT_PREDICATE, NodeFactory.createLiteral(ROOF_COMMENT));
     }
-    Node graph = NodeFactory.createURI(params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH);
+    Node graph = NodeFactory.createURI(params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH + SLASH);
     context.update(new UpdateBuilder().addInsert(graph, whereBuilder).build().toString());
   }
 
