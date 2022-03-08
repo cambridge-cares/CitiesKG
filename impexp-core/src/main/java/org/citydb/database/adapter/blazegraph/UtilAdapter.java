@@ -1,11 +1,7 @@
 package org.citydb.database.adapter.blazegraph;
 
-import java.util.Arrays;
-import org.citydb.citygml.exporter.util.Metadata;
 import org.citydb.config.geometry.BoundingBox;
 import org.citydb.config.geometry.GeometryObject;
-import org.citydb.config.geometry.GeometryType;
-import org.citydb.config.geometry.MultiPolygon;
 import org.citydb.config.project.database.DatabaseSrs;
 import org.citydb.config.project.database.DatabaseSrsType;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
@@ -25,7 +21,6 @@ import java.net.URL;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import org.locationtech.jts.geom.LinearRing;
 
 public class UtilAdapter extends AbstractUtilAdapter {
 
