@@ -129,6 +129,7 @@ Cesium.knockout.applyBindings(addSplashWindowModel, document.getElementById('cit
 
 // Splash controller
 var splashController = new SplashController(addSplashWindowModel);
+splashController.setCookie("ignoreSplashWindow", "true")
 
 /*---------------------------------  Load Configurations and Layers  ----------------------------------------*/
 
@@ -194,6 +195,10 @@ function initClient() {
 
     // display current infos of active layer in the main menu
     observeActiveLayer();
+
+    // load city based on input in url
+    var city = (new URL(window.location.href)).searchParams.get('city');
+    loadCity(city);
 
     // Zoom to desired camera position and load layers if encoded in the url...	
     zoomToDefaultCameraPosition().then(function (info) {
@@ -278,6 +283,104 @@ function initClient() {
     cesiumHomeButton.onclick = function () {
         zoomToDefaultCameraPosition();
     }
+}
+
+function loadCity(city) {
+    if (city == 'pirmasens') {
+        loadPirmasens();
+    } else if (city == 'berlin') {
+        loadBerlin();
+    }
+}
+
+function loadPirmasens() {
+    // set title
+    document.title = 'Pirmasens';
+
+    // set camera view
+    var cameraPostion = {
+        latitude: 49.194269,
+        longitude: 7.5981472,
+        height: 534.3099172951087,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+    flyToCameraPosition(cameraPostion);
+
+    // find relevant files and load layers
+    getAndLoadLayers('exported_pirmasens');
+}
+
+function loadBerlin() {
+    // set title
+    document.title = 'Berlin';
+
+    // set camera view
+    var cameraPostion = {
+        latitude: 52.517479728958044,
+        longitude: 13.411141287558161,
+        height: 534.3099172951087,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+    flyToCameraPosition(cameraPostion);
+
+    // find relevant files and load layers
+    getAndLoadLayers('exported_berlin');
+}
+
+// send get request to server to discover files in specified folder, create and load layers
+function getAndLoadLayers(folder) {
+    var url = this.location.origin;
+    var _layers = new Array();
+    var folderpath = url + '/3dwebclient/' + folder + '/';
+    var filepathname = '';
+    var options = {
+        url: '',
+        name: '',
+        layerDataType: 'COLLADA/KML/gTIF',
+        layerProxy: false,
+        layerClampToGround: false,
+        gltfVersion: '2.0',
+        thematicDataUrl: '',
+        thematicDataSource: 'GoogleSheets',
+        tableType: 'Horizontal',
+        cityobjectsJsonUrl: '',
+        minLodPixels: '',
+        maxLodPixels: '',
+        maxSizeOfCachedTiles: 200,
+        maxCountOfVisibleTiles: 200
+    }
+
+    var reqUrl = url + '/files/';
+
+    $.get(reqUrl + folder, function (data) {
+        // if data includes 'Tiles', only add MasterJSON as layer, else add all files
+        if (data.includes("Tiles")) {
+            for (let i = 0; i < data.length; i++) {
+                if (data[i].match(new RegExp("\\w*_extruded_MasterJSON.json"))) {
+                    filepathname = folderpath + data[i]
+                    options.url = filepathname;
+                    options.name = (new URL(window.location.href)).searchParams.get('city');
+                    _layers.push(new CitydbKmlLayer(options));
+                    loadLayerGroup(_layers);
+                    break;
+                }
+            }
+        } else {
+            for (let i = 0; i < data.length; i++) {
+                filepathname = folderpath + data[i];
+                options.url = filepathname;
+                options.name = data[i];
+                _layers.push(new CitydbKmlLayer(options));
+                if (i == data.length - 1) {
+                    loadLayerGroup(_layers);
+                }
+            }
+        }
+    });
 }
 
 function observeActiveLayer() {
@@ -979,6 +1082,17 @@ function addNewLayer() {
         _layers.push(new Cesium3DTilesDataLayer(options));
     } else if (['kml', 'kmz', 'json', 'czml'].indexOf(CitydbUtil.get_suffix_from_filename(options.url)) > -1) {
         _layers.push(new CitydbKmlLayer(options));
+    } else if (options.url == '') {  // todo: figure a way to check the directory , alternative pass this to the server side if it is a folder
+        var folderpath = "http://localhost:8000/3dwebclient/exported_data/";
+        var filepathname = "";
+        for (let i = 0; i < 50; i++){
+            filepathname = folderpath + "test_" + i + "_extruded.kml";
+            //console.log(filepathname);
+            options.url = filepathname;
+            options.name = "test_" + i + "_extruded.kml";
+            _layers.push(new CitydbKmlLayer(options));
+        }
+        console.log ('Directory exists!')
     }
 
     loadLayerGroup(_layers);

@@ -28,49 +28,43 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
+
+
 
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
 import org.citydb.database.schema.TableEnum;
 
-public class DBWaterBodToWaterBndSrf implements DBImporter {
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psWaterBodToWaterBndSrf;
-	private int batchCounter;
+public class DBWaterBodToWaterBndSrf extends AbstractDBImporter {
 
 	public DBWaterBodToWaterBndSrf(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
-		this.importer = importer;
+		super(batchConn, config, importer);
+	}
 
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
+	@Override
+	protected String getTableName() {
+		return TableEnum.WATERBOD_TO_WATERBND_SRF.getName();
+	}
 
-		String stmt = "insert into " + schema + ".waterbod_to_waterbnd_srf (waterboundary_surface_id, waterbody_id) values " +
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "waterbodtowaterbndsrf/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + sqlSchema + ".waterbod_to_waterbnd_srf (waterboundary_surface_id, waterbody_id) values " +
 				"(?, ?)";
-		psWaterBodToWaterBndSrf = batchConn.prepareStatement(stmt);
 	}
 
 	protected void doImport(long waterSurfaceId, long waterBodyId) throws CityGMLImportException, SQLException {
-		psWaterBodToWaterBndSrf.setLong(1, waterSurfaceId);
-		psWaterBodToWaterBndSrf.setLong(2, waterBodyId);
+		preparedStatement.setLong(1, waterSurfaceId);
+		preparedStatement.setLong(2, waterBodyId);
 
-		psWaterBodToWaterBndSrf.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.WATERBOD_TO_WATERBND_SRF);
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psWaterBodToWaterBndSrf.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psWaterBodToWaterBndSrf.close();
 	}
 
 }

@@ -71,12 +71,17 @@ mvn initialize
 
 2. If the initialization is done successful, you should be able to run the following to create the war package
 
+```
+mvn clean install
+```
 
+In case building the .war file fails due to the missing `JPS_AWS.jar`, please build this locally first via running the following command within the [JPS_AWS] repository:
 ```
 mvn clean install -DskipTests
 ```
 
-3. There is one dependency *blazegraph-jar-2.1.5.jar* need to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
+3. There is one dependency `blazegraph-jar-2.1.5.jar` which needs to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
+
 
 ```
     <dependency>
@@ -108,6 +113,8 @@ Run the command *mvn clean install -DskipTests* on the corresponding directories
 ### Deployment (for users)
 
 If the build is successful, you should be able to find the war artifact under ${projectDir}/${tomcatPath}/webapps/agents##0.1.0.war
+
+#### Tomcat setup for Windows
 
 Start the tomcat service by clicking on the executable *C:\Program Files\Apache Software Foundation\Tomcat 9.0\bin\Tomcat9w.exe*
 and click on *Start*. After that, you can see the startup page on the browser under [http://localhost:8080].
@@ -161,7 +168,13 @@ In order to use the extended 3DCityDB-Web-Map-Client for city agents make sure t
 
 * your browser support WebGL (visit http://get.webgl.org/ for checking it).
 * open source JavaScript runtime environment Node.js is installed on your machine (visit https://nodejs.org/en/ to download the latest version). 
-* the extended web-map-client does not have node_modules folder thus, download original web-map-client via the following GitHub link (https://github.com/3dcitydb/3dcitydb-web-map/releases) and copy node_modules folder in `/CitiesKG/3dcitydb-web-map-1.9.0/`.
+* the extended web-map-client does not have node_modules folder. To install required dependencies run:
+
+```
+npm install
+```
+
+in ```../CitiesKG/3dcitydb-web-map-1.9.0/``` directory.
 
 To run the web-map-client, in a shell environment navigate to the folder where *server.js* file is located `/CitiesKG/3dcitydb-web-map-1.9.0/` and simply run the following command to launch the server:
 
@@ -170,7 +183,6 @@ To run the web-map-client, in a shell environment navigate to the folder where *
 ```
 
 The web-map-client is now available via the URL (http://localhost:8080/3dwebclient/index.html). Place the .kml file in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/` and add the web link of the .kml file in `URL(*)` input field of the web-map-client Toolbox widget. In the input field `Name(*)`, a proper layer name must be specified as well. After clicking AddLayer, the .kml file will be visualised in the web-map-client.
-
 
 Solutions to common issues:
 * DistanceAgent URL, used in POST request, is hardcoded in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/script.js`. If agents are deployed on another port than 8080, agent URL needs to be updated accordingly in *script.js*.
