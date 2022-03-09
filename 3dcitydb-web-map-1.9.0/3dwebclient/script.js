@@ -290,6 +290,8 @@ function loadCity(city) {
         loadPirmasens();
     } else if (city == 'berlin') {
         loadBerlin();
+    } else if (city == 'kingslynn') {
+        loadKingsLynn();
     }
 }
 
@@ -329,6 +331,25 @@ function loadBerlin() {
 
     // find relevant files and load layers
     getAndLoadLayers('exported_berlin');
+}
+
+function loadKingsLynn() {
+    // set title
+    document.title = 'King\'s Lynn';
+
+    // set camera view
+    var cameraPostion = {
+        latitude: 52.752673871745415,
+        longitude: 0.40209742318323693,
+        height: 534.3099172951087,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+    flyToCameraPosition(cameraPostion);
+
+    // find relevant files and load layers
+    getAndLoadLayers('exported_kingslynn');
 }
 
 // send get request to server to discover files in specified folder, create and load layers
