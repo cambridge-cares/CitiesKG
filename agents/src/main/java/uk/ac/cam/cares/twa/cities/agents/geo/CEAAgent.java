@@ -51,7 +51,8 @@ public class CEAAgent extends JPSAgent {
     private String ontoUBEMMPUri;
     private String rdfUri;
     private String owlUri;
-    private String purlUri;
+    private String purlInfrastructureUri;
+    private String purlEnaeqUri;
     private String semancoUri;
     private String thinkhomeUri;
     private static String unitOntologyUri;
@@ -72,7 +73,7 @@ public class CEAAgent extends JPSAgent {
             JSONArray uriArray = new JSONArray(uriArrayString);
 
             if (requestUrl.contains(URI_UPDATE)) {
-               /* for(int i=0; i<uriArray.length(); i++) {
+                for(int i=0; i<uriArray.length(); i++) {
                     String uri = uriArray.getString(i);
                     sparqlUpdate(requestParams.get(KEY_GRID_DEMAND).toString(),
                             requestParams.get(KEY_ELECTRICITY_DEMAND).toString(),
@@ -80,7 +81,7 @@ public class CEAAgent extends JPSAgent {
                             requestParams.get(KEY_COOLING_DEMAND).toString(),
                             requestParams.get(KEY_PV_AREA).toString(),
                             requestParams.get(KEY_PV_SUPPLY).toString(), uri);
-                }*/
+                }
             } else if (requestUrl.contains(URI_ACTION)) {
                 ArrayList<CEAInputData> testData = new ArrayList<>();
                 ArrayList<String> uriStringArray = new ArrayList<>();
@@ -175,7 +176,8 @@ public class CEAAgent extends JPSAgent {
         ontoUBEMMPUri = config.getString("uri.ontology.ontoubemmp");
         rdfUri = config.getString("uri.ontology.rdf");
         owlUri = config.getString("uri.ontology.owl");
-        purlUri=config.getString("uri.ontology.purl");
+        purlInfrastructureUri=config.getString("uri.ontology.purl.infrastructure");
+        purlEnaeqUri=config.getString("uri.ontology.purl.enaeq");
         semancoUri=config.getString("uri.ontology.semanco");
         thinkhomeUri=config.getString("uri.ontology.thinkhome");
     }
@@ -314,7 +316,6 @@ public class CEAAgent extends JPSAgent {
         return sb.build();
     }
 
-
     /**
      * builds a SPARQL update using output from CEA simulations
      * @param grid_demand the output data from the CEA
@@ -322,10 +323,10 @@ public class CEAAgent extends JPSAgent {
      */
     public void sparqlUpdate(String grid_demand, String electricity_demand, String heating_demand, String cooling_demand, String PV_area, String PV_supply, String uriString) {
         String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
-        String buildingUri = getGraph(uriString,BUILDING);
+        String buildingUri = outputGraphUri + "Building_UUID_" + UUID.randomUUID() + "/";
         String heatingUri = outputGraphUri + "HeatingSystem_UUID_" + UUID.randomUUID() + "/";
-        String coolingUri = outputGraphUri + "UUID_" + UUID.randomUUID() + "/";
-        String pvCellsUri = outputGraphUri + "UUID_" + UUID.randomUUID()+ "/";
+        String coolingUri = outputGraphUri + "CoolingSystem_UUID_" + UUID.randomUUID() + "/";
+        String pvCellsUri = outputGraphUri + "PV_Cells_UUID_" + UUID.randomUUID()+ "/";
         String gridConsumptionUri = outputGraphUri + "GridConsumption_UUID_" + UUID.randomUUID()+ "/";
         String gridConsumptionValueUri = outputGraphUri + "GridConsumptionValue_UUID_" + UUID.randomUUID()+ "/";
         String electricityConsumptionUri = outputGraphUri + "ElectricityConsumption_UUID_" + UUID.randomUUID()+ "/";
@@ -344,11 +345,12 @@ public class CEAAgent extends JPSAgent {
                         .addPrefix("ontoubemmp", ontoUBEMMPUri)
                         .addPrefix("rdf", rdfUri)
                         .addPrefix("owl", owlUri)
-                        .addPrefix("purl", purlUri)
+                        .addPrefix("purlInfrastructure", purlInfrastructureUri)
+                        .addPrefix("purlEnaeq", purlEnaeqUri)
                         .addPrefix("om", unitOntologyUri)
                         .addPrefix("semanco", semancoUri)
                         .addPrefix("thinkhome", thinkhomeUri)
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "rdf:type", "purl:infrastructure/Building")
+                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "rdf:type", "purlInfrastructure:Building")
                         .addInsert("?graph", NodeFactory.createURI(gridConsumptionUri), "rdf:type", "ontoubemmp:GridConsumption")
                         .addInsert("?graph", NodeFactory.createURI(gridConsumptionUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(gridConsumptionUri), "om:hasDimension", "om:energy-Dimension")
@@ -357,7 +359,7 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(gridConsumptionValueUri), "rdf:type", "om:Measure")
                         .addInsert("?graph", NodeFactory.createURI(gridConsumptionValueUri), "om:hasNumericalValue", grid_demand)
                         .addInsert("?graph", NodeFactory.createURI(gridConsumptionValueUri), "om:hasUnit", "om:kilowattHour")
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "purl:enaeq/consumesEnergy", gridConsumptionUri)
+                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "purlEnaeq:consumesEnergy", NodeFactory.createURI(gridConsumptionUri))
                         .addInsert("?graph", NodeFactory.createURI(electricityConsumptionUri), "rdf:type", "ontoubemmp:ElectricityConsumption")
                         .addInsert("?graph", NodeFactory.createURI(electricityConsumptionUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(electricityConsumptionUri), "om:hasDimension", "om:energy-Dimension")
@@ -366,9 +368,9 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(electricityConsumptionValueUri), "rdf:type", "om:Measure")
                         .addInsert("?graph", NodeFactory.createURI(electricityConsumptionValueUri), "om:hasNumericalValue", electricity_demand)
                         .addInsert("?graph", NodeFactory.createURI(electricityConsumptionValueUri), "om:hasUnit", "om:kilowattHour")
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "purl:enaeq/consumesEnergy", electricityConsumptionUri)
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "onotubemmp:hasDevice", heatingUri)
-                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "rdf:type", "purl:enaeq/HeatingSystem")
+                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "purlEnaeq:consumesEnergy", NodeFactory.createURI(electricityConsumptionUri))
+                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(heatingUri))
+                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "rdf:type", "purlEnaeq:HeatingSystem")
                         .addInsert("?graph", NodeFactory.createURI(heatingUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(heatingConsumptionUri), "rdf:type", "ontoubemmp:ThermalConsumption")
                         .addInsert("?graph", NodeFactory.createURI(heatingConsumptionUri), "rdf:type", "owl:NamedIndividual")
@@ -378,8 +380,8 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(heatingConsumptionValueUri), "rdf:type", "om:Measure")
                         .addInsert("?graph", NodeFactory.createURI(heatingConsumptionValueUri), "om:hasNumericalValue", heating_demand)
                         .addInsert("?graph", NodeFactory.createURI(heatingConsumptionValueUri), "om:hasUnit", "om:kilowattHour")
-                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "purl:enaeq/consumesEnergy", heatingConsumptionUri)
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "onotubemmp:hasDevice", coolingUri)
+                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "purlEnaeq:consumesEnergy", NodeFactory.createURI(heatingConsumptionUri))
+                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(coolingUri))
                         .addInsert("?graph", NodeFactory.createURI(coolingUri), "rdf:type", "ontoubemmp:CoolingSystem")
                         .addInsert("?graph", NodeFactory.createURI(coolingUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(coolingConsumptionUri), "rdf:type", "ontoubemmp:ThermalConsumption")
@@ -390,8 +392,8 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(coolingConsumptionValueUri), "rdf:type", "om:Measure")
                         .addInsert("?graph", NodeFactory.createURI(coolingConsumptionValueUri), "om:hasNumericalValue", cooling_demand)
                         .addInsert("?graph", NodeFactory.createURI(coolingConsumptionValueUri), "om:hasUnit", "om:kilowattHour")
-                        .addInsert("?graph", NodeFactory.createURI(coolingUri), "purl:enaeq/consumesEnergy", coolingConsumptionUri)
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "onotubemmp:hasDevice", pvCellsUri)
+                        .addInsert("?graph", NodeFactory.createURI(coolingUri), "purlEnaeq:consumesEnergy", NodeFactory.createURI(coolingConsumptionUri))
+                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(pvCellsUri))
                         .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "rdf:type", "semanco:PVSystem")
                         .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(pvCellsUri), "ontoubemmp:hasArea", NodeFactory.createURI(PVAreaUri))
@@ -418,6 +420,7 @@ public class CEAAgent extends JPSAgent {
 
         //Use access agent
         this.update(UPDATE_ROUTE, ur.toString());
+
     }
 
 }
