@@ -52,7 +52,8 @@ public class CityExportAgent extends JPSAgent {
             serverInfo = getServerInfo(requestParams);
 
             if (gmlids[0].contains("*")){ // need to extract the whole database
-                String rootDir = "C:\\Users\\Shiying\\Documents\\CKG\\Imported_data\\testfolder";
+                //String rootDir = "C:\\Users\\Shiying\\Documents\\CKG\\Imported_data\\testfolder";
+                String rootDir = "C:\\Users\\Admin\\Documents\\CKG\\Imported_data\\ura";
                 ArrayList<Path> fileList = new ArrayList<>();
                 try (Stream<Path> paths = Files.walk(Paths.get(rootDir))) {
                     paths

@@ -1553,9 +1553,9 @@ public abstract class KmlGenericObject<T> {
 					}
 				}
 
-				// Added by Shiying: Filter the results, return Geometry object
+				// Added by Shiying: Filter the results, return Geometry object // only 1 entry after ST_UNION
 				Object buildingGeometryObj = StatementTransformer.filterResult(simpleGeom,
-						0.001);  // only 1 entry after ST_UNION
+						0.001);
 
 				if (!simpleGeom.isEmpty() && buildingGeometryObj != null) {
 					eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
@@ -2847,7 +2847,7 @@ public abstract class KmlGenericObject<T> {
 
 				for (int i = 0; i < originalCoords.length; i++) {
 					for (int j = 2; j < originalCoords[i].length; j += 3)
-						convertedCoords[i][j] = originalCoords[i][j];
+						convertedCoords[i][j] = originalCoords[i][j];  // just to copy the z-coordinate to convertedCoords
 				}
 			}
 

@@ -161,6 +161,9 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ONTO_THEMSURFACE_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "themSurfaceID";
     public static final String ONTO_REFERENCE_TO_LIBRARY = ONTO_PREFIX_NAME_ONTOCITYGML + "referenceToLibrary";
     public static final String ONTO_RELATIVE_BREP_ID = ONTO_PREFIX_NAME_ONTOCITYGML + "relativeBrepId";
+    public static final String ONTO_SRID = ONTO_PREFIX_NAME_ONTOCITYGML + "srid";
+    public static final String ONTO_SRTEXT = ONTO_PREFIX_NAME_ONTOCITYGML + "srtext";
+    public static final String ONTO_SRSNAME = ONTO_PREFIX_NAME_ONTOCITYGML + "srsname";
 
     //@TODO: NOT IN ONTOCITYGML - need to be added:
     //@END
@@ -195,7 +198,8 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
         }
         catch (IOException e){
             exists = false;
-        }**/
+        }
+        */
 
         return exists;
     }
