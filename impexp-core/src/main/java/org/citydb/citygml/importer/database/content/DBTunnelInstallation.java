@@ -28,7 +28,6 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
@@ -54,46 +53,44 @@ import org.citygml4j.model.gml.basicTypes.Code;
 import org.citygml4j.model.gml.geometry.AbstractGeometry;
 import org.citygml4j.model.gml.geometry.GeometryProperty;
 
-public class DBTunnelInstallation implements DBImporter {
-	private final Connection batchConn;
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psTunnelInstallation;
+public class DBTunnelInstallation extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
 	private DBTunnelThematicSurface thematicSurfaceImporter;
-	private DBSurfaceGeometry surfaceGeometryImporter;
 	private GeometryConverter geometryConverter;
 	private DBImplicitGeometry implicitGeometryImporter;
 	private AttributeValueJoiner valueJoiner;
-	private int batchCounter;
 
 	private boolean affineTransformation;
-	private int nullGeometryType;
-	private String nullGeometryTypeName;
 
 	public DBTunnelInstallation(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.batchConn = batchConn;
-		this.importer = importer;
-
+		super(batchConn, config, importer);
 		affineTransformation = config.getProject().getImporter().getAffineTransformation().isEnabled();
-		nullGeometryType = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType();
-		nullGeometryTypeName = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName();
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-
-		String stmt = "insert into " + schema + ".tunnel_installation (id, objectclass_id, class, class_codespace, function, function_codespace, usage, usage_codespace, tunnel_id, tunnel_hollow_space_id, " +
-				"lod2_brep_id, lod3_brep_id, lod4_brep_id, lod2_other_geom, lod3_other_geom, lod4_other_geom, " +
-				"lod2_implicit_rep_id, lod3_implicit_rep_id, lod4_implicit_rep_id, " +
-				"lod2_implicit_ref_point, lod3_implicit_ref_point, lod4_implicit_ref_point, " +
-				"lod2_implicit_transformation, lod3_implicit_transformation, lod4_implicit_transformation) values " +
-				"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-		psTunnelInstallation = batchConn.prepareStatement(stmt);
-
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
 		implicitGeometryImporter = importer.getImporter(DBImplicitGeometry.class);
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
 		thematicSurfaceImporter = importer.getImporter(DBTunnelThematicSurface.class);
 		geometryConverter = importer.getGeometryConverter();
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	@Override
+	protected String getTableName() {
+		return TableEnum.TUNNEL_INSTALLATION.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "tunnelinstallation/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + sqlSchema + ".tunnel_installation (id, objectclass_id, class, class_codespace, function, function_codespace, usage, usage_codespace, tunnel_id, tunnel_hollow_space_id, " +
+				"lod2_brep_id, lod3_brep_id, lod4_brep_id, lod2_other_geom, lod3_other_geom, lod4_other_geom, " +
+				"lod2_implicit_rep_id, lod3_implicit_rep_id, lod4_implicit_rep_id, " +
+				"lod2_implicit_ref_point, lod3_implicit_ref_point, lod4_implicit_ref_point, " +
+				"lod2_implicit_transformation, lod3_implicit_transformation, lod4_implicit_transformation) values " +
+				"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	}
 
 	protected long doImport(TunnelInstallation tunnelInstallation) throws CityGMLImportException, SQLException {
@@ -114,50 +111,50 @@ public class DBTunnelInstallation implements DBImporter {
 
 		// import tunnel installation information
 		// primary id
-		psTunnelInstallation.setLong(1, tunnelInstallationId);
+		preparedStatement.setLong(1, tunnelInstallationId);
 
 		// objectclass id
-		psTunnelInstallation.setLong(2, featureType.getObjectClassId());
+		preparedStatement.setLong(2, featureType.getObjectClassId());
 
 		// tun:class
 		if (tunnelInstallation.isSetClazz() && tunnelInstallation.getClazz().isSetValue()) {
-			psTunnelInstallation.setString(3, tunnelInstallation.getClazz().getValue());
-			psTunnelInstallation.setString(4, tunnelInstallation.getClazz().getCodeSpace());
+			preparedStatement.setString(3, tunnelInstallation.getClazz().getValue());
+			preparedStatement.setString(4, tunnelInstallation.getClazz().getCodeSpace());
 		} else {
-			psTunnelInstallation.setNull(3, Types.VARCHAR);
-			psTunnelInstallation.setNull(4, Types.VARCHAR);
+			preparedStatement.setNull(3, Types.VARCHAR);
+			preparedStatement.setNull(4, Types.VARCHAR);
 		}
 
 		// tun:function
 		if (tunnelInstallation.isSetFunction()) {
 			valueJoiner.join(tunnelInstallation.getFunction(), Code::getValue, Code::getCodeSpace);
-			psTunnelInstallation.setString(5, valueJoiner.result(0));
-			psTunnelInstallation.setString(6, valueJoiner.result(1));
+			preparedStatement.setString(5, valueJoiner.result(0));
+			preparedStatement.setString(6, valueJoiner.result(1));
 		} else {
-			psTunnelInstallation.setNull(5, Types.VARCHAR);
-			psTunnelInstallation.setNull(6, Types.VARCHAR);
+			preparedStatement.setNull(5, Types.VARCHAR);
+			preparedStatement.setNull(6, Types.VARCHAR);
 		}
 
 		// tun:usage
 		if (tunnelInstallation.isSetUsage()) {
 			valueJoiner.join(tunnelInstallation.getUsage(), Code::getValue, Code::getCodeSpace);
-			psTunnelInstallation.setString(7, valueJoiner.result(0));
-			psTunnelInstallation.setString(8, valueJoiner.result(1));
+			preparedStatement.setString(7, valueJoiner.result(0));
+			preparedStatement.setString(8, valueJoiner.result(1));
 		} else {
-			psTunnelInstallation.setNull(7, Types.VARCHAR);
-			psTunnelInstallation.setNull(8, Types.VARCHAR);
+			preparedStatement.setNull(7, Types.VARCHAR);
+			preparedStatement.setNull(8, Types.VARCHAR);
 		}
 
 		// parentId
 		if (parent instanceof AbstractTunnel) {
-			psTunnelInstallation.setLong(9, parentId);
-			psTunnelInstallation.setNull(10, Types.NULL);
+			preparedStatement.setLong(9, parentId);
+			preparedStatement.setNull(10, Types.NULL);
 		} else if (parent instanceof HollowSpace) {
-			psTunnelInstallation.setNull(9, Types.NULL);
-			psTunnelInstallation.setLong(10, parentId);
+			preparedStatement.setNull(9, Types.NULL);
+			preparedStatement.setLong(10, parentId);
 		} else {
-			psTunnelInstallation.setNull(9, Types.NULL);
-			psTunnelInstallation.setNull(10, Types.NULL);
+			preparedStatement.setNull(9, Types.NULL);
+			preparedStatement.setNull(10, Types.NULL);
 		}
 
 		// tun:lodXGeometry
@@ -202,14 +199,14 @@ public class DBTunnelInstallation implements DBImporter {
 			}
 
 			if (geometryId != 0)
-				psTunnelInstallation.setLong(11 + i, geometryId);
+				preparedStatement.setLong(11 + i, geometryId);
 			else
-				psTunnelInstallation.setNull(11 + i, Types.NULL);
+				preparedStatement.setNull(11 + i, Types.NULL);
 
 			if (geometryObject != null)
-				psTunnelInstallation.setObject(14 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
+				preparedStatement.setObject(14 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
 			else
-				psTunnelInstallation.setNull(14 + i, nullGeometryType, nullGeometryTypeName);
+				preparedStatement.setNull(14 + i, nullGeometryType, nullGeometryTypeName);
 		}
 
 		// tun:lodXImplicitRepresentation
@@ -254,22 +251,22 @@ public class DBTunnelInstallation implements DBImporter {
 			}
 
 			if (implicitId != 0)
-				psTunnelInstallation.setLong(17 + i, implicitId);
+				preparedStatement.setLong(17 + i, implicitId);
 			else
-				psTunnelInstallation.setNull(17 + i, Types.NULL);
+				preparedStatement.setNull(17 + i, Types.NULL);
 
 			if (pointGeom != null)
-				psTunnelInstallation.setObject(20 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
+				preparedStatement.setObject(20 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
 			else
-				psTunnelInstallation.setNull(20 + i, nullGeometryType, nullGeometryTypeName);
+				preparedStatement.setNull(20 + i, nullGeometryType, nullGeometryTypeName);
 
 			if (matrixString != null)
-				psTunnelInstallation.setString(23 + i, matrixString);
+				preparedStatement.setString(23 + i, matrixString);
 			else
-				psTunnelInstallation.setNull(23 + i, Types.VARCHAR);
+				preparedStatement.setNull(23 + i, Types.VARCHAR);
 		}
 
-		psTunnelInstallation.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.TUNNEL_INSTALLATION);
 
@@ -311,57 +308,57 @@ public class DBTunnelInstallation implements DBImporter {
 
 		// import interior bridge installation information
 		// primary id
-		psTunnelInstallation.setLong(1, intTunnelInstallationId);
+		preparedStatement.setLong(1, intTunnelInstallationId);
 
 		// OBJECTCLASS_ID
-		psTunnelInstallation.setLong(2, featureType.getObjectClassId());
+		preparedStatement.setLong(2, featureType.getObjectClassId());
 
 		// tun:class
 		if (intTunnelInstallation.isSetClazz() && intTunnelInstallation.getClazz().isSetValue()) {
-			psTunnelInstallation.setString(3, intTunnelInstallation.getClazz().getValue());
-			psTunnelInstallation.setString(4, intTunnelInstallation.getClazz().getCodeSpace());
+			preparedStatement.setString(3, intTunnelInstallation.getClazz().getValue());
+			preparedStatement.setString(4, intTunnelInstallation.getClazz().getCodeSpace());
 		} else {
-			psTunnelInstallation.setNull(3, Types.VARCHAR);
-			psTunnelInstallation.setNull(4, Types.VARCHAR);
+			preparedStatement.setNull(3, Types.VARCHAR);
+			preparedStatement.setNull(4, Types.VARCHAR);
 		}
 
 		// tun:function
 		if (intTunnelInstallation.isSetFunction()) {
 			valueJoiner.join(intTunnelInstallation.getFunction(), Code::getValue, Code::getCodeSpace);
-			psTunnelInstallation.setString(5, valueJoiner.result(0));
-			psTunnelInstallation.setString(6, valueJoiner.result(1));
+			preparedStatement.setString(5, valueJoiner.result(0));
+			preparedStatement.setString(6, valueJoiner.result(1));
 		} else {
-			psTunnelInstallation.setNull(5, Types.VARCHAR);
-			psTunnelInstallation.setNull(6, Types.VARCHAR);
+			preparedStatement.setNull(5, Types.VARCHAR);
+			preparedStatement.setNull(6, Types.VARCHAR);
 		}
 
 		// tun:usage
 		if (intTunnelInstallation.isSetUsage()) {
 			valueJoiner.join(intTunnelInstallation.getUsage(), Code::getValue, Code::getCodeSpace);
-			psTunnelInstallation.setString(7, valueJoiner.result(0));
-			psTunnelInstallation.setString(8, valueJoiner.result(1));
+			preparedStatement.setString(7, valueJoiner.result(0));
+			preparedStatement.setString(8, valueJoiner.result(1));
 		} else {
-			psTunnelInstallation.setNull(7, Types.VARCHAR);
-			psTunnelInstallation.setNull(8, Types.VARCHAR);
+			preparedStatement.setNull(7, Types.VARCHAR);
+			preparedStatement.setNull(8, Types.VARCHAR);
 		}
 
 		// parentId
 		if (parent instanceof AbstractTunnel) {
-			psTunnelInstallation.setLong(9, parentId);
-			psTunnelInstallation.setNull(10, Types.NULL);
+			preparedStatement.setLong(9, parentId);
+			preparedStatement.setNull(10, Types.NULL);
 		} else if (parent instanceof HollowSpace) {
-			psTunnelInstallation.setNull(9, Types.NULL);
-			psTunnelInstallation.setLong(10, parentId);
+			preparedStatement.setNull(9, Types.NULL);
+			preparedStatement.setLong(10, parentId);
 		} else {
-			psTunnelInstallation.setNull(9, Types.NULL);
-			psTunnelInstallation.setNull(10, Types.NULL);
+			preparedStatement.setNull(9, Types.NULL);
+			preparedStatement.setNull(10, Types.NULL);
 		}	
 
 		// tun:lod4Geometry
-		psTunnelInstallation.setNull(11, Types.NULL);
-		psTunnelInstallation.setNull(12, Types.NULL);
-		psTunnelInstallation.setNull(14, nullGeometryType, nullGeometryTypeName);
-		psTunnelInstallation.setNull(15, nullGeometryType, nullGeometryTypeName);
+		preparedStatement.setNull(11, Types.NULL);
+		preparedStatement.setNull(12, Types.NULL);
+		preparedStatement.setNull(14, nullGeometryType, nullGeometryTypeName);
+		preparedStatement.setNull(15, nullGeometryType, nullGeometryTypeName);
 
 		long geometryId = 0;
 		GeometryObject geometryObject = null;
@@ -392,22 +389,22 @@ public class DBTunnelInstallation implements DBImporter {
 		}
 
 		if (geometryId != 0)
-			psTunnelInstallation.setLong(13, geometryId);
+			preparedStatement.setLong(13, geometryId);
 		else
-			psTunnelInstallation.setNull(13, Types.NULL);
+			preparedStatement.setNull(13, Types.NULL);
 
 		if (geometryObject != null)
-			psTunnelInstallation.setObject(16, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
+			preparedStatement.setObject(16, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
 		else
-			psTunnelInstallation.setNull(16, nullGeometryType, nullGeometryTypeName);
+			preparedStatement.setNull(16, nullGeometryType, nullGeometryTypeName);
 
 		// tun:lod4ImplicitRepresentation
-		psTunnelInstallation.setNull(17, Types.NULL);
-		psTunnelInstallation.setNull(18, Types.NULL);
-		psTunnelInstallation.setNull(20, nullGeometryType, nullGeometryTypeName);
-		psTunnelInstallation.setNull(21, nullGeometryType, nullGeometryTypeName);
-		psTunnelInstallation.setNull(23, Types.VARCHAR);
-		psTunnelInstallation.setNull(24, Types.VARCHAR);
+		preparedStatement.setNull(17, Types.NULL);
+		preparedStatement.setNull(18, Types.NULL);
+		preparedStatement.setNull(20, nullGeometryType, nullGeometryTypeName);
+		preparedStatement.setNull(21, nullGeometryType, nullGeometryTypeName);
+		preparedStatement.setNull(23, Types.VARCHAR);
+		preparedStatement.setNull(24, Types.VARCHAR);
 
 		GeometryObject pointGeom = null;
 		String matrixString = null;
@@ -438,21 +435,21 @@ public class DBTunnelInstallation implements DBImporter {
 		}
 
 		if (implicitId != 0)
-			psTunnelInstallation.setLong(19, implicitId);
+			preparedStatement.setLong(19, implicitId);
 		else
-			psTunnelInstallation.setNull(19, Types.NULL);
+			preparedStatement.setNull(19, Types.NULL);
 
 		if (pointGeom != null)
-			psTunnelInstallation.setObject(22, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
+			preparedStatement.setObject(22, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
 		else
-			psTunnelInstallation.setNull(22, nullGeometryType, nullGeometryTypeName);
+			preparedStatement.setNull(22, nullGeometryType, nullGeometryTypeName);
 
 		if (matrixString != null)
-			psTunnelInstallation.setString(25, matrixString);
+			preparedStatement.setString(25, matrixString);
 		else
-			psTunnelInstallation.setNull(25, Types.VARCHAR);
+			preparedStatement.setNull(25, Types.VARCHAR);
 
-		psTunnelInstallation.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.TUNNEL_INSTALLATION);
 
@@ -477,19 +474,6 @@ public class DBTunnelInstallation implements DBImporter {
 			importer.delegateToADEImporter(intTunnelInstallation, intTunnelInstallationId, featureType);
 
 		return intTunnelInstallationId;
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psTunnelInstallation.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psTunnelInstallation.close();
 	}
 
 }

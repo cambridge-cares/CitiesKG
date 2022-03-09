@@ -61,11 +61,7 @@ This folder is by default not accessible, in order to make it executable, you ne
 
 ### Install and Build
 
-<<<<<<< HEAD
-1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repository. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
-=======
 1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
->>>>>>> release_0.1.0
 
 ```
 cd <main project directory>
@@ -77,20 +73,16 @@ mvn initialize
 
 
 ```
-mvn clean install -DskipTests
+mvn clean install
 ```
 
-<<<<<<< HEAD
 In case building the .war file fails due to the missing `JPS_AWS.jar`, please build this locally first via running the following command within the [JPS_AWS] repository:
 ```
 mvn clean install -DskipTests
 ```
 
 3. There is one dependency `blazegraph-jar-2.1.5.jar` which needs to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
-=======
 
-3. There is one dependency *blazegraph-jar-2.1.5.jar* need to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
->>>>>>> release_0.1.0
 ```
     <dependency>
       <groupId>com.blazegraph</groupId>
@@ -121,6 +113,8 @@ Run the command *mvn clean install -DskipTests* on the corresponding directories
 ### Deployment (for users)
 
 If the build is successful, you should be able to find the war artifact under ${projectDir}/${tomcatPath}/webapps/agents##0.1.0.war
+
+#### Tomcat setup for Windows
 
 Start the tomcat service by clicking on the executable *C:\Program Files\Apache Software Foundation\Tomcat 9.0\bin\Tomcat9w.exe*
 and click on *Start*. After that, you can see the startup page on the browser under [http://localhost:8080].
@@ -184,6 +178,9 @@ To run the web-map-client, in a shell environment navigate to the folder where *
 
 The web-map-client is now available via the URL (http://localhost:8080/3dwebclient/index.html). Place the .kml file in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/` and add the web link of the .kml file in `URL(*)` input field of the web-map-client Toolbox widget. In the input field `Name(*)`, a proper layer name must be specified as well. After clicking AddLayer, the .kml file will be visualised in the web-map-client.
 
+Solutions to common issues:
+* DistanceAgent URL, used in POST request, is hardcoded in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/script.js`. If agents are deployed on another port than 8080, agent URL needs to be updated accordingly in *script.js*.
+* If *DistanceAgent* is used with .kml files that were generated not by *ExporterAgent*, .kml file should have `<name>` value exactly same way as it is stored in the KG.
 
 ## Contributing
 
