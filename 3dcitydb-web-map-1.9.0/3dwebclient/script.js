@@ -49,8 +49,8 @@ var terrainShadows = urlController.getUrlParaValue('terrainShadows', window.loca
 
 var cesiumViewerOptions = {
     selectedImageryProviderViewModel: Cesium.createDefaultImageryProviderViewModels()[1],
-    timeline: true,
-    animation: true,
+    timeline: false,
+    animation: false,
     fullscreenButton: false,
     shadows: (shadows == "true"),
     terrainShadows: parseInt(terrainShadows),
@@ -152,6 +152,7 @@ function initClient() {
     webMap.activateMouseMoveEvents(true);
     webMap.activateViewChangedEvent(true);
 
+    /*
     // add Copyrights, TUM, 3DCityDB or more...
     var creditDisplay = cesiumViewer.scene.frameState.creditDisplay;
 
@@ -160,6 +161,11 @@ function initClient() {
 
     var tumCreditLogo = new Cesium.Credit('<a href="https://www.gis.bgu.tum.de/en/home/" target="_blank">© 2018 Chair of Geoinformatics, TU Munich</a>');
     creditDisplay.addDefaultCredit(tumCreditLogo);
+     */
+
+    // hide Cesium logo
+    var textViewer = document.getElementsByClassName("cesium-widget-credits")[0];
+    textViewer.parentNode.removeChild(textViewer);
 
     // activate debug mode
     var debugStr = urlController.getUrlParaValue('debug', window.location.href, CitydbUtil);
@@ -241,6 +247,7 @@ function initClient() {
         clock.shouldAnimate = false;
     }
 
+    /*
     // add a calendar picker in the timeline using the JS library flatpickr
     var clockElement = document.getElementsByClassName("cesium-animation-blank")[0];
     flatpickr(clockElement, {
@@ -273,6 +280,7 @@ function initClient() {
     cesiumViewer.timeline.addEventListener("click", function() {
         clockElement._flatpickr.setDate(new Date(Cesium.JulianDate.toDate(cesiumViewer.clock.currentTime).toUTCString().substr(0, 25)));
     })
+     */
 
     // Bring the cesium navigation help popup above the compass
     var cesiumNavHelp = document.getElementsByClassName("cesium-navigation-help")[0];
