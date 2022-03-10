@@ -152,17 +152,6 @@ function initClient() {
     webMap.activateMouseMoveEvents(true);
     webMap.activateViewChangedEvent(true);
 
-    /*
-    // add Copyrights, TUM, 3DCityDB or more...
-    var creditDisplay = cesiumViewer.scene.frameState.creditDisplay;
-
-    var citydbCreditLogo = new Cesium.Credit('<a href="https://www.3dcitydb.org/" target="_blank"><img src="https://3dcitydb.org/3dcitydb/fileadmin/public/logos/3dcitydb_logo.png" title="3DCityDB"></a>');
-    creditDisplay.addDefaultCredit(citydbCreditLogo);
-
-    var tumCreditLogo = new Cesium.Credit('<a href="https://www.gis.bgu.tum.de/en/home/" target="_blank">© 2018 Chair of Geoinformatics, TU Munich</a>');
-    creditDisplay.addDefaultCredit(tumCreditLogo);
-     */
-
     // hide Cesium logo
     var textViewer = document.getElementsByClassName("cesium-widget-credits")[0];
     textViewer.parentNode.removeChild(textViewer);
@@ -246,41 +235,6 @@ function initClient() {
         clock.currentTime = julianDate;
         clock.shouldAnimate = false;
     }
-
-    /*
-    // add a calendar picker in the timeline using the JS library flatpickr
-    var clockElement = document.getElementsByClassName("cesium-animation-blank")[0];
-    flatpickr(clockElement, {
-        enableTime: true,
-        defaultDate: new Date(new Date().toUTCString().substr(0, 25)), // force flatpickr to use UTC
-        enableSeconds: true,
-        time_24hr: true,
-        clickOpens: false
-    });
-    clockElement.addEventListener("change", function () {
-        var dateValue = clockElement.value;
-        var cesiumClock = cesiumViewer.clock;
-        cesiumClock.shouldAnimate = false; // stop the clock
-        cesiumClock.currentTime = Cesium.JulianDate.fromIso8601(dateValue.replace(" ", "T") + "Z");
-        // update timeline also
-        var cesiumTimeline = cesiumViewer.timeline;
-        var lowerBound = Cesium.JulianDate.addHours(cesiumViewer.clock.currentTime, -12, new Object());
-        var upperBound = Cesium.JulianDate.addHours(cesiumViewer.clock.currentTime, 12, new Object());
-        cesiumTimeline.updateFromClock(); // center the needle in the timeline
-        cesiumViewer.timeline.zoomTo(lowerBound, upperBound);
-        cesiumViewer.timeline.resize();
-    });
-    clockElement.addEventListener("click", function () {
-        if (clockElement._flatpickr.isOpen) {
-            clockElement._flatpickr.close();
-        } else {
-            clockElement._flatpickr.open();
-        }
-    });
-    cesiumViewer.timeline.addEventListener("click", function() {
-        clockElement._flatpickr.setDate(new Date(Cesium.JulianDate.toDate(cesiumViewer.clock.currentTime).toUTCString().substr(0, 25)));
-    })
-     */
 
     // Bring the cesium navigation help popup above the compass
     var cesiumNavHelp = document.getElementsByClassName("cesium-navigation-help")[0];
