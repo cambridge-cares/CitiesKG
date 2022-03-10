@@ -46,6 +46,7 @@ import org.citydb.config.geometry.GeometryObject;
 import org.citydb.config.geometry.GeometryType;
 import org.citydb.config.project.database.Database;
 import org.citydb.config.project.database.DatabaseSrs;
+import org.citydb.config.project.database.DatabaseType;
 import org.citydb.config.project.global.LogLevel;
 import org.citydb.config.project.kmlExporter.AltitudeOffsetMode;
 import org.citydb.config.project.kmlExporter.Balloon;
@@ -55,6 +56,7 @@ import org.citydb.config.project.kmlExporter.KmlExporter;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.AbstractGeometryConverterAdapter;
 import org.citydb.database.adapter.BlobExportAdapter;
+import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.event.EventDispatcher;
 import org.citydb.event.global.CounterEvent;
@@ -76,6 +78,7 @@ import org.citygml4j.geometry.Point;
 import org.citygml4j.model.citygml.CityGMLClass;
 import org.citygml4j.model.citygml.appearance.Color;
 import org.citygml4j.model.citygml.appearance.X3DMaterial;
+import org.citygml4j.model.citygml.texturedsurface._AbstractAppearance;
 import org.collada._2005._11.colladaschema.Accessor;
 import org.collada._2005._11.colladaschema.Asset;
 import org.collada._2005._11.colladaschema.BindMaterial;
@@ -115,6 +118,11 @@ import org.collada._2005._11.colladaschema.Triangles;
 import org.collada._2005._11.colladaschema.UpAxisType;
 import org.collada._2005._11.colladaschema.Vertices;
 import org.collada._2005._11.colladaschema.VisualScene;
+import org.gdal.ogr.ogr;
+import org.gdal.osr.CoordinateTransformation;
+import org.gdal.osr.SpatialReference;
+import org.gdal.ogr.ogrConstants;
+import org.locationtech.jts.geom.Coordinate;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -134,6 +142,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -148,6 +157,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
+
+
 
 public abstract class KmlGenericObject<T> {
 	private final Logger log = Logger.getInstance();
@@ -1900,6 +1911,238 @@ public abstract class KmlGenericObject<T> {
 		return placemarkList;
 	}
 
+	protected List<PlacemarkType> createPlacemarksForGeometry_geospatila(ResultSet _rs, KmlSplittingResult work) throws SQLException {
+
+		HashSet<String> exportedGmlIds = new HashSet<String>();
+		HashMap<String, MultiGeometryType> multiGeometries = new HashMap<String, MultiGeometryType>();
+		MultiGeometryType multiGeometry = null;
+		PolygonType polygon = null;
+
+		GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
+
+		SpatialReference nativeSr = new SpatialReference("");
+		DatabaseSrs srs = databaseAdapter.getConnectionMetaData().getReferenceSystem();
+		nativeSr.SetFromUserInput(srs.getDatabaseSrsName());//need to get srid from blazegraph
+		SpatialReference tagetSr = new SpatialReference("");
+		tagetSr.SetFromUserInput("EPSG:4326"); // WGS84
+		CoordinateTransformation transform = CoordinateTransformation.CreateCoordinateTransformation(nativeSr, tagetSr);;
+
+		_rs.beforeFirst(); // return cursor to beginning
+
+		while (_rs.next()) {
+//			AffineTransformer transformer = globalTransformer;
+
+			int surfaceTypeID = 0; //temporary use
+			if (surfaceTypeID != 0
+					&& (Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BUILDING_CLOSURE_SURFACE
+					|| Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BRIDGE_CLOSURE_SURFACE
+					|| Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.TUNNEL_CLOSURE_SURFACE))
+				continue;
+
+				Object rsGeometry = _rs.getObject("geomtype");
+				String query = null;
+
+
+
+//				double zOffset = getZOffsetFromConfigOrDB((long)work.getId());
+				double zOffset = 0;
+				List<Point3d> lowestPointCandidates = getLowestPointsCoordinates_unconvert(rsGeometry, (zOffset == Double.MAX_VALUE));
+				if (zOffset == Double.MAX_VALUE)
+					zOffset = getZOffsetFromGEService((long)work.getId(), lowestPointCandidates);
+
+				double lowestZCoordinate = 0;
+				if(databaseAdapter.getDatabaseType() == DatabaseType.BLAZE){
+
+					if (lowestPointCandidates == null || lowestPointCandidates.size() == 0)
+						continue;
+
+					double[] lowestPoint = new double[]{lowestPointCandidates.get(0).x,lowestPointCandidates.get(0).y,
+							lowestPointCandidates.get(0).z};
+
+					transform.TransformPoint(lowestPoint);
+					lowestZCoordinate = lowestPoint [2];
+
+				}else{
+					lowestZCoordinate = convertPointCoordinatesToWGS84(new double[] {
+							lowestPointCandidates.get(0).x,
+							lowestPointCandidates.get(0).y,
+							lowestPointCandidates.get(0).z}) [2];
+				}
+
+				org.gdal.ogr.Geometry geom_poly = new org.gdal.ogr.Geometry(ogrConstants.wkbPolygon);
+
+				Coordinate[] coordinates = geospatial.str2coords(rsGeometry.toString()).toArray(new Coordinate[0]);
+				org.gdal.ogr.Geometry geomRing = new org.gdal.ogr.Geometry(ogr.wkbLinearRing);
+
+				for (int i = 0; i < coordinates.length; i++) {
+					double[] unconvertPoint = new double[]{coordinates[i].getX(), coordinates[i].getY(), coordinates[i].getZ()};
+					transform.TransformPoint(unconvertPoint);
+					geomRing.AddPoint(unconvertPoint[0], unconvertPoint[1], unconvertPoint[2]);
+				}
+
+				geom_poly.AddGeometry(geomRing);
+
+//				}
+					eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
+
+					polygon = kmlFactory.createPolygonType();
+					switch (config.getProject().getKmlExporter().getAltitudeMode()) {
+						case ABSOLUTE:
+							polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.ABSOLUTE));
+							break;
+						case RELATIVE:
+							polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
+							break;
+						case CLAMP_TO_GROUND:
+							polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
+							break;
+					}
+
+					// in case that the Building, Bridge or Tunnel don't have thematic Surface, but normal LODxSurface, the "surfaceType" variable will be null.
+					// in this case, the thematic surface e.g. WallSurface, RoofSurface can be determined by using a walk-around-way e.g. calculate the Normal-vector
+					String surfaceType = null;
+					if (surfaceTypeID != 0)
+						surfaceType = TypeAttributeValueEnum.fromCityGMLClass(Util.getCityGMLClass(surfaceTypeID)).toString();
+
+					// just in case surfaceType == null
+					boolean probablyRoof = true;
+					double nx = 0;
+					double ny = 0;
+					double nz = 0;
+
+					for (int i = 0; i < geom_poly.GetGeometryCount(); i++) {
+						org.gdal.ogr.Geometry getRing = geom_poly.GetGeometryRef(i);
+						LinearRingType linearRing = kmlFactory.createLinearRingType();
+						BoundaryType boundary = kmlFactory.createBoundaryType();
+						boundary.setLinearRing(linearRing);
+
+						if (i == 0)
+							polygon.setOuterBoundaryIs(boundary);
+						else
+							polygon.getInnerBoundaryIs().add(boundary);
+
+						for(int j = 0; j< getRing.GetPointCount(); j++) {
+							// order points clockwise
+							double[] ordinatesArray = getRing.GetPoint(j);
+							linearRing.getCoordinates().add(String.valueOf(reducePrecisionForXorY(ordinatesArray[1]) + ","
+									+ reducePrecisionForXorY(ordinatesArray[0]) + ","
+									+ reducePrecisionForZ(ordinatesArray[2] + zOffset)));
+
+								// not touching the ground
+								probablyRoof = probablyRoof && (reducePrecisionForZ(ordinatesArray[2] - lowestZCoordinate) > 0);
+
+								if (currentLod == 1) {
+									// calculate normal
+									int current = 0;
+									int next = 3;
+									if (next >= ordinatesArray.length) next = 0;
+									nx = nx + ((ordinatesArray[current+1] - ordinatesArray[next+1]) * (ordinatesArray[current+2] + ordinatesArray[next+2]));
+									ny = ny + ((ordinatesArray[current+2] - ordinatesArray[next+2]) * (ordinatesArray[current] + ordinatesArray[next]));
+									nz = nz + ((ordinatesArray[current] - ordinatesArray[next]) * (ordinatesArray[current+1] + ordinatesArray[next+1]));
+								}
+
+						}
+
+					}
+
+					if (currentLod == 1) { // calculate normal
+						double value = Math.sqrt(nx * nx + ny * ny + nz * nz);
+						if (value == 0) { // not a surface, but a line
+							continue;
+						}
+						nx = nx / value;
+						ny = ny / value;
+						nz = nz / value;
+					}
+
+					if (surfaceType == null) {
+						if (work.getCityGMLClass() == CityGMLClass.BUILDING){
+							surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BUILDING_WALL_SURFACE).toString();
+							switch (currentLod) {
+								case 1:
+									if (probablyRoof && (nz > 0.999)) {
+										surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BUILDING_ROOF_SURFACE).toString();
+									}
+									break;
+								case 2:
+									if (probablyRoof) {
+										surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BUILDING_ROOF_SURFACE).toString();
+									}
+									break;
+							}
+						}
+						else if (work.getCityGMLClass() == CityGMLClass.BRIDGE){
+							surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BRIDGE_WALL_SURFACE).toString();
+							/*							switch (currentLod) {
+							case 1:
+								if (probablyRoof && (nz > 0.999)) {
+									surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BRIDGE_ROOF_SURFACE).toString();
+								}
+								break;
+							case 2:
+								if (probablyRoof) {
+									surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BRIDGE_ROOF_SURFACE).toString();
+								}
+								break;
+							}*/
+						}
+						else if (work.getCityGMLClass() == CityGMLClass.TUNNEL){
+							surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.TUNNEL_WALL_SURFACE).toString();
+							/*							switch (currentLod) {
+							case 1:
+								if (probablyRoof && (nz > 0.999)) {
+									surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.TUNNEL_ROOF_SURFACE).toString();
+								}
+								break;
+							case 2:
+								if (probablyRoof) {
+									surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.TUNNEL_ROOF_SURFACE).toString();
+								}
+								break;
+							}	*/
+						}
+					}
+
+					multiGeometry = multiGeometries.get(surfaceType);
+					if (multiGeometry == null) {
+						multiGeometry = kmlFactory.createMultiGeometryType();
+						multiGeometries.put(surfaceType, multiGeometry);
+					}
+					multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
+			}
+
+
+		List<PlacemarkType> placemarkList = new ArrayList<PlacemarkType>();
+		Set<String> keySet = multiGeometries.keySet();
+		Iterator<String> iterator = keySet.iterator();
+		while (iterator.hasNext()) {
+			String surfaceType = iterator.next();
+			PlacemarkType placemark = kmlFactory.createPlacemarkType();
+			if (work.getCityGMLClass() == CityGMLClass.BUILDING
+					|| work.getCityGMLClass() == CityGMLClass.BRIDGE
+					|| work.getCityGMLClass() == CityGMLClass.TUNNEL){
+				placemark.setName(work.getGmlId() + "_" + surfaceType);
+				placemark.setId(config.getProject().getKmlExporter().getIdPrefixes().getPlacemarkGeometry() + placemark.getName());
+				placemark.setStyleUrl("#" + surfaceType + "Normal");
+			}
+			else{
+				placemark.setName(work.getGmlId());
+				placemark.setId(config.getProject().getKmlExporter().getIdPrefixes().getPlacemarkGeometry() + placemark.getName());
+				placemark.setStyleUrl("#" + getStyleBasisName() + DisplayForm.GEOMETRY_STR + "Normal");
+			}
+
+			if (getBalloonSettings().isIncludeDescription() &&
+					!work.getDisplayForm().isHighlightingEnabled()) { // avoid double description
+				addBalloonContents(placemark, (long)work.getId());
+			}
+			multiGeometry = multiGeometries.get(surfaceType);
+			placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
+			placemarkList.add(placemark);
+		}
+
+		return placemarkList;
+	}
+
 	protected X3DMaterial getX3dMaterialFromIntColor(int rgbColor) {
 		java.awt.Color color = new java.awt.Color(rgbColor, true);
 		double floatRed = color.getRed() / 255.0;
@@ -2649,7 +2892,15 @@ public abstract class KmlGenericObject<T> {
 			Object buildingGeometryObj = rs.getObject(1);
 
 			if (buildingGeometryObj != null) {
-				GeometryObject geometry = geometryConverterAdapter.getGeometry(rs.getObject(1));
+				GeometryObject geometry = null;
+				if(databaseAdapter.getDatabaseType() == DatabaseType.BLAZE) {
+					buildingGeometryObj = rs.getObject("geom");
+					String datatype = rs.getString("datatype");
+					buildingGeometryObj = StatementTransformer.Str2Geometry(buildingGeometryObj.toString(), datatype);
+					geometry = geometryConverterAdapter.getGeometry(buildingGeometryObj);
+				}else{
+					geometry = geometryConverterAdapter.getGeometry(rs.getObject(1));
+				}
 
 				// we are only interested in the z coordinate 
 				for (int i = 0; i < geometry.getNumElements(); i++) {
@@ -2676,6 +2927,57 @@ public abstract class KmlGenericObject<T> {
 		return coords;
 	}
 
+	protected List<Point3d> getLowestPointsCoordinates_unconvert(Object buildingGeometryObj, boolean willCallGEService) throws SQLException {
+		double currentlyLowestZCoordinate = Double.MAX_VALUE;
+		List<Point3d> coords = new ArrayList<Point3d>();
+		GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
+
+//		while (rs.next()) {
+//			Object buildingGeometryObj = rs.getObject(1);
+
+			if (buildingGeometryObj != null) {
+//				org.gdal.ogr.Geometry geomRing = null;
+//				buildingGeometryObj = rs.getObject("geom");
+//				String datatype = rs.getString("datatype");
+//				Coordinate[] coordinates = geospatial.str2coords(rs.getObject("geom").toString()).toArray(new Coordinate[0]);
+				Coordinate[] coordinates = geospatial.str2coords(buildingGeometryObj.toString()).toArray(new Coordinate[0]);
+				org.gdal.ogr.Geometry geomRing = new org.gdal.ogr.Geometry(ogrConstants.wkbLinearRing);
+
+				for(int i = 0; i < coordinates.length; i++){
+					geomRing.AddPoint(coordinates[i].getX(), coordinates[i].getY(), coordinates[i].getZ());
+				}
+
+				org.gdal.ogr.Geometry geom_poly = new org.gdal.ogr.Geometry(ogrConstants.wkbPolygon);
+				geom_poly.AddGeometry(geomRing);
+
+				// we are only interested in the z coordinate
+				for (int i = 0; i < geom_poly.GetGeometryCount(); i++) {
+					org.gdal.ogr.Geometry getRing = geom_poly.GetGeometryRef(i);
+
+//					double[] ordinatesArray = geom_poly.GetGeometryRef(i);
+
+					for(int j = 0; j< getRing.GetPointCount(); j++){
+						double ordinatesZ = getRing.GetZ(j);
+						if (ordinatesZ < currentlyLowestZCoordinate) {
+							coords.clear();
+							Point3d point3d = new Point3d(getRing.GetX(j), getRing.GetY(j), getRing.GetZ(j));
+							coords.add(point3d);
+							currentlyLowestZCoordinate = point3d.z;
+						}
+						if (willCallGEService && ordinatesZ == currentlyLowestZCoordinate) {
+							Point3d point3d = new Point3d(getRing.GetX(j), getRing.GetY(j), getRing.GetZ(j));
+							if (!coords.contains(point3d)) {
+								coords.add(point3d);
+							}
+						}
+					}
+				}
+			}
+//		}
+
+		return coords;
+	}
+
 	protected double[] convertPointCoordinatesToWGS84(double[] coords) throws SQLException {
 		double[] pointCoords = null;
 		GeometryObject convertedPointGeom = null;
@@ -2687,6 +2989,7 @@ public abstract class KmlGenericObject<T> {
 			convertedPointGeom = convertToWGS84(GeometryObject.createCurve(coords, coords.length, dbSrs.getSrid()));
 			break;
 		case POSTGIS:
+		case BLAZE:
 			convertedPointGeom = convertToWGS84(GeometryObject.createPoint(coords, coords.length, dbSrs.getSrid()));
 			break;
 		}

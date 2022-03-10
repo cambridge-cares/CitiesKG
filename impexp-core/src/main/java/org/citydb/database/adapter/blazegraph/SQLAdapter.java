@@ -163,6 +163,7 @@ public class SQLAdapter extends AbstractSQLAdapter {
     public PreparedStatement prepareStatement(SQLStatement statement, Connection connection) throws SQLException{
         String sparqlQuery = null;
         PreparedStatement psQuery;
+
         StatementTransformer queryTransformer = new StatementTransformer(databaseAdapter);
 
         try {
@@ -171,6 +172,7 @@ public class SQLAdapter extends AbstractSQLAdapter {
             e.printStackTrace();
         }
         psQuery = connection.prepareStatement(sparqlQuery.toString());
+
         return psQuery;
     }
 

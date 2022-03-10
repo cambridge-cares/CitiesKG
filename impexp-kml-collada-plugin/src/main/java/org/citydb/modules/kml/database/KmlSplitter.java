@@ -164,8 +164,7 @@ public class KmlSplitter {
 					//	String[] elements = id_str.split("/");
 					//	String gmlId = elements[elements.length-2];
 						String gmlId = rs.getString(MappingConstants.GMLID);
-
-
+						
 					GeometryObject envelope = null;
 					if (query.isSetTiling()) {
 						Object geomObj = rs.getObject(MappingConstants.ENVELOPE);
