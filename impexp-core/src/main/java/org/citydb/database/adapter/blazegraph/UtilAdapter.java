@@ -1,5 +1,7 @@
 package org.citydb.database.adapter.blazegraph;
 
+import org.apache.jena.arq.querybuilder.ExprFactory;
+import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.citydb.citygml.exporter.util.Metadata;
 import org.citydb.config.geometry.BoundingBox;
 import org.citydb.config.geometry.GeometryObject;
@@ -53,7 +55,7 @@ public class UtilAdapter extends AbstractUtilAdapter {
 
     @Override
     public void getSrsInfo(DatabaseSrs srs) throws SQLException {
-        String connectionStr = databaseAdapter.getJDBCUrl(databaseAdapter.getConnectionDetails().getServer(), databaseAdapter.getConnectionDetails().getPort(), databaseAdapter.getConnectionDetails().getSid());
+        String connectionStr = databaseAdapter.getJDBCUrl(databaseAdapter.getConnectionDetails().getServer(), databaseAdapter.getConnectionDetails().getPort(), databaseAdapter.getConnectionDetails().getSid().replaceFirst("(namespace/)\\S*(/sparql)", "$1public$2"));
         //extract the endpoint url of public namespace
         //remove / at the end of endpoint if any - if endpoint ends with /, existsEndpoint will fail even if public namespace exists
         String endpointUrl = connectionStr.substring(23, connectionStr.indexOf("&"));
@@ -61,23 +63,23 @@ public class UtilAdapter extends AbstractUtilAdapter {
             endpointUrl = endpointUrl.substring(0, endpointUrl.length() - 1);
         }
         String schema = databaseAdapter.getConnectionDetails().getSchema();
-        StringBuilder sparqlString = new StringBuilder();
+        SelectBuilder builder = new SelectBuilder();
+        ExprFactory expr = builder.getExprFactory();
 
-        sparqlString.append("PREFIX ocgml: <" + schema + "> " +
-                "SELECT ?s ?srid ?srsname {\n" +
-                "    ?s ocgml:srid ?srid;\n" +
-                "        ocgml:srsname ?srsname\n" +
-                "}");
-
-        String query = sparqlString.toString();
+        builder.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, schema)
+                .addVar("?name").addVar("?type").addVar("?srtext")
+                .addWhere("?s", SchemaManagerAdapter.ONTO_SRTEXT, "?srtext")
+                .addBind(expr.strbefore(expr.strafter("?srtext", "\""), "\""), "?name")
+                .addBind(expr.strbefore("?srtext", "["), "?type")
+                .addWhere("?s", SchemaManagerAdapter.ONTO_SRID, String.valueOf(srs.getSrid()));
 
         //check if public namespace exists at endpoint
         Boolean exists = existsEndpoint(endpointUrl);
 
         if (exists) {
             try (Connection conn = DriverManager.getConnection(connectionStr);
-                 PreparedStatement statement = conn.prepareStatement(query);
-                 ResultSet rs = statement.executeQuery()) {
+                 Statement statement = conn.createStatement();
+                 ResultSet rs = statement.executeQuery(builder.buildString())) {
                 if (rs.next()) {
                     srs.setSupported(true);
                     if ((rs.getString(1) == null) && (rs.getString(2) == null)) { //srs is supported but no wktext
@@ -85,11 +87,9 @@ public class UtilAdapter extends AbstractUtilAdapter {
                         srs.setType(getSrsType(""));
                         srs.setWkText("");
                     } else { //srs is supported and has wktext
-                        srs.setGMLSrsName(rs.getString(1));
-                        srs.setSrid(rs.getInt(2));
-                        srs.setDatabaseSrsName(rs.getString(3));
-                        srs.setDescription(rs.getString(3));
-                        databaseAdapter.getConnectionMetaData().setReferenceSystem(srs);
+                        srs.setDatabaseSrsName(rs.getString(1));
+                        srs.setType(getSrsType(rs.getString(2)));
+                        srs.setWkText(rs.getString(3));
                     }
                 } else { //srs is not supported
                     DatabaseSrs tmp = DatabaseSrs.createDefaultSrs();
