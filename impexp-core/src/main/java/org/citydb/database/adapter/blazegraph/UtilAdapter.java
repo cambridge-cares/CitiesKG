@@ -74,30 +74,15 @@ public class UtilAdapter extends AbstractUtilAdapter {
     @Override
     public void getSrsInfo(DatabaseSrs srs) throws SQLException {
         String connectionStr = databaseAdapter.getJDBCUrl(databaseAdapter.getConnectionDetails().getServer(), databaseAdapter.getConnectionDetails().getPort(), databaseAdapter.getConnectionDetails().getSid().replaceFirst("(namespace/)\\S*(/sparql)", "$1public$2"));
-        //extract the endpoint url of public namespace
-        //remove / at the end of endpoint if any - if endpoint ends with /, existsEndpoint will fail even if public namespace exists
         String endpointUrl = connectionStr.substring(23, connectionStr.indexOf("&"));
-        if (endpointUrl.endsWith("/")) {
-            endpointUrl = endpointUrl.substring(0, endpointUrl.length() - 1);
-        }
-        String schema = databaseAdapter.getConnectionDetails().getSchema();
-        SelectBuilder builder = new SelectBuilder();
-        ExprFactory expr = builder.getExprFactory();
-
-        builder.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, schema)
-                .addVar("?name").addVar("?type").addVar("?srtext")
-                .addWhere("?s", SchemaManagerAdapter.ONTO_SRTEXT, "?srtext")
-                .addBind(expr.strbefore(expr.strafter("?srtext", "\""), "\""), "?name")
-                .addBind(expr.strbefore("?srtext", "["), "?type")
-                .addWhere("?s", SchemaManagerAdapter.ONTO_SRID, String.valueOf(srs.getSrid()));
-
-        //check if public namespace exists at endpoint
+        endpointUrl = endpointUrl.endsWith("/") ? endpointUrl.substring(0, endpointUrl.length() - 1) : endpointUrl;
         Boolean exists = existsEndpoint(endpointUrl);
 
+        //check if public namespace exists at endpoint
         if (exists) {
             try (Connection conn = DriverManager.getConnection(connectionStr);
                  Statement statement = conn.createStatement();
-                 ResultSet rs = statement.executeQuery(builder.buildString())) {
+                 ResultSet rs = statement.executeQuery(getGetSrsInfoSelectStatement(databaseAdapter.getConnectionDetails().getSchema(), srs.getSrid()))) {
                 if (rs.next()) {
                     srs.setSupported(true);
                     if ((rs.getString(1) == null) && (rs.getString(2) == null)) { //srs is supported but no wktext
@@ -109,20 +94,31 @@ public class UtilAdapter extends AbstractUtilAdapter {
                         srs.setType(getSrsType(rs.getString(2)));
                         srs.setWkText(rs.getString(3));
                     }
-                } else { //srs is not supported
-                    DatabaseSrs tmp = DatabaseSrs.createDefaultSrs();
-                    srs.setDatabaseSrsName(tmp.getDatabaseSrsName());
-                    srs.setType(tmp.getType());
-                    srs.setSupported(false);
                 }
             }
-        } else { //public namespace is not available at endpoint
+        }
+
+        if (!exists || !srs.isSupported()) { //public namespace is not available at endpoint or srs is not supported
             DatabaseSrs tmp = DatabaseSrs.createDefaultSrs();
             srs.setDatabaseSrsName(tmp.getDatabaseSrsName());
             srs.setType(tmp.getType());
             srs.setSupported(false);
         }
         srsInfoMap.put(srs.getSrid(), srs);
+    }
+
+    public String getGetSrsInfoSelectStatement(String schema, int srid) {
+        SelectBuilder builder = new SelectBuilder();
+        ExprFactory expr = builder.getExprFactory();
+
+        builder.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, schema)
+                .addVar("?name").addVar("?type").addVar("?srtext")
+                .addWhere("?s", SchemaManagerAdapter.ONTO_SRTEXT, "?srtext")
+                .addBind(expr.strbefore(expr.strafter("?srtext", "\""), "\""), "?name")
+                .addBind(expr.strbefore("?srtext", "["), "?type")
+                .addWhere("?s", SchemaManagerAdapter.ONTO_SRID, String.valueOf(srid));
+
+        return builder.buildString();
     }
 
     public Boolean existsEndpoint(String endpointUrl) {
