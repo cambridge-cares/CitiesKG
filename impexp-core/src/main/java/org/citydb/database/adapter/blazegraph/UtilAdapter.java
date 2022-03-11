@@ -45,7 +45,25 @@ public class UtilAdapter extends AbstractUtilAdapter {
 
     @Override
     protected void getDatabaseMetaData(DatabaseMetaData metaData, String schema, Connection connection) throws SQLException {
+        String connectionStr = databaseAdapter.getJDBCUrl(databaseAdapter.getConnectionDetails().getServer(), databaseAdapter.getConnectionDetails().getPort(), databaseAdapter.getConnectionDetails().getSid());
 
+        SelectBuilder builder = new SelectBuilder();
+        builder.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, schema)
+                .addVar("?srid").addVar("?srsname")
+                .addWhere("?s", SchemaManagerAdapter.ONTO_SRID, "?srid")
+                .addWhere("?s", SchemaManagerAdapter.ONTO_SRSNAME, "?srsname");
+
+        try (Connection conn = DriverManager.getConnection(connectionStr);
+             Statement statement = conn.createStatement();
+             ResultSet rs = statement.executeQuery(builder.buildString())) {
+            if (rs.next()) {
+                DatabaseSrs srs = metaData.getReferenceSystem();
+                srs.setSrid(Integer.valueOf(rs.getString(1)));
+                srs.setGMLSrsName(rs.getString(2));
+                getSrsInfo(srs);
+                metaData.setVersioning(DatabaseMetaData.Versioning.NOT_SUPPORTED);
+            }
+        }
     }
 
     @Override
