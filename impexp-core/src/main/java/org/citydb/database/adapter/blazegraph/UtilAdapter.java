@@ -98,7 +98,7 @@ public class UtilAdapter extends AbstractUtilAdapter {
             }
         }
 
-        if (!exists || !srs.isSupported()) { //public namespace is not available at endpoint or srs is not supported
+        if (!exists || (exists && !srs.isSupported())) { //public namespace is not available at endpoint or srs is not supported
             DatabaseSrs tmp = DatabaseSrs.createDefaultSrs();
             srs.setDatabaseSrsName(tmp.getDatabaseSrsName());
             srs.setType(tmp.getType());
