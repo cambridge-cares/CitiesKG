@@ -1,10 +1,13 @@
 package org.citydb.database.adapter.blazegraph.test;
 
 import org.citydb.citygml.importer.database.content.DBObjectTestHelper;
+import org.citydb.config.project.database.DBConnection;
 import org.citydb.config.project.database.DatabaseSrs;
 import org.citydb.config.project.database.DatabaseSrsType;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.blazegraph.UtilAdapter;
+import org.citydb.database.connection.DatabaseConnectionDetails;
+import org.citydb.database.connection.DatabaseMetaData;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.mockito.stubbing.Answer;
@@ -49,7 +52,61 @@ public class UtilAdapterTest {
     @Test
     public void testNewUtilAdapterMethods() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         UtilAdapter utilAdapter = createNewUtilAdapter();
-        assertEquals(21, utilAdapter.getClass().getDeclaredMethods().length);
+        assertEquals(22, utilAdapter.getClass().getDeclaredMethods().length);
+    }
+
+    //test case when endpoint has srid and srsname
+    @Test
+    public void testGetDatabaseMetaDataHasInfo() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, SQLException {
+        UtilAdapter spy = Mockito.spy(createNewUtilAdapter());
+        DBConnection dbconn = DBObjectTestHelper.createDbConnection("Blazegraph");
+        org.citydb.database.connection.DatabaseMetaData metaData = new DatabaseMetaData(new DatabaseConnectionDetails(dbconn));
+        String schema = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
+
+        Method getDataBaseMetaData = UtilAdapter.class.getDeclaredMethod("getDatabaseMetaData", org.citydb.database.connection.DatabaseMetaData.class, String.class, Connection.class);
+        getDataBaseMetaData.setAccessible(true);
+
+        when(spy.existsEndpoint(ArgumentMatchers.anyString())).thenReturn(true);
+        try (MockedStatic<DriverManager> manager = Mockito.mockStatic(DriverManager.class, RETURNS_MOCKS)) {
+            manager.when(() -> DriverManager.getConnection(ArgumentMatchers.anyString())).thenReturn(conn);
+            when(conn.createStatement()).thenReturn(statement);
+            when(statement.executeQuery(ArgumentMatchers.anyString())).thenReturn(rs);
+            when(rs.next()).thenReturn(true);
+            when(rs.getString(1)).thenReturn("25833");
+            when(rs.getString(2)).thenReturn("EPSG:25833");
+            Mockito.doNothing().when(spy).getSrsInfo(ArgumentMatchers.any(DatabaseSrs.class));
+
+            getDataBaseMetaData.invoke(spy, metaData, schema, conn);
+            assertEquals(25833, metaData.getReferenceSystem().getSrid());
+            assertEquals("EPSG:25833", metaData.getReferenceSystem().getGMLSrsName());
+            assertFalse(metaData.isVersionEnabled());
+            Mockito.verify(spy).getSrsInfo(ArgumentMatchers.any(DatabaseSrs.class));
+        }
+    }
+
+    //test case when endpoint does not have srid and srsname
+    @Test
+    public void testGetDatabaseMetaDataNoInfo() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, SQLException {
+        UtilAdapter spy = Mockito.spy(createNewUtilAdapter());
+        DBConnection dbconn = DBObjectTestHelper.createDbConnection("Blazegraph");
+        org.citydb.database.connection.DatabaseMetaData metaData = new DatabaseMetaData(new DatabaseConnectionDetails(dbconn));
+        String schema = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
+
+        Method getDataBaseMetaData = UtilAdapter.class.getDeclaredMethod("getDatabaseMetaData", org.citydb.database.connection.DatabaseMetaData.class, String.class, Connection.class);
+        getDataBaseMetaData.setAccessible(true);
+
+        when(spy.existsEndpoint(ArgumentMatchers.anyString())).thenReturn(true);
+        try (MockedStatic<DriverManager> manager = Mockito.mockStatic(DriverManager.class, RETURNS_MOCKS)) {
+            manager.when(() -> DriverManager.getConnection(ArgumentMatchers.anyString())).thenReturn(conn);
+            when(conn.createStatement()).thenReturn(statement);
+            when(statement.executeQuery(ArgumentMatchers.anyString())).thenReturn(rs);
+            when(rs.next()).thenReturn(false);
+
+            getDataBaseMetaData.invoke(spy, metaData, schema, conn);
+            assertEquals(0, metaData.getReferenceSystem().getSrid());
+            assertEquals("", metaData.getReferenceSystem().getGMLSrsName());
+            assertFalse(metaData.isVersionEnabled());
+        }
     }
 
     @Test
@@ -138,6 +195,23 @@ public class UtilAdapterTest {
         assertEquals(DatabaseSrsType.UNKNOWN, srs.getType());
         assertNull(srs.getWkText());
         assertFalse(srs.isSupported());
+    }
+
+    @Test
+    public void testGetGetSrsInfoSelectStatement() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        UtilAdapter utilAdapter = createNewUtilAdapter();
+        String schema = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
+        int srid = 0;
+        String expected = "PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>\n" +
+                "\n" +
+                "SELECT  ?name ?type ?srtext\n" +
+                "WHERE\n" +
+                "  { ?s  ocgml:srtext  ?srtext\n" +
+                "    BIND(strbefore(strafter(?srtext, \"\\\"\"), \"\\\"\") AS ?name)\n" +
+                "    BIND(strbefore(?srtext, \"[\") AS ?type)\n" +
+                "    ?s  ocgml:srid  0\n" +
+                "  }\n";
+        assertEquals(expected,utilAdapter.getGetSrsInfoSelectStatement(schema, srid));
     }
 
     @Test
@@ -239,7 +313,7 @@ public class UtilAdapterTest {
                 "WITH <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/databasesrs/>\n" +
                 "DELETE { ?srid ocgml:srid ?currentSrid .\n" +
                 "?srsname ocgml:srsname ?currentSrsname }\n" +
-                "INSERT { <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> ocgml:srid 123;\n" +
+                "INSERT { <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/> ocgml:srid 123;\n" +
                 "ocgml:srsname \"test\" }\n" +
                 "WHERE { OPTIONAL { ?srid ocgml:srid ?currentSrid }\n" +
                 "OPTIONAL { ?srsname ocgml:srsname ?currentSrsname } }";
