@@ -150,10 +150,11 @@ public class StatementTransformer {
         StringBuilder sparqlString = new StringBuilder();
 
         sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-                "SELECT distinct ?surf ?geomtype " +
+                "SELECT distinct ?surf ?geomtype ?surftype " +
                 "WHERE { " +
                 "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> " +
-                "{?themsurf ocgml:buildingId ? .} " +
+                "{?themsurf ocgml:buildingId ? ; " +
+                "ocgml:objectClassId ?surftype.}" +
                 "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> " +
                 "{?surf ocgml:cityObjectId ?themsurf; " +
                 "ocgml:GeometryType ?geomtype . " +

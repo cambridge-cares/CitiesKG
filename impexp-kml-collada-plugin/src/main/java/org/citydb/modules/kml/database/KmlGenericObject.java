@@ -1920,7 +1920,7 @@ public abstract class KmlGenericObject<T> {
 		while (_rs.next()) {
 //			AffineTransformer transformer = globalTransformer;
 
-			int surfaceTypeID = 0; //temporary use
+			int surfaceTypeID = _rs.getInt("surftype");
 			if (surfaceTypeID != 0
 					&& (Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BUILDING_CLOSURE_SURFACE
 					|| Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BRIDGE_CLOSURE_SURFACE
