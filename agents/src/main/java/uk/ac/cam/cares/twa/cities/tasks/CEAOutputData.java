@@ -1,8 +1,7 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
-import org.json.JSONArray;
-
 import java.util.ArrayList;
+import java.util.List;
 
 public class CEAOutputData {
     public ArrayList<String> grid_demand = new ArrayList<>();
@@ -13,5 +12,7 @@ public class CEAOutputData {
     public ArrayList<String> PV_supply = new ArrayList<>();
     public String targetUrl;
     public ArrayList<String> iri = new ArrayList<>();
+    public List<List<List<?>>> timeSeries = new ArrayList<>();
+    public List<String> times = new ArrayList<>();
 
 }

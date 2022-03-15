@@ -13,8 +13,11 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.sql.Timestamp;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.lang.Process;
+import java.util.List;
 import java.util.Objects;
 
 public class RunCEATask implements Runnable {
@@ -75,10 +78,9 @@ public class RunCEATask implements Runnable {
         }
     }
 
-    public CEAOutputData extractOutputs(String tmpDir) {
+    public CEAOutputData extractAnnualOutputs(String tmpDir, CEAOutputData result) {
         String line = "";
         String splitBy = ",";
-        CEAOutputData result = new CEAOutputData();
         String projectDir = tmpDir+FS+"testProject";
 
         try{
@@ -154,6 +156,106 @@ public class RunCEATask implements Runnable {
         return result;
     }
 
+    public CEAOutputData extractTimeSeriesOutputs(String tmpDir) {
+        String line = "";
+        String splitBy = ",";
+        String projectDir = tmpDir+FS+"testProject";
+        CEAOutputData result = new CEAOutputData();
+
+        try{
+            for(int i=0; i<inputs.size(); i++){
+                FileReader demand;
+                if(i<10){
+                    demand = new FileReader(projectDir+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"demand"+FS+"B00"+i+".csv");
+                }
+                else if(i<100){
+                    demand = new FileReader(projectDir+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"demand"+FS+"B0"+i+".csv");
+                }
+                else{
+                    demand = new FileReader(projectDir+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"demand"+FS+"B"+i+".csv");
+                }
+                BufferedReader demand_file = new BufferedReader(demand);
+                ArrayList<String[]> demand_columns = new ArrayList<>();
+                List<List<?>> timeseriesdata = new ArrayList<>();
+                ArrayList<String> grid_results = new ArrayList<>();
+                ArrayList<String> heating_results = new ArrayList<>();
+                ArrayList<String> cooling_results = new ArrayList<>();
+                ArrayList<String> electricity_results = new ArrayList<>();
+                ArrayList<String> PV_results = new ArrayList<>();
+                List<String> timestamps = new ArrayList();
+
+                while ((line = demand_file.readLine()) != null)   //returns a Boolean value
+                {
+                    String[] rows = line.split(splitBy);    // use comma as separator
+                    demand_columns.add(rows);
+                }
+                for(int n=0; n<demand_columns.get(0).length; n++) {
+                    if (demand_columns.get(0)[n].equals("GRID_kWh")) {
+                        for (int m = 1; m < demand_columns.size(); m++) {
+                            grid_results.add(demand_columns.get(m)[n]);
+                        }
+                    } else if (demand_columns.get(0)[n].equals("QH_sys_kWh")) {
+                        for (int m = 1; m < demand_columns.size(); m++) {
+                            heating_results.add(demand_columns.get(m)[n]);
+                        }
+                    } else if (demand_columns.get(0)[n].equals("QC_sys_kWh")) {
+                        for (int m = 1; m < demand_columns.size(); m++) {
+                            cooling_results.add(demand_columns.get(m)[n]);
+                        }
+                    } else if (demand_columns.get(0)[n].equals("E_sys_kWh")) {
+                        for (int m = 1; m < demand_columns.size(); m++) {
+                            electricity_results.add(demand_columns.get(m)[n]);
+                        }
+                    }
+                }
+                timeseriesdata.add(heating_results);
+                timeseriesdata.add(cooling_results);
+                timeseriesdata.add(grid_results);
+                timeseriesdata.add(electricity_results);
+                demand_file.close();
+                demand.close();
+
+                FileReader PV;
+                if(i<10){
+                    PV = new FileReader(projectDir+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"potentials"+FS+"solar"+FS+"B00"+i+"_PV.csv");
+                }
+                else if(i<100){
+                    PV = new FileReader(projectDir+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"potentials"+FS+"solar"+FS+"B0"+i+"_PV.csv");
+                }
+                else{
+                    PV = new FileReader(projectDir+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"potentials"+FS+"solar"+FS+"B"+i+"_PV.csv");
+                }
+                BufferedReader PV_file = new BufferedReader(PV);
+                ArrayList<String[]> PV_columns = new ArrayList<>();
+
+                while ((line = PV_file.readLine()) != null)   //returns a Boolean value
+                {
+                    String[] rows = line.split(splitBy);    // use comma as separator
+                    PV_columns.add(rows);
+                }
+                for(int n=0; n<PV_columns.get(0).length; n++) {
+                    if (i==0 && PV_columns.get(0)[n].equals("Date")) {
+                        for (int m = 1; m < PV_columns.size(); m++) {
+                            timestamps.add(demand_columns.get(m)[n].replaceAll("\\s","T")+"+00:00");
+                        }
+                    } else if(PV_columns.get(0)[n].equals("E_PV_gen_kWh")) {
+                        for(int m=1; m<PV_columns.size(); m++) {
+                            PV_results.add(PV_columns.get(m)[n]);
+                        }
+                    }
+                }
+                PV_file.close();
+                PV.close();
+                timeseriesdata.add(PV_results);
+                result.timeSeries.add(timeseriesdata);
+                if(i==0) result.times = timestamps;
+            }
+        } catch ( IOException e) {
+
+        }
+        return result;
+    }
+
     public void returnOutputs(CEAOutputData output) {
         try {
             String JSONOutput = new Gson().toJson(output);
@@ -224,7 +326,8 @@ public class RunCEATask implements Runnable {
                 // Run workflow that runs all CEA scripts
                 runProcess(args3);
 
-                returnOutputs(extractOutputs(strTmp));
+                CEAOutputData result = extractTimeSeriesOutputs(strTmp);
+                returnOutputs(extractAnnualOutputs(strTmp,result));
 
             } catch ( NullPointerException | URISyntaxException e) {
                 e.printStackTrace();
