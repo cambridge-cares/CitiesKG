@@ -32,10 +32,6 @@ public class UPRN extends Model {
   @FieldAnnotation(value = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoOSID.owl#intersectsFeature", innerType = CityObject.class)
   private ArrayList<CityObject> intersects;
 
-  @Getter @Setter
-  @FieldAnnotation(value = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoOSID.owl#representsFeature", innerType = CityObject.class)
-  private ArrayList<CityObject> represents;
-
   /**
    * Constructs a UPRN in a context according to JSON data provided by an Ordnance Survey API. Does not populate
    * {@code intersects} and {@code represents} fields. The IRI of the UPRN is built from the context graph namespace.
