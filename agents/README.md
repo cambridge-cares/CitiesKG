@@ -123,6 +123,7 @@ As CityImportAgent will execute a python script from java program, it requires t
 The tomcat server needs to be configured as following:
 
 On the logOn tab of the Tomcat properties windows, select *Log on as: Local System account* and check the box *Allow service to interact with Desktop*
+(For Mac: you need to put your import folder at same place of your tomcat service, in order to let your tomcat has right to access import folder.)
 
 After starting the tomcat server, you can place the agent .war artifact into the directory *C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps*.
 

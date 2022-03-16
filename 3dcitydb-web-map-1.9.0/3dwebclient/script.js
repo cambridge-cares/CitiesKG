@@ -49,8 +49,8 @@ var terrainShadows = urlController.getUrlParaValue('terrainShadows', window.loca
 
 var cesiumViewerOptions = {
     selectedImageryProviderViewModel: Cesium.createDefaultImageryProviderViewModels()[1],
-    timeline: true,
-    animation: true,
+    timeline: false,
+    animation: false,
     fullscreenButton: false,
     shadows: (shadows == "true"),
     terrainShadows: parseInt(terrainShadows),
@@ -152,14 +152,9 @@ function initClient() {
     webMap.activateMouseMoveEvents(true);
     webMap.activateViewChangedEvent(true);
 
-    // add Copyrights, TUM, 3DCityDB or more...
-    var creditDisplay = cesiumViewer.scene.frameState.creditDisplay;
-
-    var citydbCreditLogo = new Cesium.Credit('<a href="https://www.3dcitydb.org/" target="_blank"><img src="https://3dcitydb.org/3dcitydb/fileadmin/public/logos/3dcitydb_logo.png" title="3DCityDB"></a>');
-    creditDisplay.addDefaultCredit(citydbCreditLogo);
-
-    var tumCreditLogo = new Cesium.Credit('<a href="https://www.gis.bgu.tum.de/en/home/" target="_blank">© 2018 Chair of Geoinformatics, TU Munich</a>');
-    creditDisplay.addDefaultCredit(tumCreditLogo);
+    // hide Cesium logo
+    var textViewer = document.getElementsByClassName("cesium-widget-credits")[0];
+    textViewer.parentNode.removeChild(textViewer);
 
     // activate debug mode
     var debugStr = urlController.getUrlParaValue('debug', window.location.href, CitydbUtil);
@@ -241,39 +236,6 @@ function initClient() {
         clock.shouldAnimate = false;
     }
 
-    // add a calendar picker in the timeline using the JS library flatpickr
-    var clockElement = document.getElementsByClassName("cesium-animation-blank")[0];
-    flatpickr(clockElement, {
-        enableTime: true,
-        defaultDate: new Date(new Date().toUTCString().substr(0, 25)), // force flatpickr to use UTC
-        enableSeconds: true,
-        time_24hr: true,
-        clickOpens: false
-    });
-    clockElement.addEventListener("change", function () {
-        var dateValue = clockElement.value;
-        var cesiumClock = cesiumViewer.clock;
-        cesiumClock.shouldAnimate = false; // stop the clock
-        cesiumClock.currentTime = Cesium.JulianDate.fromIso8601(dateValue.replace(" ", "T") + "Z");
-        // update timeline also
-        var cesiumTimeline = cesiumViewer.timeline;
-        var lowerBound = Cesium.JulianDate.addHours(cesiumViewer.clock.currentTime, -12, new Object());
-        var upperBound = Cesium.JulianDate.addHours(cesiumViewer.clock.currentTime, 12, new Object());
-        cesiumTimeline.updateFromClock(); // center the needle in the timeline
-        cesiumViewer.timeline.zoomTo(lowerBound, upperBound);
-        cesiumViewer.timeline.resize();
-    });
-    clockElement.addEventListener("click", function () {
-        if (clockElement._flatpickr.isOpen) {
-            clockElement._flatpickr.close();
-        } else {
-            clockElement._flatpickr.open();
-        }
-    });
-    cesiumViewer.timeline.addEventListener("click", function() {
-        clockElement._flatpickr.setDate(new Date(Cesium.JulianDate.toDate(cesiumViewer.clock.currentTime).toUTCString().substr(0, 25)));
-    })
-
     // Bring the cesium navigation help popup above the compass
     var cesiumNavHelp = document.getElementsByClassName("cesium-navigation-help")[0];
     cesiumNavHelp.style.zIndex = 99999;
@@ -290,6 +252,8 @@ function loadCity(city) {
         loadPirmasens();
     } else if (city == 'berlin') {
         loadBerlin();
+    } else if (city == 'kingslynn') {
+        loadKingsLynn();
     }
 }
 
@@ -329,6 +293,25 @@ function loadBerlin() {
 
     // find relevant files and load layers
     getAndLoadLayers('exported_berlin');
+}
+
+function loadKingsLynn() {
+    // set title
+    document.title = 'King\'s Lynn';
+
+    // set camera view
+    var cameraPostion = {
+        latitude: 52.752673871745415,
+        longitude: 0.40209742318323693,
+        height: 534.3099172951087,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+    flyToCameraPosition(cameraPostion);
+
+    // find relevant files and load layers
+    getAndLoadLayers('exported_kingslynn');
 }
 
 // send get request to server to discover files in specified folder, create and load layers
