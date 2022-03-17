@@ -66,7 +66,6 @@ public class UtilAdapterTest {
         Method getDataBaseMetaData = UtilAdapter.class.getDeclaredMethod("getDatabaseMetaData", org.citydb.database.connection.DatabaseMetaData.class, String.class, Connection.class);
         getDataBaseMetaData.setAccessible(true);
 
-        when(spy.existsEndpoint(ArgumentMatchers.anyString())).thenReturn(true);
         try (MockedStatic<DriverManager> manager = Mockito.mockStatic(DriverManager.class, RETURNS_MOCKS)) {
             manager.when(() -> DriverManager.getConnection(ArgumentMatchers.anyString())).thenReturn(conn);
             when(conn.createStatement()).thenReturn(statement);
@@ -95,7 +94,6 @@ public class UtilAdapterTest {
         Method getDataBaseMetaData = UtilAdapter.class.getDeclaredMethod("getDatabaseMetaData", org.citydb.database.connection.DatabaseMetaData.class, String.class, Connection.class);
         getDataBaseMetaData.setAccessible(true);
 
-        when(spy.existsEndpoint(ArgumentMatchers.anyString())).thenReturn(true);
         try (MockedStatic<DriverManager> manager = Mockito.mockStatic(DriverManager.class, RETURNS_MOCKS)) {
             manager.when(() -> DriverManager.getConnection(ArgumentMatchers.anyString())).thenReturn(conn);
             when(conn.createStatement()).thenReturn(statement);
@@ -122,7 +120,7 @@ public class UtilAdapterTest {
         UtilAdapter spy = Mockito.spy(createNewUtilAdapter());
         DatabaseSrs srs = DatabaseSrs.createDefaultSrs();
 
-        when(spy.existsEndpoint(ArgumentMatchers.anyString())).thenReturn(true);
+        //when(spy.existsEndpoint(ArgumentMatchers.anyString())).thenReturn(true);
         try (MockedStatic<DriverManager> manager = Mockito.mockStatic(DriverManager.class, RETURNS_MOCKS)) {
             manager.when(() -> DriverManager.getConnection(ArgumentMatchers.anyString())).thenReturn(conn);
             when(conn.createStatement()).thenReturn(statement);
@@ -145,7 +143,7 @@ public class UtilAdapterTest {
         UtilAdapter spy = Mockito.spy(createNewUtilAdapter());
         DatabaseSrs srs = DatabaseSrs.createDefaultSrs();
 
-        when(spy.existsEndpoint(ArgumentMatchers.anyString())).thenReturn(true);
+        //when(spy.existsEndpoint(ArgumentMatchers.anyString())).thenReturn(true);
         try (MockedStatic<DriverManager> manager = Mockito.mockStatic(DriverManager.class, RETURNS_MOCKS)) {
             manager.when(() -> DriverManager.getConnection(ArgumentMatchers.anyString())).thenReturn(conn);
             when(conn.createStatement()).thenReturn(statement);
