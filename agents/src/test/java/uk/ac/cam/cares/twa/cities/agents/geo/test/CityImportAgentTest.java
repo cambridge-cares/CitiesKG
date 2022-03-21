@@ -7,7 +7,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -15,9 +14,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import junit.framework.TestCase;
@@ -29,7 +26,6 @@ import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
@@ -903,8 +899,8 @@ public class CityImportAgentTest extends TestCase {
             "  ?srsname ocgml:srsname ?currentSrsname .\n" +
             "}\n" +
             "INSERT {\n" +
-            "  <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> ocgml:srid 123 .\n" +
-            "  <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> ocgml:srsname \"test\" .\n" +
+            "  <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/> ocgml:srid 123 .\n" +
+            "  <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/> ocgml:srsname \"test\" .\n" +
             "}\n" +
             "WHERE\n" +
             "  { OPTIONAL\n" +
