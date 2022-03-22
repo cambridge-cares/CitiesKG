@@ -60,6 +60,7 @@ public class CEAAgent extends JPSAgent {
     private TimeSeriesClient<OffsetDateTime> tsClient;
     private List<JSONKeyToIriMapper> mappings;
     public static final String timeUnit = OffsetDateTime.class.getSimpleName();
+    private List<List<String>> fixedIris = new ArrayList<>();
 
     // Variables fetched from CEAAgentConfig.properties file.
     private String ocgmlUri;
@@ -117,8 +118,7 @@ public class CEAAgent extends JPSAgent {
                 for(int i=0; i<uriArray.length(); i++) {
                     String uri = uriArray.getString(i);
 
-                    createTimeSeries(uri, timeSeries.get(i), times);
-
+                    addDataToTimeSeries(timeSeries.get(i), times, fixedIris.get(i));
                     String buildingUri = checkEnergyProfileInitialised(mappings.get(i), uri);
                     if(buildingUri=="") {
                         buildingUri = sparqlUpdate(requestParams.get(KEY_PV_AREA).toString(), mappings.get(i), uri);
@@ -131,6 +131,7 @@ public class CEAAgent extends JPSAgent {
                 for(int i=0; i<uriArray.length(); i++) {
                     String uri = uriArray.getString(i);
                     uriStringArray.add(uri);
+                    createTimeSeries(uri);
                     testData.add(new CEAInputData(getValue(uri, "Envelope"), getValue(uri, "Height")));
                 }
                 runCEA(testData, uriStringArray,0);
@@ -234,20 +235,18 @@ public class CEAAgent extends JPSAgent {
      */
     private void runCEA(ArrayList<CEAInputData> buildingData, ArrayList<String> uris, int threadNumber) {
         try {
-            RunCEATask task = new RunCEATask(buildingData, new URI(targetUrl), uris, threadNumber);
+            RunCEATask task = new RunCEATask(buildingData, new URI(targetUrl), uris, fixedIris, mappings, threadNumber);
             CEAExecutor.execute(task);
         }
         catch(URISyntaxException e){
         }
     }
     /**
-     * Creates and intialises a time series using the time series client and adds new data
+     * Creates and intialises a time series using the time series client
      *
      * @param uriString input city object id
-     * @param values output CEA data
-     * @param times times for output time series data
      */
-    private void createTimeSeries(String uriString, List<List<?>> values, List<OffsetDateTime> times) {
+    private void createTimeSeries(String uriString) {
         try{
             tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, new File(
                     Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath());
@@ -279,6 +278,7 @@ public class CEAAgent extends JPSAgent {
             for (JSONKeyToIriMapper mapping: mappings) {
                 // The IRIs used by the current mapping
                 List<String> iris = mapping.getAllIRIs();
+                fixedIris.add(iris);
                 // Check whether IRIs have a time series linked and if not initialize the corresponding time series
                 if(!timeSeriesExist(iris)) {
                     // All values are doubles
@@ -290,15 +290,7 @@ public class CEAAgent extends JPSAgent {
                     tsClient.initTimeSeries(iris, classes, timeUnit);
                     //LOGGER.info(String.format("Initialized time series with the following IRIs: %s", String.join(", ", iris)));
                 }
-                TimeSeries<OffsetDateTime> currentTimeSeries = new TimeSeries<>(times, iris, values);
-                OffsetDateTime endDataTime = tsClient.getMaxTime(currentTimeSeries.getDataIRIs().get(0));
-
-                if (endDataTime == null) {
-                    tsClient.addTimeSeriesData(currentTimeSeries);
-                }
             }
-
-
 
         } catch (URISyntaxException | IOException e)
         {
@@ -307,6 +299,22 @@ public class CEAAgent extends JPSAgent {
         }
 
 
+    }
+
+    /**
+     *  Adds new data to time series
+     *
+     * @param values output CEA data
+     * @param times times for output time series data
+     * @param iri iris for time series data
+     */
+    private void addDataToTimeSeries(List<List<?>> values, List<OffsetDateTime> times, List<String> iri) {
+        TimeSeries<OffsetDateTime> currentTimeSeries = new TimeSeries<>(times, iri, values);
+        OffsetDateTime endDataTime = tsClient.getMaxTime(currentTimeSeries.getDataIRIs().get(0));
+
+        if (endDataTime == null) {
+            tsClient.addTimeSeriesData(currentTimeSeries);
+        }
     }
 
     /**

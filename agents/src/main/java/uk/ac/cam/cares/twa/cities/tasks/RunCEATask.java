@@ -25,6 +25,8 @@ public class RunCEATask implements Runnable {
     private final ArrayList<String> uris;
     private final URI endpointUri;
     private final int threadNumber;
+    private final List<List<String>> timeSeriesIris;
+    private final List<JSONKeyToIriMapper> timeSeriesMappings;
     public static final String CTYPE_JSON = "application/json";
     private Boolean stop = false;
     private static final String SHAPEFILE_SCRIPT = "create_shapefile.py";
@@ -32,11 +34,13 @@ public class RunCEATask implements Runnable {
     private static final String CREATE_WORKFLOW_SCRIPT = "create_cea_workflow.py";
     private static final String FS = System.getProperty("file.separator");
 
-    public RunCEATask(ArrayList<CEAInputData> buildingData, URI endpointUri, ArrayList<String> uris, int thread) {
+    public RunCEATask(ArrayList<CEAInputData> buildingData, URI endpointUri, ArrayList<String> uris, List<List<String>> iris, List<JSONKeyToIriMapper> mappings, int thread) {
         this.inputs = buildingData;
         this.endpointUri = endpointUri;
         this.uris = uris;
         this.threadNumber = thread;
+        this.timeSeriesIris = iris;
+        this.timeSeriesMappings = mappings;
     }
 
     public void stop() {
@@ -208,10 +212,6 @@ public class RunCEATask implements Runnable {
                         }
                     }
                 }
-                timeseriesdata.add(heating_results);
-                timeseriesdata.add(cooling_results);
-                timeseriesdata.add(grid_results);
-                timeseriesdata.add(electricity_results);
                 demand_file.close();
                 demand.close();
 
@@ -246,7 +246,27 @@ public class RunCEATask implements Runnable {
                 }
                 PV_file.close();
                 PV.close();
-                timeseriesdata.add(PV_results);
+
+                for( String key : timeSeriesIris.get(threadNumber)){
+                    switch(timeSeriesMappings.get(threadNumber).getJSONKey(key)){
+                        case "GridConsumptionMeasure" :
+                            timeseriesdata.add(grid_results);
+                            break;
+                        case "ElectricityConsumptionMeasure" :
+                            timeseriesdata.add(electricity_results);
+                            break;
+                        case "HeatingConsumptionMeasure" :
+                            timeseriesdata.add(heating_results);
+                            break;
+                        case "CoolingConsumptionMeasure" :
+                            timeseriesdata.add(cooling_results);
+                            break;
+                        case "PVSupplyMeasure" :
+                            timeseriesdata.add(PV_results);
+                            break;
+                    }
+                }
+
                 result.timeSeries.add(timeseriesdata);
                 if(i==0) result.times = timestamps;
             }
