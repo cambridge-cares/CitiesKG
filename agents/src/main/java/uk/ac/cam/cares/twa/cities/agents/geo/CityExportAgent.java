@@ -239,7 +239,7 @@ public class CityExportAgent extends JPSAgent {
         //String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder_1\\charlottenberg_extruded_blaze.kml";
         //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
         String CRSinDegree = "4326";  // global WGS 84
-        String CRSinMeter = "25833";//"32648"; "25833"
+        String CRSinMeter = "32648";//"32648"; "25833"
         int initTileSize = 250;
         long start = System.currentTimeMillis();
 
@@ -267,8 +267,8 @@ public class CityExportAgent extends JPSAgent {
     }
 
     public static void main(String[] args) {
-        //String inputDir = "C:\\Users\\ShiyingLi\\Documents\\CKG\\Exported_data\\ura_footprint_2000\\";
-        String inputDir = "C:\\Users\\ShiyingLi\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
+        //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
+        String inputDir = "C:\\Users\\ShiyingLi\\Documents\\CKG\\Exported_data\\ura_footprint_2000\\";
         //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\charlottenberg_extruded_blaze.kml";
         String outputDir = "C:\\Users\\ShiyingLi\\Documents\\CKG\\Exported_data\\testfolder\\";
         tilingKML(inputDir, outputDir);
