@@ -267,10 +267,10 @@ public class CityExportAgent extends JPSAgent {
     }
 
     public static void main(String[] args) {
-        String inputDir = "C:\\Users\\Admin\\Documents\\CKG\\Exported_data\\ura_all_footprint.kml";
-        //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\ura_all_footprint.kml";
+        //String inputDir = "C:\\Users\\ShiyingLi\\Documents\\CKG\\Exported_data\\ura_footprint_2000\\";
+        String inputDir = "C:\\Users\\ShiyingLi\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
         //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\charlottenberg_extruded_blaze.kml";
-        String outputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\";
+        String outputDir = "C:\\Users\\ShiyingLi\\Documents\\CKG\\Exported_data\\testfolder\\";
         tilingKML(inputDir, outputDir);
     }
 
