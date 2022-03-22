@@ -73,8 +73,6 @@ public class CityExportAgent extends JPSAgent {
                 result.put("outputPath", exportKml(gmlids, getOutputPath(), serverInfo));
             }
 
-
-
         }
         // It will return the file path of the exported file
         System.out.println(result);

@@ -229,15 +229,24 @@ public class StatementTransformer {
         List<PlaceHolder<?>> placeHolders = sqlStatement.getInvolvedPlaceHolders();
         Object gmlidInput = placeHolders.get(0).getValue();
 
-        if (placeHolders.size() == 1 && ((String)gmlidInput).contains("*")){
+        // for exporting the whole database
+        if (((String)gmlidInput).contains("*") && IRI_GRAPH_BASE.contains("singaporeEPSG4326")) {  // this namespace only exists in CKG server
+
+            sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
+                    "SELECT ?id ?objectclass_id ?gmlid\n" +
+                    "\nWHERE { \n" +
+                        "GRAPH <" + IRI_GRAPH_BASE + "cityobject/> \n" +
+                    "{ ?id ocgml:id ?Id ; ocgml:gmlId ?gmlid ; ocgml:objectClassId  ?objectclass_id ." +
+                    "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )}" +
+                        "GRAPH <" + IRI_GRAPH_BASE + "cityobjectgenericattrib/> \n" +
+                    "{ ?ObjectIdAttr ocgml:cityObjectId ?Id ; ocgml:attrName 'LU_DESC' . } }");
+        } else if (placeHolders.size() == 1 && ((String)gmlidInput).contains("*")){
             sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
                 "SELECT ?id ?objectclass_id ?gmlid\n" +
                 "FROM <" + IRI_GRAPH_BASE + "cityobject/> \n" +
                 "\nWHERE\n " +
                 "{ ?id ocgml:objectClassId  ?objectclass_id ; ocgml:gmlId ?gmlid ."
-                + "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )}"
-                + "LIMIT 50000");
-
+                + "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )}");
 
         } else {
             // for single object also multiple objects
