@@ -157,6 +157,8 @@ public class KMLTilingTask implements Runnable{
     if (geomEnvelope[3] >= this.extent_Ymax) { this.extent_Ymax = geomEnvelope[3]; }
 
     // updateExtent in 25833
+    //double[] testTenvelope = {1.3110057376503, 1.31143044782066, 103.818749218958, 103.819364392128};
+    geomEnvelope = new double[]{geomEnvelope[2], geomEnvelope[3], geomEnvelope[0], geomEnvelope[1]};  // switch the coordinates
     double[] Tenvelope = Transform.reprojectEnvelope(geomEnvelope, Integer.valueOf(kmlSRID), Integer.valueOf(transformSRID));
 
     if (Tenvelope[0] <= this.Textent_Xmin) { this.Textent_Xmin = Tenvelope[0]; }
