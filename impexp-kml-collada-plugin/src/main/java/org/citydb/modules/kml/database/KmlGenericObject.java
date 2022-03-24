@@ -2011,22 +2011,22 @@ public abstract class KmlGenericObject<T> {
 
 						for(int j = 0; j< getRing.GetPointCount(); j++) {
 							// order points clockwise
-							double[] ordinatesArray = getRing.GetPoint(j);
-							linearRing.getCoordinates().add(String.valueOf(reducePrecisionForXorY(ordinatesArray[1]) + ","
-									+ reducePrecisionForXorY(ordinatesArray[0]) + ","
-									+ reducePrecisionForZ(ordinatesArray[2] + zOffset)));
+//							double[] ordinatesArray = getRing.GetPoint(j);
+							linearRing.getCoordinates().add(String.valueOf(reducePrecisionForXorY(getRing.GetY(j)) + ","
+									+ reducePrecisionForXorY(getRing.GetX(j)) + ","
+									+ reducePrecisionForZ(getRing.GetZ(j) + zOffset)));
 
 								// not touching the ground
-								probablyRoof = probablyRoof && (reducePrecisionForZ(ordinatesArray[2] - lowestZCoordinate) > 0);
+								probablyRoof = probablyRoof && (reducePrecisionForZ(getRing.GetZ(j) - lowestZCoordinate) > 0);
 
 								if (currentLod == 1) {
 									// calculate normal
-									int current = 0;
-									int next = 3;
-									if (next >= ordinatesArray.length) next = 0;
-									nx = nx + ((ordinatesArray[current+1] - ordinatesArray[next+1]) * (ordinatesArray[current+2] + ordinatesArray[next+2]));
-									ny = ny + ((ordinatesArray[current+2] - ordinatesArray[next+2]) * (ordinatesArray[current] + ordinatesArray[next]));
-									nz = nz + ((ordinatesArray[current] - ordinatesArray[next]) * (ordinatesArray[current+1] + ordinatesArray[next+1]));
+//									int current = 0;
+//									int next = 3;
+//									if (next >= ordinatesArray.length) next = 0;
+//									nx = nx + ((ordinatesArray[current+1] - ordinatesArray[next+1]) * (ordinatesArray[current+2] + ordinatesArray[next+2]));
+//									ny = ny + ((ordinatesArray[current+2] - ordinatesArray[next+2]) * (ordinatesArray[current] + ordinatesArray[next]));
+//									nz = nz + ((ordinatesArray[current] - ordinatesArray[next]) * (ordinatesArray[current+1] + ordinatesArray[next+1]));
 								}
 
 						}
