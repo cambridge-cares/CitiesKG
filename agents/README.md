@@ -99,7 +99,7 @@ Make sure that you download the correct version 2.1.5, otherwise the POM file of
 After you get the correct artifact *blazegraph-jar-2.1.5.jar*, you can place it into the folder on your server in *C:\Program Files\Apache Software Foundation\Tomcat 9.0\lib*, 
 this folder contains all the libraries provided by the server. 
 
-If this step has not been done, the CityImportAgent might not work. 
+If this step has not been done, you might get a `NoClassDefFoundError`. 
 
 4. Additional dependencies used by agents are JPS_BASE_LIB and JPS_AWS are provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository.
 
