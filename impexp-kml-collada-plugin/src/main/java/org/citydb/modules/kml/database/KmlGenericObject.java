@@ -1958,17 +1958,27 @@ public abstract class KmlGenericObject<T> {
 				}
 
 				org.gdal.ogr.Geometry geom_poly = new org.gdal.ogr.Geometry(ogrConstants.wkbPolygon);
-
 				Coordinate[] coordinates = geospatial.str2coords(rsGeometry.toString()).toArray(new Coordinate[0]);
-				org.gdal.ogr.Geometry geomRing = new org.gdal.ogr.Geometry(ogr.wkbLinearRing);
 
-				for (int i = 0; i < coordinates.length; i++) {
-					double[] unconvertPoint = new double[]{coordinates[i].getX(), coordinates[i].getY(), coordinates[i].getZ()};
-					transform.TransformPoint(unconvertPoint);
-					geomRing.AddPoint(unconvertPoint[0], unconvertPoint[1], unconvertPoint[2]);
+				String datatype = _rs.getObject("datatype").toString();
+				String[] datatype_parts = datatype.split("-");
+				int segs = datatype_parts.length-2;
+				int coor_index = 0;
+				for (int s = 2; s < datatype_parts.length; s++) {
+					int pointCount = Integer.parseInt(datatype_parts[s]) / 3;
+					org.gdal.ogr.Geometry geomRing = new org.gdal.ogr.Geometry(ogr.wkbLinearRing);
+					for (int i = 0; i < pointCount; i++) {
+						if (s != 2 && i == 0){
+							coor_index = coor_index + pointCount;
+						}
+						double[] unconvertPoint = new double[]{coordinates[coor_index+i].getX(), coordinates[coor_index+i].getY(), coordinates[coor_index+i].getZ()};
+						transform.TransformPoint(unconvertPoint);
+						geomRing.AddPoint(unconvertPoint[0], unconvertPoint[1], unconvertPoint[2]);
+					}
+					geom_poly.AddGeometry(geomRing);
 				}
 
-				geom_poly.AddGeometry(geomRing);
+
 
 //				}
 					eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
@@ -1997,6 +2007,7 @@ public abstract class KmlGenericObject<T> {
 					double nx = 0;
 					double ny = 0;
 					double nz = 0;
+
 
 					for (int i = 0; i < geom_poly.GetGeometryCount(); i++) {
 						org.gdal.ogr.Geometry getRing = geom_poly.GetGeometryRef(i);
