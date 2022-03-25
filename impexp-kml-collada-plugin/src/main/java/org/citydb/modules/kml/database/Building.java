@@ -36,7 +36,6 @@ import org.citydb.config.project.kmlExporter.DisplayForm;
 import org.citydb.config.project.kmlExporter.Lod0FootprintMode;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.BlobExportAdapter;
-import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.database.connection.DatabaseConnectionPool;
 import org.citydb.event.EventDispatcher;
@@ -44,14 +43,9 @@ import org.citydb.log.Logger;
 import org.citydb.modules.kml.util.BalloonTemplateHandler;
 import org.citydb.modules.kml.util.ElevationServiceHandler;
 import org.citydb.query.Query;
-import org.gdal.osr.CoordinateTransformation;
-import org.gdal.osr.SpatialReference;
 
 import javax.vecmath.Point3d;
 import javax.xml.bind.JAXBException;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
@@ -496,7 +490,7 @@ public class Building extends KmlGenericObject{
 							//log.info("Processing : " + buildingPartId);
 //							String envelop = rs3.getString(1);
 //							measuredHeight = extractHeight(envelop);
-							return createPlacemarksForGeometry_geospatila(rs, work);
+							return createPlacemarksForGeometry_geospatial(rs, work);
 						} else {
 							if (work.getDisplayForm().isHighlightingEnabled()) {
 								if (query.isSetTiling()) { // region

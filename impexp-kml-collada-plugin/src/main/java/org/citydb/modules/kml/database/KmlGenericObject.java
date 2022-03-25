@@ -1899,7 +1899,7 @@ public abstract class KmlGenericObject<T> {
 		return placemarkList;
 	}
 
-	protected List<PlacemarkType> createPlacemarksForGeometry_geospatila(ResultSet _rs, KmlSplittingResult work) throws SQLException {
+	protected List<PlacemarkType> createPlacemarksForGeometry_geospatial(ResultSet _rs, KmlSplittingResult work) throws SQLException {
 
 		HashSet<String> exportedGmlIds = new HashSet<String>();
 		HashMap<String, MultiGeometryType> multiGeometries = new HashMap<String, MultiGeometryType>();
@@ -1962,18 +1962,17 @@ public abstract class KmlGenericObject<T> {
 
 				String datatype = _rs.getObject("datatype").toString();
 				String[] datatype_parts = datatype.split("-");
-				int segs = datatype_parts.length-2;
 				int coor_index = 0;
 				for (int s = 2; s < datatype_parts.length; s++) {
 					int pointCount = Integer.parseInt(datatype_parts[s]) / 3;
 					org.gdal.ogr.Geometry geomRing = new org.gdal.ogr.Geometry(ogr.wkbLinearRing);
 					for (int i = 0; i < pointCount; i++) {
-						if (s != 2 && i == 0){
-							coor_index = coor_index + pointCount;
-						}
 						double[] unconvertPoint = new double[]{coordinates[coor_index+i].getX(), coordinates[coor_index+i].getY(), coordinates[coor_index+i].getZ()};
 						transform.TransformPoint(unconvertPoint);
 						geomRing.AddPoint(unconvertPoint[0], unconvertPoint[1], unconvertPoint[2]);
+						if ( i == pointCount-1){
+							coor_index = coor_index + pointCount;
+						}
 					}
 					geom_poly.AddGeometry(geomRing);
 				}
@@ -2030,7 +2029,7 @@ public abstract class KmlGenericObject<T> {
 								// not touching the ground
 								probablyRoof = probablyRoof && (reducePrecisionForZ(getRing.GetZ(j) - lowestZCoordinate) > 0);
 
-								if (currentLod == 1) {
+//								if (currentLod == 1) {
 									// calculate normal
 //									int current = 0;
 //									int next = 3;
@@ -2038,21 +2037,21 @@ public abstract class KmlGenericObject<T> {
 //									nx = nx + ((ordinatesArray[current+1] - ordinatesArray[next+1]) * (ordinatesArray[current+2] + ordinatesArray[next+2]));
 //									ny = ny + ((ordinatesArray[current+2] - ordinatesArray[next+2]) * (ordinatesArray[current] + ordinatesArray[next]));
 //									nz = nz + ((ordinatesArray[current] - ordinatesArray[next]) * (ordinatesArray[current+1] + ordinatesArray[next+1]));
-								}
+//								}
 
 						}
 
 					}
 
-					if (currentLod == 1) { // calculate normal
-						double value = Math.sqrt(nx * nx + ny * ny + nz * nz);
-						if (value == 0) { // not a surface, but a line
-							continue;
-						}
-						nx = nx / value;
-						ny = ny / value;
-						nz = nz / value;
-					}
+//					if (currentLod == 1) { // calculate normal
+//						double value = Math.sqrt(nx * nx + ny * ny + nz * nz);
+//						if (value == 0) { // not a surface, but a line
+//							continue;
+//						}
+//						nx = nx / value;
+//						ny = ny / value;
+//						nz = nz / value;
+//					}
 
 					if (surfaceType == null) {
 						if (work.getCityGMLClass() == CityGMLClass.BUILDING){
