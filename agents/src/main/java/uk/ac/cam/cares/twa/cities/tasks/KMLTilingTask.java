@@ -148,6 +148,7 @@ public class KMLTilingTask implements Runnable{
   // Updated Extent: 13.09278683392157 13.758936971880468 52.339762874361156 52.662766032905616
   /*
    * Update the boundary of the extent */
+
   public void updateExtent(double[] geomEnvelope) {  //[xmin, xmax, ymin, ymax]
 
     // updateExtent in 4236
@@ -158,13 +159,58 @@ public class KMLTilingTask implements Runnable{
 
     // updateExtent in 25833
     //double[] testTenvelope = {1.3110057376503, 1.31143044782066, 103.818749218958, 103.819364392128};
-    geomEnvelope = new double[]{geomEnvelope[2], geomEnvelope[3], geomEnvelope[0], geomEnvelope[1]};  // switch the coordinates
+    //geomEnvelope = new double[]{geomEnvelope[2], geomEnvelope[3], geomEnvelope[0], geomEnvelope[1]};  // switch the coordinates
     double[] Tenvelope = Transform.reprojectEnvelope(geomEnvelope, Integer.valueOf(kmlSRID), Integer.valueOf(transformSRID));
 
     if (Tenvelope[0] <= this.Textent_Xmin) { this.Textent_Xmin = Tenvelope[0]; }
     if (Tenvelope[1] >= this.Textent_Xmax) { this.Textent_Xmax = Tenvelope[1]; }
     if (Tenvelope[2] <= this.Textent_Ymin) { this.Textent_Ymin = Tenvelope[2]; }
     if (Tenvelope[3] >= this.Textent_Ymax) { this.Textent_Ymax = Tenvelope[3]; }
+
+  }
+  /*
+  public void updateExtent(double[] geomEnvelope) {  //[xmin, xmax, ymin, ymax]
+
+    // updateExtent in 4236
+    if (geomEnvelope[0] <= this.extent_Xmin) { this.extent_Xmin = geomEnvelope[0]; }    // X : latitude
+    if (geomEnvelope[1] >= this.extent_Xmax) { this.extent_Xmax = geomEnvelope[1]; }
+    if (geomEnvelope[2] <= this.extent_Ymin) { this.extent_Ymin = geomEnvelope[2]; }
+    if (geomEnvelope[3] >= this.extent_Ymax) { this.extent_Ymax = geomEnvelope[3]; }
+
+    // updateExtent in 25833
+    //double[] testTenvelope = {1.3110057376503, 1.31143044782066, 103.818749218958, 103.819364392128};
+    //geomEnvelope = new double[]{geomEnvelope[2], geomEnvelope[3], geomEnvelope[0], geomEnvelope[1]};  // switch the coordinates
+    double[] lowerCorner = {geomEnvelope[0], geomEnvelope[2]};
+    double[] upperCorner = {geomEnvelope[1], geomEnvelope[3]};
+    double[] TlowerCorner = Transform.reprojectPoint(lowerCorner, Integer.valueOf(kmlSRID), Integer.valueOf(transformSRID));
+    double[] TupperCorner = Transform.reprojectPoint(upperCorner, Integer.valueOf(kmlSRID), Integer.valueOf(transformSRID));
+    double[] Tenvelope = {TlowerCorner[0], TupperCorner[0], TlowerCorner[1], TupperCorner[1]};
+
+    if (Tenvelope[0] <= this.Textent_Xmin) { this.Textent_Xmin = Tenvelope[0]; }
+    if (Tenvelope[1] >= this.Textent_Xmax) { this.Textent_Xmax = Tenvelope[1]; }
+    if (Tenvelope[2] <= this.Textent_Ymin) { this.Textent_Ymin = Tenvelope[2]; }
+    if (Tenvelope[3] >= this.Textent_Ymax) { this.Textent_Ymax = Tenvelope[3]; }
+
+  }
+*/
+  public void updateExtent(double[][] geometry){
+
+    double[] origEnvelop = Transform.getEnvelop(geometry);
+
+    // updateExtent in 4236
+    if (origEnvelop[0] <= this.extent_Xmin) { this.extent_Xmin = origEnvelop[0]; }
+    if (origEnvelop[1] >= this.extent_Xmax) { this.extent_Xmax = origEnvelop[1]; }
+    if (origEnvelop[2] <= this.extent_Ymin) { this.extent_Ymin = origEnvelop[2]; }
+    if (origEnvelop[3] >= this.extent_Ymax) { this.extent_Ymax = origEnvelop[3]; }
+
+    double[][] Tgeometry = Transform.reprojectGeometry(geometry, Integer.valueOf(kmlSRID), Integer.valueOf(transformSRID));
+
+    double[] Tenvelop = Transform.getEnvelop(Tgeometry);
+
+    if (Tenvelop[0] <= this.Textent_Xmin) { this.Textent_Xmin = Tenvelop[0]; }
+    if (Tenvelop[1] >= this.Textent_Xmax) { this.Textent_Xmax = Tenvelop[1]; }
+    if (Tenvelop[2] <= this.Textent_Ymin) { this.Textent_Ymin = Tenvelop[2]; }
+    if (Tenvelop[3] >= this.Textent_Ymax) { this.Textent_Ymax = Tenvelop[3]; }
 
   }
 

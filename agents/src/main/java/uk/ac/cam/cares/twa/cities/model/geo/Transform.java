@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.model.geo;
 
+import gov.nasa.worldwind.ogc.kml.KMLPolygon;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,6 +16,52 @@ public class Transform {
 
   }
 
+  public static Geometry buildPolygon(double[][] geometry){
+
+    int dimension = geometry[0].length;
+
+    Geometry ring = new Geometry(ogr.wkbLinearRing);
+    for (int i = 0; i < geometry.length; ++i){
+      if (dimension == 2){
+        ring.AddPoint(geometry[i][0], geometry[i][1]);
+      } else if (dimension == 3){
+        ring.AddPoint(geometry[i][0], geometry[i][1], geometry[i][2]);
+      }
+    }
+    Geometry polygon = new Geometry(ogr.wkbPolygon);
+    polygon.AddGeometry(ring);
+
+    return polygon;
+  }
+
+  public static double[] getEnvelop(double[][] geometry) {
+    Geometry polygon = buildPolygon(geometry);
+
+    double[] envelop = new double[4];
+    polygon.GetEnvelope(envelop);
+
+    return envelop;
+  }
+
+
+  public static double[][] reprojectGeometry (double[][] geometry, int from_epsg, int to_epsg) {
+    SpatialReference source = new SpatialReference();
+    source.ImportFromEPSG(from_epsg);
+
+    SpatialReference target = new SpatialReference();
+    target.ImportFromEPSG(to_epsg);
+
+    CoordinateTransformation transformMatrix = osr.CreateCoordinateTransformation(source, target);
+
+    Geometry polygon = buildPolygon(geometry);
+
+    polygon.Transform(transformMatrix);
+
+    double[][] points = polygon.GetBoundary().GetPoints();
+
+    return points;
+  }
+
   // Transform point like [x, y]
   public static double[] reprojectPoint(double[] centroid, int from_epsg, int to_epsg) {
     Geometry point = new Geometry(ogr.wkbPoint);
@@ -27,8 +74,7 @@ public class Transform {
 
     CoordinateTransformation transformMatrix = osr.CreateCoordinateTransformation(source, target);
     point.AddPoint(centroid[0], centroid[1]);
-    double[] transformed = transformMatrix.TransformPoint(point.GetX(),
-        point.GetY()); //  transform seems to be for more than a point
+    double[] transformed = transformMatrix.TransformPoint(point.GetX(), point.GetY()); //  transform seems to be for more than a point
 
     return transformed;
   }

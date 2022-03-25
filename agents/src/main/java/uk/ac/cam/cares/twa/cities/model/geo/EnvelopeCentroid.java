@@ -40,7 +40,7 @@ public class EnvelopeCentroid {
         // @TODO: only care the outerboundary for envelope, but can also add the innerboundary
         for (Object pos : coorinates) {
           Position point = (Position) pos;
-          ring.AddPoint(point.getLongitude().degrees, point.getLatitude().degrees); // long, lat
+          ring.AddPoint(point.getLatitude().degrees, point.getLongitude().degrees); // lat, long
         }
         Geometry polygon = new Geometry(ogr.wkbPolygon);
         polygon.AddGeometry(ring);
