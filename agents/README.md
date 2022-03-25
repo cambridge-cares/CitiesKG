@@ -153,6 +153,55 @@ Executing this request, will create a directory at the specified location. When 
 
 Please note that splitting of large files into smaller chunks to improve performance will not work if the `.gml` file contains the `core:` namespace tag in front of CityGML features. Please remove those manually beforehand.
 
+## Thematic Surface Discovery Agent User Guide
+
+### Configuration
+
+In the `resources/config.properties` file, the property `uri.route` must be specified. This is the target resource ID which queries and updates will be addressed to. By default, this is an AccessAgent identifier, which must be registered in the http://theworldavatar.com/blazegraph/ `ontokgrouter` namespace. An AccessAgent instance is also necessary for the agent to work. However, a URI prefixed with `HARDCODE:` e.g. `HARDCODE:http://localhost:9999/blazegraph/namespace/churchill/sparql` will be interpreted as a literal endpoint to access directly.
+
+### Request
+
+Example HTTPRequest for ThematicSurfaceDiscoveryAgent:
+```
+PUT http://localhost:8080/agents/discovery/thematicsurface
+Content-Type: application/json
+
+{"namespace": "http://localhost:9999/blazegraph/namespace/churchill/sparql/",
+  "lod2": "true",
+  "threshold": "5",
+  "mode": "validate"}
+```
+
+Parameters:
+
+- `namespace`: target namespace, e.g. "http://localhost:9999/blazegraph/namespace/churchill/sparql/", which is used to prefix named graph IRIs and newly created object IRIs. Typically the same as configured `uri.route`, but not necessarily.
+- `mode`: "restructure", "validate" or "footprint". See sections below.
+- `lod1`, `lod2`, `lod3`, `lod4` (optional): optionally specify one or more levels of detail to target by providing `true`. All other LoDs are ignored. If no LoD is specified, all are targeted.
+- `cityObjectIRI` (optional): optionally specify a single building to target. If omitted, all buildings in the namespace are targeted.
+- `threshold` (optional): the threshold angle in degrees; if the angle between a polygon's normal and the horizontal plane exceeds this, it is no longer considered a wall. Defaults to 15 if omitted.
+
+### Restructure mode
+
+In restructure mode, building(s)' `lodXMultiSurface`s are converted into thematic surfaces by reparenting their largest possible thematically homogeneous geometry subtrees to newly created thematic surfaces. `Building.lod1MultiSurfaceId` and `Building.lod2MultiSurfaceId` map to `ThematicSurface.lod2MultiSurfaceId` as thematic surfaces do not have an LoD 1 property; else, the LoD of the linking property is preserved in the conversion.
+
+### Validate mode
+
+In validate mode, building(s)' thematic surfaces are inspected and their themes classified using the same algorithm as restructure mode. The classifications are tagged onto bottom-level (leaf node) SurfaceGeometries by `rdfs:comment` properties. This allows comparison and debugging in Blazegraph workbench using a query e.g.
+
+```
+SELECT ?class ?comment (COUNT(*) AS ?count) WHERE {
+  ?surfaceGeometry ocgml:cityObjectId ?cityObject;
+            ocgml:GeometryType ?geometryType.
+  ?cityObject  ocgml:objectClassId ?class.
+  OPTIONAL{?surfaceGeometry rdfs:comment ?comment}
+  FILTER(!ISBLANK(?geometryType))
+} GROUP BY ?class ?comment
+```
+
+### Footprint mode
+
+Footprint mode inspects building(s)' `lodXMultiSurface`s, identifying themes as in restructure mode, and then *copies* identifies ground surfaces into a new SurfaceGeometry tree which is linked to the building by `lod0FootprintId`. Unlike restructure mode, this does not destroy the old `lodXMultiSurface`.
+
 ## 3DCityDB-Web-Map-Client
 
 We use the 3DCityDB-Web-Map-Client to visualise *CityExportAgent* exported .kml data. We extended original code with new functions and interface elements for displaying analytical capabilities of the *DistanceAgent*. The extended Web-Map-client version can be found in CitiesKG project directory `/CitiesKG/3dcitydb-web-map-1.9.0/`.
