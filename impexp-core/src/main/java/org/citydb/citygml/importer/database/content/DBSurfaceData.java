@@ -288,8 +288,8 @@ public class DBSurfaceData implements DBImporter {
 				psSurfaceData.setURL(++index, url);
 				surfaceData.setLocalProperty(CoreConstants.OBJECT_URIID, url);
 			} catch (MalformedURLException e) {
-				psSurfaceData.setObject(++index, NodeFactory.createBlankNode());
-				psSurfaceData.setObject(++index, NodeFactory.createBlankNode());
+				setBlankNode(psSurfaceData, ++index);
+				setBlankNode(psSurfaceData, ++index);
 			}
     } else {
       psSurfaceData.setLong(++index, surfaceDataId);

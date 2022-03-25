@@ -20,20 +20,11 @@ public class DBAddressTest extends DBTest {
         try {
 
             DBAddress dbAddress = new DBAddress(batchConn, config, importer);
-            assertNotNull(dbAddress.getClass().getDeclaredMethod("getSPARQLStatement", String.class));
-            Method getsparqlMethod = DBAddress.class.getDeclaredMethod("getSPARQLStatement", String.class);
+            assertNotNull(dbAddress.getClass().getDeclaredMethod("getSPARQLStatement"));
+            Method getsparqlMethod = DBAddress.class.getDeclaredMethod("getSPARQLStatement");
             getsparqlMethod.setAccessible(true);
 
-            // Prepare gmlIdCodespace for getSPARQLStatement method
-            boolean hasGmlIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(3, 1, 0) >= 0;
-            String gmlIdCodespace = null;
-            if (hasGmlIdColumn) {
-                gmlIdCodespace = config.getInternal().getCurrentGmlIdCodespace();
-                if (gmlIdCodespace != null)
-                    gmlIdCodespace = "'" + gmlIdCodespace + "', ";
-            }
-
-            generated = (String) getsparqlMethod.invoke(dbAddress, gmlIdCodespace);
+            generated = (String) getsparqlMethod.invoke(dbAddress);
             assertEquals(expected, generated);
         } catch (Exception e) {
             e.printStackTrace();

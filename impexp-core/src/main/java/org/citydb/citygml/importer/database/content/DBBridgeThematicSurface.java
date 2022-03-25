@@ -28,12 +28,10 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
-import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
 import org.citydb.database.schema.TableEnum;
@@ -49,28 +47,33 @@ import org.citygml4j.model.citygml.bridge.OpeningProperty;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
 
-public class DBBridgeThematicSurface implements DBImporter {
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psThematicSurface;
+public class DBBridgeThematicSurface extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
 	private DBSurfaceGeometry surfaceGeometryImporter;
 	private DBBridgeOpening openingImporter;
-	private int batchCounter;
 
 	public DBBridgeThematicSurface(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.importer = importer;
-
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-
-		String stmt = "insert into " + schema + ".bridge_thematic_surface (id, objectclass_id, bridge_id, bridge_room_id, bridge_installation_id, bridge_constr_element_id, " +
-				"lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id) values " +
-				"(?, ?, ?, ?, ?, ?, ?, ?, ?)";
-		psThematicSurface = batchConn.prepareStatement(stmt);
-
+		super(batchConn, config, importer);
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
 		openingImporter = importer.getImporter(DBBridgeOpening.class);
+	}
+
+	@Override
+	protected String getTableName() {
+		return TableEnum.BRIDGE_THEMATIC_SURFACE.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "bridgethematicsurface/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + sqlSchema + ".bridge_thematic_surface (id, objectclass_id, bridge_id, bridge_room_id, bridge_installation_id, bridge_constr_element_id, " +
+				"lod2_multi_surface_id, lod3_multi_surface_id, lod4_multi_surface_id) values " +
+				"(?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	}
 
 	protected long doImport(AbstractBoundarySurface boundarySurface) throws CityGMLImportException, SQLException {
@@ -87,80 +90,48 @@ public class DBBridgeThematicSurface implements DBImporter {
 
 		// import boundary surface information
 		// primary id
-		psThematicSurface.setLong(1, boundarySurfaceId);
+		preparedStatement.setLong(1, boundarySurfaceId);
 
 		// objectclass id
-		psThematicSurface.setInt(2, featureType.getObjectClassId());
+		preparedStatement.setInt(2, featureType.getObjectClassId());
 
 		// parentId
 		if (parent instanceof AbstractBridge) {
-			psThematicSurface.setLong(3, parentId);
-			psThematicSurface.setNull(4, Types.NULL);
-			psThematicSurface.setNull(5, Types.NULL);
-			psThematicSurface.setNull(6, Types.NULL);
+			preparedStatement.setLong(3, parentId);
+			preparedStatement.setNull(4, Types.NULL);
+			preparedStatement.setNull(5, Types.NULL);
+			preparedStatement.setNull(6, Types.NULL);
 		} else if (parent instanceof BridgeRoom) {
-			psThematicSurface.setNull(3, Types.NULL);
-			psThematicSurface.setLong(4, parentId);
-			psThematicSurface.setNull(5, Types.NULL);
-			psThematicSurface.setNull(6, Types.NULL);
+			preparedStatement.setNull(3, Types.NULL);
+			preparedStatement.setLong(4, parentId);
+			preparedStatement.setNull(5, Types.NULL);
+			preparedStatement.setNull(6, Types.NULL);
 		} else if (parent instanceof BridgeInstallation
 				|| parent instanceof IntBridgeInstallation) {
-			psThematicSurface.setNull(3, Types.NULL);
-			psThematicSurface.setNull(4, Types.NULL);
-			psThematicSurface.setLong(5, parentId);
-			psThematicSurface.setNull(6, Types.NULL);
+			preparedStatement.setNull(3, Types.NULL);
+			preparedStatement.setNull(4, Types.NULL);
+			preparedStatement.setLong(5, parentId);
+			preparedStatement.setNull(6, Types.NULL);
 		} else if (parent instanceof BridgeConstructionElement) {
-			psThematicSurface.setNull(3, Types.NULL);
-			psThematicSurface.setNull(4, Types.NULL);
-			psThematicSurface.setNull(5, Types.NULL);
-			psThematicSurface.setLong(6, parentId);
+			preparedStatement.setNull(3, Types.NULL);
+			preparedStatement.setNull(4, Types.NULL);
+			preparedStatement.setNull(5, Types.NULL);
+			preparedStatement.setLong(6, parentId);
 		} else {
-			psThematicSurface.setNull(3, Types.NULL);
-			psThematicSurface.setNull(4, Types.NULL);
-			psThematicSurface.setNull(5, Types.NULL);
-			psThematicSurface.setNull(6, Types.NULL);
+			preparedStatement.setNull(3, Types.NULL);
+			preparedStatement.setNull(4, Types.NULL);
+			preparedStatement.setNull(5, Types.NULL);
+			preparedStatement.setNull(6, Types.NULL);
 		}
 
 		// brid:lodXMultiSurface
-		for (int i = 0; i < 3; i++) {
-			MultiSurfaceProperty multiSurfaceProperty = null;
-			long multiSurfaceId = 0;
+		importSurfaceGeometryProperties(new MultiSurfaceProperty[]{
+				boundarySurface.getLod2MultiSurface(),
+				boundarySurface.getLod3MultiSurface(),
+				boundarySurface.getLod4MultiSurface()
+		}, new int[]{2, 3, 4}, "_multi_surface_id", 7);
 
-			switch (i) {
-			case 0:
-				multiSurfaceProperty = boundarySurface.getLod2MultiSurface();
-				break;
-			case 1:
-				multiSurfaceProperty = boundarySurface.getLod3MultiSurface();
-				break;
-			case 2:
-				multiSurfaceProperty = boundarySurface.getLod4MultiSurface();
-				break;
-			}
-
-			if (multiSurfaceProperty != null) {
-				if (multiSurfaceProperty.isSetMultiSurface()) {
-					multiSurfaceId = surfaceGeometryImporter.doImport(multiSurfaceProperty.getMultiSurface(), boundarySurfaceId);
-					multiSurfaceProperty.unsetMultiSurface();
-				} else {
-					String href = multiSurfaceProperty.getHref();
-					if (href != null && href.length() != 0) {
-						importer.propagateXlink(new DBXlinkSurfaceGeometry(
-								TableEnum.BRIDGE_THEMATIC_SURFACE.getName(),
-								boundarySurfaceId, 
-								href, 
-								"lod" + (i + 2) + "_multi_surface_id"));
-					}
-				}
-			}
-
-			if (multiSurfaceId != 0)
-				psThematicSurface.setLong(7 + i, multiSurfaceId);
-			else
-				psThematicSurface.setNull(7 + i, Types.NULL);
-		}
-
-		psThematicSurface.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.BRIDGE_THEMATIC_SURFACE);
 
@@ -191,19 +162,6 @@ public class DBBridgeThematicSurface implements DBImporter {
 			importer.delegateToADEImporter(boundarySurface, boundarySurfaceId, featureType);
 
 		return boundarySurfaceId;
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psThematicSurface.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psThematicSurface.close();
 	}
 
 }

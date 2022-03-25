@@ -49,8 +49,8 @@ var terrainShadows = urlController.getUrlParaValue('terrainShadows', window.loca
 
 var cesiumViewerOptions = {
     selectedImageryProviderViewModel: Cesium.createDefaultImageryProviderViewModels()[1],
-    timeline: true,
-    animation: true,
+    timeline: false,
+    animation: false,
     fullscreenButton: false,
     shadows: (shadows == "true"),
     terrainShadows: parseInt(terrainShadows),
@@ -152,6 +152,7 @@ Cesium.knockout.applyBindings(addSplashWindowModel, document.getElementById('cit
 
 // Splash controller
 var splashController = new SplashController(addSplashWindowModel);
+splashController.setCookie("ignoreSplashWindow", "true")
 
 /*---------------------------------  Load Configurations and Layers  ----------------------------------------*/
 
@@ -174,14 +175,9 @@ function initClient() {
     webMap.activateMouseMoveEvents(true);
     webMap.activateViewChangedEvent(true);
 
-    // add Copyrights, TUM, 3DCityDB or more...
-    var creditDisplay = cesiumViewer.scene.frameState.creditDisplay;
-
-    var citydbCreditLogo = new Cesium.Credit('<a href="https://www.3dcitydb.org/" target="_blank"><img src="https://3dcitydb.org/3dcitydb/fileadmin/public/logos/3dcitydb_logo.png" title="3DCityDB"></a>');
-    creditDisplay.addDefaultCredit(citydbCreditLogo);
-
-    var tumCreditLogo = new Cesium.Credit('<a href="https://www.gis.bgu.tum.de/en/home/" target="_blank">© 2018 Chair of Geoinformatics, TU Munich</a>');
-    creditDisplay.addDefaultCredit(tumCreditLogo);
+    // hide Cesium logo
+    var textViewer = document.getElementsByClassName("cesium-widget-credits")[0];
+    textViewer.parentNode.removeChild(textViewer);
 
     // activate debug mode
     var debugStr = urlController.getUrlParaValue('debug', window.location.href, CitydbUtil);
@@ -217,6 +213,10 @@ function initClient() {
 
     // display current infos of active layer in the main menu
     observeActiveLayer();
+
+    // load city based on input in url
+    var city = (new URL(window.location.href)).searchParams.get('city');
+    loadCity(city);
 
     // Zoom to desired camera position and load layers if encoded in the url...	
     zoomToDefaultCameraPosition().then(function (info) {
@@ -259,39 +259,6 @@ function initClient() {
         clock.shouldAnimate = false;
     }
 
-    // add a calendar picker in the timeline using the JS library flatpickr
-    var clockElement = document.getElementsByClassName("cesium-animation-blank")[0];
-    flatpickr(clockElement, {
-        enableTime: true,
-        defaultDate: new Date(new Date().toUTCString().substr(0, 25)), // force flatpickr to use UTC
-        enableSeconds: true,
-        time_24hr: true,
-        clickOpens: false
-    });
-    clockElement.addEventListener("change", function () {
-        var dateValue = clockElement.value;
-        var cesiumClock = cesiumViewer.clock;
-        cesiumClock.shouldAnimate = false; // stop the clock
-        cesiumClock.currentTime = Cesium.JulianDate.fromIso8601(dateValue.replace(" ", "T") + "Z");
-        // update timeline also
-        var cesiumTimeline = cesiumViewer.timeline;
-        var lowerBound = Cesium.JulianDate.addHours(cesiumViewer.clock.currentTime, -12, new Object());
-        var upperBound = Cesium.JulianDate.addHours(cesiumViewer.clock.currentTime, 12, new Object());
-        cesiumTimeline.updateFromClock(); // center the needle in the timeline
-        cesiumViewer.timeline.zoomTo(lowerBound, upperBound);
-        cesiumViewer.timeline.resize();
-    });
-    clockElement.addEventListener("click", function () {
-        if (clockElement._flatpickr.isOpen) {
-            clockElement._flatpickr.close();
-        } else {
-            clockElement._flatpickr.open();
-        }
-    });
-    cesiumViewer.timeline.addEventListener("click", function() {
-        clockElement._flatpickr.setDate(new Date(Cesium.JulianDate.toDate(cesiumViewer.clock.currentTime).toUTCString().substr(0, 25)));
-    })
-
     // Bring the cesium navigation help popup above the compass
     var cesiumNavHelp = document.getElementsByClassName("cesium-navigation-help")[0];
     cesiumNavHelp.style.zIndex = 99999;
@@ -301,6 +268,125 @@ function initClient() {
     cesiumHomeButton.onclick = function () {
         zoomToDefaultCameraPosition();
     }
+}
+
+function loadCity(city) {
+    if (city == 'pirmasens') {
+        loadPirmasens();
+    } else if (city == 'berlin') {
+        loadBerlin();
+    } else if (city == 'kingslynn') {
+        loadKingsLynn();
+    }
+}
+
+function loadPirmasens() {
+    // set title
+    document.title = 'Pirmasens';
+
+    // set camera view
+    var cameraPostion = {
+        latitude: 49.194269,
+        longitude: 7.5981472,
+        height: 534.3099172951087,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+    flyToCameraPosition(cameraPostion);
+
+    // find relevant files and load layers
+    getAndLoadLayers('exported_pirmasens');
+}
+
+function loadBerlin() {
+    // set title
+    document.title = 'Berlin';
+
+    // set camera view
+    var cameraPostion = {
+        latitude: 52.517479728958044,
+        longitude: 13.411141287558161,
+        height: 534.3099172951087,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+    flyToCameraPosition(cameraPostion);
+
+    // find relevant files and load layers
+    getAndLoadLayers('exported_berlin');
+}
+
+function loadKingsLynn() {
+    // set title
+    document.title = 'King\'s Lynn';
+
+    // set camera view
+    var cameraPostion = {
+        latitude: 52.752673871745415,
+        longitude: 0.40209742318323693,
+        height: 534.3099172951087,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+    flyToCameraPosition(cameraPostion);
+
+    // find relevant files and load layers
+    getAndLoadLayers('exported_kingslynn');
+}
+
+// send get request to server to discover files in specified folder, create and load layers
+function getAndLoadLayers(folder) {
+    var url = this.location.origin;
+    var _layers = new Array();
+    var folderpath = url + '/3dwebclient/' + folder + '/';
+    var filepathname = '';
+    var options = {
+        url: '',
+        name: '',
+        layerDataType: 'COLLADA/KML/gTIF',
+        layerProxy: false,
+        layerClampToGround: false,
+        gltfVersion: '2.0',
+        thematicDataUrl: '',
+        thematicDataSource: 'GoogleSheets',
+        tableType: 'Horizontal',
+        cityobjectsJsonUrl: '',
+        minLodPixels: '',
+        maxLodPixels: '',
+        maxSizeOfCachedTiles: 200,
+        maxCountOfVisibleTiles: 200
+    }
+
+    var reqUrl = url + '/files/';
+
+    $.get(reqUrl + folder, function (data) {
+        // if data includes 'Tiles', only add MasterJSON as layer, else add all files
+        if (data.includes("Tiles")) {
+            for (let i = 0; i < data.length; i++) {
+                if (data[i].match(new RegExp("\\w*_extruded_MasterJSON.json"))) {
+                    filepathname = folderpath + data[i]
+                    options.url = filepathname;
+                    options.name = (new URL(window.location.href)).searchParams.get('city');
+                    _layers.push(new CitydbKmlLayer(options));
+                    loadLayerGroup(_layers);
+                    break;
+                }
+            }
+        } else {
+            for (let i = 0; i < data.length; i++) {
+                filepathname = folderpath + data[i];
+                options.url = filepathname;
+                options.name = data[i];
+                _layers.push(new CitydbKmlLayer(options));
+                if (i == data.length - 1) {
+                    loadLayerGroup(_layers);
+                }
+            }
+        }
+    });
 }
 
 function observeActiveLayer() {
