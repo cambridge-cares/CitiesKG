@@ -75,7 +75,7 @@ public class Transform {
     CoordinateTransformation transformMatrix = osr.CreateCoordinateTransformation(source, target);
     point.AddPoint(centroid[0], centroid[1]);
     double[] transformed = transformMatrix.TransformPoint(point.GetX(), point.GetY()); //  transform seems to be for more than a point
-
+    // TransformPoint (latitude, longtitude)
     return transformed;
   }
 
@@ -123,7 +123,7 @@ public class Transform {
     double new_ymin = Collections.min(yCoords);
     double new_ymax = Collections.max(yCoords);
 
-    double[] transformed = new double[]{new_xmin, new_xmax, new_ymin, new_ymax};
+    double[] transformed = new double[]{new_ymin, new_ymax, new_xmin, new_xmax};
 
     return transformed;
   }

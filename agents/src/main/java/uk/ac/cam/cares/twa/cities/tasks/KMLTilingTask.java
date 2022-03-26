@@ -222,13 +222,13 @@ public class KMLTilingTask implements Runnable{
   /* The input is extentDim with 4326 */
   private int[] getNumRowCol() {
 
-    this.nRow = (int) (Math.ceil(
-        (this.Textent_Ymax - this.Textent_Ymin) / this.initTileSize));
     this.nCol = (int) (Math.ceil(
+        (this.Textent_Ymax - this.Textent_Ymin) / this.initTileSize));
+    this.nRow = (int) (Math.ceil(
         (this.Textent_Xmax - this.Textent_Xmin) / this.initTileSize));
 
-    this.tileWidth = (this.Textent_Xmax - this.Textent_Xmin) / this.nCol;
-    this.tileLength = (this.Textent_Ymax - this.Textent_Ymin) / this.nRow;
+    this.tileLength = (this.Textent_Xmax - this.Textent_Xmin) / this.nRow;
+    this.tileWidth = (this.Textent_Ymax - this.Textent_Ymin) / this.nCol;
 
     return new int[]{nRow, nCol};
 
@@ -262,9 +262,9 @@ public class KMLTilingTask implements Runnable{
   private Integer[] assignTiles(String centroidStr) {
     double[] transformedCentroid = reproject(centroidStr, Integer.valueOf(kmlSRID), Integer.valueOf(transformSRID));
     Integer col = (int) (Math.floor(
-        (transformedCentroid[0] - this.Textent_Xmin) / this.tileWidth));
+        (transformedCentroid[0] - this.Textent_Ymin) / this.tileWidth));
     Integer row = (int) (Math.floor(
-        (transformedCentroid[1] - this.Textent_Ymin) / this.tileLength));
+        (transformedCentroid[1] - this.Textent_Xmin) / this.tileLength));
     if (col < 0 || row < 0) {
       System.out.println(centroidStr + " is located " + row + ", " + col); }
     return new Integer[]{row, col};
@@ -284,10 +284,10 @@ public class KMLTilingTask implements Runnable{
     masterjson.put("rownum", this.nRow);  // 280
 
     LinkedHashMap bbox = new LinkedHashMap();
-    bbox.put("xmin", this.extent_Xmin);  // 13.09278683392157
-    bbox.put("xmax", this.extent_Xmax);  // 13.758936971880468
-    bbox.put("ymin", this.extent_Ymin);  // 52.339762874361156
-    bbox.put("ymax", this.extent_Ymax);  //52.662766032905616
+    bbox.put("xmin", this.extent_Ymin);  // 13.09278683392157
+    bbox.put("xmax", this.extent_Ymax);  // 13.758936971880468
+    bbox.put("ymin", this.extent_Xmin);  // 52.339762874361156
+    bbox.put("ymax", this.extent_Xmax);  //52.662766032905616
     masterjson.put("bbox", bbox);
 
     // This GSON library can help to write pretty-printed json file
