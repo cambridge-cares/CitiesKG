@@ -1910,7 +1910,7 @@ public abstract class KmlGenericObject<T> {
 
 		SpatialReference nativeSr = new SpatialReference("");
 		DatabaseSrs srs = databaseAdapter.getConnectionMetaData().getReferenceSystem();
-		nativeSr.SetFromUserInput(srs.getDatabaseSrsName());//need to get srid from blazegraph
+		nativeSr.SetFromUserInput(srs.getGMLSrsName());//need to get srid from blazegraph
 		SpatialReference tagetSr = new SpatialReference("");
 		tagetSr.SetFromUserInput("EPSG:4326"); // WGS84
 		CoordinateTransformation transform = CoordinateTransformation.CreateCoordinateTransformation(nativeSr, tagetSr);;

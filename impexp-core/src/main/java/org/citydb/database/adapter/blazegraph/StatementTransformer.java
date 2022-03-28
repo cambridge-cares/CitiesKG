@@ -138,7 +138,7 @@ public class StatementTransformer {
         StringBuilder sparqlString = new StringBuilder();
 
         sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-                "SELECT distinct ?surf ?geomtype (datatype(?geomtype) as ?datatype) " +
+                "SELECT distinct ?surf ?geomtype (datatype(?geomtype) as ?datatype) ?surftype " +
                 "WHERE { ?surf ocgml:cityObjectId ? ;" +
                 "ocgml:GeometryType ?geomtype ." +
                 "FILTER (!isBlank(?geomtype)) }");
