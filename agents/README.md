@@ -61,11 +61,7 @@ This folder is by default not accessible, in order to make it executable, you ne
 
 ### Install and Build
 
-<<<<<<< HEAD
-1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repository. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
-=======
 1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
->>>>>>> release_0.1.0
 
 ```
 cd <main project directory>
@@ -80,17 +76,13 @@ mvn initialize
 mvn clean install
 ```
 
-<<<<<<< HEAD
 In case building the .war file fails due to the missing `JPS_AWS.jar`, please build this locally first via running the following command within the [JPS_AWS] repository:
 ```
 mvn clean install -DskipTests
 ```
 
 3. There is one dependency `blazegraph-jar-2.1.5.jar` which needs to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
-=======
 
-3. There is one dependency *blazegraph-jar-2.1.5.jar* need to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
->>>>>>> release_0.1.0
 ```
     <dependency>
       <groupId>com.blazegraph</groupId>
@@ -121,6 +113,8 @@ Run the command *mvn clean install -DskipTests* on the corresponding directories
 ### Deployment (for users)
 
 If the build is successful, you should be able to find the war artifact under ${projectDir}/${tomcatPath}/webapps/agents##0.1.0.war
+
+#### Tomcat setup for Windows
 
 Start the tomcat service by clicking on the executable *C:\Program Files\Apache Software Foundation\Tomcat 9.0\bin\Tomcat9w.exe*
 and click on *Start*. After that, you can see the startup page on the browser under [http://localhost:8080].
