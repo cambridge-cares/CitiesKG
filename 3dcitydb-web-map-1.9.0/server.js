@@ -38,6 +38,8 @@
     var compression = require('compression');
     var url = require('url');
     var request = require('request');
+    var fs = require('fs');
+    var path = require('path');
 
     var yargs = require('yargs').options({
         'port' : {
@@ -156,6 +158,13 @@
 
             res.status(code).send(body);
         });
+    });
+
+    app.get('/files/*', function(req, res) {
+        var split = req.url.toString().split('/');
+        var dir = path.join(__dirname, '3dwebclient', split[2]);
+        var files = fs.readdirSync(dir);
+        res.send(files);
     });
 
     var server = app.listen(argv.port, 'localhost', function() {
