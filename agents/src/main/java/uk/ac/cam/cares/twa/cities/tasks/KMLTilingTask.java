@@ -29,8 +29,8 @@ public class KMLTilingTask implements Runnable{
 
   private int nRow;
   private int nCol;
-  private String kmlSRID;
-  private String transformSRID;
+  private String sourceSRID;
+  private String targetSRID;
   private double extent_Xmin;
   private double extent_Xmax;
   private double extent_Ymin;
@@ -57,10 +57,10 @@ public class KMLTilingTask implements Runnable{
 /* This class will help to
  * 1. calculate the NumColRow (number of rows and columns) based on the initial tile size
  * 2. */
-  public KMLTilingTask(String kmlCRS, String computeCRS, String outputDir, int initTileSize) {
+  public KMLTilingTask(String kmlCRS, String targetCRS, String outputDir, int initTileSize) {
 
-    this.kmlSRID = kmlCRS;
-    this.transformSRID = computeCRS;
+    this.sourceSRID = kmlCRS;
+    this.targetSRID = targetCRS;
     extent_Xmin = Double.POSITIVE_INFINITY;
     extent_Xmax = Double.NEGATIVE_INFINITY;
     extent_Ymin = Double.POSITIVE_INFINITY;
@@ -160,7 +160,7 @@ public class KMLTilingTask implements Runnable{
     // updateExtent in 25833
     //double[] testTenvelope = {1.3110057376503, 1.31143044782066, 103.818749218958, 103.819364392128};
     //geomEnvelope = new double[]{geomEnvelope[2], geomEnvelope[3], geomEnvelope[0], geomEnvelope[1]};  // switch the coordinates
-    double[] Tenvelope = Transform.reprojectEnvelope(geomEnvelope, Integer.valueOf(kmlSRID), Integer.valueOf(transformSRID));
+    double[] Tenvelope = Transform.reprojectEnvelope(geomEnvelope, Integer.valueOf(sourceSRID), Integer.valueOf(targetSRID));
 
     if (Tenvelope[0] <= this.Textent_Xmin) { this.Textent_Xmin = Tenvelope[0]; }
     if (Tenvelope[1] >= this.Textent_Xmax) { this.Textent_Xmax = Tenvelope[1]; }
@@ -203,7 +203,7 @@ public class KMLTilingTask implements Runnable{
     if (origEnvelop[2] <= this.extent_Ymin) { this.extent_Ymin = origEnvelop[2]; }
     if (origEnvelop[3] >= this.extent_Ymax) { this.extent_Ymax = origEnvelop[3]; }
 
-    double[][] Tgeometry = Transform.reprojectGeometry(geometry, Integer.valueOf(kmlSRID), Integer.valueOf(transformSRID));
+    double[][] Tgeometry = Transform.reprojectGeometry(geometry, Integer.valueOf(sourceSRID), Integer.valueOf(targetSRID));
 
     double[] Tenvelop = Transform.getEnvelop(Tgeometry);
 
@@ -258,9 +258,9 @@ public class KMLTilingTask implements Runnable{
     return transformedGeom;
   }
 
-  /* Compute the tile location based on the transformed extent (based on meter)*/
+  /* Compute the belonging tile of a cityobject based on the transformed Extent and centroid of the cityobject (based on meter) */
   private Integer[] assignTiles(String centroidStr) {
-    double[] transformedCentroid = reproject(centroidStr, Integer.valueOf(kmlSRID), Integer.valueOf(transformSRID));
+    double[] transformedCentroid = reproject(centroidStr, Integer.valueOf(sourceSRID), Integer.valueOf(targetSRID));
     Integer col = (int) (Math.floor(
         (transformedCentroid[0] - this.Textent_Ymin) / this.tileWidth));
     Integer row = (int) (Math.floor(
@@ -270,9 +270,9 @@ public class KMLTilingTask implements Runnable{
     return new Integer[]{row, col};
   }
 
-
+  /* To Note: Need to be careful with latitude and longitude , Check with epsg.io*/
+  /* Creation of MasterJson file, which is used to name the tiles' filename in KMLSorterTask.java */
   private void createMasterJson(){
-
     LinkedHashMap masterjson = new LinkedHashMap();
     masterjson.put("version", "1.0.0");
     masterjson.put("layername", "test");
@@ -280,8 +280,8 @@ public class KMLTilingTask implements Runnable{
     masterjson.put("displayform", "extruded");
     masterjson.put("minLodPixels", 10);
     masterjson.put("maxLodPixels", -1);
-    masterjson.put("colnum", this.nCol ); // 368
-    masterjson.put("rownum", this.nRow);  // 280
+    masterjson.put("colnum", this.nCol );
+    masterjson.put("rownum", this.nRow);
 
     LinkedHashMap bbox = new LinkedHashMap();
     bbox.put("xmin", this.extent_Ymin);  // 13.09278683392157
@@ -300,7 +300,6 @@ public class KMLTilingTask implements Runnable{
     } catch (Exception ex) {
       System.err.println("Couldn't write masterjson\n" + ex.getMessage());
     }
-
   }
 
 

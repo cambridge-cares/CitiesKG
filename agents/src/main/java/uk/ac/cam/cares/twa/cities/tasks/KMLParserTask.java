@@ -95,14 +95,14 @@ public class KMLParserTask implements Runnable{
       {
         KMLMultiGeometry multiGeometry = ((KMLMultiGeometry) geom);
         KMLPolygon polygon = (KMLPolygon) multiGeometry.getGeometries().toArray()[0];
-        double[] envelop = EnvelopeCentroid.getEnvelope(geom);
-        double[] centroid = EnvelopeCentroid.getCentroid(envelop);
+        double[] envelope = EnvelopeCentroid.calcEnvelope(geom);
+        double[] centroid = EnvelopeCentroid.calcCentroid(envelope);
         this.gmlidList.add(buildingId);
         // {"gmlid", "envelope", "envelopeCentroid", "filename"};
-        String[] row = {buildingId, arr2str(envelop), arr2str(centroid), this.currFile.getName()};
+        String[] row = {buildingId, arr2str(envelope), arr2str(centroid), this.currFile.getName()};
         this.dataContent.add(row);
         //double[][] test = new double[polygon.getOuterBoundary().getCoordinates().list.size()][];
-        kmltiling.updateExtent(envelop);
+        kmltiling.updateExtent(envelope);
         //System.out.println("Envelop: "  + envelope[0] + " " + envelope[1] + " " + envelope[2] + " " + envelope[3]);
         //ArrayList geometries = (ArrayList) multiGeometry.getGeometries();
         //ArrayList positionL = (ArrayList) polygon.getOuterBoundary().getCoordinates().list;

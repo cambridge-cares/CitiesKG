@@ -14,13 +14,15 @@ import org.gdal.ogr.ogr;
 
 public class EnvelopeCentroid {
 
-  private double[] envelope = new double[4];
+  private double[] envelope = new double[4]; // [xmin, xmax, ymin, ymax]
   private Geometry centroid = new Geometry(ogr.wkbPoint);
   private Geometry building = new Geometry(ogr.wkbMultiPolygon);
 
   public EnvelopeCentroid() {}
 
-  public static double[] getEnvelope(KMLAbstractGeometry kmlGeom) {
+  /* Input: KMLMultiGeometry with 1 or multiple polygons
+  *  Output: Envelope of this KMLMultiGeometry for each GMLID */
+  public static double[] calcEnvelope(KMLAbstractGeometry kmlGeom) {
 
     double[] envelope = new double[4];
 
@@ -36,9 +38,10 @@ public class EnvelopeCentroid {
       // Create the polygon and add to the multipolygon
       for (KMLPolygon kmlPolygon : geometries) {
         Geometry ring = new Geometry(ogr.wkbLinearRing);
-        ArrayList coorinates = (ArrayList) kmlPolygon.getOuterBoundary().getCoordinates().list;
-        // @TODO: only care the outerboundary for envelope, but can also add the innerboundary
-        for (Object pos : coorinates) {
+        // @TODO: only care the OuterBoundary for envelope, but can also add the InnerBoundary
+        ArrayList coordinates = (ArrayList) kmlPolygon.getOuterBoundary().getCoordinates().list;
+
+        for (Object pos : coordinates) {
           Position point = (Position) pos;
           ring.AddPoint(point.getLatitude().degrees, point.getLongitude().degrees); // lat, long
         }
@@ -64,7 +67,7 @@ public class EnvelopeCentroid {
   /* This class calculate the centroid of building's envelope and not the building */
   /* the centroid or geometric center of a plane figure is the arithmetic mean position of all the points in the figure. */
   // TODO: two different methods to getCentroid
-  public static double[] getCentroid(double[] envelope) { // return point // envelope = [Xmin, Xmax, Ymin, Ymax]
+  public static double[] calcCentroid(double[] envelope) { // return point // envelope = [Xmin, Xmax, Ymin, Ymax]
     //Geometry centroid = new Geometry(ogr.wkbPoint);
     double[] centroid = new double[2]; // {centroidX, centroidY}
     centroid[0] = envelope[0] + (envelope[1] - envelope[0]) / 2 ;

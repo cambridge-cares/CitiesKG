@@ -17,6 +17,7 @@ public class KMLSorterTask implements Runnable {
     //TODO replace all / with system file separator
 
     private String name; // project name, need to match the layer name in master json
+    private String displayform; // read from masterjson and use for tile's name
     private int rows; // the number of tile rows
     private int cols; // the number of tile columns
     private String[] unsortedFiles; // list of unsorted kml files
@@ -63,6 +64,7 @@ public class KMLSorterTask implements Runnable {
         this.rows = masterJSON.getInt("rownum");
         this.cols = masterJSON.getInt("colnum");
         this.name = masterJSON.getString("layername");
+        this.displayform = masterJSON.getString("displayform");
 
         System.out.println("colnum:" + cols + ", rownum: " + rows);
         if (rows == 0 || cols == 0) {
@@ -100,7 +102,7 @@ public class KMLSorterTask implements Runnable {
 
         for (int i = 0; i < rows; i++) {
             for (int k = 0; k < cols; k++) {
-                String name = this.name + "_Tile_" + i + "_" + k + "_extruded";
+                String name = this.name + "_Tile_" + i + "_" + k + "_" + this.displayform;
                 File out = new File(this.outputDir + "\\Tiles\\" + i + "\\" + k + "\\" + name + ".kml");
                 if (out.exists()){
                     continue;
