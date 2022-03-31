@@ -99,8 +99,10 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
         restructureAndPush();
       else if(params.mode == ThematicSurfaceDiscoveryAgent.Mode.FOOTPRINT)
         addFootprintAndPush();
-      else
+      else if(params.mode == ThematicSurfaceDiscoveryAgent.Mode.VALIDATE)
         commentAndPush();
+      else
+        touchesAndPush();
     }
     return null;
   }
@@ -325,6 +327,12 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
     }
   }
 
+  /**
+   * calculate touches of surface
+   */
+  private void touchesAndPush() {
+
+  }
   /**
    * Compute the average coordinate of the centroids of a number of SurfaaceGeometry objects, i.e. their collcetive
    * unweighted centroid.

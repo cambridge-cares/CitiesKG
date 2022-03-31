@@ -4,12 +4,12 @@ Content-Type: application/json
 // the config.properties in this folder must also have uri.route set to your target resource
 // specification of no lod arguments -> all of lods 1, 2, 3, 4 "true".
 // specify "cityObjectIRI": "http://localhost:9999/blazegraph/namespace/building/..../" to only process one building.
-// specify "mode": "restructre" to convert lodXMultiSurfaces into thematic surfaces
+// specify "mode": "restructure" to convert lodXMultiSurfaces into thematic surfaces
 //               : "footprint" to add lod0footprint only instead of restructuring
 //               : "validate" to do "comment" behaviour, but on thematic surfaces instead of lodXMultiSurfaces
 
-{"namespace": "http://localhost:9999/blazegraph/namespace/churchill/sparql/",
-  "lod1": "true",
-  "lod2": "true",
+{"namespace": "http://10.25.188.180:9999/blazegraph/namespace/onemapsgEPSG24500/sparql/",
+  "lod3": "true",
   "threshold": "5",
-  "mode": "validate"}
+  "cityObjectIRI": "http://10.25.188.180:9999/blazegraph/namespace/onemapsgEPSG24500/sparql/building/UUID_enhanced_v_6_0_0_0/",
+  "mode": "split"}
