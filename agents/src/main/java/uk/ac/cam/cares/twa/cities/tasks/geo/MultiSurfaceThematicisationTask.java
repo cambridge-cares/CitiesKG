@@ -6,6 +6,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Polygon;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
@@ -15,12 +16,11 @@ import uk.ac.cam.cares.twa.cities.models.geo.*;
 import java.math.BigInteger;
 import java.net.URI;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,6 +46,7 @@ import java.util.stream.Stream;
  * @version $Id$
  */
 public class MultiSurfaceThematicisationTask implements Callable<Void> {
+  ExecutorService executor = Executors.newFixedThreadPool(5);
 
   public enum Theme {
     UNSET(-1),
@@ -81,6 +82,8 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
   private final List<List<SurfaceGeometry>> bottomLevelThematicGeometries = Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
   private final List<SurfaceGeometry> mixedGeometries = new ArrayList<>();
 
+  private final List<List<SurfaceGeometry>> buildings = new ArrayList<>();
+
   public MultiSurfaceThematicisationTask(int lod, ThematicSurfaceDiscoveryAgent.Params params, String ... rootIris) {
     this.context = params.makeContext();
     this.roots = Arrays.stream(rootIris).map(
@@ -92,7 +95,11 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
 
   public Void call() {
     if (!stage) {
-      tryClassifyGeometries();
+      if(params.mode == ThematicSurfaceDiscoveryAgent.Mode.SPLIT) {
+        geoTouches();
+      }else {
+        tryClassifyGeometries();
+      }
       stage = true;
     } else {
       if(params.mode == ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE)
@@ -330,6 +337,88 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
   /**
    * calculate touches of surface
    */
+  private void geoTouches() {
+    try{
+      for(SurfaceGeometry root: roots) {
+        context.pullAllWhere(
+                SurfaceGeometry.class,
+                new WhereBuilder().addWhere(
+                        ModelContext.getModelVar(),
+                        NodeFactory.createURI(SPARQLUtils.expandQualifiedName(SchemaManagerAdapter.ONTO_ROOT_ID)),
+                        NodeFactory.createURI(root.getIri())
+                )
+        );
+
+        List<SurfaceGeometry> children = root.getChildGeometries();
+
+        recursiveTouches (children);
+      }
+      System.out.println(buildings.size());
+    }catch (Exception e) {
+      e.printStackTrace();
+    }
+
+
+  }
+
+  private void recursiveTouches (List<SurfaceGeometry> children) {
+    List<SurfaceGeometry> single = new ArrayList<>();
+
+    for(int i = 0; i < children.size() - 1; i++) {
+      List<SurfaceGeometry> building1 = new ArrayList<>();
+      int key = -1;
+
+      SurfaceGeometry currentSurf = children.get(i);
+      GeometryType currentGeom = currentSurf.getGeometryType();
+      Polygon currentPolygon = currentGeom.getPolygon();
+      if (currentGeom == null ) continue;
+      key = isContainSurface(currentSurf);
+      if (key == -1) {
+        building1.add(currentSurf);
+      } else {
+        building1 = buildings.get(key);
+      }
+
+      for (int j = i+1; j < children.size(); j++) {
+        SurfaceGeometry compareSurf = children.get(j);
+        GeometryType compareGeom = compareSurf.getGeometryType();
+        if (compareGeom == null) continue;
+        Polygon comparePolygon = compareGeom.getPolygon();
+        if (!currentPolygon.disjoint(comparePolygon) && !building1.contains(compareSurf)) {
+          int tempK = isContainSurface(compareSurf);
+          if(tempK == -1) {
+            building1.add(compareSurf);
+          } else if (tempK != key){
+            building1.addAll(buildings.get(tempK));
+            buildings.remove(tempK);
+          }
+        }
+      }
+
+      if (building1.size() == 1){
+        single.add(building1.get(0));
+      } else {
+        if (key == -1){
+          key = buildings.size();
+//          buildings.put(key, building1);
+        }
+      }
+    }
+    System.out.println(single.size());
+  }
+  private int isContainSurface (SurfaceGeometry checkSurface) {
+    int key = -1;
+    for (int i = 0; i < buildings.size(); i++) {
+      List<SurfaceGeometry> sortSurfaces = buildings.get(i);
+      if (sortSurfaces != null) {
+        if (sortSurfaces.contains(checkSurface)){
+          key = i;
+          break;
+        }
+      }
+    }
+    return key;
+  }
   private void touchesAndPush() {
 
   }

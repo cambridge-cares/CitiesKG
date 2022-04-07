@@ -24,6 +24,8 @@ public class ThematicSurfaceDiscoveryTask implements Runnable {
   private final ConcurrentLinkedQueue<MultiSurfaceThematicisationTask> lxmsThematicisationTaskQueue = new ConcurrentLinkedQueue<>();
   private final List<MultiSurfaceThematicisationTask> lxmsThematicisationTaskList = new ArrayList<>();
 
+  private final List<BuildingCleanTask> lxmsBuildingCleanTaskList = new ArrayList<>();
+
   public ThematicSurfaceDiscoveryTask(List<String> buildingIris, ThematicSurfaceDiscoveryAgent.Params params) {
     this.buildingIris = buildingIris;
     this.params = params;
