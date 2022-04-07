@@ -10,6 +10,7 @@ import org.locationtech.jts.geom.Polygon;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
+import uk.ac.cam.cares.twa.cities.models.Model;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
 
@@ -399,8 +400,9 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
         single.add(building1.get(0));
       } else {
         if (key == -1){
-          key = buildings.size();
-//          buildings.put(key, building1);
+          buildings.add(building1);
+        } else {
+          buildings.set(key, building1);
         }
       }
     }
@@ -420,7 +422,28 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
     return key;
   }
   private void touchesAndPush() {
+      int size = this.buildings.size();
+      for(SurfaceGeometry root: roots) {
+        String rootURI = root.getIri();
+        String buildingtId = root.getCityObjectId().toString();
+        String cityobjectId = buildingtId.replace("building", "cityobject");
 
+        SurfaceGeometry rootSurface = context.getModel(SurfaceGeometry.class, rootURI);
+        Building buildingModel = context.getModel(Building.class, buildingtId);
+
+        context.pullAllWhere(
+                CityObject.class,
+                new WhereBuilder().addWhere(
+                        ModelContext.getModelVar(),
+                        NodeFactory.createURI(SPARQLUtils.expandQualifiedName(SchemaManagerAdapter.ONTO_ROOT_ID)),
+                        NodeFactory.createURI(cityobjectId)
+                )
+        );
+
+        CityObject cityObjectModel = context.getModel(CityObject.class, cityobjectId);
+        ArrayList<GenericAttribute> genAttribModel = cityObjectModel.getGenericAttributes();
+
+      }
   }
   /**
    * Compute the average coordinate of the centroids of a number of SurfaaceGeometry objects, i.e. their collcetive
