@@ -17,7 +17,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
 
         <!-- Version of the JPS Base Library to use -->
-        <jps.base.version>1.3.0</jps.base.version>
+        <jps.base.version>1.6.0</jps.base.version>
     </properties>
 
     <repositories>
@@ -61,6 +61,14 @@
                     <configuration>
                         <source>1.8</source>
                         <target>1.8</target>
+                        <excludes>
+                            <exclude>**/DistanceAgent.java</exclude>
+                            <exclude>**/Envelope.java</exclude>
+                        </excludes>
+                        <testExcludes>
+                            <testExclude>**/DistanceAgentTest.java</testExclude>
+                            <testExclude>**/EnvelopeTest.java</testExclude>
+                        </testExcludes>
                     </configuration>
                 </plugin>
 
@@ -124,6 +132,12 @@
             <groupId>uk.ac.cam.cares.jps</groupId>
             <artifactId>jps-base-lib</artifactId>
             <version>${jps.base.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.blazegraph</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.json</groupId>
