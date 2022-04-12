@@ -83,7 +83,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
   private final List<List<SurfaceGeometry>> bottomLevelThematicGeometries = Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
   private final List<SurfaceGeometry> mixedGeometries = new ArrayList<>();
 
-  private final List<List<SurfaceGeometry>> buildings = new ArrayList<>();
+  private final List<Set<SurfaceGeometry>> buildings = new ArrayList<>();
 
   public MultiSurfaceThematicisationTask(int lod, ThematicSurfaceDiscoveryAgent.Params params, String ... rootIris) {
     this.context = params.makeContext();
@@ -351,24 +351,22 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
         );
 
         List<SurfaceGeometry> children = root.getChildGeometries();
-
         recursiveTouches (children);
       }
-      System.out.println(buildings.size());
+      if (buildings.size() > 0) {
+        flipped = false;
+      }
     }catch (Exception e) {
       e.printStackTrace();
     }
-
-
   }
 
   private void recursiveTouches (List<SurfaceGeometry> children) {
-    List<SurfaceGeometry> single = new ArrayList<>();
+    List<SurfaceGeometry> singleList = new ArrayList<>();
 
     for(int i = 0; i < children.size() - 1; i++) {
-      List<SurfaceGeometry> building1 = new ArrayList<>();
+      Set<SurfaceGeometry> building1 = new HashSet<>();
       int key = -1;
-
       SurfaceGeometry currentSurf = children.get(i);
       GeometryType currentGeom = currentSurf.getGeometryType();
       Polygon currentPolygon = currentGeom.getPolygon();
@@ -382,10 +380,11 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
 
       for (int j = i+1; j < children.size(); j++) {
         SurfaceGeometry compareSurf = children.get(j);
+        if (building1.contains(compareSurf)) continue;
         GeometryType compareGeom = compareSurf.getGeometryType();
         if (compareGeom == null) continue;
         Polygon comparePolygon = compareGeom.getPolygon();
-        if (!currentPolygon.disjoint(comparePolygon) && !building1.contains(compareSurf)) {
+        if (!currentPolygon.disjoint(comparePolygon) || currentPolygon.touches(comparePolygon) || currentPolygon.distance(comparePolygon) == 0) {
           int tempK = isContainSurface(compareSurf);
           if(tempK == -1) {
             building1.add(compareSurf);
@@ -397,21 +396,30 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
       }
 
       if (building1.size() == 1){
-        single.add(building1.get(0));
+        singleList.add(currentSurf);
       } else {
-        if (key == -1){
+        if (key == -1) {
           buildings.add(building1);
-        } else {
-          buildings.set(key, building1);
         }
       }
     }
-    System.out.println(single.size());
+
+
+    if(singleList.size() > 0) {
+      int location = 0;
+      for (SurfaceGeometry single : singleList) {
+        location = findClosedSurface(single);
+        if (location != -1) {
+          buildings.get(location).add(single);
+        }
+      }
+    }
   }
+
   private int isContainSurface (SurfaceGeometry checkSurface) {
     int key = -1;
     for (int i = 0; i < buildings.size(); i++) {
-      List<SurfaceGeometry> sortSurfaces = buildings.get(i);
+      Set<SurfaceGeometry> sortSurfaces = buildings.get(i);
       if (sortSurfaces != null) {
         if (sortSurfaces.contains(checkSurface)){
           key = i;
@@ -421,6 +429,30 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
     }
     return key;
   }
+
+  private int findClosedSurface(SurfaceGeometry currentSurface) {
+    int location = -1;
+    double distance = 9999.99;
+    for (int key1 = 0; key1 < buildings.size(); key1 ++) {
+      Set<SurfaceGeometry> building = buildings.get(key1);
+      for (SurfaceGeometry compareSurf : building) {
+        GeometryType singleGeom = currentSurface.getGeometryType();
+        Polygon singlePolygon = singleGeom.getPolygon();
+        GeometryType compareGeom = compareSurf.getGeometryType();
+        Polygon comparePolygon = compareGeom.getPolygon();
+        if (singlePolygon.distance(comparePolygon) < distance) {
+          distance = singlePolygon.distance(comparePolygon);
+          location = key1;
+        }
+      }
+    }
+    return location;
+  }
+
+  /**
+   * 1. insert new building, cityobject, genericattribute, root surfacegeometry
+   * 2. update surfacegeometry
+   */
   private void touchesAndPush() {
       int size = this.buildings.size();
       for(SurfaceGeometry root: roots) {
@@ -429,21 +461,86 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
         String cityobjectId = buildingtId.replace("building", "cityobject");
 
         SurfaceGeometry rootSurface = context.getModel(SurfaceGeometry.class, rootURI);
-        Building buildingModel = context.getModel(Building.class, buildingtId);
-
-        context.pullAllWhere(
-                CityObject.class,
-                new WhereBuilder().addWhere(
-                        ModelContext.getModelVar(),
-                        NodeFactory.createURI(SPARQLUtils.expandQualifiedName(SchemaManagerAdapter.ONTO_ROOT_ID)),
-                        NodeFactory.createURI(cityobjectId)
-                )
-        );
-
-        CityObject cityObjectModel = context.getModel(CityObject.class, cityobjectId);
+        Building buildingModel = context.loadAll(Building.class, buildingtId);
+        CityObject cityObjectModel = context.loadAll(CityObject.class, cityobjectId);
         ArrayList<GenericAttribute> genAttribModel = cityObjectModel.getGenericAttributes();
+        for (int i = 0; i< genAttribModel.size(); i++){
+          GenericAttribute genericAttriM = genAttribModel.get(i);
+          context.pullAllWhere(
+                  GenericAttribute.class,
+                  new WhereBuilder().addWhere(
+                          ModelContext.getModelVar(),
+                          NodeFactory.createURI(SPARQLUtils.expandQualifiedName(SchemaManagerAdapter.ONTO_ID)),
+                          NodeFactory.createURI(genericAttriM.getIri())
+                  )
+          );
+          genAttribModel.set(i, context.getModel(GenericAttribute.class, genericAttriM.getIri()));
+        }
 
+        for (Set<SurfaceGeometry> building: buildings) {
+          ArrayList<SurfaceGeometry> buildingList = new ArrayList<>(building);
+
+          String genericAttri_uuid = "UUID_" + UUID.randomUUID().toString();
+          String genericAttriIri = params.namespace + SchemaManagerAdapter.GENERIC_ATTRIB_GARPH + SLASH + genericAttri_uuid;
+          GenericAttribute newGenericAttri = context.createNewModel(GenericAttribute.class, genericAttriIri);
+          String rootSurface_uuid = "UUID_" + UUID.randomUUID().toString();
+          String rootSurfaceIri = params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH + SLASH + rootSurface_uuid;
+          SurfaceGeometry newRootSurface = context.createNewModel(SurfaceGeometry.class, rootSurfaceIri);
+          String building_uuid = "UUID_" + UUID.randomUUID().toString();
+          String buildingIri = params.namespace + SchemaManagerAdapter.BUILDING_GRAPH + SLASH + building_uuid;
+          Building newBuilding = context.createNewModel(Building.class, buildingIri);
+          String cityObject_uuid = building_uuid;
+          String cityObjectIri = params.namespace + SchemaManagerAdapter.CITY_OBJECT_GRAPH + SLASH + cityObject_uuid;
+          CityObject newCityObject = context.createNewModel(CityObject.class, cityObjectIri);
+
+          newGenericAttri.setAttrName(genAttribModel.get(0).getAttrName());
+          newGenericAttri.setDataType(genAttribModel.get(0).getDataType());
+          newGenericAttri.setStrVal(genAttribModel.get(0).getStrVal());
+          ArrayList<GenericAttribute> newGenAttriList = new ArrayList<>();
+          newGenAttriList.add(newGenericAttri);
+          newGenericAttri.setCityObjectId(newCityObject.getId());
+
+          newCityObject.setGmlId(cityObject_uuid);
+          newCityObject.setObjectClassId(cityObjectModel.getObjectClassId());
+          newCityObject.setEnvelopeType(new EnvelopeType(buildingList));
+          newCityObject.setCreationDate(OffsetDateTime.now().toString());
+          newCityObject.setLastModificationDate(OffsetDateTime.now().toString());
+          newCityObject.setUpdatingPerson(UPDATING_PERSON);
+          newCityObject.setGenericAttributes(newGenAttriList);
+
+          newRootSurface.setGmlId(rootSurface_uuid);
+          newRootSurface.setRootId(URI.create(rootSurfaceIri));
+          newRootSurface.setCityObjectId(URI.create(buildingIri));
+          newRootSurface.setChildGeometries(buildingList);
+          newRootSurface.setIsComposite(rootSurface.getIsComposite());
+          newRootSurface.setIsReverse(rootSurface.getIsReverse());
+          newRootSurface.setIsSolid(rootSurface.getIsSolid());
+          newRootSurface.setIsTriangulated(rootSurface.getIsTriangulated());
+          newRootSurface.setIsXlink(rootSurface.getIsXlink());
+
+          newBuilding.setLod3MultiSurfaceId(newRootSurface);
+          newBuilding.setObjectClassId(buildingModel.getObjectClassId());
+          newBuilding.setBuildingRootId(URI.create(buildingIri));
+
+          context.pushChanges(newBuilding);
+          context.pushChanges(newCityObject);
+          context.pushChanges(newRootSurface);
+          for (GenericAttribute newGenericModel : newGenAttriList) {
+            context.pushChanges(newGenericModel);
+          }
+          for(SurfaceGeometry newSurfaceGeometry : buildingList){
+            //update
+            newSurfaceGeometry.setRootId(URI.create(rootSurfaceIri));
+            newSurfaceGeometry.setParentId(newRootSurface);
+            newSurfaceGeometry.setCityObjectId(URI.create(buildingIri));
+            context.pushChanges(newSurfaceGeometry);
+          }
+        }
+        context.delete(buildingModel,false);
+        context.retire(cityObjectModel);
+        context.retire(buildingModel);
       }
+
   }
   /**
    * Compute the average coordinate of the centroids of a number of SurfaaceGeometry objects, i.e. their collcetive
