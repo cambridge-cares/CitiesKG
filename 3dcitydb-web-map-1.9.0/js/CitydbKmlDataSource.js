@@ -1181,7 +1181,8 @@
 
         var polyline = styleEntity.polyline;
         if (defined(polyline)) {
-            polygon.outlineColor = defined(polyline.material) ? polyline.material.color : Color.WHITE;
+            //polygon.outlineColor = defined(polyline.material) ? polyline.material.color : Color.WHITE;
+            polygon.outlineColor = defined(polyline.material) ? Color.BLACK : Color.WHITE;
             polygon.outlineWidth = polyline.width;
         }
         entity.polygon = polygon;
