@@ -582,11 +582,11 @@ the `Model` IRI with a `?model` variable Node, and then append (a) search condit
 BY ?model`. The response is decomposed into segments corresponding to different individuals, and each segment read 
 in by the same response processors as `pullAll` and `pullPartial`. 
 
-##Notes for future development
+## Notes for future development
 
-###How to add new types
+### How to add new types
 
-####Method 1: Direct addition to FieldInterface
+#### Method 1: Direct addition to FieldInterface
 
 Support for different types is implemented in the constructor of `FieldInterface`. Simply add an additional 
 condition to the `innerType` interrogation section, capturing the type to be added and setting their `parser`, 
@@ -599,12 +599,12 @@ increased size of TestModel.
 
 This method is appropriate for relatively common types such as date and time types, numeric types, etc.
 
-####Method 2: Creation of a DatatypeModel
+#### Method 2: Creation of a DatatypeModel
 
 See [Defining a DatatypeModel](#Defining a DatatypeModel). This is more appropriate if you need behaviour for a 
 particular use case.
 
-###Why does deletion work like that?
+### Why does deletion work like that?
 
 `DELETE WHERE` is used in place of `DELETE DATA` in the deletion parts of the change-pushing updates. This is, I 
 think, justified by there being a change-tracking system: properties which have not modified will not be republished 
