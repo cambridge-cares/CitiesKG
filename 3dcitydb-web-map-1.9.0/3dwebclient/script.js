@@ -277,6 +277,8 @@ function loadCity(city) {
         loadBerlin();
     } else if (city == 'kingslynn') {
         loadKingsLynn();
+    } else if (city == 'ura') {
+        loadURA();
     }
 }
 
@@ -337,6 +339,24 @@ function loadKingsLynn() {
     getAndLoadLayers('exported_kingslynn');
 }
 
+function loadURA() {
+    // set title
+    document.title = 'URA';
+
+    // set camera view
+    var cameraPostion = {
+        latitude: 1.3110057376503,
+        longitude: 103.818749218958,
+        height: 534.3099172951087,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+    flyToCameraPosition(cameraPostion);
+
+    // find relevant files and load layers
+    getAndLoadLayers('exported_ura');
+}
 // send get request to server to discover files in specified folder, create and load layers
 function getAndLoadLayers(folder) {
     var url = this.location.origin;

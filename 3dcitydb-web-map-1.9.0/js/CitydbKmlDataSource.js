@@ -1186,6 +1186,8 @@
         }
         entity.polygon = polygon;
 
+        //entity.polyline = polyline; // Shiying
+
         if (canExtrude) {
             polygon.perPositionHeight = true;
             polygon.extrudedHeight = extrude ? 0 : undefined;
@@ -1207,6 +1209,8 @@
                 }
             }
             polygon.hierarchy = hierarchy;
+
+            //polyline.positions = createPositionPropertyArrayFromAltitudeMode(coordinates, altitudeMode, gxAltitudeMode);   // Shiying
         }
 
         return true;
