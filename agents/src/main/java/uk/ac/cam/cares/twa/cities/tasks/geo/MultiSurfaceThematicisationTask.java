@@ -527,6 +527,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
           context.pushChanges(newRootSurface);
           for (GenericAttribute newGenericModel : newGenAttriList) {
             context.pushChanges(newGenericModel);
+            context.retire(newGenericModel);
           }
           for(SurfaceGeometry newSurfaceGeometry : buildingList){
             //update
@@ -534,19 +535,24 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
             newSurfaceGeometry.setParentId(newRootSurface);
             newSurfaceGeometry.setCityObjectId(URI.create(buildingIri));
             context.pushChanges(newSurfaceGeometry);
+            context.retire(newSurfaceGeometry);
           }
+          context.retire(newBuilding);
+          context.retire(newCityObject);
+          context.retire(newRootSurface);
         }
 
         for (GenericAttribute oldGenericModel : genAttribModel) {
-          context.delete(oldGenericModel,false);
-          context.pushChanges(oldGenericModel);
+          context.delete(oldGenericModel,true);
+//          context.pushChanges(oldGenericModel);
         }
-        context.delete(rootSurface,false);
-        context.pushChanges(rootSurface);
-        context.delete(buildingModel,false);
-        context.pushChanges(buildingModel);
-        context.delete(cityObjectModel,false);
-        context.pushChanges(cityObjectModel);
+        context.delete(rootSurface,true);
+//        context.pushChanges(rootSurface);
+        context.delete(buildingModel,true);
+//        context.pushChanges(buildingModel);
+        context.delete(cityObjectModel,true);
+//        context.pushChanges(cityObjectModel);
+        context.pushAllChanges();;
 
       }
 
