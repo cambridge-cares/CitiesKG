@@ -61,8 +61,7 @@ This folder is by default not accessible, in order to make it executable, you ne
 
 ### Install and Build
 
-
-1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repository. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
+1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
 
 ```
 cd <main project directory>
@@ -83,6 +82,7 @@ mvn clean install -DskipTests
 ```
 
 3. There is one dependency `blazegraph-jar-2.1.5.jar` which needs to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
+
 ```
     <dependency>
       <groupId>com.blazegraph</groupId>
@@ -99,7 +99,7 @@ Make sure that you download the correct version 2.1.5, otherwise the POM file of
 After you get the correct artifact *blazegraph-jar-2.1.5.jar*, you can place it into the folder on your server in *C:\Program Files\Apache Software Foundation\Tomcat 9.0\lib*, 
 this folder contains all the libraries provided by the server. 
 
-If this step has not been done, the CityImportAgent might not work. 
+If this step has not been done, you might get a `NoClassDefFoundError`. 
 
 4. Additional dependencies used by agents are JPS_BASE_LIB and JPS_AWS are provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository.
 
@@ -115,6 +115,8 @@ Run the command *mvn clean install -DskipTests* on the corresponding directories
 
 If the build is successful, you should be able to find the war artifact under ${projectDir}/${tomcatPath}/webapps/agents##0.1.0.war
 
+#### Tomcat setup for Windows
+
 Start the tomcat service by clicking on the executable *C:\Program Files\Apache Software Foundation\Tomcat 9.0\bin\Tomcat9w.exe*
 and click on *Start*. After that, you can see the startup page on the browser under [http://localhost:8080].
 
@@ -122,6 +124,7 @@ As CityImportAgent will execute a python script from java program, it requires t
 The tomcat server needs to be configured as following:
 
 On the logOn tab of the Tomcat properties windows, select *Log on as: Local System account* and check the box *Allow service to interact with Desktop*
+(For Mac: you need to put your import folder at same place of your tomcat service, in order to let your tomcat has right to access import folder.)
 
 After starting the tomcat server, you can place the agent .war artifact into the directory *C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps*.
 
