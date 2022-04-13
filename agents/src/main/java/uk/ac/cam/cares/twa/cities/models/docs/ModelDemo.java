@@ -1,9 +1,12 @@
-package uk.ac.cam.cares.twa.cities.models;
+package uk.ac.cam.cares.twa.cities.models.docs;
 
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
+import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
+import uk.ac.cam.cares.twa.cities.models.Model;
+import uk.ac.cam.cares.twa.cities.models.ModelContext;
 
 import java.util.ArrayList;
 import java.util.List;
