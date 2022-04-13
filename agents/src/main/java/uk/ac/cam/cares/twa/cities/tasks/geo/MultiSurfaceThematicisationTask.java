@@ -487,7 +487,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
           String rootSurfaceIri = params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH + SLASH + rootSurface_uuid;
           SurfaceGeometry newRootSurface = context.createNewModel(SurfaceGeometry.class, rootSurfaceIri);
           String building_uuid = "UUID_" + UUID.randomUUID().toString();
-          String buildingIri = params.namespace + SchemaManagerAdapter.BUILDING_GRAPH + SLASH + building_uuid;
+          String buildingIri = params.namespace + SchemaManagerAdapter.BUILDING_GRAPH + SLASH + building_uuid + SLASH;
           Building newBuilding = context.createNewModel(Building.class, buildingIri);
           String cityObject_uuid = building_uuid;
           String cityObjectIri = params.namespace + SchemaManagerAdapter.CITY_OBJECT_GRAPH + SLASH + cityObject_uuid;
@@ -536,9 +536,18 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
             context.pushChanges(newSurfaceGeometry);
           }
         }
+
+        for (GenericAttribute oldGenericModel : genAttribModel) {
+          context.delete(oldGenericModel,false);
+          context.pushChanges(oldGenericModel);
+        }
+        context.delete(rootSurface,false);
+        context.pushChanges(rootSurface);
         context.delete(buildingModel,false);
-        context.retire(cityObjectModel);
-        context.retire(buildingModel);
+        context.pushChanges(buildingModel);
+        context.delete(cityObjectModel,false);
+        context.pushChanges(cityObjectModel);
+
       }
 
   }
