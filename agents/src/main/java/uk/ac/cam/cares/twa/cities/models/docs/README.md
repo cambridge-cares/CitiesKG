@@ -38,21 +38,21 @@ class Employee extends Model {
   @Getter @Setter
   @FieldAnnotation(
       value = "http://mycompany.org/ontology#manages",
-      graphName = "companyhierarchy",
-      innerType = Employee.class)
-  protected ArrayList<Employee> subordinates;
+      graphName = "companyhierarchy")
+  protected Employee manager;
 
   @Getter @Setter
   @FieldAnnotation(
       value = "http://mycompany.org/ontology#manages",
       graphName = "companyhierarchy",
-      backward = true)
-  protected Employee manager;
+      backward=true,
+      innerType = Employee.class)
+  protected ArrayList<Employee> subordinates;
 
 }
 ```
 
-The `Employee` model contains three fields, `name`, `manager`, and `subordinates`, the last of which is an array. It
+The `Employee` model contains five fields, `name`, `age`, `department`, `manager`, and `subordinates`, the last of which is an array. It
 describes an Employee ontology where each Employee has
 
 - exactly one `ex:hasName` datatype property of `xsd:string` type in the `employees` graph;
@@ -69,7 +69,7 @@ corresponds to in its arguments:
   PrefixToUrlMap and also custom specifications in the config file. No default value.
 - `graphName`: the short name of the graph of the quad, which is appended to the application's target namespace to
   obtain the actual graph IRI used. Defaults to the `nativeGraphName` of the declaring class' `ModelAnnotation`.
-- `backward`: whether the model instance is the subject or the object of the quad. Default: `false`.
+- `backward`: whether the declaring model class is the subject or the object of the quad. Default: `false`.
 - `innerType`: the class of the elements of the `ArrayList`, if the field is an `ArrayList`. This exists because Java's
   runtime type erasure means this information is not available at runtime even with reflection. Can be left unspecified
   for non-list fields.
@@ -128,8 +128,8 @@ For an example of a `Model` built for a triple store (without named graphs), see
 
 ### Creating a ModelContext
 
-Each `Model` must exist in a `ModelContext`. A `ModelContext` stores the access information of the graph database, the
-base namespace for graph IRIs (if applicable), and keeps track of instantiated `Model`s to crosslink them when loading
+Each `Model` instance must exist in a `ModelContext`. A `ModelContext` stores the access information of the graph database,
+the base namespace for graph IRIs (if applicable), and keeps track of instantiated `Model`s to crosslink them when loading
 from the database. A `ModelContext` may be a triple context or a quad context, the latter supporting named graphs.
 
 - `ModelContext(String targetResourceId[, int initialCapacity])`
@@ -141,8 +141,13 @@ from the database. A `ModelContext` may be a triple context or a quad context, t
 - `ModelContext(String targetResourceId, String graphNamespace[, int initialCapacity])`
 
   Creates a quad context with optional specification of initial capacity. The `graphNamespace` is prepended to the
-  graph name definitions in `Model` definitions to creatae graph IRIs. This enables the same `Model` to be used for 
-  different namespaces with their own named graphs.
+  graph name definitions in `Model` definitions to create graph IRIs. This enables the same `Model` class to be used
+  different namespaces with differently named graphs. For example, fields in a `Building` model class of `graphName`
+  `building/` instantiated in a `ModelContext` of `graphNamespace` `http://[...]/namespace/berlin/sparql` will be
+  interpreted as using named graph `http://[...]/namespace/berlin/sparql/building/`, while one instantiated in a
+  `ModelContext` of `graphNamespace` `http://[...]/namespace/churchill/sparql` will be interpreted as using named
+  graph `http://[...]/namespace/churchill/sparql/building/`, which would not be possible if the full IRI had to be
+  hardcoded into the `Model` class definition.
 
 ### Instantiating a Model
 
