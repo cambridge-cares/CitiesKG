@@ -38,6 +38,7 @@ class Employee extends Model {
   @Getter @Setter
   @FieldAnnotation(
       value = "http://mycompany.org/ontology#manages",
+      backward = true,
       graphName = "companyhierarchy")
   protected Employee manager;
 
@@ -45,7 +46,6 @@ class Employee extends Model {
   @FieldAnnotation(
       value = "http://mycompany.org/ontology#manages",
       graphName = "companyhierarchy",
-      backward=true,
       innerType = Employee.class)
   protected ArrayList<Employee> subordinates;
 
