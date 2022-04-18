@@ -7,20 +7,21 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
-import junit.framework.TestCase;
 import org.eclipse.jetty.server.Server;
+import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask;
 import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
 
-public class BlazegraphServerTaskTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.*;
 
+public class BlazegraphServerTaskTest {
+
+  @Test
   public void testNewBlazegraphServerTask() {
     BlazegraphServerTask task;
 
@@ -32,6 +33,7 @@ public class BlazegraphServerTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewBlazegraphServerTaskFields() {
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), "test.jnl");
     assertEquals(13, task.getClass().getDeclaredFields().length);
@@ -94,11 +96,13 @@ public class BlazegraphServerTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewBlazegraphServerTaskMethods() {
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), "test.jnl");
     assertEquals(7, task.getClass().getDeclaredMethods().length);
   }
 
+  @Test
   public void testNewBlazegraphServerTaskStopMethod() {
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), "test.jnl");
 
@@ -116,6 +120,7 @@ public class BlazegraphServerTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewBlazegraphServerTaskIsRunningMethod() {
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), "test.jnl");
 
@@ -135,6 +140,7 @@ public class BlazegraphServerTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewBlazegraphServerTaskSetupPathsMethod() {
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(),
         "/test/test.jnl");
@@ -152,6 +158,7 @@ public class BlazegraphServerTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewBlazegraphServerTaskSetupFilesMethod() {
     String fs = System.getProperty("file.separator");
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(),
@@ -204,6 +211,7 @@ public class BlazegraphServerTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewBlazegraphServerTaskSetupSystemMethod() {
     String jnlPath = System.getProperty("java.io.tmpdir") + "test.jnl";
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), jnlPath);
@@ -226,6 +234,7 @@ public class BlazegraphServerTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewBlazegraphServerTaskSetupServerMethod() {
     String jnlPath = System.getProperty("java.io.tmpdir") + "test.jnl";
     File jnlFile = new File(jnlPath);
@@ -264,6 +273,7 @@ public class BlazegraphServerTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewBlazegraphServerTaskRunMethod() {
     String jnlPath = System.getProperty("java.io.tmpdir") + "test.jnl";
     File jnlFile = new File(jnlPath);
