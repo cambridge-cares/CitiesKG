@@ -88,7 +88,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
   private static final String BUILDING_PARENT = "bldgParent";
 
   // Default task parameters
-  private static final double DEFAULT_THRESHOLD = 15;
+  private static final double DEFAULT_THRESHOLD = 5;
 
   private final String targetResourceId;
   @Getter private String buildingIri;
