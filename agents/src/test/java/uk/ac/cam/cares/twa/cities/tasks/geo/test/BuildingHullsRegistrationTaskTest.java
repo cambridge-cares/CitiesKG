@@ -6,10 +6,12 @@ import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.Building;
 import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
+import uk.ac.cam.cares.twa.cities.models.geo.ThematicSurface;
 import uk.ac.cam.cares.twa.cities.tasks.geo.BuildingHullsRegistrationTask;
 import uk.ac.cam.cares.twa.cities.tasks.geo.MultiSurfaceThematicisationTask;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class BuildingHullsRegistrationTaskTest extends TestCase {
@@ -30,7 +32,8 @@ public class BuildingHullsRegistrationTaskTest extends TestCase {
     Building building = context.createNewModel(Building.class, "a");
     building.setLod1MultiSurfaceId(context.createHollowModel(SurfaceGeometry.class, "b"));
     building.setLod2MultiSurfaceId(context.createHollowModel(SurfaceGeometry.class, "c"));
-    Mockito.doReturn(building).when(context).loadAll(Mockito.any(), Mockito.anyString());
+    Mockito.doReturn(new ArrayList<ThematicSurface>()).when(context).pullPartialWhere(Mockito.any(), Mockito.any(), Mockito.any());
+    Mockito.doReturn(building).when(context).loadPartial(Mockito.any(), Mockito.anyString(), Mockito.any());
     Field contextField = BuildingHullsRegistrationTask.class.getDeclaredField("context");
     contextField.setAccessible(true);
     contextField.set(task, context);

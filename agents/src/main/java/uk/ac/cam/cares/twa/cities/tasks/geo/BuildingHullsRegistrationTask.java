@@ -42,7 +42,8 @@ public class BuildingHullsRegistrationTask implements Callable<Void> {
     WhereBuilder where = new WhereBuilder();
     SPARQLUtils.addPrefix(SchemaManagerAdapter.ONTO_BUILDING_ID, where);
     where.addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_BUILDING_ID, NodeFactory.createURI(buildingIri));
-    List<ThematicSurface> thematicSurfaces = context.pullAllWhere(ThematicSurface.class, where);
+    List<ThematicSurface> thematicSurfaces = context.pullPartialWhere(ThematicSurface.class, where,
+        "lod2MultiSurfaceId", "lod3MultiSurfaceId", "lod4MultiSurfaceId");
 
     if (params.mode == ThematicSurfaceDiscoveryAgent.Mode.VALIDATE ||
             (params.mode == ThematicSurfaceDiscoveryAgent.Mode.FOOTPRINT && thematicSurfaces.size() > 0)) {
@@ -63,7 +64,8 @@ public class BuildingHullsRegistrationTask implements Callable<Void> {
         if(roots.get(i).size() > 0)
           outputQueue.add(new MultiSurfaceThematicisationTask(i+1, params, roots.get(i).toArray(new String[0])));
     } else {
-      Building building = context.loadAll(Building.class, buildingIri);
+      Building building = context.loadPartial(Building.class, buildingIri,
+          "lod1MultiSurfaceId", "lod2MultiSurfaceId", "lod3MultiSurfaceId", "lod4MultiSurfaceId");
       if(params.lods[0] && building.getLod1MultiSurfaceId() != null)
         outputQueue.add(new MultiSurfaceThematicisationTask(1, params, building.getLod1MultiSurfaceId().getIri()));
       if(params.lods[1] && building.getLod2MultiSurfaceId() != null)
