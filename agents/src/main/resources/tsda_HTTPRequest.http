@@ -11,5 +11,5 @@ Content-Type: application/json
 {"namespace": "http://localhost:9999/blazegraph/namespace/churchill/sparql/",
   "lod1": "true",
   "lod2": "true",
-  "threshold": "5",
+  "thresholdAngle": "5",
   "mode": "validate"}
