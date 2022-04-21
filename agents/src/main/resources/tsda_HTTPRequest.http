@@ -8,8 +8,8 @@ Content-Type: application/json
 //               : "footprint" to add lod0footprint only instead of restructuring
 //               : "validate" to do "comment" behaviour, but on thematic surfaces instead of lodXMultiSurfaces
 
-{"namespace": "http://localhost:9999/blazegraph/namespace/churchill/sparql/",
+{"namespace": "http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/",
   "lod1": "true",
   "lod2": "true",
-  "threshold": "5",
+  "thresholdAngle": "5",
   "mode": "validate"}
