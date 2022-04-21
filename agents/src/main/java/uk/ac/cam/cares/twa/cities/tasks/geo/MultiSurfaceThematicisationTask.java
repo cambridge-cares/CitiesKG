@@ -1,10 +1,12 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo;
 
+import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
+import org.json.JSONArray;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -67,9 +69,15 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
   private static final String GROUND_COMMENT = "ground";
   private static final String WALL_COMMENT = "wall";
   private static final String ROOF_COMMENT = "roof";
+  private static final String BUILDING_COMMENT = "clean1";
   private static final String UPDATING_PERSON = "ThematicSurfaceDiscoveryAgent";
   private static final String MALFORMED_SURFACE_GEOMETRY_EXCEPTION_TEXT =
       "Malformed building: SurfaceGeometry contains both sub-geometries and explicit GeometryType.";
+
+  // Query labels
+  private static final String QM = "?";
+  private static final String BUILDING = "bldg";
+  private static final String COMMENT = "comment";
 
   public final SurfaceGeometry[] roots;
   public final ModelContext context;
@@ -286,6 +294,13 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
     context.update(new UpdateBuilder().addInsert(graph, whereBuilder).build().toString());
   }
 
+  private void buildingCommentAndPush(String buildingIri) {
+    WhereBuilder whereBuilder = new WhereBuilder();
+    whereBuilder.addWhere(NodeFactory.createURI(buildingIri), COMMENT_PREDICATE, NodeFactory.createLiteral(BUILDING_COMMENT));
+    Node graph = NodeFactory.createURI(params.namespace + SchemaManagerAdapter.BUILDING_GRAPH + SLASH);
+    context.update(new UpdateBuilder().addInsert(graph, whereBuilder).build().toString());
+  }
+
   /**
    * Creates one MultiSurface with copies of all bottom-level thematic geometries identified as ground as direct children
    * and assigns this surface as lod0FootprintId to the parent building. This is done instead of restructureAndPush() if
@@ -341,6 +356,18 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
   private void geoTouches() {
     try{
       for(SurfaceGeometry root: roots) {
+        context.pullPartialWhere(SurfaceGeometry.class,new WhereBuilder().addWhere(
+                        ModelContext.getModelVar(),
+                        NodeFactory.createURI(SPARQLUtils.expandQualifiedName(SchemaManagerAdapter.ONTO_ID)),
+                        NodeFactory.createURI(root.getIri())
+                ),"cityObjectId"
+        );
+        StringBuilder buildingsQuery = new StringBuilder();
+        buildingsQuery.append("SELECT ?comment " +
+                "WHERE { <" + root.getCityObjectId().toString() +"> " + COMMENT_PREDICATE +" ?comment . }");
+        JSONArray buildingsResponse = context.query(buildingsQuery.toString());
+        if (!buildingsResponse.isEmpty()) continue;
+
         context.pullAllWhere(
                 SurfaceGeometry.class,
                 new WhereBuilder().addWhere(
@@ -454,116 +481,111 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
    * 2. update surfacegeometry
    */
   private void touchesAndPush() {
-      int size = this.buildings.size();
+    int size = this.buildings.size();
 
-      for(SurfaceGeometry root: roots) {
-        String rootURI = root.getIri();
-        String buildingtId = root.getCityObjectId().toString();
-        String cityobjectId = buildingtId.replace("building", "cityobject");
+    for(SurfaceGeometry root: roots) {
+      String rootURI = root.getIri();
+      String buildingtId = root.getCityObjectId().toString();
+      String cityobjectId = buildingtId.replace("building", "cityobject");
 
-        SurfaceGeometry rootSurface = context.getModel(SurfaceGeometry.class, rootURI);
-        Building buildingModel = context.loadAll(Building.class, buildingtId);
-        CityObject cityObjectModel = context.loadAll(CityObject.class, cityobjectId);
-        ArrayList<GenericAttribute> genAttribModel = cityObjectModel.getGenericAttributes();
-        for (int i = 0; i< genAttribModel.size(); i++){
-          GenericAttribute genericAttriM = genAttribModel.get(i);
-          context.pullAllWhere(
-                  GenericAttribute.class,
-                  new WhereBuilder().addWhere(
-                          ModelContext.getModelVar(),
-                          NodeFactory.createURI(SPARQLUtils.expandQualifiedName(SchemaManagerAdapter.ONTO_ID)),
-                          NodeFactory.createURI(genericAttriM.getIri())
-                  )
-          );
-          genAttribModel.set(i, context.getModel(GenericAttribute.class, genericAttriM.getIri()));
-        }
-        if (size > 1) {
-          for (Set<SurfaceGeometry> building: buildings) {
-            ArrayList<SurfaceGeometry> buildingList = new ArrayList<>(building);
-
-            String genericAttri_uuid = "UUID_" + UUID.randomUUID().toString();
-            String genericAttriIri = params.namespace + SchemaManagerAdapter.GENERIC_ATTRIB_GARPH + SLASH + genericAttri_uuid;
-            GenericAttribute newGenericAttri = context.createNewModel(GenericAttribute.class, genericAttriIri);
-            String rootSurface_uuid = "UUID_" + UUID.randomUUID().toString();
-            String rootSurfaceIri = params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH + SLASH + rootSurface_uuid;
-            SurfaceGeometry newRootSurface = context.createNewModel(SurfaceGeometry.class, rootSurfaceIri);
-            String building_uuid = "UUID_" + UUID.randomUUID().toString();
-            String buildingIri = params.namespace + SchemaManagerAdapter.BUILDING_GRAPH + SLASH + building_uuid + SLASH;
-            Building newBuilding = context.createNewModel(Building.class, buildingIri);
-            String cityObject_uuid = building_uuid;
-            String cityObjectIri = params.namespace + SchemaManagerAdapter.CITY_OBJECT_GRAPH + SLASH + cityObject_uuid;
-            CityObject newCityObject = context.createNewModel(CityObject.class, cityObjectIri);
-
-            newGenericAttri.setAttrName(genAttribModel.get(0).getAttrName());
-            newGenericAttri.setDataType(genAttribModel.get(0).getDataType());
-            newGenericAttri.setStrVal(genAttribModel.get(0).getStrVal());
-            ArrayList<GenericAttribute> newGenAttriList = new ArrayList<>();
-            newGenAttriList.add(newGenericAttri);
-            newGenericAttri.setCityObjectId(newCityObject.getId());
-
-            newCityObject.setGmlId(cityObject_uuid);
-            newCityObject.setObjectClassId(cityObjectModel.getObjectClassId());
-            newCityObject.setEnvelopeType(new EnvelopeType(buildingList));
-            newCityObject.setCreationDate(OffsetDateTime.now().toString());
-            newCityObject.setLastModificationDate(OffsetDateTime.now().toString());
-            newCityObject.setUpdatingPerson(UPDATING_PERSON);
-            newCityObject.setGenericAttributes(newGenAttriList);
-
-            newRootSurface.setGmlId(rootSurface_uuid);
-            newRootSurface.setRootId(URI.create(rootSurfaceIri));
-            newRootSurface.setCityObjectId(URI.create(buildingIri));
-            newRootSurface.setChildGeometries(buildingList);
-            newRootSurface.setIsComposite(rootSurface.getIsComposite());
-            newRootSurface.setIsReverse(rootSurface.getIsReverse());
-            newRootSurface.setIsSolid(rootSurface.getIsSolid());
-            newRootSurface.setIsTriangulated(rootSurface.getIsTriangulated());
-            newRootSurface.setIsXlink(rootSurface.getIsXlink());
-
-            newBuilding.setLod3MultiSurfaceId(newRootSurface);
-            newBuilding.setObjectClassId(buildingModel.getObjectClassId());
-            newBuilding.setBuildingRootId(URI.create(buildingIri));
-
-            context.pushChanges(newBuilding);
-            context.pushChanges(newCityObject);
-            context.pushChanges(newRootSurface);
-            for (GenericAttribute newGenericModel : newGenAttriList) {
-              context.pushChanges(newGenericModel);
-              context.retire(newGenericModel);
-            }
-            for(SurfaceGeometry newSurfaceGeometry : buildingList){
-              //update
-              newSurfaceGeometry.setRootId(URI.create(rootSurfaceIri));
-              newSurfaceGeometry.setParentId(newRootSurface);
-              newSurfaceGeometry.setCityObjectId(URI.create(buildingIri));
-              context.pushChanges(newSurfaceGeometry);
-              context.retire(newSurfaceGeometry);
-            }
-            context.retire(newBuilding);
-            context.retire(newCityObject);
-            context.retire(newRootSurface);
-          }
-
-          for (GenericAttribute oldGenericModel : genAttribModel) {
-            context.delete(oldGenericModel,true);
-          }
-          context.delete(rootSurface,true);
-//        context.pushChanges(rootSurface);
-          context.delete(buildingModel,true);
-//        context.pushChanges(buildingModel);
-          context.delete(cityObjectModel,true);
-//        context.pushChanges(cityObjectModel);
-          context.pushAllChanges();;
-
-          }else{
-          context.members.clear();
-//          for (GenericAttribute oldGenericModel : genAttribModel) {
-//            context.retire(oldGenericModel);
-//          }
-//          context.retire(rootSurface);
-//          context.retire(buildingModel);
-//          context.retire(cityObjectModel);
-        }
+      SurfaceGeometry rootSurface = context.getModel(SurfaceGeometry.class, rootURI);
+      Building buildingModel = context.loadAll(Building.class, buildingtId);
+      CityObject cityObjectModel = context.loadAll(CityObject.class, cityobjectId);
+      ArrayList<GenericAttribute> genAttribModel = cityObjectModel.getGenericAttributes();
+      for (int i = 0; i< genAttribModel.size(); i++){
+        GenericAttribute genericAttriM = genAttribModel.get(i);
+        context.pullAllWhere(
+                GenericAttribute.class,
+                new WhereBuilder().addWhere(
+                        ModelContext.getModelVar(),
+                        NodeFactory.createURI(SPARQLUtils.expandQualifiedName(SchemaManagerAdapter.ONTO_ID)),
+                        NodeFactory.createURI(genericAttriM.getIri())
+                )
+        );
+        genAttribModel.set(i, context.getModel(GenericAttribute.class, genericAttriM.getIri()));
       }
+      if (size > 1) {
+        for (Set<SurfaceGeometry> building: buildings) {
+          ArrayList<SurfaceGeometry> buildingList = new ArrayList<>(building);
+
+          String genericAttri_uuid = "UUID_" + UUID.randomUUID().toString();
+          String genericAttriIri = params.namespace + SchemaManagerAdapter.GENERIC_ATTRIB_GARPH + SLASH + genericAttri_uuid + SLASH;
+          GenericAttribute newGenericAttri = context.createNewModel(GenericAttribute.class, genericAttriIri);
+          String rootSurface_uuid = "UUID_" + UUID.randomUUID().toString();
+          String rootSurfaceIri = params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH + SLASH + rootSurface_uuid + SLASH;
+          SurfaceGeometry newRootSurface = context.createNewModel(SurfaceGeometry.class, rootSurfaceIri);
+          String building_uuid = "UUID_" + UUID.randomUUID().toString();
+          String buildingIri = params.namespace + SchemaManagerAdapter.BUILDING_GRAPH + SLASH + building_uuid + SLASH;
+          Building newBuilding = context.createNewModel(Building.class, buildingIri);
+          String cityObject_uuid = building_uuid;
+          String cityObjectIri = params.namespace + SchemaManagerAdapter.CITY_OBJECT_GRAPH + SLASH + cityObject_uuid + SLASH;
+          CityObject newCityObject = context.createNewModel(CityObject.class, cityObjectIri);
+
+          newGenericAttri.setAttrName(genAttribModel.get(0).getAttrName());
+          newGenericAttri.setDataType(genAttribModel.get(0).getDataType());
+          newGenericAttri.setStrVal(genAttribModel.get(0).getStrVal());
+          ArrayList<GenericAttribute> newGenAttriList = new ArrayList<>();
+          newGenAttriList.add(newGenericAttri);
+          newGenericAttri.setCityObjectId(newCityObject.getId());
+
+          newCityObject.setGmlId(cityObject_uuid);
+          newCityObject.setObjectClassId(cityObjectModel.getObjectClassId());
+          newCityObject.setEnvelopeType(new EnvelopeType(buildingList));
+          newCityObject.setCreationDate(OffsetDateTime.now().toString());
+          newCityObject.setLastModificationDate(OffsetDateTime.now().toString());
+          newCityObject.setUpdatingPerson(UPDATING_PERSON);
+          newCityObject.setGenericAttributes(newGenAttriList);
+
+          newRootSurface.setGmlId(rootSurface_uuid);
+          newRootSurface.setRootId(URI.create(rootSurfaceIri));
+          newRootSurface.setCityObjectId(URI.create(buildingIri));
+          newRootSurface.setChildGeometries(buildingList);
+          newRootSurface.setIsComposite(rootSurface.getIsComposite());
+          newRootSurface.setIsReverse(rootSurface.getIsReverse());
+          newRootSurface.setIsSolid(rootSurface.getIsSolid());
+          newRootSurface.setIsTriangulated(rootSurface.getIsTriangulated());
+          newRootSurface.setIsXlink(rootSurface.getIsXlink());
+
+          newBuilding.setLod3MultiSurfaceId(newRootSurface);
+          newBuilding.setObjectClassId(buildingModel.getObjectClassId());
+          newBuilding.setBuildingRootId(URI.create(buildingIri));
+          buildingCommentAndPush(buildingIri);
+
+          context.pushChanges(newBuilding);
+          context.pushChanges(newCityObject);
+          context.pushChanges(newRootSurface);
+          for (GenericAttribute newGenericModel : newGenAttriList) {
+            context.pushChanges(newGenericModel);
+            context.retire(newGenericModel);
+          }
+          for(SurfaceGeometry newSurfaceGeometry : buildingList){
+            //update
+            newSurfaceGeometry.setRootId(URI.create(rootSurfaceIri));
+            newSurfaceGeometry.setParentId(newRootSurface);
+            newSurfaceGeometry.setCityObjectId(URI.create(buildingIri));
+            context.pushChanges(newSurfaceGeometry);
+            context.retire(newSurfaceGeometry);
+          }
+          context.retire(newBuilding);
+          context.retire(newCityObject);
+          context.retire(newRootSurface);
+        }
+
+        for (GenericAttribute oldGenericModel : genAttribModel) {
+          context.delete(oldGenericModel,true);
+        }
+        context.delete(rootSurface,true);
+//        context.pushChanges(rootSurface);
+        context.delete(buildingModel,true);
+//        context.pushChanges(buildingModel);
+        context.delete(cityObjectModel,true);
+//        context.pushChanges(cityObjectModel);
+        context.pushAllChanges();;
+
+        }else{
+        context.members.clear();
+      }
+    }
  }
   /**
    * Compute the average coordinate of the centroids of a number of SurfaaceGeometry objects, i.e. their collcetive
