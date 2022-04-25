@@ -791,9 +791,7 @@ public class ModelContext {
       String responseString = new RemoteStoreClient(endpoint).execute(query);
       return new JSONArray(responseString);
     } else {
-      String responseString = AccessAgentCaller.query(targetResourceId, query);
-      JSONObject response = new JSONObject(responseString);
-      return new JSONArray(response.getString("result"));
+      return AccessAgentCaller.queryStore(targetResourceId, query);
     }
   }
 
@@ -807,7 +805,7 @@ public class ModelContext {
       String endpoint = targetResourceId.substring(9);
       new RemoteStoreClient(endpoint, endpoint).executeUpdate(update);
     } else {
-      AccessAgentCaller.update(targetResourceId, update);
+      AccessAgentCaller.updateStore(targetResourceId, update);
     }
   }
 
