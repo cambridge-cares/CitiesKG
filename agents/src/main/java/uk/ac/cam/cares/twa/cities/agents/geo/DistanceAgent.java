@@ -27,7 +27,6 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 import uk.ac.cam.cares.twa.cities.models.geo.EnvelopeType;
@@ -45,8 +44,6 @@ public class DistanceAgent extends JPSAgent {
   public static final String KEY_REQ_METHOD = "method";
   public static final String KEY_IRIS = "iris";
   public static final String KEY_DISTANCES = "distances";
-
-  public static final String KEY_QUERY_RESULT = "result";
 
   private static final String RDF_SCHEMA = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
   private static final String XML_SCHEMA = "http://www.w3.org/2001/XMLSchema#";
@@ -74,7 +71,6 @@ public class DistanceAgent extends JPSAgent {
   private static final String VALUE_PREDICATE = "hasValue";
   private static final String QST_MARK = "?";
   private static final String COLON = ":";
-  private static final String SLASH = "/";
 
   // Variables fetched from config.properties file.
   private static String ocgmlUri;
