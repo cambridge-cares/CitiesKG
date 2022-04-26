@@ -1,14 +1,17 @@
 package uk.ac.cam.cares.twa.cities.models.test;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.models.FieldKey;
 import uk.ac.cam.cares.twa.cities.models.MetaModel;
 
 import java.io.InvalidClassException;
 
-public class MetaModelTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.*;
 
+public class MetaModelTest {
+
+  @Test
   public void testConstructor() throws InvalidClassException, NoSuchMethodException {
     MetaModel metaModel = MetaModel.get(TestModel.class);
     // test default graph, forward
