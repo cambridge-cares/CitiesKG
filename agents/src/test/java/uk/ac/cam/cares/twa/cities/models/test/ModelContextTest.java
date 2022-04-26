@@ -1,12 +1,12 @@
 package uk.ac.cam.cares.twa.cities.models.test;
 
-import junit.framework.TestCase;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.json.JSONArray;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
@@ -18,24 +18,26 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * To run ModelContextTest, you need:
  * - A Blazegraph namespace at http://localhost:9999/blazegraph/namespace/test/sparql
  */
-public class ModelContextTest extends TestCase {
+public class ModelContextTest {
 
   private static final String testResourceId = "HARDCODE:http://localhost:9999/blazegraph/namespace/test/sparql";
   private static final String testNamespace = "http://localhost:9999/blazegraph/namespace/test/sparql/";
 
   private static final MetaModel metaModel = MetaModel.get(TestModel.class);
 
+  @Test
   private int countTriples(ModelContext context) {
     JSONArray response = context.query("SELECT (COUNT(*) AS ?count) WHERE { ?a ?b ?c }");
     return response.getJSONObject(0).getInt("count");
   }
 
+  @Test
   public void testPushNewObject() {
     ModelContext context = Mockito.spy(new ModelContext(testResourceId, testNamespace));
     context.update("CLEAR ALL");
@@ -44,6 +46,7 @@ public class ModelContextTest extends TestCase {
     assertEquals(metaModel.scalarFieldList.size() + (metaModel.vectorFieldList.size() - 1) * 3, countTriples(context));
   }
 
+  @Test
   public void testPushChanges() {
     ModelContext context = Mockito.spy(new ModelContext(testResourceId, testNamespace));
     context.update("CLEAR ALL");
@@ -58,6 +61,7 @@ public class ModelContextTest extends TestCase {
     assertEquals(metaModel.scalarFieldList.size() + (metaModel.vectorFieldList.size() - 1) * 3, countTriples(context));
   }
 
+  @Test
   public void testPushPartialChanges() {
     ModelContext pushContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
     pushContext.update("CLEAR ALL");
@@ -85,6 +89,7 @@ public class ModelContextTest extends TestCase {
     Mockito.verify(pullContext, Mockito.never()).update(Mockito.contains("uriprop"));
   }
 
+  @Test
   public void testDelete() {
 
     ModelContext context = new ModelContext(testResourceId, testNamespace);
@@ -116,6 +121,7 @@ public class ModelContextTest extends TestCase {
 
   }
 
+  @Test
   public void testDeleteZealous() {
 
     ModelContext context = new ModelContext(testResourceId, testNamespace);
@@ -136,6 +142,7 @@ public class ModelContextTest extends TestCase {
 
   }
 
+  @Test
   public void testPullAll() {
     ModelContext pushContext = new ModelContext(testResourceId, testNamespace);
     pushContext.update("CLEAR ALL");
@@ -147,6 +154,7 @@ public class ModelContextTest extends TestCase {
     assertEquals(pushModel, pullModel);
   }
 
+  @Test
   public void testPullRecursive() {
     ModelContext pushContext = new ModelContext(testResourceId, testNamespace);
     pushContext.update("CLEAR ALL");
@@ -165,6 +173,7 @@ public class ModelContextTest extends TestCase {
     assertEquals(comparisonModel, pullModel.getModelProp().getModelProp().getModelProp());
   }
 
+  @Test
   public void testPullScalars() {
     ModelContext pushContext = new ModelContext(testResourceId, testNamespace);
     pushContext.update("CLEAR ALL");
@@ -183,6 +192,7 @@ public class ModelContextTest extends TestCase {
     }
   }
 
+  @Test
   public void testPullVector() {
     ModelContext pushContext = new ModelContext(testResourceId, testNamespace);
     pushContext.update("CLEAR ALL");
@@ -201,6 +211,7 @@ public class ModelContextTest extends TestCase {
     }
   }
 
+  @Test
   public void testLoadAllWhere() throws ParseException {
     ModelContext pushContext = new ModelContext(testResourceId, testNamespace);
     pushContext.update("CLEAR ALL");
@@ -233,6 +244,7 @@ public class ModelContextTest extends TestCase {
     }
   }
 
+  @Test
   public void testRecursiveLoadAllWhere() throws ParseException {
     ModelContext pushContext = new ModelContext(testResourceId, testNamespace);
     pushContext.update("CLEAR ALL");
@@ -274,6 +286,7 @@ public class ModelContextTest extends TestCase {
     }
   }
 
+  @Test
   public void testLoadPartialWhere() throws ParseException {
     ModelContext pushContext = new ModelContext(testResourceId, testNamespace);
     pushContext.update("CLEAR ALL");
@@ -311,6 +324,7 @@ public class ModelContextTest extends TestCase {
     }
   }
 
+  @Test
   public void testRecursiveLoadPartialWhere() throws ParseException {
     ModelContext pushContext = new ModelContext(testResourceId, testNamespace);
     pushContext.update("CLEAR ALL");
@@ -357,6 +371,7 @@ public class ModelContextTest extends TestCase {
     }
   }
 
+  @Test
   public void testRetire() {
     ModelContext context = new ModelContext(testResourceId, testNamespace);
     TestModel model1 = TestModel.createRandom(context, 1234, 7, 0);
@@ -370,6 +385,7 @@ public class ModelContextTest extends TestCase {
     assertNotSame(model1, model2);
   }
 
+  @Test
   public void testEquals() {
     ModelContext context1 = new ModelContext(testResourceId, testNamespace);
     ModelContext context2 = new ModelContext(testResourceId, testNamespace);
@@ -386,6 +402,7 @@ public class ModelContextTest extends TestCase {
     assertNotEquals(model1, model2);
   }
 
+  @Test
   public void testIRICollision() {
     ModelContext context = new ModelContext(testResourceId, testNamespace);
     context.createNewModel(TestModel.class, "test");
@@ -396,6 +413,7 @@ public class ModelContextTest extends TestCase {
     }
   }
 
+  @Test
   public void testQuadModelInTripleContext() {
     ModelContext context = new ModelContext(testResourceId);
     try {
@@ -414,6 +432,7 @@ public class ModelContextTest extends TestCase {
     @Getter @Setter @FieldAnnotation(value = "dbpediao:backwardVector", backward = true, innerType = URI.class) private ArrayList<URI> backwardVector;
   }
 
+  @Test
   public void testTripleModelPushPullAll() {
     ModelContext pushContext = new ModelContext(testResourceId);
     pushContext.update("CLEAR ALL");
@@ -427,6 +446,7 @@ public class ModelContextTest extends TestCase {
     assertEquals(pushModel, pullModel);
   }
 
+  @Test
   public void testTripleModelPullScalarsVectors() {
     ModelContext pushContext = new ModelContext(testResourceId);
     pushContext.update("CLEAR ALL");
