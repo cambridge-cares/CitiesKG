@@ -1,9 +1,9 @@
 package uk.ac.cam.cares.twa.cities.models.test;
 
-import junit.framework.TestCase;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.twa.cities.models.FieldInterface;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
@@ -15,13 +15,14 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class FieldInterfaceTest extends TestCase {
+public class FieldInterfaceTest{
 
   TestModel model1 = new ModelContext("", "").createNewModel(TestModel.class, "http://m1");
   TestModel model2 = new ModelContext("", "").createNewModel(TestModel.class, "http://m2");
 
+  @Test
   public void testIntegerInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
     this.testScalarInterface("intProp", TestModel::setIntProp, TestModel::getIntProp,
@@ -29,6 +30,7 @@ public class FieldInterfaceTest extends TestCase {
         NodeFactory.createLiteral(String.valueOf(2), XSDDatatype.XSDint), 2);
   }
 
+  @Test
   public void testBigIntegerInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
     this.testScalarInterface("bigIntProp", TestModel::setBigIntProp, TestModel::getBigIntProp,
@@ -36,6 +38,7 @@ public class FieldInterfaceTest extends TestCase {
         NodeFactory.createLiteral(String.valueOf(2), XSDDatatype.XSDinteger), BigInteger.valueOf(2));
   }
 
+  @Test
   public void testDoubleInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
     this.testScalarInterface("doubleProp", TestModel::setDoubleProp, TestModel::getDoubleProp,
@@ -43,6 +46,7 @@ public class FieldInterfaceTest extends TestCase {
         NodeFactory.createLiteral("5.1167", XSDDatatype.XSDdouble), 5.1167);
   }
 
+  @Test
   public void testStringInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
     this.testScalarInterface("stringProp", TestModel::setStringProp, TestModel::getStringProp,
@@ -50,6 +54,7 @@ public class FieldInterfaceTest extends TestCase {
         NodeFactory.createLiteral("test2", XSDDatatype.XSDstring), "test2");
   }
 
+  @Test
   public void testUriInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
     this.testScalarInterface("uriProp", TestModel::setUriProp, TestModel::getUriProp,
@@ -58,6 +63,7 @@ public class FieldInterfaceTest extends TestCase {
         NodeFactory.createURI("http://example.com/uri2"), "http://example.com/uri2");
   }
 
+  @Test
   public void testModelInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
     TestModel dataModel = new ModelContext("", "").createNewModel(TestModel.class, "http://example.com/testmodel");
@@ -67,6 +73,7 @@ public class FieldInterfaceTest extends TestCase {
         NodeFactory.createURI("http://example.com/model2"), "http://example.com/model2");
   }
 
+  @Test
   public void testDatatypeModelInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
     GeometryType dataGeometryType = new GeometryType(
@@ -82,6 +89,7 @@ public class FieldInterfaceTest extends TestCase {
         "\"1.0#1.0#3.0#1.0#2.0#3.0#2.0#2.0#3.0#2.0#1.0#3.0#1.0#1.0#1.0#1.0#1.0#3.0\"^^http://localhost/blazegraph/literals/POLYGON-3-18");
   }
 
+  @Test
   private <T> void testScalarInterface(
       String fieldName, BiConsumer<TestModel, T> directSetter, Function<TestModel, T> directGetter,
       String valueString, String datatypeString, T dataValue, T secondValue, Node secondValueNode, Object secondValueMinimised)
@@ -112,6 +120,7 @@ public class FieldInterfaceTest extends TestCase {
     assertNull(field.getMinimised(model1));
   }
 
+  @Test
   public void testVectorInterface() throws NoSuchFieldException, InvalidClassException, NoSuchMethodException {
     FieldInterface field = new FieldInterface(TestModel.class.getDeclaredField("forwardVector"), 0);
     // Test putting
