@@ -1,14 +1,17 @@
 package uk.ac.cam.cares.twa.cities.models.geo.test;
 
-import junit.framework.TestCase;
 import org.apache.jena.graph.Node;
+import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.math.Vector3D;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
 
-public class GeometryTypeTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+public class GeometryTypeTest {
+
+  @Test
   public void testRDFSerialisationDeserialisation() {
     String coords =
         "0.0#0.0#0.0#10.0#0.0#1.0#10.0#10.0#1.0#5.0#15.0#0.5#0.0#10.0#0.0#0.0#0.0#0.0#" + // outer ring
@@ -25,6 +28,7 @@ public class GeometryTypeTest extends TestCase {
     assertEquals(structure, node.getLiteralDatatypeURI());
   }
 
+  @Test
   public void testCrsMetricConversion() {
     String coords = "1#1#5#2#1#5#2#3#5#1#3#5#1#1#5";
     String structure = "http://localhost/blazegraph/literals/POLYGON-3-15";
@@ -36,6 +40,7 @@ public class GeometryTypeTest extends TestCase {
     assertEquals(new Coordinate(603903.3328829142, 5513705.798364676, 5.0), geometry.getMetricPolygon().getExteriorRing().getCoordinateN(2));
   }
 
+  @Test
   public void testGeometricPropertyComputations() {
     GeometryType.setSourceCrsName("EPSG:27700");
     // Triangle  (1/8,0,0) (0,1/4,0) (0,0,1/2) should have
@@ -54,6 +59,7 @@ public class GeometryTypeTest extends TestCase {
     assertEquals(new Coordinate(603902.0748522265, 5513703.1742914105, 0.0), unitSquare.getMetricCentroid());
   }
 
+  @Test
   public void testComputeCentroid() {
     Coordinate[] coordinates = {
         new Coordinate(0, 0, 0),
@@ -65,6 +71,7 @@ public class GeometryTypeTest extends TestCase {
     assertEquals(new Coordinate(1.0/3, 0, 2.0/3), GeometryType.computeCentroid(coordinates, true));
   }
 
+  @Test
   public void testComputeVectorArea() {
     Coordinate[] coordinates = {
         new Coordinate(0, 0, 1),
