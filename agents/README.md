@@ -61,8 +61,11 @@ This folder is by default not accessible, in order to make it executable, you ne
 
 ### Install and Build
 
-
+<<<<<<< HEAD
 1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repository. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
+=======
+1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
+>>>>>>> release_0.1.0
 
 ```
 cd <main project directory>
@@ -77,12 +80,17 @@ mvn initialize
 mvn clean install
 ```
 
+<<<<<<< HEAD
 In case building the .war file fails due to the missing `JPS_AWS.jar`, please build this locally first via running the following command within the [JPS_AWS] repository:
 ```
 mvn clean install -DskipTests
 ```
 
 3. There is one dependency `blazegraph-jar-2.1.5.jar` which needs to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
+=======
+
+3. There is one dependency *blazegraph-jar-2.1.5.jar* need to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
+>>>>>>> release_0.1.0
 ```
     <dependency>
       <groupId>com.blazegraph</groupId>
@@ -103,8 +111,7 @@ If this step has not been done, the CityImportAgent might not work.
 
 4. Additional dependencies used by agents are JPS_BASE_LIB and JPS_AWS are provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository.
 
-Clone the TWA project from the [TWA repository](https://github.com/cambridge-cares/TheWorldAvatar) and checkout to develop branch, commit 610cfcc8492f65821039a04795625a783e6050e6.
-The most recent master and develop branches have refactored class names for KnowledgeBaseClientInterface and RemoteKnowledgeBaseClient, and will not work with these agents.
+Clone the TWA project from the [TWA repository](https://github.com/cambridge-cares/TheWorldAvatar) and checkout to develop and master branches
 
 Run the command *mvn clean install -DskipTests* on the corresponding directories where the POM file is found.
 * JPS_BASE_LIB project can be found in the [JPS_BASE_LIB directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/JPS_BASE_LIB) from the *master* branch (stable version)
@@ -152,55 +159,6 @@ Content-Type: application/json
 Executing this request, will create a directory at the specified location. When placing any `.gml` file into this folder, this file will automatically be imported into the specified triple store. For further details, please see the "Semantic 3D City Agents - an intelligent automation for Dynamic Geospatial Knowledge Graphs" [preprint].
 
 Please note that splitting of large files into smaller chunks to improve performance will not work if the `.gml` file contains the `core:` namespace tag in front of CityGML features. Please remove those manually beforehand.
-
-## Thematic Surface Discovery Agent User Guide
-
-### Configuration
-
-In the `resources/config.properties` file, the property `uri.route` must be specified. This is the target resource ID which queries and updates will be addressed to. By default, this is an AccessAgent identifier, which must be registered in the http://theworldavatar.com/blazegraph/ `ontokgrouter` namespace. An AccessAgent instance is also necessary for the agent to work. However, a URI prefixed with `HARDCODE:` e.g. `HARDCODE:http://localhost:9999/blazegraph/namespace/churchill/sparql` will be interpreted as a literal endpoint to access directly.
-
-### Request
-
-Example HTTPRequest for ThematicSurfaceDiscoveryAgent:
-```
-PUT http://localhost:8080/agents/discovery/thematicsurface
-Content-Type: application/json
-
-{"namespace": "http://localhost:9999/blazegraph/namespace/churchill/sparql/",
-  "lod2": "true",
-  "threshold": "5",
-  "mode": "validate"}
-```
-
-Parameters:
-
-- `namespace`: target namespace, e.g. "http://localhost:9999/blazegraph/namespace/churchill/sparql/", which is used to prefix named graph IRIs and newly created object IRIs. Typically the same as configured `uri.route`, but not necessarily.
-- `mode`: "restructure", "validate" or "footprint". See sections below.
-- `lod1`, `lod2`, `lod3`, `lod4` (optional): optionally specify one or more levels of detail to target by providing `true`. All other LoDs are ignored. If no LoD is specified, all are targeted.
-- `cityObjectIRI` (optional): optionally specify a single building to target. If omitted, all buildings in the namespace are targeted.
-- `threshold` (optional): the threshold angle in degrees; if the angle between a polygon's normal and the horizontal plane exceeds this, it is no longer considered a wall. Defaults to 15 if omitted.
-
-### Restructure mode
-
-In restructure mode, building(s)' `lodXMultiSurface`s are converted into thematic surfaces by reparenting their largest possible thematically homogeneous geometry subtrees to newly created thematic surfaces. `Building.lod1MultiSurfaceId` and `Building.lod2MultiSurfaceId` map to `ThematicSurface.lod2MultiSurfaceId` as thematic surfaces do not have an LoD 1 property; else, the LoD of the linking property is preserved in the conversion.
-
-### Validate mode
-
-In validate mode, building(s)' thematic surfaces are inspected and their themes classified using the same algorithm as restructure mode. The classifications are tagged onto bottom-level (leaf node) SurfaceGeometries by `rdfs:comment` properties. This allows comparison and debugging in Blazegraph workbench using a query e.g.
-
-```
-SELECT ?class ?comment (COUNT(*) AS ?count) WHERE {
-  ?surfaceGeometry ocgml:cityObjectId ?cityObject;
-            ocgml:GeometryType ?geometryType.
-  ?cityObject  ocgml:objectClassId ?class.
-  OPTIONAL{?surfaceGeometry rdfs:comment ?comment}
-  FILTER(!ISBLANK(?geometryType))
-} GROUP BY ?class ?comment
-```
-
-### Footprint mode
-
-Footprint mode inspects building(s)' `lodXMultiSurface`s, identifying themes as in restructure mode, and then *copies* identifies ground surfaces into a new SurfaceGeometry tree which is linked to the building by `lod0FootprintId`. Unlike restructure mode, this does not destroy the old `lodXMultiSurface`.
 
 ## 3DCityDB-Web-Map-Client
 
