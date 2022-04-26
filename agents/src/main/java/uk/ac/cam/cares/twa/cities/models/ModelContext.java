@@ -786,13 +786,7 @@ public class ModelContext {
    */
   public JSONArray query(String query) {
     System.err.println(query);
-    if (targetResourceId.startsWith("HARDCODE:")) {
-      String endpoint = targetResourceId.substring(9);
-      String responseString = new RemoteStoreClient(endpoint).execute(query);
-      return new JSONArray(responseString);
-    } else {
-      return AccessAgentCaller.queryStore(targetResourceId, query);
-    }
+    return AccessAgentCaller.queryStore(targetResourceId, query);
   }
 
   /**
@@ -801,12 +795,7 @@ public class ModelContext {
    */
   public void update(String update) {
     System.err.println(update);
-    if (targetResourceId.startsWith("HARDCODE:")) {
-      String endpoint = targetResourceId.substring(9);
-      new RemoteStoreClient(endpoint, endpoint).executeUpdate(update);
-    } else {
-      AccessAgentCaller.updateStore(targetResourceId, update);
-    }
+    AccessAgentCaller.updateStore(targetResourceId, update);
   }
 
   /**
