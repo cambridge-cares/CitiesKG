@@ -1,18 +1,18 @@
 package uk.ac.cam.cares.twa.cities.models.test;
 
-import junit.framework.TestCase;
 import org.apache.commons.lang.ArrayUtils;
+import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
 import uk.ac.cam.cares.twa.cities.models.FieldKey;
 import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
 
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class FieldKeyTest extends TestCase {
+public class FieldKeyTest{
 
+  @Test
   public void testAnnotationConstructor() throws NoSuchFieldException {
     // Test no graph, forward
     FieldKey key = new FieldKey(
@@ -37,6 +37,7 @@ public class FieldKeyTest extends TestCase {
     assertFalse(key.backward);
   }
 
+  @Test
   public void testEquals() {
     assertEquals(new FieldKey("g", "p", true), new FieldKey("g", "p", true));
     assertNotEquals(new FieldKey("g", "p", true), new FieldKey("h", "p", true));
@@ -44,6 +45,7 @@ public class FieldKeyTest extends TestCase {
     assertNotEquals(new FieldKey("g", "p", true), new FieldKey("g", "p", false));
   }
 
+  @Test
   public void testHashCode() {
     assertEquals(new FieldKey("g", "p", true).hashCode(),
         new FieldKey("g", "p", true).hashCode());
@@ -53,6 +55,7 @@ public class FieldKeyTest extends TestCase {
         new FieldKey("g", "p", false).hashCode());
   }
 
+  @Test
   public void testCompareTo() {
     // Sort by graph, then by backward, then by predicate.
     FieldKey[] keys = {
