@@ -98,7 +98,7 @@ public class DistanceAgent extends JPSAgent {
       uris.add(iri.toString());
     }
 
-    if(uris.size() > 0) new ModelContext(route, getNamespace(uris.get(0)) + "/");
+    if(uris.size() > 0) this.context = new ModelContext(route, getNamespace(uris.get(0)) + "/");
 
     ArrayList<Double> distances = new ArrayList<>();
 
@@ -209,8 +209,7 @@ public class DistanceAgent extends JPSAgent {
     double distance = -1.0;
 
     Query q = getDistanceQuery(firstUriString, secondUriString);
-    String queryResultString = query(route, q.toString());
-    JSONArray queryResult = SPARQLUtils.unpackQueryResponse(queryResultString);
+    JSONArray queryResult = this.context.query(q.toString());
 
     if (!queryResult.isEmpty()) {
       distance = Double.parseDouble(queryResult.getJSONObject(0).get(DISTANCE_OBJECT).toString());
@@ -234,7 +233,7 @@ public class DistanceAgent extends JPSAgent {
             .addPrefix(OCGML_PREFIX, ocgmlUri)
             .addVar(QST_MARK + SRS_NAME_OBJECT)
             .addWhere(QST_MARK + "s" , predicate, QST_MARK + SRS_NAME_OBJECT);
-    sb.setVar(Var.alloc("s"), NodeFactory.createURI(getNamespace(uriString) + "/sparql"));
+    sb.setVar(Var.alloc("s"), NodeFactory.createURI(getNamespace(uriString) + "/"));
 
     return sb.build();
   }
@@ -251,8 +250,7 @@ public class DistanceAgent extends JPSAgent {
     else { srs = DEFAULT_TARGET_SRS; }
 
     Query q = getObjectSRSQuery(uriString, source);
-    String queryResultString = query(route, q.toString());
-    JSONArray queryResult = SPARQLUtils.unpackQueryResponse(queryResultString);
+    JSONArray queryResult = this.context.query(q.toString());
 
     if (!queryResult.isEmpty()) {
       srs = queryResult.getJSONObject(0).get(SRS_NAME_OBJECT).toString();
@@ -337,6 +335,6 @@ public class DistanceAgent extends JPSAgent {
    */
   private void setDistance(String firstUri, String secondUri, double distance) {
     UpdateRequest ur = getSetDistanceQuery(firstUri, secondUri, distance);
-    update(route, ur.toString());
+    this.context.update(ur.toString());
   }
 }
