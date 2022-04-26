@@ -1,6 +1,6 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo.test;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
@@ -14,8 +14,12 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class BuildingHullsRegistrationTaskTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+public class BuildingHullsRegistrationTaskTest{
+
+  @Test
   public void testInvocation() throws NoSuchFieldException, IllegalAccessException {
 
     ConcurrentLinkedQueue<MultiSurfaceThematicisationTask> queue = new ConcurrentLinkedQueue<>();
