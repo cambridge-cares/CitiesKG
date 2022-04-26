@@ -1,14 +1,15 @@
 package uk.ac.cam.cares.twa.cities.models.test;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 
 import java.util.ArrayList;
 
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class ModelTest extends TestCase {
+public class ModelTest {
 
+  @Test
   public void testSetClean() {
     ModelContext context = new ModelContext("", "");
     TestModel newModel = context.createNewModel(TestModel.class, "a");
@@ -21,6 +22,7 @@ public class ModelTest extends TestCase {
     assertTrue(newModel.isClean("forwardVector"));
   }
 
+  @Test
   public void testSetDirty() {
     ModelContext context = new ModelContext("", "");
     TestModel newModel = context.createNewModel(TestModel.class, "a");
@@ -34,6 +36,7 @@ public class ModelTest extends TestCase {
     assertFalse(newModel.isClean("forwardVector"));
   }
 
+  @Test
   public void testIsClean() {
     ModelContext context = new ModelContext("", "");
     TestModel newModel = context.createNewModel(TestModel.class, "a");
@@ -46,6 +49,7 @@ public class ModelTest extends TestCase {
     assertFalse(newModel.isClean("forwardVector"));
   }
 
+  @Test
   public void testIsHollow() {
     ModelContext context = new ModelContext("", "");
     TestModel newModel = context.createNewModel(TestModel.class, "a");
@@ -58,6 +62,7 @@ public class ModelTest extends TestCase {
     assertFalse(hollowModel.isHollow("doubleProp"));
   }
 
+  @Test
   public void testClear() {
     ModelContext context = new ModelContext("", "");
     TestModel newModel = context.createNewModel(TestModel.class, "a");
@@ -73,6 +78,7 @@ public class ModelTest extends TestCase {
     assertEquals(new ArrayList<Double>(), newModel.getForwardVector());
   }
 
+  @Test
   public void testEquals() {
     ModelContext context1 = new ModelContext("1", "");
     TestModel m1 = context1.createNewModel(TestModel.class, "a");
