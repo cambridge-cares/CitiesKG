@@ -1,9 +1,9 @@
 package uk.ac.cam.cares.twa.cities.models.geo.test;
 
-import junit.framework.TestCase;
 import org.apache.jena.graph.Node;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
+import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.impl.CoordinateArraySequence;
 import org.locationtech.jts.math.Vector3D;
@@ -19,8 +19,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class EnvelopeTypeTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+public class EnvelopeTypeTest {
+
+  @Test
   public void testComputeBounds() {
     Polygon bounds = EnvelopeType.computeBounds(new Coordinate[]{
         new Coordinate(0, -2, 0),
