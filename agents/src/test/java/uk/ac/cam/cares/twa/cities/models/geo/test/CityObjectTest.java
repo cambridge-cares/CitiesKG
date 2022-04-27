@@ -1,6 +1,5 @@
 package uk.ac.cam.cares.twa.cities.models.geo.test;
 
-import com.hp.hpl.jena.graph.query.regexptrees.RegexpTreeGenerator;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
@@ -21,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CityObjectTest {
 
     @Test
-    public void testNewCityObjectFields() throws NoSuchFieldException {
+    public void testNewCityObjectAnnotations() throws NoSuchFieldException {
 
         CityObject cityobject = new CityObject();
 
