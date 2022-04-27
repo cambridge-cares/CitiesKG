@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.models.geo.test;
 
+import com.hp.hpl.jena.graph.query.regexptrees.RegexpTreeGenerator;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
@@ -20,45 +21,11 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CityObjectTest {
 
     @Test
-    public void testNewCityObjectFields() throws NoSuchFieldException, NoSuchMethodException {
+    public void testNewCityObjectFields() throws NoSuchFieldException {
 
         CityObject cityobject = new CityObject();
 
         assertEquals(SchemaManagerAdapter.CITY_OBJECT_GRAPH + "/", cityobject.getClass().getAnnotation(ModelAnnotation.class).defaultGraphName());
-
-        //Test for Getter and Setter methods
-        assertNotNull(cityobject.getClass().getDeclaredMethod("getCreationDate"));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("setCreationDate", String.class));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("getDescription"));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("setDescription", String.class));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("getEnvelopeType"));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("setEnvelopeType", EnvelopeType.class));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("getGmlId"));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("setGmlId", String.class));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("getLastModificationDate"));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("setLastModificationDate", String.class));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("getLineage"));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("setLineage", String.class));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("getName"));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("setName", String.class));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("getNameCodespace"));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("setNameCodespace", String.class));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("getObjectClassId"));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("setObjectClassId", BigInteger.class));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("getReasonForUpdate"));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("setReasonForUpdate", String.class));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("getRelativeToTerrain"));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("setRelativeToTerrain", String.class));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("getRelativeToWater"));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("setRelativeToWater", String.class));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("getTerminationDate"));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("setTerminationDate", String.class));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("getUpdatingPerson"));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("setUpdatingPerson", String.class));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("getGenericAttributes"));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("setGenericAttributes", ArrayList.class));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("getExternalReferences"));
-        assertNotNull(cityobject.getClass().getDeclaredMethod("setExternalReferences", ArrayList.class));
 
         //Test field Annotations
         Field creationDate = cityobject.getClass().getDeclaredField("creationDate");
@@ -157,5 +124,45 @@ public class CityObjectTest {
         assertEquals(SchemaManagerAdapter.EXTERNAL_REFERENCES_GRAPH + "/", externalReferences.getAnnotation(FieldAnnotation.class).graphName());
         assertEquals(ExternalReference.class, externalReferences.getAnnotation(FieldAnnotation.class).innerType());
 
+    }
+
+    @Test
+    public void testNewCityObjectMethods() throws NoSuchMethodException {
+
+        CityObject cityobject = new CityObject();
+
+        //Test for Getter and Setter methods
+        assertNotNull(cityobject.getClass().getDeclaredMethod("getCreationDate"));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("setCreationDate", String.class));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("getDescription"));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("setDescription", String.class));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("getEnvelopeType"));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("setEnvelopeType", EnvelopeType.class));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("getGmlId"));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("setGmlId", String.class));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("getLastModificationDate"));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("setLastModificationDate", String.class));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("getLineage"));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("setLineage", String.class));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("getName"));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("setName", String.class));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("getNameCodespace"));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("setNameCodespace", String.class));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("getObjectClassId"));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("setObjectClassId", BigInteger.class));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("getReasonForUpdate"));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("setReasonForUpdate", String.class));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("getRelativeToTerrain"));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("setRelativeToTerrain", String.class));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("getRelativeToWater"));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("setRelativeToWater", String.class));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("getTerminationDate"));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("setTerminationDate", String.class));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("getUpdatingPerson"));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("setUpdatingPerson", String.class));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("getGenericAttributes"));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("setGenericAttributes", ArrayList.class));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("getExternalReferences"));
+        assertNotNull(cityobject.getClass().getDeclaredMethod("setExternalReferences", ArrayList.class));
     }
 }
