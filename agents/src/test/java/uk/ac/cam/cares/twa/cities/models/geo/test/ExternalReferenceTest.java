@@ -5,9 +5,11 @@ import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
 import uk.ac.cam.cares.twa.cities.models.Model;
 import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
+import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 import uk.ac.cam.cares.twa.cities.models.geo.ExternalReference;
 
 import java.lang.reflect.Field;
+import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -44,5 +46,23 @@ public class ExternalReferenceTest {
         assertFalse(uri.getAnnotation(FieldAnnotation.class).backward());
         assertEquals("", uri.getAnnotation(FieldAnnotation.class).graphName());
         assertEquals(Model.class, uri.getAnnotation(FieldAnnotation.class).innerType());
+    }
+
+    @Test
+    public void testNewExternalReferenceMethods() throws NoSuchMethodException {
+
+        ExternalReference externalReference = new ExternalReference();
+
+        assertNotNull(externalReference.getClass().getDeclaredMethod("getCityObjectId"));
+        assertNotNull(externalReference.getClass().getDeclaredMethod("setCityObjectId", CityObject.class));
+
+        assertNotNull(externalReference.getClass().getDeclaredMethod("getInfoSys"));
+        assertNotNull(externalReference.getClass().getDeclaredMethod("setInfoSys", String.class));
+
+        assertNotNull(externalReference.getClass().getDeclaredMethod("getName"));
+        assertNotNull(externalReference.getClass().getDeclaredMethod("setName", String.class));
+
+        assertNotNull(externalReference.getClass().getDeclaredMethod("getUri"));
+        assertNotNull(externalReference.getClass().getDeclaredMethod("setUri", URI.class));
     }
 }
