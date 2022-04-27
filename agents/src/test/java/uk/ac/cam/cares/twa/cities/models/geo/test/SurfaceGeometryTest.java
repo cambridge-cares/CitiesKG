@@ -1,9 +1,7 @@
 package uk.ac.cam.cares.twa.cities.models.geo.test;
 
-import com.sun.org.apache.xpath.internal.operations.Mod;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
 import uk.ac.cam.cares.twa.cities.models.Model;
 import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
