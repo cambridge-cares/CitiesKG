@@ -155,8 +155,7 @@ public class SurfaceGeometryTest {
     @Test
     public void testgetFlattenedSubtreeOne(){
 
-        SurfaceGeometry surfaceGeometry = new SurfaceGeometry();
-        ModelContext context = new ModelContext("", "");
+       ModelContext context = new ModelContext("", "");
 
 
         GeometryType.setSourceCrsName("EPSG:27700");
