@@ -16,9 +16,9 @@ import java.util.concurrent.LinkedBlockingDeque;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import junit.framework.TestCase;
 import org.citydb.ImpExp;
 import org.eclipse.jetty.server.Server;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -30,8 +30,11 @@ import uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask;
 import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
 import uk.ac.cam.cares.twa.cities.tasks.NquadsExporterTask;
 
-public class ImporterTaskTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.*;
 
+public class ImporterTaskTest {
+
+  @Test
   public void testNewImporterTask() {
     ImporterTask task;
 
@@ -43,6 +46,7 @@ public class ImporterTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewImporterTaskFields() {
     ImporterTask task = new ImporterTask(new LinkedBlockingDeque<>(), new File("test.gml"));
     assertEquals(15, task.getClass().getDeclaredFields().length);
@@ -103,11 +107,13 @@ public class ImporterTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewImporterTaskMethods() {
     ImporterTask task = new ImporterTask(new LinkedBlockingDeque<>(), new File("test.gml"));
     assertEquals(4, task.getClass().getDeclaredMethods().length);
   }
 
+  @Test
   public void testNewImporterTaskStopMethod() {
     ImporterTask task = new ImporterTask(new LinkedBlockingDeque<>(), new File("test.gml"));
 
@@ -125,6 +131,7 @@ public class ImporterTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewImporterTaskIsRunningMethod() {
     ImporterTask task = new ImporterTask(new LinkedBlockingDeque<>(), new File("test.gml"));
 
@@ -144,6 +151,7 @@ public class ImporterTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewImporterTaskSetupFilesMethod() {
     String fs = System.getProperty("file.separator");
     File impFile = new File(
@@ -201,6 +209,7 @@ public class ImporterTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewImporterTaskRunMethod() {
     File impFile = new File(System.getProperty("java.io.tmpdir") + "test.gml");
     File testFile = new File(
