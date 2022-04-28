@@ -786,15 +786,15 @@ public class ModelContext {
    */
   public JSONArray query(String query) {
     System.err.println(query);
-    if (targetResourceId.startsWith("HARDCODE:")) {
-      String endpoint = targetResourceId.substring(9);
-      String responseString = new RemoteStoreClient(endpoint).execute(query);
-      return new JSONArray(responseString);
-    } else {
+//    if (targetResourceId.startsWith("HARDCODE:")) {
+//      String endpoint = targetResourceId.substring(9);
+//      String responseString = new RemoteStoreClient(endpoint).execute(query);
+//      return new JSONArray(responseString);
+//    } else {
       String responseString = AccessAgentCaller.query(targetResourceId, query);
       JSONObject response = new JSONObject(responseString);
       return new JSONArray(response.getString("result"));
-    }
+//    }
   }
 
   /**
