@@ -50,10 +50,14 @@ public class OntoCityGMLModelTest {
         Field ID_MISMATCH_ERROR_TEXT = ontoCityGMLModel.getClass().getDeclaredField("ID_MISMATCH_ERROR_TEXT");
         ID_MISMATCH_ERROR_TEXT.setAccessible(true);
 
-        URI value = URI.create(prefix+"temp2_uuid");
-
-        JPSRuntimeException exception = assertThrows(JPSRuntimeException.class, () -> ontoCityGMLModel.setId(value));
+        JPSRuntimeException exception = assertThrows(JPSRuntimeException.class, () -> ontoCityGMLModel.setId(URI.create(prefix+"temp2_uuid")));
         assertEquals(ID_MISMATCH_ERROR_TEXT.get(ontoCityGMLModel), exception.getMessage());
+
+        ontoCityGMLModel.setId(null);
+        assertEquals(URI.create(prefix+"temp1_uuid"), ontoCityGMLModel.getId());
+
+        ontoCityGMLModel.setId(URI.create(prefix+"temp1_uuid"));
+        assertEquals(URI.create(prefix+"temp1_uuid"), ontoCityGMLModel.getId());
 
     }
 }
