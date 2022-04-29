@@ -1,7 +1,7 @@
 # Semantic 3D City Agents
 
 The Semantic City Agents is an intelligent automation for Dynamic Geospatial Knowledge Graphs. 
-It contains 3 agents: CityImportAgent, CityExportAgent and DistanceAgent. All 3 agnets works with the semantic cities database - [Cities Knowledge Graphs](http://www.theworldavatar.com:83/citieskg/#query).
+It contains 3 agents: CityImportAgent, CityExportAgent and DistanceAgent. All 3 agents works with the semantic cities database - [Cities Knowledge Graphs](http://www.theworldavatar.com:83/citieskg/#query).
 
 ## System requirements
 
@@ -69,7 +69,7 @@ cd <main project directory>
 mvn initialize
 ```
 
-2. If the initialization is done successful, you should be able to run the following to create the war package
+2. If the initialization is done successfully, you should be able to run the following to create the war package:
 
 
 ```
@@ -109,6 +109,24 @@ Run the command *mvn clean install -DskipTests* on the corresponding directories
 * JPS_BASE_LIB project can be found in the [JPS_BASE_LIB directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/JPS_BASE_LIB) from the *master* branch (stable version)
 * JPS_AWS project can be found in the [AsynchronousWatcherService](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/AsynchronousWatcherService) directory from the *develop* branch. Before run the install command, please comment out the JPS_BASE dependency in the POM file. 
 
+#### Install and build local AccessAgent (for developers)
+For development and testing purposes, the [AccessAgent](https://github.com/cambridge-cares/TheWorldAvatar/wiki/Access-Agent) can be deployed locally via Docker to access your local Blazegraph.
+1. Set up a Docker environment as described in the [TWA Wiki - Docker: Environment](https://github.com/cambridge-cares/TheWorldAvatar/wiki/Docker%3A-Environment) page.
+2. In the TWA repository clone, locate the properties file in _TheWorldAvatar/JPS_ACCESS_AGENT/access-agent/src/main/resources/accessagent.properties_, and replace `http://www.theworldavatar.com/blazegraph/namespace/ontokgrouter/sparql` with `http://host.docker.internal:9999/blazegraph/namespace/ontokgrouter/sparql`.
+    If using a different port for Blazegraph, replace `9999` with your port number.
+3. In your local Blazegraph, create a new namespace called 'ontokgrouter'.
+4. For each endpoint to be accessed, 5 triples need to be added to the 'ontokgrouter' namespace. An example SPARQL update is shown, which inserts the triples required to access a namespace 'test' in a local Blazegraph on port 9999. Replace all occurrences of `test` with the name of the namespace and `9999` with your port number, and execute the SPARQL update. 
+```
+INSERT DATA {
+<http://host.docker.internal:9999/blazegraph/ontokgrouter/test>	<http://www.theworldavatar.com/ontology/ontokgrouter/OntoKGRouter.owl#hasQueryEndpoint>	"http://host.docker.internal:9999/blazegraph/namespace/test/sparql".
+<http://host.docker.internal:9999/blazegraph/ontokgrouter/test>	<http://www.theworldavatar.com/ontology/ontokgrouter/OntoKGRouter.owl#hasUpdateEndpoint> "http://host.docker.internal:9999/blazegraph/namespace/test/sparql".
+<http://host.docker.internal:9999/blazegraph/ontokgrouter/test>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.theworldavatar.com/ontology/ontokgrouter/OntoKGRouter.owl#TargetResource>.
+<http://host.docker.internal:9999/blazegraph/ontokgrouter/test>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual>.
+<http://host.docker.internal:9999/blazegraph/ontokgrouter/test>	<http://www.w3.org/2000/01/rdf-schema#label> "test".
+}
+```
+5. In this repository, locate the agents properties file in _agents/src/main/resources/config.properties_, and set the uri.route to `http://localhost:48080/access-agent/access/test`, replacing `test` with the name of the namespace to connect to.
+7. Build and deploy the AccessAgent as described in the README of the [JPS_ACCESS_AGENT directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/main/JPS_ACCESS_AGENT) in the TWA repository.
 
 ### Deployment (for users)
 
@@ -148,7 +166,9 @@ POST http://localhost:8080/agents/import/source
 Content-Type: application/json
 
 {"directory":"C:\\tmp\\import",
-  "targetURL": "http://192.168.10.111:9999/blazegraph/namespace/testdata/sparql"}
+  "targetURL": "http://127.0.0.1:9995/blazegraph/namespace/testdata/sparql",
+  "srid": "25833",
+  "srsName": "urn:ogc:def:crs,crs:EPSG::25833,crs:EPSG::5783"}
 ```
 
 Executing this request, will create a directory at the specified location. When placing any `.gml` file into this folder, this file will automatically be imported into the specified triple store. For further details, please see the "Semantic 3D City Agents - an intelligent automation for Dynamic Geospatial Knowledge Graphs" [preprint].
