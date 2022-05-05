@@ -31,7 +31,6 @@ public class ModelContextTest {
 
   private static final MetaModel metaModel = MetaModel.get(TestModel.class);
 
-  @Test
   private int countTriples(ModelContext context) {
     JSONArray response = context.query("SELECT (COUNT(*) AS ?count) WHERE { ?a ?b ?c }");
     return response.getJSONObject(0).getInt("count");
