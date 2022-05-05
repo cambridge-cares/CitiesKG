@@ -49,7 +49,7 @@ public class DistanceAgent extends JPSAgent {
   private static final String XML_SCHEMA = "http://www.w3.org/2001/XMLSchema#";
   private static final String OWL_SCHEMA = "http://www.w3.org/2002/07/owl#";
   private static final String DISTANCE_GRAPH = "/distance/";
-  public static final String DEFAULT_SRS = "EPSG:4236";
+  public static final String DEFAULT_SRS = "EPSG:4326";
   public static final String DEFAULT_TARGET_SRS = "EPSG:24500";
 
   // Repeating variables in SPARQL queries
