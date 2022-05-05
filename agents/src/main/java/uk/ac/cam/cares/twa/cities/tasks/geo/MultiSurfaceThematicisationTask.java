@@ -106,6 +106,8 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
     if (!stage) {
       if(params.mode == ThematicSurfaceDiscoveryAgent.Mode.SPLIT) {
         geoTouches();
+      }else if (params.mode == ThematicSurfaceDiscoveryAgent.Mode.MERGE){
+
       }else {
         tryClassifyGeometries();
       }
@@ -587,6 +589,10 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
       }
     }
  }
+
+  private void spatialRelation () {
+
+  }
   /**
    * Compute the average coordinate of the centroids of a number of SurfaaceGeometry objects, i.e. their collcetive
    * unweighted centroid.

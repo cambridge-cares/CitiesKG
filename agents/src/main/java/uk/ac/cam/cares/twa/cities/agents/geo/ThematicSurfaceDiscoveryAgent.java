@@ -46,7 +46,8 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
     RESTRUCTURE,
     FOOTPRINT,
     VALIDATE,
-    SPLIT
+    SPLIT,
+    MERGE
   }
 
   public static class Params {
@@ -135,7 +136,8 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
             Objects.equals(requestParams.getString(KEY_MODE), "footprint") ? Mode.FOOTPRINT :
                 Objects.equals(requestParams.getString(KEY_MODE), "validate") ? Mode.VALIDATE :
                     Objects.equals(requestParams.getString(KEY_MODE), "restructure") ? Mode.RESTRUCTURE :
-                            Objects.equals(requestParams.getString(KEY_MODE), "split") ? Mode.SPLIT : null;
+                            Objects.equals(requestParams.getString(KEY_MODE), "split") ? Mode.SPLIT :
+                                    Objects.equals(requestParams.getString(KEY_MODE), "merge") ? Mode.MERGE :null;
         if(mode == null) throw new BadRequestException(MODE_NOT_RECOGNIZED_EXCEPTION_TEXT);
         if (keys.contains(KEY_NAMESPACE)) {
           namespaceIri = new URI(requestParams.getString(KEY_NAMESPACE)).toString();

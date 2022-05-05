@@ -7,6 +7,8 @@ Content-Type: application/json
 // specify "mode": "restructure" to convert lodXMultiSurfaces into thematic surfaces
 //               : "footprint" to add lod0footprint only instead of restructuring
 //               : "validate" to do "comment" behaviour, but on thematic surfaces instead of lodXMultiSurfaces
+//               : "split" to split buildings from a group of buildings under 1 building UUID
+//               : "merge" to check whether a building has been separated into differenct parts and stored under several UUID, then merge them
 // "cityObjectIRI": "http://192.168.0.101:9999/blazegraph/namespace/onemapsgEPSG24500/sparql/building/UUID_enhanced_v_6_0_0_0/",
 
 {"namespace": "http://10.25.188.180:9999/blazegraph/namespace/onemapsgEPSG24500/sparql/",
