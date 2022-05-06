@@ -1178,16 +1178,20 @@
         var canExtrude = isExtrudable(altitudeMode, gxAltitudeMode);
 
         var polygon = defined(styleEntity.polygon) ? styleEntity.polygon.clone() : createDefaultPolygon();
-
+        polygon.material.color = new Color(255 / 255, 255/ 255, 0/ 255, 0.2);
         var polyline = styleEntity.polyline;
         if (defined(polyline)) {
             //polygon.outlineColor = defined(polyline.material) ? polyline.material.color : Color.WHITE;
             polygon.outlineColor = defined(polyline.material) ? Color.BLACK : Color.WHITE;
             polygon.outlineWidth = polyline.width;
         }
+
         entity.polygon = polygon;
 
-        //entity.polyline = polyline; // Shiying
+        // definition of the properties for the extra polyline
+        //polyline.material.color = Color.BLACK;
+        //polyline.width = 1;
+        //entity.polyline = polyline; // Shiying, if comment out, not extra polyline is drawn
 
         if (canExtrude) {
             polygon.perPositionHeight = true;
@@ -1211,7 +1215,7 @@
             }
             polygon.hierarchy = hierarchy;
 
-            //polyline.positions = createPositionPropertyArrayFromAltitudeMode(coordinates, altitudeMode, gxAltitudeMode);   // Shiying
+            polyline.positions = createPositionPropertyArrayFromAltitudeMode(coordinates, altitudeMode, gxAltitudeMode);   // Shiying: this help to draw the extra polylines
         }
 
         return true;
