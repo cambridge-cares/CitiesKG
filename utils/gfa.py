@@ -9,6 +9,29 @@ import geopandas as gpd
 import json
 
 
+def assign_gpr(plots, plot_type, lh, buffer, gpr1, gpr2, gpr3, storeys2, storeys3):
+    for plot in plots.loc[plots['PlotType'].isin([plot_type])].index:
+
+        lh_cont = lh.geometry.contains(plots.loc[plot, 'geometry'])
+        lh_int = lh.geometry.intersects(plots.loc[plot, 'geometry'].buffer(buffer))
+        context_int = plots.geometry.intersects(plots.loc[plot, 'geometry'].buffer(buffer))
+
+        # contained within landed housing boundary case
+        if lh_cont.any():
+            plots.loc[plot, 'GPR'] = gpr1
+            plots.loc[plot, 'context_storeys'] = lh.loc[lh_cont, 'STY_HT'].min()
+
+        # instersection with the landed housing fringe case
+        elif lh_int.any():
+            plots.loc[plot, 'GPR'] = gpr2
+            plots.loc[plot, 'context_storeys'] = storeys2
+
+        # intersection with surrouding area case
+        elif (plots.loc[context_int, 'GPR'].mean() > 1.4) or (plots.loc[context_int, 'PlotType'].isin(['BUSINESS 1', 'BUSINESS 2', 'BUSINESS PARK']).any()):
+            plots.loc[plot, 'GPR'] = gpr3
+            plots.loc[plot, 'context_storeys'] = storeys3
+            
+            
 def retrieve_number_of_storeys(plots_for_GFA, hc_int, sb_int, udr_int):
     count = 0
     for count, i in enumerate(plots_for_GFA.index):
@@ -17,11 +40,14 @@ def retrieve_number_of_storeys(plots_for_GFA, hc_int, sb_int, udr_int):
         street_block = sb_int.loc[sb_int['PlotId'] == plot_id, :]
         urban_guidelines = udr_int.loc[udr_int['PlotId'] == plot_id, :]
 
-        min_storey = float("inf")
+        if not pd.isna(plots_for_GFA.loc[i, 'context_storeys']):
+            min_storey = plots_for_GFA.loc[i, 'context_storeys']
+        else:
+            min_storey = float("inf")
         parts = []
         storeys = []
         if not street_block.empty:
-            min_storey = street_block["Storeys"].min()
+            min_storey = min(min_storey, street_block["Storeys"].min())
 
         # covers scenarios where there are more than one plot part with different number of storeys.
         if (height_control.shape[0] > 1) or (urban_guidelines.shape[0] > 1):
@@ -139,6 +165,7 @@ def compute_gfa(plots_for_GFA, plot_setbacks, dcp):
             # No minimum storeys
             if not plot_storeys:
                 plot_gfa = plot_row["GPR_GFA"]
+                #plot_gfa = float("NaN")
             # Minimum storeys apply
             else:
                 subtype_setbacks = setbacks[subtype]
@@ -309,25 +336,25 @@ def set_partywall_edges(plots_for_GFA, plots):
 def run_estimate_gfa():
 
     # File paths
-    fn_plots = "C:/Users/AydaGrisiute/Desktop/demonstrator/URA_plots/SingaporeRiverAndRochor.shp"
+    fn_plots = "C:/Users/AydaGrisiute/Desktop/demonstrator/URA_plots/test/G_MP19_LAND_USE_PL.shp"
     fn_con = "C:/Users/AydaGrisiute/Desktop/demonstrator/conservation_areas/master-plan-2019-sdcp-conservation-area-layer-geojson.geojson"
     fn_hc = "C:/Users/AydaGrisiute/Desktop/demonstrator/height_control/G_MP08_BUILDHTCTRL_STY_PL.shp"
     fn_sb_boundary = "C:/Users/AydaGrisiute/Desktop/demonstrator/street_blocks/G_MP08_STREET_BLK_PLAN_PL.shp"
     fn_sb_reg = "C:/Users/AydaGrisiute/Desktop/demonstrator/street_blocks/street_block_plans.xlsx"
     fn_udr = "C:/Users/AydaGrisiute/Desktop/demonstrator/urban_design_guidelines/UrbanDesignGuidelines.shp"
     fn_control_plans = "C:/Users/AydaGrisiute/Desktop/demonstrator/Regulation_grouping2.xlsx"
+    fn_landed_housing = "C:/Users/AydaGrisiute/Desktop/demonstrator/landed_housing/landed_housing.shp"
 
     """ 
-    Loading plot file, removing plots with zoning types for which calculating GFA does not make sense, like PARK, OPEN SPACE, 
-    WATERBODY, ROAD.
+    Removing plots with zoning types for which calculating GFA does not make sense, like PARK, OPEN SPACE, WATERBODY, ROAD.
     Apply initial filtering to eliminate invalid plots and minimise bad input.
-    Remaining number of plots after applying relevant filters - 2488.
     """
 
     plots = gpd.read_file(fn_plots).to_crs(epsg=3857)
     plots.geometry = plots.geometry.simplify(0.1)
     plots = plots[['INC_CRC', 'LU_DESC', 'GPR', 'geometry']].copy()
     plots['site_area'] = plots.area
+    plots['context_storeys'] = float('NaN')
 
     # filter plots smaller than 50sqm.
     plots = plots.loc[plots['site_area'] >= 50]
@@ -338,7 +365,7 @@ def run_estimate_gfa():
     plots = plots[~plots['PlotType'].isin(['ROAD', 'WATERBODY', 'PARK', 'OPEN SPACE', 'CEMETERY', 'BEACH AREA'])]
 
     # other zoning types that  GFA cannot be computed.
-    invalid_zones = ['PLACE OF WORSHIP', 'RESERVE SITE', 'SPECIAL USE ZONE']
+    invalid_zones = ['RESERVE SITE', 'SPECIAL USE ZONE', 'UTILITY']
 
     # filter invalid MultiPolygon plot geometry.
     mp_plots = plots[plots.geometry.type == "MultiPolygon"]
@@ -360,6 +387,9 @@ def run_estimate_gfa():
         Urban Design Guidelines - 171 boundaries; 
         Development Control Plans
     """
+    # landed housing areas
+    lh = gpd.read_file(fn_landed_housing).to_crs(3857)
+    lh['STY_HT'] = lh['STY_HT'].map({'3-STOREY': 3, '2-STOREY': 2})
 
     # conservation areas
     con = gpd.read_file(fn_con).to_crs(epsg=3857)
@@ -387,6 +417,16 @@ def run_estimate_gfa():
     dcp['type_context'].fillna(value='default', inplace=True)
     dcp['type_property'].fillna(value='default', inplace=True)
     print('Regulations loaded')
+
+    """
+    Assign GPR for plots with EDUCATIONAL INSTITUTION, CIVIC & COMMUNITY INSTITUTION and PLACE OF WORSHIP zoning type.
+    Assignment is based on the relation to landed housing boundaries or surrounding context, like GPR of neighboring plots.
+    Fringe is implemented as a buffer zone around every plot of respective zoning types.
+    """
+
+    assign_gpr(plots, 'EDUCATIONAL INSTITUTION', lh, 400, 1, 1, 1.4, 3, 4)
+    assign_gpr(plots, 'CIVIC & COMMUNITY INSTITUTION', lh, 400, 1, 1, 1.4, 3, 4)
+    assign_gpr(plots, 'PLACE OF WORSHIP', lh, 400, 1, 1.4, 1.6, 4, 5)
 
     """ 
     Intersect regulation areas dataset with plot dataset. Valid intersections if overlap > than 0.1 of site area. 
