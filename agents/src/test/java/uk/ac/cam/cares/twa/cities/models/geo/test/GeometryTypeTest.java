@@ -37,7 +37,7 @@ public class GeometryTypeTest {
     assertEquals(new Coordinate(1, 1, 5), geometry.getPolygon().getExteriorRing().getCoordinateN(0));
     assertEquals(new Coordinate(603902.5252167048, 5513703.7177186, 5.0), geometry.getMetricPolygon().getExteriorRing().getCoordinateN(0));
     assertEquals(new Coordinate(2, 3, 5), geometry.getPolygon().getExteriorRing().getCoordinateN(2));
-    assertEquals(new Coordinate(603903.3328829142, 5513705.798364676, 5.0), geometry.getMetricPolygon().getExteriorRing().getCoordinateN(2));
+    assertEquals(new Coordinate(603903.3328829142, 5513705.798364675, 5.0), geometry.getMetricPolygon().getExteriorRing().getCoordinateN(2));
   }
 
   @Test
@@ -47,16 +47,16 @@ public class GeometryTypeTest {
     // normal (8,4,2) => (0.87,0.44,0.22)   (note the ccw winding order)
     String coords = "0.125#0#0#0#0.25#0#0#0#0.5#0.125#0#0";
     String structure = "http://localhost/blazegraph/literals/POLYGON-3-12";
-    assertEquals(new Vector3D(0.8284510729110272, 0.5159635596748086, 0.21783118436134974).toString(),
+    assertEquals(new Vector3D(0.8284510730510422, 0.5159635577328808, 0.21783118842857427).toString(),
         new GeometryType(coords, structure).getNormal().toString());
     // Unit square should have unit area
     coords = "0#0#0#1#0#0#1#1#0#0#1#0#0#0#0";
     structure = "http://localhost/blazegraph/literals/POLYGON-3-15";
     GeometryType unitSquare = new GeometryType(coords, structure);
-    assertEquals(0.9962825436959974, unitSquare.getArea());
+    assertEquals(0.9962825445109047, unitSquare.getArea());
     // Centroids: the native crs centroid should be at about (0.5,0.5,0.5)
-    assertEquals(new Coordinate(0.5012210839777254, 0.5077971342398087, 0.0), unitSquare.getCentroid());
-    assertEquals(new Coordinate(603902.0748522265, 5513703.1742914105, 0.0), unitSquare.getMetricCentroid());
+    assertEquals(new Coordinate(0.5012210836284794, 0.507797131431289, 0.0), unitSquare.getCentroid());
+    assertEquals(new Coordinate(603902.0748522267, 5513703.1742914090, 0.0), unitSquare.getMetricCentroid());
   }
 
   @Test
