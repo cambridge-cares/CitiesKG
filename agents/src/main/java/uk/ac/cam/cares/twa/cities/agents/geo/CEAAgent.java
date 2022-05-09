@@ -1,6 +1,7 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.jooq.exception.DataAccessException;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -12,6 +13,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URL;
 import java.time.OffsetDateTime;
@@ -30,18 +32,21 @@ import org.json.JSONArray;
 @WebServlet(
         urlPatterns = {
                 CEAAgent.URI_ACTION,
-                CEAAgent.URI_UPDATE
+                CEAAgent.URI_UPDATE,
+                CEAAgent.URI_QUERY
         })
 public class CEAAgent extends JPSAgent {
     public static final String KEY_REQ_METHOD = "method";
     public static final String URI_ACTION = "/cea/run";
     public static final String URI_UPDATE = "/cea/update";
+    public static final String URI_QUERY = "/cea/query";
     public static final String KEY_REQ_URL = "requestUrl";
     public static final String KEY_TARGET_URL = "targetUrl";
-    public static final String KEY_IRI = "iri";
+    public static final String KEY_IRI = "iris";
     public static final String CITY_OBJECT = "cityobject";
     public static final String CITY_OBJECT_GEN_ATT = "cityobjectgenericattrib";
     public static final String BUILDING = "building";
+    public static final String SURFACE_GEOMETRY = "surfacegeometry";
     public static final String ENERGY_PROFILE = "energyprofile";
     public static final String KEY_GRID_DEMAND = "grid_demand";
     public static final String KEY_ELECTRICITY_DEMAND = "electricity_demand";
@@ -82,59 +87,90 @@ public class CEAAgent extends JPSAgent {
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
         if (validateInput(requestParams)) {
+
             requestUrl = requestParams.getString(KEY_REQ_URL);
-            targetUrl = requestParams.getString(KEY_TARGET_URL);
             String uriArrayString = requestParams.get(KEY_IRI).toString();
             JSONArray uriArray = new JSONArray(uriArrayString);
 
-            if (requestUrl.contains(URI_UPDATE)) {
-                String timesArrayString = requestParams.get(KEY_TIMES).toString();
-                JSONArray timesArray = new JSONArray(timesArrayString);
-                List<OffsetDateTime> times = new ArrayList<>();
+            if (requestUrl.contains(URI_UPDATE) || requestUrl.contains(URI_ACTION)) {
+                targetUrl = requestParams.getString(KEY_TARGET_URL);
 
-                for(int i=0; i<timesArray.length(); i++){
-                    OffsetDateTime odt = OffsetDateTime.parse(timesArray.getString(i));
-                    times.add(odt);
-                }
+                if (requestUrl.contains(URI_UPDATE)) {
+                    // parse time series data
+                    String timesArrayString = requestParams.get(KEY_TIMES).toString();
+                    JSONArray timesArray = new JSONArray(timesArrayString);
+                    List<OffsetDateTime> times = new ArrayList<>();
 
-                String timesSeriesArrayString = requestParams.get(KEY_TIME_SERIES).toString();
-                JSONArray timeSeriesArray = new JSONArray(timesSeriesArrayString);
-                List<List<List<?>>> timeSeries = new ArrayList<>();
+                    for (int i = 0; i < timesArray.length(); i++) {
+                        OffsetDateTime odt = OffsetDateTime.parse(timesArray.getString(i));
+                        times.add(odt);
+                    }
 
-                for(int i=0; i<timeSeriesArray.length(); i++){
-                    JSONArray timeSeriesIriArray = new JSONArray(timeSeriesArray.get(i).toString());
-                    List<List<?>> timeSeriesMaps = new ArrayList<>();
-                    for(int j=0; j<timeSeriesIriArray.length(); j++) {
-                        JSONArray timeSeriesMappingArray = new JSONArray(timeSeriesIriArray.get(j).toString());
-                        List<Double> timeSeriesList = new ArrayList<>();
-                        for(int k=0; k<timeSeriesMappingArray.length(); k++) {
-                            timeSeriesList.add(Double.valueOf(timeSeriesMappingArray.get(k).toString()));
+                    String timesSeriesArrayString = requestParams.get(KEY_TIME_SERIES).toString();
+                    JSONArray timeSeriesArray = new JSONArray(timesSeriesArrayString);
+                    List<List<List<?>>> timeSeries = new ArrayList<>();
+
+                    for (int i = 0; i < timeSeriesArray.length(); i++) {
+                        JSONArray timeSeriesIriArray = new JSONArray(timeSeriesArray.get(i).toString());
+                        List<List<?>> timeSeriesMaps = new ArrayList<>();
+                        for (int j = 0; j < timeSeriesIriArray.length(); j++) {
+                            JSONArray timeSeriesMappingArray = new JSONArray(timeSeriesIriArray.get(j).toString());
+                            List<Double> timeSeriesList = new ArrayList<>();
+                            for (int k = 0; k < timeSeriesMappingArray.length(); k++) {
+                                timeSeriesList.add(Double.valueOf(timeSeriesMappingArray.get(k).toString()));
+                            }
+                            timeSeriesMaps.add(timeSeriesList);
                         }
-                        timeSeriesMaps.add(timeSeriesList);
+                        timeSeries.add(timeSeriesMaps);
                     }
-                    timeSeries.add(timeSeriesMaps);
-                }
 
-                for(int i=0; i<uriArray.length(); i++) {
-                    String uri = uriArray.getString(i);
-
-                    addDataToTimeSeries(timeSeries.get(i), times, fixedIris.get(i));
-                    String buildingUri = checkEnergyProfileInitialised(mappings.get(i), uri);
-                    if(buildingUri=="") {
-                        buildingUri = sparqlUpdate(requestParams.get(KEY_PV_AREA).toString(), mappings.get(i), uri);
+                    // parse PV area data
+                    String areaArrayString = requestParams.get(KEY_PV_AREA).toString();
+                    JSONArray areaArray = new JSONArray(areaArrayString);
+                    List<String> areas = new ArrayList<>();
+                    for (int j = 0; j < areaArray.length(); j++) {
+                        areas.add(areaArray.getString(j));
                     }
-                    if(!checkGenAttributeInitialised(uri)) sparqlGenAttributeUpdate(uri, buildingUri);
+
+                    for (int i = 0; i < uriArray.length(); i++) {
+                        String uri = uriArray.getString(i);
+                        addDataToTimeSeries(timeSeries.get(i), times, fixedIris.get(i));
+                        String buildingUri = checkEnergyProfileInitialised(mappings.get(i), uri);
+                        if (buildingUri == "") {
+                            buildingUri = sparqlUpdate(areas.get(i), mappings.get(i), uri);
+                        }
+                        if (!checkGenAttributeInitialised(uri)) sparqlGenAttributeUpdate(uri, buildingUri);
+                    }
+                } else if (requestUrl.contains(URI_ACTION)) {
+                    ArrayList<CEAInputData> testData = new ArrayList<>();
+                    ArrayList<String> uriStringArray = new ArrayList<>();
+                    for (int i = 0; i < uriArray.length(); i++) {
+                        String uri = uriArray.getString(i);
+                        uriStringArray.add(uri);
+                        createTimeSeries(uri);
+                        testData.add(new CEAInputData(getValue(uri, "Envelope"), getValue(uri, "Height")));
+                    }
+                    runCEA(testData, uriStringArray, 0);
                 }
-            } else if (requestUrl.contains(URI_ACTION)) {
-                ArrayList<CEAInputData> testData = new ArrayList<>();
-                ArrayList<String> uriStringArray = new ArrayList<>();
-                for(int i=0; i<uriArray.length(); i++) {
+            } else if (requestUrl.contains(URI_QUERY)) {
+                for (int i = 0; i < uriArray.length(); i++) {
                     String uri = uriArray.getString(i);
-                    uriStringArray.add(uri);
-                    createTimeSeries(uri);
-                    testData.add(new CEAInputData(getValue(uri, "Envelope"), getValue(uri, "Height")));
+                    JSONObject data = new JSONObject();
+                    for (Field key : CEAOutputData.class.getDeclaredFields()) {
+                        ArrayList<String> results = getDataIRI(uri, key.getName());
+                        if (!results.isEmpty()) {
+                            String value;
+                            if (key.getName() != "PV_area") {
+                                value = calculateAverage(retrieveData(results.get(0)), results.get(0));
+                            } else {
+                                value = results.get(0);
+                            }
+                            value += " " + getUnit(results.get(1));
+                            data.put(key.getName(), value);
+                        }
+                    }
+                    requestParams.append(ENERGY_PROFILE, data);
                 }
-                runCEA(testData, uriStringArray,0);
             }
 
         }
@@ -147,16 +183,16 @@ public class CEAAgent extends JPSAgent {
 
         if (!requestParams.isEmpty()) {
             Set<String> keys = requestParams.keySet();
-            if (keys.contains(KEY_REQ_METHOD) && keys.contains(KEY_REQ_URL) && keys.contains(
-                    KEY_TARGET_URL) && keys.contains(KEY_IRI)) {
+            if (keys.contains(KEY_REQ_METHOD) && keys.contains(KEY_REQ_URL) && keys.contains(KEY_IRI)) {
                 if (requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.POST)) {
                     try {
                         URL reqUrl = new URL(requestParams.getString(KEY_REQ_URL));
-                        new URL(requestParams.getString(KEY_TARGET_URL));
                         if (reqUrl.getPath().contains(URI_UPDATE)) {
                             error = validateUpdateInput(requestParams);
                         } else if (reqUrl.getPath().contains(URI_ACTION)) {
                             error = validateActionInput(requestParams);
+                        } else if (reqUrl.getPath().contains(URI_QUERY)) {
+                            error = validateQueryInput(requestParams);
                         }
                     } catch (Exception e) {
                         throw new BadRequestException();
@@ -180,7 +216,9 @@ public class CEAAgent extends JPSAgent {
      */
     private boolean validateUpdateInput(JSONObject requestParams) {
         boolean error = true;
-        if (!requestParams.get(KEY_GRID_DEMAND).toString().isEmpty() ||
+        if (!requestParams.get(KEY_IRI).toString().isEmpty() ||
+                !requestParams.get(KEY_TARGET_URL).toString().isEmpty() ||
+                !requestParams.get(KEY_GRID_DEMAND).toString().isEmpty() ||
                 !requestParams.get(KEY_ELECTRICITY_DEMAND).toString().isEmpty() ||
                 !requestParams.get(KEY_HEATING_DEMAND).toString().isEmpty() ||
                 !requestParams.get(KEY_COOLING_DEMAND).toString().isEmpty() ||
@@ -201,6 +239,20 @@ public class CEAAgent extends JPSAgent {
      * @return boolean saying if request is valid or not
      */
     private boolean validateActionInput(JSONObject requestParams) {
+        boolean error = true;
+        if (!requestParams.get(KEY_TARGET_URL).toString().isEmpty() || !requestParams.get(KEY_IRI).toString().isEmpty()){
+            error = false;
+        }
+        return error;
+    }
+
+    /**
+     * Validates input specific to requests coming to URI_QUERY
+     *
+     * @param requestParams - request body in JSON format
+     * @return boolean saying if request is valid or not
+     */
+    private boolean validateQueryInput(JSONObject requestParams) {
         boolean error = true;
         if (!requestParams.get(KEY_IRI).toString().isEmpty()){
             error = false;
@@ -384,7 +436,7 @@ public class CEAAgent extends JPSAgent {
      * @param value building value requested
      * @return geometry as string
      */
-    private String getValue(String uriString, String value){
+    private String getValue(String uriString, String value)  {
 
         String result = "";
 
@@ -398,9 +450,50 @@ public class CEAAgent extends JPSAgent {
         JSONArray queryResultArray = new JSONArray(resultString);
 
         if(!queryResultArray.isEmpty()){
-            result = queryResultArray.getJSONObject(0).get(value).toString();
+            if(value!="Envelope") {
+                result = queryResultArray.getJSONObject(0).get(value).toString();
+            }
+            else{
+                result=getFootprint(queryResultArray);
+            }
         }
         return result;
+    }
+
+    /**
+     * finds footprint of building from array of building surfaces by searching for constant minimum z in geometries
+     * @param results array of building surfaces
+     * @return footprint geometry as string
+     */
+    private String getFootprint(JSONArray results){
+        String footprint="";
+        ArrayList<String> z_values = new ArrayList<>();
+        Double minimum=Double.MAX_VALUE;
+
+        for(Integer i=0; i<results.length(); i++){
+            String geom = results.getJSONObject(i).get("Envelope").toString();
+            String[] split = geom.split("#");
+            // store z values of surface
+            for(Integer j=1; j<=split.length; j++) {
+                if(j%3==0){
+                    z_values.add(split[j-1]);
+                }
+            }
+            // find surfaces with constant z value
+            Boolean zIsConstant = true;
+            for(Integer k=1; k<z_values.size(); k++) {
+                if (!z_values.get(k).equals(z_values.get(k - 1))) {
+                    zIsConstant = false;
+                }
+            }
+            // store geometry with the minimum constant z as footprint
+            if (zIsConstant && Double.valueOf(z_values.get(0)) < minimum) {
+                minimum = Double.valueOf(z_values.get(0));
+                footprint=geom;
+            }
+            z_values.clear();
+        }
+        return footprint;
     }
 
     /**
@@ -424,7 +517,7 @@ public class CEAAgent extends JPSAgent {
      * @param uriString city object id
      * @return returns a query string
      */
-    private Query getGeometryQuery(String uriString) {
+    /*private Query getGeometryQuery(String uriString) {
         SelectBuilder sb = new SelectBuilder()
                 .addPrefix( "ocgml", ocgmlUri )
                 .addVar("?Envelope")
@@ -432,6 +525,25 @@ public class CEAAgent extends JPSAgent {
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
 
         return sb.build();
+    }*/
+    private Query getGeometryQuery(String uriString) {
+        try {
+            WhereBuilder wb = new WhereBuilder()
+                    .addPrefix("ocgml", ocgmlUri)
+                    .addWhere("?surf", "ocgml:cityObjectId", "?s")
+                    .addWhere("?surf", "ocgml:GeometryType", "?Envelope")
+                    .addFilter("!isBlank(?Envelope)");
+            SelectBuilder sb = new SelectBuilder()
+                    .addVar("?Envelope")
+                    .addGraph(NodeFactory.createURI(getGraph(uriString,SURFACE_GEOMETRY)), wb);
+            sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getGraph(uriString,BUILDING)+getUUID(uriString)+"/"));
+            return sb.build();
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
+
     }
 
     /**
@@ -593,6 +705,95 @@ public class CEAAgent extends JPSAgent {
 
     }
 
+    public ArrayList<String> getDataIRI(String uriString, String value) {
+        ArrayList<String> result = new ArrayList<>();
+
+        WhereBuilder wb1 = new WhereBuilder();
+        SelectBuilder sb = new SelectBuilder();
+        WhereBuilder wb2 = new WhereBuilder();
+
+        wb1.addPrefix("ocgml", ocgmlUri)
+                .addWhere("?genAttribute", "ocgml:cityObjectId", "?s")
+                .addWhere("?genAttribute", "ocgml:attrName", "energyProfileBuildingRepresentation")
+                .addWhere("?genAttribute", "ocgml:uriVal", "?energyProfileBuilding");
+
+        sb.addGraph(NodeFactory.createURI(getGraph(uriString,CITY_OBJECT_GEN_ATT)), wb1);
+
+        wb2.addPrefix("ocgml", ocgmlUri)
+                .addPrefix("rdf", rdfUri)
+                .addPrefix("om", unitOntologyUri)
+                .addPrefix("purlEnaeq", purlEnaeqUri)
+                .addPrefix("ontoubemmp", ontoUBEMMPUri)
+                .addPrefix("thinkhome", thinkhomeUri);
+
+        switch(value) {
+            case "grid_demand":
+                wb2.addWhere("?energyProfileBuilding", "purlEnaeq:consumesEnergy", "?grid")
+                        .addWhere("?grid", "rdf:type", "ontoubemmp:GridConsumption")
+                        .addWhere("?grid", "om:hasValue", "?measure")
+                           .addWhere("?measure", "om:hasUnit", "?unit");
+                break;
+            case "electricity_demand":
+                wb2.addWhere("?energyProfileBuilding", "purlEnaeq:consumesEnergy", "?electricity")
+                        .addWhere("?electricity", "rdf:type", "ontoubemmp:ElectricityConsumption")
+                        .addWhere("?electricity", "om:hasValue", "?measure")
+                        .addWhere("?measure", "om:hasUnit", "?unit");
+                break;
+            case "heating_demand":
+                wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?heatingDevice")
+                        .addWhere("?heatingDevice", "rdf:type", "ontoubemmp:HeatingSystem")
+                        .addWhere("?heatingDevice", "purlEnaeq:consumesEnergy", "?heating")
+                        .addWhere("?heating", "rdf:type", "ontoubemmp:ThermalConsumption")
+                        .addWhere("?heating", "om:hasValue", "?measure")
+                        .addWhere("?measure", "om:hasUnit", "?unit");
+                break;
+            case "cooling_demand":
+                wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?coolingDevice")
+                        .addWhere("?coolingDevice", "rdf:type", "ontoubemmp:CoolingSystem")
+                        .addWhere("?coolingDevice", "purlEnaeq:consumesEnergy", "?cooling")
+                        .addWhere("?cooling", "rdf:type", "ontoubemmp:ThermalConsumption")
+                        .addWhere("?cooling", "om:hasValue", "?measure")
+                        .addWhere("?measure", "om:hasUnit", "?unit");
+                break;
+            case "PV_supply":
+                wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVSystem")
+                        .addWhere("?PVSystem", "rdf:type", "ontoubemmp:PVSystem")
+                        .addWhere("?PVSystem", "thinkhome:producesEnergy", "?supply")
+                        .addWhere("?supply", "rdf:type", "ontoubemmp:ElectricitySupply")
+                        .addWhere("?supply", "om:hasValue", "?measure")
+                        .addWhere("?measure", "om:hasUnit", "?unit");
+                break;
+            case "PV_area":
+                wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVSystem")
+                        .addWhere("?PVSystem", "rdf:type", "ontoubemmp:PVSystem")
+                        .addWhere("?PVSystem", "ontoubemmp:hasArea", "?area")
+                        .addWhere("?area", "rdf:type", "ontoubemmp:PVSystemArea")
+                        .addWhere("?area", "om:hasValue", "?value")
+                        .addWhere("?value", "om:hasNumericalValue", "?measure")
+                        .addWhere("?value", "om:hasUnit", "?unit");
+                break;
+            default:
+                return result;
+
+        }
+
+        sb.addVar("?measure")
+                .addVar("?unit")
+                .addGraph(NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)), wb2);
+
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
+
+        JSONObject queryResultObject = new JSONObject(this.query(QUERY_ROUTE, sb.build().toString()));
+        JSONArray queryResultArray = new JSONArray(queryResultObject.get("result").toString());
+
+        if(!queryResultArray.isEmpty()){
+            result.add(queryResultArray.getJSONObject(0).get("measure").toString());
+            result.add(queryResultArray.getJSONObject(0).get("unit").toString());
+        }
+        return result;
+
+    }
+
     public boolean checkGenAttributeInitialised(String uriString){
         WhereBuilder wb = new WhereBuilder();
         SelectBuilder sb = new SelectBuilder();
@@ -657,6 +858,42 @@ public class CEAAgent extends JPSAgent {
 
         }
         return building;
+    }
+
+    public String getUnit(String ontologyUnit){
+        switch(ontologyUnit) {
+            case("http://www.ontology-of-units-of-measure.org/resource/om-2/kilowattHour"):
+                return "kWh";
+            case("http://www.ontology-of-units-of-measure.org/resource/om-2/squareMetre"):
+                return "m^2";
+            default:
+                return "";
+        }
+    }
+
+    public TimeSeries<OffsetDateTime> retrieveData(String dataIri){
+        try {
+            tsClient = new TimeSeriesClient<>(OffsetDateTime.class, new File(
+                    Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath());
+            List<String> iris = new ArrayList<>();
+            iris.add(dataIri);
+            TimeSeries<OffsetDateTime> data = tsClient.getTimeSeries(iris);
+            return data;
+
+        } catch(URISyntaxException | IOException e){
+            e.printStackTrace();
+            throw new JPSRuntimeException(e);
+        }
+    }
+
+    public String calculateAverage(TimeSeries<OffsetDateTime> timeSeries, String dataIri){
+        List<Double> values = timeSeries.getValuesAsDouble(dataIri);
+        Double annualValue = 0.;
+        for(Double value : values){
+            annualValue += value;
+        }
+        return annualValue.toString();
+
     }
 
 }
