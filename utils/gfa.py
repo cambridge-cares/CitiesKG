@@ -333,10 +333,27 @@ def set_partywall_edges(plots_for_GFA, plots):
     return plots_for_GFA
 
 
+def set_road_buffer_edges(plots_for_GFA, road_plots, category_column, road_types):
+    for i in plots_for_GFA.index:
+        cat_edges = []
+
+        for edge_index, edge in enumerate(plots_for_GFA.loc[i, "edges"]):
+            buffered_edge = edge.buffer(1, single_sided=True)
+            cat_int = (road_plots.loc[road_plots['RD_TYP_CD'].isin(road_types)]
+                       .geometry
+                       .intersection(buffered_edge).apply(lambda g: g.area))
+            cat_int = cat_int / buffered_edge.area
+            cat_int = cat_int > 0.3
+            if cat_int.any():
+                cat_edges.append(edge_index)
+        plots_for_GFA.at[i, category_column] = cat_edges
+    return plots_for_GFA
+
+
 def run_estimate_gfa():
 
     # File paths
-    fn_plots = "C:/Users/AydaGrisiute/Desktop/demonstrator/URA_plots/test/G_MP19_LAND_USE_PL.shp"
+    fn_plots = "C:/Users/AydaGrisiute/Desktop/demonstrator/URA_plots/G_MP19_LAND_USE_PL.shp"
     fn_con = "C:/Users/AydaGrisiute/Desktop/demonstrator/conservation_areas/master-plan-2019-sdcp-conservation-area-layer-geojson.geojson"
     fn_hc = "C:/Users/AydaGrisiute/Desktop/demonstrator/height_control/G_MP08_BUILDHTCTRL_STY_PL.shp"
     fn_sb_boundary = "C:/Users/AydaGrisiute/Desktop/demonstrator/street_blocks/G_MP08_STREET_BLK_PLAN_PL.shp"
@@ -344,6 +361,7 @@ def run_estimate_gfa():
     fn_udr = "C:/Users/AydaGrisiute/Desktop/demonstrator/urban_design_guidelines/UrbanDesignGuidelines.shp"
     fn_control_plans = "C:/Users/AydaGrisiute/Desktop/demonstrator/Regulation_grouping2.xlsx"
     fn_landed_housing = "C:/Users/AydaGrisiute/Desktop/demonstrator/landed_housing/landed_housing.shp"
+    fn_roads = "C:/Users/AydaGrisiute/Desktop/demonstrator/roads/ROADNETWORKLINE.shp"
 
     """ 
     Removing plots with zoning types for which calculating GFA does not make sense, like PARK, OPEN SPACE, WATERBODY, ROAD.
@@ -361,7 +379,10 @@ def run_estimate_gfa():
     plots = plots.rename(columns={'INC_CRC': 'PlotId', 'LU_DESC': 'PlotType'})
     plots['GPR'] = pd.to_numeric(plots['GPR'], errors='coerce')
 
-    # filter plots with non buildable zoning types
+    # extract road plots.
+    road_plots = plots[plots['PlotType'] == 'ROAD']
+
+    # filter plots with non buildable zoning types.
     plots = plots[~plots['PlotType'].isin(['ROAD', 'WATERBODY', 'PARK', 'OPEN SPACE', 'CEMETERY', 'BEACH AREA'])]
 
     # other zoning types that  GFA cannot be computed.
@@ -416,7 +437,30 @@ def run_estimate_gfa():
     dcp = pd.read_excel(fn_control_plans)
     dcp['type_context'].fillna(value='default', inplace=True)
     dcp['type_property'].fillna(value='default', inplace=True)
+
+    rn_lta = gpd.read_file(fn_roads).to_crs(epsg=3857)
+    rn_lta = rn_lta[~rn_lta['RD_TYP_CD'].isin(['Cross Junction', 'T-Junction', 'Expunged', 'Other Junction', 'Pedestrian Mall',
+                                   '2 T-Junction opposite each other', 'Unknown', 'Y-Junction', 'Imaginary Line',
+                                   'Slip Road'])]
     print('Regulations loaded')
+
+    """
+    Road category assignment to the road type plot.
+    road graph segments and their attributes are mapped to road plots.
+    """
+
+    rn_lta['buffered_network'] = rn_lta.buffer(3)
+    rn_lta_buffered = rn_lta.set_geometry(col='buffered_network', drop=True)
+
+    rn_int = gpd.overlay(road_plots, rn_lta_buffered, how='intersection', keep_geom_type=True)
+    rn_int['intersection_area'] = rn_int.area
+
+    grouped_intersection = rn_int.groupby(['PlotId']).apply(
+        lambda x: x.sort_values(['intersection_area'], ascending=False).iloc[0, :]).drop(columns=['PlotId'])
+    grouped_intersection = grouped_intersection.reset_index()
+    grouped_intersection = grouped_intersection[['PlotId', 'RD_TYP_CD']].copy()
+
+    road_plots = road_plots.merge(grouped_intersection, on='PlotId', how='left')
 
     """
     Assign GPR for plots with EDUCATIONAL INSTITUTION, CIVIC & COMMUNITY INSTITUTION and PLACE OF WORSHIP zoning type.
@@ -476,11 +520,27 @@ def run_estimate_gfa():
     # filtering plots for which to compute GFA: right zone type and no ambiguities in regulations
     plots_for_GFA = plots.loc[~plots["PlotId"].isin(unclear_plots), :].copy()
     plots_for_GFA = plots_for_GFA[~plots_for_GFA['PlotType'].isin(invalid_zones)]
+
     plots_for_GFA = set_partywall_edges(plots_for_GFA, plots)
     print('Partywalls set')
 
+
     """
-    Extracting number of storeys
+    Extract road buffer edges.
+    Checks plot edge intersection with  road plots and assigns edges to one of five road categories.
+    """
+
+    plots_for_GFA['cat_1_edges'] = [[]] * plots_for_GFA.shape[0]
+    plots_for_GFA['cat_2_edges'] = [[]] * plots_for_GFA.shape[0]
+    plots_for_GFA['cat_3_5_edges'] = [[]] * plots_for_GFA.shape[0]
+
+    plots_for_GFA = set_road_buffer_edges(plots_for_GFA, road_plots, 'cat_1_edges', ['Expressway'])
+    plots_for_GFA = set_road_buffer_edges(plots_for_GFA, road_plots, 'cat_2_edges', ['Major Arterials/Minor Arterials'])
+    plots_for_GFA = set_road_buffer_edges(plots_for_GFA, road_plots, 'cat_3_5_edges',
+                                          ['Local Access', 'Local Collector/Primary Access', float('NaN')])
+    print('Road buffer edges set')
+    """
+    Extracting number of storeys.
     Covers five regulation scenarios impacting how storeys are computed.
     """
 
@@ -523,6 +583,7 @@ def run_estimate_gfa():
     gfas = compute_gfa(plots_for_GFA, plot_setbacks, dcp)
     with open('C:/Users/AydaGrisiute/Desktop/estimate_GFA.json', 'w') as f:
         json.dump(gfas, f, indent=4)
+    print('GFAs computed')
 
 
 if __name__ == "__main__":
