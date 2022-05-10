@@ -1,9 +1,9 @@
 package uk.ac.cam.cares.twa.cities.agents.geo.test;
 
-import junit.framework.TestCase;
 import org.apache.jena.query.Query;
 import org.apache.jena.update.UpdateRequest;
 import org.geotools.geometry.jts.GeometryBuilder;
+import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Point;
 import org.mockito.*;
 import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
@@ -15,13 +15,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class DistanceAgentTest extends TestCase {
+public class DistanceAgentTest {
 
     @Mock
     KnowledgeBaseClientInterface kgClientMock = Mockito.mock(RemoteKnowledgeBaseClient.class);
 
+    @Test
     public void testGetDistanceQuery()
         throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
@@ -40,6 +42,7 @@ public class DistanceAgentTest extends TestCase {
 
     }
 
+    @Test
     public void testGetNamespace()
         throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         DistanceAgent distanceAgent = new DistanceAgent();
@@ -55,6 +58,7 @@ public class DistanceAgentTest extends TestCase {
         assertEquals("http://localhost/berlin", getNamespace.invoke(distanceAgent, uri2));
     }
 
+    @Test
     public void testGetObjectSRSQuery()
         throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
@@ -76,6 +80,7 @@ public class DistanceAgentTest extends TestCase {
         assertTrue(q2.toString().contains("ocgml:metricSrsName"));
     }
 
+    @Test
     public void testGetObjectSrs() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         DistanceAgent distanceAgent = new DistanceAgent();
@@ -120,6 +125,7 @@ public class DistanceAgentTest extends TestCase {
         }
     }
 
+    @Test
     public void testGetDistance() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         DistanceAgent distanceAgent = new DistanceAgent();
@@ -150,6 +156,7 @@ public class DistanceAgentTest extends TestCase {
         }
     }
 
+    @Test
     public void testGetEnvelope(){
 
         DistanceAgent distanceAgent = new DistanceAgent();
@@ -164,6 +171,7 @@ public class DistanceAgentTest extends TestCase {
         }
     }
 
+    @Test
     public void testComputeDistance() {
 
         DistanceAgent distanceAgent = new DistanceAgent();
@@ -187,6 +195,7 @@ public class DistanceAgentTest extends TestCase {
         assertEquals(1.0034225353460755, distanceAgent.computeDistance(envelope1, envelope3, "EPSG:24500"));
     }
 
+    @Test
     public void testSetUniformCRS(){
 
         DistanceAgent distanceAgent = new DistanceAgent();
@@ -210,6 +219,7 @@ public class DistanceAgentTest extends TestCase {
         }
     }
 
+    @Test
     public void testGetSetDistanceQuery(){
 
         DistanceAgent distanceAgent = new DistanceAgent();
@@ -241,6 +251,7 @@ public class DistanceAgentTest extends TestCase {
         }
     }
 
+    @Test
     public void testSetDistance() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
 
         DistanceAgent distanceAgent = new DistanceAgent();

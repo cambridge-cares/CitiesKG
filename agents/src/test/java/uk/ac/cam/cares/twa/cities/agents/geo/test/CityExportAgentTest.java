@@ -1,8 +1,8 @@
 package uk.ac.cam.cares.twa.cities.agents.geo.test;
 
-import junit.framework.TestCase;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityExportAgent;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
@@ -12,8 +12,10 @@ import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.*;
 
-public class CityExportAgentTest extends TestCase {
+
+public class CityExportAgentTest {
 
     public String[] data = {"abc", "def"};
     public JSONArray testGmlIds = new JSONArray(data);
@@ -21,7 +23,7 @@ public class CityExportAgentTest extends TestCase {
     public String outFileName = "/test.kml";
     public String outTmpDir = "java.io.tmpdir";
 
-
+    @Test
     public void testNewCityExportAgent() {
         CityExportAgent agent;
         try {
@@ -32,7 +34,7 @@ public class CityExportAgentTest extends TestCase {
         }
     }
 
-
+    @Test
     public void testValidateInput()  {
         CityExportAgent agent = new CityExportAgent();
         Method validateInput = null;
@@ -149,7 +151,7 @@ public class CityExportAgentTest extends TestCase {
         }
     }
 
-
+    @Test
     public void testExportKml() {
         CityExportAgent agent = new CityExportAgent();
         Method exportKml = null;

@@ -7,7 +7,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -15,21 +14,18 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
-import junit.framework.TestCase;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
+import org.junit.jupiter.api.Test;
 import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
@@ -39,8 +35,11 @@ import uk.ac.cam.cares.twa.cities.tasks.NquadsExporterTask;
 import uk.ac.cam.cares.twa.cities.tasks.NquadsUploaderTask;
 import uk.ac.cam.cares.twa.cities.tasks.test.NquadsExporterTaskTest;
 
-public class CityImportAgentTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.*;
 
+public class CityImportAgentTest {
+
+  @Test
   public void testNewCityImportAgent() {
     CityImportAgent agent;
 
@@ -53,6 +52,7 @@ public class CityImportAgentTest extends TestCase {
 
   }
 
+  @Test
   public void testNewCityImportAgentFields() {
     CityImportAgent agent = new CityImportAgent();
 
@@ -176,11 +176,13 @@ public class CityImportAgentTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewCityImportAgentMethods() {
     CityImportAgent agent = new CityImportAgent();
     assertEquals(18, agent.getClass().getDeclaredMethods().length);
   }
 
+  @Test
   public void testValidateListenInput() {
     CityImportAgent agent = new CityImportAgent();
     Method validateListenInput = null;
@@ -211,6 +213,7 @@ public class CityImportAgentTest extends TestCase {
 
   }
 
+  @Test
   public void testValidateActionInput() {
     CityImportAgent agent = new CityImportAgent();
     Method validateListenInput = null;
@@ -239,6 +242,7 @@ public class CityImportAgentTest extends TestCase {
     }
   }
 
+  @Test
   public void testValidateDatabaseSrsInput() {
     CityImportAgent agent = new CityImportAgent();
     Method validateDatabaseSrsInput = null;
@@ -293,6 +297,7 @@ public class CityImportAgentTest extends TestCase {
     }
   }
 
+  @Test
   public void testValidateInput() {
     CityImportAgent agent = new CityImportAgent();
     Method validateInput = null;
@@ -315,33 +320,6 @@ public class CityImportAgentTest extends TestCase {
       assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
           BadRequestException.class);
     }
-    /*
-
-    try {
-      validateInput.invoke(agent, requestParams);
-    } catch (Exception e) {
-      assert e instanceof InvocationTargetException;
-      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-          BadRequestException.class);
-    }
-
-    try {
-      validateInput.invoke(agent, requestParams);
-    } catch (Exception e) {
-      assert e instanceof InvocationTargetException;
-      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-          BadRequestException.class);
-    }
-
-    try {
-      validateInput.invoke(agent, requestParams);
-    } catch (Exception e) {
-      assert e instanceof InvocationTargetException;
-      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-          BadRequestException.class);
-    }
-
-     */
 
     requestParams.put(CityImportAgent.KEY_REQ_METHOD, HttpMethod.GET);
 
@@ -419,7 +397,6 @@ public class CityImportAgentTest extends TestCase {
 
     requestParams.put(CityImportAgent.KEY_SRID, "123");
     requestParams.put(CityImportAgent.KEY_SRSNAME, "srsname");
-    //requestParams.put(CityImportAgent.KEY_DIRECTORY, System.getProperty("java.io.tmpdir"));
 
     try {
       assertTrue((Boolean) validateInput.invoke(agent, requestParams));
@@ -478,6 +455,7 @@ public class CityImportAgentTest extends TestCase {
 
   }
 
+  @Test
   public void testListenToImport() {
     CityImportAgent agent = new CityImportAgent();
     Method listenToImport = null;
@@ -502,6 +480,7 @@ public class CityImportAgentTest extends TestCase {
     // watching directory already tested in CreateFileWatcherTest
   }
 
+  @Test
   public void testImportFiles() {
     String fs = System.getProperty("file.separator");
     String forwardSlash = "/";
@@ -616,6 +595,7 @@ public class CityImportAgentTest extends TestCase {
     //other import functionality already tested in the corresponding tasks' tests
   }
 
+  @Test
   public void testSplitFile() {
     String fs = System.getProperty("file.separator");
     String forwardSlash = "/";
@@ -659,6 +639,7 @@ public class CityImportAgentTest extends TestCase {
 
   }
 
+  @Test
   public void testImportChunk() {
     String fs = System.getProperty("file.separator");
     String forwardSlash = "/";
@@ -713,6 +694,7 @@ public class CityImportAgentTest extends TestCase {
     //other import functionality already tested in the corresponding tasks' tests
   }
 
+  @Test
   public void testStartBlazegraphInstance() {
     String fs = System.getProperty("file.separator");
     String forwardSlash = "/";
@@ -751,6 +733,7 @@ public class CityImportAgentTest extends TestCase {
     //other functionality already tested in the corresponding task
   }
 
+  @Test
   public void testImportToLocalBlazegraphInstance() {
     String fs = System.getProperty("file.separator");
     String forwardSlash = "/";
@@ -782,6 +765,7 @@ public class CityImportAgentTest extends TestCase {
     //other functionality already tested in the corresponding task
   }
 
+  @Test
   public void testExportToNquads() {
     String fs = System.getProperty("file.separator");
     String forwardSlash = "/";
@@ -813,6 +797,7 @@ public class CityImportAgentTest extends TestCase {
     //other functionality already tested in the corresponding task
   }
 
+  @Test
   public void testUploadNQuadsFileToBlazegraphInstance() {
     CityImportAgent agent = new CityImportAgent();
     URI impUri;
@@ -836,6 +821,7 @@ public class CityImportAgentTest extends TestCase {
     //other functionality already tested in the corresponding task
   }
 
+  @Test
   public void testSetDatabaseSrs() {
     CityImportAgent agent = new CityImportAgent();
     Field targetUrl = null;
@@ -878,6 +864,7 @@ public class CityImportAgentTest extends TestCase {
     }
   }
 
+  @Test
   public void testGetSetDatabaseSrsUpdate() {
     CityImportAgent agent = new CityImportAgent();
 
@@ -903,8 +890,8 @@ public class CityImportAgentTest extends TestCase {
             "  ?srsname ocgml:srsname ?currentSrsname .\n" +
             "}\n" +
             "INSERT {\n" +
-            "  <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> ocgml:srid 123 .\n" +
-            "  <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql> ocgml:srsname \"test\" .\n" +
+            "  <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/> ocgml:srid 123 .\n" +
+            "  <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/> ocgml:srsname \"test\" .\n" +
             "}\n" +
             "WHERE\n" +
             "  { OPTIONAL\n" +
@@ -921,6 +908,7 @@ public class CityImportAgentTest extends TestCase {
     }
   }
 
+  @Test
   public void testArchiveImportFiles() {
     String fs = System.getProperty("file.separator");
     File archD = new File(System.getProperty("java.io.tmpdir") + "tstdir");
@@ -945,10 +933,6 @@ public class CityImportAgentTest extends TestCase {
           fail();
         }
         if (impFgmlPart.createNewFile()) {
-          /*CityImportAgent agent = new CityImportAgent();
-          Field serverExecutor = agent.getClass().getDeclaredField("serverExecutor");
-          serverExecutor.setAccessible(true);
-          serverExecutor.set(agent, Executors.newFixedThreadPool(CityImportAgent.NUM_SERVER_THREADS)); */
           assertEquals(CityImportAgent.archiveImportFiles(impFnq), archF.getAbsolutePath());
         } else {
           fail();

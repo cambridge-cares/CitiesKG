@@ -1,9 +1,9 @@
 package uk.ac.cam.cares.twa.cities.model.geo.test;
 
 import java.lang.reflect.Field;
-import junit.framework.TestCase;
 import org.apache.jena.query.Query;
 import org.json.JSONException;
+import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Point;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
@@ -16,11 +16,14 @@ import uk.ac.cam.cares.twa.cities.model.geo.Envelope;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class EnvelopeTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.*;
+
+public class EnvelopeTest {
 
     @Mock
     KnowledgeBaseClientInterface kgClientMock = Mockito.mock(RemoteKnowledgeBaseClient.class);
 
+    @Test
     public void testGetEnvelopeQuery(){
 
         Envelope envelope = new Envelope("EPSG:4326");
@@ -39,6 +42,7 @@ public class EnvelopeTest extends TestCase {
         }
     }
 
+    @Test
     public void testGetEnvelopeGraphUri()
         throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
 
@@ -55,6 +59,7 @@ public class EnvelopeTest extends TestCase {
         assertEquals("http://localhost/berlin/sparql/cityobject/", getEnvelopeGraphUri.invoke(envelope, uri));
     }
 
+    @Test
     public void testGetEnvelopeString(){
 
         Envelope envelope = new Envelope("EPSG:4326");
@@ -86,6 +91,7 @@ public class EnvelopeTest extends TestCase {
         }
     }
 
+    @Test
     public void testExtractEnvelopePoints(){
 
         Envelope envelope = new Envelope("EPSG:4326");
@@ -145,6 +151,7 @@ public class EnvelopeTest extends TestCase {
         assertEquals(0.0, envelope.getCentroid().getCoordinate().getZ());
     }
 
+    @Test
     public void testGetCentroid(){
 
         Envelope envelope = new Envelope("EPSG:4326");
@@ -163,6 +170,7 @@ public class EnvelopeTest extends TestCase {
         assertFalse(Double.isNaN(centroid2.getCoordinate().getZ()));
     }
 
+    @Test
     public void testGetCRS(){
         Envelope envelope = new Envelope("EPSG:4326");
         assertEquals(envelope.getCRS(),"EPSG:4326");
