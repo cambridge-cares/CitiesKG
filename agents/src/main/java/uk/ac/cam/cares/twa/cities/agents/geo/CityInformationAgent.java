@@ -81,7 +81,8 @@ public class CityInformationAgent extends JPSAgent {
         for (String key : agentKeyValuePairs.keySet()) {
           requestBody.put(key,agentKeyValuePairs.get(key));
         }
-        HttpPost request =  Http.post(agentURL, requestBody, "application/json","application/json", null);
+        String[] params = new String[0];
+        HttpPost request =  Http.post(agentURL, requestBody, "application/json","application/json", params);
         JSONObject response = new JSONObject(Http.execute(request));
 
         // specific agent response added to the city information response.
