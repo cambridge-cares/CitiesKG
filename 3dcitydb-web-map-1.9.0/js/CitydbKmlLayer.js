@@ -74,8 +74,8 @@
 
         //this._highlightColor = new Cesium.Color(16/255, 77/255, 151/255, 1.0);
         //this._mouseOverhighlightColor = new Cesium.Color(61/255, 141/255, 239/255, 1.0);
-        this._highlightColor = new Cesium.Color(60/255, 179/255, 113/255, 1.0);
-        this._mouseOverhighlightColor = new Cesium.Color(60/255, 179/255, 113/255, 0.6);
+        this._highlightColor = new Cesium.Color(65/255, 168/255, 255/255, 0.8);
+        this._mouseOverhighlightColor = new Cesium.Color(130/255, 187/255, 255/255, 1.0);
 
 
         this._layerDataType = options.layerDataType;

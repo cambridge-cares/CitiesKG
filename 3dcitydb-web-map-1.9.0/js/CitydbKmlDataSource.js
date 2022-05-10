@@ -1178,7 +1178,7 @@
         var canExtrude = isExtrudable(altitudeMode, gxAltitudeMode);
 
         var polygon = defined(styleEntity.polygon) ? styleEntity.polygon.clone() : createDefaultPolygon();
-        polygon.material.color = new Color(255 / 255, 255/ 255, 0/ 255, 0.2);
+        polygon.material.color = new Color(180 / 255, 180/ 255, 180/ 255, 0.5);
         var polyline = styleEntity.polyline;
         if (defined(polyline)) {
             //polygon.outlineColor = defined(polyline.material) ? polyline.material.color : Color.WHITE;
