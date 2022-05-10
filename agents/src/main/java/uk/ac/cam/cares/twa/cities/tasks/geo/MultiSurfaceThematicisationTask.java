@@ -107,7 +107,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
       if(params.mode == ThematicSurfaceDiscoveryAgent.Mode.SPLIT) {
         geoTouches();
       }else if (params.mode == ThematicSurfaceDiscoveryAgent.Mode.MERGE){
-
+        spatialRelation();
       }else {
         tryClassifyGeometries();
       }
