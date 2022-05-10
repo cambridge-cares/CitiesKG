@@ -3,10 +3,6 @@ package org.citydb.database.adapter.blazegraph;
 import org.apache.jena.datatypes.DatatypeFormatException;
 import org.apache.jena.sparql.expr.ExprEvalException;
 import org.citydb.config.geometry.GeometryObject;
-import org.gdal.ogr.ogr;
-import org.gdal.osr.CoordinateTransformation;
-import org.gdal.osr.SpatialReference;
-import org.gdal.osr.osr;
 import org.geotools.geometry.jts.GeometryBuilder;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
@@ -23,6 +19,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import org.gdal.ogr.ogr;
+import org.gdal.osr.CoordinateTransformation;
+import org.gdal.osr.SpatialReference;
+import org.gdal.osr.osr;
+
 
 public class GeoSpatialProcessor {
     public GeoSpatialProcessor() {
