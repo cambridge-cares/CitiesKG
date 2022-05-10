@@ -8,10 +8,18 @@ public class CEAOutputData {
     public ArrayList<String> electricity_demand = new ArrayList<>();
     public ArrayList<String> heating_demand = new ArrayList<>();
     public ArrayList<String> cooling_demand = new ArrayList<>();
-    public ArrayList<String> PV_area = new ArrayList<>();
-    public ArrayList<String> PV_supply = new ArrayList<>();
+    public ArrayList<String> PV_area_roof = new ArrayList<>();
+    public ArrayList<String> PV_area_wall_south = new ArrayList<>();
+    public ArrayList<String> PV_area_wall_north = new ArrayList<>();
+    public ArrayList<String> PV_area_wall_east = new ArrayList<>();
+    public ArrayList<String> PV_area_wall_west = new ArrayList<>();
+    public ArrayList<String> PV_supply_roof = new ArrayList<>();
+    public ArrayList<String> PV_supply_wall_south = new ArrayList<>();
+    public ArrayList<String> PV_supply_wall_north = new ArrayList<>();
+    public ArrayList<String> PV_supply_wall_east = new ArrayList<>();
+    public ArrayList<String> PV_supply_wall_west = new ArrayList<>();
     public String targetUrl;
-    public ArrayList<String> iri = new ArrayList<>();
+    public ArrayList<String> iris = new ArrayList<>();
     public List<List<List<?>>> timeSeries = new ArrayList<>();
     public List<String> times = new ArrayList<>();
 

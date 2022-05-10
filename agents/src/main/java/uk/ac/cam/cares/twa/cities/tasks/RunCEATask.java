@@ -82,67 +82,46 @@ public class RunCEATask implements Runnable {
         }
     }
 
-    public CEAOutputData extractAnnualOutputs(String tmpDir, CEAOutputData result) {
+    public CEAOutputData extractArea(String tmpDir, CEAOutputData result) {
         String line = "";
         String splitBy = ",";
         String projectDir = tmpDir+FS+"testProject";
 
         try{
             //parsing a CSV file into BufferedReader class constructor
-            FileReader demand = new FileReader(projectDir+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"demand"+FS+"Total_demand.csv");
             FileReader PV = new FileReader(projectDir+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"potentials"+FS+"solar"+FS+"PV_total_buildings.csv");
-            BufferedReader demand_file = new BufferedReader(demand);
             BufferedReader PV_file = new BufferedReader(PV);
-            ArrayList<String[]> demand_columns = new ArrayList<>();
             ArrayList<String[] > PV_columns = new ArrayList<>();
 
-            while ((line = demand_file.readLine()) != null)   //returns a Boolean value
-            {
-                String[] rows = line.split(splitBy);    // use comma as separator
-                demand_columns.add(rows);
-            }
-            for(int n=0; n<demand_columns.get(0).length; n++) {
-                 if(demand_columns.get(0)[n].equals("GRID_MWhyr")) {
-                     for(int m=1; m<demand_columns.size(); m++){
-                         Double value = Double.valueOf(demand_columns.get(m)[n])*1000;
-                         result.grid_demand.add(value.toString());
-                     }
-                 }
-                 else if(demand_columns.get(0)[n].equals("QH_sys_MWhyr")) {
-                     for(int m=1; m<demand_columns.size(); m++) {
-                         Double value = Double.valueOf(demand_columns.get(m)[n])*1000;
-                         result.heating_demand.add(value.toString());
-                     }
-                 }
-                 else if(demand_columns.get(0)[n].equals("QC_sys_MWhyr")) {
-                     for(int m=1; m<demand_columns.size(); m++) {
-                         Double value = Double.valueOf(demand_columns.get(m)[n])*1000;
-                         result.cooling_demand.add(value.toString());
-                     }
-                 }
-                 else if(demand_columns.get(0)[n].equals("E_sys_MWhyr")) {
-                     for(int m=1; m<demand_columns.size(); m++) {
-                         Double value = Double.valueOf(demand_columns.get(m)[n])*1000;
-                         result.electricity_demand.add(value.toString());
-                     }
-                 }
-            }
-            demand_file.close();
-            demand.close();
             while ((line = PV_file.readLine()) != null)   //returns a Boolean value
             {
                 String[] rows = line.split(splitBy);    // use comma as separator
                 PV_columns.add(rows);
             }
             for(int n=0; n<PV_columns.get(0).length; n++) {
-                if(PV_columns.get(0)[n].equals("E_PV_gen_kWh")) {
+                if(PV_columns.get(0)[n].equals("PV_roofs_top_m2")) {
                     for(int m=1; m<PV_columns.size(); m++) {
-                        result.PV_supply.add(PV_columns.get(m)[n]);
+                        result.PV_area_roof.add(PV_columns.get(m)[n]);
                     }
                 }
-                else if(PV_columns.get(0)[n].equals("Area_PV_m2")) {
+                else if(PV_columns.get(0)[n].equals("PV_walls_south_m2")) {
                     for(int m=1; m<PV_columns.size(); m++) {
-                        result.PV_area.add(PV_columns.get(m)[n]);
+                        result.PV_area_wall_south.add(PV_columns.get(m)[n]);
+                    }
+                }
+                else if(PV_columns.get(0)[n].equals("PV_walls_north_m2")) {
+                    for(int m=1; m<PV_columns.size(); m++) {
+                        result.PV_area_wall_north.add(PV_columns.get(m)[n]);
+                    }
+                }
+                else if(PV_columns.get(0)[n].equals("PV_walls_east_m2")) {
+                    for(int m=1; m<PV_columns.size(); m++) {
+                        result.PV_area_wall_east.add(PV_columns.get(m)[n]);
+                    }
+                }
+                else if(PV_columns.get(0)[n].equals("PV_walls_west_m2")) {
+                    for(int m=1; m<PV_columns.size(); m++) {
+                        result.PV_area_wall_west.add(PV_columns.get(m)[n]);
                     }
                 }
             }
@@ -152,7 +131,7 @@ public class RunCEATask implements Runnable {
 
         }
         result.targetUrl=endpointUri.toString();
-        result.iri=uris;
+        result.iris=uris;
         File file = new File(tmpDir);
         deleteDirectoryContents(file);
         file.delete();
@@ -185,7 +164,12 @@ public class RunCEATask implements Runnable {
                 ArrayList<String> heating_results = new ArrayList<>();
                 ArrayList<String> cooling_results = new ArrayList<>();
                 ArrayList<String> electricity_results = new ArrayList<>();
-                ArrayList<String> PV_results = new ArrayList<>();
+                ArrayList<String> PV_roof_results = new ArrayList<>();
+                ArrayList<String> PV_wall_south_results = new ArrayList<>();
+                ArrayList<String> PV_wall_north_results = new ArrayList<>();
+                ArrayList<String> PV_wall_east_results = new ArrayList<>();
+                ArrayList<String> PV_wall_west_results = new ArrayList<>();
+
                 List<String> timestamps = new ArrayList();
 
                 while ((line = demand_file.readLine()) != null)   //returns a Boolean value
@@ -238,9 +222,25 @@ public class RunCEATask implements Runnable {
                         for (int m = 1; m < PV_columns.size(); m++) {
                             timestamps.add(demand_columns.get(m)[n].replaceAll("\\s","T")+"+00:00");
                         }
-                    } else if(PV_columns.get(0)[n].equals("E_PV_gen_kWh")) {
+                    } else if(PV_columns.get(0)[n].equals("PV_roofs_top_E_kWh")) {
                         for(int m=1; m<PV_columns.size(); m++) {
-                            PV_results.add(PV_columns.get(m)[n]);
+                            PV_roof_results.add(PV_columns.get(m)[n]);
+                        }
+                    } else if(PV_columns.get(0)[n].equals("PV_walls_south_E_kWh")) {
+                        for(int m=1; m<PV_columns.size(); m++) {
+                            PV_wall_south_results.add(PV_columns.get(m)[n]);
+                        }
+                    } else if(PV_columns.get(0)[n].equals("PV_walls_north_E_kWh")) {
+                        for(int m=1; m<PV_columns.size(); m++) {
+                            PV_wall_north_results.add(PV_columns.get(m)[n]);
+                        }
+                    } else if(PV_columns.get(0)[n].equals("PV_walls_west_E_kWh")) {
+                        for(int m=1; m<PV_columns.size(); m++) {
+                            PV_wall_west_results.add(PV_columns.get(m)[n]);
+                        }
+                    } else if(PV_columns.get(0)[n].equals("PV_walls_east_E_kWh")) {
+                        for(int m=1; m<PV_columns.size(); m++) {
+                            PV_wall_east_results.add(PV_columns.get(m)[n]);
                         }
                     }
                 }
@@ -261,8 +261,20 @@ public class RunCEATask implements Runnable {
                         case "CoolingConsumptionMeasure" :
                             timeseriesdata.add(cooling_results);
                             break;
-                        case "PVSupplyMeasure" :
-                            timeseriesdata.add(PV_results);
+                        case "PVSupplyRoofMeasure" :
+                            timeseriesdata.add(PV_roof_results);
+                            break;
+                        case "PVSupplyWallSouthMeasure" :
+                            timeseriesdata.add(PV_wall_south_results);
+                            break;
+                        case "PVSupplyWallNorthMeasure" :
+                            timeseriesdata.add(PV_wall_north_results);
+                            break;
+                        case "PVSupplyWallEastMeasure" :
+                            timeseriesdata.add(PV_wall_east_results);
+                            break;
+                        case "PVSupplyWallWestMeasure" :
+                            timeseriesdata.add(PV_wall_west_results);
                             break;
                     }
                 }
@@ -347,7 +359,7 @@ public class RunCEATask implements Runnable {
                 runProcess(args3);
 
                 CEAOutputData result = extractTimeSeriesOutputs(strTmp);
-                returnOutputs(extractAnnualOutputs(strTmp,result));
+                returnOutputs(extractArea(strTmp,result));
 
             } catch ( NullPointerException | URISyntaxException e) {
                 e.printStackTrace();
