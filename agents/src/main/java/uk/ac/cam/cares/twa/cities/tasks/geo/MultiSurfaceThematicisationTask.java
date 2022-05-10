@@ -523,12 +523,16 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
           String cityObjectIri = params.namespace + SchemaManagerAdapter.CITY_OBJECT_GRAPH + SLASH + cityObject_uuid + SLASH;
           CityObject newCityObject = context.createNewModel(CityObject.class, cityObjectIri);
 
-          newGenericAttri.setAttrName(genAttribModel.get(0).getAttrName());
-          newGenericAttri.setDataType(genAttribModel.get(0).getDataType());
-          newGenericAttri.setStrVal(genAttribModel.get(0).getStrVal());
           ArrayList<GenericAttribute> newGenAttriList = new ArrayList<>();
-          newGenAttriList.add(newGenericAttri);
-          newGenericAttri.setCityObjectId(newCityObject.getId());
+          if (genAttribModel.size()>0) {
+            newGenericAttri.setAttrName(genAttribModel.get(0).getAttrName());
+            newGenericAttri.setDataType(genAttribModel.get(0).getDataType());
+            newGenericAttri.setStrVal(genAttribModel.get(0).getStrVal());
+            newGenAttriList.add(newGenericAttri);
+            newGenericAttri.setCityObjectId(newCityObject.getId());
+
+            newCityObject.setGenericAttributes(newGenAttriList);
+          }
 
           newCityObject.setGmlId(cityObject_uuid);
           newCityObject.setObjectClassId(cityObjectModel.getObjectClassId());
@@ -536,7 +540,6 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
           newCityObject.setCreationDate(OffsetDateTime.now().toString());
           newCityObject.setLastModificationDate(OffsetDateTime.now().toString());
           newCityObject.setUpdatingPerson(UPDATING_PERSON);
-          newCityObject.setGenericAttributes(newGenAttriList);
 
           newRootSurface.setGmlId(rootSurface_uuid);
           newRootSurface.setRootId(URI.create(rootSurfaceIri));
