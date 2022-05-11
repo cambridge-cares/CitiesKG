@@ -66,7 +66,6 @@ var KMLDataSource = /** @class */ (function (_super) {
                         else {
                             result[key] = data[key];
                         }
-
                     }
                 }
             }
@@ -86,6 +85,9 @@ var KMLDataSource = /** @class */ (function (_super) {
                     break;
                 case 3:
                     value = object["realVal"];
+                    break;
+                case 4:
+                    value = object["uriVal"];
                     break;
                 default:
                     value = object["strVal"];
