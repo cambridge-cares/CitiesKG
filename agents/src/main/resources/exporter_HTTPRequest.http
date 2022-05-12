@@ -1,6 +1,13 @@
 POST http://localhost:8080/agents/export/kml
 Content-Type: application/json
 
-{"gmlid":  ["http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/*/"]}
+// specify "gmlid" with a list of gmlids or * to export the whole namespace, e.g., ["http://10.25.182.103:9999/blazegraph/namespace/URA_testdata/sparql/cityobject/*/"]
+// specify "outputpath": a local directory where the data can be export, the path need to be valid
+//
+
+
+{"gmlid":  ["http://10.25.182.103:9999/blazegraph/namespace/URA_testdata/sparql/cityobject/*/"],
+ "directory":  "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder"
+}
 
 
