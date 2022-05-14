@@ -234,10 +234,8 @@ public class StatementTransformer {
                 "SELECT ?id ?objectclass_id ?gmlid\n" +
                 "FROM <" + IRI_GRAPH_BASE + "cityobject/> \n" +
                 "\nWHERE\n " +
-                "{ ?id ocgml:objectClassId  ?objectclass_id ; ocgml:gmlId ?gmlid ."
-                + "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )}"
-                + "LIMIT 50000");
-
+                "{ ?id ocgml:objectClassId  ?objectclass_id ; \n ocgml:gmlId ?gmlid . \n"
+                + "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )}");
 
         } else {
             // for single object also multiple objects

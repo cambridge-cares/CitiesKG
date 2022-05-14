@@ -19,10 +19,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import org.gdal.ogr.ogr;
-import org.gdal.osr.CoordinateTransformation;
-import org.gdal.osr.SpatialReference;
-import org.gdal.osr.osr;
 
 
 public class GeoSpatialProcessor {
@@ -59,7 +55,7 @@ public class GeoSpatialProcessor {
     }
 
     /* Method using osgeo gdal CoordinateTransformation */
-
+/**
     public Geometry reProject (Geometry sourceGeom, int from_epsg, int to_epsg) {
 
         Coordinate[] coordinates = sourceGeom.getCoordinates();
@@ -94,7 +90,7 @@ public class GeoSpatialProcessor {
 
         return null;
     }
-
+**/
 
 
     /**

@@ -1,12 +1,16 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
+import com.google.gson.JsonElement;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.openrdf.query.algebra.Str;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
@@ -47,16 +51,19 @@ public class CityExportAgent extends JPSAgent {
     public static final String KEY_DIR = "directory";
     public static final String KEY_REQ_URL = "requestUrl";
     public static final String KEY_REQ_METHOD = "method";
+    public static final String KEY_NAMESPACE = "namespace";
 
     // Export files names
     private String outFileName = "test";
     private String outFileExtension = ".kml";
 
     private String outTmpDir;
+    private String namespaceIri;
     private String requestUrl;
-    private String[] gmlids;
+    private JSONArray gmlidParams;
     private String directory;
     private JSONObject serverInfo;
+
 
     // Default task parameters
     //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
@@ -68,13 +75,13 @@ public class CityExportAgent extends JPSAgent {
     public JSONObject processRequestParameters(JSONObject requestParams) {
         JSONObject result = new JSONObject();
 
-
         if (validateInput(requestParams)) {
             requestUrl = requestParams.getString(KEY_REQ_URL);
-            gmlids = getInputGmlids(requestParams); // this method will process the input when it is a path or an array of gmlid
-            serverInfo = getServerInfo(requestParams.getJSONArray(KEY_GMLID).get(0).toString());
+            namespaceIri = requestParams.getString(KEY_NAMESPACE);
+            serverInfo = getServerInfo(namespaceIri);
             directory = requestParams.getString(KEY_DIR);
 
+            //gmlids = getInputGmlids(requestParams); // this method will process the input when it is a path or an array of gmlid
             // If gmlid contains "*", it requires the whole list of gmlid from the namespace
             // This step can take long as querying the database is long with this sparql query
             // 3 modes:
@@ -82,10 +89,12 @@ public class CityExportAgent extends JPSAgent {
             // 1.2) [*]
             // 2) explicit gmlids
 
-            if (Files.exists(Paths.get(gmlids[1]))) {
-                String rootDir = gmlids[1];
+            gmlidParams = requestParams.getJSONArray(KEY_GMLID);
+
+            if (gmlidParams.length() == 2 && gmlidParams.get(0).equals("*")) {
+                String preparedGmlids = gmlidParams.get(1).toString();
                 ArrayList<Path> fileList = new ArrayList<>();
-                try (Stream<Path> paths = Files.walk(Paths.get(rootDir))) {
+                try (Stream<Path> paths = Files.walk(Paths.get(preparedGmlids))) {
                     paths
                         .filter(Files::isRegularFile)
                         .forEach(fileList::add);
@@ -94,12 +103,19 @@ public class CityExportAgent extends JPSAgent {
                 }
 
                 for (Path gmlidFile : fileList) {
+                    // Retrieve a list of gmlids from a file, and execute the export process
                     String[] gmlidArray = getGmlidFromFile(gmlidFile);
                     String outputFileName = getOutputPath(gmlidFile);
                     result.put("outputPath", exportKml(gmlidArray, outputFileName, serverInfo));
                 }
             }else{
-                result.put("outputPath", exportKml(gmlids, getOutputPath(), serverInfo));
+                ArrayList<String> buildingIds = new ArrayList<>();
+                for (Object id : gmlidParams) {
+                    buildingIds.add(id.toString());
+                }
+                String[] gmlidsArray = new String[buildingIds.size()];
+                gmlidsArray = buildingIds.toArray(gmlidsArray);
+                result.put("outputPath", exportKml(gmlidsArray, getOutputPath(), serverInfo));
             }
 
         }
@@ -111,63 +127,36 @@ public class CityExportAgent extends JPSAgent {
     @Override
     public boolean validateInput(JSONObject requestParams) throws BadRequestException {
 
-        boolean error = true;
-        if (!requestParams.isEmpty()) {
+        if (!requestParams.isEmpty() && requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.POST)) {
             Set<String> keys = requestParams.keySet();
-            if (keys.contains(KEY_REQ_METHOD)) {
-                if (requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.POST)) {
-                    try {
-                        // Check if gmlid is empty
-                        if (!requestParams.getJSONArray(KEY_GMLID).isEmpty()){
-                            error = false;
+            try {
+                // Check if namespace is empty or valid
+                if (!requestParams.getString(KEY_NAMESPACE).isEmpty()){
+                    namespaceIri = new URI(requestParams.getString(KEY_NAMESPACE)).toString();
+                }
+                // Check if gmlid is empty or valid
+                if (!requestParams.getJSONArray(KEY_GMLID).isEmpty()){
+                    JSONArray gmlidArgs = requestParams.getJSONArray(KEY_GMLID);
+                    if (gmlidArgs.length() == 2 && gmlidArgs.get(0).equals("*")) {
+                        // For the * case: Check if the second field of gmlid array is valid director
+                        if (!Files.exists(Paths.get(gmlidArgs.get(1).toString()))){
+                            throw new BadRequestException("Error: The prepared_gmlid directory does not exist.");
                         }
-                        // Check if the output directory is empty or valid
-                        if (!requestParams.getString(KEY_DIR).isEmpty() && Files.exists(Paths.get(requestParams.getString(KEY_DIR)))) {
-                            System.out.println("Valid directory: " + requestParams.getString(KEY_DIR));
-                        } else {
-                            System.out.println("Error: The given input directory is invalid");
-                            error = false;
-                        }
-
-                    } catch (Exception e) {
-                        throw new BadRequestException();
                     }
                 }
+                // Check if the output directory is empty or valid
+                if (!requestParams.getString(KEY_DIR).isEmpty() && Files.exists(Paths.get(requestParams.getString(KEY_DIR)))) {
+                    System.out.println("Valid directory: " + requestParams.getString(KEY_DIR));
+                } else {
+                    throw new BadRequestException("Error: The given input directory is invalid");
+                }
+
+                return true;
+            } catch (Exception e) {
+                throw new BadRequestException();
             }
         }
-        if (error) {
-            throw new BadRequestException();
-        }
-        return !error;
-    }
-
-    /**
-     * retrieves a list of gmlids from a list of CityObjectUris.
-     *
-     * @param requestParams requestParams sent to the agent
-     * @return a list of gmlids as string[].
-     */
-    private String[] getInputGmlids (JSONObject requestParams) {
-
-        ArrayList<String> uris = new ArrayList<>();
-        JSONArray uriGmlids = requestParams.getJSONArray(KEY_GMLID);
-
-        for (Object iri : uriGmlids) {
-            uris.add(iri.toString());
-        }
-
-        if (uris == null || uris.size() == 0){
-            return null;
-        }
-
-        String[] gmlids = new String[uris.size()];
-
-        for (int i = 0; i < uris.size(); ++i){
-            String[] elemnets = uris.get(i).split("/");
-            gmlids[i] = elemnets[elemnets.length-1];
-        }
-
-        return gmlids;
+        throw new BadRequestException();
     }
 
     private String[] getGmlidFromFile(Path gmlidFile){
@@ -186,28 +175,41 @@ public class CityExportAgent extends JPSAgent {
         return gmlidsArray;
     }
 
-    private String getOutputPath (Path gmlidFile) {
-        //ResourceBundle rb = ResourceBundle.getBundle("config");
-        //outTmpDir = rb.getString("outputDir") + "export";
-        outTmpDir = Paths.get(directory, "export").toString();
-        File outputdir = new File (outTmpDir);
-        if (!outputdir.exists()){
-            outputdir.mkdirs();
+    /**
+     * create the output path of the generated kml file for indexed input files.
+     * @param - indexed file
+     * @return - the output location of the kml file
+     */
+    private String getOutputPath (Path inputFile) {
+
+        File outputDir = new File (Paths.get(directory, "export").toString());
+        if (!outputDir.exists()){ outputDir.mkdirs(); }
+
+        if (inputFile ==  null) {
+            return Paths.get(outputDir.toString(), outFileName + outFileExtension).toString();
         }
-        String path = gmlidFile.toString().replace("\\", "/");
+
+        String path = inputFile.toString().replace("\\", "/");
         String[] elem = path.split("/");
-        //String index = elem[elem.length-1].replaceAll("[^0-9]", "");
-        String filename = elem[elem.length-1];
+        String filename = elem[elem.length - 1];
         String index = filename.substring(filename.indexOf("_") + 1, filename.indexOf("."));
         String exportFilename = outFileName + "_" + index + outFileExtension;
-        String outputPath = Paths.get(outTmpDir, exportFilename).toString();
-        return outputPath;
+        return Paths.get(outputDir.toString(), exportFilename).toString();
+
+    }
+
+    /**
+     * create the output path of the generated kml file as default no arguments.
+     * @return the output location of the kml file
+     */
+    private String getOutputPath () {
+        return getOutputPath(null);
     }
 
     /**
      * retrieves the server information from the endpointUri -- host, port, namespace
      *
-     * @param  - requestParams sent to the agent
+     * @param  - endpointUri which is namespaceIri that contains
      * @return - JSONObject with key/value: host, port, namespace
      */
 
@@ -228,7 +230,7 @@ public class CityExportAgent extends JPSAgent {
             port = serverport[1];
         }
 
-        String[] subarray = Arrays.copyOfRange(splitstr, 3, 7);
+        String[] subarray = Arrays.copyOfRange(splitstr, 3, splitstr.length);
         String namespace = "/" + String.join("/", subarray) + "/";
 
         if (server.isEmpty() || port.isEmpty() || namespace.isEmpty()) {
@@ -238,24 +240,6 @@ public class CityExportAgent extends JPSAgent {
         serverInfo.put ("port", port);
         serverInfo.put ("namespace", namespace);
         return serverInfo;
-    }
-
-    /**
-     * define the output path of the generated kml file.
-     *
-     * the root folder is predefined in config.properties, a folder called export will be created
-     * @return the output location of the kml file
-     */
-    private String getOutputPath () {
-        //esourceBundle rb = ResourceBundle.getBundle("config");
-        //outTmpDir = rb.getString("outputDir") + "export";
-        outTmpDir = Paths.get(directory, "export").toString();
-        File outputdir = new File (outTmpDir);
-        if (!outputdir.exists()){
-            outputdir.mkdirs();
-        }
-        String outputPath = Paths.get(outTmpDir, outFileName, outFileExtension).toString();
-        return outputPath;
     }
 
     private String exportKml (String[] gmlIds, String outputpath, JSONObject serverInfo){
