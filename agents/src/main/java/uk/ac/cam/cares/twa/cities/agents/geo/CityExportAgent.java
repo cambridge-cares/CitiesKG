@@ -52,6 +52,8 @@ public class CityExportAgent extends JPSAgent {
     public static final String KEY_REQ_URL = "requestUrl";
     public static final String KEY_REQ_METHOD = "method";
     public static final String KEY_NAMESPACE = "namespace";
+    public static final String KEY_LOD = "lod";
+    public static final String KEY_DISPLAYFORM = "displayform";
 
     // Export files names
     private String outFileName = "test";
@@ -63,6 +65,8 @@ public class CityExportAgent extends JPSAgent {
     private JSONArray gmlidParams;
     private String directory;
     private JSONObject serverInfo;
+    private int lod;
+    private String displayForm;
 
 
     // Default task parameters
@@ -150,6 +154,14 @@ public class CityExportAgent extends JPSAgent {
                 } else {
                     throw new BadRequestException("Error: The given input directory is invalid");
                 }
+
+                // Check if the LOD is within 1 - 3
+
+
+                // Check the displayform
+
+
+
 
                 return true;
             } catch (Exception e) {
