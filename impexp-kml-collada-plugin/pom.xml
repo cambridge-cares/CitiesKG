@@ -96,5 +96,10 @@
       <version>1.5.2</version>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>org.gdal</groupId>
+      <artifactId>gdal</artifactId>
+      <version>3.4.0</version>
+    </dependency>
   </dependencies>
 </project>
