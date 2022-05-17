@@ -15,14 +15,17 @@ def assign_gpr(plots, plot_type, lh, buffer, gpr1, gpr2, gpr3, storeys2, storeys
         lh_cont = lh.geometry.contains(plots.loc[plot, 'geometry'])
         lh_int = lh.geometry.intersects(plots.loc[plot, 'geometry'].buffer(buffer))
         context_int = plots.geometry.intersects(plots.loc[plot, 'geometry'].buffer(buffer))
+
         # contained within landed housing boundary case
         if lh_cont.any():
             plots.loc[plot, 'GPR'] = gpr1
             plots.loc[plot, 'context_storeys'] = lh.loc[lh_cont, 'STY_HT'].min()
+
         # instersection with the landed housing fringe case
         elif lh_int.any():
             plots.loc[plot, 'GPR'] = gpr2
             plots.loc[plot, 'context_storeys'] = storeys2
+
         # intersection with surrouding area case
         elif (plots.loc[context_int, 'GPR'].mean() > 1.4) or (plots.loc[context_int, 'PlotType'].isin(['BUSINESS 1', 'BUSINESS 2', 'BUSINESS PARK']).any()):
             plots.loc[plot, 'GPR'] = gpr3
@@ -35,7 +38,8 @@ def retrieve_number_of_storeys(plots_for_GFA, hc_int, sb_int, udr_int):
         plot_id = plots_for_GFA.loc[i, 'PlotId']
         height_control = hc_int.loc[hc_int['PlotId'] == plot_id, :]
         street_block = sb_int.loc[sb_int['PlotId'] == plot_id, :]
-        urban_guidelines = udr_int.loc[udr_int['PlotId'] == plot_id, :]
+        urban_guidelines = udr_int.loc[udr_int['PlotId'] == plot_id, :].copy()
+        urban_guidelines = urban_guidelines.loc[~urban_guidelines["Storeys"].isna()]
 
         if not pd.isna(plots_for_GFA.loc[i, 'context_storeys']):
             min_storey = plots_for_GFA.loc[i, 'context_storeys']
@@ -83,7 +87,8 @@ def retrieve_number_of_storeys(plots_for_GFA, hc_int, sb_int, udr_int):
 
 
 def retrieve_edge_setback(plots_for_GFA: pd.DataFrame, plots: pd.DataFrame, dcp: pd.DataFrame, sb_int: pd.DataFrame,
-                          plots_in_control: List[str], plots_in_streetblocks: List[str]) -> dict:
+                          udr: pd.DataFrame, plots_in_control: List[str], plots_in_streetblocks: List[str],
+                          plots_in_urban_design_guidelines: List[str]) -> dict:
     plot_setbacks = {plot_id: {} for plot_id in plots_for_GFA['PlotId'].unique()}
     count = 0
 
@@ -132,7 +137,16 @@ def retrieve_edge_setback(plots_for_GFA: pd.DataFrame, plots: pd.DataFrame, dcp:
                     if not pd.isna(cur_setbacks).all():
                         if len(cur_setbacks) == 1:
                             cur_setbacks = cur_setbacks[0]
-                        setbacks['default'][i] = cur_setbacks
+                        for setback in setbacks.keys():
+                            setbacks[setback][i] = cur_setbacks
+
+        #  set setbacks if urban guideline setbacks apply
+        if plot_id in plots_in_urban_design_guidelines:
+            for i, edge in enumerate(plot_row.loc['edges']):
+                edge_setback = find_udr_edge_setback(edge, udr)
+                if edge_setback is not None:
+                    for setback in setbacks.keys():
+                        setbacks[setback][i] = edge_setback
 
         # reset edge setback to 0 if they are partywall edges.
         if plot_row["Party_Wall"]:
@@ -143,7 +157,6 @@ def retrieve_edge_setback(plots_for_GFA: pd.DataFrame, plots: pd.DataFrame, dcp:
 
         sys.stdout.write("{:d}/{:d} plots processed\r".format(count + 1, plots_for_GFA.shape[0]))
     sys.stdout.write("{:d}/{:d} plots processed\n".format(count + 1, plots_for_GFA.shape[0]))
-
     return plot_setbacks
 
 
@@ -152,7 +165,6 @@ def _reset_road_setbacks(plot_row, setbacks, road_setbacks):
         for i in plot_row.loc[category]:
             for edge_setback in setbacks.keys():
                 setbacks[edge_setback][i] = setback
-
     return setbacks
 
 
@@ -160,7 +172,6 @@ def compute_gfa(plots_for_GFA, plot_setbacks, dcp):
 
     gfas = {plot_id: {} for plot_id in plots_for_GFA['PlotId'].unique()}
     count = 0
-
     for count, plot in enumerate(plots_for_GFA.index):
         plot_row = plots_for_GFA.loc[plot, :]
         plot_id = plot_row.loc["PlotId"]
@@ -183,8 +194,8 @@ def compute_gfa(plots_for_GFA, plot_setbacks, dcp):
                     plot_storeys = [min(control_storeys, storeys) for storeys in plot_storeys]
             # No minimum storeys
             if not plot_storeys:
-                plot_gfa = plot_row["GPR_GFA"]
-                #plot_gfa = float("NaN")
+                #plot_gfa = plot_row["GPR_GFA"]
+                plot_gfa = float("NaN")
             # Minimum storeys apply
             else:
                 subtype_setbacks = setbacks[subtype]
@@ -231,12 +242,24 @@ def compute_gfa(plots_for_GFA, plot_setbacks, dcp):
                             storey_area = plot_area * site_coverage
                     plot_gfa += storey_area
                 # Use the minimum of the computed GFA and GFA based on GPR
-                plot_gfa = min(plot_gfa, plot_row.loc["GPR_GFA"])
+                #plot_gfa = min(plot_gfa, plot_row.loc["GPR_GFA"])
             plot_gfas[subtype] = plot_gfa
         gfas[plot_id] = plot_gfas
         sys.stdout.write("{:d}/{:d} plots processed\r".format(count + 1, plots_for_GFA.shape[0]))
     sys.stdout.write("{:d}/{:d} plots processed\n".format(count + 1, plots_for_GFA.shape[0]))
     return gfas
+
+
+def find_udr_edge_setback(edge, udr):
+    buffered_edge = edge.buffer(3, single_sided=True)
+    udr_int = (udr.loc[~udr["Setbacks"].isna(), :].geometry.intersection(buffered_edge)
+               .apply(lambda g: g.area)) / buffered_edge.area
+    udr_valid_int = udr_int.index[udr_int > 0.3]
+    setback = None
+    if not udr_valid_int.empty:
+        udr_index = udr_int.loc[udr_valid_int].sort_values(ascending=False).index[0]
+        setback = udr.loc[udr_index, "Setbacks"]
+    return setback
 
 
 def find_edge_type(edge, rectangle_edges) -> str:
@@ -450,22 +473,28 @@ def run_estimate_gfa():
     """
     lh = gpd.read_file(fn_landed_housing).to_crs(3857) # landed housing areas
     lh['STY_HT'] = lh['STY_HT'].map({'3-STOREY': 3, '2-STOREY': 2})
+
     con = gpd.read_file(fn_con).to_crs(epsg=3857) # conservation areas
+
     hc = gpd.read_file(fn_hc).to_crs(epsg=3857) # height controls
     hc.loc[hc['BLD_HT_STY'] == '> 50', 'BLD_HT_STY'] = '100'
     hc['BLD_HT_STY'] = pd.to_numeric(hc['BLD_HT_STY'])
+
     sb = gpd.read_file(fn_sb_boundary).to_crs(epsg=3857) # street blocks
     sb_reg = pd.read_excel(fn_sb_reg, engine='openpyxl')
     sb = sb.merge(sb_reg, on="INC_CRC")
     sb = to_list(sb, 'Setback_Front')
     sb = to_list(sb, 'Setback_Side')
     sb = to_list(sb, 'Setback_Rear')
+
     udr = gpd.read_file(fn_udr).to_crs(epsg=3857) # urban design guidelines
     udr['Storeys'] = pd.to_numeric(udr['Storeys'], errors='coerce')
     udr = to_bool(udr, 'Party_Wall')
+
     dcp = pd.read_excel(fn_control_plans) # development control  plans
     dcp['type_context'].fillna(value='default', inplace=True)
     dcp['type_property'].fillna(value='default', inplace=True)
+
     rn_lta = gpd.read_file(fn_roads).to_crs(epsg=3857) # road network
     rn_lta = rn_lta[~rn_lta['RD_TYP_CD'].isin(['Cross Junction', 'T-Junction', 'Expunged', 'Other Junction', 'Pedestrian Mall',
                                    '2 T-Junction opposite each other', 'Unknown', 'Y-Junction', 'Imaginary Line', 'Slip Road'])]
@@ -487,6 +516,12 @@ def run_estimate_gfa():
     hc_int = intersect_with_regulation(plots, hc, 0.1)
     sb_int = intersect_with_regulation(plots, sb, 0.1)
     udr_int = intersect_with_regulation(plots, udr, 0.1)
+
+    # to identify which plots setbacks should apply from udr. Doing it separately makes it faster.
+    plots_for_setbacks = plots.copy()
+    udr_setback_int = intersect_with_regulation(
+        gpd.GeoDataFrame(plots_for_setbacks, geometry=plots_for_setbacks.buffer(3)),
+        udr.loc[~udr["Setbacks"].isna(), :], 0)
 
     """
     Assign GPR for plots with EDUCATIONAL INSTITUTION, CIVIC & COMMUNITY INSTITUTION and PLACE OF WORSHIP zoning type.
@@ -510,10 +545,11 @@ def run_estimate_gfa():
     plots['GPR_GFA'] = plots['GPR'] * plots['site_area']
 
     # id list of plots that overlap with hc areas that are "SUBJECT TO DETAILED CONTROL" or "CONSERVATION" type.
+    type_dropped = ['MONUMENT', 'CONSERVATION', 'SUBJECT TO DETAILED CONTROL']
     plots_in_con = set(con_int['PlotId'].unique())
     plots_hc_unclear = (hc_int.loc[:, ["PlotId", "BLD_HT_STY"]].groupby("PlotId").apply(lambda plot: plot.isnull().values.any()))
     plots_hc_unclear = set(plots_hc_unclear.index[plots_hc_unclear])
-    plots_udr_unclear = (udr_int.loc[:, ["PlotId", "Storeys"]].groupby("PlotId").apply(lambda plot: plot.isnull().values.any()))
+    plots_udr_unclear = (udr_int.loc[:, ["PlotId", "Type"]].groupby("PlotId").apply(lambda plot: plot.isin(type_dropped).values.any()))
     plots_udr_unclear = set(plots_udr_unclear.index[plots_udr_unclear])
 
     # combined list of unclear plot ids.
@@ -566,19 +602,28 @@ def run_estimate_gfa():
     setback_names = ['Setback_Front', 'Setback_Side', 'Setback_Rear']
     plots_in_streetblocks = []
     plots_in_control = []
-    for plot in plots_for_GFA.index:
+    plots_in_urban_design_guidelines = []
+    count = 0
+    for count, plot in enumerate(plots_for_GFA.index):
         plot_id = plots_for_GFA.loc[plot, 'PlotId']
         street_block = sb_int.loc[sb_int['PlotId'] == plot_id, :]
+        urban_design_guideline = udr_setback_int.loc[udr_setback_int['PlotId'] == plot_id, :]
+
         if not street_block.empty:
             street_block = street_block.iloc[0]
             if not np.all([pd.isna(street_block.loc[col][0]) for col in setback_names]):
                 plots_in_streetblocks.append(plot_id)
+
+        if not urban_design_guideline.empty:
+            plots_in_urban_design_guidelines.append(plot_id)
+
         plot_type = plots_for_GFA.loc[plot, 'PlotType']
         dcp_zone_type = dcp.loc[dcp['Zone'] == plot_type, :]
         if not dcp_zone_type["setback_common"].isna().all():
             plots_in_control.append(plot_id)
 
-    plot_setbacks = retrieve_edge_setback(plots_for_GFA, plots, dcp, sb_int, plots_in_control, plots_in_streetblocks)
+    plot_setbacks = retrieve_edge_setback(plots_for_GFA, plots, dcp, sb_int, udr,
+                                              plots_in_control, plots_in_streetblocks, plots_in_urban_design_guidelines)
     print('Setbacks set')
 
     """
