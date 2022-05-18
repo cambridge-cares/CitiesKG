@@ -241,6 +241,7 @@ public class UtilAdapter extends AbstractUtilAdapter {
      * @param connection   - database connection
      * @return GeometryObject - make sure the incoming and outgoing has the same format (dimension)
      */
+
     @Override
     protected GeometryObject transform(GeometryObject geometry, DatabaseSrs targetSrs, Connection connection) throws SQLException {
 

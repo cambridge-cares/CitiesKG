@@ -1552,7 +1552,6 @@ public abstract class KmlGenericObject<T> {
 					}
 				}
 
-
 			} else
 			{// Require the GeoSpatialProcessor to post-process the data, return only 1 entry after ST_UNION
 				ArrayList<String> simpleGeom = new ArrayList<>();
@@ -3130,6 +3129,7 @@ public abstract class KmlGenericObject<T> {
 			pointCoords = convertedPointGeom.getCoordinates(0);
 
 			return pointCoords;
+
 		}
 
 		protected GeometryObject convertToWGS84 (GeometryObject geomObj) throws SQLException {
