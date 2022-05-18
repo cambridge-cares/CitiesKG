@@ -1911,7 +1911,7 @@ public abstract class KmlGenericObject<T> {
 		return placemarkList;
 	}
 
-	protected List<PlacemarkType> createPlacemarksForGeometry_geospatila(ResultSet _rs, KmlSplittingResult work) throws SQLException {
+	protected List<PlacemarkType> createPlacemarksForGeometry_geospatial(ResultSet _rs, KmlSplittingResult work) throws SQLException {
 
 		HashSet<String> exportedGmlIds = new HashSet<String>();
 		HashMap<String, MultiGeometryType> multiGeometries = new HashMap<String, MultiGeometryType>();
@@ -1922,7 +1922,7 @@ public abstract class KmlGenericObject<T> {
 
 		SpatialReference nativeSr = new SpatialReference("");
 		DatabaseSrs srs = databaseAdapter.getConnectionMetaData().getReferenceSystem();
-		nativeSr.SetFromUserInput(srs.getDatabaseSrsName());//need to get srid from blazegraph
+		nativeSr.SetFromUserInput(srs.getGMLSrsName());//need to get srid from blazegraph
 		SpatialReference tagetSr = new SpatialReference("");
 		tagetSr.SetFromUserInput("EPSG:4326"); // WGS84
 		CoordinateTransformation transform = CoordinateTransformation.CreateCoordinateTransformation(nativeSr, tagetSr);;
@@ -1932,7 +1932,7 @@ public abstract class KmlGenericObject<T> {
 		while (_rs.next()) {
 //			AffineTransformer transformer = globalTransformer;
 
-			int surfaceTypeID = 0; //temporary use
+			int surfaceTypeID = _rs.getInt("surftype");
 			if (surfaceTypeID != 0
 					&& (Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BUILDING_CLOSURE_SURFACE
 					|| Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BRIDGE_CLOSURE_SURFACE
@@ -1970,17 +1970,26 @@ public abstract class KmlGenericObject<T> {
 				}
 
 				org.gdal.ogr.Geometry geom_poly = new org.gdal.ogr.Geometry(ogrConstants.wkbPolygon);
-
 				Coordinate[] coordinates = geospatial.str2coords(rsGeometry.toString()).toArray(new Coordinate[0]);
-				org.gdal.ogr.Geometry geomRing = new org.gdal.ogr.Geometry(ogr.wkbLinearRing);
 
-				for (int i = 0; i < coordinates.length; i++) {
-					double[] unconvertPoint = new double[]{coordinates[i].getX(), coordinates[i].getY(), coordinates[i].getZ()};
-					transform.TransformPoint(unconvertPoint);
-					geomRing.AddPoint(unconvertPoint[0], unconvertPoint[1], unconvertPoint[2]);
+				String datatype = _rs.getObject("datatype").toString();
+				String[] datatype_parts = datatype.split("-");
+				int coor_index = 0;
+				for (int s = 2; s < datatype_parts.length; s++) {
+					int pointCount = Integer.parseInt(datatype_parts[s]) / 3;
+					org.gdal.ogr.Geometry geomRing = new org.gdal.ogr.Geometry(ogr.wkbLinearRing);
+					for (int i = 0; i < pointCount; i++) {
+						double[] unconvertPoint = new double[]{coordinates[coor_index+i].getX(), coordinates[coor_index+i].getY(), coordinates[coor_index+i].getZ()};
+						transform.TransformPoint(unconvertPoint);
+						geomRing.AddPoint(unconvertPoint[0], unconvertPoint[1], unconvertPoint[2]);
+						if ( i == pointCount-1){
+							coor_index = coor_index + pointCount;
+						}
+					}
+					geom_poly.AddGeometry(geomRing);
 				}
 
-				geom_poly.AddGeometry(geomRing);
+
 
 //				}
 					eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
@@ -2010,6 +2019,7 @@ public abstract class KmlGenericObject<T> {
 					double ny = 0;
 					double nz = 0;
 
+
 					for (int i = 0; i < geom_poly.GetGeometryCount(); i++) {
 						org.gdal.ogr.Geometry getRing = geom_poly.GetGeometryRef(i);
 						LinearRingType linearRing = kmlFactory.createLinearRingType();
@@ -2023,37 +2033,37 @@ public abstract class KmlGenericObject<T> {
 
 						for(int j = 0; j< getRing.GetPointCount(); j++) {
 							// order points clockwise
-							double[] ordinatesArray = getRing.GetPoint(j);
-							linearRing.getCoordinates().add(String.valueOf(reducePrecisionForXorY(ordinatesArray[1]) + ","
-									+ reducePrecisionForXorY(ordinatesArray[0]) + ","
-									+ reducePrecisionForZ(ordinatesArray[2] + zOffset)));
+//							double[] ordinatesArray = getRing.GetPoint(j);
+							linearRing.getCoordinates().add(String.valueOf(reducePrecisionForXorY(getRing.GetY(j)) + ","
+									+ reducePrecisionForXorY(getRing.GetX(j)) + ","
+									+ reducePrecisionForZ(getRing.GetZ(j) + zOffset)));
 
 								// not touching the ground
-								probablyRoof = probablyRoof && (reducePrecisionForZ(ordinatesArray[2] - lowestZCoordinate) > 0);
+								probablyRoof = probablyRoof && (reducePrecisionForZ(getRing.GetZ(j) - lowestZCoordinate) > 0);
 
-								if (currentLod == 1) {
+//								if (currentLod == 1) {
 									// calculate normal
-									int current = 0;
-									int next = 3;
-									if (next >= ordinatesArray.length) next = 0;
-									nx = nx + ((ordinatesArray[current+1] - ordinatesArray[next+1]) * (ordinatesArray[current+2] + ordinatesArray[next+2]));
-									ny = ny + ((ordinatesArray[current+2] - ordinatesArray[next+2]) * (ordinatesArray[current] + ordinatesArray[next]));
-									nz = nz + ((ordinatesArray[current] - ordinatesArray[next]) * (ordinatesArray[current+1] + ordinatesArray[next+1]));
-								}
+//									int current = 0;
+//									int next = 3;
+//									if (next >= ordinatesArray.length) next = 0;
+//									nx = nx + ((ordinatesArray[current+1] - ordinatesArray[next+1]) * (ordinatesArray[current+2] + ordinatesArray[next+2]));
+//									ny = ny + ((ordinatesArray[current+2] - ordinatesArray[next+2]) * (ordinatesArray[current] + ordinatesArray[next]));
+//									nz = nz + ((ordinatesArray[current] - ordinatesArray[next]) * (ordinatesArray[current+1] + ordinatesArray[next+1]));
+//								}
 
 						}
 
 					}
 
-					if (currentLod == 1) { // calculate normal
-						double value = Math.sqrt(nx * nx + ny * ny + nz * nz);
-						if (value == 0) { // not a surface, but a line
-							continue;
-						}
-						nx = nx / value;
-						ny = ny / value;
-						nz = nz / value;
-					}
+//					if (currentLod == 1) { // calculate normal
+//						double value = Math.sqrt(nx * nx + ny * ny + nz * nz);
+//						if (value == 0) { // not a surface, but a line
+//							continue;
+//						}
+//						nx = nx / value;
+//						ny = ny / value;
+//						nz = nz / value;
+//					}
 
 					if (surfaceType == null) {
 						if (work.getCityGMLClass() == CityGMLClass.BUILDING){

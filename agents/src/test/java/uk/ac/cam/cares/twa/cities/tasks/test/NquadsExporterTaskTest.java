@@ -1,6 +1,7 @@
 package uk.ac.cam.cares.twa.cities.tasks.test;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static org.junit.jupiter.api.Assertions.*;
 import static uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask.DEF_JOURNAL_NAME;
 
 import com.bigdata.rdf.store.DataLoader;
@@ -15,21 +16,19 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.zip.GZIPOutputStream;
-import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jetty.server.Server;
+import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
 import uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask;
 import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
 import uk.ac.cam.cares.twa.cities.tasks.NquadsExporterTask;
 
-public class NquadsExporterTaskTest extends TestCase {
+public class NquadsExporterTaskTest {
 
+  @Test
   public void testNewNquadsExporterTask() {
     NquadsExporterTask task;
 
@@ -42,6 +41,7 @@ public class NquadsExporterTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewNquadsExporterTaskFields() {
     BlockingQueue<File> queue = new LinkedBlockingDeque<>();
     File impFile = new File("test.gml");
@@ -110,12 +110,14 @@ public class NquadsExporterTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewNquadsExporterTaskMethods() {
     NquadsExporterTask task = new NquadsExporterTask(new LinkedBlockingDeque<>(),
         new File("test.gml"), "http://www.test.com/");
     assertEquals(6, task.getClass().getDeclaredMethods().length);
   }
 
+  @Test
   public void testNewNquadsExporterTaskStopMethod() {
     NquadsExporterTask task = new NquadsExporterTask(new LinkedBlockingDeque<>(),
         new File("test.gml"), "http://www.test.com/");
@@ -134,6 +136,7 @@ public class NquadsExporterTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewNquadsExporterTaskIsRunningMethod() {
     NquadsExporterTask task = new NquadsExporterTask(new LinkedBlockingDeque<>(),
         new File("test.gml"), "http://www.test.com/");
@@ -154,6 +157,7 @@ public class NquadsExporterTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewNquadsExporterTaskExportToNquadsFileFromJnlFileMethod() {
     File impFile = NquadsExporterTaskTestHelper.impFile;
     File nqFile = NquadsExporterTaskTestHelper.nqFile;
@@ -182,6 +186,7 @@ public class NquadsExporterTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewNquadsExporterTaskGetLocalSourceUrlFromProjectCfgMethod() {
     NquadsExporterTask task = new NquadsExporterTask(new LinkedBlockingDeque<>(),
         NquadsExporterTaskTestHelper.impFile, "http://www.test.com/");
@@ -216,7 +221,9 @@ public class NquadsExporterTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewNquadsExporterTaskChangeUrlsInNQuadsFileMethod() {
+    NquadsExporterTaskTestHelper.tearDown();
     String from = "127.0.0.1:52066";
     String to = "www.test.com";
     File nqGzFile = NquadsExporterTaskTestHelper.nqGzFile;
@@ -275,6 +282,7 @@ public class NquadsExporterTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewNquadsExporterTaskRunMethod() {
     String to = "www.test.com";
     NquadsExporterTask task = new NquadsExporterTask(new LinkedBlockingDeque<>(),
