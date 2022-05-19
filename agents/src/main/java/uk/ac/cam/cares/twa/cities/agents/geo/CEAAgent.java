@@ -878,7 +878,7 @@ public class CEAAgent extends JPSAgent {
                 break;
             case "heating_demand":
                 wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?heatingDevice")
-                        .addWhere("?heatingDevice", "rdf:type", "ontoubemmp:HeatingSystem")
+                        .addWhere("?heatingDevice", "rdf:type", "purlEnaeq:HeatingSystem")
                         .addWhere("?heatingDevice", "purlEnaeq:consumesEnergy", "?heating")
                         .addWhere("?heating", "rdf:type", "ontoubemmp:ThermalConsumption")
                         .addWhere("?heating", "om:hasValue", "?measure")
