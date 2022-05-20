@@ -336,11 +336,11 @@
             <standardPath></standardPath>
             <lastUsedPath>C:\Users\Shiying\Documents\CKG\Exported_data</lastUsedPath>
         </path>
-        <lodToExportFrom>2</lodToExportFrom>
+        <lodToExportFrom>{{lod}}</lodToExportFrom>
         <buildingDisplayForms>
             <displayForm>
                 <form>4</form>
-                <active>false</active>
+                <active>{{display4}}</active>
                 <visibleFrom>0</visibleFrom>
                 <rgba0>-3355444</rgba0>
                 <rgba1>-1</rgba1>
@@ -353,8 +353,8 @@
             </displayForm>
             <displayForm>
                 <form>3</form>
-                <active>false</active>
-                <visibleFrom>-1</visibleFrom>
+                <active>{{display3}}</active>
+                <visibleFrom>0</visibleFrom>
                 <rgba0>-926102324</rgba0>
                 <rgba1>-932813210</rgba1>
                 <rgba2>-922799309</rgba2>
@@ -366,7 +366,7 @@
             </displayForm>
             <displayForm>
                 <form>2</form>
-                <active>true</active>
+                <active>{{display2}}/active>
                 <visibleFrom>0</visibleFrom>
                 <rgba0>-922760192</rgba0>
                 <rgba1>-922786253</rgba1>
@@ -379,8 +379,8 @@
             </displayForm>
             <displayForm>
                 <form>1</form>
-                <active>false</active>
-                <visibleFrom>-1</visibleFrom>
+                <active>{{display1}}</active>
+                <visibleFrom>0</visibleFrom>
                 <rgba0>-922760192</rgba0>
                 <rgba1>-922786253</rgba1>
                 <rgba2>-1</rgba2>

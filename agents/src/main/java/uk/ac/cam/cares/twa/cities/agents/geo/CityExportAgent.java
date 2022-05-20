@@ -45,6 +45,21 @@ import uk.ac.cam.cares.twa.cities.tasks.KMLTilingTask;
 
 public class CityExportAgent extends JPSAgent {
 
+    public static class Params {
+        public String namespaceIri;
+        public String directory;
+        public JSONObject serverInfo;
+        public int displayForm;
+        public String outputPath;
+        public Params (String namespaceIri, String directory, JSONObject serverInfo, int displayForm, String outputPath){
+            this.namespaceIri = namespaceIri;
+            this.directory = directory;
+            this.serverInfo = serverInfo;
+            this.displayForm = displayForm;
+            this.outputPath = outputPath;
+        }
+    }
+
     // Agent endpoint and parameter keys
     public static final String URI_ACTION = "/export/kml";
     public static final String KEY_GMLID = "gmlid";
@@ -59,15 +74,13 @@ public class CityExportAgent extends JPSAgent {
     private String outFileName = "test";
     private String outFileExtension = ".kml";
 
-    private String outTmpDir;
     private String namespaceIri;
-    private String requestUrl;
     private JSONArray gmlidParams;
     private String directory;
     private JSONObject serverInfo;
-    private int lod;
-    private String displayForm;
+    private int displayForm;
 
+    private String[] avaiableDisplay = {"FOOTPRINT", "EXTRUDED", "GEOMETRY", "COLLADA"};
 
     // Default task parameters
     //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
@@ -80,10 +93,13 @@ public class CityExportAgent extends JPSAgent {
         JSONObject result = new JSONObject();
 
         if (validateInput(requestParams)) {
-            requestUrl = requestParams.getString(KEY_REQ_URL);
+
             namespaceIri = requestParams.getString(KEY_NAMESPACE);
             serverInfo = getServerInfo(namespaceIri);
             directory = requestParams.getString(KEY_DIR);
+
+            List<String> availOptions = Arrays.asList(avaiableDisplay);
+            displayForm = availOptions.indexOf(requestParams.getString(KEY_DISPLAYFORM).toUpperCase()) + 1;
 
             //gmlids = getInputGmlids(requestParams); // this method will process the input when it is a path or an array of gmlid
             // If gmlid contains "*", it requires the whole list of gmlid from the namespace
@@ -110,7 +126,8 @@ public class CityExportAgent extends JPSAgent {
                     // Retrieve a list of gmlids from a file, and execute the export process
                     String[] gmlidArray = getGmlidFromFile(gmlidFile);
                     String outputFileName = getOutputPath(gmlidFile);
-                    result.put("outputPath", exportKml(gmlidArray, outputFileName, serverInfo));
+                    Params taskParams = new Params(namespaceIri, directory, serverInfo, displayForm, outputFileName);
+                    result.put("outputPath", exportKml(gmlidArray, taskParams);
                 }
             }else{
                 ArrayList<String> buildingIds = new ArrayList<>();
@@ -155,13 +172,15 @@ public class CityExportAgent extends JPSAgent {
                     throw new BadRequestException("Error: The given input directory is invalid");
                 }
 
-                // Check if the LOD is within 1 - 3
-
-
                 // Check the displayform
-
-
-
+                if (!requestParams.getString(KEY_DISPLAYFORM).isEmpty()) {
+                    List<String> availOptions = Arrays.asList(avaiableDisplay);
+                    int index = availOptions.indexOf(
+                        requestParams.getString(KEY_DISPLAYFORM).toUpperCase());
+                    if (index > 0) {
+                        System.out.println("Valid displayform: " + requestParams.getString(KEY_DISPLAYFORM));
+                    }
+                }
 
                 return true;
             } catch (Exception e) {
@@ -207,7 +226,6 @@ public class CityExportAgent extends JPSAgent {
         String index = filename.substring(filename.indexOf("_") + 1, filename.indexOf("."));
         String exportFilename = outFileName + "_" + index + outFileExtension;
         return Paths.get(outputDir.toString(), exportFilename).toString();
-
     }
 
     /**
@@ -254,8 +272,8 @@ public class CityExportAgent extends JPSAgent {
         return serverInfo;
     }
 
-    private String exportKml (String[] gmlIds, String outputpath, JSONObject serverInfo){
-        String actualPath = outputpath.replace(".kml", "_extruded.kml");
+    private String exportKml (String[] gmlIds, Params taskParams){
+        String actualPath = taskParams.outputPath.replace(".kml", "_" + displayForm + outFileExtension);
         ExporterTask task = new ExporterTask(gmlIds, outputpath, serverInfo);
         exporterExecutor.execute(task);
         return actualPath;
