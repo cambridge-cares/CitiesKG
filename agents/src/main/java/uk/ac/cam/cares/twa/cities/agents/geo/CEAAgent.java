@@ -75,7 +75,7 @@ public class CEAAgent extends JPSAgent {
     private TimeSeriesClient<OffsetDateTime> tsClient;
     private List<JSONKeyToIriMapper> mappings;
     public static final String timeUnit = OffsetDateTime.class.getSimpleName();
-    private List<List<String>> fixedIris = new ArrayList<>();
+    private final List<List<String>> fixedIris = new ArrayList<>();
 
     // Variables fetched from CEAAgentConfig.properties file.
     private String ocgmlUri;
@@ -157,7 +157,6 @@ public class CEAAgent extends JPSAgent {
                         areas_wall_north.add(areaWallNorthArray.getString(j));
                         areas_wall_east.add(areaWallEastArray.getString(j));
                         areas_wall_west.add(areaWallWestArray.getString(j));
-
                     }
 
                     for (int i = 0; i < uriArray.length(); i++) {
@@ -178,6 +177,8 @@ public class CEAAgent extends JPSAgent {
                         createTimeSeries(uri);
                         testData.add(new CEAInputData(getValue(uri, "Envelope"), getValue(uri, "Height")));
                     }
+                    // Manually set thread number to 0 - multiple threads not working so needs investigating
+                    // Potentially issue is  CEA is already multi-threaded
                     runCEA(testData, uriStringArray, 0);
                 }
             } else if (requestUrl.contains(URI_QUERY)) {
@@ -193,8 +194,11 @@ public class CEAAgent extends JPSAgent {
                             } else {
                                 value = results.get(0);
                             }
-                            value += " " + getUnit(results.get(1));
-                            data.put(key.getName(), value);
+                            if(!(value.equals("0") || value.equals("0.0"))){
+                                value += " " + getUnit(results.get(1));
+                                data.put(key.getName(), value);
+                            }
+
                         }
                     }
                     requestParams.append(ENERGY_PROFILE, data);
@@ -243,27 +247,24 @@ public class CEAAgent extends JPSAgent {
      * @return boolean saying if request is valid or not
      */
     private boolean validateUpdateInput(JSONObject requestParams) {
-        boolean error = true;
-        if (!requestParams.get(KEY_IRI).toString().isEmpty() ||
-                !requestParams.get(KEY_TARGET_URL).toString().isEmpty() ||
-                !requestParams.get(KEY_GRID_DEMAND).toString().isEmpty() ||
-                !requestParams.get(KEY_ELECTRICITY_DEMAND).toString().isEmpty() ||
-                !requestParams.get(KEY_HEATING_DEMAND).toString().isEmpty() ||
-                !requestParams.get(KEY_COOLING_DEMAND).toString().isEmpty() ||
-                !requestParams.get(KEY_PV_ROOF_AREA).toString().isEmpty() ||
-                !requestParams.get(KEY_PV_ROOF_SUPPLY).toString().isEmpty() ||
-                !requestParams.get(KEY_PV_WALL_SOUTH_AREA).toString().isEmpty() ||
-                !requestParams.get(KEY_PV_WALL_SOUTH_SUPPLY).toString().isEmpty() ||
-                !requestParams.get(KEY_PV_WALL_NORTH_AREA).toString().isEmpty() ||
-                !requestParams.get(KEY_PV_WALL_NORTH_SUPPLY).toString().isEmpty() ||
-                !requestParams.get(KEY_PV_WALL_EAST_AREA).toString().isEmpty() ||
-                !requestParams.get(KEY_PV_WALL_EAST_SUPPLY).toString().isEmpty() ||
-                !requestParams.get(KEY_PV_WALL_WEST_AREA).toString().isEmpty() ||
-                !requestParams.get(KEY_PV_WALL_WEST_SUPPLY).toString().isEmpty() ||
-                !requestParams.get(KEY_TIMES).toString().isEmpty() ||
-                !requestParams.get(KEY_TIME_SERIES).toString().isEmpty()){
-            error = false;
-        }
+        boolean error = requestParams.get(KEY_IRI).toString().isEmpty() &&
+                requestParams.get(KEY_TARGET_URL).toString().isEmpty() &&
+                requestParams.get(KEY_GRID_DEMAND).toString().isEmpty() &&
+                requestParams.get(KEY_ELECTRICITY_DEMAND).toString().isEmpty() &&
+                requestParams.get(KEY_HEATING_DEMAND).toString().isEmpty() &&
+                requestParams.get(KEY_COOLING_DEMAND).toString().isEmpty() &&
+                requestParams.get(KEY_PV_ROOF_AREA).toString().isEmpty() &&
+                requestParams.get(KEY_PV_ROOF_SUPPLY).toString().isEmpty() &&
+                requestParams.get(KEY_PV_WALL_SOUTH_AREA).toString().isEmpty() &&
+                requestParams.get(KEY_PV_WALL_SOUTH_SUPPLY).toString().isEmpty() &&
+                requestParams.get(KEY_PV_WALL_NORTH_AREA).toString().isEmpty() &&
+                requestParams.get(KEY_PV_WALL_NORTH_SUPPLY).toString().isEmpty() &&
+                requestParams.get(KEY_PV_WALL_EAST_AREA).toString().isEmpty() &&
+                requestParams.get(KEY_PV_WALL_EAST_SUPPLY).toString().isEmpty() &&
+                requestParams.get(KEY_PV_WALL_WEST_AREA).toString().isEmpty() &&
+                requestParams.get(KEY_PV_WALL_WEST_SUPPLY).toString().isEmpty() &&
+                requestParams.get(KEY_TIMES).toString().isEmpty() &&
+                requestParams.get(KEY_TIME_SERIES).toString().isEmpty();
 
         return error;
     }
@@ -275,10 +276,7 @@ public class CEAAgent extends JPSAgent {
      * @return boolean saying if request is valid or not
      */
     private boolean validateActionInput(JSONObject requestParams) {
-        boolean error = true;
-        if (!requestParams.get(KEY_TARGET_URL).toString().isEmpty() || !requestParams.get(KEY_IRI).toString().isEmpty()){
-            error = false;
-        }
+        boolean error = requestParams.get(KEY_TARGET_URL).toString().isEmpty() && requestParams.get(KEY_IRI).toString().isEmpty();
         return error;
     }
 
@@ -289,10 +287,7 @@ public class CEAAgent extends JPSAgent {
      * @return boolean saying if request is valid or not
      */
     private boolean validateQueryInput(JSONObject requestParams) {
-        boolean error = true;
-        if (!requestParams.get(KEY_IRI).toString().isEmpty()){
-            error = false;
-        }
+        boolean error = requestParams.get(KEY_IRI).toString().isEmpty();
         return error;
     }
 
