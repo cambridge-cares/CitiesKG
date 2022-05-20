@@ -12,14 +12,13 @@ Content-Type: application/json
 // gmlid should contain the serverInfo with * and the path to the directory of prepared_gmlid
 // ["*", "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\chunk_gmlid_1000"]
 // Note: make sure the namespace is the same as IRI in the DB "http://127.0.0.1:9999/blazegraph/namespace/testdata/sparql/",
-// lod : 2, 3
+// lod : 5 as default = highest LOD available
 // displayform: footprint, extruded, geometry
 
-{ "namespace" : "http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/",
-  "gmlid":  ["*", "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\chunk_gmlid_1000"],
+{ "namespace" : "http://127.0.0.1:9999/blazegraph/namespace/testdata_geometry/sparql/",
+  "gmlid":  ["BLDG_0003000b006b51e2"],
   "directory":  "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder",
-  "lod" : 2,
-  "displayform": "extruded"
+  "displayform": "geometry"
 }
 
 
