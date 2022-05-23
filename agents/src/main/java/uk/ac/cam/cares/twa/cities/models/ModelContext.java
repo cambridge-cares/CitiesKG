@@ -14,7 +14,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
-import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
