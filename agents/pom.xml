@@ -132,6 +132,10 @@
                     <groupId>com.blazegraph</groupId>
                     <artifactId>*</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>net.sourceforge.owlapi</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -187,7 +191,7 @@
         </dependency>
         <dependency>
             <groupId>uk.ac.cam.cares.jps.aws</groupId>
-            <artifactId>JPS_AWS</artifactId>
+            <artifactId>jps-aws</artifactId>
             <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>
