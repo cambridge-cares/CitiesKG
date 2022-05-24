@@ -25,8 +25,6 @@ public class RunCEATask implements Runnable {
     private final ArrayList<String> uris;
     private final URI endpointUri;
     private final int threadNumber;
-    private final List<List<String>> timeSeriesIris;
-    private final List<JSONKeyToIriMapper> timeSeriesMappings;
     public static final String CTYPE_JSON = "application/json";
     private Boolean stop = false;
     private static final String SHAPEFILE_SCRIPT = "create_shapefile.py";
@@ -34,13 +32,11 @@ public class RunCEATask implements Runnable {
     private static final String CREATE_WORKFLOW_SCRIPT = "create_cea_workflow.py";
     private static final String FS = System.getProperty("file.separator");
 
-    public RunCEATask(ArrayList<CEAInputData> buildingData, URI endpointUri, ArrayList<String> uris, List<List<String>> iris, List<JSONKeyToIriMapper> mappings, int thread) {
+    public RunCEATask(ArrayList<CEAInputData> buildingData, URI endpointUri, ArrayList<String> uris, int thread) {
         this.inputs = buildingData;
         this.endpointUri = endpointUri;
         this.uris = uris;
         this.threadNumber = thread;
-        this.timeSeriesIris = iris;
-        this.timeSeriesMappings = mappings;
     }
 
     public void stop() {
@@ -71,6 +67,10 @@ public class RunCEATask implements Runnable {
         }
     }
 
+    /**
+     * Recursively delete contents of a directory
+     * @param file given directory
+     */
     public void deleteDirectoryContents(File file)
     {
         for (File subFile : file.listFiles()) {
@@ -82,6 +82,12 @@ public class RunCEATask implements Runnable {
         }
     }
 
+    /**
+     * Extract areas from excel files and add to output data, then delete excel files
+     * @param tmpDir temporary directory path
+     * @param result output data
+     * @return output data
+     */
     public CEAOutputData extractArea(String tmpDir, CEAOutputData result) {
         String line = "";
         String splitBy = ",";
@@ -139,6 +145,11 @@ public class RunCEATask implements Runnable {
         return result;
     }
 
+    /**
+     * Extract time series data from excel files and add to output data
+     * @param tmpDir temporary directory path
+     * @return output data
+     */
     public CEAOutputData extractTimeSeriesOutputs(String tmpDir) {
         String line = "";
         String splitBy = ",";
@@ -159,7 +170,6 @@ public class RunCEATask implements Runnable {
                 }
                 BufferedReader demand_file = new BufferedReader(demand);
                 ArrayList<String[]> demand_columns = new ArrayList<>();
-                List<List<?>> timeseriesdata = new ArrayList<>();
                 ArrayList<String> grid_results = new ArrayList<>();
                 ArrayList<String> heating_results = new ArrayList<>();
                 ArrayList<String> cooling_results = new ArrayList<>();
@@ -247,40 +257,17 @@ public class RunCEATask implements Runnable {
                 PV_file.close();
                 PV.close();
 
-                for( String key : timeSeriesIris.get(threadNumber)){
-                    switch(timeSeriesMappings.get(threadNumber).getJSONKey(key)){
-                        case "GridConsumptionMeasure" :
-                            timeseriesdata.add(grid_results);
-                            break;
-                        case "ElectricityConsumptionMeasure" :
-                            timeseriesdata.add(electricity_results);
-                            break;
-                        case "HeatingConsumptionMeasure" :
-                            timeseriesdata.add(heating_results);
-                            break;
-                        case "CoolingConsumptionMeasure" :
-                            timeseriesdata.add(cooling_results);
-                            break;
-                        case "PVSupplyRoofMeasure" :
-                            timeseriesdata.add(PV_roof_results);
-                            break;
-                        case "PVSupplyWallSouthMeasure" :
-                            timeseriesdata.add(PV_wall_south_results);
-                            break;
-                        case "PVSupplyWallNorthMeasure" :
-                            timeseriesdata.add(PV_wall_north_results);
-                            break;
-                        case "PVSupplyWallEastMeasure" :
-                            timeseriesdata.add(PV_wall_east_results);
-                            break;
-                        case "PVSupplyWallWestMeasure" :
-                            timeseriesdata.add(PV_wall_west_results);
-                            break;
-                    }
-                }
+                result.grid_demand.add(grid_results);
+                result.electricity_demand.add(electricity_results);
+                result.heating_demand.add(heating_results);
+                result.cooling_demand.add(cooling_results);
+                result.PV_supply_roof.add(PV_roof_results);
+                result.PV_supply_wall_south.add(PV_wall_south_results);
+                result.PV_supply_wall_north.add(PV_wall_north_results);
+                result.PV_supply_wall_east.add(PV_wall_east_results);
+                result.PV_supply_wall_west.add(PV_wall_west_results);
 
-                result.timeSeries.add(timeseriesdata);
-                if(i==0) result.times = timestamps;
+                if(i==0) result.times = timestamps; //only add times once
             }
         } catch ( IOException e) {
 
@@ -288,6 +275,10 @@ public class RunCEATask implements Runnable {
         return result;
     }
 
+    /**
+     * Return output data to CEA Agent via http request
+     * @param output output data
+     */
     public void returnOutputs(CEAOutputData output) {
         try {
             String JSONOutput = new Gson().toJson(output);

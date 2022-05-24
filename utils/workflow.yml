@@ -13,7 +13,7 @@
 - script: surroundings-helper
   parameters:
     scenario: scenario_path
-    buffer: 50.
+    buffer: 200.
 - script: terrain-helper
   parameters:
     scenario: scenario_path

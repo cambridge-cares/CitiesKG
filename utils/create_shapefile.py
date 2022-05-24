@@ -29,12 +29,14 @@ def create_shapefile(geometries, heights, shapefile):
     names = []
     i = 0
     floors_ag = []
+    # heights_ag = []
     # Convert geometry data to arrays of points
     for geom in geometries:
 
         split_data = geom.split("#")
         points = [[] for i in range(4)]
-
+        #upperboundz = 0
+        #lowerboundz=0
         # Extract x-y footprint data
         for a in range(0, 4):
             for b in range(0, 3):
@@ -42,7 +44,12 @@ def create_shapefile(geometries, heights, shapefile):
                     points[a].append(float(split_data[a * 3 + b]))
                 else:
                     points[a].append(0.0)
+                    #if a == 0:
+                        #lowerboundz = float(split_data[a * 3 + b])
+                    #if a == 2:
+                        #upperboundz = float(split_data[a * 3 + b])
 
+        #heights_ag.append(upperboundz-lowerboundz)
         geometry_values.append(str(points))
         floors_bg.append(0)
         height_bg.append(0)
@@ -52,7 +59,11 @@ def create_shapefile(geometries, heights, shapefile):
 
     # Set floors_ag to building height divided by HDB floor-to-floor height 3.6m (rounded down)
     for x in range(len(heights)):
-        floors_ag.append(round(heights[x] / floor_height[x]))
+        floors = round(heights[x] / floor_height[x])
+        if floors != 0:
+            floors_ag.append(floors)
+        else:
+            floors_ag.append(1)
 
     zone_data = {'Name': names,
             'floors_bg': floors_bg,
@@ -67,7 +78,11 @@ def create_shapefile(geometries, heights, shapefile):
     df.drop('geometry', axis=1)
 
     # crs = CRS.from_user_input(24500)
+    # churchill, kings lynn
     crs = CRS.from_user_input(27700)
+    # pirmasens
+    # crs = CRS.from_user_input(3857)
+
     gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
     gdf.to_file(shapefile, driver='ESRI Shapefile', encoding='ISO-8859-1')
 

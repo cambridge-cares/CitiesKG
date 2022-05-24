@@ -1,9 +1,7 @@
 package uk.ac.cam.cares.twa.cities.tasks.test;
 
 import junit.framework.TestCase;
-import org.json.JSONArray;
 import uk.ac.cam.cares.twa.cities.tasks.CEAInputData;
-import uk.ac.cam.cares.twa.cities.tasks.JSONKeyToIriMapper;
 import uk.ac.cam.cares.twa.cities.tasks.RunCEATask;
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +11,6 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.List;
 
 public class RunCEATaskTest extends TestCase {
     public void testRunCEATask() {
@@ -24,9 +21,7 @@ public class RunCEATaskTest extends TestCase {
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
             testData.add(new CEAInputData("test","test"));
             ArrayList<String> testArray = new ArrayList<String>();
-            List<JSONKeyToIriMapper> mappings = new ArrayList<>();
-            List<List<String>> fixedIris = new ArrayList<>();
-            task = new RunCEATask(testData, testURI, testArray,fixedIris,mappings,0);
+            task = new RunCEATask(testData, testURI, testArray,0);
             assertNotNull(task);
         } catch (Exception e) {
             fail();
@@ -39,9 +34,7 @@ public class RunCEATaskTest extends TestCase {
             testData.add(new CEAInputData("test","test"));
             URI testURI = new URI("http://localhost/test");
             ArrayList<String> testArray = new ArrayList<String>();
-            List<JSONKeyToIriMapper> mappings = new ArrayList<>();
-            List<List<String>> fixedIris = new ArrayList<>();
-            RunCEATask task = new RunCEATask(testData, testURI, testArray,fixedIris,mappings,0);
+            RunCEATask task = new RunCEATask(testData, testURI, testArray,0);
 
             assertEquals(6, task.getClass().getDeclaredFields().length);
 
@@ -83,9 +76,7 @@ public class RunCEATaskTest extends TestCase {
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
             testData.add(new CEAInputData("test","test"));
             ArrayList<String> testArray = new ArrayList<String>();
-            List<JSONKeyToIriMapper> mappings = new ArrayList<>();
-            List<List<String>> fixedIris = new ArrayList<>();
-            RunCEATask task = new RunCEATask(testData, testURI, testArray, fixedIris, mappings,0);
+            RunCEATask task = new RunCEATask(testData, testURI, testArray,0);
             assertEquals(6, task.getClass().getDeclaredMethods().length);
         } catch (URISyntaxException e) {
             fail();
@@ -99,9 +90,7 @@ public class RunCEATaskTest extends TestCase {
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
             testData.add(new CEAInputData("test","test"));
             ArrayList<String> testArray = new ArrayList<String>();
-            List<JSONKeyToIriMapper> mappings = new ArrayList<>();
-            List<List<String>> fixedIris = new ArrayList<>();
-            RunCEATask task = new RunCEATask(testData, testURI, testArray, fixedIris, mappings,0);
+            RunCEATask task = new RunCEATask(testData, testURI, testArray,0);
 
             Field stopField = task.getClass().getDeclaredField("stop");
             stopField.setAccessible(true);
@@ -121,9 +110,7 @@ public class RunCEATaskTest extends TestCase {
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
             testData.add(new CEAInputData("test","test"));
             ArrayList<String> testArray = new ArrayList<String>();
-            List<JSONKeyToIriMapper> mappings = new ArrayList<>();
-            List<List<String>> fixedIris = new ArrayList<>();
-            RunCEATask task = new RunCEATask(testData, testURI, testArray, fixedIris, mappings,0);
+            RunCEATask task = new RunCEATask(testData, testURI, testArray,0);
 
             File myTempDir = new File(System.getProperty("java.io.tmpdir"));
             File newDirectory = new File(myTempDir, "new_directory");

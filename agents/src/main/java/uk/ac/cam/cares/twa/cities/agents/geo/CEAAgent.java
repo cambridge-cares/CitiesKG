@@ -57,25 +57,21 @@ public class CEAAgent extends JPSAgent {
     public static final String KEY_PV_WALL_SOUTH_AREA = "PV_area_wall_south";
     public static final String KEY_PV_WALL_EAST_AREA = "PV_area_wall_east";
     public static final String KEY_PV_WALL_WEST_AREA = "PV_area_wall_west";
-
     public static final String KEY_PV_ROOF_SUPPLY= "PV_supply_roof";
     public static final String KEY_PV_WALL_NORTH_SUPPLY= "PV_supply_wall_north";
     public static final String KEY_PV_WALL_SOUTH_SUPPLY= "PV_supply_wall_south";
     public static final String KEY_PV_WALL_EAST_SUPPLY= "PV_supply_wall_east";
     public static final String KEY_PV_WALL_WEST_SUPPLY= "PV_supply_wall_west";
-
-    public static final String KEY_TIME_SERIES= "timeSeries";
     public static final String KEY_TIMES= "times";
+
+    public static final List<String> TIME_SERIES = Arrays.asList("grid_demand","electricity_demand","heating_demand", "cooling_demand", "PV_supply_roof","PV_supply_wall_south", "PV_supply_wall_north", "PV_supply_wall_east", "PV_supply_wall_west");
 
     public final int NUM_CEA_THREADS = 1;
     private final ThreadPoolExecutor CEAExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_CEA_THREADS);
 
     private static final String TIME_SERIES_CLIENT_PROPS = "timeseriesclient.properties";
-    private static final String MAPPING_FOLDER = "mappings";
     private TimeSeriesClient<OffsetDateTime> tsClient;
-    private List<JSONKeyToIriMapper> mappings;
     public static final String timeUnit = OffsetDateTime.class.getSimpleName();
-    private final List<List<String>> fixedIris = new ArrayList<>();
 
     // Variables fetched from CEAAgentConfig.properties file.
     private String ocgmlUri;
@@ -84,6 +80,7 @@ public class CEAAgent extends JPSAgent {
     private String owlUri;
     private String purlEnaeqUri;
     private String purlInfrastructureUri;
+    private String timeSeriesUri;
     private String thinkhomeUri;
     private static String unitOntologyUri;
     private static String QUERY_ROUTE;
@@ -97,7 +94,6 @@ public class CEAAgent extends JPSAgent {
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
         if (validateInput(requestParams)) {
-
             requestUrl = requestParams.getString(KEY_REQ_URL);
             String uriArrayString = requestParams.get(KEY_IRI).toString();
             JSONArray uriArray = new JSONArray(uriArrayString);
@@ -106,67 +102,37 @@ public class CEAAgent extends JPSAgent {
                 targetUrl = requestParams.getString(KEY_TARGET_URL);
 
                 if (requestUrl.contains(URI_UPDATE)) {
-                    // parse time series data
-                    String timesArrayString = requestParams.get(KEY_TIMES).toString();
-                    JSONArray timesArray = new JSONArray(timesArrayString);
-                    List<OffsetDateTime> times = new ArrayList<>();
+                    // parse times
+                    List<OffsetDateTime> times = getTimesList(requestParams, KEY_TIMES);
 
-                    for (int i = 0; i < timesArray.length(); i++) {
-                        OffsetDateTime odt = OffsetDateTime.parse(timesArray.getString(i));
-                        times.add(odt);
-                    }
-
-                    String timesSeriesArrayString = requestParams.get(KEY_TIME_SERIES).toString();
-                    JSONArray timeSeriesArray = new JSONArray(timesSeriesArrayString);
+                    // parse times series data;
                     List<List<List<?>>> timeSeries = new ArrayList<>();
-
-                    for (int i = 0; i < timeSeriesArray.length(); i++) {
-                        JSONArray timeSeriesIriArray = new JSONArray(timeSeriesArray.get(i).toString());
-                        List<List<?>> timeSeriesMaps = new ArrayList<>();
-                        for (int j = 0; j < timeSeriesIriArray.length(); j++) {
-                            JSONArray timeSeriesMappingArray = new JSONArray(timeSeriesIriArray.get(j).toString());
-                            List<Double> timeSeriesList = new ArrayList<>();
-                            for (int k = 0; k < timeSeriesMappingArray.length(); k++) {
-                                timeSeriesList.add(Double.valueOf(timeSeriesMappingArray.get(k).toString()));
-                            }
-                            timeSeriesMaps.add(timeSeriesList);
+                    for (int i = 0; i < uriArray.length(); i++) {
+                        List<List<?>> iriList = new ArrayList<>();
+                        for(String ts: TIME_SERIES) {
+                            iriList.add(getTimeSeriesList(requestParams, ts, i));
                         }
-                        timeSeries.add(timeSeriesMaps);
+                        timeSeries.add(iriList);
                     }
 
                     // parse PV area data
-                    String areaRoofArrayString = requestParams.get(KEY_PV_ROOF_AREA).toString();
-                    JSONArray areaRoofArray = new JSONArray(areaRoofArrayString);
-                    List<String> areas_roof = new ArrayList<>();
-                    String areaWallSouthArrayString = requestParams.get(KEY_PV_WALL_SOUTH_AREA).toString();
-                    JSONArray areaWallSouthArray = new JSONArray(areaWallSouthArrayString);
-                    List<String> areas_wall_south = new ArrayList<>();
-                    String areaWallNorthArrayString = requestParams.get(KEY_PV_WALL_NORTH_AREA).toString();
-                    JSONArray areaWallNorthArray = new JSONArray(areaWallNorthArrayString);
-                    List<String> areas_wall_north = new ArrayList<>();
-                    String areaWallEastArrayString = requestParams.get(KEY_PV_WALL_EAST_AREA).toString();
-                    JSONArray areaWallEastArray = new JSONArray(areaWallEastArrayString);
-                    List<String> areas_wall_east = new ArrayList<>();
-                    String areaWallWestArrayString = requestParams.get(KEY_PV_WALL_WEST_AREA).toString();
-                    JSONArray areaWallWestArray = new JSONArray(areaWallWestArrayString);
-                    List<String> areas_wall_west= new ArrayList<>();
+                    List<String> areas_roof = getList(requestParams, KEY_PV_ROOF_AREA);
+                    List<String> areas_wall_south = getList(requestParams, KEY_PV_WALL_SOUTH_AREA);
+                    List<String> areas_wall_north = getList(requestParams, KEY_PV_WALL_NORTH_AREA);
+                    List<String> areas_wall_east = getList(requestParams, KEY_PV_WALL_EAST_AREA);
+                    List<String> areas_wall_west= getList(requestParams, KEY_PV_WALL_WEST_AREA);
 
-                    for (int j = 0; j < areaRoofArray.length(); j++) {
-                        areas_roof.add(areaRoofArray.getString(j));
-                        areas_wall_south.add(areaWallSouthArray.getString(j));
-                        areas_wall_north.add(areaWallNorthArray.getString(j));
-                        areas_wall_east.add(areaWallEastArray.getString(j));
-                        areas_wall_west.add(areaWallWestArray.getString(j));
-                    }
+                    List<LinkedHashMap<String,String>> fixedIris = new ArrayList<>();
 
                     for (int i = 0; i < uriArray.length(); i++) {
                         String uri = uriArray.getString(i);
-                        addDataToTimeSeries(timeSeries.get(i), times, fixedIris.get(i));
-                        String buildingUri = checkEnergyProfileInitialised(mappings.get(i), uri);
-                        if (buildingUri == "") {
-                            buildingUri = sparqlUpdate(areas_roof.get(i), areas_wall_south.get(i), areas_wall_north.get(i), areas_wall_east.get(i), areas_wall_west.get(i), mappings.get(i), uri);
+                        String buildingUri = checkBlazegraphAndTimeSeriesInitialised(uri, fixedIris);
+                        if (buildingUri=="") {
+                            createTimeSeries(uri,fixedIris);
+                            buildingUri = sparqlUpdate(areas_roof.get(i), areas_wall_south.get(i), areas_wall_north.get(i), areas_wall_east.get(i), areas_wall_west.get(i), fixedIris.get(i), uri);
+                            sparqlGenAttributeUpdate(uri, buildingUri);
                         }
-                        if (!checkGenAttributeInitialised(uri)) sparqlGenAttributeUpdate(uri, buildingUri);
+                        addDataToTimeSeries(timeSeries.get(i), times, fixedIris.get(i));
                     }
                 } else if (requestUrl.contains(URI_ACTION)) {
                     ArrayList<CEAInputData> testData = new ArrayList<>();
@@ -174,7 +140,6 @@ public class CEAAgent extends JPSAgent {
                     for (int i = 0; i < uriArray.length(); i++) {
                         String uri = uriArray.getString(i);
                         uriStringArray.add(uri);
-                        createTimeSeries(uri);
                         testData.add(new CEAInputData(getValue(uri, "Envelope"), getValue(uri, "Height")));
                     }
                     // Manually set thread number to 0 - multiple threads not working so needs investigating
@@ -190,7 +155,7 @@ public class CEAAgent extends JPSAgent {
                         if (!results.isEmpty()) {
                             String value;
                             if (!key.getName().contains("area")) {
-                                value = calculateAverage(retrieveData(results.get(0)), results.get(0));
+                                value = calculateAnnual(retrieveData(results.get(0)), results.get(0));
                             } else {
                                 value = results.get(0);
                             }
@@ -241,6 +206,61 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
+     * Parses input JSONObject into a list of strings
+     *
+     * @param requestParams - request body in JSON format
+     * @param key - requested data
+     * @return List of data
+     */
+    private List<String> getList (JSONObject requestParams, String key) {
+        String arrayString = requestParams.get(key).toString();
+        JSONArray array = new JSONArray(arrayString);
+        List<String> list = new ArrayList<>();
+        for (int j = 0; j < array.length(); j++) {
+            list.add(array.getString(j));
+        }
+        return list;
+    }
+
+    /**
+     * Parses input JSONObject into a list of time series data
+     *
+     * @param requestParams - request body in JSON format
+     * @param key - requested data
+     * @return List of data
+     */
+    private List<Double> getTimeSeriesList (JSONObject requestParams, String key, Integer index) {
+        String arrayString = requestParams.get(key).toString();
+        JSONArray array = new JSONArray(arrayString);
+
+        JSONArray timeDataArray = new JSONArray(array.get(index).toString());
+        List<Double> timeSeriesList = new ArrayList<>();
+
+        for (int i = 0; i < timeDataArray.length(); i++) {
+            timeSeriesList.add(Double.valueOf(timeDataArray.get(i).toString()));
+        }
+        return timeSeriesList;
+    }
+
+    /**
+     * Parses input JSONObject into a list of times
+     *
+     * @param requestParams - request body in JSON format
+     * @param key - requested data
+     * @return List of times
+     */
+    private List<OffsetDateTime> getTimesList (JSONObject requestParams, String key) {
+        String arrayString = requestParams.get(key).toString();
+        JSONArray array = new JSONArray(arrayString);
+        List<OffsetDateTime> list = new ArrayList<>();
+        for (int j = 0; j < array.length(); j++) {
+            OffsetDateTime odt = OffsetDateTime.parse(array.getString(j));
+            list.add(odt);
+        }
+        return list;
+    }
+
+    /**
      * Validates input specific to requests coming to URI_UPDATE
      *
      * @param requestParams - request body in JSON format
@@ -263,8 +283,7 @@ public class CEAAgent extends JPSAgent {
                 requestParams.get(KEY_PV_WALL_EAST_SUPPLY).toString().isEmpty() &&
                 requestParams.get(KEY_PV_WALL_WEST_AREA).toString().isEmpty() &&
                 requestParams.get(KEY_PV_WALL_WEST_SUPPLY).toString().isEmpty() &&
-                requestParams.get(KEY_TIMES).toString().isEmpty() &&
-                requestParams.get(KEY_TIME_SERIES).toString().isEmpty();
+                requestParams.get(KEY_TIMES).toString().isEmpty();
 
         return error;
     }
@@ -308,6 +327,7 @@ public class CEAAgent extends JPSAgent {
         purlEnaeqUri=config.getString("uri.ontology.purl.enaeq");
         thinkhomeUri=config.getString("uri.ontology.thinkhome");
         purlInfrastructureUri=config.getString("uri.ontology.purl.infrastructure");
+        timeSeriesUri=config.getString("uri.ts");
     }
 
     /**
@@ -318,7 +338,7 @@ public class CEAAgent extends JPSAgent {
      */
     private void runCEA(ArrayList<CEAInputData> buildingData, ArrayList<String> uris, int threadNumber) {
         try {
-            RunCEATask task = new RunCEATask(buildingData, new URI(targetUrl), uris, fixedIris, mappings, threadNumber);
+            RunCEATask task = new RunCEATask(buildingData, new URI(targetUrl), uris, threadNumber);
             CEAExecutor.execute(task);
         }
         catch(URISyntaxException e){
@@ -329,51 +349,33 @@ public class CEAAgent extends JPSAgent {
      *
      * @param uriString input city object id
      */
-    private void createTimeSeries(String uriString) {
+    private void createTimeSeries(String uriString, List<LinkedHashMap<String,String>> fixedIris ) {
         try{
             tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, new File(
                     Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath());
-            String mappingFolder = new File(
-                    Objects.requireNonNull(getClass().getClassLoader().getResource(MAPPING_FOLDER)).toURI()).getAbsolutePath();
 
-            mappings = new ArrayList<>();
-            File folder = new File(mappingFolder);
-            File[] mappingFiles = folder.listFiles();
-
-            // Make sure the folder exists and contains files
-            if (mappingFiles == null) {
-                throw new IOException("Folder does not exist: " + mappingFolder);
+            // Create a iri for each measurement
+            List<String> iris = new ArrayList<>();
+            LinkedHashMap<String, String> iriMapping = new LinkedHashMap<>();;
+            for(String measurement: TIME_SERIES){
+                String iri = getGraph(uriString,ENERGY_PROFILE)+measurement+"_"+UUID.randomUUID();
+                iris.add(iri);
+                iriMapping.put(measurement, iri);
             }
-            if (mappingFiles.length == 0) {
-                throw new IOException("No files in the folder: " + mappingFolder);
-            }
+            fixedIris.add(iriMapping);
 
-            // Create a mapper for each file
-            else {
-                for (File mappingFile: mappingFiles) {
-                    JSONKeyToIriMapper mapper = new JSONKeyToIriMapper(getGraph(uriString,ENERGY_PROFILE), mappingFile.getAbsolutePath());
-                    mappings.add(mapper);
-                    // Save the mappings back to the file to ensure using same IRIs next time
-                    mapper.saveToFile(mappingFile.getAbsolutePath());
-                }
-            }
-
-            for (JSONKeyToIriMapper mapping: mappings) {
-                // The IRIs used by the current mapping
-                List<String> iris = mapping.getAllIRIs();
-                fixedIris.add(iris);
                 // Check whether IRIs have a time series linked and if not initialize the corresponding time series
-                if(!timeSeriesExist(iris)) {
+            if(!timeSeriesExist(iris)) {
                     // All values are doubles
-                    List<Class<?>> classes =  new ArrayList<>();
-                    for(int i=0; i<iris.size(); i++){
-                        classes.add(Double.class);
-                    }
-                    // Initialize the time series
-                    tsClient.initTimeSeries(iris, classes, timeUnit);
-                    //LOGGER.info(String.format("Initialized time series with the following IRIs: %s", String.join(", ", iris)));
+                List<Class<?>> classes =  new ArrayList<>();
+                for(int i=0; i<iris.size(); i++){
+                    classes.add(Double.class);
                 }
+                // Initialize the time series
+                tsClient.initTimeSeries(iris, classes, timeUnit);
+                //LOGGER.info(String.format("Initialized time series with the following IRIs: %s", String.join(", ", iris)));
             }
+
 
         } catch (URISyntaxException | IOException e)
         {
@@ -389,15 +391,36 @@ public class CEAAgent extends JPSAgent {
      *
      * @param values output CEA data
      * @param times times for output time series data
-     * @param iri iris for time series data
+     * @param iriMap iri map containing time series iris
      */
-    private void addDataToTimeSeries(List<List<?>> values, List<OffsetDateTime> times, List<String> iri) {
-        TimeSeries<OffsetDateTime> currentTimeSeries = new TimeSeries<>(times, iri, values);
-        OffsetDateTime endDataTime = tsClient.getMaxTime(currentTimeSeries.getDataIRIs().get(0));
-
-        if (endDataTime == null) {
-            tsClient.addTimeSeriesData(currentTimeSeries);
+    private void addDataToTimeSeries(List<List<?>> values, List<OffsetDateTime> times, LinkedHashMap<String,String> iriMap) {
+        List<String> iris = new ArrayList<>();
+        for (String iri : iriMap.values()){
+            iris.add(iri);
         }
+            // If CreateTimeSeries has not been run, get time series client
+        if(tsClient==null){
+            try{
+                tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, new File(
+                    Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath());
+            } catch (URISyntaxException | IOException e)
+            {
+                e.printStackTrace();
+                throw new JPSRuntimeException(e);
+            }
+        }
+        TimeSeries<OffsetDateTime> currentTimeSeries = new TimeSeries<>(times, iris, values);
+        OffsetDateTime endDataTime = tsClient.getMaxTime(currentTimeSeries.getDataIRIs().get(0));
+        OffsetDateTime beginDataTime = tsClient.getMinTime(currentTimeSeries.getDataIRIs().get(0));
+
+        // Delete old data if exists
+        if (endDataTime != null) {
+            for(Integer i=0; i<currentTimeSeries.getDataIRIs().size(); i++){
+                tsClient.deleteTimeSeriesHistory(currentTimeSeries.getDataIRIs().get(i), beginDataTime, endDataTime);
+            }
+        }
+        // Add New data
+        tsClient.addTimeSeriesData(currentTimeSeries);
     }
 
     /**
@@ -493,6 +516,7 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * finds footprint of building from array of building surfaces by searching for constant minimum z in geometries
+     * NB. On data TSDA has run on, the surface should be labelled with a ground surface id so this won't be necessary
      * @param results array of building surfaces
      * @return footprint geometry as string
      */
@@ -643,9 +667,11 @@ public class CEAAgent extends JPSAgent {
      * @param PV_wall_north_area the area of north wall PV Cells
      * @param PV_wall_east_area the area of east wall PV Cells
      * @param PV_wall_west_area the area of west wall PV Cells
+     * @param tsIris map of time series iris
      * @param uriString city object id
+     * @return building uri in energy profile graph
      */
-    public String sparqlUpdate( String PV_roof_area, String PV_wall_south_area, String PV_wall_north_area, String PV_wall_east_area, String PV_wall_west_area, JSONKeyToIriMapper mapper, String uriString) {
+    public String sparqlUpdate( String PV_roof_area, String PV_wall_south_area, String PV_wall_north_area, String PV_wall_east_area, String PV_wall_west_area, LinkedHashMap<String, String> tsIris, String uriString) {
         String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
 
         String buildingUri = outputGraphUri + "Building_UUID_" + UUID.randomUUID() + "/";
@@ -690,18 +716,18 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(gridConsumptionUri), "rdf:type", "ontoubemmp:GridConsumption")
                         .addInsert("?graph", NodeFactory.createURI(gridConsumptionUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(gridConsumptionUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(gridConsumptionUri), "om:hasValue", NodeFactory.createURI(mapper.getIRI("GridConsumptionMeasure")))
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("GridConsumptionMeasure")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("GridConsumptionMeasure")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("GridConsumptionMeasure")), "om:hasUnit", "om:kilowattHour")
+                        .addInsert("?graph", NodeFactory.createURI(gridConsumptionUri), "om:hasValue", NodeFactory.createURI(tsIris.get("grid_demand")))
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("grid_demand")), "rdf:type", "om:Measure")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("grid_demand")), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("grid_demand")), "om:hasUnit", "om:kilowattHour")
                         .addInsert("?graph", NodeFactory.createURI(buildingUri), "purlEnaeq:consumesEnergy", NodeFactory.createURI(gridConsumptionUri))
                         .addInsert("?graph", NodeFactory.createURI(electricityConsumptionUri), "rdf:type", "ontoubemmp:ElectricityConsumption")
                         .addInsert("?graph", NodeFactory.createURI(electricityConsumptionUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(electricityConsumptionUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(electricityConsumptionUri), "om:hasValue", NodeFactory.createURI(mapper.getIRI("ElectricityConsumptionMeasure")))
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("ElectricityConsumptionMeasure")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("ElectricityConsumptionMeasure")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("ElectricityConsumptionMeasure")), "om:hasUnit", "om:kilowattHour")
+                        .addInsert("?graph", NodeFactory.createURI(electricityConsumptionUri), "om:hasValue", NodeFactory.createURI(tsIris.get("electricity_demand")))
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("electricity_demand")), "rdf:type", "om:Measure")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("electricity_demand")), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("electricity_demand")), "om:hasUnit", "om:kilowattHour")
                         .addInsert("?graph", NodeFactory.createURI(buildingUri), "purlEnaeq:consumesEnergy", NodeFactory.createURI(electricityConsumptionUri))
                         .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(heatingUri))
                         .addInsert("?graph", NodeFactory.createURI(heatingUri), "rdf:type", "purlEnaeq:HeatingSystem")
@@ -709,10 +735,10 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(heatingConsumptionUri), "rdf:type", "ontoubemmp:ThermalConsumption")
                         .addInsert("?graph", NodeFactory.createURI(heatingConsumptionUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(heatingConsumptionUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(heatingConsumptionUri), "om:hasValue", NodeFactory.createURI(mapper.getIRI("HeatingConsumptionMeasure")))
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("HeatingConsumptionMeasure")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("HeatingConsumptionMeasure")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("HeatingConsumptionMeasure")), "om:hasUnit", "om:kilowattHour")
+                        .addInsert("?graph", NodeFactory.createURI(heatingConsumptionUri), "om:hasValue", NodeFactory.createURI(tsIris.get("heating_demand")))
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("heating_demand")), "rdf:type", "om:Measure")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("heating_demand")), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("heating_demand")), "om:hasUnit", "om:kilowattHour")
                         .addInsert("?graph", NodeFactory.createURI(heatingUri), "purlEnaeq:consumesEnergy", NodeFactory.createURI(heatingConsumptionUri))
                         .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(coolingUri))
                         .addInsert("?graph", NodeFactory.createURI(coolingUri), "rdf:type", "ontoubemmp:CoolingSystem")
@@ -720,10 +746,10 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(coolingConsumptionUri), "rdf:type", "ontoubemmp:ThermalConsumption")
                         .addInsert("?graph", NodeFactory.createURI(coolingConsumptionUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(coolingConsumptionUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(coolingConsumptionUri), "om:hasValue", NodeFactory.createURI(mapper.getIRI("CoolingConsumptionMeasure")))
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("CoolingConsumptionMeasure")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("CoolingConsumptionMeasure")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("CoolingConsumptionMeasure")), "om:hasUnit", "om:kilowattHour")
+                        .addInsert("?graph", NodeFactory.createURI(coolingConsumptionUri), "om:hasValue", NodeFactory.createURI(tsIris.get("cooling_demand")))
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("cooling_demand")), "rdf:type", "om:Measure")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("cooling_demand")), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("cooling_demand")), "om:hasUnit", "om:kilowattHour")
                         .addInsert("?graph", NodeFactory.createURI(coolingUri), "purlEnaeq:consumesEnergy", NodeFactory.createURI(coolingConsumptionUri))
                         .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(pvRoofPanelsUri))
                         .addInsert("?graph", NodeFactory.createURI(pvRoofPanelsUri), "rdf:type", "ontoubemmp:RoofPVPanels")
@@ -741,10 +767,10 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(PVRoofSupplyUri), "rdf:type", "ontoubemmp:ElectricitySupply")
                         .addInsert("?graph", NodeFactory.createURI(PVRoofSupplyUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(PVRoofSupplyUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(PVRoofSupplyUri), "om:hasValue", NodeFactory.createURI(mapper.getIRI("PVSupplyRoofMeasure")))
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("PVSupplyRoofMeasure")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("PVSupplyRoofMeasure")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("PVSupplyRoofMeasure")), "om:hasUnit", "om:kilowattHour")
+                        .addInsert("?graph", NodeFactory.createURI(PVRoofSupplyUri), "om:hasValue", NodeFactory.createURI(tsIris.get("PV_supply_roof")))
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_roof")), "rdf:type", "om:Measure")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_roof")), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_roof")), "om:hasUnit", "om:kilowattHour")
                         .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(pvWallSouthPanelsUri))
                         .addInsert("?graph", NodeFactory.createURI(pvWallSouthPanelsUri), "rdf:type", "ontoubemmp:SouthWallPVPanels")
                         .addInsert("?graph", NodeFactory.createURI(pvWallSouthPanelsUri), "rdf:type", "owl:NamedIndividual")
@@ -761,10 +787,10 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(PVWallSouthSupplyUri), "rdf:type", "ontoubemmp:ElectricitySupply")
                         .addInsert("?graph", NodeFactory.createURI(PVWallSouthSupplyUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(PVWallSouthSupplyUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(PVWallSouthSupplyUri), "om:hasValue", NodeFactory.createURI(mapper.getIRI("PVSupplyWallSouthMeasure")))
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("PVSupplyWallSouthMeasure")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("PVSupplyWallSouthMeasure")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("PVSupplyWallSouthMeasure")), "om:hasUnit", "om:kilowattHour")
+                        .addInsert("?graph", NodeFactory.createURI(PVWallSouthSupplyUri), "om:hasValue", NodeFactory.createURI(tsIris.get("PV_supply_wall_south")))
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_south")), "rdf:type", "om:Measure")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_south")), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_south")), "om:hasUnit", "om:kilowattHour")
                         .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(pvWallNorthPanelsUri))
                         .addInsert("?graph", NodeFactory.createURI(pvWallNorthPanelsUri), "rdf:type", "ontoubemmp:NorthWallPVPanels")
                         .addInsert("?graph", NodeFactory.createURI(pvWallNorthPanelsUri), "rdf:type", "owl:NamedIndividual")
@@ -781,10 +807,10 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(PVWallNorthSupplyUri), "rdf:type", "ontoubemmp:ElectricitySupply")
                         .addInsert("?graph", NodeFactory.createURI(PVWallNorthSupplyUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(PVWallNorthSupplyUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(PVWallNorthSupplyUri), "om:hasValue", NodeFactory.createURI(mapper.getIRI("PVSupplyWallNorthMeasure")))
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("PVSupplyWallNorthMeasure")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("PVSupplyWallNorthMeasure")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("PVSupplyWallNorthMeasure")), "om:hasUnit", "om:kilowattHour")
+                        .addInsert("?graph", NodeFactory.createURI(PVWallNorthSupplyUri), "om:hasValue", NodeFactory.createURI(tsIris.get("PV_supply_wall_north")))
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_north")), "rdf:type", "om:Measure")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_north")), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_north")), "om:hasUnit", "om:kilowattHour")
                         .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(pvWallEastPanelsUri))
                         .addInsert("?graph", NodeFactory.createURI(pvWallEastPanelsUri), "rdf:type", "ontoubemmp:EastWallPVPanels")
                         .addInsert("?graph", NodeFactory.createURI(pvWallEastPanelsUri), "rdf:type", "owl:NamedIndividual")
@@ -801,10 +827,10 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(PVWallEastSupplyUri), "rdf:type", "ontoubemmp:ElectricitySupply")
                         .addInsert("?graph", NodeFactory.createURI(PVWallEastSupplyUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(PVWallEastSupplyUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(PVWallEastSupplyUri), "om:hasValue", NodeFactory.createURI(mapper.getIRI("PVSupplyWallEastMeasure")))
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("PVSupplyWallEastMeasure")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("PVSupplyWallEastMeasure")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("PVSupplyWallEastMeasure")), "om:hasUnit", "om:kilowattHour")
+                        .addInsert("?graph", NodeFactory.createURI(PVWallEastSupplyUri), "om:hasValue", NodeFactory.createURI(tsIris.get("PV_supply_wall_east")))
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_east")), "rdf:type", "om:Measure")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_east")), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_east")), "om:hasUnit", "om:kilowattHour")
                         .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(pvWallWestPanelsUri))
                         .addInsert("?graph", NodeFactory.createURI(pvWallWestPanelsUri), "rdf:type", "ontoubemmp:WestWallPVPanels")
                         .addInsert("?graph", NodeFactory.createURI(pvWallWestPanelsUri), "rdf:type", "owl:NamedIndividual")
@@ -821,10 +847,10 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(PVWallWestSupplyUri), "rdf:type", "ontoubemmp:ElectricitySupply")
                         .addInsert("?graph", NodeFactory.createURI(PVWallWestSupplyUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(PVWallWestSupplyUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(PVWallWestSupplyUri), "om:hasValue", NodeFactory.createURI(mapper.getIRI("PVSupplyWallWestMeasure")))
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("PVSupplyWallWestMeasure")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("PVSupplyWallWestMeasure")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(mapper.getIRI("PVSupplyWallWestMeasure")), "om:hasUnit", "om:kilowattHour");
+                        .addInsert("?graph", NodeFactory.createURI(PVWallWestSupplyUri), "om:hasValue", NodeFactory.createURI(tsIris.get("PV_supply_wall_west")))
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_west")), "rdf:type", "om:Measure")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_west")), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_west")), "om:hasUnit", "om:kilowattHour");
 
         ub.setVar(Var.alloc("graph"), NodeFactory.createURI(outputGraphUri));
 
@@ -837,6 +863,12 @@ public class CEAAgent extends JPSAgent {
 
     }
 
+    /**
+     * Retrieves iris from KG for the data type requested
+     * @param uriString city object id
+     * @param value type of data from TIME_SERIES
+     * @return list of iris
+     */
     public ArrayList<String> getDataIRI(String uriString, String value) {
         ArrayList<String> result = new ArrayList<>();
 
@@ -956,7 +988,7 @@ public class CEAAgent extends JPSAgent {
                 break;
             case "PV_area_wall_east":
                 wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                        .addWhere("?PVPanels", "rdf:type", "ontoubemmp:WestWallPVPanels")
+                        .addWhere("?PVPanels", "rdf:type", "ontoubemmp:EastWallPVPanels")
                         .addWhere("?PVPanels", "ontoubemmp:hasArea", "?area")
                         .addWhere("?area", "rdf:type", "ontoubemmp:PVPanelsArea")
                         .addWhere("?area", "om:hasValue", "?value")
@@ -965,7 +997,7 @@ public class CEAAgent extends JPSAgent {
                 break;
             case "PV_area_wall_west":
                 wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                        .addWhere("?PVPanels", "rdf:type", "ontoubemmp:EastWallPVPanels")
+                        .addWhere("?PVPanels", "rdf:type", "ontoubemmp:WestWallPVPanels")
                         .addWhere("?PVPanels", "ontoubemmp:hasArea", "?area")
                         .addWhere("?area", "rdf:type", "ontoubemmp:PVPanelsArea")
                         .addWhere("?area", "om:hasValue", "?value")
@@ -994,7 +1026,12 @@ public class CEAAgent extends JPSAgent {
 
     }
 
-    public boolean checkGenAttributeInitialised(String uriString){
+    /**
+     * Check generic attribute is initialised in KG
+     * @param uriString city object id
+     * @return building in energy profile graph
+     */
+    public String checkGenAttributeInitialised(String uriString){
         WhereBuilder wb = new WhereBuilder();
         SelectBuilder sb = new SelectBuilder();
 
@@ -1010,21 +1047,30 @@ public class CEAAgent extends JPSAgent {
 
         JSONObject queryResultObject = new JSONObject(this.query(QUERY_ROUTE, sb.build().toString()));
         JSONArray queryResultArray = new JSONArray(queryResultObject.get("result").toString());
-        String genAtt = "";
+        String building = "";
 
         if(!queryResultArray.isEmpty()){
-            genAtt = queryResultArray.getJSONObject(0).get("genAttribute").toString();
-
+            building = queryResultArray.getJSONObject(0).get("energyProfileBuilding").toString();
         }
-        return genAtt != "";
+        return building;
     }
 
-    public String checkEnergyProfileInitialised(JSONKeyToIriMapper mapper, String uriString){
-        WhereBuilder wb = new WhereBuilder();
+    /**
+     * Check if energy profile in KG has been initialised already for given building and time series already exist
+     * @param uriString city object id
+     * @param fixedIris map of time series iris to data types
+     * @return building in energy profile graph
+     */
+    public String checkBlazegraphAndTimeSeriesInitialised(String uriString, List<LinkedHashMap<String,String>> fixedIris){
+        String building = checkGenAttributeInitialised(uriString);
+        if(building.equals("")){
+            return "";
+        }
+        WhereBuilder wb1 = new WhereBuilder();
+        WhereBuilder wb2 = new WhereBuilder();
         SelectBuilder sb = new SelectBuilder();
 
-
-        wb.addPrefix("ocgml", ocgmlUri)
+        wb1.addPrefix("ocgml", ocgmlUri)
                 .addPrefix("rdf", rdfUri)
                 .addPrefix("purlEnaeq", purlEnaeqUri)
                 .addPrefix("ontoubemmp", ontoUBEMMPUri)
@@ -1033,45 +1079,77 @@ public class CEAAgent extends JPSAgent {
                 .addPrefix("om", unitOntologyUri)
                 .addWhere("?energyProfileBuilding", "rdf:type", "purlInf:Building")
                 .addWhere("?energyProfileBuilding", "purlEnaeq:consumesEnergy", "?grid")
-                .addWhere("?grid", "om:hasValue", NodeFactory.createURI(mapper.getIRI("GridConsumptionMeasure")))
+                .addWhere("?grid", "rdf:type", "ontoubemmp:GridConsumption")
+                .addWhere("?grid", "om:hasValue", "?grid_demand")
                 .addWhere("?energyProfileBuilding", "purlEnaeq:consumesEnergy", "?electricity")
-                .addWhere("?electricity", "om:hasValue", NodeFactory.createURI(mapper.getIRI("ElectricityConsumptionMeasure")))
+                .addWhere("?electricity", "rdf:type", "ontoubemmp:ElectricityConsumption")
+                .addWhere("?electricity", "om:hasValue", "?electricity_demand")
                 .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?heating")
+                .addWhere("?heating", "rdf:type", "purlEnaeq:HeatingSystem")
                 .addWhere("?heating", "purlEnaeq:consumesEnergy", "?heatingConsumption")
-                .addWhere("?heatingConsumption", "om:hasValue", NodeFactory.createURI(mapper.getIRI("HeatingConsumptionMeasure")))
+                .addWhere("?heatingConsumption", "om:hasValue", "?heating_demand")
                 .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?cooling")
+                .addWhere("?cooling", "rdf:type", "ontoubemmp:CoolingSystem")
                 .addWhere("?cooling", "purlEnaeq:consumesEnergy", "?coolingConsumption")
-                .addWhere("?coolingConsumption", "om:hasValue", NodeFactory.createURI(mapper.getIRI("CoolingConsumptionMeasure")))
-                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                .addWhere("?PVPanels", "thinkhome:producesEnergy", "?PVSupply")
-                .addWhere("?PVSupply", "om:hasValue", NodeFactory.createURI(mapper.getIRI("PVSupplyRoofMeasure")))
-                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                .addWhere("?PVPanels", "thinkhome:producesEnergy", "?PVSupply")
-                .addWhere("?PVSupply", "om:hasValue", NodeFactory.createURI(mapper.getIRI("PVSupplyWallSouthMeasure")))
-                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                .addWhere("?PVPanels", "thinkhome:producesEnergy", "?PVSupply")
-                .addWhere("?PVSupply", "om:hasValue", NodeFactory.createURI(mapper.getIRI("PVSupplyWallNorthMeasure")))
-                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                .addWhere("?PVPanels", "thinkhome:producesEnergy", "?PVSupply")
-                .addWhere("?PVSupply", "om:hasValue", NodeFactory.createURI(mapper.getIRI("PVSupplyWallEastMeasure")))
-                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                .addWhere("?PVPanels", "thinkhome:producesEnergy", "?PVSupply")
-                .addWhere("?PVSupply", "om:hasValue", NodeFactory.createURI(mapper.getIRI("PVSupplyWallWestMeasure")));
+                .addWhere("?coolingConsumption", "om:hasValue", "?cooling_demand")
+                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanelsRoof")
+                .addWhere("?PVPanelsRoof", "rdf:type", "ontoubemmp:RoofPVPanels")
+                .addWhere("?PVPanelsRoof", "thinkhome:producesEnergy", "?PVSupplyRoof")
+                .addWhere("?PVSupplyRoof", "om:hasValue", "?PV_supply_roof")
+                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanelsSouthWalls")
+                .addWhere("?PVPanelsSouthWalls", "rdf:type", "ontoubemmp:SouthWallPVPanels")
+                .addWhere("?PVPanelsSouthWalls", "thinkhome:producesEnergy", "?PVSupplySouthWalls")
+                .addWhere("?PVSupplySouthWalls", "om:hasValue", "?PV_supply_wall_south")
+                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanelsNorthWalls")
+                .addWhere("?PVPanelsNorthWalls", "rdf:type", "ontoubemmp:NorthWallPVPanels")
+                .addWhere("?PVPanelsNorthWalls", "thinkhome:producesEnergy", "?PVSupplyNorthWalls")
+                .addWhere("?PVSupplyNorthWalls", "om:hasValue", "?PV_supply_wall_north")
+                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanelsEastWalls")
+                .addWhere("?PVPanelsEastWalls", "rdf:type", "ontoubemmp:EastWallPVPanels")
+                .addWhere("?PVPanelsEastWalls", "thinkhome:producesEnergy", "?PVSupplyEastWalls")
+                .addWhere("?PVSupplyEastWalls", "om:hasValue", "?PV_supply_wall_east")
+                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanelsWestWalls")
+                .addWhere("?PVPanelsWestWalls", "rdf:type", "ontoubemmp:WestWallPVPanels")
+                .addWhere("?PVPanelsWestWalls", "thinkhome:producesEnergy", "?PVSupplyWestWalls")
+                .addWhere("?PVSupplyWestWalls", "om:hasValue", "?PV_supply_wall_west");
+        wb2.addPrefix("ts", timeSeriesUri)
+                .addWhere("?grid_demand", "ts:hasTimeSeries", "?gridTS")
+                .addWhere("?electricity_demand", "ts:hasTimeSeries", "?electricityTS")
+                .addWhere("?heating_demand", "ts:hasTimeSeries", "?heatingTS")
+                .addWhere("?cooling_demand", "ts:hasTimeSeries", "?coolingTS")
+                .addWhere("?PV_supply_roof", "ts:hasTimeSeries", "?PVSupplyRoofTS")
+                .addWhere("?PV_supply_wall_south", "ts:hasTimeSeries", "?PVSupplySouthWallsTS")
+                .addWhere("?PV_supply_wall_north", "ts:hasTimeSeries", "?PVSupplyNorthWallsTS")
+                .addWhere("?PV_supply_wall_east", "ts:hasTimeSeries", "?PVSupplyEastWallsTS")
+                .addWhere("?PV_supply_wall_west", "ts:hasTimeSeries", "?PVSupplyWestWallsTS");
+
 
         sb.addVar("?energyProfileBuilding")
-                .addGraph(NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)), wb);
+                .addGraph(NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)), wb1);
+        sb.addVar("?grid_demand").addVar("?electricity_demand").addVar("?heating_demand").addVar("?cooling_demand")
+                .addVar("?PV_supply_roof").addVar("?PV_supply_wall_south").addVar("?PV_supply_wall_north")
+                .addVar("?PV_supply_wall_east").addVar("?PV_supply_wall_west").addWhere(wb2);
+        sb.setVar( Var.alloc( "energyProfileBuilding" ), NodeFactory.createURI(building));
 
         JSONObject queryResultObject = new JSONObject(this.query(QUERY_ROUTE, sb.build().toString()));
         JSONArray queryResultArray = new JSONArray(queryResultObject.get("result").toString());
-        String building = "";
+        LinkedHashMap<String, String> tsIris = new LinkedHashMap<>();
 
         if(!queryResultArray.isEmpty()){
-            building = queryResultArray.getJSONObject(0).get("energyProfileBuilding").toString();
-
+            for(String measure: TIME_SERIES){
+                tsIris.put(measure, queryResultArray.getJSONObject(0).get(measure).toString());
+            }
+            fixedIris.add(tsIris);
+            return building;
         }
-        return building;
+        return "";
     }
 
+    /**
+     * Return readable unit from ontology iri
+     * @param ontologyUnit unit iri in ontology
+     * @return unit as a String
+     */
     public String getUnit(String ontologyUnit){
         switch(ontologyUnit) {
             case("http://www.ontology-of-units-of-measure.org/resource/om-2/kilowattHour"):
@@ -1083,6 +1161,11 @@ public class CEAAgent extends JPSAgent {
         }
     }
 
+    /**
+     * Return data using time series client for given data iri
+     * @param dataIri iri in time series database
+     * @return time series data
+     */
     public TimeSeries<OffsetDateTime> retrieveData(String dataIri){
         try {
             tsClient = new TimeSeriesClient<>(OffsetDateTime.class, new File(
@@ -1098,12 +1181,19 @@ public class CEAAgent extends JPSAgent {
         }
     }
 
-    public String calculateAverage(TimeSeries<OffsetDateTime> timeSeries, String dataIri){
+    /**
+     * Calculate annual value by summing all data in column in time series and rounding to 2dp
+     * @param timeSeries time series data
+     * @param dataIri iri in time series database
+     * @return annualValue as a String
+     */
+    public String calculateAnnual(TimeSeries<OffsetDateTime> timeSeries, String dataIri){
         List<Double> values = timeSeries.getValuesAsDouble(dataIri);
         Double annualValue = 0.;
         for(Double value : values){
             annualValue += value;
         }
+        annualValue = Math.round(annualValue*Math.pow(10,2))/Math.pow(10,2);
         return annualValue.toString();
 
     }
