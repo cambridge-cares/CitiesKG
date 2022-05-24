@@ -20,8 +20,10 @@ public class RunCEATaskTest extends TestCase {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
             testData.add(new CEAInputData("test","test"));
-            ArrayList<String> testArray = new ArrayList<String>();
-            task = new RunCEATask(testData, testURI, testArray,0);
+            ArrayList<String> testArray = new ArrayList<>();
+            testArray.add("testUri");
+            Integer test_thread = 0;
+            task = new RunCEATask(testData, testURI, testArray,test_thread);
             assertNotNull(task);
         } catch (Exception e) {
             fail();
@@ -33,12 +35,18 @@ public class RunCEATaskTest extends TestCase {
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
             testData.add(new CEAInputData("test","test"));
             URI testURI = new URI("http://localhost/test");
-            ArrayList<String> testArray = new ArrayList<String>();
-            RunCEATask task = new RunCEATask(testData, testURI, testArray,0);
+            ArrayList<String> testArray = new ArrayList<>();
+            testArray.add("testUri");
+            Integer test_thread = 0;
+            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread);
 
-            assertEquals(6, task.getClass().getDeclaredFields().length);
+            assertEquals(10, task.getClass().getDeclaredFields().length);
 
             Field inputs;
+            Field uris;
+            Field endpointUri;
+            Field threadNumber;
+            Field CTYPE_JSON;
             Field stop;
             Field SHAPEFILE_SCRIPT;
             Field WORKFLOW_SCRIPT;
@@ -49,6 +57,17 @@ public class RunCEATaskTest extends TestCase {
             inputs = task.getClass().getDeclaredField("inputs");
             inputs.setAccessible(true);
             assertEquals(inputs.get(task), testData);
+            uris = task.getClass().getDeclaredField("uris");
+            uris.setAccessible(true);
+            assertEquals(uris.get(task), testArray);
+            endpointUri = task.getClass().getDeclaredField("endpointUri");
+            endpointUri.setAccessible(true);
+            assertEquals(endpointUri.get(task), testURI);
+            threadNumber = task.getClass().getDeclaredField("threadNumber");
+            threadNumber.setAccessible(true);
+            assertEquals(threadNumber.get(task), test_thread);
+            CTYPE_JSON = task.getClass().getDeclaredField("CTYPE_JSON");
+            assertEquals(CTYPE_JSON.get(task), "application/json");
             stop = task.getClass().getDeclaredField("stop");
             stop.setAccessible(true);
             assertFalse((boolean) stop.get(task));
@@ -75,9 +94,13 @@ public class RunCEATaskTest extends TestCase {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
             testData.add(new CEAInputData("test","test"));
-            ArrayList<String> testArray = new ArrayList<String>();
-            RunCEATask task = new RunCEATask(testData, testURI, testArray,0);
-            assertEquals(6, task.getClass().getDeclaredMethods().length);
+            ArrayList<String> testArray = new ArrayList<>();
+            testArray.add("testUri");
+            Integer test_thread = 0;
+            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread);
+
+            assertEquals(7, task.getClass().getDeclaredMethods().length);
+
         } catch (URISyntaxException e) {
             fail();
         }
@@ -89,8 +112,10 @@ public class RunCEATaskTest extends TestCase {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
             testData.add(new CEAInputData("test","test"));
-            ArrayList<String> testArray = new ArrayList<String>();
-            RunCEATask task = new RunCEATask(testData, testURI, testArray,0);
+            ArrayList<String> testArray = new ArrayList<>();
+            testArray.add("testUri");
+            Integer test_thread = 0;
+            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread);
 
             Field stopField = task.getClass().getDeclaredField("stop");
             stopField.setAccessible(true);
@@ -109,8 +134,10 @@ public class RunCEATaskTest extends TestCase {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
             testData.add(new CEAInputData("test","test"));
-            ArrayList<String> testArray = new ArrayList<String>();
-            RunCEATask task = new RunCEATask(testData, testURI, testArray,0);
+            ArrayList<String> testArray = new ArrayList<>();
+            testArray.add("testUri");
+            Integer test_thread = 0;
+            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread);
 
             File myTempDir = new File(System.getProperty("java.io.tmpdir"));
             File newDirectory = new File(myTempDir, "new_directory");
