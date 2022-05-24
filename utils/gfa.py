@@ -51,9 +51,9 @@ Functions that sets necessary params, like GPR for particular zoning types, or r
 """
 
 
-def intersect_with_regulation(all_plots, regulation, valid_overlap):
+def intersect_with_regulation(plots, reg, valid_overlap):
 
-    intersection = gpd.overlay(all_plots, regulation, how='intersection', keep_geom_type=True)
+    intersection = gpd.overlay(plots, reg, how='intersection', keep_geom_type=True)
     intersection['intersection_area'] = intersection.area
     overlap_ratio = intersection['intersection_area'] / intersection['site_area']
     intersection = intersection.loc[overlap_ratio >= valid_overlap, :]
@@ -130,19 +130,19 @@ def assign_gpr(plots, plot_type, lh, buffer, gpr1, gpr2, gpr3, storeys2, storeys
             plots.loc[plot, 'GPR'] = gpr1
             plots.loc[plot, 'context_storeys'] = lh.loc[lh_cont, 'STY_HT'].min()
 
-        # instersection with the landed housing fringe case
+        # intersection with the landed housing fringe case
         elif lh_int.any():
             plots.loc[plot, 'GPR'] = gpr2
             plots.loc[plot, 'context_storeys'] = storeys2
 
-        # intersection with surrouding area case
+        # intersection with surrounding area case
         elif (plots.loc[context_int, 'GPR'].mean() > 1.4) or (plots.loc[context_int, 'PlotType'].isin(['BUSINESS 1', 'BUSINESS 2', 'BUSINESS PARK']).any()):
             plots.loc[plot, 'GPR'] = gpr3
             plots.loc[plot, 'context_storeys'] = storeys3
 
 
 """
-Functions that sets or retrieves main parameters for GFA calculation.
+Functions that set or retrieve main parameters for GFA calculation.
 """
 
 
@@ -456,23 +456,24 @@ def run_estimate_gfa():
     Apply initial filtering to eliminate invalid plots and minimise bad input.
     """
 
-    # 4398 at this point
     plots = gpd.read_file(fn_plots).to_crs(epsg=3857)
     plots.geometry = plots.geometry.simplify(0.1)
+
     plots = plots[['INC_CRC', 'LU_DESC', 'GPR', 'geometry']].copy()
     plots = plots.rename(columns={'INC_CRC': 'PlotId', 'LU_DESC': 'PlotType'})
-    plots['GPR'] = pd.to_numeric(plots['GPR'], errors='coerce')
 
-    plots = plots[~plots['PlotType'].isin(['ROAD', 'WATERBODY', 'PARK', 'OPEN SPACE', 'CEMETERY', 'BEACH AREA'])]
+    plots['GPR'] = pd.to_numeric(plots['GPR'], errors='coerce')
     plots = plots[~(plots.geometry.type == "MultiPolygon")]
-    plots['context_storeys'] = float('NaN')
     plots['site_area'] = plots.area
     plots = plots.loc[plots['site_area'] >= 50]
-
     narrow_plots = []
     for plot in plots.geometry:
         narrow_plots.append(~is_narrow(plot, 3, 0.1))
     plots = plots.loc[narrow_plots, :]
+
+    plots = plots[~plots['PlotType'].isin(['ROAD', 'WATERBODY', 'PARK', 'OPEN SPACE', 'CEMETERY', 'BEACH AREA'])]
+    plots['context_storeys'] = float('NaN')
+
     invalid_zones = ['RESERVE SITE', 'SPECIAL USE ZONE', 'UTILITY']
     print('Plots loaded')
 
