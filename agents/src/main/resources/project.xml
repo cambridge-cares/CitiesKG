@@ -366,7 +366,7 @@
             </displayForm>
             <displayForm>
                 <form>2</form>
-                <active>{{display2}}/active>
+                <active>{{display2}}</active>
                 <visibleFrom>0</visibleFrom>
                 <rgba0>-922760192</rgba0>
                 <rgba1>-922786253</rgba1>

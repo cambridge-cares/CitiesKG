@@ -47,15 +47,15 @@ public class CityExportAgent extends JPSAgent {
 
     public static class Params {
         public String namespaceIri;
-        public String directory;
+        public String outputDir;
         public JSONObject serverInfo;
-        public int displayForm;
+        public String[] displayMode;
         public String outputPath;
-        public Params (String namespaceIri, String directory, JSONObject serverInfo, int displayForm, String outputPath){
+        public Params (String namespaceIri, String directory, JSONObject serverInfo, String[] displayMode, String outputPath){
             this.namespaceIri = namespaceIri;
-            this.directory = directory;
+            this.outputDir = directory;
             this.serverInfo = serverInfo;
-            this.displayForm = displayForm;
+            this.displayMode = displayMode;
             this.outputPath = outputPath;
         }
     }
@@ -63,12 +63,11 @@ public class CityExportAgent extends JPSAgent {
     // Agent endpoint and parameter keys
     public static final String URI_ACTION = "/export/kml";
     public static final String KEY_GMLID = "gmlid";
-    public static final String KEY_DIR = "directory";
     public static final String KEY_REQ_URL = "requestUrl";
     public static final String KEY_REQ_METHOD = "method";
     public static final String KEY_NAMESPACE = "namespace";
-    public static final String KEY_LOD = "lod";
     public static final String KEY_DISPLAYFORM = "displayform";
+    public static final String FS = System.getProperty("file.separator");
 
     // Export files names
     private String outFileName = "test";
@@ -76,12 +75,14 @@ public class CityExportAgent extends JPSAgent {
 
     private String namespaceIri;
     private JSONArray gmlidParams;
-    private String directory;
+    private String outputDir;
     private JSONObject serverInfo;
-    private int displayForm;
+    private int displayIndex;
+    private String[] displayMode = {"false","false", "false", "false"};
 
-    private String[] avaiableDisplay = {"FOOTPRINT", "EXTRUDED", "GEOMETRY", "COLLADA"};
-
+    private String[] displayOptions = {"FOOTPRINT", "EXTRUDED", "GEOMETRY", "COLLADA"};
+    private String namespaceName;
+    private String tmpDirsLocation = "C:/tmp";    //System.getProperty("java.io.tmpdir");
     // Default task parameters
     //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
     private final int NUM_IMPORTER_THREADS = 1;
@@ -96,23 +97,23 @@ public class CityExportAgent extends JPSAgent {
 
             namespaceIri = requestParams.getString(KEY_NAMESPACE);
             serverInfo = getServerInfo(namespaceIri);
-            directory = requestParams.getString(KEY_DIR);
 
-            List<String> availOptions = Arrays.asList(avaiableDisplay);
-            displayForm = availOptions.indexOf(requestParams.getString(KEY_DISPLAYFORM).toUpperCase()) + 1;
-
+            List<String> availOptions = Arrays.asList(displayOptions);
+            displayIndex = availOptions.indexOf(requestParams.getString(KEY_DISPLAYFORM).toUpperCase());
+            displayMode[displayIndex] = "true";
             //gmlids = getInputGmlids(requestParams); // this method will process the input when it is a path or an array of gmlid
             // If gmlid contains "*", it requires the whole list of gmlid from the namespace
             // This step can take long as querying the database is long with this sparql query
-            // 3 modes:
-            // 1.1) [* , path to a directory where the list of gmlids is prepared]
-            // 1.2) [*]
+            // 2 modes:
+            // 1) [*]
             // 2) explicit gmlids
 
+            outputDir = Paths.get(tmpDirsLocation, "export").toString();
             gmlidParams = requestParams.getJSONArray(KEY_GMLID);
 
-            if (gmlidParams.length() == 2 && gmlidParams.get(0).equals("*")) {
-                String preparedGmlids = gmlidParams.get(1).toString();
+            if (gmlidParams.length() == 1 && gmlidParams.get(0).equals("*")) {
+                String preparedGmlids = Paths.get(tmpDirsLocation, namespaceName).toString();
+
                 ArrayList<Path> fileList = new ArrayList<>();
                 try (Stream<Path> paths = Files.walk(Paths.get(preparedGmlids))) {
                     paths
@@ -126,8 +127,8 @@ public class CityExportAgent extends JPSAgent {
                     // Retrieve a list of gmlids from a file, and execute the export process
                     String[] gmlidArray = getGmlidFromFile(gmlidFile);
                     String outputFileName = getOutputPath(gmlidFile);
-                    Params taskParams = new Params(namespaceIri, directory, serverInfo, displayForm, outputFileName);
-                    result.put("outputPath", exportKml(gmlidArray, taskParams);
+                    Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outputFileName);
+                    result.put("outputPath", exportKml(gmlidArray, taskParams));
                 }
             }else{
                 ArrayList<String> buildingIds = new ArrayList<>();
@@ -136,7 +137,9 @@ public class CityExportAgent extends JPSAgent {
                 }
                 String[] gmlidsArray = new String[buildingIds.size()];
                 gmlidsArray = buildingIds.toArray(gmlidsArray);
-                result.put("outputPath", exportKml(gmlidsArray, getOutputPath(), serverInfo));
+                String outSingleFileName = getOutputPath(null);
+                Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outSingleFileName);
+                result.put("outputPath", exportKml(gmlidsArray, taskParams));
             }
 
         }
@@ -157,24 +160,12 @@ public class CityExportAgent extends JPSAgent {
                 }
                 // Check if gmlid is empty or valid
                 if (!requestParams.getJSONArray(KEY_GMLID).isEmpty()){
-                    JSONArray gmlidArgs = requestParams.getJSONArray(KEY_GMLID);
-                    if (gmlidArgs.length() == 2 && gmlidArgs.get(0).equals("*")) {
-                        // For the * case: Check if the second field of gmlid array is valid director
-                        if (!Files.exists(Paths.get(gmlidArgs.get(1).toString()))){
-                            throw new BadRequestException("Error: The prepared_gmlid directory does not exist.");
-                        }
-                    }
-                }
-                // Check if the output directory is empty or valid
-                if (!requestParams.getString(KEY_DIR).isEmpty() && Files.exists(Paths.get(requestParams.getString(KEY_DIR)))) {
-                    System.out.println("Valid directory: " + requestParams.getString(KEY_DIR));
-                } else {
-                    throw new BadRequestException("Error: The given input directory is invalid");
+                    System.out.println("Not empty gmlid inputs");
                 }
 
                 // Check the displayform
                 if (!requestParams.getString(KEY_DISPLAYFORM).isEmpty()) {
-                    List<String> availOptions = Arrays.asList(avaiableDisplay);
+                    List<String> availOptions = Arrays.asList(displayOptions);
                     int index = availOptions.indexOf(
                         requestParams.getString(KEY_DISPLAYFORM).toUpperCase());
                     if (index > 0) {
@@ -206,6 +197,7 @@ public class CityExportAgent extends JPSAgent {
         return gmlidsArray;
     }
 
+
     /**
      * create the output path of the generated kml file for indexed input files.
      * @param - indexed file
@@ -213,11 +205,10 @@ public class CityExportAgent extends JPSAgent {
      */
     private String getOutputPath (Path inputFile) {
 
-        File outputDir = new File (Paths.get(directory, "export").toString());
-        if (!outputDir.exists()){ outputDir.mkdirs(); }
+        if (!new File(outputDir).exists()){ new File(outputDir).mkdirs(); }
 
         if (inputFile ==  null) {
-            return Paths.get(outputDir.toString(), outFileName + outFileExtension).toString();
+            return Paths.get(outputDir, outFileName + outFileExtension).toString();
         }
 
         String path = inputFile.toString().replace("\\", "/");
@@ -262,7 +253,7 @@ public class CityExportAgent extends JPSAgent {
 
         String[] subarray = Arrays.copyOfRange(splitstr, 3, splitstr.length);
         String namespace = "/" + String.join("/", subarray) + "/";
-
+        namespaceName = subarray[2];
         if (server.isEmpty() || port.isEmpty() || namespace.isEmpty()) {
             return null;
         }
@@ -273,8 +264,8 @@ public class CityExportAgent extends JPSAgent {
     }
 
     private String exportKml (String[] gmlIds, Params taskParams){
-        String actualPath = taskParams.outputPath.replace(".kml", "_" + displayForm + outFileExtension);
-        ExporterTask task = new ExporterTask(gmlIds, outputpath, serverInfo);
+        String actualPath = taskParams.outputPath.replace(".kml", "_" + displayOptions[displayIndex].toLowerCase() + outFileExtension);
+        ExporterTask task = new ExporterTask(gmlIds, actualPath, serverInfo, taskParams.displayMode);
         exporterExecutor.execute(task);
         return actualPath;
     }

@@ -45,9 +45,10 @@ public class ExporterTaskTest {
         String[] gmlIds = testgmlIds;
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
+        String[] displayMode = {"false", "true" , "false", "false"};
 
         try {
-            task = new ExporterTask(gmlIds, outputPath, testServerInfo);
+            task = new ExporterTask(gmlIds, outputPath, testServerInfo, displayMode);
             assertNotNull(task);
         }  catch (Exception e) {
             fail();
@@ -61,8 +62,9 @@ public class ExporterTaskTest {
         String[] gmlIds = testgmlIds;
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath = outputFile.getAbsolutePath();
+        String[] displayMode = {"false", "true" , "false", "false"};
 
-        ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo);
+        ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo, displayMode);
         assertEquals(13, task.getClass().getDeclaredFields().length);
 
         Field PROJECT_CONFIG;
@@ -122,8 +124,9 @@ public class ExporterTaskTest {
         String[] gmlIds = testgmlIds;
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
+        String[] displayMode = {"false", "true" , "false", "false"};
 
-        ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo);
+        ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo, displayMode);
         assertEquals(4, task.getClass().getDeclaredMethods().length);
     }
 
@@ -133,8 +136,9 @@ public class ExporterTaskTest {
         String[] gmlIds = testgmlIds;
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
+        String[] displayMode = {"false", "true" , "false", "false"};
 
-        ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo);
+        ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo, displayMode);
 
         try {
             Field stopF = task.getClass().getDeclaredField("stop");
@@ -157,7 +161,9 @@ public class ExporterTaskTest {
         String[] gmlIds = testgmlIds;
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath= outputFile.getAbsolutePath();
-        ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo);
+        String[] displayMode = {"false", "true" , "false", "false"};
+
+        ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo, displayMode);
 
         // Working with tempFolder and tempFile
         File configFile = new File(System.getProperty(outTmpDir) + "/testproject.xml");  //initialize File object and passing path as argument but the file is not created yet
@@ -204,8 +210,9 @@ public class ExporterTaskTest {
         // Setup the CityExportAgent
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath = outputFile.getAbsolutePath();
+        String[] displayMode = {"false", "true" , "false", "false"};
 
-        ExporterTask task = new ExporterTask(exampleGmlIds, outputPath, testServerInfo);
+        ExporterTask task = new ExporterTask(exampleGmlIds, outputPath, testServerInfo, displayMode);
         String actualFilePath = outputPath.replace(".kml", "_extruded.kml");
         File actualFile = new File(actualFilePath);
 

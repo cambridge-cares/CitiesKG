@@ -21,6 +21,11 @@ public class ExporterTask implements Runnable {
     public static final String PLACEHOLDER_GMLID = "{{gmlid}}";
     public static final String PLACEHOLDER_HOST = "{{host}}";
     public static final String PLACEHOLDER_PORT = "{{port}}";
+    public static final String PLACEHOLDER_LOD = "{{lod}}";
+    public static final String PLACEHOLDER_FOOTPRINT = "{{display1}}";
+    public static final String PLACEHOLDER_EXTRUDED = "{{display2}}";
+    public static final String PLACEHOLDER_GEOMETRY = "{{display3}}";
+    public static final String PLACEHOLDER_COLLADA = "{{display4}}";
     public static final String PLACEHOLDER_NS = "{{namespace}}";
     public static final String ARG_SHELL = "-shell";
     public static final String ARG_KMLEXPORT = "-kmlExport=";
@@ -29,13 +34,17 @@ public class ExporterTask implements Runnable {
     private final String[] inputs;
     private final String outputpath;
     private final JSONObject serverinfo;
+    private final String[] displaymode;
+    private final int lod;
     private Boolean stop = false;
 
 
-    public ExporterTask(String[] gmlIds, String outputpath, JSONObject serverInfo) {
+    public ExporterTask(String[] gmlIds, String outputPath, JSONObject serverInfo, String[] displayMode) {
         this.inputs = gmlIds;
-        this.outputpath = outputpath;
+        this.outputpath = outputPath;
         this.serverinfo = serverInfo;
+        this.displaymode = displayMode;
+        this.lod = 5;   // by default: highest lod available
     }
 
     public void stop() {
@@ -82,13 +91,22 @@ public class ExporterTask implements Runnable {
                     Paths.get(projectCfg), StandardCopyOption.REPLACE_EXISTING);
 
         File cfgFile = new File(projectCfg);
-
+        // Change the server info
         String cfgData = FileUtils.readFileToString(cfgFile, String.valueOf(Charset.defaultCharset()));
         cfgData = cfgData.replace(PLACEHOLDER_GMLID, createGmlids(this.inputs));
         cfgData = cfgData.replace(PLACEHOLDER_HOST, String.valueOf(serverinfo.get("host")));
         cfgData = cfgData.replace(PLACEHOLDER_PORT, String.valueOf(serverinfo.get("port")));
         cfgData = cfgData.replace(PLACEHOLDER_NS, String.valueOf(serverinfo.get("namespace")));
 
+        // Change the lod in config file, by default: highest lod available = 5
+        cfgData = cfgData.replace(PLACEHOLDER_LOD, String.valueOf(this.lod));
+        // Change the displayform in config file
+        cfgData = cfgData.replace(PLACEHOLDER_FOOTPRINT, String.valueOf(this.displaymode[0]));
+        cfgData = cfgData.replace(PLACEHOLDER_EXTRUDED, String.valueOf(this.displaymode[1]));
+        cfgData = cfgData.replace(PLACEHOLDER_GEOMETRY, String.valueOf(this.displaymode[2]));
+        cfgData = cfgData.replace(PLACEHOLDER_COLLADA, String.valueOf(this.displaymode[3]));
+
+        // Save the modified cfgFile
         FileUtils.writeStringToFile(cfgFile, cfgData);
         return cfgFile;
     }
