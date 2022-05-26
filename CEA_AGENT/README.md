@@ -20,11 +20,13 @@ You'll need to provide  your credentials (github username/personal access token)
 ```
 
 The agent also requires a postgreSQL database for the time series client to save data in. The database used and the triplestore endpoint need to be provided in 
+```
 ./cea-agent/src/main/resources
     timeseriesclient.properties
 ```
 
 The username and password for the postgreSQL database need to be provided in:
+```
 ./credentials/
     repo_username.txt
     repo_password.txt
