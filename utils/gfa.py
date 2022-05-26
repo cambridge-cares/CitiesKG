@@ -7,6 +7,7 @@ from shapely.ops import unary_union
 import math
 import geopandas as gpd
 import json
+from concurrent.futures import ProcessPoolExecutor
 
 """
 Helper functions to process dataframes, e.g. filter.
@@ -436,6 +437,78 @@ def compute_gfa(plots_for_GFA, plot_setbacks, dcp):
     return gfas
 
 
+def process_plots(fn_plots):
+    plots = gpd.read_file(fn_plots).to_crs(epsg=3857)
+    plots.geometry = plots.geometry.simplify(0.1)
+    plots = plots[~(plots.geometry.type == "MultiPolygon")]
+    plots['site_area'] = plots.area
+    plots = plots.loc[plots['site_area' ] >= 50]
+    plots = plots.rename(columns = {'INC_CRC':'PlotId', 'LU_DESC':'PlotType'})
+    plots['GPR'] = pd.to_numeric(plots['GPR'], errors = 'coerce')
+    plots = plots[~plots['PlotType'].isin(['ROAD','WATERBODY', 'PARK', 'OPEN SPACE', 'CEMETERY', 'BEACH AREA'])]
+    plots['context_storeys'] = float('NaN')
+
+    narrow_plots = []
+    for plot in plots.geometry:
+        narrow_plots.append(~is_narrow(plot, 3, 0.1))
+    plots = plots.loc[narrow_plots,:]
+    return plots
+
+
+def read_landed_housing(fn_landed_housing):
+    lh = gpd.read_file(fn_landed_housing).to_crs(3857)
+    lh['STY_HT'] = lh['STY_HT'].map({'3-STOREY': 3, '2-STOREY': 2})
+    return lh
+
+
+def read_height_control(fn_hc):
+    hc = gpd.read_file(fn_hc).to_crs(epsg=3857)
+    hc.loc[hc['BLD_HT_STY'] == '> 50', 'BLD_HT_STY'] = '100'
+    hc['BLD_HT_STY'] = pd.to_numeric(hc['BLD_HT_STY'])
+    return hc
+
+
+def read_conservation_control(fn_con):
+    con = gpd.read_file(fn_con).to_crs(epsg=3857)
+    return con
+
+
+def read_street_block_control(fn_sb_boundary, fn_sb_reg):
+    sb = gpd.read_file(fn_sb_boundary).to_crs(epsg=3857)
+    sb_reg = pd.read_excel(fn_sb_reg, engine='openpyxl')
+    sb = sb.merge(sb_reg, on="INC_CRC")
+    sb = to_list(sb, 'Setback_Front')
+    sb = to_list(sb, 'Setback_Side')
+    sb = to_list(sb, 'Setback_Rear')
+    return sb
+
+
+def read_urban_design_guidelines(fn_udr):
+    udr = gpd.read_file(fn_udr).to_crs(epsg=3857)  # urban design goudelines
+    udr['Storeys'] = pd.to_numeric(udr['Storeys'], errors='coerce')
+    udr = to_bool(udr, 'Party_Wall')
+    return udr
+
+
+def read_development_control(fn_control_plans):
+    dcp = pd.read_excel(fn_control_plans)  # development control  plans
+    dcp['type_context'].fillna(value='default', inplace=True)
+    dcp['type_property'].fillna(value='default', inplace=True)
+    return dcp
+
+
+def read_road_regulations(fn_roads, fn_road_plots):
+    rn_lta = gpd.read_file(fn_roads).to_crs(epsg=3857)  # road network
+    rn_lta = rn_lta[
+        ~rn_lta['RD_TYP_CD'].isin(['Cross Junction', 'T-Junction', 'Expunged', 'Other Junction', 'Pedestrian Mall',
+                                   '2 T-Junction opposite each other', 'Unknown', 'Y-Junction', 'Imaginary Line',
+                                   'Slip Road'])]
+    road_plots = gpd.read_file(fn_road_plots).to_crs(epsg=3857)
+    road_plots = road_plots.rename(columns={'INC_CRC': 'PlotId', 'LU_DESC': 'PlotType'})
+    road_plots = assign_road_category(road_plots, rn_lta)
+    return road_plots
+
+
 def run_estimate_gfa():
 
     # file paths
@@ -452,88 +525,51 @@ def run_estimate_gfa():
     fn_road_plots = root + "roads/road_plots/roads.shp"
 
     """ 
-    Removing plots with zoning types for which calculating GFA does not make sense, like PARK, OPEN SPACE, WATERBODY, ROAD.
-    Apply initial filtering to eliminate invalid plots and minimise bad input.
-    """
-
-    plots = gpd.read_file(fn_plots).to_crs(epsg=3857)
-    plots.geometry = plots.geometry.simplify(0.1)
-
-    plots = plots[['INC_CRC', 'LU_DESC', 'GPR', 'geometry']].copy()
-    plots = plots.rename(columns={'INC_CRC': 'PlotId', 'LU_DESC': 'PlotType'})
-
-    plots['GPR'] = pd.to_numeric(plots['GPR'], errors='coerce')
-    plots = plots[~(plots.geometry.type == "MultiPolygon")]
-    plots['site_area'] = plots.area
-    plots = plots.loc[plots['site_area'] >= 50]
-    narrow_plots = []
-    for plot in plots.geometry:
-        narrow_plots.append(~is_narrow(plot, 3, 0.1))
-    plots = plots.loc[narrow_plots, :]
-
-    plots = plots[~plots['PlotType'].isin(['ROAD', 'WATERBODY', 'PARK', 'OPEN SPACE', 'CEMETERY', 'BEACH AREA'])]
-    plots['context_storeys'] = float('NaN')
-
-    invalid_zones = ['RESERVE SITE', 'SPECIAL USE ZONE', 'UTILITY']
-    print('Plots loaded')
-
-    """
-    Reads in geometry and regulation data for: 
+    Pre-processing plots and regulations.
         Conservation Areas - 248 boundaries; 
         Height Control Plan - 362 boundaries; 
         Street Block Plan - 90 boundaries; 
         Urban Design Guidelines - 171 boundaries; 
         Development Control Plans
     """
-    lh = gpd.read_file(fn_landed_housing).to_crs(3857)  # landed housing
-    lh['STY_HT'] = lh['STY_HT'].map({'3-STOREY': 3, '2-STOREY': 2})
 
-    con = gpd.read_file(fn_con).to_crs(epsg=3857)  # conservation areas
+    with ProcessPoolExecutor(max_workers=8) as executor:
+        # plot task
+        plots = executor.submit(gfa.process_plots, fn_plots)
 
-    hc = gpd.read_file(fn_hc).to_crs(epsg=3857)  # height controls
-    hc.loc[hc['BLD_HT_STY'] == '> 50', 'BLD_HT_STY'] = '100'
-    hc['BLD_HT_STY'] = pd.to_numeric(hc['BLD_HT_STY'])
+        # regulation tasks
+        lh = executor.submit(gfa.read_landed_housing, fn_landed_housing)
+        con = executor.submit(gfa.read_conservation_control, fn_con)
+        hc = executor.submit(gfa.read_height_control, fn_hc)
+        sb = executor.submit(gfa.read_street_block_control, fn_sb_boundary, fn_sb_reg)
+        udr = executor.submit(gfa.read_urban_design_guidelines, fn_udr)
+        dcp = executor.submit(gfa.read_development_control, fn_control_plans)
+        road_plots = executor.submit(gfa.read_road_regulations, fn_roads, fn_road_plots)
 
-    sb = gpd.read_file(fn_sb_boundary).to_crs(epsg=3857)  # street blocks
-    sb_reg = pd.read_excel(fn_sb_reg, engine='openpyxl')
-    sb = sb.merge(sb_reg, on="INC_CRC")
-    sb = to_list(sb, 'Setback_Front')
-    sb = to_list(sb, 'Setback_Side')
-    sb = to_list(sb, 'Setback_Rear')
+        plots = plots.result()
+        lh = lh.result()
+        con = con.result()
+        hc = hc.result()
+        sb = sb.result()
+        udr = udr.result()
+        dcp = dcp.result()
+        road_plots = road_plots.result()
 
-    udr = gpd.read_file(fn_udr).to_crs(epsg=3857)  # urban design goudelines
-    udr['Storeys'] = pd.to_numeric(udr['Storeys'], errors='coerce')
-    udr = to_bool(udr, 'Party_Wall')
-
-    dcp = pd.read_excel(fn_control_plans)  # development control  plans
-    dcp['type_context'].fillna(value='default', inplace=True)
-    dcp['type_property'].fillna(value='default', inplace=True)
-
-    rn_lta = gpd.read_file(fn_roads).to_crs(epsg=3857)  # road network
-    rn_lta = rn_lta[
-        ~rn_lta['RD_TYP_CD'].isin(['Cross Junction', 'T-Junction', 'Expunged', 'Other Junction', 'Pedestrian Mall',
-                                   '2 T-Junction opposite each other', 'Unknown', 'Y-Junction', 'Imaginary Line',
-                                   'Slip Road'])]
-    print('Regulations loaded')
-
-    """
-    Road category assignment to the road type plot.
-    road graph segments and their attributes are mapped to road plots.
-    """
-
-    road_plots = gpd.read_file(fn_road_plots).to_crs(epsg=3857)
-    road_plots = road_plots.rename(columns={'INC_CRC': 'PlotId', 'LU_DESC': 'PlotType'})
-    road_plots = assign_road_category(road_plots, rn_lta)
+    invalid_zones = ['RESERVE SITE', 'SPECIAL USE ZONE', 'UTILITY']
+    print('Plots & Regulations loaded')
 
     """ 
     Intersect regulation areas dataset with plot dataset. Valid intersections if overlap > than 0.1 of site area. 
     Store these intersections into dataframe to be used whenever intersection related information is needed.
     """
 
-    con_int = intersect_with_regulation(plots, con, 0.1)  # 1414
-    hc_int = intersect_with_regulation(plots, hc, 0.1)  # 853
-    sb_int = intersect_with_regulation(plots, sb, 0.1)  # 402
-    udr_int = intersect_with_regulation(plots, udr, 0.1)  # 478
+    tasks = [(plots, con, 0.1), (plots, hc, 0.1), (plots, sb, 0.1), (plots, udr, 0.1)]
+    with Pool(4) as pool:
+        intersections = pool.starmap(gfa.intersect_with_regulation, tasks)
+        con_int = intersections[0]
+        hc_int = intersections[1]
+        sb_int = intersections[2]
+        udr_int = intersections[3]
 
     # to identify small amount of plots for which setbacks come from udr.Doing it separately makes it faster. 63
     plots_for_setbacks = plots.copy()
