@@ -15,10 +15,8 @@ import org.citydb.database.adapter.blazegraph.BlazegraphAdapter;
 import org.citydb.database.adapter.blazegraph.BlazegraphConfigBuilder;
 import org.citydb.database.adapter.blazegraph.BlazegraphGeoDatatype;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class BlazegraphConfigBuilderTest {
 

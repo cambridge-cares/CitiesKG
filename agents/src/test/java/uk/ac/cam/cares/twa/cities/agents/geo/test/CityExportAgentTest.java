@@ -1,7 +1,8 @@
 package uk.ac.cam.cares.twa.cities.agents.geo.test;
 
-import junit.framework.TestCase;
+import org.json.JSONArray;
 import org.json.JSONObject;
+import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityExportAgent;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
@@ -11,14 +12,18 @@ import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.*;
 
-public class CityExportAgentTest extends TestCase {
 
-    public String testGmlIds = "abc";
+public class CityExportAgentTest {
+
+    public String[] data = {"abc", "def"};
+    public JSONArray testGmlIds = new JSONArray(data);
+
     public String outFileName = "/test.kml";
     public String outTmpDir = "java.io.tmpdir";
 
-
+    @Test
     public void testNewCityExportAgent() {
         CityExportAgent agent;
         try {
@@ -29,7 +34,7 @@ public class CityExportAgentTest extends TestCase {
         }
     }
 
-
+    @Test
     public void testValidateInput()  {
         CityExportAgent agent = new CityExportAgent();
         Method validateInput = null;
@@ -146,25 +151,27 @@ public class CityExportAgentTest extends TestCase {
         }
     }
 
-
+    @Test
     public void testExportKml() {
         CityExportAgent agent = new CityExportAgent();
         Method exportKml = null;
         try {
-            exportKml = agent.getClass().getDeclaredMethod("exportKml", String.class, String.class);
+            exportKml = agent.getClass().getDeclaredMethod("exportKml", String[].class, String.class, JSONObject.class);
             exportKml.setAccessible(true);
         } catch (NoSuchMethodException e) {
-            e.printStackTrace();
+            fail();
         }
 
-        String gmlIds = testGmlIds;
+        String[] gmlIds = data;
+        JSONObject serverInfo = new JSONObject();
+
         File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
         String outputPath = outputFile.getAbsolutePath();
         String actualPath = outputPath.replace(".kml", "_extruded.kml");
 
         try {
             assert exportKml != null;
-            assertEquals(actualPath, exportKml.invoke(agent, gmlIds, outputPath));
+            assertEquals(actualPath, exportKml.invoke(agent, gmlIds, outputPath, serverInfo));
         } catch (Exception e) {
             fail();
         }

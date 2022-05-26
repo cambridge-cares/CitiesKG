@@ -1,30 +1,34 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo.test;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static org.junit.jupiter.api.Assertions.*;
+import static uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask.DEF_JOURNAL_NAME;
+
+import com.bigdata.rdf.store.DataLoader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.zip.GZIPOutputStream;
-import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jetty.server.Server;
+import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
 import uk.ac.cam.cares.twa.cities.tasks.geo.BlazegraphServerTask;
 import uk.ac.cam.cares.twa.cities.tasks.geo.ImporterTask;
 import uk.ac.cam.cares.twa.cities.tasks.geo.NquadsExporterTask;
 
-public class NquadsExporterTaskTest extends TestCase {
+public class NquadsExporterTaskTest {
 
+  @Test
   public void testNewNquadsExporterTask() {
     NquadsExporterTask task;
 
@@ -37,6 +41,7 @@ public class NquadsExporterTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewNquadsExporterTaskFields() {
     BlockingQueue<File> queue = new LinkedBlockingDeque<>();
     File impFile = new File("test.gml");
@@ -105,12 +110,14 @@ public class NquadsExporterTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewNquadsExporterTaskMethods() {
     NquadsExporterTask task = new NquadsExporterTask(new LinkedBlockingDeque<>(),
         new File("test.gml"), "http://www.test.com/");
     assertEquals(6, task.getClass().getDeclaredMethods().length);
   }
 
+  @Test
   public void testNewNquadsExporterTaskStopMethod() {
     NquadsExporterTask task = new NquadsExporterTask(new LinkedBlockingDeque<>(),
         new File("test.gml"), "http://www.test.com/");
@@ -129,6 +136,7 @@ public class NquadsExporterTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewNquadsExporterTaskIsRunningMethod() {
     NquadsExporterTask task = new NquadsExporterTask(new LinkedBlockingDeque<>(),
         new File("test.gml"), "http://www.test.com/");
@@ -149,6 +157,7 @@ public class NquadsExporterTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewNquadsExporterTaskExportToNquadsFileFromJnlFileMethod() {
     File impFile = NquadsExporterTaskTestHelper.impFile;
     File nqFile = NquadsExporterTaskTestHelper.nqFile;
@@ -177,6 +186,7 @@ public class NquadsExporterTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewNquadsExporterTaskGetLocalSourceUrlFromProjectCfgMethod() {
     NquadsExporterTask task = new NquadsExporterTask(new LinkedBlockingDeque<>(),
         NquadsExporterTaskTestHelper.impFile, "http://www.test.com/");
@@ -197,6 +207,8 @@ public class NquadsExporterTaskTest extends TestCase {
       Files.copy(NquadsExporterTaskTestHelper.testProjFile.toPath(),
           NquadsExporterTaskTestHelper.projFile.toPath());
 
+      NquadsExporterTaskTestHelper.setUp();
+
       assertEquals(
           getLocalSourceUrlFromProjectCfg.invoke(task, NquadsExporterTaskTestHelper.nqGzFile),
           "http://127.0.0.1:52066/blazegraph/namespace/tmpkb/sparql/");
@@ -209,7 +221,9 @@ public class NquadsExporterTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewNquadsExporterTaskChangeUrlsInNQuadsFileMethod() {
+    NquadsExporterTaskTestHelper.tearDown();
     String from = "127.0.0.1:52066";
     String to = "www.test.com";
     File nqGzFile = NquadsExporterTaskTestHelper.nqGzFile;
@@ -240,8 +254,18 @@ public class NquadsExporterTaskTest extends TestCase {
       FileOutputStream fos = new FileOutputStream(nqGzFile.getAbsolutePath());
 
       GZIPOutputStream gzos = new GZIPOutputStream(fos);
-      gzos.write(nQuads.getBytes());
-      gzos.finish();
+
+      try {
+        gzos.write(nQuads.getBytes());
+      } finally {
+        try {
+          gzos.finish();
+          gzos.close();
+          fos.close();
+        } catch (IOException e) {
+          fail();
+        }
+      }
 
       File targetNqFile = (File) changeUrlsInNQuadsFile.invoke(task, nqGzFile, from, to);
 
@@ -258,6 +282,7 @@ public class NquadsExporterTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewNquadsExporterTaskRunMethod() {
     String to = "www.test.com";
     NquadsExporterTask task = new NquadsExporterTask(new LinkedBlockingDeque<>(),
@@ -265,9 +290,9 @@ public class NquadsExporterTaskTest extends TestCase {
 
     try {
       Files.copy(NquadsExporterTaskTestHelper.testNqFile.toPath(),
-          NquadsExporterTaskTestHelper.nqFile.toPath());
+          NquadsExporterTaskTestHelper.nqFile.toPath(), REPLACE_EXISTING);
       Files.copy(NquadsExporterTaskTestHelper.testPropFile.toPath(),
-          NquadsExporterTaskTestHelper.propFile.toPath());
+          NquadsExporterTaskTestHelper.propFile.toPath(), REPLACE_EXISTING);
       try {
         task.run();
       } catch (Exception e) {
@@ -281,11 +306,11 @@ public class NquadsExporterTaskTest extends TestCase {
 
     try {
       Files.copy(NquadsExporterTaskTestHelper.testNqFile.toPath(),
-          NquadsExporterTaskTestHelper.nqFile.toPath());
+          NquadsExporterTaskTestHelper.nqFile.toPath(), REPLACE_EXISTING);
       Files.copy(NquadsExporterTaskTestHelper.testPropFile.toPath(),
-          NquadsExporterTaskTestHelper.propFile.toPath());
+          NquadsExporterTaskTestHelper.propFile.toPath(), REPLACE_EXISTING);
       Files.copy(NquadsExporterTaskTestHelper.testProjFile.toPath(),
-          NquadsExporterTaskTestHelper.projFile.toPath());
+          NquadsExporterTaskTestHelper.projFile.toPath(), REPLACE_EXISTING);
       try {
         task.run();
       } catch (Exception e) {
@@ -323,12 +348,14 @@ public class NquadsExporterTaskTest extends TestCase {
 
     } catch (NoSuchFieldException | IllegalAccessException | InterruptedException | IOException | NoSuchMethodException | InvocationTargetException e) {
       fail();
+    } finally {
+      NquadsExporterTaskTestHelper.tearDown();
     }
 
   }
 
   public static class NquadsExporterTaskTestHelper {
-
+    public static final String FS = System.getProperty("file.separator");
     public static final File impFile = new File(System.getProperty("java.io.tmpdir") + "test.gml");
     public static final File testFile = new File(Objects.requireNonNull(
         NquadsExporterTaskTestHelper.class.getClassLoader()
@@ -352,46 +379,47 @@ public class NquadsExporterTaskTest extends TestCase {
         .replace(ImporterTask.EXT_FILE_GML, BlazegraphServerTask.PROPERTY_FILE));
     public static final File projFile = new File(
         impFile.getAbsolutePath().replace(ImporterTask.EXT_FILE_GML, ImporterTask.PROJECT_CONFIG));
+    public static final File defaultJnlFile = new File(
+            System.getProperty("user.dir").concat(FS + DEF_JOURNAL_NAME));
     public static final File quadsDir = new File(
         System.getProperty("java.io.tmpdir") + NquadsExporterTask.NQ_OUTDIR);
     public static final File splitDir = new File(
         System.getProperty("java.io.tmpdir") + CityImportAgent.KEY_SPLIT);
 
     public static void setUp() {
-      assertTrue(testFile.exists());
+      assertTrue(testNqFile.exists());
+      assertTrue(testPropFile.exists());
+      assertTrue(testProjFile.exists());
       try {
-        Files.copy(testFile.toPath(), impFile.toPath());
+        Files.copy(testNqFile.toPath(), nqFile.toPath(), REPLACE_EXISTING);
+        Files.copy(testProjFile.toPath(), projFile.toPath(), REPLACE_EXISTING);
+
+        Method setupFiles = BlazegraphServerTask.class.getDeclaredMethod("setupFiles", String.class);
+        setupFiles.setAccessible(true);
+        setupFiles.invoke(new BlazegraphServerTask(new LinkedBlockingDeque<>(), jnlFile.getAbsolutePath()), propFile.getAbsolutePath());
+
+        String data = FileUtils.readFileToString(projFile, String.valueOf(Charset.defaultCharset()));
+        data = data.replace("www.theworldavatar.com", "127.0.0.1");
+        data = data.replace("/citieskg/namespace/berlin/sparql/", "/blazegraph/namespace/tmpkb/sparql/");
+        data = data.replace("<port>83</port>", "<port>52066</port>");
+        FileUtils.writeStringToFile(projFile, data);
+      } catch (IOException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        fail();
+      }
+
+      String[] args = {"-namespace", "tmpkb",
+          propFile.getAbsolutePath(), nqFile.getAbsolutePath()};
+
+      try {
+        DataLoader.main(args);
       } catch (IOException e) {
         fail();
       }
-      ExecutorService serverExecutor = Executors.newFixedThreadPool(1);
-      BlockingQueue<Server> importQueue = new LinkedBlockingDeque<>();
-      BlazegraphServerTask serverTask = new BlazegraphServerTask(importQueue,
-          jnlFile.getAbsolutePath());
-      serverExecutor.execute(serverTask);
 
-      ImporterTask task = new ImporterTask(importQueue, impFile);
-
-      try {
-        Field stop = task.getClass().getDeclaredField("stop");
-        Field serverInstances = task.getClass().getDeclaredField("serverInstances");
-        stop.setAccessible(true);
-        serverInstances.setAccessible(true);
-        new Thread(task).start();
-
-        while (!(boolean) stop.get(task)) {
-          if (((BlockingQueue<?>) serverInstances.get(task)).size() == 0) {
-            if (Objects.requireNonNull(nqFile).isFile()) {
-              assertTrue(nqFile.exists());
-            }
-          }
-        }
-      } catch (NoSuchFieldException | IllegalAccessException e) {
-        fail();
-      }
     }
 
     public static void tearDown() {
+      System.gc();
       if (Objects.requireNonNull(impFile).isFile()) {
         if (!impFile.delete()) {
           fail();
@@ -419,6 +447,11 @@ public class NquadsExporterTaskTest extends TestCase {
       }
       if (Objects.requireNonNull(projFile).isFile()) {
         if (!projFile.delete()) {
+          fail();
+        }
+      }
+      if (Objects.requireNonNull(defaultJnlFile).isFile()) {
+        if(!defaultJnlFile.delete()) {
           fail();
         }
       }

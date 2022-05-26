@@ -4,6 +4,8 @@ import dev.jeka.core.api.file.JkPathTree;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.NumberFormatException;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -23,6 +25,15 @@ import java.util.concurrent.LinkedBlockingDeque;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
+import kong.unirest.HttpResponse;
+import kong.unirest.Unirest;
+import kong.unirest.UnirestException;
+import org.apache.http.HttpException;
+import org.apache.http.protocol.HTTP;
+import org.apache.jena.arq.querybuilder.UpdateBuilder;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.update.UpdateRequest;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.eclipse.jetty.server.Server;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.aws.AsynchronousWatcherService;
@@ -65,12 +76,15 @@ public class CityImportAgent extends JPSAgent {
   public static final String KEY_DIRECTORY = "directory";
   public static final String KEY_SPLIT = "split";
   public static final String KEY_TARGET_URL = "targetURL";
+  public static final String KEY_SRID = "srid";
+  public static final String KEY_SRSNAME = "srsName";
   public static final String SPLIT_SCRIPT = "citygml_splitter.py";
   public final int CHUNK_SIZE = 50;
   public static final int NUM_SERVER_THREADS = 2;
   //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
   public static final int NUM_IMPORTER_THREADS = 1;
   public static final String FS = System.getProperty("file.separator");
+  public static final String CTYPE_SPARQLUPDATE = "application/sparql-update";
   private static final ExecutorService serverExecutor = Executors.newFixedThreadPool(NUM_SERVER_THREADS);
   private static final ExecutorService importerExecutor = Executors.newFixedThreadPool(
       NUM_IMPORTER_THREADS);
@@ -80,18 +94,34 @@ public class CityImportAgent extends JPSAgent {
   private String requestUrl;
   private String targetUrl;
   private File importDir;
+  private String srid;
+  private String srsname;
+
+  public static final String OCGML_PREFIX = SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML.replace(":", "");
+  public static final String OCGML_SCHEMA = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
+  public static final String GRAPH_DATABASESRS = "/databasesrs/";
+  public static final String QN_MARK = "?";
+  public static final String SUB_SRID = "srid";
+  public static final String SUB_SRSNAME = "srsname";
+  public static final String OB_SRID = "currentSrid";
+  public static final String OB_SRSNAME = "currentSrsname";
 
   @Override
   public JSONObject processRequestParameters(JSONObject requestParams) {
     if (validateInput(requestParams)) {
       requestUrl = requestParams.getString(KEY_REQ_URL);
       targetUrl = requestParams.getString(KEY_TARGET_URL);
+      // Ensure that targetUrl does not end with slash
+      targetUrl = targetUrl.endsWith("/") ? targetUrl.substring(0, targetUrl.length()-1) : targetUrl;
+      srid = requestParams.getString(KEY_SRID);
+      srsname = requestParams.getString(KEY_SRSNAME);
       if (requestUrl.contains(URI_LISTEN)) {
         importDir = listenToImport(requestParams.getString(KEY_DIRECTORY));
       } else if (requestUrl.contains(URI_ACTION)) {
         String importedFiles = importFiles(new File(requestParams.getString(AsynchronousWatcherService.KEY_WATCH)));
         JSONObject jsonMessage = new JSONObject();
         jsonMessage.put("Imported Files", importedFiles);
+        setDatabaseSrs();
         requestParams = jsonMessage;
       }
     }
@@ -102,6 +132,7 @@ public class CityImportAgent extends JPSAgent {
   @Override
   public boolean validateInput(JSONObject requestParams) throws BadRequestException {
     boolean error = true;
+    boolean errorSrs = true;
     if (!requestParams.isEmpty()) {
       Set<String> keys = requestParams.keySet();
       if (keys.contains(KEY_REQ_METHOD) && keys.contains(KEY_REQ_URL) && keys.contains(
@@ -110,6 +141,7 @@ public class CityImportAgent extends JPSAgent {
           try {
             URL reqUrl = new URL(requestParams.getString(KEY_REQ_URL));
             new URL(requestParams.getString(KEY_TARGET_URL));
+            errorSrs = validateDatabaseSrsInput(requestParams, keys);
             if (reqUrl.getPath().contains(URI_LISTEN)) {
               error = validateListenInput(requestParams, keys);
             } else if (reqUrl.getPath().contains(URI_ACTION)) {
@@ -122,7 +154,7 @@ public class CityImportAgent extends JPSAgent {
       }
     }
 
-    if (error) {
+    if (error || errorSrs) {
       throw new BadRequestException();
     }
 
@@ -168,6 +200,30 @@ public class CityImportAgent extends JPSAgent {
   }
 
   /**
+   * Validates database srs inputs
+   *
+   * @param requestParams - request body in JSON format
+   * @param keys          - request body keys
+   * @return boolean saying if database srs is valid or not
+   */
+  private boolean validateDatabaseSrsInput(JSONObject requestParams, Set<String> keys) {
+    boolean error = true;
+    if ((keys.contains(KEY_SRID)) && (keys.contains(KEY_SRSNAME))) {
+      String srid = requestParams.getString(KEY_SRID);
+      String srsname = requestParams.getString(KEY_SRSNAME);
+      try {
+        Integer.parseInt(srid);
+        if (!srsname.isEmpty()) {
+          error = false;
+        }
+      } catch (NumberFormatException e) {
+        throw new JPSRuntimeException(e);
+      }
+    }
+    return error;
+  }
+
+  /**
    * Starts agent listening process to the new file appearing events in a given directory. Creates
    * import directory, if it does not exist. Asks Asynchronous Watching Service to start watching
    * the directory.
@@ -188,6 +244,8 @@ public class CityImportAgent extends JPSAgent {
       json.put(AsynchronousWatcherService.KEY_WATCH, directoryName);
       json.put(AsynchronousWatcherService.KEY_CALLBACK_URL, url);
       json.put(KEY_TARGET_URL, targetUrl);
+      json.put(KEY_SRID, srid);
+      json.put(KEY_SRSNAME, srsname);
       CreateFileWatcher watcher = new CreateFileWatcher(dir,
           AsynchronousWatcherService.PARAM_TIMEOUT * AsynchronousWatcherService.TIMEOUT_MUL);
       WatcherCallback callback = watcher.getCallback(url, json.toString());
@@ -352,6 +410,46 @@ public class CityImportAgent extends JPSAgent {
     nqUploadExecutor.execute(task);
 
     return task;
+  }
+
+  /**
+   * Performs POST request to execute a SPARQL update at targetUrl endpoint. The SPARQL update:
+   * 1. Creates a named graph 'databasesrs' and adds srid and srsname as triples if 'databasesrs' does not exist, or
+   * 2. Replaces existing srid and srsname triples in an existing 'databasesrs' named graph
+   */
+  private void setDatabaseSrs() {
+    String update = getSetDatabaseSrsUpdate().toString();
+    try { HttpResponse<?> response = Unirest.post(targetUrl)
+            .header(HTTP.CONTENT_TYPE, CTYPE_SPARQLUPDATE)
+            .body(update)
+            .socketTimeout(300000)
+            .asEmpty();
+        int respStatus = response.getStatus();
+        if (respStatus != HttpURLConnection.HTTP_OK) {
+          throw new HttpException(targetUrl + " " + respStatus);
+        }
+    } catch ( HttpException | UnirestException e) {
+      throw new JPSRuntimeException(e);
+    }
+  }
+
+  /**
+   * Builds the SPARQL update statement for setDatabaseSrs
+   *
+   * @return UpdateRequest - update statement
+   */
+  private UpdateRequest getSetDatabaseSrsUpdate() {
+    UpdateBuilder builder = new UpdateBuilder()
+            .addPrefix(OCGML_PREFIX, OCGML_SCHEMA)
+            .with(NodeFactory.createURI(targetUrl + GRAPH_DATABASESRS))
+            .addDelete(QN_MARK + SUB_SRID, SchemaManagerAdapter.ONTO_SRID, QN_MARK + OB_SRID)
+            .addDelete(QN_MARK + SUB_SRSNAME, SchemaManagerAdapter.ONTO_SRSNAME, QN_MARK + OB_SRSNAME)
+            .addInsert(NodeFactory.createURI(targetUrl + "/"), SchemaManagerAdapter.ONTO_SRID, srid)
+            .addInsert(NodeFactory.createURI(targetUrl + "/"),SchemaManagerAdapter.ONTO_SRSNAME, srsname)
+            .addOptional(QN_MARK + SUB_SRID, SchemaManagerAdapter.ONTO_SRID, QN_MARK + OB_SRID)
+            .addOptional(QN_MARK + SUB_SRSNAME, SchemaManagerAdapter.ONTO_SRSNAME, QN_MARK + OB_SRSNAME);
+    UpdateRequest update = builder.buildRequest();
+    return update;
   }
 
   /**

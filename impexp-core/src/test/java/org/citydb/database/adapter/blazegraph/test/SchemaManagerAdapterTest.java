@@ -1,12 +1,10 @@
 package org.citydb.database.adapter.blazegraph.test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import org.citydb.citygml.importer.database.content.CityGMLImportManager;
 import org.citydb.citygml.importer.database.content.DBObjectTestHelper;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.sql.Connection;
 

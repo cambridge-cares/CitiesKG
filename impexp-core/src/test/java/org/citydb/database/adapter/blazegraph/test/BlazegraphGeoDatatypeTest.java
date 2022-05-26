@@ -1,9 +1,5 @@
 package org.citydb.database.adapter.blazegraph.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.fail;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -15,6 +11,8 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.citydb.database.adapter.blazegraph.BlazegraphGeoDatatype;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class BlazegraphGeoDatatypeTest {
   private final String TEST_URI = "http://localhost/blazegraph/literals/POINT-1-3";

@@ -1,8 +1,7 @@
 POST http://localhost:8080/agents/import/source
 Content-Type: application/json
 
-{"directory":"C:\\tmp2\\import",
-  "targetURL": "http://172.20.10.5:9999/blazegraph/namespace/URA_complete/sparql"}
-
-
-
+{"directory":"/Library/tomcat/import",
+  "targetURL": "http://192.168.0.101:9999/blazegraph/namespace/onemapsgEPSG24500/sparql",
+  "srid": "24500",
+  "srsName": "EPSG:24500"}

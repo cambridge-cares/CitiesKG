@@ -15,6 +15,8 @@ import org.citydb.database.adapter.blazegraph.BlazegraphConfigBuilder;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 //@Note: Testing only additions for Blazegraph
 public class ImporterTest {
 

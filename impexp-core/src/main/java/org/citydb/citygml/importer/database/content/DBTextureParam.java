@@ -30,54 +30,45 @@ package org.citydb.citygml.importer.database.content;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.citygml.importer.util.LocalAppearanceHandler.SurfaceGeometryTarget;
 import org.citydb.config.Config;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.TableEnum;
 
-public class DBTextureParam implements DBImporter {
-	private final Connection batchConn;
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psTextureParam;
-	private int batchCounter;
-	private String PREFIX_ONTOCITYGML;
-	private String IRI_GRAPH_BASE;
-	private String IRI_GRAPH_OBJECT;
-	private static final String IRI_GRAPH_OBJECT_REL = "textureparam/";
+public class DBTextureParam extends AbstractDBImporter {
 
 	public DBTextureParam(Connection batchConn, Config config, CityGMLImportManager importer) throws SQLException {
-		this.batchConn = batchConn;
-		this.importer = importer;
-
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-
-		String texCoordListStmt = "insert into " + schema + ".textureparam (surface_geometry_id, is_texture_parametrization, " +
-				"world_to_texture, texture_coordinates, surface_data_id) values " +
-				"(?, ?, ?, ?, ?)";
-
-		if (importer.isBlazegraph()) {
-			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
-			IRI_GRAPH_BASE = importer.getGraphBaseIri();
-			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
-			texCoordListStmt = getSPARQLStatement();
-		}
-
-		psTextureParam = batchConn.prepareStatement(texCoordListStmt);
+		super(batchConn, config, importer);
 	}
 
-	private String getSPARQLStatement(){
+	@Override
+	protected String getTableName() {
+		return TableEnum.TEXTUREPARAM.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "textureparam/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + sqlSchema + ".textureparam (surface_geometry_id, is_texture_parametrization, " +
+				"world_to_texture, texture_coordinates, surface_data_id) values " +
+				"(?, ?, ?, ?, ?)";
+	}
+
+	@Override
+	protected String getSPARQLStatement() {
 		String param = "  ?;";
-		String texCoordListStmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-				"BASE <" + IRI_GRAPH_BASE + "> " +
+		String texCoordListStmt = "PREFIX ocgml: <" + prefixOntoCityGML + "> " +
+				"BASE <" + iriGraphBase + "> " +
 				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				" { GRAPH <" + iriGraphObjectRel + "> " +
 				"{ ? "+ SchemaManagerAdapter.ONTO_SURFACE_GEOMETRY_ID + param +
 				SchemaManagerAdapter.ONTO_IS_TEXTURE_PARAMETRIZATION + param  +
 				SchemaManagerAdapter.ONTO_WORLD_TO_TEXTURE + param  +
@@ -94,22 +85,22 @@ public class DBTextureParam implements DBImporter {
 		if (importer.isBlazegraph()) {
 			try {
 				String uuid = importer.generateNewGmlId();
-				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
-				psTextureParam.setURL(++index, url);
+				URL url = new URL(iriGraphObject + uuid + "/");
+				preparedStatement.setURL(++index, url);
 			} catch (MalformedURLException e) {
-				setBlankNode(psTextureParam, ++index);
+				setBlankNode(preparedStatement, ++index);
 			}
 		}
 
-		psTextureParam.setLong(++index, target.getSurfaceGeometryId());
-		psTextureParam.setInt(++index, 1);
+		preparedStatement.setLong(++index, target.getSurfaceGeometryId());
+		preparedStatement.setInt(++index, 1);
 		if (importer.isBlazegraph())  {
-			setBlankNode(psTextureParam, ++index);
+			setBlankNode(preparedStatement, ++index);
 		} else {
-			psTextureParam.setNull(++index, Types.VARCHAR);
+			preparedStatement.setNull(++index, Types.VARCHAR);
 		}
-		psTextureParam.setObject(++index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(target.compileTextureCoordinates(), batchConn));
-		psTextureParam.setLong(++index, surfaceDataId);
+		preparedStatement.setObject(++index, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(target.compileTextureCoordinates(), batchConn));
+		preparedStatement.setLong(++index, surfaceDataId);
 
 		addBatch();
 	}
@@ -120,24 +111,24 @@ public class DBTextureParam implements DBImporter {
 		if (importer.isBlazegraph()) {
 			try {
 				String uuid = importer.generateNewGmlId();
-				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
-				psTextureParam.setURL(++index, url);
+				URL url = new URL(iriGraphObject + uuid + "/");
+				preparedStatement.setURL(++index, url);
 			} catch (MalformedURLException e) {
-				setBlankNode(psTextureParam, ++index);
+				setBlankNode(preparedStatement, ++index);
 			}
 		}
 
-		psTextureParam.setLong(++index, surfaceGeometryId);
-		psTextureParam.setInt(++index, 1);
-		psTextureParam.setString(++index, worldToTexture);
+		preparedStatement.setLong(++index, surfaceGeometryId);
+		preparedStatement.setInt(++index, 1);
+		preparedStatement.setString(++index, worldToTexture);
 		if (importer.isBlazegraph())  {
-			setBlankNode(psTextureParam, ++index);
+			setBlankNode(preparedStatement, ++index);
 		} else {
-			psTextureParam.setNull(++index, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
+			preparedStatement.setNull(++index, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
 		}
 
-		psTextureParam.setLong(++index, surfaceDataId);
+		preparedStatement.setLong(++index, surfaceDataId);
 
 		addBatch();
 	}
@@ -148,53 +139,33 @@ public class DBTextureParam implements DBImporter {
 		if (importer.isBlazegraph()) {
 			try {
 				String uuid = importer.generateNewGmlId();
-				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
-				psTextureParam.setURL(++index, url);
+				URL url = new URL(iriGraphObject + uuid + "/");
+				preparedStatement.setURL(++index, url);
 			} catch (MalformedURLException e) {
-				setBlankNode(psTextureParam, ++index);
+				setBlankNode(preparedStatement, ++index);
 			}
 		}
 
-		psTextureParam.setLong(++index, surfaceGeometryId);
-		psTextureParam.setInt(++index, 0);
+		preparedStatement.setLong(++index, surfaceGeometryId);
+		preparedStatement.setInt(++index, 0);
 		if (importer.isBlazegraph())  {
-			setBlankNode(psTextureParam, ++index);
-			setBlankNode(psTextureParam, ++index);
+			setBlankNode(preparedStatement, ++index);
+			setBlankNode(preparedStatement, ++index);
 		} else {
-			psTextureParam.setNull(++index, Types.VARCHAR);
-			psTextureParam.setNull(++index, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
+			preparedStatement.setNull(++index, Types.VARCHAR);
+			preparedStatement.setNull(++index, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
 		}
 
-		psTextureParam.setLong(++index, surfaceDataId);
+		preparedStatement.setLong(++index, surfaceDataId);
 
 		addBatch();
 	}
 
 	private void addBatch() throws CityGMLImportException, SQLException {
-		psTextureParam.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
-			importer.executeBatch(TableEnum.TEXTUREPARAM);		
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psTextureParam.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psTextureParam.close();
-	}
-
-	/**
-	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
-	 */
-	private void setBlankNode(PreparedStatement smt, int index) throws CityGMLImportException {
-		importer.setBlankNode(smt, index);
+			importer.executeBatch(TableEnum.TEXTUREPARAM);
 	}
 
 }
