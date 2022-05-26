@@ -14,7 +14,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
-import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -785,16 +784,7 @@ public class ModelContext {
    * @return the deserialised {@link JSONArray} of rows in the response.
    */
   public JSONArray query(String query) {
-    System.err.println(query);
-    if (targetResourceId.startsWith("HARDCODE:")) {
-      String endpoint = targetResourceId.substring(9);
-      String responseString = new RemoteStoreClient(endpoint).execute(query);
-      return new JSONArray(responseString);
-    } else {
-      String responseString = AccessAgentCaller.query(targetResourceId, query);
-      JSONObject response = new JSONObject(responseString);
-      return new JSONArray(response.getString("result"));
-    }
+    return AccessAgentCaller.queryStore(targetResourceId, query);
   }
 
   /**
@@ -802,13 +792,7 @@ public class ModelContext {
    * @param update the update string.
    */
   public void update(String update) {
-    System.err.println(update);
-    if (targetResourceId.startsWith("HARDCODE:")) {
-      String endpoint = targetResourceId.substring(9);
-      new RemoteStoreClient(endpoint, endpoint).executeUpdate(update);
-    } else {
-      AccessAgentCaller.update(targetResourceId, update);
-    }
+    AccessAgentCaller.updateStore(targetResourceId, update);
   }
 
   /**
