@@ -82,7 +82,7 @@ public class CityExportAgent extends JPSAgent {
 
     private String[] displayOptions = {"FOOTPRINT", "EXTRUDED", "GEOMETRY", "COLLADA"};
     private String namespaceName;
-    private String tmpDirsLocation = "C:/tmp";    //System.getProperty("java.io.tmpdir");
+    private String tmpDirsLocation = "C:/tmp";    //System.getProperty("java.io.tmpdir");   //"C:/tmp";  // can not have empty space on the path
     // Default task parameters
     //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
     private final int NUM_IMPORTER_THREADS = 1;
@@ -126,7 +126,7 @@ public class CityExportAgent extends JPSAgent {
                 for (Path gmlidFile : fileList) {
                     // Retrieve a list of gmlids from a file, and execute the export process
                     String[] gmlidArray = getGmlidFromFile(gmlidFile);
-                    String outputFileName = getOutputPath(gmlidFile);
+                    String outputFileName = getOutputName(gmlidFile);
                     Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outputFileName);
                     result.put("outputPath", exportKml(gmlidArray, taskParams));
                 }
@@ -137,7 +137,7 @@ public class CityExportAgent extends JPSAgent {
                 }
                 String[] gmlidsArray = new String[buildingIds.size()];
                 gmlidsArray = buildingIds.toArray(gmlidsArray);
-                String outSingleFileName = getOutputPath(null);
+                String outSingleFileName = getOutputName(null);
                 Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outSingleFileName);
                 result.put("outputPath", exportKml(gmlidsArray, taskParams));
             }
@@ -203,7 +203,7 @@ public class CityExportAgent extends JPSAgent {
      * @param - indexed file
      * @return - the output location of the kml file
      */
-    private String getOutputPath (Path inputFile) {
+    private String getOutputName (Path inputFile) {
 
         if (!new File(outputDir).exists()){ new File(outputDir).mkdirs(); }
 
@@ -223,8 +223,8 @@ public class CityExportAgent extends JPSAgent {
      * create the output path of the generated kml file as default no arguments.
      * @return the output location of the kml file
      */
-    private String getOutputPath () {
-        return getOutputPath(null);
+    private String getOutputName () {
+        return getOutputName(null);
     }
 
     /**
@@ -264,10 +264,10 @@ public class CityExportAgent extends JPSAgent {
     }
 
     private String exportKml (String[] gmlIds, Params taskParams){
-        String actualPath = taskParams.outputPath.replace(".kml", "_" + displayOptions[displayIndex].toLowerCase() + outFileExtension);
-        ExporterTask task = new ExporterTask(gmlIds, actualPath, serverInfo, taskParams.displayMode);
+        //String actualPath = taskParams.outputPath.replace(".kml", "_" + displayOptions[displayIndex].toLowerCase() + outFileExtension);
+        ExporterTask task = new ExporterTask(gmlIds, taskParams.outputPath, serverInfo, taskParams.displayMode);
         exporterExecutor.execute(task);
-        return actualPath;
+        return taskParams.outputPath;
     }
 
     /**

@@ -325,7 +325,7 @@ public class Building extends KmlGenericObject{
 
 						if (isBlazegraph) {
 
-							sparqlGeom = optquery.getSPARQLBuildingPart(connection, SQLquery, (String)buildingPartId);
+							sparqlGeom = optquery.getSPARQLBuildingPart(connection, SQLquery, currentLod , (String)buildingPartId);
 
 							if (!sparqlGeom.isEmpty()){
 								existGS = true;
