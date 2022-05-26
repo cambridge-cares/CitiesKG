@@ -784,7 +784,6 @@ public class ModelContext {
    * @return the deserialised {@link JSONArray} of rows in the response.
    */
   public JSONArray query(String query) {
-    System.err.println(query);
     return AccessAgentCaller.queryStore(targetResourceId, query);
   }
 
@@ -793,7 +792,6 @@ public class ModelContext {
    * @param update the update string.
    */
   public void update(String update) {
-    System.err.println(update);
     AccessAgentCaller.updateStore(targetResourceId, update);
   }
 
