@@ -3,7 +3,7 @@ CEA Agent
 
 Description
 -------------
-The CEA agent can be used to interact with the City Energy Analyst (CEA) and the data it produces.
+The CEA agent can be used to interact with the City Energy Analyst (CEA) (https://www.cityenergyanalyst.com/) and the data it produces.
 The CEAAgent provides three endpoints:
 - http://localhost:58085/agents/cea/run - Provide an array of cityobject IRIs in the request parameters for the CEA to be run on
 - http://localhost:58085/agents/cea/update - Provide data from CEA to update KG with (request sent automatically by cea/run)
@@ -32,7 +32,7 @@ The username and password for the postgreSQL database need to be provided in:
     repo_password.txt
 ```
 
-The agent also requires the access agent to be running. The triplestore access route to be passed to the access agent needs to be provided in uri.route.local in:
+The agent also requires the access agent to be running (https://github.com/cambridge-cares/TheWorldAvatar/tree/main/JPS_ACCESS_AGENT). The triplestore access route to be passed to the access agent needs to be provided in uri.route.local in:
 ```
 ./cea-agent/src/main/resources
     CEAAgentConfig.properties
