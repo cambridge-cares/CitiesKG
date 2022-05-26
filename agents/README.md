@@ -61,7 +61,15 @@ This folder is by default not accessible, in order to make it executable, you ne
 
 ### Install and Build
 
-1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
+1. Additional dependencies used by agents are JPS_BASE_LIB and AsynchronousWatcherService, which provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository. You may skip this step if both dependencies have been set up before. 
+
+Clone the TWA project from the [TWA repository](https://github.com/cambridge-cares/TheWorldAvatar) and checkout to 'main' branch.
+
+Run the command *mvn clean install -DskipTests* on the corresponding directories where the POM file is found.
+* JPS_BASE_LIB project can be found in the [JPS_BASE_LIB directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/JPS_BASE_LIB).
+* AsynchronousWatcherService project can be found in the [AsynchronousWatcherService directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/AsynchronousWatcherService).
+
+2. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
 
 ```
 cd <main project directory>
@@ -75,12 +83,6 @@ mvn initialize
 ```
 mvn clean install
 ```
-
-In case building the .war file fails due to the missing `JPS_AWS.jar`, please build this locally first via running the following command within the [JPS_AWS] repository:
-```
-mvn clean install -DskipTests
-```
-
 3. There is one dependency `blazegraph-jar-2.1.5.jar` which needs to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
 
 ```
@@ -101,13 +103,7 @@ this folder contains all the libraries provided by the server.
 
 If this step has not been done, you might get a `NoClassDefFoundError`. 
 
-4. Additional dependencies used by agents are JPS_BASE_LIB and JPS_AWS are provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository.
 
-Clone the TWA project from the [TWA repository](https://github.com/cambridge-cares/TheWorldAvatar) and checkout to 'main' branch.
-
-Run the command *mvn clean install -DskipTests* on the corresponding directories where the POM file is found.
-* JPS_BASE_LIB project can be found in the [JPS_BASE_LIB directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/JPS_BASE_LIB).
-* JPS_AWS project can be found in the [AsynchronousWatcherService directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/AsynchronousWatcherService).
 #### Install and build local AccessAgent (for developers)
 For development and testing purposes, the [AccessAgent](https://github.com/cambridge-cares/TheWorldAvatar/wiki/Access-Agent) can be deployed locally via Docker to access your local Blazegraph.
 1. Set up a Docker environment as described in the [TWA Wiki - Docker: Environment](https://github.com/cambridge-cares/TheWorldAvatar/wiki/Docker%3A-Environment) page.
