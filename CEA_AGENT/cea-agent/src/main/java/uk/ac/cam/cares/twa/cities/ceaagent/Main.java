@@ -1,4 +1,4 @@
-package uk.ac.cam.cares.twa.cities.agents.geo;
+package uk.ac.cam.cares.twa.cities.ceaagent;
 
 import java.io.File;
 import java.util.logging.Level;

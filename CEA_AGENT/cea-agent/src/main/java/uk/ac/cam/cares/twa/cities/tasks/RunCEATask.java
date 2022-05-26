@@ -318,35 +318,56 @@ public class RunCEATask implements Runnable {
                     throw new JPSRuntimeException(new FileNotFoundException(strTmp));
                 }
 
+                String OS = System.getProperty("os.name").toLowerCase();
                 ArrayList<String> args = new ArrayList<>();
-                args.add("python");
-                args.add(new File(
-                        Objects.requireNonNull(getClass().getClassLoader().getResource(SHAPEFILE_SCRIPT)).toURI()).getAbsolutePath());
-                args.add(dataString.replace("\"", "\\\""));
-                args.add(strTmp);
+                ArrayList<String> args2 = new ArrayList<>();
+                ArrayList<String> args3 = new ArrayList<>();
+                String workflowPath = strTmp+FS+"workflow.yml";
+
+                if(OS.contains("win")){
+                    args.add("python");
+                    args.add(new File(
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(SHAPEFILE_SCRIPT)).toURI()).getAbsolutePath());
+                    args.add(dataString.replace("\"", "\\\""));
+                    args.add(strTmp);
+
+                    args2.add("python");
+                    args2.add(new File(
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(CREATE_WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
+                    args2.add(new File(
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
+                    args2.add(strTmp);
+
+
+                    args3.add("cmd.exe");
+                    args3.add("/C");
+                    args3.add("conda activate cea && cea workflow --workflow " + workflowPath);
+                }
+                else {
+                    String shapefile = FS+"target"+FS+"classes"+FS+SHAPEFILE_SCRIPT;
+                    String createWorkflowFile = FS+"target"+FS+"classes"+FS+CREATE_WORKFLOW_SCRIPT;
+                    String workflowFile = FS+"target"+FS+"classes"+FS+WORKFLOW_SCRIPT;
+
+                    args.add("/bin/bash");
+                    args.add("-c");
+                    args.add("export PROJ_LIB=/venv/share/lib && python " + shapefile +" '"+ dataString +"' " +strTmp);
+
+                    args2.add("/bin/bash");
+                    args2.add("-c");
+                    args2.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile + " " + strTmp);
+
+
+                    args3.add("/bin/bash");
+                    args3.add("-c");
+                    args3.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath);
+                    
+                }
 
                 // create the shapefile process and run
                 runProcess(args);
-
-                ArrayList<String> args2 = new ArrayList<>();
-                args2.add("python");
-                args2.add(new File(
-                        Objects.requireNonNull(getClass().getClassLoader().getResource(CREATE_WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
-                args2.add(new File(
-                        Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
-                args2.add(strTmp);
-
-                // create the workflow process and run
+                 // create the workflow process and run
                 runProcess(args2);
-
-                String workflowPath = strTmp+FS+"workflow.yml";
-
-                ArrayList<String> args3 = new ArrayList<>();
-                args3.add("cmd.exe");
-                args3.add("/C");
-                args3.add("conda activate cea && cea workflow --workflow " + workflowPath);
-
-                // Run workflow that runs all CEA scripts
+                    // Run workflow that runs all CEA scripts
                 runProcess(args3);
 
                 CEAOutputData result = extractTimeSeriesOutputs(strTmp);

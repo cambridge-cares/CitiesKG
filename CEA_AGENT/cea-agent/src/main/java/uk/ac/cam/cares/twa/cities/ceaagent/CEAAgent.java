@@ -1,4 +1,4 @@
-package uk.ac.cam.cares.twa.cities.agents.geo;
+package uk.ac.cam.cares.twa.cities.ceaagent;
 
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
@@ -72,6 +72,7 @@ public class CEAAgent extends JPSAgent {
     private static final String TIME_SERIES_CLIENT_PROPS = "timeseriesclient.properties";
     private TimeSeriesClient<OffsetDateTime> tsClient;
     public static final String timeUnit = OffsetDateTime.class.getSimpleName();
+    private static final String FS = System.getProperty("file.separator");
 
     // Variables fetched from CEAAgentConfig.properties file.
     private String ocgmlUri;
@@ -351,8 +352,15 @@ public class CEAAgent extends JPSAgent {
      */
     private void createTimeSeries(String uriString, List<LinkedHashMap<String,String>> fixedIris ) {
         try{
-            tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, new File(
-                    Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath());
+            String timeseries_props;
+            if(System.getProperty("os.name").toLowerCase().contains("win")){
+                timeseries_props = new File(
+                    Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
+            }
+            else{
+                timeseries_props = FS+"target"+FS+"classes"+FS+TIME_SERIES_CLIENT_PROPS;
+            }
+            tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, timeseries_props);
 
             // Create a iri for each measurement
             List<String> iris = new ArrayList<>();
@@ -401,8 +409,15 @@ public class CEAAgent extends JPSAgent {
             // If CreateTimeSeries has not been run, get time series client
         if(tsClient==null){
             try{
-                tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, new File(
-                    Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath());
+                String timeseries_props;
+                 if(System.getProperty("os.name").toLowerCase().contains("win")){
+                    timeseries_props = new File(
+                    Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
+                }
+                else{
+                    timeseries_props = FS+"target"+FS+"classes"+FS+TIME_SERIES_CLIENT_PROPS;
+                }
+                tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, timeseries_props);
             } catch (URISyntaxException | IOException e)
             {
                 e.printStackTrace();
@@ -1168,8 +1183,15 @@ public class CEAAgent extends JPSAgent {
      */
     public TimeSeries<OffsetDateTime> retrieveData(String dataIri){
         try {
-            tsClient = new TimeSeriesClient<>(OffsetDateTime.class, new File(
-                    Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath());
+            String timeseries_props;
+            if(System.getProperty("os.name").toLowerCase().contains("win")){
+                timeseries_props = new File(
+                    Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
+            }
+            else{
+                timeseries_props = FS+"target"+FS+"classes"+FS+TIME_SERIES_CLIENT_PROPS;
+            }
+            tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, timeseries_props);
             List<String> iris = new ArrayList<>();
             iris.add(dataIri);
             TimeSeries<OffsetDateTime> data = tsClient.getTimeSeries(iris);
