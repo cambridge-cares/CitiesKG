@@ -11,14 +11,14 @@
     <owl:Ontology rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl">
         <ontodebug:testCase>
             <rdf:Description>
-                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf mayBeAllowedInUse only 
-(CommercialOrHotelUseCommercialAndResidentialZone or CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or CommercialUseWithoutDisamenity or ShopHouseUseGeneral or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark)</ontodebug:axiom>
+                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (mayBeAllowedInUse only 
+(CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or CommercialUseWithoutDisamenity or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
                 <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
             </rdf:Description>
         </ontodebug:testCase>
         <ontodebug:testCase>
             <rdf:Description>
-                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store</ontodebug:axiom>
+                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
                 <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
             </rdf:Description>
         </ontodebug:testCase>
@@ -33,12 +33,6 @@
             <rdf:Description>
                 <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PrototypeProduction SubClassOf ResearchAndDevelopment and (allowedInUse only 
 (MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-                <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-            </rdf:Description>
-        </ontodebug:testCase>
-        <ontodebug:testCase>
-            <rdf:Description>
-                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
                 <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
             </rdf:Description>
         </ontodebug:testCase>
@@ -169,6 +163,16 @@
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasSource">
         <rdfs:domain rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
         <rdfs:range rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataSource"/>
+        <owlr:class_property_type>only</owlr:class_property_type>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasZone -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasZone">
+        <rdfs:domain rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Plot"/>
+        <rdfs:range rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ZoningType"/>
         <owlr:class_property_type>only</owlr:class_property_type>
     </owl:ObjectProperty>
     
@@ -7131,6 +7135,14 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Plot -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Plot">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+    </owl:Class>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PoliceStation -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PoliceStation">
@@ -11817,35 +11829,12 @@
         </rdfs:subClassOf>
     </owl:Class>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf mayBeAllowedInUse only 
-(CommercialOrHotelUseCommercialAndResidentialZone or CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or CommercialUseWithoutDisamenity or ShopHouseUseGeneral or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark)</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf mayBeAllowedInUse only 
-(CommercialOrHotelUseCommercialAndResidentialZone or CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or CommercialUseWithoutDisamenity or ShopHouseUseGeneral or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark)</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (mayBeAllowedInUse only 
 (CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or CommercialUseWithoutDisamenity or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf mayBeAllowedInUse only 
-(CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or CommercialUseWithoutDisamenity or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark)</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
@@ -11856,10 +11845,6 @@
     <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PrototypeProduction SubClassOf ResearchAndDevelopment and (allowedInUse only 
 (MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
