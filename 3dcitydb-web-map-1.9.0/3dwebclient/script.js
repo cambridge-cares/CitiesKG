@@ -46,11 +46,15 @@ var clock = new Cesium.Clock({
 // create 3Dcitydb-web-map instance
 var shadows = urlController.getUrlParaValue('shadows', window.location.href, CitydbUtil);
 var terrainShadows = urlController.getUrlParaValue('terrainShadows', window.location.href, CitydbUtil);
-// const arcGisProvider = new Cesium.ArcGISTiledElevationTerrainProvider({
-//     url:
-//         "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer",
-//     token : 'AAPKbf0b7f2a8953431a81e7cfcd134ed1a7vpJelJZm_pRLw7B_iUbDGg-uag4DtFwd9fHR8saNjIjJFhCuwYHMTP75Z5_Sqdas'
-// });
+var geeMetadata = new Cesium.GoogleEarthEnterpriseMetadata('http://www.earthenterprise.org/3d');
+var gee = new Cesium.GoogleEarthEnterpriseTerrainProvider({
+    metadata : geeMetadata
+});
+var maptiler = new Cesium.CesiumTerrainProvider({
+    url: 'https://api.maptiler.com/tiles/terrain-quantized-mesh-v2/?key=TRuPEmfpRFg51wlyVA8c',
+    credit: new Cesium.Credit("\u003ca href=\"https://www.maptiler.com/copyright/\" target=\"_blank\"\u003e\u0026copy;MapTiler\u003c/a\u003e \u003ca href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\"\u003e\u0026copy; OpenStreetMap contributors\u003c/a\u003e", true),
+    requestVertexNormals: true
+});
 
 var cesiumViewerOptions = {
     selectedImageryProviderViewModel: Cesium.createDefaultImageryProviderViewModels()[1],
@@ -60,7 +64,7 @@ var cesiumViewerOptions = {
     shadows: (shadows == "true"),
     terrainShadows: parseInt(terrainShadows),
     clockViewModel: new Cesium.ClockViewModel(clock),
-    // terrainProvider: arcGisProvider,
+    terrainProvider: maptiler
 }
 
 
@@ -217,12 +221,17 @@ function initClient() {
         }
         
         var cesiumWorldTerrainString = urlController.getUrlParaValue('cesiumWorldTerrain', window.location.href, CitydbUtil);
-        if(cesiumWorldTerrainString === "true") {
+        var maptilerTerrainString = urlController.getUrlParaValue('maptiler', window.location.href, CitydbUtil);
+        if(cesiumWorldTerrainString == "true") {
             // if the Cesium World Terrain is given in the URL --> activate, else other terrains
             cesiumViewer.terrainProvider = Cesium.createWorldTerrain();
             var baseLayerPickerViewModel = cesiumViewer.baseLayerPicker.viewModel;
             baseLayerPickerViewModel.selectedTerrain = baseLayerPickerViewModel.terrainProviderViewModels[1];
-        } else {
+        } else if (maptilerTerrainString == 'true'){
+            cesiumViewer.terrainProvider = maptiler;
+            var baseLayerPickerViewModel = cesiumViewer.baseLayerPicker.viewModel;
+            baseLayerPickerViewModel.selectedTerrain = baseLayerPickerViewModel.terrainProviderViewModels[1];
+        }else {
             var terrainConfigString = urlController.getUrlParaValue('terrain', window.location.href, CitydbUtil);
             if (terrainConfigString) {
                 var viewMoModel = Cesium.queryToObject(Object.keys(Cesium.queryToObject(terrainConfigString))[0]);
