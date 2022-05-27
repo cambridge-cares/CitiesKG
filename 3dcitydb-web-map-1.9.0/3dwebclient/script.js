@@ -46,11 +46,11 @@ var clock = new Cesium.Clock({
 // create 3Dcitydb-web-map instance
 var shadows = urlController.getUrlParaValue('shadows', window.location.href, CitydbUtil);
 var terrainShadows = urlController.getUrlParaValue('terrainShadows', window.location.href, CitydbUtil);
-const arcGisProvider = new Cesium.ArcGISTiledElevationTerrainProvider({
-    url:
-        "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer",
-    token : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI1MTc4ODVmOS0zODcxLTRhOGItODBkMy03MzE5NWU1YWJmMDAiLCJpZCI6NDA1Nywic2NvcGVzIjpbImFzciIsImdjIl0sImlhdCI6MTUzOTc2NTE1NH0.A6R3oKePneMYhrfZ7460onafcTcvfNdsJa7goYk0XAM'
-});
+// const arcGisProvider = new Cesium.ArcGISTiledElevationTerrainProvider({
+//     url:
+//         "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer",
+//     token : 'AAPKbf0b7f2a8953431a81e7cfcd134ed1a7vpJelJZm_pRLw7B_iUbDGg-uag4DtFwd9fHR8saNjIjJFhCuwYHMTP75Z5_Sqdas'
+// });
 
 var cesiumViewerOptions = {
     selectedImageryProviderViewModel: Cesium.createDefaultImageryProviderViewModels()[1],
@@ -60,7 +60,7 @@ var cesiumViewerOptions = {
     shadows: (shadows == "true"),
     terrainShadows: parseInt(terrainShadows),
     clockViewModel: new Cesium.ClockViewModel(clock),
-    terrainProvider: arcGisProvider,
+    // terrainProvider: arcGisProvider,
 }
 
 
