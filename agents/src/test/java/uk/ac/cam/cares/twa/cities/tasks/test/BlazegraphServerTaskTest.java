@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.tasks.test;
 
+import com.bigdata.journal.Journal;
 import com.bigdata.rdf.sail.webapp.NanoSparqlServer;
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,7 +37,7 @@ public class BlazegraphServerTaskTest {
   @Test
   public void testNewBlazegraphServerTaskFields() {
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), "test.jnl");
-    assertEquals(13, task.getClass().getDeclaredFields().length);
+    assertEquals(14, task.getClass().getDeclaredFields().length);
     Field PROPERTY_FILE;
     Field PROPERTY_FILE_PATH;
     Field JETTY_CFG_PATH;
@@ -274,7 +275,7 @@ public class BlazegraphServerTaskTest {
   }
 
   @Test
-  public void testNewBlazegraphServerTaskRunMethod() {
+  public void testNewBlazegraphServerTaskRunMethod() throws NoSuchFieldException, IllegalAccessException {
     String jnlPath = System.getProperty("java.io.tmpdir") + "test.jnl";
     File jnlFile = new File(jnlPath);
     File propFile = new File(
@@ -288,6 +289,8 @@ public class BlazegraphServerTaskTest {
     } catch (JPSRuntimeException e) {
       assertEquals(e.getClass(), JPSRuntimeException.class);
     } finally {
+      Object indexmanager = task.getClass().getDeclaredField("indexManager").get(task);
+      ((Journal) indexmanager).destroy();
       if (Objects.requireNonNull(jnlFile).isFile()) {
         if (!jnlFile.delete()) {
           fail();
