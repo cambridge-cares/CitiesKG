@@ -349,7 +349,7 @@ function getAndLoadLayers(folder) {
         layerClampToGround: false,
         gltfVersion: '2.0',
         thematicDataUrl: '',
-        thematicDtaSource: 'GoogleSheets',
+        thematicDataSource: 'KML',
         tableType: 'Horizontal',
         cityobjectsJsonUrl: '',
         minLodPixels: '',
