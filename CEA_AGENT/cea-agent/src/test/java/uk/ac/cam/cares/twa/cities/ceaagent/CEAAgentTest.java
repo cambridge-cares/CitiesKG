@@ -206,7 +206,6 @@ public class CEAAgentTest extends TestCase {
         assertEquals(29, agent.getClass().getDeclaredMethods().length);
     }
 
-    //fix this test - failing on docker build
     public void testValidateInput() {
         CEAAgent agent = new CEAAgent();
         Method validateInput = null;
