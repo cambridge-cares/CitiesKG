@@ -254,6 +254,8 @@ function loadCity(city) {
         loadBerlin();
     } else if (city == 'kingslynn') {
         loadKingsLynn();
+    } else if (city == 'singapore') {
+        loadSingapore();
     }
 }
 
@@ -314,6 +316,25 @@ function loadKingsLynn() {
     getAndLoadLayers('exported_kingslynn');
 }
 
+function loadSingapore() {
+    // set title
+    document.title = 'Singapore';
+
+    // set camera view
+    var cameraPostion = {
+        latitude:  1.272546,
+        longitude: 103.8363,
+        height: 4000,
+        heading: 360,
+        pitch: -60,
+        roll: 356,
+    }
+    flyToCameraPosition(cameraPostion);
+
+    // find relevant files and load layers
+    getAndLoadLayers('exported_singapore');
+}
+
 // send get request to server to discover files in specified folder, create and load layers
 function getAndLoadLayers(folder) {
     var url = this.location.origin;
@@ -328,7 +349,7 @@ function getAndLoadLayers(folder) {
         layerClampToGround: false,
         gltfVersion: '2.0',
         thematicDataUrl: '',
-        thematicDataSource: 'GoogleSheets',
+        thematicDtaSource: 'GoogleSheets',
         tableType: 'Horizontal',
         cityobjectsJsonUrl: '',
         minLodPixels: '',
