@@ -46,6 +46,11 @@ var clock = new Cesium.Clock({
 // create 3Dcitydb-web-map instance
 var shadows = urlController.getUrlParaValue('shadows', window.location.href, CitydbUtil);
 var terrainShadows = urlController.getUrlParaValue('terrainShadows', window.location.href, CitydbUtil);
+const arcGisProvider = new Cesium.ArcGISTiledElevationTerrainProvider({
+    url:
+        "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer",
+    token : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI1MTc4ODVmOS0zODcxLTRhOGItODBkMy03MzE5NWU1YWJmMDAiLCJpZCI6NDA1Nywic2NvcGVzIjpbImFzciIsImdjIl0sImlhdCI6MTUzOTc2NTE1NH0.A6R3oKePneMYhrfZ7460onafcTcvfNdsJa7goYk0XAM'
+});
 
 var cesiumViewerOptions = {
     selectedImageryProviderViewModel: Cesium.createDefaultImageryProviderViewModels()[1],
@@ -54,8 +59,10 @@ var cesiumViewerOptions = {
     fullscreenButton: false,
     shadows: (shadows == "true"),
     terrainShadows: parseInt(terrainShadows),
-    clockViewModel: new Cesium.ClockViewModel(clock)
+    clockViewModel: new Cesium.ClockViewModel(clock),
+    terrainProvider: arcGisProvider,
 }
+
 
 // If neither BingMapsAPI key nor ionToken is present, use the OpenStreetMap Geocoder Nominatim
 var ionToken = urlController.getUrlParaValue('ionToken', window.location.href, CitydbUtil);
