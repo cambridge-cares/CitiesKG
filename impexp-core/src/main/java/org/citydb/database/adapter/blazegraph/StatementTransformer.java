@@ -134,6 +134,45 @@ public class StatementTransformer {
         return SparqlString;
     }
 
+    public static String getSPARQLStatement_BuildingPartGeometry () {
+        StringBuilder sparqlString = new StringBuilder();
+
+        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+                "SELECT distinct ?surf ?geomtype (datatype(?geomtype) as ?datatype) ?surftype " +
+                "WHERE { ?surf ocgml:cityObjectId ? ;" +
+                "ocgml:GeometryType ?geomtype ." +
+                "FILTER (!isBlank(?geomtype)) }");
+
+        return sparqlString.toString();
+    }
+
+    public static String getSPARQLStatement_BuildingPartGeometry_part2 () {
+        StringBuilder sparqlString = new StringBuilder();
+
+        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+                "SELECT distinct ?surf ?geomtype ?surftype (datatype(?geomtype) as ?datatype) " +
+                "WHERE { " +
+                "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> " +
+                "{?themsurf ocgml:buildingId ? ; " +
+                "ocgml:objectClassId ?surftype.}" +
+                "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> " +
+                "{?surf ocgml:cityObjectId ?themsurf; " +
+                "ocgml:GeometryType ?geomtype . " +
+                "FILTER (!isBlank(?geomtype)) }}");
+
+        return sparqlString.toString();
+    }
+
+    public static String getSPARQLStatement_SurfaceGeometry () {
+        StringBuilder sparqlString = new StringBuilder();
+
+        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+                "SELECT ?geom (DATATYPE(?geom) as ?datatype)" +
+                "WHERE { ? ocgml:GeometryType ?geom ." +
+                "FILTER (!isBlank(?geom)) }");
+
+        return sparqlString.toString();
+    }
 
     // Analyze SQL statement and transform it to a SPARQL query (Normal usuage: single gmlid or multiple gmlid or *)
     public static String getTopFeatureId (SQLStatement sqlStatement) throws ParseException {
@@ -151,6 +190,8 @@ public class StatementTransformer {
 
         sb.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "objectClassId", "?objectclass_id");
         sb.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "gmlId", "?gmlid");
+//        sb.setLimit(3000);//temporal use
+//        sb.setOffset(1501);
         List<PlaceHolder<?>> placeHolders = sqlStatement.getInvolvedPlaceHolders();
 
         applyPredicate(sb, predicateTokens, placeHolders);
