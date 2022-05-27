@@ -13,6 +13,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
+import com.bigdata.journal.Journal;
 import org.eclipse.jetty.server.Server;
 import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -186,6 +187,8 @@ public class NquadsUploaderTaskTest {
             if (!Objects.requireNonNull(server).isStopped()) {
               server.setStopAtShutdown(true);
               server.setStopTimeout(7_000);
+              Object indexmanager = serverTask.getClass().getDeclaredField("indexManager").get(serverTask);
+              ((Journal) indexmanager).destroy();
               server.stop();
             }
             stop.set(task, true);
