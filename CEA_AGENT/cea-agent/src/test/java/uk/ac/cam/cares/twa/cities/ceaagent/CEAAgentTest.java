@@ -207,7 +207,7 @@ public class CEAAgentTest extends TestCase {
     }
 
     //fix this test - failing on docker build
-    /*public void testValidateInput() {
+    public void testValidateInput() {
         CEAAgent agent = new CEAAgent();
         Method validateInput = null;
 
@@ -280,7 +280,7 @@ public class CEAAgentTest extends TestCase {
             fail();
         }
 
-    }*/
+    }
 
     public void testGetNamespace()
          throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
