@@ -106,9 +106,9 @@ public abstract class Model {
   }
 
   /**
-   * @return if the named field is clean; fields immediately after {@link ModelContext#createNewModel(Class, String)}
-   * before first push are not considered clean. Dirty fields are pushed to the database on
-   * {@link ModelContext#pushChanges(Model)}.
+   * @return if the field is hollow, i.e. its cleanValues entry is set to SpecialFieldInstruction.UNPULLED.
+   * This is the case if it has been manually set hollow, or if the model instance was created with createHollowModel
+   * and the field has not been pulled or pushed.
    */
   public boolean isHollow(String fieldName) {
     for (FieldInterface field : metaModel.fieldMap.values())
