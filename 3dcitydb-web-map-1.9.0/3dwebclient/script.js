@@ -324,7 +324,7 @@ function loadSingapore() {
     var cameraPostion = {
         latitude:  1.272546,
         longitude: 103.8363,
-        height: 4000,
+        height: 3000,
         heading: 360,
         pitch: -60,
         roll: 356,
