@@ -243,8 +243,8 @@
             }
 			
 			.programmes_long_container {
-                margin-left: 0px;
-                margin-right: 2%;
+                margin-left: 5px;
+                margin-right: 5px;
             }
 
         </style>
@@ -264,12 +264,30 @@
                 </select>
                 <div class="citydb_overSelect"></div>
             </div>
-		</div>
-		<div id="uiProgrammeFinder-content">
+			<div id="uiProgrammeFinder-content">
                 <div id="programmeFinder_toolbox">
+					<table>
+						<tr>
+						<th>Development Type</th>
+						<th>Configuration of Uses</th>
+						<th>Gross Floor Area (GFA)</th>
+						</tr>
+						<tr>
+							<td>
+								<select id="developmentType">
+									<option value="NewDevelopment" selected="selected">New Development</option>
+									<option value="Refurbishment">Refurbishment</option>
+									<option value="Unused GFA redevelopment" selected="selected">Unused GFA redevelopment</option>
+								</select>
+							</td>
+							<td>List of checkboxes here</td>
+							<td>Text input box here</td>
+						</tr>
+					</table>
 				</div>
-		</div>
+			</div>
 		
+		</div>
 		
 		
 		
