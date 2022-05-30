@@ -247,16 +247,20 @@ public class BlazegraphServerTaskTest {
     try {
       Method setupServer = task.getClass()
           .getDeclaredMethod("setupServer", String.class, String.class);
+      Method setupFiles = task.getClass()
+              .getDeclaredMethod("setupFiles", String.class);
       setupServer.setAccessible(true);
+      setupFiles.setAccessible(true);
 
       try {
-        setupServer.invoke(task, jnlPath, "");
+        setupFiles.invoke(task, propFile.getAbsolutePath());
+        setupServer.invoke(task, propFile.getAbsolutePath(), "");
       } catch (InvocationTargetException e) {
-        assertEquals(e.getTargetException().getStackTrace()[1].getClassName(),
-            "com.bigdata.rdf.sail.webapp.NanoSparqlServer");
+        assertEquals("com.bigdata.rdf.sail.webapp.NanoSparqlServer", e.getTargetException().getStackTrace()[1].getClassName());
       }
-
-      assertEquals(setupServer.invoke(task, jnlPath, jettyCfg).getClass(), Server.class);
+      task.indexManager.destroy();
+      assertEquals(Server.class, setupServer.invoke(task, propFile.getAbsolutePath(), jettyCfg).getClass());
+      task.indexManager.destroy();
     } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
       fail();
     } finally {
