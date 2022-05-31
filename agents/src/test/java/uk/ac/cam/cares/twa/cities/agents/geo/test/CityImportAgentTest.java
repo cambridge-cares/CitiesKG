@@ -20,6 +20,7 @@ import javax.ws.rs.HttpMethod;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jetty.server.Server;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedConstruction;
@@ -56,7 +57,7 @@ public class CityImportAgentTest {
   public void testNewCityImportAgentFields() {
     CityImportAgent agent = new CityImportAgent();
 
-    assertEquals(33, agent.getClass().getDeclaredFields().length);
+    assertEquals(36, agent.getClass().getDeclaredFields().length);
 
     Field URI_LISTEN;
     Field URI_ACTION;
@@ -216,12 +217,12 @@ public class CityImportAgentTest {
   @Test
   public void testValidateActionInput() {
     CityImportAgent agent = new CityImportAgent();
-    Method validateListenInput = null;
+    Method validateActionInput = null;
 
     try {
-      validateListenInput = agent.getClass().getDeclaredMethod(
+      validateActionInput = agent.getClass().getDeclaredMethod(
           "validateActionInput", JSONObject.class, Set.class);
-      validateListenInput.setAccessible(true);
+      validateActionInput.setAccessible(true);
     } catch (NoSuchMethodException e) {
       fail();
     }
@@ -230,13 +231,13 @@ public class CityImportAgentTest {
     Set<String> keys = new HashSet<>();
 
     try {
-      assertTrue((Boolean) validateListenInput.invoke(agent, requestParams, keys));
+      assertTrue((Boolean) validateActionInput.invoke(agent, requestParams, keys));
 
       keys.add(AsynchronousWatcherService.KEY_WATCH);
       requestParams.put(AsynchronousWatcherService.KEY_WATCH,
           System.getProperty("java.io.tmpdir"));
 
-      assertFalse((Boolean) validateListenInput.invoke(agent, requestParams, keys));
+      assertFalse((Boolean) validateActionInput.invoke(agent, requestParams, keys));
     } catch (Exception e) {
       fail();
     }
@@ -282,8 +283,7 @@ public class CityImportAgentTest {
       validateDatabaseSrsInput.invoke(agent, requestParamsSridError, keys);
     } catch (Exception e) {
       assert e instanceof InvocationTargetException;
-      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-              JPSRuntimeException.class);
+      assertEquals(JPSRuntimeException.class, ((InvocationTargetException) e).getTargetException().getClass());
     }
 
     try {
@@ -317,8 +317,7 @@ public class CityImportAgentTest {
       validateInput.invoke(agent, requestParams);
     } catch (Exception e) {
       assert e instanceof InvocationTargetException;
-      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-          BadRequestException.class);
+      assertEquals(BadRequestException.class, ((InvocationTargetException) e).getTargetException().getClass());
     }
 
     requestParams.put(CityImportAgent.KEY_REQ_METHOD, HttpMethod.GET);
@@ -327,8 +326,7 @@ public class CityImportAgentTest {
       validateInput.invoke(agent, requestParams);
     } catch (Exception e) {
       assert e instanceof InvocationTargetException;
-      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-          BadRequestException.class);
+      assertEquals(BadRequestException.class, ((InvocationTargetException) e).getTargetException().getClass());
     }
 
     requestParams.put(CityImportAgent.KEY_REQ_METHOD, HttpMethod.POST);
@@ -337,8 +335,7 @@ public class CityImportAgentTest {
       validateInput.invoke(agent, requestParams);
     } catch (Exception e) {
       assert e instanceof InvocationTargetException;
-      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-          BadRequestException.class);
+      assertEquals(BadRequestException.class, ((InvocationTargetException) e).getTargetException().getClass());
     }
 
     requestParams.put(CityImportAgent.KEY_REQ_URL, "abc");
@@ -347,8 +344,7 @@ public class CityImportAgentTest {
       validateInput.invoke(agent, requestParams);
     } catch (Exception e) {
       assert e instanceof InvocationTargetException;
-      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-          BadRequestException.class);
+      assertEquals(BadRequestException.class, ((InvocationTargetException) e).getTargetException().getClass());
     }
 
     requestParams.put(CityImportAgent.KEY_TARGET_URL, "abc");
@@ -357,8 +353,7 @@ public class CityImportAgentTest {
       validateInput.invoke(agent, requestParams);
     } catch (Exception e) {
       assert e instanceof InvocationTargetException;
-      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-          BadRequestException.class);
+      assertEquals(BadRequestException.class, ((InvocationTargetException) e).getTargetException().getClass());
     }
 
     requestParams.put(CityImportAgent.KEY_TARGET_URL, localhostURL);
@@ -371,8 +366,7 @@ public class CityImportAgentTest {
       validateInput.invoke(agent, requestParams);
     } catch (Exception e) {
       assert e instanceof InvocationTargetException;
-      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-          BadRequestException.class);
+      assertEquals(BadRequestException.class, ((InvocationTargetException) e).getTargetException().getClass());
     }
 
     requestParams.put(CityImportAgent.KEY_REQ_URL, localhostURL + CityImportAgent.URI_LISTEN);
@@ -381,8 +375,7 @@ public class CityImportAgentTest {
       validateInput.invoke(agent, requestParams);
     } catch (Exception e) {
       assert e instanceof InvocationTargetException;
-      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-          BadRequestException.class);
+      assertEquals(BadRequestException.class, ((InvocationTargetException) e).getTargetException().getClass());
     }
 
     requestParams.put(CityImportAgent.KEY_DIRECTORY, "");
@@ -391,8 +384,7 @@ public class CityImportAgentTest {
       validateInput.invoke(agent, requestParams);
     } catch (Exception e) {
       assert e instanceof InvocationTargetException;
-      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-          BadRequestException.class);
+      assertEquals(BadRequestException.class, ((InvocationTargetException) e).getTargetException().getClass());
     }
 
     requestParams.put(CityImportAgent.KEY_SRID, "123");
@@ -412,8 +404,7 @@ public class CityImportAgentTest {
       validateInput.invoke(agent, requestParams);
     } catch (Exception e) {
       assert e instanceof InvocationTargetException;
-      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-          BadRequestException.class);
+      assertEquals(BadRequestException.class, ((InvocationTargetException) e).getTargetException().getClass());
     }
 
     requestParams.put(CityImportAgent.KEY_REQ_URL, localhostURL + CityImportAgent.URI_ACTION);
@@ -422,8 +413,7 @@ public class CityImportAgentTest {
       validateInput.invoke(agent, requestParams);
     } catch (Exception e) {
       assert e instanceof InvocationTargetException;
-      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-          BadRequestException.class);
+      assertEquals(BadRequestException.class, ((InvocationTargetException) e).getTargetException().getClass());
     }
 
     requestParams.put(AsynchronousWatcherService.KEY_WATCH, "");
@@ -432,8 +422,7 @@ public class CityImportAgentTest {
       validateInput.invoke(agent, requestParams);
     } catch (Exception e) {
       assert e instanceof InvocationTargetException;
-      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-          BadRequestException.class);
+      assertEquals(BadRequestException.class, ((InvocationTargetException) e).getTargetException().getClass());
     }
 
     requestParams.put(AsynchronousWatcherService.KEY_WATCH, System.getProperty("java.io.tmpdir"));
@@ -449,8 +438,7 @@ public class CityImportAgentTest {
       validateInput.invoke(agent, requestParams);
     } catch (Exception e) {
       assert e instanceof InvocationTargetException;
-      assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-              BadRequestException.class);
+      assertEquals(BadRequestException.class, ((InvocationTargetException) e).getTargetException().getClass());
     }
 
   }
@@ -472,7 +460,7 @@ public class CityImportAgentTest {
     }
 
     try {
-      assertEquals(((File) listenToImport.invoke(agent, listenDir)).getAbsolutePath(), listenDir);
+      assertEquals(listenDir, ((File) listenToImport.invoke(agent, listenDir)).getAbsolutePath());
     } catch (Exception e) {
       fail();
     }
@@ -508,7 +496,7 @@ public class CityImportAgentTest {
     // make sure if the impD exists, it need to be deleted before the test
     if (impD.exists()){
       try {
-        FileUtils.deleteDirectory(impD); // force delete any directory with content. File.delete() can not delete dir with content
+        FileUtils.forceDelete(impD); // force delete any directory with content. File.delete() can not delete dir with content
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -521,8 +509,7 @@ public class CityImportAgentTest {
       importFiles.invoke(agent, impD);
     } catch (IllegalAccessException | InvocationTargetException e) {
       if (e.getClass() == InvocationTargetException.class) {
-        assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-            NullPointerException.class);  // It should be nullpointer exception
+        assertEquals(NullPointerException.class, ((InvocationTargetException) e).getTargetException().getClass()); // It should be nullpointer exception
       } else {
         fail();
       }
@@ -532,7 +519,7 @@ public class CityImportAgentTest {
     // should return empty string as it skips the if block at if (Objects.requireNonNull(dirContent).length > 0)
     try {
       if (impD.mkdirs()) {  // FILE.mkdirs() only return true for the first time, otherwise false
-        assertEquals(importFiles.invoke(agent, impD), "");
+        assertEquals("", importFiles.invoke(agent, impD));
       }
     } catch (Exception e) {
       fail();
@@ -559,8 +546,7 @@ public class CityImportAgentTest {
         }
       } catch (InvocationTargetException | IllegalAccessException | IOException e) {
         if (e.getClass() == InvocationTargetException.class) {
-          assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-                  JPSRuntimeException.class);
+          assertEquals(JPSRuntimeException.class, ((InvocationTargetException) e).getTargetException().getClass());
         } else {
           fail();
         }
@@ -578,7 +564,7 @@ public class CityImportAgentTest {
         if (impD.mkdirs()) {
           Files.copy(testFile.toPath(), impF.toPath());
           targetUrl.set(agent, "http://localhost/test");
-          assertEquals(importFiles.invoke(agent, impD), "file_part_1.gml \n");    // Initial code: Splitfiles returns null, chunks = null, assume the file is small
+          assertEquals("file_part_1.gml \n", importFiles.invoke(agent, impD));    // Initial code: Splitfiles returns null, chunks = null, assume the file is small
         }
       } catch (InvocationTargetException | IllegalAccessException | IOException e) {
         fail();
@@ -613,8 +599,7 @@ public class CityImportAgentTest {
         splitFile.invoke(agent, impF);
       } catch (IllegalAccessException | InvocationTargetException e) {
         if (e.getClass() == InvocationTargetException.class) {
-          assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
-              JPSRuntimeException.class);
+          assertEquals(JPSRuntimeException.class, ((InvocationTargetException) e).getTargetException().getClass());
         } else {
           fail();
         }
@@ -651,6 +636,14 @@ public class CityImportAgentTest {
 
     Field targetUrl = null;
     Method importChunk = null;
+    Field localImportQueue = null;
+    BlockingQueue<Server> queue;
+
+    Field task = null;
+    BlazegraphServerTask serverTask;
+    Field stopF ;
+    Field serverF ;
+    Server server =null;
 
     try {
       targetUrl = agent.getClass().getDeclaredField("targetUrl");
@@ -658,6 +651,9 @@ public class CityImportAgentTest {
       assertNull(targetUrl.get(agent));
       importChunk = agent.getClass().getDeclaredMethod("importChunk", File.class);
       importChunk.setAccessible(true);
+      localImportQueue = agent.getClass().getDeclaredField("localImportQueue");
+      task = agent.getClass().getDeclaredField("task");
+
     } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException e) {
       fail();
     }
@@ -676,6 +672,30 @@ public class CityImportAgentTest {
         fail();
       }
     } finally {
+      try{
+        queue = (BlockingQueue<Server>) localImportQueue.get(agent);
+        serverTask = (BlazegraphServerTask) task.get(agent);
+
+        stopF = serverTask.getClass().getDeclaredField("stop");
+        stopF.setAccessible(true);
+
+        serverF = serverTask.getClass().getDeclaredField("server");
+        serverF.setAccessible(true);
+
+        while (queue.size() == 0) {
+          server = (Server) serverF.get(serverTask);
+        }
+
+        while (!(boolean) stopF.get(serverTask)) {
+          if (!Objects.requireNonNull(server).isStopped()) {
+            serverTask.indexManager.destroy();
+            server.stop();
+          }
+          stopF.set(serverTask, true);
+        }
+      } catch (Exception e){
+        fail();
+      }
       NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
     }
 
@@ -685,10 +705,39 @@ public class CityImportAgentTest {
       }
       targetUrl.set(agent, "http://localhost/test");
       assertNull(importChunk.invoke(agent, impF));
-    } catch (IllegalAccessException | InvocationTargetException | IOException e) {
+
+      queue = (BlockingQueue<Server>) localImportQueue.get(agent);
+      serverTask = (BlazegraphServerTask) task.get(agent);
+
+      stopF = serverTask.getClass().getDeclaredField("stop");
+      stopF.setAccessible(true);
+
+      serverF = serverTask.getClass().getDeclaredField("server");
+      serverF.setAccessible(true);
+
+      while (queue.size() == 0) {
+        server = (Server) serverF.get(serverTask);
+      }
+
+      while (!(boolean) stopF.get(serverTask)) {
+        if (!Objects.requireNonNull(server).isStopped()) {
+          serverTask.indexManager.destroy();
+          server.stop();
+        }
+        stopF.set(serverTask, true);
+      }
+
+    } catch (Exception e) {
       fail();
     } finally {
       NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
+      if (impD.isDirectory()){
+        try {
+          FileUtils.deleteDirectory(impD);
+        } catch (IOException e) {
+          fail();
+        }
+      }
     }
 
     //other import functionality already tested in the corresponding tasks' tests
@@ -703,9 +752,12 @@ public class CityImportAgentTest {
         Objects.requireNonNull(this.getClass().getResource(forwardSlash + "test.gml")).getFile());
     File impD = new File(System.getProperty("java.io.tmpdir") + "imptstdir");
     File impF = new File(impD.getAbsolutePath() + fs + "test.gml");
-
+    BlockingQueue<Server> importQueue = new LinkedBlockingDeque<>();
     Method startBlazegraphInstance;
-    BlazegraphServerTask task = null;
+    BlazegraphServerTask task;
+    Field stopF;
+    Field serverF;
+    Server server = null;
 
     try {
       if (impD.mkdirs()) {
@@ -714,19 +766,35 @@ public class CityImportAgentTest {
       startBlazegraphInstance = agent.getClass()
           .getDeclaredMethod("startBlazegraphInstance", BlockingQueue.class, String.class);
       startBlazegraphInstance.setAccessible(true);
+
      task = (BlazegraphServerTask) startBlazegraphInstance.invoke(agent,
-          new LinkedBlockingDeque<>(), impF.getAbsolutePath());
-      Field stopF = task.getClass().getDeclaredField("stop");
+          importQueue, impF.getAbsolutePath());
+
+      stopF = task.getClass().getDeclaredField("stop");
       stopF.setAccessible(true);
       assertFalse((Boolean) stopF.get(task));
-    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IOException | NoSuchFieldException e) {
+
+      serverF = task.getClass().getDeclaredField("server");
+      serverF.setAccessible(true);
+
+      while (importQueue.size() == 0) {
+        server = (Server) serverF.get(task);
+      }
+
+      while (!(boolean) stopF.get(task)) {
+        if (!Objects.requireNonNull(server).isStopped()) {
+          task.indexManager.destroy();
+          server.stop();
+        }
+        stopF.set(task, true);
+      }
+    } catch (Exception e) {
       fail();
     } finally {
       try {
-        task.stop();
         FileUtils.deleteDirectory(impD);
         NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
-      } catch (IOException e) {
+      } catch (Exception e) {
         fail();
       }
     }
@@ -761,6 +829,13 @@ public class CityImportAgentTest {
       fail();
     } finally {
       NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
+      if(impD.isDirectory()){
+        try {
+          FileUtils.deleteDirectory(impD);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
     }
     //other functionality already tested in the corresponding task
   }
@@ -793,6 +868,13 @@ public class CityImportAgentTest {
       fail();
     } finally {
       NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
+      if(impD.isDirectory()){
+        try {
+          FileUtils.deleteDirectory(impD);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
     }
     //other functionality already tested in the corresponding task
   }
