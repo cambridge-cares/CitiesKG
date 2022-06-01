@@ -1,5 +1,6 @@
 package org.citydb.database.adapter.blazegraph;
 
+import org.apache.jena.base.Sys;
 import org.apache.jena.datatypes.DatatypeFormatException;
 import org.apache.jena.sparql.expr.ExprEvalException;
 import org.citydb.config.geometry.GeometryObject;
@@ -10,6 +11,7 @@ import org.locationtech.jts.geom.*;
 import org.locationtech.jts.operation.union.UnaryUnionOp;
 import org.locationtech.jts.operation.valid.IsValidOp;
 import org.locationtech.jts.operation.valid.TopologyValidationError;
+import org.locationtech.jts.precision.GeometryPrecisionReducer;
 import org.opengis.geometry.MismatchedDimensionException;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -176,12 +178,28 @@ public class GeoSpatialProcessor {
 
     /* Equivalent ST_UNION with multiple Geometry together */
     public Geometry UnaryUnion(List<Geometry> geomlist) {
+
+        Geometry merged = geomlist.get(0);
+        PrecisionModel pm = new PrecisionModel(100000000);
+        GeometryPrecisionReducer geometryPrecisionReducer = new GeometryPrecisionReducer(pm);
+        merged = geometryPrecisionReducer.reduce(merged);
+        //System.out.println(geometryPrecisionReducer.reduce(merged));
+        for (Geometry geo : geomlist){
+            geo = geometryPrecisionReducer.reduce(geo);
+            merged = geometryPrecisionReducer.reduce(merged);
+            merged = merged.union(geo);
+        }
+        /*
+        PrecisionModel pm = new PrecisionModel(100000000);
+        GeometryPrecisionReducer geometryPrecisionReducer = new GeometryPrecisionReducer(pm);
+
         GeometryFactory fac = new GeometryFactory();
         Geometry[] col = geomlist.toArray(new Geometry[0]);
         GeometryCollection coll = new GeometryCollection(col, fac);
         UnaryUnionOp op = new UnaryUnionOp(coll);
-        Geometry union = op.union();
-        return union;
+        Geometry union = op.union();*/
+
+        return merged;
     }
 
     /*Convert the input String into list of coordinates
