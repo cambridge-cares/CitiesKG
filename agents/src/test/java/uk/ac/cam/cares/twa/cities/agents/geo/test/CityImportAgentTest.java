@@ -496,7 +496,7 @@ public class CityImportAgentTest {
     // make sure if the impD exists, it need to be deleted before the test
     if (impD.exists()){
       try {
-        FileUtils.forceDelete(impD); // force delete any directory with content. File.delete() can not delete dir with content
+        FileUtils.deleteDirectory(impD); // force delete any directory with content. File.delete() can not delete dir with content
       } catch (IOException e) {
         e.printStackTrace();
       }
