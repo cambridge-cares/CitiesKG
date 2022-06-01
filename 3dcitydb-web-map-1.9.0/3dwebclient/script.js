@@ -571,13 +571,6 @@ function getMidpoint(point1, point2) {
 	
 }
 
-
-function getObjectInformtaion(){
-	
-	//something comes in here.
-
-}
-
 	//---Extended Web-Map-Client part---//
 
 function listHiddenObjects() {
