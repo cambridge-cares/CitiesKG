@@ -270,6 +270,8 @@ function loadCity(city) {
         loadBerlin();
     } else if (city == 'kingslynn') {
         loadKingsLynn();
+    } else if (city == 'pirmasenslod2') {
+        loadPirmasensLod2();
     }
 }
 
@@ -328,6 +330,27 @@ function loadKingsLynn() {
 
     // find relevant files and load layers
     getAndLoadLayers('exported_kingslynn');
+}
+
+function loadPirmasensLod2() {
+    // set title
+    document.title = 'Pirmasens';
+
+    // set camera view
+    var cameraPostion = {
+        latitude: 49.194269,
+        longitude: 7.5981472,
+        height: 800,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+    cesiumViewer.terrainProvider = maptiler;
+
+    flyToCameraPosition(cameraPostion);
+
+    // find relevant files and load layers
+    getAndLoadLayers('exported_pirmasenslod2');
 }
 
 // send get request to server to discover files in specified folder, create and load layers
