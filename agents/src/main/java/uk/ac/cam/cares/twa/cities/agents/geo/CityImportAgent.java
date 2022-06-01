@@ -108,7 +108,7 @@ public class CityImportAgent extends JPSAgent {
 
   public static LinkedBlockingDeque<Server> localImportQueue;
   public static LinkedBlockingDeque<File> remoteImportQueue;
-  public BlazegraphServerTask task =null;
+  public BlazegraphServerTask task = null;
 
   @Override
   public JSONObject processRequestParameters(JSONObject requestParams) {
