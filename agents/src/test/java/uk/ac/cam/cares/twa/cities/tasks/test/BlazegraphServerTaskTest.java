@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.tasks.test;
 
+import com.bigdata.journal.Journal;
 import com.bigdata.rdf.sail.webapp.NanoSparqlServer;
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,7 +37,7 @@ public class BlazegraphServerTaskTest {
   @Test
   public void testNewBlazegraphServerTaskFields() {
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), "test.jnl");
-    assertEquals(13, task.getClass().getDeclaredFields().length);
+    assertEquals(14, task.getClass().getDeclaredFields().length);
     Field PROPERTY_FILE;
     Field PROPERTY_FILE_PATH;
     Field JETTY_CFG_PATH;
@@ -246,16 +247,20 @@ public class BlazegraphServerTaskTest {
     try {
       Method setupServer = task.getClass()
           .getDeclaredMethod("setupServer", String.class, String.class);
+      Method setupFiles = task.getClass()
+              .getDeclaredMethod("setupFiles", String.class);
       setupServer.setAccessible(true);
+      setupFiles.setAccessible(true);
 
       try {
-        setupServer.invoke(task, jnlPath, "");
+        setupFiles.invoke(task, propFile.getAbsolutePath());
+        setupServer.invoke(task, propFile.getAbsolutePath(), "");
       } catch (InvocationTargetException e) {
-        assertEquals(e.getTargetException().getStackTrace()[1].getClassName(),
-            "com.bigdata.rdf.sail.webapp.NanoSparqlServer");
+        assertEquals("com.bigdata.rdf.sail.webapp.NanoSparqlServer", e.getTargetException().getStackTrace()[1].getClassName());
       }
-
-      assertEquals(setupServer.invoke(task, jnlPath, jettyCfg).getClass(), Server.class);
+      task.indexManager.destroy();
+      assertEquals(Server.class, setupServer.invoke(task, propFile.getAbsolutePath(), jettyCfg).getClass());
+      task.indexManager.destroy();
     } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
       fail();
     } finally {
@@ -288,6 +293,13 @@ public class BlazegraphServerTaskTest {
     } catch (JPSRuntimeException e) {
       assertEquals(e.getClass(), JPSRuntimeException.class);
     } finally {
+      Object indexmanager = null;
+      try {
+        indexmanager = task.getClass().getDeclaredField("indexManager").get(task);
+      } catch (IllegalAccessException | NoSuchFieldException e) {
+        fail();
+      }
+      ((Journal) indexmanager).destroy();
       if (Objects.requireNonNull(jnlFile).isFile()) {
         if (!jnlFile.delete()) {
           fail();

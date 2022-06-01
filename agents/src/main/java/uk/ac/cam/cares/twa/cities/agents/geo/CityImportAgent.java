@@ -106,6 +106,10 @@ public class CityImportAgent extends JPSAgent {
   public static final String OB_SRID = "currentSrid";
   public static final String OB_SRSNAME = "currentSrsname";
 
+  public static LinkedBlockingDeque<Server> localImportQueue;
+  public static LinkedBlockingDeque<File> remoteImportQueue;
+  public BlazegraphServerTask task = null;
+
   @Override
   public JSONObject processRequestParameters(JSONObject requestParams) {
     if (validateInput(requestParams)) {
@@ -341,8 +345,8 @@ public class CityImportAgent extends JPSAgent {
    * @param file- chunk to import
    */
   private void importChunk(File file) throws URISyntaxException {
-    BlockingQueue<Server> localImportQueue = new LinkedBlockingDeque<>();
-    BlockingQueue<File> remoteImportQueue = new LinkedBlockingDeque<>();
+    localImportQueue = new LinkedBlockingDeque<>();
+    remoteImportQueue = new LinkedBlockingDeque<>();
     if (!startBlazegraphInstance(localImportQueue, file.getAbsolutePath()).isRunning() ||
         !importToLocalBlazegraphInstance(localImportQueue, file).isRunning() ||
         !exportToNquads(remoteImportQueue, file).isRunning() ||
@@ -362,10 +366,9 @@ public class CityImportAgent extends JPSAgent {
    */
   private BlazegraphServerTask startBlazegraphInstance(BlockingQueue<Server> queue,
       String filepath) {
-    BlazegraphServerTask task = new BlazegraphServerTask(queue,
+    task = new BlazegraphServerTask(queue,
         filepath.replace(ImporterTask.EXT_FILE_GML, ImporterTask.EXT_FILE_JNL));
     serverExecutor.execute(task);
-
     return task;
   }
 

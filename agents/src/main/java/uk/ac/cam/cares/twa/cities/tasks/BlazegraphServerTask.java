@@ -1,5 +1,7 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
+import com.bigdata.journal.IIndexManager;
+import com.bigdata.journal.Journal;
 import com.bigdata.rdf.sail.webapp.ConfigParams;
 import com.bigdata.rdf.sail.webapp.NanoSparqlServer;
 import com.bigdata.rdf.sail.webapp.StandaloneNanoSparqlServer;
@@ -8,14 +10,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Server;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 
@@ -46,7 +46,7 @@ public class BlazegraphServerTask implements Runnable {
   private final BlockingQueue<Server> queue;
   private Boolean stop = false;
   private Server server = null;
-
+  public IIndexManager indexManager = null;
 
   public BlazegraphServerTask(BlockingQueue<Server> queue, String journalName) {
     this.queue = queue;
@@ -76,6 +76,7 @@ public class BlazegraphServerTask implements Runnable {
           throw new JPSRuntimeException(e);
         }
       } else if (server.isStopped()) {
+        ((Journal) indexManager).shutdownNow();
         server.destroy();
         stop();
       }
@@ -155,7 +156,13 @@ public class BlazegraphServerTask implements Runnable {
     initParams.put(ConfigParams.PROPERTY_FILE, propFileAbsPath);
     initParams.put(ConfigParams.NAMESPACE, NAMESPACE);
 
-    return StandaloneNanoSparqlServer.newInstance(0, jettyXml, null, initParams);
+    Properties properties = new Properties();
+    FileInputStream fin = new FileInputStream(propFileAbsPath);  // Save the filestream in a variable and close it properly after usage
+    properties.load(fin);
+    fin.close();
+    indexManager = new Journal(properties);
+
+    return StandaloneNanoSparqlServer.newInstance(0, jettyXml, indexManager, initParams);
   }
 
 }

@@ -186,6 +186,7 @@ public class NquadsUploaderTaskTest {
             if (!Objects.requireNonNull(server).isStopped()) {
               server.setStopAtShutdown(true);
               server.setStopTimeout(7_000);
+              serverTask.indexManager.destroy();
               server.stop();
             }
             stop.set(task, true);
