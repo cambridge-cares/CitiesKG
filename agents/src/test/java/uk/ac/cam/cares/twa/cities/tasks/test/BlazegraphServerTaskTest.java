@@ -279,7 +279,7 @@ public class BlazegraphServerTaskTest {
   }
 
   @Test
-  public void testNewBlazegraphServerTaskRunMethod() throws NoSuchFieldException, IllegalAccessException {
+  public void testNewBlazegraphServerTaskRunMethod() {
     String jnlPath = System.getProperty("java.io.tmpdir") + "test.jnl";
     File jnlFile = new File(jnlPath);
     File propFile = new File(
@@ -293,7 +293,12 @@ public class BlazegraphServerTaskTest {
     } catch (JPSRuntimeException e) {
       assertEquals(e.getClass(), JPSRuntimeException.class);
     } finally {
-      Object indexmanager = task.getClass().getDeclaredField("indexManager").get(task);
+      Object indexmanager = null;
+      try {
+        indexmanager = task.getClass().getDeclaredField("indexManager").get(task);
+      } catch (IllegalAccessException | NoSuchFieldException e) {
+        fail();
+      }
       ((Journal) indexmanager).destroy();
       if (Objects.requireNonNull(jnlFile).isFile()) {
         if (!jnlFile.delete()) {
