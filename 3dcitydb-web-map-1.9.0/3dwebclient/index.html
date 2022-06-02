@@ -80,6 +80,8 @@
         <script src="utils/mashup-data-source-service/application/DataSourceController.js"></script>
         <!-- URL controller -->
         <script src="utils/UrlController.js"></script>
+        <!-- demo UI queries -->
+        <script src="utils/DropdownElement.js"></script>
 
         <style>
             @import url(../ThirdParty/Cesium/Widgets/widgets.css);
@@ -108,7 +110,7 @@
                 z-index: 99980;
             }
 			
-			#ProgrammaticPlotFinder {
+			      #ProgrammaticPlotFinder {
                 border-radius: 5px;
                 padding: 5px;
                 position: absolute;
@@ -268,7 +270,7 @@
                 <div class="citydb_overSelect"></div>
             </div>
 			<div id="uiProgrammeFinder-content">
-                <div id="programmeFinder_toolbox">
+          <div id="programmeFinder_toolbox" class="citydb_dynamic_box">
 					<table>
 						<tr style="color:#FFFFFF">
 						<th>Development Type</th>
@@ -286,17 +288,17 @@
 								</select>
 							</td>
               <td>
-                <select id="Choose Use">
-                  <option value="Choose Use" selected="selected">Choose Use</option>
-                </select>
+                  <select id="ChooseUse">
+                      <option>Choose Use</option>
+                  </select>
               </td>
               <td>
-                  <select id="Choose Programme">
+                  <select id="ChooseProgramme">
                       <option value="Choose Programme" selected="selected">Choose Programme</option>
                   </select>
               </td>
               <td>
-                  <select id="Assign GFA(s)">
+                  <select id="AssignGFAs">
                       <option value="Assign GFA(s)" selected="selected">Assign GFA(s)</option>
                   </select>
               </td>
@@ -736,17 +738,20 @@
                 }
             }
 			
-			var expanded6 = false;
+			      var expanded6 = false;
             function showProgrammeFinder() {
                 var programmeFinder_toolbox = document.getElementById("programmeFinder_toolbox");
-                if (!expanded) {
+                if (!expanded6) {
                     programmeFinder_toolbox.style.display = "block";
-                    expanded = true;
+                    expanded6 = true;
                 } else {
-                    programmeFinder_toolbox_toolbox.style.display = "none";
-                    expanded = false;
+                    programmeFinder_toolbox.style.display = "none";
+                    expanded6 = false;
                 }
             }
+            getDropdownElements('LandUse');
+            getDropdownElements('Programme');
+
         </script>
         <script src="script.js"></script>
     </body>
