@@ -27,3 +27,4 @@ db/*.gml
 db/appearance
 
 */target/
+*/*/target/
