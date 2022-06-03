@@ -106,21 +106,22 @@ var KMLDataSource = /** @class */ (function (_super) {
         }
     };
 
-	
-		KMLDataSource.prototype.queryUsingId = function (id, callback, limit, clickedObject) {
-		console.log(clickedObject);
-		
-		// REQUEST FOR CityInformationAgent.
-		
-		$.ajax({
-			url:"http://localhost:8080/agents/cityobjectinformation",
-			type: 'POST',
-			data: JSON.stringify({iris: [clickedObject._name]}),
-			dataType: 'json',
-			contentType: 'application/json',
-			success: function(data, status_message, xhr){
-				console.log(data["cityobjectinformation"]);
-				callback(data["cityobjectinformation"]);
+    KMLDataSource.prototype.queryUsingId = function (id, callback, limit, clickedObject) {
+        console.log(clickedObject);
+
+        // REQUEST FOR CityInformationAgent.
+        var iri = clickedObject.iriPrefix + clickedObject._name;
+        iri.endsWith('/') ? iri : iri = iri + '/';
+
+        $.ajax({
+            url: "http://localhost:8080/agents/cityobjectinformation",
+            type: 'POST',
+            data: JSON.stringify({iris: [iri]}),
+            dataType: 'json',
+            contentType: 'application/json',
+            success: function (data, status_message, xhr) {
+                console.log(data["cityobjectinformation"]);
+                callback(data["cityobjectinformation"]);
 		}});		
     };
 	
