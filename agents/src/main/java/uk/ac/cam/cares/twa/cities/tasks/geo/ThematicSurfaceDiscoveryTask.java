@@ -23,7 +23,7 @@ public class ThematicSurfaceDiscoveryTask implements Runnable {
 
   private final ConcurrentLinkedQueue<MultiSurfaceThematicisationTask> lxmsThematicisationTaskQueue = new ConcurrentLinkedQueue<>();
   private final List<MultiSurfaceThematicisationTask> lxmsThematicisationTaskList = new ArrayList<>();
-
+  private final List<BuildingsMergeTask> buildingMergeTaskList = new ArrayList<>();
 
   public ThematicSurfaceDiscoveryTask(List<String> buildingIris, ThematicSurfaceDiscoveryAgent.Params params) {
     this.buildingIris = buildingIris;
@@ -33,18 +33,23 @@ public class ThematicSurfaceDiscoveryTask implements Runnable {
   @Override
   public void run() {
     try {
-      // Parallelised collection of buildings' lodXMultiSurfaces and registration of tasks to process them.
-      List<BuildingHullsRegistrationTask> buildingRegistrationTasks = new ArrayList<>();
-      for (String buildingIri : buildingIris)
-        buildingRegistrationTasks.add(new BuildingHullsRegistrationTask(buildingIri, params, lxmsThematicisationTaskQueue));
-      executor.invokeAll(buildingRegistrationTasks);
-      lxmsThematicisationTaskList.addAll(lxmsThematicisationTaskQueue);
-      // Parallelised stage 1: tentative determination of themes and flip if able to determine appropriate
-      executor.invokeAll(lxmsThematicisationTaskList);
-      // Nonparallelised flip resolution for indeterminate case
-      resolveIndeterminateFlips();
-      // Parallelised stage 2: restructuring of hierarchy and push to database
-      executor.invokeAll(lxmsThematicisationTaskList);
+      if (params.mode == ThematicSurfaceDiscoveryAgent.Mode.MERGE){
+        buildingMergeTaskList.add(new BuildingsMergeTask(buildingIris, params));
+        executor.invokeAll(buildingMergeTaskList);
+      }else {
+        // Parallelised collection of buildings' lodXMultiSurfaces and registration of tasks to process them.
+        List<BuildingHullsRegistrationTask> buildingRegistrationTasks = new ArrayList<>();
+        for (String buildingIri : buildingIris)
+          buildingRegistrationTasks.add(new BuildingHullsRegistrationTask(buildingIri, params, lxmsThematicisationTaskQueue));
+        executor.invokeAll(buildingRegistrationTasks);
+        lxmsThematicisationTaskList.addAll(lxmsThematicisationTaskQueue);
+        // Parallelised stage 1: tentative determination of themes and flip if able to determine appropriate
+        executor.invokeAll(lxmsThematicisationTaskList);
+        // Nonparallelised flip resolution for indeterminate case
+        resolveIndeterminateFlips();
+        // Parallelised stage 2: restructuring of hierarchy and push to database
+        executor.invokeAll(lxmsThematicisationTaskList);
+      }
     } catch (InterruptedException e) {
       throw new JPSRuntimeException(e);
     }

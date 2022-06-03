@@ -594,7 +594,8 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
  }
 
   private void spatialRelation () {
-
+//    1. query cityobject evenlope 2. spatial relationship
+    int size = this.buildings.size();
   }
   /**
    * Compute the average coordinate of the centroids of a number of SurfaaceGeometry objects, i.e. their collcetive
