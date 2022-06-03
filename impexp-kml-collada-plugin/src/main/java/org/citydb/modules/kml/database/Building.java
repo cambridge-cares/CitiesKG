@@ -393,7 +393,7 @@ public class Building extends KmlGenericObject{
 								}
 
 								// Execution of SQL query and the last stage of SPARQL query
-								rs = psQuery.executeQuery();
+								rs = psQuery.executeQuery();  // Note: 1 outcome, groundsurface
 
 								if (rs.isBeforeFirst()) {
 									rs.next();
@@ -427,7 +427,12 @@ public class Building extends KmlGenericObject{
 			// this IF-condition order is important, as rs.isBeforeFirst can raise error about closed ResultSet. In the case of blazegraph, it should not be evaluated at all
 				switch (work.getDisplayForm().getForm()) {
 				case DisplayForm.FOOTPRINT:
-					return createPlacemarksForFootprint(rs, work);
+					if (isBlazegraph){
+						return createPlacemarksForFootprint_geospatial(sparqlGeom, work, existGS, null);
+					} else {
+						return createPlacemarksForFootprint(rs, work);
+					}
+
 
 				case DisplayForm.EXTRUDED:  // @TODO: process the data
 					PreparedStatement psQuery2 = null;

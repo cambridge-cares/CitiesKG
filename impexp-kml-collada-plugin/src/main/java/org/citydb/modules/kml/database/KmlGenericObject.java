@@ -1378,11 +1378,89 @@ public abstract class KmlGenericObject<T> {
 		return Math.rint(originalValue * PRECISION) / PRECISION;
 	}
 
+	protected List<PlacemarkType> createPlacemarksForFootprint_geospatial(ArrayList<ResultSet> sparqlResults, KmlSplittingResult work, boolean existGS, AffineTransformer transformer) throws SQLException {
+		List<PlacemarkType> placemarkList = new ArrayList<PlacemarkType>();
+		PlacemarkType placemark = kmlFactory.createPlacemarkType();
+		placemark.setName(work.getGmlId());
+		placemark.setId(config.getProject().getKmlExporter().getIdPrefixes().getPlacemarkFootprint() + placemark.getName());
+
+		if (work.getDisplayForm().isHighlightingEnabled()) {
+			placemark.setStyleUrl("#" + getStyleBasisName() + DisplayForm.FOOTPRINT_STR + "Style");
+		}
+		else {
+			placemark.setStyleUrl("#" + getStyleBasisName() + DisplayForm.FOOTPRINT_STR + "Normal");
+		}
+
+		if (getBalloonSettings().isIncludeDescription()) {
+			addBalloonContents(placemark, (long)work.getId());
+		}
+		MultiGeometryType multiGeometry = kmlFactory.createMultiGeometryType();
+		placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
+
+		PolygonType polygon = null;
+		Object buildingGeometryObj = null;
+		String datatype = null;
+
+		if (existGS) {
+			// 1 geometry, no need to filterResult
+			ResultSet rs = sparqlResults.get(0);
+			while (rs.next()) {
+				buildingGeometryObj = rs.getObject("geometry");
+				datatype = rs.getString("datatype");  // Added by Shiying
+			}
+		} else {
+			ArrayList<String> simpleGeom = new ArrayList<>();
+			for (ResultSet rs : sparqlResults) {
+				while (rs.next()) {
+					String row = rs.getString("geometry");  // "geometry"
+					simpleGeom.add(row);
+					datatype = rs.getString("datatype");
+				}
+			}
+			// Added by Shiying: The output of getSPARQLAggregateGeometriesForLOD2OrHigher in building.java should only contain 1 groundsurface.
+			// the filterResult will process the multisurface into groundsurface
+			buildingGeometryObj = StatementTransformer.filterResult(simpleGeom,0.001);
+		}
+
+		GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
+		//GeometryObject unconvertedGeom = GeoSpatialProcessor.create3dPolygon(buildingGeometryObj.toString(), datatype);
+
+		GeometryObject groundSurface = convertToWGS84(unconvertedGeom);
+
+		int dim = groundSurface.getDimension();
+
+		for (int i = 0; i < groundSurface.getNumElements(); i++) {
+			LinearRingType linearRing = kmlFactory.createLinearRingType();
+			BoundaryType boundary = kmlFactory.createBoundaryType();
+			boundary.setLinearRing(linearRing);
+
+			if (groundSurface.getElementType(i) == ElementType.EXTERIOR_LINEAR_RING) {
+				polygon = kmlFactory.createPolygonType();
+				polygon.setTessellate(true);
+				polygon.setExtrude(false);
+				polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
+				polygon.setOuterBoundaryIs(boundary);
+				multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
+			} else if (polygon != null)
+				polygon.getInnerBoundaryIs().add(boundary);
+
+			// order points counter-clockwise
+			double[] ordinatesArray = groundSurface.getCoordinates(i);
+			for (int j = ordinatesArray.length - dim; j >= 0; j = j-dim)
+				linearRing.getCoordinates().add(String.valueOf(ordinatesArray[j] + "," + ordinatesArray[j+1] + ",0"));
+		}
+
+		if (polygon != null) { // if there is at least some content
+			placemarkList.add(placemark);
+		}
+		return placemarkList;
+	}
 	protected List<PlacemarkType> createPlacemarksForFootprint(ResultSet rs, KmlSplittingResult work) throws SQLException {
 		return createPlacemarksForFootprint(rs, work, null);
 	}
 
-	protected List<PlacemarkType> createPlacemarksForFootprint(ResultSet rs, KmlSplittingResult work, AffineTransformer transformer) throws SQLException {
+	protected List<PlacemarkType> createPlacemarksForFootprint(ResultSet rs, KmlSplittingResult work, AffineTransformer transformer)
+			throws SQLException {
 		List<PlacemarkType> placemarkList = new ArrayList<PlacemarkType>();
 		PlacemarkType placemark = kmlFactory.createPlacemarkType();
 		placemark.setName(work.getGmlId());

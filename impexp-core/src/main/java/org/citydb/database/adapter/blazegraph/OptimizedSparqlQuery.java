@@ -71,7 +71,7 @@ public class OptimizedSparqlQuery {
   public static String getBuildingPartQuery_part2() {
     StringBuilder sparqlbuilder = new StringBuilder();
     sparqlbuilder.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-        "SELECT ?geomtype (datatype(?geomtype) AS ?type) " +
+        "SELECT ?geomtype (datatype(?geomtype) AS ?datatype) " +
         "WHERE {" +
         "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> {" +
         "?sg_id ocgml:rootId " + QST_MARK + " ; ocgml:GeometryType ?geomtype . FILTER(!isBlank(?geomtype))} }");
@@ -181,7 +181,7 @@ public class OptimizedSparqlQuery {
         "SELECT (" + lodId + " AS ?rootId) " +
         "\nWHERE\n { " +
         "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> { \n" +
-        " ?id ocgml:buildingId " +  QST_MARK + " ;  \n ocgml:" + lodXMultiSurfaceId + " " + lodId + "\n" +
+        " ?id ocgml:buildingId " +  QST_MARK + " ;  \n ocgml:" + lodXMultiSurfaceId + " " + lodId + "; \n" +
         "FILTER (!isBlank(" + lodId + ")) }}");
     intermRs = executeQuery(connection, sparqlStr.toString(), buildingPartId, "rootId");
     if (intermRs.next()){
@@ -197,7 +197,7 @@ public class OptimizedSparqlQuery {
       sparqlStr.setLength(0);
 
       sparqlStr.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-          "SELECT ?geometry " +
+          "SELECT ?geometry (datatype(?geometry) AS ?datatype)" +
           "\nWHERE\n { " +
           "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> { \n" +
           " ?id ocgml:rootId " + QST_MARK + " ;  \n ocgml:GeometryType    ?geometry\n" +
