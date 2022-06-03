@@ -1,15 +1,14 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo.test;
 
-import junit.framework.TestCase;
 import org.citydb.ImpExp;
 import org.json.JSONObject;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
-import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.tasks.geo.ExporterTask;
 import java.io.File;
 import java.io.IOException;
@@ -22,7 +21,9 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-public class ExporterTaskTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.*;
+
+public class ExporterTaskTest {
 
     public String[] testgmlIds = {"abc"};
     public String outFileName = "/test.kml";
@@ -37,7 +38,7 @@ public class ExporterTaskTest extends TestCase {
         return serverInfo;
     }
 
-
+    @Test
     public void testNewExporterTask() {
         ExporterTask task;
 
@@ -53,6 +54,7 @@ public class ExporterTaskTest extends TestCase {
         }
     }
 
+    @Test
     public void testNewExporterTaskFields() {
 
         // Setup of input parameters for the method
@@ -114,7 +116,7 @@ public class ExporterTaskTest extends TestCase {
 
     }
 
-
+    @Test
     public void testNewExporterTaskMethods() {
 
         String[] gmlIds = testgmlIds;
@@ -125,7 +127,7 @@ public class ExporterTaskTest extends TestCase {
         assertEquals(4, task.getClass().getDeclaredMethods().length);
     }
 
-
+    @Test
     public void testNewExporterTaskStopMethod() {
 
         String[] gmlIds = testgmlIds;
@@ -148,7 +150,7 @@ public class ExporterTaskTest extends TestCase {
 
     }
 
-
+    @Test
     public void testNewExporterTaskSetupConfigMethod() {
 
         // Setup the CityExportAgent
@@ -191,7 +193,7 @@ public class ExporterTaskTest extends TestCase {
         }
     }
 
-
+    @Test
     public void testNewExporterTaskRunMethod() {
         File testKml = new File(
                 Objects.requireNonNull(this.getClass().getResource("/testoutput.kml")).getFile());

@@ -27,7 +27,6 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 import uk.ac.cam.cares.twa.cities.models.geo.EnvelopeType;
@@ -52,7 +51,7 @@ public class DistanceAgent extends JPSAgent {
   private static final String XML_SCHEMA = "http://www.w3.org/2001/XMLSchema#";
   private static final String OWL_SCHEMA = "http://www.w3.org/2002/07/owl#";
   private static final String DISTANCE_GRAPH = "/distance/";
-  public static final String DEFAULT_SRS = "EPSG:4236";
+  public static final String DEFAULT_SRS = "EPSG:4326";
   public static final String DEFAULT_TARGET_SRS = "EPSG:24500";
 
   // Repeating variables in SPARQL queries
@@ -114,7 +113,7 @@ public class DistanceAgent extends JPSAgent {
           String firstSrs = getObjectSrs(firstObjectUri, true);
           String secondSrs = getObjectSrs(secondObjectUri, true);
           distance =
-              computeDistance(getEnvelope(firstObjectUri, firstSrs), getEnvelope(secondObjectUri, secondSrs));
+                  computeDistance(getEnvelope(firstObjectUri, firstSrs), getEnvelope(secondObjectUri, secondSrs));
           setDistance(firstObjectUri, secondObjectUri, distance);
         }
         distances.add(distance);
