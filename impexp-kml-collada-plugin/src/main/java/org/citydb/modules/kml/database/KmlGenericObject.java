@@ -1398,56 +1398,105 @@ public abstract class KmlGenericObject<T> {
 		placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
 
 		PolygonType polygon = null;
-		Object buildingGeometryObj = null;
-		String datatype = null;
 
 		if (existGS) {
-			// 1 geometry, no need to filterResult
-			ResultSet rs = sparqlResults.get(0);
-			while (rs.next()) {
-				buildingGeometryObj = rs.getObject("geometry");
-				datatype = rs.getString("datatype");  // Added by Shiying
+			for (ResultSet rs : sparqlResults) {
+				while (rs.next()) {
+					Object buildingGeometryObj = rs.getObject("geomtype");
+					String datatype = rs.getString("datatype");
+
+					//String obj = ((MaterializedSelectResults) rs).getNode(1).getLiteral();
+					if (!rs.wasNull() && buildingGeometryObj != null) {
+						eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
+
+						// Added by Shiying: convert the # string to geometry
+						buildingGeometryObj = StatementTransformer.Str2Geometry(
+								buildingGeometryObj.toString(), datatype);
+
+						GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(
+								buildingGeometryObj);
+
+						if (unconvertedGeom == null || (
+								unconvertedGeom.getGeometryType() != GeometryType.POLYGON
+										&& unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON))
+							continue;
+
+						// for implicit geometries, we need to apply the transformation matrix first
+						if (transformer != null)
+							unconvertedGeom = transformer.applyTransformation(unconvertedGeom);
+
+						GeometryObject groundSurface = convertToWGS84(unconvertedGeom); // apply transformation, coordinates have totally been changed
+						unconvertedGeom = null;
+
+						int dim = groundSurface.getDimension();
+
+						for (int i = 0; i < groundSurface.getNumElements(); i++) {
+							LinearRingType linearRing = kmlFactory.createLinearRingType();
+							BoundaryType boundary = kmlFactory.createBoundaryType();
+							boundary.setLinearRing(linearRing);
+
+							if (groundSurface.getElementType(i) == ElementType.EXTERIOR_LINEAR_RING) {
+								polygon = kmlFactory.createPolygonType();
+								polygon.setTessellate(true);
+								polygon.setExtrude(false);
+								polygon.setAltitudeModeGroup(
+										kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
+								polygon.setOuterBoundaryIs(boundary);
+								multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
+							} else if (polygon != null){
+								polygon.getInnerBoundaryIs().add(boundary);}
+
+							// order points counter-clockwise
+							double[] ordinatesArray = groundSurface.getCoordinates(i);
+							for (int j = ordinatesArray.length - dim; j >= 0; j = j-dim)
+								linearRing.getCoordinates().add(String.valueOf(ordinatesArray[j] + "," + ordinatesArray[j+1] + ",0"));
+
+						}
+					}
+				}
 			}
+
 		} else {
+			// the getBuildingPartAggregateGeometries from building.java requires a postprocessing of the surfacegeometry here: they all will be union into 1 groundsurface
 			ArrayList<String> simpleGeom = new ArrayList<>();
 			for (ResultSet rs : sparqlResults) {
 				while (rs.next()) {
 					String row = rs.getString("geometry");  // "geometry"
 					simpleGeom.add(row);
-					datatype = rs.getString("datatype");
+					String datatype = rs.getString("datatype");  // @note: not used so far
 				}
 			}
 			// Added by Shiying: The output of getSPARQLAggregateGeometriesForLOD2OrHigher in building.java should only contain 1 groundsurface.
 			// the filterResult will process the multisurface into groundsurface
-			buildingGeometryObj = StatementTransformer.filterResult(simpleGeom,0.001);
-		}
+			Object buildingGeometryObj = StatementTransformer.filterResult(simpleGeom,0.001);
 
-		GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
-		//GeometryObject unconvertedGeom = GeoSpatialProcessor.create3dPolygon(buildingGeometryObj.toString(), datatype);
+			GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
+			//GeometryObject unconvertedGeom = GeoSpatialProcessor.create3dPolygon(buildingGeometryObj.toString(), datatype);
 
-		GeometryObject groundSurface = convertToWGS84(unconvertedGeom);
+			GeometryObject groundSurface = convertToWGS84(unconvertedGeom);
 
-		int dim = groundSurface.getDimension();
+			int dim = groundSurface.getDimension();
 
-		for (int i = 0; i < groundSurface.getNumElements(); i++) {
-			LinearRingType linearRing = kmlFactory.createLinearRingType();
-			BoundaryType boundary = kmlFactory.createBoundaryType();
-			boundary.setLinearRing(linearRing);
+			for (int i = 0; i < groundSurface.getNumElements(); i++) {
+				LinearRingType linearRing = kmlFactory.createLinearRingType();
+				BoundaryType boundary = kmlFactory.createBoundaryType();
+				boundary.setLinearRing(linearRing);
 
-			if (groundSurface.getElementType(i) == ElementType.EXTERIOR_LINEAR_RING) {
-				polygon = kmlFactory.createPolygonType();
-				polygon.setTessellate(true);
-				polygon.setExtrude(false);
-				polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
-				polygon.setOuterBoundaryIs(boundary);
-				multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
-			} else if (polygon != null)
-				polygon.getInnerBoundaryIs().add(boundary);
+				if (groundSurface.getElementType(i) == ElementType.EXTERIOR_LINEAR_RING) {
+					polygon = kmlFactory.createPolygonType();
+					polygon.setTessellate(true);
+					polygon.setExtrude(false);
+					polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
+					polygon.setOuterBoundaryIs(boundary);
+					multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
+				} else if (polygon != null){
+					polygon.getInnerBoundaryIs().add(boundary);}
 
-			// order points counter-clockwise
-			double[] ordinatesArray = groundSurface.getCoordinates(i);
-			for (int j = ordinatesArray.length - dim; j >= 0; j = j-dim)
-				linearRing.getCoordinates().add(String.valueOf(ordinatesArray[j] + "," + ordinatesArray[j+1] + ",0"));
+				// order points counter-clockwise
+				double[] ordinatesArray = groundSurface.getCoordinates(i);
+				for (int j = ordinatesArray.length - dim; j >= 0; j = j-dim)
+					linearRing.getCoordinates().add(String.valueOf(ordinatesArray[j] + "," + ordinatesArray[j+1] + ",0"));
+			}
 		}
 
 		if (polygon != null) { // if there is at least some content
@@ -1480,24 +1529,14 @@ public abstract class KmlGenericObject<T> {
 		placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
 
 		PolygonType polygon = null; 
-		while (rs.next()) {  // @TODO: ..
+		while (rs.next()) {
 			Object buildingGeometryObj = rs.getObject(1);
 			String datatype = null;
-			if (isBlazegraph){
-				datatype = rs.getString("datatype");  // Added by Shiying
-			}
 
 			if (!rs.wasNull() && buildingGeometryObj != null) {
 				eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
 
-				GeometryObject unconvertedGeom = null;
-				// Added by Shiying: convert the # string to geometry, it has to be 3D?
-				if (isBlazegraph){
-					//buildingGeometryObj = StatementTransformer.Str2Geometry(buildingGeometryObj.toString(), datatype);
-					unconvertedGeom = GeoSpatialProcessor.create3dPolygon(buildingGeometryObj.toString(), datatype);
-				} else {
-					unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
-				}
+				GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
 
 				if (unconvertedGeom == null || (unconvertedGeom.getGeometryType() != GeometryType.POLYGON && unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON))
 					continue;
@@ -1523,8 +1562,8 @@ public abstract class KmlGenericObject<T> {
 						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
 						polygon.setOuterBoundaryIs(boundary);
 						multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
-					} else if (polygon != null)
-						polygon.getInnerBoundaryIs().add(boundary);
+					} else if (polygon != null){
+						polygon.getInnerBoundaryIs().add(boundary);}
 
 					// order points counter-clockwise
 					double[] ordinatesArray = groundSurface.getCoordinates(i);
@@ -1571,7 +1610,7 @@ public abstract class KmlGenericObject<T> {
 			for (ResultSet rs : sparqlResults) {
 				while (rs.next()) {
 					Object buildingGeometryObj = rs.getObject("geomtype");
-					String datatype = rs.getString("type");
+					String datatype = rs.getString("datatype");
 
 					//String obj = ((MaterializedSelectResults) rs).getNode(1).getLiteral();
 					if (!rs.wasNull() && buildingGeometryObj != null) {
@@ -1630,8 +1669,7 @@ public abstract class KmlGenericObject<T> {
 					}
 				}
 
-			} else
-			{// Require the GeoSpatialProcessor to post-process the data, return only 1 entry after ST_UNION
+			} else {// Require the GeoSpatialProcessor to post-process the data, return only 1 entry after ST_UNION
 				ArrayList<String> simpleGeom = new ArrayList<>();
 				for (ResultSet rs : sparqlResults) {
 					while (rs.next()) {
