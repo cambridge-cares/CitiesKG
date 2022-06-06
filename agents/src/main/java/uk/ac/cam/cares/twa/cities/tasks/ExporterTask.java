@@ -28,8 +28,8 @@ public class ExporterTask implements Runnable {
     public static final String PLACEHOLDER_COLLADA = "{{display4}}";
     public static final String PLACEHOLDER_NS = "{{namespace}}";
     public static final String ARG_SHELL = "-shell";
-    public static final String ARG_KMLEXPORT = "-kmlExport=";
-    public static final String ARG_CFG = "-config=";
+    public static final String ARG_KMLEXPORT = "-kmlExport";
+    public static final String ARG_CFG = "-config";
 
     private final String[] inputs;
     private final String outputpath;
@@ -58,8 +58,8 @@ public class ExporterTask implements Runnable {
 
             try {
                 cfgfile = setupConfig();  // modify the gmlIds within the config file
-                String[] args = {ARG_SHELL, ARG_KMLEXPORT + outputpath,
-                        ARG_CFG + cfgfile.getAbsolutePath()};
+                String[] args = {ARG_SHELL, ARG_KMLEXPORT, outputpath,
+                        ARG_CFG, cfgfile.getAbsolutePath()}; // <-kmlExport filename> can take path with blank space, quoted with "" mark and <-kmlExport=filename> can only accept path without blank space
                 ImpExp.main(args);
 
             } catch (IOException | URISyntaxException e) {

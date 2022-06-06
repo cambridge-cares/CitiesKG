@@ -77,12 +77,11 @@ public class CityExportAgent extends JPSAgent {
     private JSONArray gmlidParams;
     private String outputDir;
     private JSONObject serverInfo;
-    private int displayIndex;
     private String[] displayMode = {"false","false", "false", "false"};
 
     private String[] displayOptions = {"FOOTPRINT", "EXTRUDED", "GEOMETRY", "COLLADA"};
     private String namespaceName;
-    private String tmpDirsLocation = "C:/tmp";    //System.getProperty("java.io.tmpdir");   //"C:/tmp";  // can not have empty space on the path
+    private String tmpDirsLocation = System.getProperty("java.io.tmpdir");    //System.getProperty("java.io.tmpdir");   //"C:/tmp";  // can not have empty space on the path
     // Default task parameters
     //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
     private final int NUM_IMPORTER_THREADS = 1;
@@ -98,9 +97,15 @@ public class CityExportAgent extends JPSAgent {
             namespaceIri = requestParams.getString(KEY_NAMESPACE);
             serverInfo = getServerInfo(namespaceIri);
 
+            // Process "displayform"
             List<String> availOptions = Arrays.asList(displayOptions);
-            displayIndex = availOptions.indexOf(requestParams.getString(KEY_DISPLAYFORM).toUpperCase());
-            displayMode[displayIndex] = "true";
+
+            JSONArray inputDisplayForm = requestParams.getJSONArray(KEY_DISPLAYFORM);
+            for ( int i = 0; i < inputDisplayForm.length(); i ++) {
+                int index = availOptions.indexOf(
+                    inputDisplayForm.get(i).toString().toUpperCase());
+                displayMode[index] = "true";
+            }
             //gmlids = getInputGmlids(requestParams); // this method will process the input when it is a path or an array of gmlid
             // If gmlid contains "*", it requires the whole list of gmlid from the namespace
             // This step can take long as querying the database is long with this sparql query
@@ -164,6 +169,21 @@ public class CityExportAgent extends JPSAgent {
                 }
 
                 // Check the displayform
+                if (!requestParams.getJSONArray(KEY_DISPLAYFORM).isEmpty()) {
+                    List<String> availOptions = Arrays.asList(displayOptions);
+                    JSONArray inputDisplayForm = requestParams.getJSONArray(KEY_DISPLAYFORM);
+                    for ( int i = 0; i < inputDisplayForm.length(); i ++){
+                        int index = availOptions.indexOf(
+                            inputDisplayForm.get(i).toString().toUpperCase());
+                        if (index >= 0){
+                            System.out.println("Valid displayform: " + inputDisplayForm.get(i).toString());
+                        } else {
+                            System.out.println("InValid displayform: " + inputDisplayForm.get(i).toString());
+                        }
+                    }
+
+                }
+                /*
                 if (!requestParams.getString(KEY_DISPLAYFORM).isEmpty()) {
                     List<String> availOptions = Arrays.asList(displayOptions);
                     int index = availOptions.indexOf(
@@ -171,7 +191,7 @@ public class CityExportAgent extends JPSAgent {
                     if (index > 0) {
                         System.out.println("Valid displayform: " + requestParams.getString(KEY_DISPLAYFORM));
                     }
-                }
+                }*/
 
                 return true;
             } catch (Exception e) {
@@ -207,16 +227,29 @@ public class CityExportAgent extends JPSAgent {
 
         if (!new File(outputDir).exists()){ new File(outputDir).mkdirs(); }
 
+        String outputPath = null;
+        String path = null;
         if (inputFile ==  null) {
-            return Paths.get(outputDir, outFileName + outFileExtension).toString();
+            outputPath =  Paths.get(outputDir, outFileName + outFileExtension).toString();
+
+        } else {
+            path = inputFile.toString().replace("\\", "/");
+            String[] elem = path.split("/");
+            String filename = elem[elem.length - 1];
+            String index = filename.substring(filename.indexOf("_") + 1, filename.indexOf("."));
+            String exportFilename = outFileName + "_" + index + outFileExtension;
+            outputPath = Paths.get(outputDir.toString(), exportFilename).toString();
         }
 
-        String path = inputFile.toString().replace("\\", "/");
-        String[] elem = path.split("/");
-        String filename = elem[elem.length - 1];
-        String index = filename.substring(filename.indexOf("_") + 1, filename.indexOf("."));
-        String exportFilename = outFileName + "_" + index + outFileExtension;
-        return Paths.get(outputDir.toString(), exportFilename).toString();
+        File outputFile = new File(outputPath);
+        if (!outputFile.exists()){
+            try {
+                outputFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return outputPath;
     }
 
     /**
