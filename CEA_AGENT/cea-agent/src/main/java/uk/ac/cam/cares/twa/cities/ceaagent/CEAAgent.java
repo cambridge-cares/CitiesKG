@@ -268,22 +268,22 @@ public class CEAAgent extends JPSAgent {
      * @return boolean saying if request is valid or not
      */
     private boolean validateUpdateInput(JSONObject requestParams) {
-        boolean error = requestParams.get(KEY_IRI).toString().isEmpty() &&
-                requestParams.get(KEY_TARGET_URL).toString().isEmpty() &&
-                requestParams.get(KEY_GRID_DEMAND).toString().isEmpty() &&
-                requestParams.get(KEY_ELECTRICITY_DEMAND).toString().isEmpty() &&
-                requestParams.get(KEY_HEATING_DEMAND).toString().isEmpty() &&
-                requestParams.get(KEY_COOLING_DEMAND).toString().isEmpty() &&
-                requestParams.get(KEY_PV_ROOF_AREA).toString().isEmpty() &&
-                requestParams.get(KEY_PV_ROOF_SUPPLY).toString().isEmpty() &&
-                requestParams.get(KEY_PV_WALL_SOUTH_AREA).toString().isEmpty() &&
-                requestParams.get(KEY_PV_WALL_SOUTH_SUPPLY).toString().isEmpty() &&
-                requestParams.get(KEY_PV_WALL_NORTH_AREA).toString().isEmpty() &&
-                requestParams.get(KEY_PV_WALL_NORTH_SUPPLY).toString().isEmpty() &&
-                requestParams.get(KEY_PV_WALL_EAST_AREA).toString().isEmpty() &&
-                requestParams.get(KEY_PV_WALL_EAST_SUPPLY).toString().isEmpty() &&
-                requestParams.get(KEY_PV_WALL_WEST_AREA).toString().isEmpty() &&
-                requestParams.get(KEY_PV_WALL_WEST_SUPPLY).toString().isEmpty() &&
+        boolean error = requestParams.get(KEY_IRI).toString().isEmpty() ||
+                requestParams.get(KEY_TARGET_URL).toString().isEmpty() ||
+                requestParams.get(KEY_GRID_DEMAND).toString().isEmpty() ||
+                requestParams.get(KEY_ELECTRICITY_DEMAND).toString().isEmpty() ||
+                requestParams.get(KEY_HEATING_DEMAND).toString().isEmpty() ||
+                requestParams.get(KEY_COOLING_DEMAND).toString().isEmpty() ||
+                requestParams.get(KEY_PV_ROOF_AREA).toString().isEmpty() ||
+                requestParams.get(KEY_PV_ROOF_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PV_WALL_SOUTH_AREA).toString().isEmpty() ||
+                requestParams.get(KEY_PV_WALL_SOUTH_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PV_WALL_NORTH_AREA).toString().isEmpty() ||
+                requestParams.get(KEY_PV_WALL_NORTH_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PV_WALL_EAST_AREA).toString().isEmpty() ||
+                requestParams.get(KEY_PV_WALL_EAST_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PV_WALL_WEST_AREA).toString().isEmpty() ||
+                requestParams.get(KEY_PV_WALL_WEST_SUPPLY).toString().isEmpty() ||
                 requestParams.get(KEY_TIMES).toString().isEmpty();
 
         return error;
@@ -296,7 +296,7 @@ public class CEAAgent extends JPSAgent {
      * @return boolean saying if request is valid or not
      */
     private boolean validateActionInput(JSONObject requestParams) {
-        boolean error = requestParams.get(KEY_TARGET_URL).toString().isEmpty() && requestParams.get(KEY_IRI).toString().isEmpty();
+        boolean error = requestParams.get(KEY_TARGET_URL).toString().isEmpty() || requestParams.get(KEY_IRI).toString().isEmpty();
         return error;
     }
 
@@ -335,9 +335,10 @@ public class CEAAgent extends JPSAgent {
      * runs CEATask on CEAInputData and returns CEAOutputData
      *
      * @param buildingData input data on building envelope and height
+     * @param uris list of input uris
      * @param threadNumber int tracking thread that is running
      */
-    private void runCEA(ArrayList<CEAInputData> buildingData, ArrayList<String> uris, int threadNumber) {
+    private void runCEA(ArrayList<CEAInputData> buildingData, ArrayList<String> uris, Integer threadNumber) {
         try {
             RunCEATask task = new RunCEATask(buildingData, new URI(targetUrl), uris, threadNumber);
             CEAExecutor.execute(task);
@@ -349,6 +350,7 @@ public class CEAAgent extends JPSAgent {
      * Creates and intialises a time series using the time series client
      *
      * @param uriString input city object id
+     * @param fixedIris list of maps containing time series iris mapped to measurement type
      */
     private void createTimeSeries(String uriString, List<LinkedHashMap<String,String>> fixedIris ) {
         try{
@@ -512,11 +514,7 @@ public class CEAAgent extends JPSAgent {
         Query q = getQuery(uriString, value);
 
         //Use access agent
-        String queryResultString = this.query(QUERY_ROUTE, q.toString());
-
-        JSONObject queryResultObject = new JSONObject(queryResultString);
-        String resultString = queryResultObject.get("result").toString();
-        JSONArray queryResultArray = new JSONArray(resultString);
+        JSONArray queryResultArray = this.queryStore(QUERY_ROUTE, q.toString());
 
         if(!queryResultArray.isEmpty()){
             if(value!="Envelope") {
@@ -587,7 +585,9 @@ public class CEAAgent extends JPSAgent {
      * @param uriString city object id
      * @return returns a query string
      */
-    /*private Query getGeometryQuery(String uriString) {
+    /*
+    // Old implementation using Envelope
+    private Query getGeometryQuery(String uriString) {
         SelectBuilder sb = new SelectBuilder()
                 .addPrefix( "ocgml", ocgmlUri )
                 .addVar("?Envelope")
@@ -673,7 +673,7 @@ public class CEAAgent extends JPSAgent {
         UpdateRequest ur = ub.buildRequest();
 
         //Use access agent
-        this.update(UPDATE_ROUTE, ur.toString());
+        this.updateStore(UPDATE_ROUTE, ur.toString());
     }
     /**
      * builds a SPARQL update using output from CEA simulations
@@ -872,7 +872,7 @@ public class CEAAgent extends JPSAgent {
         UpdateRequest ur = ub.buildRequest();
 
         //Use access agent
-        this.update(UPDATE_ROUTE, ur.toString());
+        this.updateStore(UPDATE_ROUTE, ur.toString());
 
         return buildingUri;
 
@@ -1030,8 +1030,7 @@ public class CEAAgent extends JPSAgent {
 
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
 
-        JSONObject queryResultObject = new JSONObject(this.query(QUERY_ROUTE, sb.build().toString()));
-        JSONArray queryResultArray = new JSONArray(queryResultObject.get("result").toString());
+        JSONArray queryResultArray = new JSONArray(this.queryStore(QUERY_ROUTE, sb.build().toString()));
 
         if(!queryResultArray.isEmpty()){
             result.add(queryResultArray.getJSONObject(0).get("measure").toString());
@@ -1060,8 +1059,7 @@ public class CEAAgent extends JPSAgent {
 
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
 
-        JSONObject queryResultObject = new JSONObject(this.query(QUERY_ROUTE, sb.build().toString()));
-        JSONArray queryResultArray = new JSONArray(queryResultObject.get("result").toString());
+        JSONArray queryResultArray = new JSONArray(this.queryStore(QUERY_ROUTE, sb.build().toString()));
         String building = "";
 
         if(!queryResultArray.isEmpty()){
@@ -1146,13 +1144,14 @@ public class CEAAgent extends JPSAgent {
                 .addVar("?PV_supply_wall_east").addVar("?PV_supply_wall_west").addWhere(wb2);
         sb.setVar( Var.alloc( "energyProfileBuilding" ), NodeFactory.createURI(building));
 
-        JSONObject queryResultObject = new JSONObject(this.query(QUERY_ROUTE, sb.build().toString()));
-        JSONArray queryResultArray = new JSONArray(queryResultObject.get("result").toString());
+        JSONArray queryResultArray = new JSONArray(this.queryStore(QUERY_ROUTE, sb.build().toString()));
         LinkedHashMap<String, String> tsIris = new LinkedHashMap<>();
 
         if(!queryResultArray.isEmpty()){
             for(String measure: TIME_SERIES){
-                tsIris.put(measure, queryResultArray.getJSONObject(0).get(measure).toString());
+                if (queryResultArray.getJSONObject(0).has(measure)) {
+                    tsIris.put(measure, queryResultArray.getJSONObject(0).get(measure).toString());
+                }
             }
             fixedIris.add(tsIris);
             return building;
