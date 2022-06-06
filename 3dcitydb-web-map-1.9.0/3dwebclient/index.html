@@ -221,7 +221,7 @@
             }
 			
 			      #programmeFinder_toolbox {
-                width: 1000px;
+                width: 1050px;
                 height: 60px;
                 display: none;
                 background: rgba(42, 42, 42, 0.5);
@@ -230,17 +230,35 @@
                 font-family: "Arial";
                 font-size: 9pt;
             }
-            .use_element{
+            .use_element, .programme_element{
                 display:inline-block;
-                height:15px;
+                padding-top: 2px;
+                height:40px;
+                width: 200px;
+                vertical-align: top;
             }
-            .programme_element{
+            .checkbox{
                 display:inline-block;
-                height:15px;
+                height:40px;
+                width: 20px;
+                vertical-align: top;
+            }
+            .text{
+                display:inline-block;
+                height:30px;
+                width: 100px;
+                vertical-align: top;
+            }
+            .text_input{
+                display:inline-block;
+                height:30px;
+                width: 60px;
+                vertical-align: top;
             }
 
             .finder_dynamic_box {
                 display: none;
+                width: 290px;
                 height: 200px;
                 margin: 3px;
                 padding: 2px 3px;
@@ -252,6 +270,7 @@
                 font-family: sans-serif;
                 font-size: 9pt;
                 overflow: auto;
+                vertical-align: top;
             }
 
         </style>
@@ -290,7 +309,7 @@
               <td>
                   <div>
                       <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
-                          <select  style="width:300px" class="cesium-button">
+                          <select style="width:300px" class="cesium-button">
                               <option>Choose Uses</option>
                           </select>
                           <div class="citydb_overSelect"></div>
@@ -304,15 +323,24 @@
                         <select style="width: 300px" class="cesium-button">
                             <option>Choose Programme</option>
                         </select>
-                        <!--<div class="citydb_overSelect"></div>-->
                       </div>
                       <div id="choose_programmes" class="finder_dynamic_box"></div>
                   </div>
               </td>
               <td>
-                  <select id="AssignGFAs">
-                      <option value="Assign GFA(s)" selected="selected">Assign GFA(s)</option>
-                  </select>
+                  <div>
+                      <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignCheckboxValues()">
+                          <select style="width: 200px" class="cesium-button">
+                              <option>Assign GFA(s)</option>
+                          </select>
+                      </div>
+                      <div id="assignGFA" class="finder_dynamic_box" style="width:190px">
+                          <div>
+                            <div class='text'>Total GFA</div>
+                            <div class='text_input'><input type='text' maxlength="5" size="4"></div>
+                          </div>
+                      </div>
+                  </div>
               </td>
 					  	</tr>
 					  </table>
@@ -753,20 +781,32 @@
                 }
             }
 
-            var expanded =  false
+            var expanded8 =  false
             function showChooseProgrammes() {
                 var citydb_addsplashwindow = document.getElementById("choose_programmes");
-                if (!expanded) {
+                if (!expanded8) {
                     citydb_addsplashwindow.style.display = "block";
-                    expanded = true;
+                    expanded8 = true;
                 } else {
                     citydb_addsplashwindow.style.display = "none";
-                    expanded = false;
+                    expanded8 = false;
                 }
 
             }
 
-            getDropdownElements('ZoningType', 'use_element', '#choose_uses');
+            var expanded10 =  false
+            function showAssignCheckboxValues() {
+                var citydb_addsplashwindow = document.getElementById("assignGFA");
+                if (!expanded10) {
+                    citydb_addsplashwindow.style.display = "block";
+                    expanded10 = true;
+                } else {
+                    citydb_addsplashwindow.style.display = "none";
+                    expanded10 = false;
+                }
+            }
+
+            getDropdownElements('LandUse', 'use_element', '#choose_uses');
             getDropdownElements('Programme', 'programme_element', '#choose_programmes');
 
         </script>

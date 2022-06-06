@@ -1,5 +1,5 @@
 function buildOntoQuery(object){
-	query = "PREFIX zo: <http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#> SELECT DISTINCT ?s WHERE { ?s rdfs:subClassOf zo:" + object + " } LIMIT 50"
+	query = "PREFIX zo: <http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#> SELECT DISTINCT ?s WHERE { ?s rdfs:subClassOf zo:" + object + " }"
 	return query
 }
 
@@ -19,21 +19,21 @@ function getDropdownElements(object, element_type, dropdown_type) {
 				var checkbox_line = results[index]["s"]["value"];
 				appendElement(removePrefix(checkbox_line), element_type, dropdown_type)
 			}
-			console.log(checkbox_lines)			
 		}
     });
 }
 
 function appendElement(line,element_type, dropdown_type){
-	var some_element = "<div>" +
-			"<div class=" + element_type + ">" +
-			"<input type='checkbox'>" +
-			"</div>" +
+	var some_element =
+			"<div>" +
+			"<div id='check' class='checkbox'><input type='checkbox' value="+ line + "></div>" +
 			"<div class=" + element_type + ">" + line + "</div>" +
 			"</div>";
 		$(dropdown_type).append(some_element)
 }
 
 function removePrefix(result){
-	return result.split("#")[1]	
+	var element = result.split("#")[1]
+	element = element.match(/[A-Z][a-z]+|[0-9]+/g).join(" ")
+	return element
 }
