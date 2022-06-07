@@ -28,9 +28,10 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
+
+
 
 import org.citydb.citygml.common.database.xlink.DBXlinkBasic;
 import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
@@ -53,35 +54,45 @@ import org.citygml4j.model.gml.geometry.AbstractGeometry;
 import org.citygml4j.model.gml.geometry.GeometryProperty;
 import org.citygml4j.model.gml.geometry.aggregates.MultiCurveProperty;
 
-public class DBBridgeConstrElement implements DBImporter {
-	private final Connection batchConn;
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psBridgeConstruction;
+public class DBBridgeConstrElement extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
 	private DBBridgeThematicSurface thematicSurfaceImporter;
-	private DBSurfaceGeometry surfaceGeometryImporter;
 	private GeometryConverter geometryConverter;
 	private DBImplicitGeometry implicitGeometryImporter;
 	private AttributeValueJoiner valueJoiner;
-	private int batchCounter;
 
 	private boolean hasObjectClassIdColumn;
 	private boolean affineTransformation;
-	private int nullGeometryType;
-	private String nullGeometryTypeName;
 
 	public DBBridgeConstrElement(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.batchConn = batchConn;
-		this.importer = importer;
-
+		super(batchConn, config, importer);
 		affineTransformation = config.getProject().getImporter().getAffineTransformation().isEnabled();
-		nullGeometryType = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType();
-		nullGeometryTypeName = importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName();
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
+		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
+		implicitGeometryImporter = importer.getImporter(DBImplicitGeometry.class);
+		cityObjectImporter = importer.getImporter(DBCityObject.class);
+		thematicSurfaceImporter = importer.getImporter(DBBridgeThematicSurface.class);
+		geometryConverter = importer.getGeometryConverter();
+		valueJoiner = importer.getAttributeValueJoiner();
+	}
 
-		String stmt = "insert into " + schema + ".bridge_constr_element (id, class, class_codespace, function, function_codespace, usage, usage_codespace, bridge_id, " +
+	@Override
+	protected void preconstructor(Config config) {
+		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
+	}
+
+	@Override
+	protected String getTableName() {
+		return TableEnum.BRIDGE_CONSTR_ELEMENT.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "bridgeconstrelement/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + sqlSchema + ".bridge_constr_element (id, class, class_codespace, function, function_codespace, usage, usage_codespace, bridge_id, " +
 				"lod1_terrain_intersection, lod2_terrain_intersection, lod3_terrain_intersection, lod4_terrain_intersection, " +
 				"lod1_brep_id, lod2_brep_id, lod3_brep_id, lod4_brep_id, lod1_other_geom, lod2_other_geom, lod3_other_geom, lod4_other_geom, " +
 				"lod1_implicit_rep_id, lod2_implicit_rep_id, lod3_implicit_rep_id, lod4_implicit_rep_id, " +
@@ -90,14 +101,6 @@ public class DBBridgeConstrElement implements DBImporter {
 				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
 				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
 				(hasObjectClassIdColumn ? ", ?)" : ")");
-		psBridgeConstruction = batchConn.prepareStatement(stmt);
-
-		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
-		implicitGeometryImporter = importer.getImporter(DBImplicitGeometry.class);
-		cityObjectImporter = importer.getImporter(DBCityObject.class);
-		thematicSurfaceImporter = importer.getImporter(DBBridgeThematicSurface.class);
-		geometryConverter = importer.getGeometryConverter();
-		valueJoiner = importer.getAttributeValueJoiner();
 	}
 
 	protected long doImport(BridgeConstructionElement bridgeConstruction) throws CityGMLImportException, SQLException {
@@ -114,74 +117,50 @@ public class DBBridgeConstrElement implements DBImporter {
 
 		// import bridge construction element information
 		// primary id
-		psBridgeConstruction.setLong(1, bridgeConstructionId);
+		preparedStatement.setLong(1, bridgeConstructionId);
 
 		// brid:class
 		if (bridgeConstruction.isSetClazz() && bridgeConstruction.getClazz().isSetValue()) {
-			psBridgeConstruction.setString(2, bridgeConstruction.getClazz().getValue());
-			psBridgeConstruction.setString(3, bridgeConstruction.getClazz().getCodeSpace());
+			preparedStatement.setString(2, bridgeConstruction.getClazz().getValue());
+			preparedStatement.setString(3, bridgeConstruction.getClazz().getCodeSpace());
 		} else {
-			psBridgeConstruction.setNull(2, Types.VARCHAR);
-			psBridgeConstruction.setNull(3, Types.VARCHAR);
+			preparedStatement.setNull(2, Types.VARCHAR);
+			preparedStatement.setNull(3, Types.VARCHAR);
 		}
 
 		// brid:function
 		if (bridgeConstruction.isSetFunction()) {
 			valueJoiner.join(bridgeConstruction.getFunction(), Code::getValue, Code::getCodeSpace);
-			psBridgeConstruction.setString(4, valueJoiner.result(0));
-			psBridgeConstruction.setString(5, valueJoiner.result(1));
+			preparedStatement.setString(4, valueJoiner.result(0));
+			preparedStatement.setString(5, valueJoiner.result(1));
 		} else {
-			psBridgeConstruction.setNull(4, Types.VARCHAR);
-			psBridgeConstruction.setNull(5, Types.VARCHAR);
+			preparedStatement.setNull(4, Types.VARCHAR);
+			preparedStatement.setNull(5, Types.VARCHAR);
 		}
 
 		// brid:usage
 		if (bridgeConstruction.isSetUsage()) {
 			valueJoiner.join(bridgeConstruction.getUsage(), Code::getValue, Code::getCodeSpace);
-			psBridgeConstruction.setString(6, valueJoiner.result(0));
-			psBridgeConstruction.setString(7, valueJoiner.result(1));
+			preparedStatement.setString(6, valueJoiner.result(0));
+			preparedStatement.setString(7, valueJoiner.result(1));
 		} else {
-			psBridgeConstruction.setNull(6, Types.VARCHAR);
-			psBridgeConstruction.setNull(7, Types.VARCHAR);
+			preparedStatement.setNull(6, Types.VARCHAR);
+			preparedStatement.setNull(7, Types.VARCHAR);
 		}
 
 		// parent id
 		if (parent instanceof AbstractBridge)
-			psBridgeConstruction.setLong(8, parentId);
+			preparedStatement.setLong(8, parentId);
 		else
-			psBridgeConstruction.setNull(8, Types.NULL);
+			preparedStatement.setNull(8, Types.NULL);
 
 		// brid:lodXTerrainIntersectionCurve
-		for (int i = 0; i < 4; i++) {
-			MultiCurveProperty multiCurveProperty = null;
-			GeometryObject multiLine = null;
-
-			switch (i) {
-			case 0:
-				multiCurveProperty = bridgeConstruction.getLod1TerrainIntersection();
-				break;
-			case 1:
-				multiCurveProperty = bridgeConstruction.getLod2TerrainIntersection();
-				break;
-			case 2:
-				multiCurveProperty = bridgeConstruction.getLod3TerrainIntersection();
-				break;
-			case 3:
-				multiCurveProperty = bridgeConstruction.getLod4TerrainIntersection();
-				break;
-			}
-
-			if (multiCurveProperty != null) {
-				multiLine = geometryConverter.getMultiCurve(multiCurveProperty);
-				multiCurveProperty.unsetMultiCurve();
-			}
-
-			if (multiLine != null) {
-				Object multiLineObj = importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(multiLine, batchConn);
-				psBridgeConstruction.setObject(9 + i, multiLineObj);
-			} else
-				psBridgeConstruction.setNull(9 + i, nullGeometryType, nullGeometryTypeName);
-		}
+		importGeometryObjectProperties(new MultiCurveProperty[]{
+				bridgeConstruction.getLod1TerrainIntersection(),
+				bridgeConstruction.getLod2TerrainIntersection(),
+				bridgeConstruction.getLod3TerrainIntersection(),
+				bridgeConstruction.getLod4TerrainIntersection()
+		}, geometryConverter::getMultiCurve, 9);
 
 		// brid:lodXGeometry
 		for (int i = 0; i < 4; i++) {
@@ -211,7 +190,7 @@ public class DBBridgeConstrElement implements DBImporter {
 						geometryId = surfaceGeometryImporter.doImport(abstractGeometry, bridgeConstructionId);
 					else if (importer.isPointOrLineGeometry(abstractGeometry))
 						geometryObject = geometryConverter.getPointOrCurveGeometry(abstractGeometry);
-					else 
+					else
 						importer.logOrThrowUnsupportedGeometryMessage(bridgeConstruction, abstractGeometry);
 
 					geometryProperty.unsetGeometry();
@@ -220,22 +199,22 @@ public class DBBridgeConstrElement implements DBImporter {
 					if (href != null && href.length() != 0) {
 						importer.propagateXlink(new DBXlinkSurfaceGeometry(
 								TableEnum.BRIDGE_CONSTR_ELEMENT.getName(),
-								bridgeConstructionId, 
-								href, 
+								bridgeConstructionId,
+								href,
 								"lod" + (i + 1) + "_brep_id"));
 					}
 				}
 			}
 
 			if (geometryId != 0)
-				psBridgeConstruction.setLong(13 + i, geometryId);
+				preparedStatement.setLong(13 + i, geometryId);
 			else
-				psBridgeConstruction.setNull(13 + i, Types.NULL);
+				preparedStatement.setNull(13 + i, Types.NULL);
 
 			if (geometryObject != null)
-				psBridgeConstruction.setObject(17 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
+				preparedStatement.setObject(17 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
 			else
-				psBridgeConstruction.setNull(17 + i, nullGeometryType, nullGeometryTypeName);
+				preparedStatement.setNull(17 + i, nullGeometryType, nullGeometryTypeName);
 		}
 
 		// brid:lodXImplicitRepresentation
@@ -283,26 +262,26 @@ public class DBBridgeConstrElement implements DBImporter {
 			}
 
 			if (implicitId != 0)
-				psBridgeConstruction.setLong(21 + i, implicitId);
+				preparedStatement.setLong(21 + i, implicitId);
 			else
-				psBridgeConstruction.setNull(21 + i, Types.NULL);
+				preparedStatement.setNull(21 + i, Types.NULL);
 
 			if (pointGeom != null)
-				psBridgeConstruction.setObject(25 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
+				preparedStatement.setObject(25 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
 			else
-				psBridgeConstruction.setNull(25 + i, nullGeometryType, nullGeometryTypeName);
+				preparedStatement.setNull(25 + i, nullGeometryType, nullGeometryTypeName);
 
 			if (matrixString != null)
-				psBridgeConstruction.setString(29 + i, matrixString);
+				preparedStatement.setString(29 + i, matrixString);
 			else
-				psBridgeConstruction.setNull(29 + i, Types.VARCHAR);
+				preparedStatement.setNull(29 + i, Types.VARCHAR);
 		}
 
 		// objectclass id
 		if (hasObjectClassIdColumn)
-			psBridgeConstruction.setLong(33, featureType.getObjectClassId());
+			preparedStatement.setLong(33, featureType.getObjectClassId());
 
-		psBridgeConstruction.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.BRIDGE_CONSTR_ELEMENT);
 
@@ -332,19 +311,6 @@ public class DBBridgeConstrElement implements DBImporter {
 			importer.delegateToADEImporter(bridgeConstruction, bridgeConstructionId, featureType);
 
 		return bridgeConstructionId;
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psBridgeConstruction.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psBridgeConstruction.close();
 	}
 
 }

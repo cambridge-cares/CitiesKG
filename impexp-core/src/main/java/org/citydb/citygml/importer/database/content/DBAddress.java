@@ -30,7 +30,6 @@ package org.citydb.citygml.importer.database.content;
 import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
-import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.schema.SequenceEnum;
 import org.citydb.database.schema.TableEnum;
@@ -51,75 +50,66 @@ import org.citygml4j.util.walker.XALWalker;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
-public class DBAddress implements DBImporter {
-	private final Connection batchConn;
-	private final CityGMLImportManager importer;
+public class DBAddress extends AbstractDBImporter {
 
-	private PreparedStatement psAddress;
 	private DBAddressToBuilding addressToBuildingImporter;
 	private DBAddressToBridge addressToBridgeImporter;
 	private GeometryConverter geometryConverter;
 	private XALAddressWalker addressWalker;
 
-	private int batchCounter;
 	private boolean importXALSource;
 	private boolean hasGmlIdColumn;
+	private String gmlIdCodespace;
 	private boolean replaceGmlId;
-	private String PREFIX_ONTOCITYGML;
-	private String IRI_GRAPH_BASE;
-	private String IRI_GRAPH_OBJECT;
-	private static final String IRI_GRAPH_OBJECT_REL = "address/";
 
 	public DBAddress(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.batchConn = batchConn;
-		this.importer = importer;
-
-		importXALSource = config.getProject().getImporter().getAddress().isSetImportXAL();
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-		hasGmlIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(3, 1, 0) >= 0;
-		replaceGmlId = config.getProject().getImporter().getGmlId().isUUIDModeReplace();
-		String gmlIdCodespace = null;
-
-		if (hasGmlIdColumn) {
-			gmlIdCodespace = config.getInternal().getCurrentGmlIdCodespace();
-			if (gmlIdCodespace != null)
-				gmlIdCodespace = "'" + gmlIdCodespace + "', ";
-		}
-
-		String stmtSQL = "insert into " + schema + ".address (id, " + (hasGmlIdColumn ? "gmlid, " : "") + (gmlIdCodespace != null ? "gmlid_codespace, " : "") +
-				"street, house_number, po_box, zip_code, city, country, multi_point, xal_source) values " +
-				"(?, " + (hasGmlIdColumn ? "?, " : "") + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?, ?, ?)";
-
-		String stmt = "";
-
-		if (importer.isBlazegraph()) {
-			PREFIX_ONTOCITYGML = importer.getOntoCityGmlPrefix();
-			IRI_GRAPH_BASE = importer.getGraphBaseIri();
-			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
-			stmt = getSPARQLStatement(gmlIdCodespace);
-		}
-
-		psAddress = batchConn.prepareStatement(stmt);
-
-		PreparedStatement AddressSQL = batchConn.prepareStatement(stmtSQL);
-
+		super(batchConn, config, importer);
 		addressToBuildingImporter = importer.getImporter(DBAddressToBuilding.class);
 		addressToBridgeImporter = importer.getImporter(DBAddressToBridge.class);
 		geometryConverter = importer.getGeometryConverter();
 		addressWalker = new XALAddressWalker();
 	}
 
+	@Override
+	protected void preconstructor(Config config) {
+		importXALSource = config.getProject().getImporter().getAddress().isSetImportXAL();
+		hasGmlIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(3, 1, 0) >= 0;
+		replaceGmlId = config.getProject().getImporter().getGmlId().isUUIDModeReplace();
 
-	private String getSPARQLStatement(String gmlIdCodespace){
+		if (hasGmlIdColumn) {
+			gmlIdCodespace = config.getInternal().getCurrentGmlIdCodespace();
+			if (gmlIdCodespace != null)
+				gmlIdCodespace = "'" + gmlIdCodespace + "', ";
+		}
+	}
+
+	@Override
+	protected String getTableName() {
+		return TableEnum.ADDRESS.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "address/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + sqlSchema + ".address (id, " + (hasGmlIdColumn ? "gmlid, " : "") + (gmlIdCodespace != null ? "gmlid_codespace, " : "") +
+				"street, house_number, po_box, zip_code, city, country, multi_point, xal_source) values " +
+				"(?, " + (hasGmlIdColumn ? "?, " : "") + (gmlIdCodespace != null ? gmlIdCodespace : "") + "?, ?, ?, ?, ?, ?, ?, ?)";
+	}
+
+	@Override
+	protected String getSPARQLStatement(){
 		String param = "  ?;";
-		String stmt = "PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-				"BASE <" + IRI_GRAPH_BASE + "> " +
+		String stmt = "PREFIX ocgml: <" + prefixOntoCityGML + "> " +
+				"BASE <" + iriGraphBase + "> " +
 				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				" { GRAPH <" + iriGraphObjectRel + "> " +
 				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
 				(hasGmlIdColumn ? SchemaManagerAdapter.ONTO_GML_ID + param : "") +
 				(gmlIdCodespace != null ? SchemaManagerAdapter.ONTO_GML_ID_CODESPACE + param : "") +
@@ -168,7 +158,7 @@ public class DBAddress implements DBImporter {
 				address.setId(importer.generateNewGmlId());
 		}
 
-		int index = 1;
+		int index = 0;
 
 		if (importer.isBlazegraph()) {
 			try {
@@ -176,19 +166,19 @@ public class DBAddress implements DBImporter {
 				if (uuid.isEmpty()) {
 					uuid = importer.generateNewGmlId();
 				}
-				URL url = new URL(IRI_GRAPH_OBJECT + uuid + "/");
-				psAddress.setURL(index++, url);
-				psAddress.setURL(index++, url);
+				URL url = new URL(iriGraphObject + uuid + "/");
+				preparedStatement.setURL(++index, url);
+				preparedStatement.setURL(++index, url);
 				address.setLocalProperty(CoreConstants.OBJECT_URIID, url);
 			} catch (MalformedURLException e) {
-				psAddress.setObject(index++, NodeFactory.createBlankNode());
+				setBlankNode(preparedStatement, ++index);
 			}
-    } else {
-      psAddress.setLong(index++, addressId);
+		} else {
+		  preparedStatement.setLong(++index, addressId);
 		}
 
 		if (hasGmlIdColumn)
-			psAddress.setString(index++, address.getId());
+			preparedStatement.setString(++index, address.getId());
 
 		// get address details
 		addressWalker.reset();
@@ -197,58 +187,46 @@ public class DBAddress implements DBImporter {
 
 		if (importer.isBlazegraph()) {
 			if (addressWalker.street != null) {
-				psAddress.setString(index++, addressWalker.street.toString());
+				preparedStatement.setString(++index, addressWalker.street.toString());
 			} else {
-				setBlankNode(psAddress, index++);
+				setBlankNode(preparedStatement, ++index);
 			}
 			if (addressWalker.houseNo  != null) {
-				psAddress.setString(index++, addressWalker.houseNo.toString());
+				preparedStatement.setString(++index, addressWalker.houseNo.toString());
 			} else {
-				setBlankNode(psAddress, index++);
+				setBlankNode(preparedStatement, ++index);
 			}
 			if (addressWalker.poBox != null) {
-				psAddress.setString(index++, addressWalker.poBox.toString());
+				preparedStatement.setString(++index, addressWalker.poBox.toString());
 			} else {
-				setBlankNode(psAddress, index++);
+				setBlankNode(preparedStatement, ++index);
 			}
 			if (addressWalker.zipCode != null) {
-				psAddress.setString(index++, addressWalker.zipCode.toString());
+				preparedStatement.setString(++index, addressWalker.zipCode.toString());
 			} else {
-				setBlankNode(psAddress, index++);
+				setBlankNode(preparedStatement, ++index);
 			}
 			if (addressWalker.city != null) {
-				psAddress.setString(index++, addressWalker.city.toString());
+				preparedStatement.setString(++index, addressWalker.city.toString());
 			} else {
-				setBlankNode(psAddress, index++);
+				setBlankNode(preparedStatement, ++index);
 			}
 			if (addressWalker.country != null) {
-				psAddress.setString(index++, addressWalker.country.toString());
+				preparedStatement.setString(++index, addressWalker.country.toString());
 			} else {
-				setBlankNode(psAddress, index++);
+				setBlankNode(preparedStatement, ++index);
 			}
 		} else {
-			psAddress.setString(index++, addressWalker.street != null ? addressWalker.street.toString() : null);
-			psAddress.setString(index++, addressWalker.houseNo != null ? addressWalker.houseNo.toString() : null);
-			psAddress.setString(index++, addressWalker.poBox != null ? addressWalker.poBox.toString() : null);
-			psAddress.setString(index++, addressWalker.zipCode != null ? addressWalker.zipCode.toString() : null);
-			psAddress.setString(index++, addressWalker.city != null ? addressWalker.city.toString() : null);
-			psAddress.setString(index++, addressWalker.country != null ? addressWalker.country.toString() : null);
+			preparedStatement.setString(++index, addressWalker.street != null ? addressWalker.street.toString() : null);
+			preparedStatement.setString(++index, addressWalker.houseNo != null ? addressWalker.houseNo.toString() : null);
+			preparedStatement.setString(++index, addressWalker.poBox != null ? addressWalker.poBox.toString() : null);
+			preparedStatement.setString(++index, addressWalker.zipCode != null ? addressWalker.zipCode.toString() : null);
+			preparedStatement.setString(++index, addressWalker.city != null ? addressWalker.city.toString() : null);
+			preparedStatement.setString(++index, addressWalker.country != null ? addressWalker.country.toString() : null);
 		}
 
 		// multiPoint geometry
-		GeometryObject multiPoint = null;
-		if (address.isSetMultiPoint())
-			multiPoint = geometryConverter.getMultiPoint(address.getMultiPoint());
-
-		if (multiPoint != null) {
-			Object multiPointObj = importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(multiPoint, batchConn);
-			psAddress.setObject(index++, multiPointObj);
-		} else if (importer.isBlazegraph()) {
-			setBlankNode(psAddress, index++);
-		} else {
-			psAddress.setNull(index++, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
-					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
-		}
+		index = importGeometryObjectProperty(address.getMultiPoint(), geometryConverter::getMultiPoint, index);
 
 		// get XML representation of <xal:AddressDetails>
 		String xalSource = null;
@@ -256,14 +234,14 @@ public class DBAddress implements DBImporter {
 			xalSource = importer.marshalObject(address.getXalAddress().getAddressDetails(), XALModuleType.CORE);
 
 		if (xalSource != null && !xalSource.isEmpty()) {
-			psAddress.setString(index++, xalSource);
+			preparedStatement.setString(++index, xalSource);
 		} else if (importer.isBlazegraph()) {
-			setBlankNode(psAddress, index++);
+			setBlankNode(preparedStatement, ++index);
 		}  else {
-			psAddress.setNull(index++, Types.CLOB);
+			preparedStatement.setNull(++index, Types.CLOB);
 		}
 
-		psAddress.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.ADDRESS);
 		
@@ -365,26 +343,6 @@ public class DBAddress implements DBImporter {
 
 			super.visit(postBoxNumber);
 		}
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psAddress.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psAddress.close();
-	}
-
-	/**
-	 * Sets blank nodes on PreparedStatements. Used with SPARQL which does not support nulls.
-	 */
-	private void setBlankNode(PreparedStatement smt, int index) throws CityGMLImportException {
-		importer.setBlankNode(smt, index);
 	}
 
 }

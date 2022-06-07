@@ -28,7 +28,6 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
@@ -47,43 +46,49 @@ import org.citygml4j.model.gml.basicTypes.Code;
 import org.citygml4j.model.gml.geometry.AbstractGeometry;
 import org.citygml4j.model.gml.geometry.GeometryProperty;
 
-public class DBTunnelFurniture implements DBImporter {
-	private final Connection batchConn;
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psTunnelFurniture;
+public class DBTunnelFurniture extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
-	private DBSurfaceGeometry surfaceGeometryImporter;
 	private GeometryConverter geometryConverter;
 	private DBImplicitGeometry implicitGeometryImporter;
 	private GeometryConverter geometryImporter;
 	private AttributeValueJoiner valueJoiner;
 
 	private boolean hasObjectClassIdColumn;
-	private int batchCounter;	
 	private boolean affineTransformation;
 
 	public DBTunnelFurniture(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.batchConn = batchConn;
-		this.importer = importer;
-
+		super(batchConn, config, importer);
 		affineTransformation = config.getProject().getImporter().getAffineTransformation().isEnabled();
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
-
-		String stmt = "insert into " + schema + ".tunnel_furniture (id, class, class_codespace, function, function_codespace, usage, usage_codespace, tunnel_hollow_space_id, " +
-				"lod4_brep_id, lod4_other_geom, " +
-				"lod4_implicit_rep_id, lod4_implicit_ref_point, lod4_implicit_transformation" +
-				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
-				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
-				(hasObjectClassIdColumn ? ", ?)" : ")");
-		psTunnelFurniture = batchConn.prepareStatement(stmt);
-
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
 		implicitGeometryImporter = importer.getImporter(DBImplicitGeometry.class);
 		geometryConverter = importer.getGeometryConverter();
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	@Override
+	protected void preconstructor(Config config) {
+		hasObjectClassIdColumn = importer.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
+	}
+
+	@Override
+	protected String getTableName() {
+		return TableEnum.TUNNEL_FURNITURE.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "tunnelfurniture/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + sqlSchema + ".tunnel_furniture (id, class, class_codespace, function, function_codespace, usage, usage_codespace, tunnel_hollow_space_id, " +
+				"lod4_brep_id, lod4_other_geom, " +
+				"lod4_implicit_rep_id, lod4_implicit_ref_point, lod4_implicit_transformation" +
+				(hasObjectClassIdColumn ? ", objectclass_id) " : ") ") +
+				"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" +
+				(hasObjectClassIdColumn ? ", ?)" : ")");
 	}
 
 	protected long doImport(TunnelFurniture tunnelFurniture) throws CityGMLImportException, SQLException {
@@ -100,42 +105,42 @@ public class DBTunnelFurniture implements DBImporter {
 
 		// import tunnel furniture information
 		// primary id
-		psTunnelFurniture.setLong(1, tunnelFurnitureId);
+		preparedStatement.setLong(1, tunnelFurnitureId);
 
 		// tun:class
 		if (tunnelFurniture.isSetClazz() && tunnelFurniture.getClazz().isSetValue()) {
-			psTunnelFurniture.setString(2, tunnelFurniture.getClazz().getValue());
-			psTunnelFurniture.setString(3, tunnelFurniture.getClazz().getCodeSpace());
+			preparedStatement.setString(2, tunnelFurniture.getClazz().getValue());
+			preparedStatement.setString(3, tunnelFurniture.getClazz().getCodeSpace());
 		} else {
-			psTunnelFurniture.setNull(2, Types.VARCHAR);
-			psTunnelFurniture.setNull(3, Types.VARCHAR);
+			preparedStatement.setNull(2, Types.VARCHAR);
+			preparedStatement.setNull(3, Types.VARCHAR);
 		}
 
 		// tun:function
 		if (tunnelFurniture.isSetFunction()) {
 			valueJoiner.join(tunnelFurniture.getFunction(), Code::getValue, Code::getCodeSpace);
-			psTunnelFurniture.setString(4, valueJoiner.result(0));
-			psTunnelFurniture.setString(5, valueJoiner.result(1));
+			preparedStatement.setString(4, valueJoiner.result(0));
+			preparedStatement.setString(5, valueJoiner.result(1));
 		} else {
-			psTunnelFurniture.setNull(4, Types.VARCHAR);
-			psTunnelFurniture.setNull(5, Types.VARCHAR);
+			preparedStatement.setNull(4, Types.VARCHAR);
+			preparedStatement.setNull(5, Types.VARCHAR);
 		}
 
 		// tun:usage
 		if (tunnelFurniture.isSetUsage()) {
 			valueJoiner.join(tunnelFurniture.getUsage(), Code::getValue, Code::getCodeSpace);
-			psTunnelFurniture.setString(6, valueJoiner.result(0));
-			psTunnelFurniture.setString(7, valueJoiner.result(1));
+			preparedStatement.setString(6, valueJoiner.result(0));
+			preparedStatement.setString(7, valueJoiner.result(1));
 		} else {
-			psTunnelFurniture.setNull(6, Types.VARCHAR);
-			psTunnelFurniture.setNull(7, Types.VARCHAR);
+			preparedStatement.setNull(6, Types.VARCHAR);
+			preparedStatement.setNull(7, Types.VARCHAR);
 		}
 
 		// parent room id
 		if (roomId != 0)
-			psTunnelFurniture.setLong(8, roomId);
+			preparedStatement.setLong(8, roomId);
 		else
-			psTunnelFurniture.setNull(8, Types.NULL);
+			preparedStatement.setNull(8, Types.NULL);
 
 		// tun:lod4Geometry
 		long geometryId = 0;
@@ -167,14 +172,14 @@ public class DBTunnelFurniture implements DBImporter {
 		}
 
 		if (geometryId != 0)
-			psTunnelFurniture.setLong(9, geometryId);
+			preparedStatement.setLong(9, geometryId);
 		else
-			psTunnelFurniture.setNull(9, Types.NULL);
+			preparedStatement.setNull(9, Types.NULL);
 
 		if (geometryObject != null)
-			psTunnelFurniture.setObject(10, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
+			preparedStatement.setObject(10, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(geometryObject, batchConn));
 		else
-			psTunnelFurniture.setNull(10, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
+			preparedStatement.setNull(10, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
 
 		// tun:lod4ImplicitRepresentation
@@ -207,26 +212,26 @@ public class DBTunnelFurniture implements DBImporter {
 		}
 
 		if (implicitId != 0)
-			psTunnelFurniture.setLong(11, implicitId);
+			preparedStatement.setLong(11, implicitId);
 		else
-			psTunnelFurniture.setNull(11, Types.NULL);
+			preparedStatement.setNull(11, Types.NULL);
 
 		if (pointGeom != null)
-			psTunnelFurniture.setObject(12, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
+			preparedStatement.setObject(12, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
 		else
-			psTunnelFurniture.setNull(12, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
+			preparedStatement.setNull(12, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 					importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
 
 		if (matrixString != null)
-			psTunnelFurniture.setString(13, matrixString);
+			preparedStatement.setString(13, matrixString);
 		else
-			psTunnelFurniture.setNull(13, Types.VARCHAR);
+			preparedStatement.setNull(13, Types.VARCHAR);
 
 		// objectclass id
 		if (hasObjectClassIdColumn)
-			psTunnelFurniture.setLong(14, featureType.getObjectClassId());
+			preparedStatement.setLong(14, featureType.getObjectClassId());
 
-		psTunnelFurniture.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.TUNNEL_FURNITURE);
 		
@@ -235,19 +240,6 @@ public class DBTunnelFurniture implements DBImporter {
 			importer.delegateToADEImporter(tunnelFurniture, tunnelFurnitureId, featureType);
 
 		return tunnelFurnitureId;
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psTunnelFurniture.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psTunnelFurniture.close();
 	}
 
 }

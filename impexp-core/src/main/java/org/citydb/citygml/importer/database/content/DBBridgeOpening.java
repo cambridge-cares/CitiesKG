@@ -28,7 +28,6 @@
 package org.citydb.citygml.importer.database.content;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
@@ -51,36 +50,19 @@ import org.citygml4j.model.citygml.core.ImplicitGeometry;
 import org.citygml4j.model.citygml.core.ImplicitRepresentationProperty;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
 
-public class DBBridgeOpening implements DBImporter {
-	private final Connection batchConn;
-	private final CityGMLImportManager importer;
-
-	private PreparedStatement psOpening;
+public class DBBridgeOpening extends AbstractDBImporter {
 	private DBCityObject cityObjectImporter;
-	private DBSurfaceGeometry surfaceGeometryImporter;
 	private GeometryConverter geometryConverter;
 	private DBImplicitGeometry implicitGeometryImporter;
 	private DBBridgeOpenToThemSrf openingToThemSurfaceImporter;
 	private DBAddress addressImporter;
 	private AttributeValueJoiner valueJoiner;
-	private int batchCounter;
 
 	private boolean affineTransformation;
 
 	public DBBridgeOpening(Connection batchConn, Config config, CityGMLImportManager importer) throws CityGMLImportException, SQLException {
-		this.batchConn = batchConn;
-		this.importer = importer;
-
+		super(batchConn, config, importer);
 		affineTransformation = config.getProject().getImporter().getAffineTransformation().isEnabled();
-		String schema = importer.getDatabaseAdapter().getConnectionDetails().getSchema();
-
-		String stmt = "insert into " + schema + ".bridge_opening (id, objectclass_id, address_id, lod3_multi_surface_id, lod4_multi_surface_id, " +
-				"lod3_implicit_rep_id, lod4_implicit_rep_id, " +
-				"lod3_implicit_ref_point, lod4_implicit_ref_point, " +
-				"lod3_implicit_transformation, lod4_implicit_transformation) values " +
-				"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-		psOpening = batchConn.prepareStatement(stmt);
-
 		surfaceGeometryImporter = importer.getImporter(DBSurfaceGeometry.class);
 		implicitGeometryImporter = importer.getImporter(DBImplicitGeometry.class);
 		cityObjectImporter = importer.getImporter(DBCityObject.class);
@@ -88,6 +70,25 @@ public class DBBridgeOpening implements DBImporter {
 		addressImporter = importer.getImporter(DBAddress.class);
 		geometryConverter = importer.getGeometryConverter();
 		valueJoiner = importer.getAttributeValueJoiner();
+	}
+
+	@Override
+	protected String getTableName() {
+		return TableEnum.BRIDGE_FURNITURE.getName();
+	}
+
+	@Override
+	protected String getIriGraphObjectRel() {
+		return "bridgefurniture/";
+	}
+
+	@Override
+	protected String getSQLStatement() {
+		return "insert into " + sqlSchema + ".bridge_opening (id, objectclass_id, address_id, lod3_multi_surface_id, lod4_multi_surface_id, " +
+				"lod3_implicit_rep_id, lod4_implicit_rep_id, " +
+				"lod3_implicit_ref_point, lod4_implicit_ref_point, " +
+				"lod3_implicit_transformation, lod4_implicit_transformation) values " +
+				"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	}
 
 	protected long doImport(AbstractOpening opening) throws CityGMLImportException, SQLException {
@@ -104,10 +105,10 @@ public class DBBridgeOpening implements DBImporter {
 
 		// import opening information
 		// primary id
-		psOpening.setLong(1, openingId);
+		preparedStatement.setLong(1, openingId);
 
 		// objectclass id
-		psOpening.setInt(2, featureType.getObjectClassId());
+		preparedStatement.setInt(2, featureType.getObjectClassId());
 
 		// brid:address
 		long addressId = 0;
@@ -136,9 +137,9 @@ public class DBBridgeOpening implements DBImporter {
 		}
 
 		if (addressId != 0)
-			psOpening.setLong(3, addressId);
+			preparedStatement.setLong(3, addressId);
 		else
-			psOpening.setNull(3, Types.NULL);
+			preparedStatement.setNull(3, Types.NULL);
 
 		// brid:lodXMultiSurface
 		for (int i = 0; i < 2; i++) {
@@ -171,9 +172,9 @@ public class DBBridgeOpening implements DBImporter {
 			}
 
 			if (multiSurfaceId != 0)
-				psOpening.setLong(4 + i, multiSurfaceId);
+				preparedStatement.setLong(4 + i, multiSurfaceId);
 			else
-				psOpening.setNull(4 + i, Types.NULL);
+				preparedStatement.setNull(4 + i, Types.NULL);
 		}
 
 		// brid:lodXImplicitRepresentation
@@ -215,23 +216,23 @@ public class DBBridgeOpening implements DBImporter {
 			}
 
 			if (implicitId != 0)
-				psOpening.setLong(6 + i, implicitId);
+				preparedStatement.setLong(6 + i, implicitId);
 			else
-				psOpening.setNull(6 + i, Types.NULL);
+				preparedStatement.setNull(6 + i, Types.NULL);
 
 			if (pointGeom != null)
-				psOpening.setObject(8 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
+				preparedStatement.setObject(8 + i, importer.getDatabaseAdapter().getGeometryConverter().getDatabaseObject(pointGeom, batchConn));
 			else
-				psOpening.setNull(8 + i, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
+				preparedStatement.setNull(8 + i, importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryType(),
 						importer.getDatabaseAdapter().getGeometryConverter().getNullGeometryTypeName());
 
 			if (matrixString != null)
-				psOpening.setString(10 + i, matrixString);
+				preparedStatement.setString(10 + i, matrixString);
 			else
-				psOpening.setNull(10 + i, Types.VARCHAR);
+				preparedStatement.setNull(10 + i, Types.VARCHAR);
 		}
 
-		psOpening.addBatch();
+		preparedStatement.addBatch();
 		if (++batchCounter == importer.getDatabaseAdapter().getMaxBatchSize())
 			importer.executeBatch(TableEnum.BRIDGE_OPENING);
 
@@ -243,19 +244,6 @@ public class DBBridgeOpening implements DBImporter {
 			importer.delegateToADEImporter(opening, openingId, featureType);
 
 		return openingId;
-	}
-
-	@Override
-	public void executeBatch() throws CityGMLImportException, SQLException {
-		if (batchCounter > 0) {
-			psOpening.executeBatch();
-			batchCounter = 0;
-		}
-	}
-
-	@Override
-	public void close() throws CityGMLImportException, SQLException {
-		psOpening.close();
 	}
 
 }

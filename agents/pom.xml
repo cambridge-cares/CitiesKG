@@ -7,8 +7,39 @@
     <groupId>uk.ac.cam.cares.twa.cities.agents</groupId>
     <artifactId>agents</artifactId>
     <version>0.1.0</version>
-
     <packaging>war</packaging>
+
+    <!-- Project properties -->
+    <properties>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+
+        <!-- Version of the JPS Base Library to use -->
+        <jps.base.version>1.3.0</jps.base.version>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>wikimedia</id>
+            <name>wikimedia</name>
+            <url>https://archiva.wikimedia.org/repository/releases/</url>
+        </repository>
+        <repository>
+            <id>official-maven-repo</id>
+            <url>https://repo.maven.apache.org/maven2/</url>
+        </repository>
+        <repository>
+            <id>osgeo-repo</id>
+            <url>https://repo.osgeo.org/repository/release/</url>
+        </repository>
+        <repository>
+            <id>repo</id>
+            <name>TheWorldAvatar Maven Repository</name>
+            <url>https://maven.pkg.github.com/cambridge-cares/TheWorldAvatar/</url>
+        </repository>
+    </repositories>
 
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
@@ -24,7 +55,6 @@
 
         <pluginManagement>
             <plugins>
-
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.1</version>
@@ -37,7 +67,10 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.12.4</version>
+                    <version>3.0.0-M5</version>
+                    <configuration>
+                        <rerunFailingTestsCount>2</rerunFailingTestsCount>
+                    </configuration>
                 </plugin>
 
                 <plugin>
@@ -47,6 +80,12 @@
                         <warName>${project.artifactId}##${project.version}</warName>
                         <!--suppress UnresolvedMavenProperty -->
                         <outputDirectory>${tomcatPath}/webapps</outputDirectory>
+                        <webResources>
+                            <resource>
+                                <directory>${basedir}/WEB-INF</directory>
+                                <targetPath>WEB-INF</targetPath>
+                            </resource>
+                        </webResources>
                     </configuration>
                 </plugin>
 
@@ -81,7 +120,6 @@
 
             </plugins>
         </pluginManagement>
-
     </build>
     <properties>
         <tomcat.version>8.5.47</tomcat.version>
@@ -90,7 +128,7 @@
         <dependency>
             <groupId>uk.ac.cam.cares.jps</groupId>
             <artifactId>jps-base-lib</artifactId>
-            <version>1.5.0-SNAPSHOT</version>
+            <version>${jps.base.version}</version>
         </dependency>
         <dependency>
             <groupId>org.json</groupId>
@@ -98,9 +136,9 @@
             <version>20201115</version>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.4.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -109,12 +147,11 @@
             <version>3.1.0</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>uk.ac.cam.cares.jps.aws</groupId>
-            <artifactId>JPS_AWS</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
-        </dependency>
+        <!--<dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
+        </dependency>-->
         <!-- https://mvnrepository.com/artifact/com.blazegraph/blazegraph-jar -->
         <dependency>
             <groupId>com.blazegraph</groupId>
@@ -135,7 +172,8 @@
         <dependency>
             <groupId>com.konghq</groupId>
             <artifactId>unirest-java</artifactId>
-            <version>3.11.12</version>
+            <version>3.12.0</version>
+            <classifier>standalone</classifier>
         </dependency>
         <!-- https://mvnrepository.com/artifact/dev.jeka/jeka-core -->
         <dependency>
@@ -144,14 +182,41 @@
             <version>0.9.11.RELEASE</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.tomcat.embed</groupId>
-            <artifactId>tomcat-embed-core</artifactId>
-            <version>${tomcat.version}</version>
+            <groupId>uk.ac.cam.cares.jps.aws</groupId>
+            <artifactId>JPS_AWS</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.tomcat.embed</groupId>
-            <artifactId>tomcat-embed-jasper</artifactId>
-            <version>${tomcat.version}</version>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>3.11.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-inline</artifactId>
+            <version>3.11.2</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://repo.osgeo.org/repository/release/org.geotools/gt-main -->
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-main</artifactId>
+            <version>25.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-epsg-hsql</artifactId>
+            <version>25.1</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.22</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>
+

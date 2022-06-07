@@ -4,6 +4,8 @@ import com.bigdata.rdf.sail.webapp.ConfigParams;
 import com.bigdata.rdf.sail.webapp.NanoSparqlServer;
 import com.bigdata.rdf.sail.webapp.StandaloneNanoSparqlServer;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -11,10 +13,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Server;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 /**
  * Runnable task instantiating Blazegraph's {@link StandaloneNanoSparqlServer} and placing the
@@ -101,11 +106,19 @@ public class BlazegraphServerTask implements Runnable {
   private File setupFiles(String propFileAbsPath) throws URISyntaxException, IOException {
     Files.copy(Paths.get(
             Objects.requireNonNull(getClass().getResource(PROPERTY_FILE_PATH + PROPERTY_FILE)).toURI()),
-        Paths.get(propFileAbsPath));
+        Paths.get(propFileAbsPath), REPLACE_EXISTING);  // Note Files.copy raises errors when the file on the destination exists
+    Properties properties = new Properties();
+    FileInputStream fin = new FileInputStream(propFileAbsPath);  // Save the filestream in a variable and close it properly after usage
+    properties.load(fin);
+    fin.close();
+    properties.setProperty("com.bigdata.journal.AbstractJournal.file", new File(journalPath).getAbsolutePath());
+    FileOutputStream fout = new FileOutputStream(propFileAbsPath);
+    properties.store(fout, null);
+    fout.close();
     File propFile = new File(propFileAbsPath);
-    String data = FileUtils.readFileToString(propFile, String.valueOf(Charset.defaultCharset()));
+    /*String data = FileUtils.readFileToString(propFile, String.valueOf(Charset.defaultCharset()));
     data = data.replace(DEF_JOURNAL_NAME, journalPath);
-    FileUtils.writeStringToFile(propFile, data);
+    FileUtils.writeStringToFile(propFile, data);*/
 
     return propFile;
   }

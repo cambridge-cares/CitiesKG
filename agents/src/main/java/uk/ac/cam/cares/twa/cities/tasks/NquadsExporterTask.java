@@ -191,9 +191,6 @@ public class NquadsExporterTask implements Runnable {
 
     bw.close();
     osw.close();
-    if (!nqFile.delete()) {
-      throw new IOException();
-    }
 
     return targetNqFile;
   }
