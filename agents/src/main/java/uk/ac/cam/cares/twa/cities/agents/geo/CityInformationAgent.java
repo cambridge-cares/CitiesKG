@@ -3,7 +3,6 @@ package uk.ac.cam.cares.twa.cities.agents.geo;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.ResourceBundle;
 import java.util.Set;
 import javax.servlet.annotation.WebServlet;
@@ -14,7 +13,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
-import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 import uk.ac.cam.cares.jps.base.http.Http;
 
@@ -30,7 +28,6 @@ public class CityInformationAgent extends JPSAgent {
   public static final String KEY_IRIS = "iris";
   public static String KEY_CONTEXT = "context";
   public static final String KEY_CITY_OBJECT_INFORMATION = "cityobjectinformation";
-  private static ModelContext context;
 
   @Getter private String route;
   private boolean lazyload;
@@ -52,22 +49,15 @@ public class CityInformationAgent extends JPSAgent {
     for (Object iri : iris) {
       uris.add(iri.toString());
     }
-
-    if(uris.size() > 0) {
-      String[] split = uris.get(0).split("/");
-      String namespace = String.join("/", Arrays.copyOfRange(split, 0, split.length - 2));
-      this.context = new ModelContext(route, namespace + "/");
-    }
-
     JSONArray cityObjectInformation = new JSONArray();
     for (String cityObjectIri : uris) {
       CityObject cityObject = new CityObject();
-      cityObject.setId(URI.create(cityObjectIri));
+      cityObject.setIri(URI.create(cityObjectIri));
       if (lazyload) {
-        cityObject.recursivePullAll(0);
+        cityObject.pullAll(route, 0);
       }
       else {
-        cityObject.recursivePullAll(1);
+        cityObject.pullAll(route, 1);
       }
       ArrayList<CityObject> cityObjectList = new ArrayList<>();
       cityObjectList.add(cityObject);
