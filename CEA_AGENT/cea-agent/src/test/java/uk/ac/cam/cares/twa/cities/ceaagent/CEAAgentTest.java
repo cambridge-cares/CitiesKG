@@ -296,7 +296,7 @@ public class CEAAgentTest extends TestCase {
     }
 
     @Test
-    public void testUpdateInput()  throws NoSuchMethodException, InvocationTargetException, IllegalAccessException{
+    public void testValidateUpdateInput()  throws NoSuchMethodException, InvocationTargetException, IllegalAccessException{
         CEAAgent agent = new CEAAgent();
         Method validateUpdateInput  = agent.getClass().getDeclaredMethod("validateUpdateInput", JSONObject.class);
         assertNotNull(validateUpdateInput);
@@ -355,7 +355,7 @@ public class CEAAgentTest extends TestCase {
     }
 
     @Test
-    public void testActionInput() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void testValidateActionInput() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
         Method validateActionInput = agent.getClass().getDeclaredMethod("validateActionInput", JSONObject.class);
         assertNotNull(validateActionInput);
@@ -381,7 +381,7 @@ public class CEAAgentTest extends TestCase {
     }
 
     @Test
-    public void testQueryInput() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void testValidateQueryInput() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
         Method validateQueryInput = agent.getClass().getDeclaredMethod("validateQueryInput", JSONObject.class);
         assertNotNull(validateQueryInput);
