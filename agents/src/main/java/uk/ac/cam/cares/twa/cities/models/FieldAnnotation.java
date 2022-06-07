@@ -26,12 +26,12 @@ public @interface FieldAnnotation {
 
   /**
    * @return the short graph name of the quad, e.g. "surfacegeometry". If not overridden, this defaults to the declaring
-   * class' <code>ModelAnnotation.nativeGraphName()</code>
+   * class' <code>ModelAnnotation.defaultGraphName()</code>
    */
   String graphName() default "";
 
   /**
-   * @return <code>T</code> if the field is of type {@link ArrayList}; else, the value of this field is ignored.
+   * @return <code>T</code> if the field is of type {@link java.util.ArrayList}; else, the value of this field is ignored.
    */
   Class<?> innerType() default Model.class;
 

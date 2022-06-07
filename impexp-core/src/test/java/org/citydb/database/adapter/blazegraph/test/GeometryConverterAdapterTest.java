@@ -18,18 +18,21 @@ import org.citydb.database.adapter.DatabaseAdapterFactory;
 import org.citydb.database.adapter.blazegraph.BlazegraphConfigBuilder;
 import org.citydb.database.adapter.blazegraph.GeometryConverterAdapter;
 import org.junit.jupiter.api.Test;
-import org.apache.jena.graph.Node;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import org.apache.jena.graph.Node;
 
 public class GeometryConverterAdapterTest {
   private final String TEST_DB_ADAPTER_TYPE = "Blazegraph";
   private final String TEST_URI = "http://localhost/blazegraph/literals/POINT-3-3";
   private final String TEST_GEODATATYPE = "{\"config\":{\"fields\":["
-      + "{\"serviceMapping\":\"X0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
-      + "{\"serviceMapping\":\"Y0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
-      + "{\"serviceMapping\":\"Z0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"}],"
-      + "\"uri\":\"" + TEST_URI + "\"}}";
+          + "{\"serviceMapping\":\"X0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
+          + "{\"serviceMapping\":\"Y0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
+          + "{\"serviceMapping\":\"Z0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"}],"
+          + "\"uri\":\"" + TEST_URI + "\"}}";
   private final String TEST_GEOLITERAL = "1#2#3";
 
   @Test
@@ -38,7 +41,7 @@ public class GeometryConverterAdapterTest {
 
     try {
       AbstractDatabaseAdapter adapter = DatabaseAdapterFactory.getInstance()
-          .createDatabaseAdapter(DatabaseType.fromValue(TEST_DB_ADAPTER_TYPE));
+              .createDatabaseAdapter(DatabaseType.fromValue(TEST_DB_ADAPTER_TYPE));
       converter = (GeometryConverterAdapter) adapter.getGeometryConverter();
       assertNotNull(converter);
     } catch (Exception e) {
@@ -49,7 +52,7 @@ public class GeometryConverterAdapterTest {
   @Test
   public void testNewGeometryConverterAdapterFields() {
     AbstractDatabaseAdapter adapter = DatabaseAdapterFactory.getInstance()
-        .createDatabaseAdapter(DatabaseType.fromValue(TEST_DB_ADAPTER_TYPE));
+            .createDatabaseAdapter(DatabaseType.fromValue(TEST_DB_ADAPTER_TYPE));
     GeometryConverterAdapter converter = (GeometryConverterAdapter) adapter.getGeometryConverter();
 
     assertEquals(1, converter.getClass().getDeclaredFields().length);
@@ -66,7 +69,7 @@ public class GeometryConverterAdapterTest {
   @Test
   public void testNewGeometryConverterAdapterMethods() {
     AbstractDatabaseAdapter adapter = DatabaseAdapterFactory.getInstance()
-        .createDatabaseAdapter(DatabaseType.fromValue(TEST_DB_ADAPTER_TYPE));
+            .createDatabaseAdapter(DatabaseType.fromValue(TEST_DB_ADAPTER_TYPE));
     GeometryConverterAdapter converter = (GeometryConverterAdapter) adapter.getGeometryConverter();
 
     assertEquals(15, converter.getClass().getDeclaredMethods().length);
@@ -75,12 +78,12 @@ public class GeometryConverterAdapterTest {
   @Test
   public void testGetDatabaseObject() {
     AbstractDatabaseAdapter adapter = DatabaseAdapterFactory.getInstance()
-        .createDatabaseAdapter(DatabaseType.fromValue(TEST_DB_ADAPTER_TYPE));
+            .createDatabaseAdapter(DatabaseType.fromValue(TEST_DB_ADAPTER_TYPE));
     GeometryConverterAdapter converter = (GeometryConverterAdapter) adapter.getGeometryConverter();
 
     try {
       Method getDatabaseObject = converter.getClass().getDeclaredMethod("getDatabaseObject",
-          GeometryObject.class, Connection.class);
+              GeometryObject.class, Connection.class);
       GeometryObject geo = GeometryObject.createPoint(new double[]{1.1, 2.2, 3.2}, 3, 1);
       Connection con = DBObjectTestHelper.getConnection();
 
@@ -100,7 +103,7 @@ public class GeometryConverterAdapterTest {
       assertTrue(((HashSet) uriStrings.get(builder)).contains(TEST_URI));
 
     } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException
-        | NoSuchFieldException e) {
+            | NoSuchFieldException e) {
       fail();
     }
   }
@@ -108,11 +111,11 @@ public class GeometryConverterAdapterTest {
   @Test
   public void testMakeBlazegraphGeoDatatype() {
     AbstractDatabaseAdapter adapter = DatabaseAdapterFactory.getInstance()
-        .createDatabaseAdapter(DatabaseType.fromValue(TEST_DB_ADAPTER_TYPE));
+            .createDatabaseAdapter(DatabaseType.fromValue(TEST_DB_ADAPTER_TYPE));
     GeometryConverterAdapter converter = (GeometryConverterAdapter) adapter.getGeometryConverter();
     try {
       Method makeBlazegraphGeoDatatype = converter.getClass().getDeclaredMethod(
-          "makeBlazegraphGeoDatatype", Node.class);
+              "makeBlazegraphGeoDatatype", Node.class);
       makeBlazegraphGeoDatatype.setAccessible(true);
 
       URI datatypeURI = new URI(TEST_URI);
@@ -132,7 +135,7 @@ public class GeometryConverterAdapterTest {
       assertTrue(((HashSet) uriStrings.get(builder)).contains(TEST_URI));
 
     } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException
-        | URISyntaxException | NoSuchFieldException e) {
+            | URISyntaxException | NoSuchFieldException e) {
       fail();
     }
   }
@@ -140,7 +143,7 @@ public class GeometryConverterAdapterTest {
   @Test
   public void testGetNullGeometryType() {
     AbstractDatabaseAdapter adapter = DatabaseAdapterFactory.getInstance()
-        .createDatabaseAdapter(DatabaseType.fromValue(TEST_DB_ADAPTER_TYPE));
+            .createDatabaseAdapter(DatabaseType.fromValue(TEST_DB_ADAPTER_TYPE));
     GeometryConverterAdapter converter = (GeometryConverterAdapter) adapter.getGeometryConverter();
 
     try {
@@ -155,7 +158,7 @@ public class GeometryConverterAdapterTest {
   @Test
   public void testGetNullGeometryTypeName() {
     AbstractDatabaseAdapter adapter = DatabaseAdapterFactory.getInstance()
-        .createDatabaseAdapter(DatabaseType.fromValue(TEST_DB_ADAPTER_TYPE));
+            .createDatabaseAdapter(DatabaseType.fromValue(TEST_DB_ADAPTER_TYPE));
     GeometryConverterAdapter converter = (GeometryConverterAdapter) adapter.getGeometryConverter();
 
     try {

@@ -1,6 +1,5 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,19 +19,15 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.update.UpdateRequest;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
-import org.geotools.referencing.GeodeticCalculator;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.operation.distance3d.Distance3DOp;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.twa.cities.SPARQLUtils;
+import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 import uk.ac.cam.cares.twa.cities.models.geo.EnvelopeType;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
@@ -56,7 +51,7 @@ public class DistanceAgent extends JPSAgent {
   private static final String XML_SCHEMA = "http://www.w3.org/2001/XMLSchema#";
   private static final String OWL_SCHEMA = "http://www.w3.org/2002/07/owl#";
   private static final String DISTANCE_GRAPH = "/distance/";
-  public static final String DEFAULT_SRS = "EPSG:4236";
+  public static final String DEFAULT_SRS = "EPSG:4326";
   public static final String DEFAULT_TARGET_SRS = "EPSG:24500";
 
   // Repeating variables in SPARQL queries
@@ -78,11 +73,13 @@ public class DistanceAgent extends JPSAgent {
   private static final String VALUE_PREDICATE = "hasValue";
   private static final String QST_MARK = "?";
   private static final String COLON = ":";
+  private static final String SLASH = "/";
 
   // Variables fetched from config.properties file.
-  private String ocgmlUri;
+  private static String ocgmlUri;
   private static String unitOntology;
   private static String route;
+  private static ModelContext context;
 
   public DistanceAgent() {
     super();
@@ -100,6 +97,8 @@ public class DistanceAgent extends JPSAgent {
       uris.add(iri.toString());
     }
 
+    if(uris.size() > 0) this.context = new ModelContext(route, getNamespace(uris.get(0)) + "/");
+
     ArrayList<Double> distances = new ArrayList<>();
 
     for (int firstURI = 0; firstURI < uris.size(); firstURI++) {
@@ -114,7 +113,7 @@ public class DistanceAgent extends JPSAgent {
           String firstSrs = getObjectSrs(firstObjectUri, true);
           String secondSrs = getObjectSrs(secondObjectUri, true);
           distance =
-              computeDistance(getEnvelope(firstObjectUri, firstSrs), getEnvelope(secondObjectUri, secondSrs));
+                  computeDistance(getEnvelope(firstObjectUri, firstSrs), getEnvelope(secondObjectUri, secondSrs));
           setDistance(firstObjectUri, secondObjectUri, distance);
         }
         distances.add(distance);
@@ -209,8 +208,7 @@ public class DistanceAgent extends JPSAgent {
     double distance = -1.0;
 
     Query q = getDistanceQuery(firstUriString, secondUriString);
-    String queryResultString = query(route, q.toString());
-    JSONArray queryResult = SPARQLUtils.unpackQueryResponse(queryResultString);
+    JSONArray queryResult = this.context.query(q.toString());
 
     if (!queryResult.isEmpty()) {
       distance = Double.parseDouble(queryResult.getJSONObject(0).get(DISTANCE_OBJECT).toString());
@@ -234,7 +232,7 @@ public class DistanceAgent extends JPSAgent {
             .addPrefix(OCGML_PREFIX, ocgmlUri)
             .addVar(QST_MARK + SRS_NAME_OBJECT)
             .addWhere(QST_MARK + "s" , predicate, QST_MARK + SRS_NAME_OBJECT);
-    sb.setVar(Var.alloc("s"), NodeFactory.createURI(getNamespace(uriString) + "/sparql"));
+    sb.setVar(Var.alloc("s"), NodeFactory.createURI(getNamespace(uriString) + "/"));
 
     return sb.build();
   }
@@ -251,8 +249,7 @@ public class DistanceAgent extends JPSAgent {
     else { srs = DEFAULT_TARGET_SRS; }
 
     Query q = getObjectSRSQuery(uriString, source);
-    String queryResultString = query(route, q.toString());
-    JSONArray queryResult = SPARQLUtils.unpackQueryResponse(queryResultString);
+    JSONArray queryResult = this.context.query(q.toString());
 
     if (!queryResult.isEmpty()) {
       srs = queryResult.getJSONObject(0).get(SRS_NAME_OBJECT).toString();
@@ -268,9 +265,7 @@ public class DistanceAgent extends JPSAgent {
    */
   public EnvelopeType getEnvelope(String uriString, String coordinateSystem) {
     GeometryType.setSourceCrsName(coordinateSystem);
-    CityObject cityObject = new CityObject();
-    cityObject.setIri(URI.create(uriString));
-    cityObject.pullAll(route, 0);
+    CityObject cityObject = context.loadAll(CityObject.class, uriString);
     return cityObject.getEnvelopeType();
   }
 
@@ -288,8 +283,8 @@ public class DistanceAgent extends JPSAgent {
     CoordinateReferenceSystem crs2 = envelope2.getSourceCrs();
     CoordinateReferenceSystem targetCrs = envelope1.getMetricCrs();
     try {
-      Coordinate metricCentroid1 = JTS.transform(centroid1, null, CRS.findMathTransform(crs1, targetCrs));
-      Coordinate metricCentroid2 = JTS.transform(centroid2, null, CRS.findMathTransform(crs2, targetCrs));
+      Coordinate metricCentroid1 = JTS.transform(centroid1, null, CRS.findMathTransform(crs1, targetCrs, true));
+      Coordinate metricCentroid2 = JTS.transform(centroid2, null, CRS.findMathTransform(crs2, targetCrs, true));
       return metricCentroid1.distance(metricCentroid2);
     } catch (FactoryException | TransformException e) {
       throw new JPSRuntimeException(e);
@@ -339,6 +334,6 @@ public class DistanceAgent extends JPSAgent {
    */
   private void setDistance(String firstUri, String secondUri, double distance) {
     UpdateRequest ur = getSetDistanceQuery(firstUri, secondUri, distance);
-    update(route, ur.toString());
+    this.context.update(ur.toString());
   }
 }

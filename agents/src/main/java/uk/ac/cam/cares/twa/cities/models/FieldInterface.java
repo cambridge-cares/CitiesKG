@@ -4,10 +4,10 @@ import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
 
 import java.io.InvalidClassException;
 import java.lang.reflect.*;
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.List;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ public class FieldInterface {
    */
   @FunctionalInterface
   interface Putter {
-    void consume(Object object, Object value) throws Exception;
+    void consume(Model model, Object value) throws Exception;
   }
 
   /**
@@ -38,7 +38,7 @@ public class FieldInterface {
    */
   @FunctionalInterface
   interface Parser {
-    Object parse(String value, String datatype, String kgId, int recursiveInstantiationDepth) throws Exception;
+    Object parse(String value, String datatype, ModelContext context) throws Exception;
   }
 
   /**
@@ -46,11 +46,14 @@ public class FieldInterface {
    */
   @FunctionalInterface
   interface NodeGetter {
-    Node get(Object object) throws Exception;
+    Node get(Object value) throws Exception;
   }
+
+  private static final String INNER_TYPE_OF_ARRAYLIST_NOT_SPECIFIED_ERROR_TEXT = "Inner type of ArrayList field not specified.";
 
   // Convenience metadata
   public final boolean isList;
+  public final boolean isModel;
   public final int index;
 
   // Direct access to the field itself
@@ -77,48 +80,43 @@ public class FieldInterface {
     Class<?> outerType = field.getType();
     isList = List.class.isAssignableFrom(outerType);
     Class<?> innerType = isList ? field.getAnnotation(FieldAnnotation.class).innerType() : outerType;
+    if(innerType == Model.class) throw new InvalidClassException(INNER_TYPE_OF_ARRAYLIST_NOT_SPECIFIED_ERROR_TEXT);
     // Get the lombok accessors/modifiers --- we can't access private/protected fields. :(
     String fieldName = field.getName();
     fieldName = fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
     getter = parentType.getMethod("get" + fieldName);
     setter = parentType.getMethod("set" + fieldName, outerType);
     // Generate parser
-    if (Model.class.isAssignableFrom(innerType)) {
-      Constructor<?> constructor = innerType.getConstructor();
-      parser = (String value, String datatype, String kgId, int recursiveInstantiationDepth) -> {
-        Model model = (Model) constructor.newInstance();
-        if (recursiveInstantiationDepth > 0) {
-          model.setIri(URI.create(value));
-          model.pullAll(kgId, recursiveInstantiationDepth - 1);
-        } else {
-          model.setIri(URI.create(value));
-        }
-        return model;
-      };
+    isModel = Model.class.isAssignableFrom(innerType);
+    if (isModel) {
+      parser = (String value, String datatype, ModelContext context) -> context.getModel(innerType.asSubclass(Model.class), value);
       nodeGetter = (Object value) -> {
-        URI iri = ((Model) value).getIri();
-        return iri == null ? NodeFactory.createBlankNode() : NodeFactory.createURI(iri.toString());
+        String iri = ((Model) value).iri;
+        return iri == null ? NodeFactory.createBlankNode() : NodeFactory.createURI(iri);
       };
-      minimiser = (Object value) -> (((Model) value).getIri() != null) ? ((Model) value).getIri().toString() : null;
+      minimiser = (Object object) -> ((Model) object).iri;
     } else if (innerType == URI.class) {
-      parser = (String value, String datatype, String kgId, int rid) -> URI.create(value);
+      parser = (String value, String datatype, ModelContext context) -> URI.create(value);
       nodeGetter = (Object value) -> NodeFactory.createURI(value.toString());
       minimiser = Object::toString;
     } else if (DatatypeModel.class.isAssignableFrom(innerType)) {
       Constructor<?> constructor = innerType.getConstructor(String.class, String.class);
-      parser = (String value, String datatype, String kgId, int rid) -> constructor.newInstance(value, datatype);
+      parser = (String value, String datatype, ModelContext context) -> constructor.newInstance(value, datatype);
       nodeGetter = (Object value) -> ((DatatypeModel) value).getNode();
       minimiser = (Object value) -> ((DatatypeModel) value).getNode().toString();
     } else {
       minimiser = (Object value) -> value;
       if (innerType == Integer.class) {
-        parser = (String value, String datatype, String kgId, int rid) -> Integer.valueOf(value);
-        nodeGetter = (Object value) -> NodeFactory.createLiteral(String.valueOf((int) value), XSDDatatype.XSDinteger);
+        parser = (String value, String datatype, ModelContext context) -> Integer.valueOf(value);
+        nodeGetter = (Object value) -> NodeFactory.createLiteral(String.valueOf((int) value), XSDDatatype.XSDint);
+      } else if (innerType == BigInteger.class) {
+        parser = (String value, String datatype, ModelContext context) -> new BigInteger(value);
+        nodeGetter = (Object value) -> NodeFactory.createLiteral(value.toString(), XSDDatatype.XSDinteger);
       } else if (innerType == Double.class) {
-        parser = (String value, String datatype, String kgId, int rid) -> Double.valueOf(value);
+        parser = (String value, String datatype, ModelContext context) -> Double.valueOf(value);
         nodeGetter = (Object value) -> NodeFactory.createLiteral(String.valueOf((double) value), XSDDatatype.XSDdouble);
       } else if (innerType == String.class) {
-        parser = (String value, String datatype, String kgId, int rid) -> value;
+        parser = (String value, String datatype, ModelContext context) -> value;
         nodeGetter = (Object value) -> NodeFactory.createLiteral((String) value, XSDDatatype.XSDstring);
       } else {
         throw new InvalidClassException(innerType.toString());
@@ -128,7 +126,7 @@ public class FieldInterface {
     if (isList) {
       // Due to type erasure, ArrayLists accept Objects, not innerTypes.
       Method adder = outerType.getMethod("add", Object.class);
-      putter = (Object object, Object value) -> adder.invoke(getter.invoke(object), value);
+      putter = (Model model, Object value) -> adder.invoke(getter.invoke(model), value);
       // Override previously assigned default constructor, which was for innerType
       listConstructor = outerType.getConstructor();
     } else {
@@ -140,17 +138,13 @@ public class FieldInterface {
   /**
    * Parses and puts a datum represented by a value string and a datatype string into this field of a {@link Model}.
    * For a scalar field, this sets the value. For a vector field (list), this adds the parsed value to the array.
-   * @param object                      the object to put the value into.
-   * @param valueString                 the string representation of the value to be put.
-   * @param datatypeString              the string representation of the RDF datatype of the value to be put.
-   * @param kgId                        resource ID of graph to query additional data from; only used for {@link Model}
-   *                                    when <code>recursiveInstantiationDepth</code> > 0.
-   * @param recursiveInstantiationDepth number of further nested levels of {@link Model} fields to recursively
-   *                                    query and instantiate.
+   * @param model          the model to put the value into.
+   * @param valueString    the string representation of the value to be put.
+   * @param datatypeString the string representation of the RDF datatype of the value to be put.
    */
-  public void put(Object object, String valueString, String datatypeString, String kgId, int recursiveInstantiationDepth) {
+  public void put(Model model, String valueString, String datatypeString) {
     try {
-      putter.consume(object, parser.parse(valueString, datatypeString, kgId, recursiveInstantiationDepth));
+      putter.consume(model, valueString == null ? null : parser.parse(valueString, datatypeString, model.context));
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -159,11 +153,11 @@ public class FieldInterface {
   /**
    * Overwrites the existing value of a field with a default value. For a scalar field, this is <code>null</code>. For
    * a vector field, this is an empty {@link ArrayList}.
-   * @param object the object for which to clear this field.
+   * @param model the model for which to clear this field.
    */
-  public void clear(Object object) {
+  public void clear(Model model) {
     try {
-      setter.invoke(object, isList ? listConstructor.newInstance() : null);
+      setter.invoke(model, isList ? listConstructor.newInstance() : null);
     } catch (Exception e) {
       throw new JPSRuntimeException(e);
     }
@@ -171,14 +165,15 @@ public class FieldInterface {
 
   /**
    * Gets a minimised representation of the field value that can be used with <code>equals</code> to check equality on a
-   * database representation level (i.e. they return the same on <code>getNode</code>), which is value equality but with
-   * caveats: only IRI is considered for models, and order is ignored for vector fields.
-   * @param object the object from which to read and minimise the field value.
+   * database representation level (i.e. for all <code>getNode(a).equals(getNode(b))</code>,
+   * <code>getMinimised(a).equals(getMinimised(b))</code>), which is value equality but with caveats: only IRI is
+   * considered for models, and order is ignored for vector fields.
+   * @param model the model from which to read and minimise the field value.
    * @return the minimised representation.
    */
-  public Object getMinimised(Object object) {
+  public Object getMinimised(Model model) {
     try {
-      Object value = getter.invoke(object);
+      Object value = getter.invoke(model);
       if (isList) {
         // Use a list instead of an array since the List<?>.equals does element-by-element comparison.
         return ((List<?>) value).stream().map(
@@ -193,46 +188,40 @@ public class FieldInterface {
   }
 
   /**
-   * Gets a Jena {@link Node} representing the current field value, for use in UpdateBuilder. Scalar fields only.
-   * @param object the object from which to read the value.
-   * @return a {@link Node} representing the value.
-   */
-  public Node getNode(Object object) {
-    try {
-      Object value = getter.invoke(object);
-      return value == null ? NodeFactory.createBlankNode() : nodeGetter.get(value);
-    } catch (Exception e) {
-      throw new JPSRuntimeException(e);
-    }
-  }
-
-  /**
-   * Gets a {@link Node}<code>[]</code> representing the current field value, for use in UpdateBuilder. Vector fields only.
-   * @param object the object from which to read the values.
+   * Gets a {@link Node}<code>[]</code> representing the current field value, for use in UpdateBuilder. For scalar
+   * fields, the array is of length 1.
+   * @param model the model from which to read the values.
    * @return an array of {@link Node}s representing the values.
    */
-  public Node[] getNodes(Object object) {
+  public Node[] getNodes(Model model) {
     try {
-      List<?> list = (List<?>) getter.invoke(object);
-      Node[] literals = new Node[list.size()];
-      for (int i = 0; i < literals.length; i++)
-        literals[i] = list.get(i) == null ? NodeFactory.createBlankNode() : nodeGetter.get(list.get(i));
-      return literals;
+      if (isList) {
+        List<?> list = (List<?>) getter.invoke(model);
+        Node[] literals = new Node[list.size()];
+        for (int i = 0; i < literals.length; i++)
+          literals[i] = list.get(i) == null ? NodeFactory.createBlankNode() : nodeGetter.get(list.get(i));
+        return literals;
+      } else {
+        Object value = getter.invoke(model);
+        return new Node[]{value == null ? NodeFactory.createBlankNode() : nodeGetter.get(value)};
+      }
     } catch (Exception e) {
       throw new JPSRuntimeException(e);
     }
   }
 
   /**
-   * Determines if two objects are equal in this field on a database representation (i.e. {@link Node}) level. This
+   * Determines if two model are equal in this field on a database representation (i.e. {@link Node}) level. This
    * is value equality with the caveats: only IRI is considered for models, and order is ignored for vector fields.
    * Internally uses <code>getMinimised</code>.
-   * @param o1 the first object to compare.
-   * @param o2 the second object to compare.
+   * @param m1 the first model to compare.
+   * @param m2 the second model to compare.
    * @return whether they are equal on a database representation level.
    */
-  public boolean equals(Object o1, Object o2) {
-    return Objects.equals(getMinimised(o1), getMinimised(o2));
+  public boolean equals(Model m1, Model m2) {
+    Object min1 = getMinimised(m1);
+    Object min2 = getMinimised(m2);
+    return Objects.equals(min1, min2);
   }
 
 }

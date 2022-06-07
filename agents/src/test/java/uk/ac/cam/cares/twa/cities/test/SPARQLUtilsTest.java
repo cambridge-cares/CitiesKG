@@ -1,13 +1,17 @@
 package uk.ac.cam.cares.twa.cities.test;
 
-import junit.framework.TestCase;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 
-public class SPARQLUtilsTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+public class SPARQLUtilsTest {
+
+  @Test
   public void testAddPrefix() {
     SelectBuilder builder = new SelectBuilder();
     SPARQLUtils.addPrefix("ocgml:test", builder);
@@ -18,6 +22,7 @@ public class SPARQLUtilsTest extends TestCase {
     assertTrue(builtString.contains("PREFIX  ocgml"));
   }
 
+  @Test
   public void testExpandQualifiedName() {
     assertEquals("http://dbpedia.org/ontology/testname", SPARQLUtils.expandQualifiedName("dbpediao:testname"));
     assertEquals("http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#id", SPARQLUtils.expandQualifiedName("ocgml:id"));
@@ -26,11 +31,13 @@ public class SPARQLUtilsTest extends TestCase {
     assertEquals("http://dbpedia.org/ontology/testname", SPARQLUtils.expandQualifiedName("http://dbpedia.org/ontology/testname"));
   }
 
+  @Test
   public void testGetPrefixUrl() {
     assertEquals("http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#", SPARQLUtils.getPrefixUrl("ocgml"));
     assertEquals("http://dbpedia.org/ontology/", SPARQLUtils.getPrefixUrl("dbpediao"));
   }
 
+  @Test
   public void testUnpackQueryResponse () {
     JSONArray unpacked = new JSONArray();
     JSONObject row = new JSONObject();

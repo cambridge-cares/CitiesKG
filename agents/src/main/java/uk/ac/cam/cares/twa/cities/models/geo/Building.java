@@ -1,10 +1,10 @@
 package uk.ac.cam.cares.twa.cities.models.geo;
 
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.ArrayList;
 
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import uk.ac.cam.cares.twa.cities.models.Model;
 import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,8 +15,8 @@ import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
  * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
  * @version $Id$
  */
-@ModelAnnotation(nativeGraphName = SchemaManagerAdapter.BUILDING_GRAPH)
-public class Building extends Model {
+@ModelAnnotation(defaultGraphName = SchemaManagerAdapter.BUILDING_GRAPH + "/")
+public class Building extends OntoCityGMLModel {
 
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_FUNCTION) protected String function;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ROOF_TYPE) protected String roofType;
@@ -25,8 +25,8 @@ public class Building extends Model {
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CLASS) protected String classID; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_CLASS_CODESPACE) protected String classCodespace; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_FUNCTION_CODESPACE) protected String functionCodespace; // check-type
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_FOOTPRINT_ID) protected String lod0FootprintId; // check-type
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ROOFPRINT_ID) protected String lod0RoofprintId; // check-type
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_FOOTPRINT_ID) protected SurfaceGeometry lod0FootprintId; // check-type
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ROOFPRINT_ID) protected SurfaceGeometry lod0RoofprintId; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_LOD1_MULTI_SURFACE_ID) protected SurfaceGeometry lod1MultiSurfaceId; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_LOD2_MULTI_SURFACE_ID) protected SurfaceGeometry lod2MultiSurfaceId; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_LOD3_MULTI_SURFACE_ID) protected SurfaceGeometry lod3MultiSurfaceId; // check-type
@@ -44,7 +44,7 @@ public class Building extends Model {
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_LOD4_MULTI_CURVE) protected URI lod4MultiCurve; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_MEASURED_HEIGHT) protected Double measuredHeight;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_MEASURED_HEIGHT_UNIT) protected String measuredHeightUnit; // check-type
-  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID) protected Integer objectClassId = 26;
+  @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_OBJECT_CLASS_ID) protected BigInteger objectClassId = OBJECT_CLASS_ID;
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_ROOF_TYPE_CODESPACE) protected String roofTypeCodespace; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_ABOVE_GROUND) protected String storeyHeightsAboveGround; // check-type
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_STOREY_HEIGHTS_BELLOW_GROUND) protected String storeyHeightsBelowGround; // check-type
@@ -59,9 +59,11 @@ public class Building extends Model {
 
   @Getter @Setter @FieldAnnotation(
       value = SchemaManagerAdapter.ONTO_BUILDING_ID,
-      graphName = SchemaManagerAdapter.THEMATIC_SURFACE_GRAPH,
+      graphName = SchemaManagerAdapter.THEMATIC_SURFACE_GRAPH + "/",
       innerType = ThematicSurface.class,
       backward = true)
   private ArrayList<ThematicSurface> thematicSurfaces;
+
+  public static final BigInteger OBJECT_CLASS_ID = BigInteger.valueOf(26);
 
 }

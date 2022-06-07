@@ -14,20 +14,20 @@ import java.util.Objects;
 public class FieldKey implements Comparable<FieldKey> {
   // The predicate is expanded to a full IRI but the graph is kept as a fragment because the full graph iri is namespace
   // -dependent and will not be the same across different applications, while the full predicate iri does not change.
+  // Note that the graphName is "" for triple fields.
   public final String predicate;
   public final String graphName;
   public final boolean backward;
 
   /**
-   * Constructs a {@link FieldKey} from a graph name and a predicate IRI
-   * @param graph     either a graph IRI or the short name of a graph.
+   * Constructs a {@link FieldKey} from a graph name and a predicate IRI.
+   * @param graphName the short name of a graph, i.e. the part after the graph namespace. {@code ""} for triple use.
    * @param predicate full predicate IRI.
    * @param backward  whether the declaring class is the object of the quad.
    */
-  public FieldKey(String graph, String predicate, boolean backward) {
+  public FieldKey(String graphName, String predicate, boolean backward) {
     this.predicate = predicate;
-    String[] splitGraph = graph.split("/");
-    this.graphName = splitGraph[splitGraph.length - 1];
+    this.graphName = graphName;
     this.backward = backward;
   }
 
@@ -39,7 +39,8 @@ public class FieldKey implements Comparable<FieldKey> {
    */
   public FieldKey(FieldAnnotation fieldAnnotation, ModelAnnotation modelAnnotation) {
     predicate = SPARQLUtils.expandQualifiedName(fieldAnnotation.value());
-    graphName = fieldAnnotation.graphName().equals("") ? modelAnnotation.nativeGraphName() : fieldAnnotation.graphName();
+    graphName = !fieldAnnotation.graphName().isEmpty() ? fieldAnnotation.graphName() :
+        (modelAnnotation == null ? "" : modelAnnotation.defaultGraphName());
     backward = fieldAnnotation.backward();
   }
 

@@ -53,4 +53,12 @@ public class EnvelopeType extends GeometryType {
     });
   }
 
+  public Coordinate getLowerBound() {
+    return polygon.getExteriorRing().getCoordinateN(0);
+  }
+
+  public Coordinate getUpperBound() {
+    return polygon.getExteriorRing().getCoordinateN(2);
+  }
+
 }

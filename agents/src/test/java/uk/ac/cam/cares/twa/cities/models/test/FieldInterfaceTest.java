@@ -1,36 +1,44 @@
 package uk.ac.cam.cares.twa.cities.models.test;
 
-import junit.framework.TestCase;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import org.mockito.Mock;
-import uk.ac.cam.cares.jps.base.interfaces.StoreClientInterface;
+import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.twa.cities.models.FieldInterface;
+import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
-import uk.ac.cam.cares.twa.cities.models.test.TestModel;
 
 import java.io.InvalidClassException;
+import java.math.BigInteger;
 import java.net.URI;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class FieldInterfaceTest extends TestCase {
+public class FieldInterfaceTest{
 
-  TestModel model1 = new TestModel();
-  TestModel model2 = new TestModel();
+  TestModel model1 = new ModelContext("", "").createNewModel(TestModel.class, "http://m1");
+  TestModel model2 = new ModelContext("", "").createNewModel(TestModel.class, "http://m2");
 
+  @Test
   public void testIntegerInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
     this.testScalarInterface("intProp", TestModel::setIntProp, TestModel::getIntProp,
-        "1", "http://www.w3.org/2001/XMLSchema#integer", 1, 2,
-        NodeFactory.createLiteral(String.valueOf(2), XSDDatatype.XSDinteger), 2);
+        "1", "http://www.w3.org/2001/XMLSchema#int", 1, 2,
+        NodeFactory.createLiteral(String.valueOf(2), XSDDatatype.XSDint), 2);
   }
 
+  @Test
+  public void testBigIntegerInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
+    // Data to write
+    this.testScalarInterface("bigIntProp", TestModel::setBigIntProp, TestModel::getBigIntProp,
+        "1", "http://www.w3.org/2001/XMLSchema#integer", BigInteger.valueOf(1), BigInteger.valueOf(2),
+        NodeFactory.createLiteral(String.valueOf(2), XSDDatatype.XSDinteger), BigInteger.valueOf(2));
+  }
+
+  @Test
   public void testDoubleInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
     this.testScalarInterface("doubleProp", TestModel::setDoubleProp, TestModel::getDoubleProp,
@@ -38,6 +46,7 @@ public class FieldInterfaceTest extends TestCase {
         NodeFactory.createLiteral("5.1167", XSDDatatype.XSDdouble), 5.1167);
   }
 
+  @Test
   public void testStringInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
     this.testScalarInterface("stringProp", TestModel::setStringProp, TestModel::getStringProp,
@@ -45,6 +54,7 @@ public class FieldInterfaceTest extends TestCase {
         NodeFactory.createLiteral("test2", XSDDatatype.XSDstring), "test2");
   }
 
+  @Test
   public void testUriInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
     this.testScalarInterface("uriProp", TestModel::setUriProp, TestModel::getUriProp,
@@ -53,17 +63,17 @@ public class FieldInterfaceTest extends TestCase {
         NodeFactory.createURI("http://example.com/uri2"), "http://example.com/uri2");
   }
 
+  @Test
   public void testModelInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
-    TestModel dataModel = new TestModel();
-    dataModel.setIri(URI.create("http://example.com/testmodel"));
-    TestModel secondModel = new TestModel();
-    secondModel.setIri(URI.create("http://example.com/model2"));
+    TestModel dataModel = new ModelContext("", "").createNewModel(TestModel.class, "http://example.com/testmodel");
+    TestModel secondModel = new ModelContext("", "").createNewModel(TestModel.class, "http://example.com/model2");
     this.testScalarInterface("modelProp", TestModel::setModelProp, TestModel::getModelProp,
         "http://example.com/testmodel", "", dataModel, secondModel,
         NodeFactory.createURI("http://example.com/model2"), "http://example.com/model2");
   }
 
+  @Test
   public void testDatatypeModelInterface() throws InvalidClassException, NoSuchFieldException, NoSuchMethodException {
     // Data to write
     GeometryType dataGeometryType = new GeometryType(
@@ -79,13 +89,14 @@ public class FieldInterfaceTest extends TestCase {
         "\"1.0#1.0#3.0#1.0#2.0#3.0#2.0#2.0#3.0#2.0#1.0#3.0#1.0#1.0#1.0#1.0#1.0#3.0\"^^http://localhost/blazegraph/literals/POLYGON-3-18");
   }
 
+  @Test
   private <T> void testScalarInterface(
       String fieldName, BiConsumer<TestModel, T> directSetter, Function<TestModel, T> directGetter,
       String valueString, String datatypeString, T dataValue, T secondValue, Node secondValueNode, Object secondValueMinimised)
       throws NoSuchFieldException, InvalidClassException, NoSuchMethodException {
     FieldInterface field = new FieldInterface(TestModel.class.getDeclaredField(fieldName), 0);
     // Test putting
-    field.put(model1, valueString, datatypeString, null, 0);
+    field.put(model1, valueString, datatypeString);
     assertEquals(dataValue, directGetter.apply(model1));
     // Test equality checks
     assertFalse(field.equals(model1, model2)); // a != null
@@ -102,19 +113,20 @@ public class FieldInterfaceTest extends TestCase {
     assertNull(directGetter.apply(model2));
     // Test getNode
     directSetter.accept(model2, secondValue);
-    assertEquals(secondValueNode, field.getNode(model2));
-    assertTrue(field.getNode(model1).isBlank());
+    assertEquals(secondValueNode, field.getNodes(model2)[0]);
+    assertTrue(field.getNodes(model1)[0].isBlank());
     // Test minimisation
     assertEquals(secondValueMinimised, field.getMinimised(model2));
     assertNull(field.getMinimised(model1));
   }
 
+  @Test
   public void testVectorInterface() throws NoSuchFieldException, InvalidClassException, NoSuchMethodException {
     FieldInterface field = new FieldInterface(TestModel.class.getDeclaredField("forwardVector"), 0);
     // Test putting
     assertEquals(0, model1.getForwardVector().size());
     assertTrue(field.equals(model1, model2));
-    field.put(model1, "1.32", "http://www.w3.org/2001/XMLSchema#double", null, 0);
+    field.put(model1, "1.32", "http://www.w3.org/2001/XMLSchema#double");
     assertEquals(1, model1.getForwardVector().size());
     assertEquals(1.32, model1.getForwardVector().get(0));
     assertFalse(field.equals(model1, model2));

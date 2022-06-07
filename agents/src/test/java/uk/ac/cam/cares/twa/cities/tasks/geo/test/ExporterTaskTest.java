@@ -1,4 +1,4 @@
-package uk.ac.cam.cares.twa.cities.tasks.test;
+package uk.ac.cam.cares.twa.cities.tasks.geo.test;
 
 import org.citydb.ImpExp;
 import org.json.JSONObject;
@@ -9,7 +9,7 @@ import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
-import uk.ac.cam.cares.twa.cities.tasks.ExporterTask;
+import uk.ac.cam.cares.twa.cities.tasks.geo.ExporterTask;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
