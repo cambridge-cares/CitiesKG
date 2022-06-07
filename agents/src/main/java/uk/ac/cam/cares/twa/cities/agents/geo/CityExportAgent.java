@@ -22,6 +22,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
 import uk.ac.cam.cares.twa.cities.tasks.KMLParserTask;
 import uk.ac.cam.cares.twa.cities.tasks.KMLSorterTask;
 import uk.ac.cam.cares.twa.cities.tasks.KMLTilingTask;
@@ -84,8 +85,8 @@ public class CityExportAgent extends JPSAgent {
     private String tmpDirsLocation = System.getProperty("java.io.tmpdir");    //System.getProperty("java.io.tmpdir");   //"C:/tmp";  // can not have empty space on the path
     // Default task parameters
     //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
-    private final int NUM_IMPORTER_THREADS = 1;
-    private final ThreadPoolExecutor exporterExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_IMPORTER_THREADS);
+    private final int NUM_EXPORTER_THREADS = 1;
+    private final ThreadPoolExecutor exporterExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_EXPORTER_THREADS);
 
 
     @Override
@@ -127,14 +128,20 @@ public class CityExportAgent extends JPSAgent {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-                for (Path gmlidFile : fileList) {
+                ImporterTask currentTask = null;
+                for (int i = 0 ; i < fileList.size(); ++i){
+                    //Path gmlidFile : fileList) {
                     // Retrieve a list of gmlids from a file, and execute the export process
-                    String[] gmlidArray = getGmlidFromFile(gmlidFile);
-                    String outputFileName = getOutputName(gmlidFile);
+                    String[] gmlidArray = getGmlidFromFile(fileList.get(i));
+                    String outputFileName = getOutputName(fileList.get(i));
                     Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outputFileName);
-                    result.put("outputPath", exportKml(gmlidArray, taskParams));
+                    currentTask = exportKml(gmlidArray, taskParams);
+                    //result.put("outputPath", exportKml(gmlidArray, taskParams));  // this can not indicate that the process is done
                 }
+
+                // @todo: how to capture the signal that the export process is done
+
+
             }else{
                 ArrayList<String> buildingIds = new ArrayList<>();
                 for (Object id : gmlidParams) {
@@ -144,7 +151,7 @@ public class CityExportAgent extends JPSAgent {
                 gmlidsArray = buildingIds.toArray(gmlidsArray);
                 String outSingleFileName = getOutputName(null);
                 Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outSingleFileName);
-                result.put("outputPath", exportKml(gmlidsArray, taskParams));
+                //result.put("outputPath", exportKml(gmlidsArray, taskParams));
             }
 
         }
@@ -296,11 +303,12 @@ public class CityExportAgent extends JPSAgent {
         return serverInfo;
     }
 
-    private String exportKml (String[] gmlIds, Params taskParams){
-        //String actualPath = taskParams.outputPath.replace(".kml", "_" + displayOptions[displayIndex].toLowerCase() + outFileExtension);
+    private ExporterTask exportKml (String[] gmlIds, Params taskParams){
+
         ExporterTask task = new ExporterTask(gmlIds, taskParams.outputPath, serverInfo, taskParams.displayMode);
         exporterExecutor.execute(task);
-        return taskParams.outputPath;
+
+        return task;
     }
 
     /**
@@ -312,7 +320,7 @@ public class CityExportAgent extends JPSAgent {
         //String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder_1\\charlottenberg_extruded_blaze.kml";
         //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
         String CRSinDegree = "4326";  // global WGS 84
-        String CRSinMeter = "32648";//"32648"; "25833"
+        String CRSinMeter = "25833";//"32648"; "25833"
         int initTileSize = 250;
         long start = System.currentTimeMillis();
 

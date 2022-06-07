@@ -51,6 +51,10 @@ public class ExporterTask implements Runnable {
         stop = true;
     }
 
+    public boolean isRunning() {
+        return !stop;
+    }
+
     @Override
     public void run() {
         File cfgfile;
