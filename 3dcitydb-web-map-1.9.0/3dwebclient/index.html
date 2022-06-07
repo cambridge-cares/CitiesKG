@@ -221,7 +221,7 @@
             }
 			
 			      #programmeFinder_toolbox {
-                width: 1050px;
+                width: 1100px;
                 height: 60px;
                 display: none;
                 background: rgba(42, 42, 42, 0.5);
@@ -230,39 +230,44 @@
                 font-family: "Arial";
                 font-size: 9pt;
             }
+
             .use_element, .programme_element{
                 display:inline-block;
                 padding-top: 2px;
-                height:40px;
-                width: 200px;
+                height:30px;
+                width: 220px;
                 vertical-align: top;
             }
+
             .checkbox{
                 display:inline-block;
-                height:40px;
+                height:30px;
                 width: 20px;
                 vertical-align: top;
             }
+
             .text{
                 display:inline-block;
                 height:30px;
-                width: 100px;
+                width: 200px;
                 vertical-align: top;
             }
+
             .text_input{
                 display:inline-block;
                 height:30px;
-                width: 60px;
+                width: 50px;
                 vertical-align: top;
             }
 
             .finder_dynamic_box {
                 display: none;
-                width: 290px;
+                width: 260px;
                 height: 200px;
-                margin: 3px;
-                padding: 2px 3px;
+                margin: 2px;
+                padding: 2px 2px;
                 position: relative;
+                margin-top: 10px;
                 border: 2px #505050 solid;
                 background: rgba(42, 42, 42, 0.6);
                 border-radius: 4px;
@@ -271,6 +276,15 @@
                 font-size: 9pt;
                 overflow: auto;
                 vertical-align: top;
+            }
+
+            .arrow {
+                float: right;
+                border: solid white;
+                border-width: 0 2px 2px 0;
+                display: inline-block;
+                padding: 3px;
+                transform: rotate(45deg);
             }
 
         </style>
@@ -286,7 +300,7 @@
 		<div id="ProgrammaticPlotFinder">
             <div onclick="showProgrammeFinder()">
                 <select class="cesium-button">
-                    <option>Programmatic Plot Finder</option>
+                    <option hidden="hidden">Programmatic Plot Finder</option>
                 </select>
                 <div class="citydb_overSelect"></div>
             </div>
@@ -301,7 +315,7 @@
 						</tr>
 						<tr style="vertical-align:top">
 							<td>
-								<select id="developmentType">
+								<select id="developmentType" class="cesium-button">
                   <option value="Choose Development Type" selected="selected">Choose Development Type</option>
 									<option value="NewDevelopment">New Development</option>
 								</select>
@@ -309,35 +323,29 @@
               <td>
                   <div>
                       <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
-                          <select style="width:300px" class="cesium-button">
-                              <option>Choose Uses</option>
-                          </select>
-                          <div class="citydb_overSelect"></div>
+                          <div style="width:240px" class="cesium-button">Choose Use<div class="arrow down"></div></div>
                       </div>
-                      <div id="choose_uses" class="finder_dynamic_box"></div>
+                      <div id="choose_uses" class="finder_dynamic_box" ></div>
                   </div>
               </td>
               <td>
                   <div>
                       <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
-                        <select style="width: 300px" class="cesium-button">
-                            <option>Choose Programme</option>
-                        </select>
+                          <div style="width:240px" class="cesium-button">Choose Programme<div class="arrow down"></div></div>
                       </div>
                       <div id="choose_programmes" class="finder_dynamic_box"></div>
                   </div>
               </td>
               <td>
                   <div>
-                      <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignCheckboxValues()">
-                          <select style="width: 200px" class="cesium-button">
-                              <option>Assign GFA(s)</option>
-                          </select>
+                      <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
+                          <div style="width:240px" class="cesium-button">Assign GFA(s)<div class="arrow down"></div></div>
                       </div>
-                      <div id="assignGFA" class="finder_dynamic_box" style="width:190px">
+                      <div id="assignGFA" class="finder_dynamic_box">
                           <div>
-                            <div class='text'>Total GFA</div>
-                            <div class='text_input'><input type='text' maxlength="5" size="4"></div>
+                            <div class='text' style="width: 198px">Total GFA</div>
+                            <div class='text_input'>
+                                <input type='text' maxlength="10" size="3"></div>
                           </div>
                       </div>
                   </div>
@@ -781,25 +789,26 @@
                 }
             }
 
-            var expanded8 =  false
+            var expanded8 = false
             function showChooseProgrammes() {
-                var citydb_addsplashwindow = document.getElementById("choose_programmes");
+                var programme_window = document.getElementById("choose_programmes");
                 if (!expanded8) {
-                    citydb_addsplashwindow.style.display = "block";
+                    programme_window.style.display = "block";
                     expanded8 = true;
                 } else {
-                    citydb_addsplashwindow.style.display = "none";
+                    programme_window.style.display = "none";
                     expanded8 = false;
                 }
 
             }
 
             var expanded10 =  false
-            function showAssignCheckboxValues() {
+            function showAssignGFAValues() {
                 var citydb_addsplashwindow = document.getElementById("assignGFA");
                 if (!expanded10) {
                     citydb_addsplashwindow.style.display = "block";
                     expanded10 = true;
+
                 } else {
                     citydb_addsplashwindow.style.display = "none";
                     expanded10 = false;
