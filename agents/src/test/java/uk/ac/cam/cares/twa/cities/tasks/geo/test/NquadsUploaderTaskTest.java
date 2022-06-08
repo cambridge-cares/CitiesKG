@@ -13,15 +13,18 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
-import junit.framework.TestCase;
 import org.eclipse.jetty.server.Server;
+import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.tasks.geo.BlazegraphServerTask;
 import uk.ac.cam.cares.twa.cities.tasks.geo.ImporterTask;
 import uk.ac.cam.cares.twa.cities.tasks.geo.NquadsUploaderTask;
 
-public class NquadsUploaderTaskTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.*;
 
+public class NquadsUploaderTaskTest {
+
+  @Test
   public void testNewNquadsUploaderTask() {
     NquadsUploaderTask task;
 
@@ -34,6 +37,7 @@ public class NquadsUploaderTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewNquadsUploaderTaskFields() {
     BlockingQueue<File> queue = new LinkedBlockingDeque<>();
     URI uri = null;
@@ -68,6 +72,7 @@ public class NquadsUploaderTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewNquadsUploaderTaskMethods() {
     try {
       NquadsUploaderTask task = new NquadsUploaderTask(new LinkedBlockingDeque<>(),
@@ -78,6 +83,7 @@ public class NquadsUploaderTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewNquadsUploaderStopMethod() {
     try {
       NquadsUploaderTask task = new NquadsUploaderTask(new LinkedBlockingDeque<>(),
@@ -95,6 +101,7 @@ public class NquadsUploaderTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewNquadsExporterTaskIsRunningMethod() {
     try {
       NquadsUploaderTask task = new NquadsUploaderTask(new LinkedBlockingDeque<>(),
@@ -115,6 +122,7 @@ public class NquadsUploaderTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewNquadsUploaderRunMethod() {
     BlockingQueue<File> queue = new LinkedBlockingDeque<>();
     File testNqFile = new File(Objects.requireNonNull(
@@ -178,6 +186,7 @@ public class NquadsUploaderTaskTest extends TestCase {
             if (!Objects.requireNonNull(server).isStopped()) {
               server.setStopAtShutdown(true);
               server.setStopTimeout(7_000);
+              serverTask.indexManager.destroy();
               server.stop();
             }
             stop.set(task, true);

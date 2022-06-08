@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo.test;
 
+import com.bigdata.journal.Journal;
 import com.bigdata.rdf.sail.webapp.NanoSparqlServer;
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,14 +12,17 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
-import junit.framework.TestCase;
 import org.eclipse.jetty.server.Server;
+import org.junit.jupiter.api.Test;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.tasks.geo.BlazegraphServerTask;
 import uk.ac.cam.cares.twa.cities.tasks.geo.ImporterTask;
 
-public class BlazegraphServerTaskTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.*;
 
+public class BlazegraphServerTaskTest {
+
+  @Test
   public void testNewBlazegraphServerTask() {
     BlazegraphServerTask task;
 
@@ -30,9 +34,10 @@ public class BlazegraphServerTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewBlazegraphServerTaskFields() {
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), "test.jnl");
-    assertEquals(13, task.getClass().getDeclaredFields().length);
+    assertEquals(14, task.getClass().getDeclaredFields().length);
     Field PROPERTY_FILE;
     Field PROPERTY_FILE_PATH;
     Field JETTY_CFG_PATH;
@@ -92,11 +97,13 @@ public class BlazegraphServerTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewBlazegraphServerTaskMethods() {
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), "test.jnl");
     assertEquals(7, task.getClass().getDeclaredMethods().length);
   }
 
+  @Test
   public void testNewBlazegraphServerTaskStopMethod() {
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), "test.jnl");
 
@@ -114,6 +121,7 @@ public class BlazegraphServerTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewBlazegraphServerTaskIsRunningMethod() {
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), "test.jnl");
 
@@ -133,6 +141,7 @@ public class BlazegraphServerTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewBlazegraphServerTaskSetupPathsMethod() {
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(),
         "/test/test.jnl");
@@ -150,6 +159,7 @@ public class BlazegraphServerTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewBlazegraphServerTaskSetupFilesMethod() {
     String fs = System.getProperty("file.separator");
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(),
@@ -202,6 +212,7 @@ public class BlazegraphServerTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewBlazegraphServerTaskSetupSystemMethod() {
     String jnlPath = System.getProperty("java.io.tmpdir") + "test.jnl";
     BlazegraphServerTask task = new BlazegraphServerTask(new LinkedBlockingDeque<>(), jnlPath);
@@ -224,6 +235,7 @@ public class BlazegraphServerTaskTest extends TestCase {
     }
   }
 
+  @Test
   public void testNewBlazegraphServerTaskSetupServerMethod() {
     String jnlPath = System.getProperty("java.io.tmpdir") + "test.jnl";
     File jnlFile = new File(jnlPath);
@@ -235,16 +247,20 @@ public class BlazegraphServerTaskTest extends TestCase {
     try {
       Method setupServer = task.getClass()
           .getDeclaredMethod("setupServer", String.class, String.class);
+      Method setupFiles = task.getClass()
+              .getDeclaredMethod("setupFiles", String.class);
       setupServer.setAccessible(true);
+      setupFiles.setAccessible(true);
 
       try {
-        setupServer.invoke(task, jnlPath, "");
+        setupFiles.invoke(task, propFile.getAbsolutePath());
+        setupServer.invoke(task, propFile.getAbsolutePath(), "");
       } catch (InvocationTargetException e) {
-        assertEquals(e.getTargetException().getStackTrace()[1].getClassName(),
-            "com.bigdata.rdf.sail.webapp.NanoSparqlServer");
+        assertEquals("com.bigdata.rdf.sail.webapp.NanoSparqlServer", e.getTargetException().getStackTrace()[1].getClassName());
       }
-
-      assertEquals(setupServer.invoke(task, jnlPath, jettyCfg).getClass(), Server.class);
+      task.indexManager.destroy();
+      assertEquals(Server.class, setupServer.invoke(task, propFile.getAbsolutePath(), jettyCfg).getClass());
+      task.indexManager.destroy();
     } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
       fail();
     } finally {
@@ -262,6 +278,7 @@ public class BlazegraphServerTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testNewBlazegraphServerTaskRunMethod() {
     String jnlPath = System.getProperty("java.io.tmpdir") + "test.jnl";
     File jnlFile = new File(jnlPath);
@@ -276,6 +293,13 @@ public class BlazegraphServerTaskTest extends TestCase {
     } catch (JPSRuntimeException e) {
       assertEquals(e.getClass(), JPSRuntimeException.class);
     } finally {
+      Object indexmanager = null;
+      try {
+        indexmanager = task.getClass().getDeclaredField("indexManager").get(task);
+      } catch (IllegalAccessException | NoSuchFieldException e) {
+        fail();
+      }
+      ((Journal) indexmanager).destroy();
       if (Objects.requireNonNull(jnlFile).isFile()) {
         if (!jnlFile.delete()) {
           fail();
