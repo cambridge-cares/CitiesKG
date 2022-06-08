@@ -1,8 +1,9 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
 import javax.servlet.annotation.WebServlet;
@@ -13,8 +14,10 @@ import org.apache.http.client.methods.HttpPost;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
+import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 import uk.ac.cam.cares.jps.base.http.Http;
+import uk.ac.cam.cares.twa.cities.models.geo.GenericAttribute;
 
 
 /**
@@ -51,16 +54,18 @@ public class CityInformationAgent extends JPSAgent {
     }
     JSONArray cityObjectInformation = new JSONArray();
     for (String cityObjectIri : uris) {
-      CityObject cityObject = new CityObject();
-      cityObject.setIri(URI.create(cityObjectIri));
+      ModelContext context = new ModelContext(route, getNamespace(cityObjectIri)+ "/");
+      CityObject cityObject = context.createNewModel(CityObject.class, cityObjectIri);
       if (lazyload) {
-        cityObject.pullAll(route, 0);
+        context.recursivePullAll(cityObject, 0);
       }
       else {
-        cityObject.pullAll(route, 1);
+        context.recursivePullAll(cityObject, 1);
       }
-      ArrayList<CityObject> cityObjectList = new ArrayList<>();
-      cityObjectList.add(cityObject);
+      ArrayList<Object> cityObjectList = new ArrayList<>();
+      cityObjectList.addAll(cityObject.getGenericAttributes());
+      cityObjectList.addAll(cityObject.getExternalReferences());
+      cityObjectList.add(cityObject); // breaks on this while work with generic attributes and external references.
       cityObjectInformation.put(cityObjectList);
     }
 
@@ -132,5 +137,10 @@ public class CityInformationAgent extends JPSAgent {
     ResourceBundle config = ResourceBundle.getBundle("config");
     lazyload = Boolean.getBoolean(config.getString("loading.status"));
     route = config.getString("uri.route");
+  }
+
+  private String getNamespace(String uriString) {
+    String[] splitUri = uriString.split("/");
+    return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 2));
   }
 }
