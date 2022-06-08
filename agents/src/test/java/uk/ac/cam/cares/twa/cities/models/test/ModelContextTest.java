@@ -45,11 +45,6 @@ public class ModelContextTest {
 
   @Test
   public void testPushNewObject() {
-//    ModelContext context = Mockito.spy(new ModelContext(testResourceId, testNamespace));
-//    context.update("CLEAR ALL");
-//    TestModel.createRandom(context, 12345, 3, 3).pushChanges();
-//    Mockito.verify(context, Mockito.never()).query(Mockito.contains("DELETE"));
-//    assertEquals(metaModel.scalarFieldList.size() + (metaModel.vectorFieldList.size() - 1) * 3, countTriples(context));
 
     ModelContext context = Mockito.spy(new ModelContext(testResourceId, testNamespace));
 
@@ -73,18 +68,6 @@ public class ModelContextTest {
 
   @Test
   public void testPushChanges() {
-//    ModelContext context = Mockito.spy(new ModelContext(testResourceId, testNamespace));
-//    context.update("CLEAR ALL");
-//    TestModel model = TestModel.createRandom(context, 12345, 3, 3);
-//    model.pushChanges();
-//    Mockito.verify(context, Mockito.never()).query(Mockito.contains("DELETE"));
-//    model.setDoubleProp(7.77);
-//    model.pushChanges();
-//    Mockito.verify(context, Mockito.times(1)).update(Mockito.contains("DELETE"));
-//    Mockito.verify(context, Mockito.times(2)).update(Mockito.contains("doubleprop"));
-//    Mockito.verify(context, Mockito.times(1)).update(Mockito.contains("stringprop"));
-//    assertEquals(metaModel.scalarFieldList.size() + (metaModel.vectorFieldList.size() - 1) * 3, countTriples(context));
-
     ModelContext context = Mockito.spy((new ModelContext(testResourceId, testNamespace)));
 
     Mockito.doNothing().when(context).update(Mockito.contains("CLEAR ALL"));
@@ -110,31 +93,6 @@ public class ModelContextTest {
 
   @Test
   public void testPushPartialChanges() {
-//    ModelContext pushContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
-//    pushContext.update("CLEAR ALL");
-//    TestModel pushModel = TestModel.createRandom(pushContext, 12345, 3, 3);
-//    pushContext.pushAllChanges();
-//
-//    ModelContext pullContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
-//    TestModel pullModel = pullContext.createHollowModel(TestModel.class, pushModel.getIri());
-//    pullModel.pull("doubleProp", "uriProp");
-//    pullModel.setDoubleProp(7.77);
-//    pullModel.setStringProp("modified");
-//    pullModel.pushChanges();
-////     Only fields which were pulled should ever be pushed, even if unpulled fields have been changed.
-//    Mockito.verify(pullContext).update(Mockito.contains("doubleprop"));
-//    Mockito.verify(pullContext, Mockito.never()).update(Mockito.contains("stringprop"));
-//    Mockito.verify(pullContext, Mockito.never()).update(Mockito.contains("uriprop"));
-////     If we pull the string field, we should afterwards be able to change and push it.
-//    pullModel.pull("stringProp");
-//    pullModel.pushChanges();
-//    Mockito.verify(pullContext, Mockito.never()).update(Mockito.contains("stringProp"));
-//    pullModel.setStringProp("modified2");
-//    pullModel.pushChanges();
-//    Mockito.verify(pullContext, Mockito.times(1)).update(Mockito.contains("stringprop"));
-//    Mockito.verify(pullContext, Mockito.times(1)).update(Mockito.contains("doubleprop"));
-//    Mockito.verify(pullContext, Mockito.never()).update(Mockito.contains("uriprop"));
-//
 
     ModelContext pushContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
 
