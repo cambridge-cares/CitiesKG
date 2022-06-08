@@ -2,9 +2,8 @@ package uk.ac.cam.cares.twa.cities.agents.geo;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.openrdf.query.algebra.Str;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
-import uk.ac.cam.cares.twa.cities.tasks.ExporterTask;
+import uk.ac.cam.cares.twa.cities.tasks.geo.ExporterTask;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;

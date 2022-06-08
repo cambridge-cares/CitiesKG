@@ -1,7 +1,7 @@
 # Semantic 3D City Agents
 
 The Semantic City Agents is an intelligent automation for Dynamic Geospatial Knowledge Graphs. 
-It contains 3 agents: CityImportAgent, CityExportAgent and DistanceAgent. All 3 agnets works with the semantic cities database - [Cities Knowledge Graphs](http://www.theworldavatar.com:83/citieskg/#query).
+It contains 3 agents: CityImportAgent, CityExportAgent and DistanceAgent. All 3 agents works with the semantic cities database - [Cities Knowledge Graphs](http://www.theworldavatar.com:83/citieskg/#query).
 
 ## System requirements
 
@@ -61,7 +61,15 @@ This folder is by default not accessible, in order to make it executable, you ne
 
 ### Install and Build
 
-1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
+1. Additional dependencies used by agents are JPS_BASE_LIB and AsynchronousWatcherService, which provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository. You may skip this step if both dependencies have been set up before. 
+
+Clone the TWA project from the [TWA repository](https://github.com/cambridge-cares/TheWorldAvatar) and checkout to 'main' branch.
+
+Run the command *mvn clean install -DskipTests* on the corresponding directories where the POM file is found.
+* JPS_BASE_LIB project can be found in the [JPS_BASE_LIB directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/JPS_BASE_LIB).
+* AsynchronousWatcherService project can be found in the [AsynchronousWatcherService directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/AsynchronousWatcherService).
+
+2. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
 
 ```
 cd <main project directory>
@@ -69,18 +77,12 @@ cd <main project directory>
 mvn initialize
 ```
 
-2. If the initialization is done successful, you should be able to run the following to create the war package
+2. If the initialization is done successfully, you should be able to run the following to create the war package:
 
 
 ```
 mvn clean install
 ```
-
-In case building the .war file fails due to the missing `JPS_AWS.jar`, please build this locally first via running the following command within the [JPS_AWS] repository:
-```
-mvn clean install -DskipTests
-```
-
 3. There is one dependency `blazegraph-jar-2.1.5.jar` which needs to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
 
 ```
@@ -101,14 +103,24 @@ this folder contains all the libraries provided by the server.
 
 If this step has not been done, you might get a `NoClassDefFoundError`. 
 
-4. Additional dependencies used by agents are JPS_BASE_LIB and JPS_AWS are provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository.
-
-Clone the TWA project from the [TWA repository](https://github.com/cambridge-cares/TheWorldAvatar) and checkout to develop and master branches
-
-Run the command *mvn clean install -DskipTests* on the corresponding directories where the POM file is found.
-* JPS_BASE_LIB project can be found in the [JPS_BASE_LIB directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/JPS_BASE_LIB) from the *master* branch (stable version)
-* JPS_AWS project can be found in the [AsynchronousWatcherService](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/AsynchronousWatcherService) directory from the *develop* branch. Before run the install command, please comment out the JPS_BASE dependency in the POM file. 
-
+#### Install and build local AccessAgent (for developers)
+For development and testing purposes, the [AccessAgent](https://github.com/cambridge-cares/TheWorldAvatar/wiki/Access-Agent) can be deployed locally via Docker to access your local Blazegraph.
+1. Set up a Docker environment as described in the [TWA Wiki - Docker: Environment](https://github.com/cambridge-cares/TheWorldAvatar/wiki/Docker%3A-Environment) page.
+2. In the TWA repository clone, locate the properties file in _TheWorldAvatar/JPS_ACCESS_AGENT/access-agent/src/main/resources/accessagent.properties_, and replace `http://www.theworldavatar.com/blazegraph/namespace/ontokgrouter/sparql` with `http://host.docker.internal:9999/blazegraph/namespace/ontokgrouter/sparql`.
+    If using a different port for Blazegraph, replace `9999` with your port number.
+3. In your local Blazegraph, create a new namespace called 'ontokgrouter'.
+4. For each endpoint to be accessed, 5 triples need to be added to the 'ontokgrouter' namespace. An example SPARQL update is shown, which inserts the triples required to access a namespace 'test' in a local Blazegraph on port 9999. Replace all occurrences of `test` with the name of the namespace and `9999` with your port number, and execute the SPARQL update. 
+```
+INSERT DATA {
+<http://host.docker.internal:9999/blazegraph/ontokgrouter/test>	<http://www.theworldavatar.com/ontology/ontokgrouter/OntoKGRouter.owl#hasQueryEndpoint>	"http://host.docker.internal:9999/blazegraph/namespace/test/sparql".
+<http://host.docker.internal:9999/blazegraph/ontokgrouter/test>	<http://www.theworldavatar.com/ontology/ontokgrouter/OntoKGRouter.owl#hasUpdateEndpoint> "http://host.docker.internal:9999/blazegraph/namespace/test/sparql".
+<http://host.docker.internal:9999/blazegraph/ontokgrouter/test>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.theworldavatar.com/ontology/ontokgrouter/OntoKGRouter.owl#TargetResource>.
+<http://host.docker.internal:9999/blazegraph/ontokgrouter/test>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual>.
+<http://host.docker.internal:9999/blazegraph/ontokgrouter/test>	<http://www.w3.org/2000/01/rdf-schema#label> "test".
+}
+```
+5. In this repository, locate the agents properties file in _agents/src/main/resources/config.properties_, and set the uri.route to `http://localhost:48080/access-agent/access/test`, replacing `test` with the name of the namespace to connect to.
+7. Build and deploy the AccessAgent as described in the README of the [JPS_ACCESS_AGENT directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/main/JPS_ACCESS_AGENT) in the TWA repository.
 
 ### Deployment (for users)
 
@@ -148,12 +160,85 @@ POST http://localhost:8080/agents/import/source
 Content-Type: application/json
 
 {"directory":"C:\\tmp\\import",
-  "targetURL": "http://192.168.10.111:9999/blazegraph/namespace/testdata/sparql"}
+  "targetURL": "http://127.0.0.1:9995/blazegraph/namespace/testdata/sparql",
+  "srid": "25833",
+  "srsName": "urn:ogc:def:crs,crs:EPSG::25833,crs:EPSG::5783"}
 ```
 
 Executing this request, will create a directory at the specified location. When placing any `.gml` file into this folder, this file will automatically be imported into the specified triple store. For further details, please see the "Semantic 3D City Agents - an intelligent automation for Dynamic Geospatial Knowledge Graphs" [preprint].
 
 Please note that splitting of large files into smaller chunks to improve performance will not work if the `.gml` file contains the `core:` namespace tag in front of CityGML features. Please remove those manually beforehand.
+
+## Thematic Surface Discovery Agent User Guide
+
+### Configuration
+
+In the `resources/config.properties` file, the property `uri.route` must be specified. This is the target resource 
+ID which queries and updates will be addressed to. By default, this is an AccessAgent string, where e.g. 
+`http://localhost:48080/churchill` is interpreted as "using an AccessAgent instance hosted at `http://localhost:48080`, 
+access the knowledge graph `churchill` registered in ontokgrouter". Therefore, an AccessAgent instance is required to use this. However, a URI prefixed with `HARDCODE:` e.g. 
+`HARDCODE:http://localhost:9999/blazegraph/namespace/churchill/sparql` will be interpreted as a literal endpoint to 
+query directly, which does not require AccessAgent.
+
+### Request
+
+Example HTTPRequest for ThematicSurfaceDiscoveryAgent:
+```
+PUT http://localhost:8080/agents/discovery/thematicsurface
+Content-Type: application/json
+
+{ "namespace": "http://localhost:9999/blazegraph/namespace/churchill/sparql/",
+  "cityObjectIRI": "http://localhost:9999/blazegraph/namespace/building/..../",
+  "lod2": "true",
+  "threshold": "5",
+  "mode": "validate" }
+```
+
+Parameters:
+
+- `namespace`: target namespace, e.g. "http://localhost:9999/blazegraph/namespace/churchill/sparql/", which is used to prefix named graph IRIs and newly created object IRIs. Typically the same as configured `uri.route`, but not necessarily.
+- `mode`: "restructure", "validate" or "footprint". See sections below.
+- `lod1`, `lod2`, `lod3`, `lod4` (optional): optionally specify one or more levels of detail to target by providing `true`. All other LoDs are ignored. If no LoD is specified, all are targeted.
+- `cityObjectIRI` (optional): optionally specify a single building to target. If omitted, all buildings in the 
+  namespace are targeted. `namespace` is still necessary even with `cityObjectIRI` specified.
+- `threshold` (optional): the threshold angle in degrees; if the angle between a polygon's normal and the horizontal plane exceeds this, it is no longer considered a wall. Defaults to 15 if omitted.
+
+### Restructure mode
+
+In restructure mode, building(s)' `lodXMultiSurface`s are converted into thematic surfaces by reparenting their largest possible thematically homogeneous geometry subtrees to newly created thematic surfaces. `Building.lod1MultiSurfaceId` and `Building.lod2MultiSurfaceId` map to `ThematicSurface.lod2MultiSurfaceId` as thematic surfaces do not have an LoD 1 property; else, the LoD of the linking property is preserved in the conversion.
+
+Before:
+
+![Before](README-resources/tsda-restructure-before.png)
+
+Red, blue and green indicate classified roof, wall and ground surfaces, where a composite surface whose components 
+are all the same theme is also considered that theme. Brown is a "mixed" composite surface with components of 
+different themes, and is therefore destroyed in the conversion. After:
+
+![After](README-resources/tsda-restructure-after.png)
+
+### Validate mode
+
+In validate mode, building(s)' thematic surfaces are inspected and their themes classified using the same algorithm as restructure mode. The classifications are tagged onto bottom-level (leaf node) SurfaceGeometries by `rdfs:comment` properties. This allows comparison and debugging in Blazegraph workbench using a query e.g.
+
+```
+SELECT ?class ?comment (COUNT(*) AS ?count) WHERE {
+  ?surfaceGeometry ocgml:cityObjectId ?cityObject;
+            ocgml:GeometryType ?geometryType.
+  ?cityObject  ocgml:objectClassId ?class.
+  OPTIONAL{?surfaceGeometry rdfs:comment ?comment}
+  FILTER(!ISBLANK(?geometryType))
+} GROUP BY ?class ?comment
+```
+
+which counts all the combinations of original data themes and classified themes.
+
+### Footprint mode
+
+Footprint mode inspects building(s)' `lodXMultiSurface`s, identifying themes as in restructure mode, and then 
+*copies* identifies ground surfaces into a new SurfaceGeometry tree which is linked to the building by 
+`lod0FootprintId`. Unlike restructure mode, this does not destroy the old `lodXMultiSurface`. This is useful if the 
+large triple overhead of a full thematicisation is not desired, but footprints are needed to be extracted for other use.
 
 ## 3DCityDB-Web-Map-Client
 
