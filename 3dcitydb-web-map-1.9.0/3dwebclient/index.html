@@ -234,30 +234,31 @@
             .use_element, .programme_element{
                 display:inline-block;
                 padding-top: 2px;
-                height:30px;
+                height:40px;
                 width: 220px;
                 vertical-align: top;
             }
 
             .checkbox{
                 display:inline-block;
-                height:30px;
+                height:40px;
                 width: 20px;
                 vertical-align: top;
             }
 
             .text{
                 display:inline-block;
-                height:30px;
+                line-height: 14px;
                 width: 200px;
                 vertical-align: top;
             }
 
             .text_input{
                 display:inline-block;
-                height:30px;
+                line-height: 14px;
                 width: 50px;
                 vertical-align: top;
+                alignment: right;
             }
 
             .finder_dynamic_box {
@@ -274,8 +275,9 @@
                 color: #fff;
                 font-family: sans-serif;
                 font-size: 9pt;
-                overflow: auto;
+                overflow-y: scroll;
                 vertical-align: top;
+                scrollbar-gutter: stable;
             }
 
             .arrow {
@@ -343,9 +345,10 @@
                       </div>
                       <div id="assignGFA" class="finder_dynamic_box">
                           <div>
-                            <div class='text' style="width: 198px">Total GFA</div>
+                            <div class='text'>Total Gross Floor Area (GFA)</div>
                             <div class='text_input'>
-                                <input type='text' maxlength="10" size="3"></div>
+                                <input type='text' style="width: 80px" maxlength="10" size="3"></div>
+                              <hr size="1">
                           </div>
                       </div>
                   </div>

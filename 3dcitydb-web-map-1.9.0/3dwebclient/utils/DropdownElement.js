@@ -1,5 +1,5 @@
 function buildOntoQuery(object){
-	query = "PREFIX zo: <http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#> SELECT DISTINCT ?s WHERE { ?s rdfs:subClassOf zo:" + object + "}"
+	query = "PREFIX zo:<http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#> SELECT DISTINCT ?s WHERE { ?s rdfs:subClassOf zo:" + object + "}"
 	return query
 }
 
@@ -13,7 +13,6 @@ function getDropdownElements(object, element_type, dropdown_type) {
 			xhr.setRequestHeader("Accept", "application/json");
 		},
 		success: function(data, status_message, xhr){
-			const checkbox_lines = [];
 			var results = data["results"]["bindings"];
 			for (index in results){
 				var checkbox_line = results[index]["s"]["value"];
@@ -44,9 +43,10 @@ function updateGfaRows(){
 		if (checkbox.checked) {
 			var clicked_element =
 					"<div>" +
-					"<div class='text'>" + checkboxes.item(i).id + "</div>" +
+					"<div class='text' style='width: 180px'>" + checkboxes.item(i).id + "</div>" +
 					"<div class='text_input'><input type='text' maxLength='5' size='3'></div>" +
-					"</div>";
+					"</div>" +
+					"<hr size='1'>";
 			$("#assignGFA").append(clicked_element)
 		}
 	}
