@@ -8,12 +8,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.stream.Stream;
+import org.eclipse.jetty.server.Server;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.openrdf.query.algebra.Str;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
+import uk.ac.cam.cares.twa.cities.tasks.ExporterExpTask;
 import uk.ac.cam.cares.twa.cities.tasks.ExporterTask;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
@@ -52,12 +56,14 @@ public class CityExportAgent extends JPSAgent {
         public JSONObject serverInfo;
         public String[] displayMode;
         public String outputPath;
-        public Params (String namespaceIri, String directory, JSONObject serverInfo, String[] displayMode, String outputPath){
+        public String[] gmlIds;
+        public Params (String namespaceIri, String directory, JSONObject serverInfo, String[] displayMode, String outputPath, String[] gmlIds){
             this.namespaceIri = namespaceIri;
             this.outputDir = directory;
             this.serverInfo = serverInfo;
             this.displayMode = displayMode;
             this.outputPath = outputPath;
+            this.gmlIds = gmlIds;
         }
     }
 
@@ -128,18 +134,33 @@ public class CityExportAgent extends JPSAgent {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                ImporterTask currentTask = null;
+
+                ExporterTask lastTask = null;
+                BlockingQueue<Params> taskParamsQueue = new LinkedBlockingDeque<>();
                 for (int i = 0 ; i < fileList.size(); ++i){
                     //Path gmlidFile : fileList) {
                     // Retrieve a list of gmlids from a file, and execute the export process
                     String[] gmlidArray = getGmlidFromFile(fileList.get(i));
                     String outputFileName = getOutputName(fileList.get(i));
-                    Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outputFileName);
-                    currentTask = exportKml(gmlidArray, taskParams);
+                    Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outputFileName, gmlidArray);
+                    taskParamsQueue.add(taskParams);
+                    //lastTask = exportKml(gmlidArray, taskParams);
                     //result.put("outputPath", exportKml(gmlidArray, taskParams));  // this can not indicate that the process is done
                 }
 
+                System.out.println("After for loop, Thread Name: " + Thread.currentThread().getName());
+
+                ExporterExpTask exporterExpTask = new ExporterExpTask(taskParamsQueue);
+                exporterExecutor.execute(exporterExpTask);
                 // @todo: how to capture the signal that the export process is done
+                /*
+                while (lastTask.isRunning()){
+
+                    if (!lastTask.isRunning()){
+                        System.out.println(lastTask.getOutputpath() + " has stopped");
+                        tilingKML(outputDir, outputDir);
+                    }
+                }*/
 
 
             }else{
@@ -150,13 +171,14 @@ public class CityExportAgent extends JPSAgent {
                 String[] gmlidsArray = new String[buildingIds.size()];
                 gmlidsArray = buildingIds.toArray(gmlidsArray);
                 String outSingleFileName = getOutputName(null);
-                Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outSingleFileName);
+                Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outSingleFileName, gmlidsArray);
                 //result.put("outputPath", exportKml(gmlidsArray, taskParams));
             }
 
         }
         // It will return the file path of the exported file
-        System.out.println(result);
+        System.out.println("This msg should come at the end of everything");
+        System.out.println(result);  //{}
         return result;
     }
 
@@ -247,7 +269,7 @@ public class CityExportAgent extends JPSAgent {
             String exportFilename = outFileName + "_" + index + outFileExtension;
             outputPath = Paths.get(outputDir.toString(), exportFilename).toString();
         }
-
+        /*
         File outputFile = new File(outputPath);
         if (!outputFile.exists()){
             try {
@@ -255,7 +277,7 @@ public class CityExportAgent extends JPSAgent {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
+        }*/
         return outputPath;
     }
 
@@ -316,7 +338,7 @@ public class CityExportAgent extends JPSAgent {
      *
      * @param path2unsortedKML the path of the directory that contains the unsorted KMLs
      */
-    private static void tilingKML(String path2unsortedKML, String outputDir){
+    private static void tilingKML(String path2unsortedKML, String path2sortedKML){
         //String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder_1\\charlottenberg_extruded_blaze.kml";
         //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
         String CRSinDegree = "4326";  // global WGS 84
@@ -325,13 +347,13 @@ public class CityExportAgent extends JPSAgent {
         long start = System.currentTimeMillis();
 
         // 1. KMLParserTask
-        KMLParserTask parserTask = new KMLParserTask(path2unsortedKML, outputDir, CRSinDegree, CRSinMeter, initTileSize);
+        KMLParserTask parserTask = new KMLParserTask(path2unsortedKML, path2sortedKML, CRSinDegree, CRSinMeter, initTileSize);
         parserTask.run();
         double[] updatedExtent = parserTask.getUpdatedExtent();
         String summaryCSV = parserTask.getOutFile();
 
         // 2. KMLTilingTask
-        KMLTilingTask kmltiling = new KMLTilingTask(CRSinDegree, CRSinMeter, outputDir, initTileSize);  // 25833
+        KMLTilingTask kmltiling = new KMLTilingTask(CRSinDegree, CRSinMeter, path2sortedKML, initTileSize);  // 25833
         kmltiling.setUp(summaryCSV);
         kmltiling.updateExtent(updatedExtent);  // whole berlin: new double[]{13.09278683392157, 13.758936971880468, 52.339762874361156, 52.662766032905616}
         kmltiling.run();
@@ -340,7 +362,7 @@ public class CityExportAgent extends JPSAgent {
 
 
         // 3. KMLSorterTask
-        KMLSorterTask kmlSorter=new KMLSorterTask(path2unsortedKML, outputDir, masterJSONFile, sortedCSVFile);
+        KMLSorterTask kmlSorter=new KMLSorterTask(path2unsortedKML, path2sortedKML, masterJSONFile, sortedCSVFile);
         kmlSorter.run();
         long end = System.currentTimeMillis();
         System.out.println("The re-arrangement of KMLs takes: " + (end - start) / 1000 + " seconds.");

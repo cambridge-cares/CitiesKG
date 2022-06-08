@@ -46,6 +46,10 @@ public class ExporterTask implements Runnable {
         this.displaymode = displayMode;
         this.lod = 5;   // by default: highest lod available
     }
+    public String getOutputpath(){
+        return this.outputpath;
+    }
+    public boolean getStopStatus() {return stop;}
 
     public void stop() {
         stop = true;
@@ -59,7 +63,6 @@ public class ExporterTask implements Runnable {
     public void run() {
         File cfgfile;
         while (!stop) {
-
             try {
                 cfgfile = setupConfig();  // modify the gmlIds within the config file
                 String[] args = {ARG_SHELL, ARG_KMLEXPORT, outputpath,
@@ -70,6 +73,7 @@ public class ExporterTask implements Runnable {
                 e.printStackTrace();
                 throw new JPSRuntimeException(e);
             } finally {
+                System.out.println("Task Completed! Thread Name: " + Thread.currentThread().getName());
                 stop();
             }
         }
