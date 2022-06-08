@@ -230,7 +230,7 @@ public class RunCEATask implements Runnable {
                 for(int n=0; n<PV_columns.get(0).length; n++) {
                     if (i==0 && PV_columns.get(0)[n].equals("Date")) {
                         for (int m = 1; m < PV_columns.size(); m++) {
-                            timestamps.add(PV_columns.get(m)[n].replaceAll("\\s","T")+"+00:00");
+                            timestamps.add(PV_columns.get(m)[n].replaceAll("\\s","T"));
                         }
                     } else if(PV_columns.get(0)[n].equals("PV_roofs_top_E_kWh")) {
                         for(int m=1; m<PV_columns.size(); m++) {

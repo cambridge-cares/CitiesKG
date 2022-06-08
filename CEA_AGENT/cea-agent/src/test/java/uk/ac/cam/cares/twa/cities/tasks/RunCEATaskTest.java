@@ -254,8 +254,8 @@ public class RunCEATaskTest extends TestCase {
         String demandValuesRow2 = "11.0,21.0,31.0,41.0,51.0";
 
         String PVTitleRow = "Date,PV_roofs_top_E_kWh,PV_walls_south_E_kWh,Other,PV_walls_north_E_kWh,PV_walls_west_E_kWh,PV_walls_east_E_kWh";
-        String PVValuesRow1 = "2005-01-01 00:00:00,20.0,30.0,40.0,50.0,60.0,70.0";
-        String PVValuesRow2 = "2005-01-01 01:00:00,21.0,31.0,41.0,51.0,61.0,71.0";
+        String PVValuesRow1 = "2005-01-01 00:00:00+00:00,20.0,30.0,40.0,50.0,60.0,70.0";
+        String PVValuesRow2 = "2005-01-01 01:00:00+00:00,21.0,31.0,41.0,51.0,61.0,71.0";
 
         String tmpDir = "test";
 
