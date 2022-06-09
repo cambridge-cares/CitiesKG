@@ -246,7 +246,7 @@
                 vertical-align: top;
             }
 
-            .text{
+            .text_gfa{
                 display:inline-block;
                 line-height: 14px;
                 width: 200px;
@@ -345,10 +345,9 @@
                       </div>
                       <div id="assignGFA" class="finder_dynamic_box">
                           <div>
-                            <div class='text'>Total Gross Floor Area (GFA)</div>
-                            <div class='text_input'>
-                                <input type='text' style="width: 80px" maxlength="10" size="3"></div>
-                              <hr size="1">
+                            <div class='text_gfa'>Total Gross Floor Area (GFA)</div>
+                            <div class='text_input' style="width: 80px"><input type='text' maxlength="10" size="3" onblur='getInputParams()'/></div>
+                            <hr size="1">
                           </div>
                       </div>
                   </div>
@@ -818,8 +817,8 @@
                 }
             }
 
-            getDropdownElements('LandUse', 'use_element', '#choose_uses');
-            getDropdownElements('Programme', 'programme_element', '#choose_programmes');
+            getDropdownElements('allowsUse', 'use_element', '#choose_uses');
+            getDropdownElements('allowsProgramme', 'programme_element', '#choose_programmes');
 
         </script>
         <script src="script.js"></script>

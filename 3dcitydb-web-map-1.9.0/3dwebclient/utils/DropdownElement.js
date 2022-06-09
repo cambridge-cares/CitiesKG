@@ -1,21 +1,25 @@
-function buildOntoQuery(object){
-	query = "PREFIX zo:<http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#> SELECT DISTINCT ?s WHERE { ?s rdfs:subClassOf zo:" + object + "}"
+var CONTEXT = "citieskg";
+var CITY = (new URL(window.location.href).searchParams.get('city'))
+
+
+function buildQuery(predicate){
+	query = "PREFIX zo:<http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#> "
+			+ "SELECT DISTINCT ?g WHERE { GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/> "
+			+ "{ ?zone zo:" + predicate + " ?g . } }"
 	return query
 }
 
-function getDropdownElements(object, element_type, dropdown_type) {
+function getDropdownElements(predicate, element_type, dropdown_type) {
 	$.ajax({
-		url:"http://localhost:9999/blazegraph/namespace/kb/sparql",
+		url:"http://theworldavatar.com:83/access-agent/access",
 		type: 'POST',
-		data: buildOntoQuery(object),
-		contentType: 'application/sparql-query',
-		beforeSend: function(xhr) {
-			xhr.setRequestHeader("Accept", "application/json");
-		},
+		data: JSON.stringify({targetresourceiri:CONTEXT + "-" + CITY , sparqlquery: buildQuery(predicate)}),
+		dataType: 'json',
+		contentType: 'application/json',
 		success: function(data, status_message, xhr){
-			var results = data["results"]["bindings"];
+			var results = JSON.parse(data["result"]);
 			for (index in results){
-				var checkbox_line = results[index]["s"]["value"];
+				var checkbox_line = results[index]["g"];
 				appendElement(removePrefix(checkbox_line), element_type, dropdown_type)
 			}
 		}
@@ -43,8 +47,8 @@ function updateGfaRows(){
 		if (checkbox.checked) {
 			var clicked_element =
 					"<div>" +
-					"<div class='text' style='width: 180px'>" + checkboxes.item(i).id + "</div>" +
-					"<div class='text_input'><input type='text' maxLength='5' size='3'></div>" +
+					"<div class='text_gfa' style='width: 180px'>" + checkboxes.item(i).id + "</div>" +
+					"<div class='text_input'><input type='text' maxLength='5' size='3' onblur='getInputParams()'/></div>" +
 					"</div>" +
 					"<hr size='1'>";
 			$("#assignGFA").append(clicked_element)
@@ -52,9 +56,21 @@ function updateGfaRows(){
 	}
 }
 
-
 function removePrefix(result){
 	var element = result.split("#")[1]
 	element = element.match(/[A-Z][a-z]+|[0-9]+/g).join(" ")
 	return element
+}
+
+function getInputParams() {
+	var parameters = {};
+
+	var text_inputs = document.getElementsByClassName('text_gfa');
+	for (let i = 0; i < text_inputs.length; i++) {
+		var text_item = text_inputs.item(i).firstChild;
+		var sibling = text_inputs.item(i).nextElementSibling.firstChild;
+
+		parameters[text_item.textContent] = sibling.value;
+	}
+	console.log(parameters);
 }

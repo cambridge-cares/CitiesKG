@@ -254,7 +254,7 @@ function loadCity(city) {
         loadBerlin();
     } else if (city == 'kingslynn') {
         loadKingsLynn();
-    } else if (city == 'singapore') {
+    } else if (city == 'singaporeEPSG4326') {
         loadSingapore();
     }
 }
@@ -319,6 +319,7 @@ function loadKingsLynn() {
 function loadSingapore() {
     // set title
     document.title = 'Singapore';
+
 
     // set camera view
     var cameraPostion = {
