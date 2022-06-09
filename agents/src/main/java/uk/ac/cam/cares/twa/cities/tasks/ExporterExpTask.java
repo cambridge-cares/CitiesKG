@@ -58,24 +58,37 @@ public class ExporterExpTask implements Runnable {
   @Override
   public void run() {
     File cfgfile;
+    File kmlfile;
     while (isRunning()) {
       try {
         while (!taskParamsQueue.isEmpty()) {
           Params taskParams = taskParamsQueue.take();
           cfgfile = setupConfig(taskParams);  // modify the gmlIds within the config file
-          String[] args = {ARG_SHELL, ARG_KMLEXPORT, taskParams.outputPath,
-              ARG_CFG,
-              cfgfile.getAbsolutePath()}; // <-kmlExport filename> can take path with blank space, quoted with "" mark and <-kmlExport=filename> can only accept path without blank space
+          kmlfile = setupKmlPath(taskParams);
+          String[] args = {ARG_SHELL, ARG_KMLEXPORT, kmlfile.getAbsolutePath(),
+              ARG_CFG, cfgfile.getAbsolutePath()}; // <-kmlExport filename> can take path with blank space, quoted with "" mark and <-kmlExport=filename> can only accept path without blank space
           ImpExp.main(args);
         }
       } catch (IOException | URISyntaxException | InterruptedException e) {
         e.printStackTrace();
         throw new JPSRuntimeException(e);
       } finally {
+        System.out.println("the final of ExporterTask ==================");
         System.out.println("Task Completed! Thread Name: " + Thread.currentThread().getName());
+        // @todo: try to start the tiling
         stop();
       }
     }
+  }
+
+  /** Setup the output directory export/kmlFiles */
+
+  private File setupKmlPath(Params taskparams)  {
+    File kmlDir = Paths.get(taskparams.outputDir, "kmlFiles").toFile();
+    if (!kmlDir.exists()) {kmlDir.mkdirs();}
+    String filename = new File(taskparams.outputPath).getName();
+    File exportFile = new File(Paths.get(kmlDir.toString(), filename).toString());
+    return exportFile;
   }
 
   /**
@@ -90,8 +103,12 @@ public class ExporterExpTask implements Runnable {
    * */
   private File setupConfig(Params taskparams) throws IOException, URISyntaxException {
 
-    // Copy the template to the location of output
-    File exportFile = new File(taskparams.outputPath);
+    // Create cfgFiles directory if not exists
+    // Copy the template to the location of export/cfgFiles/
+    File cfgDir = Paths.get(taskparams.outputDir, "cfgFiles").toFile();
+    if (!cfgDir.exists()) {cfgDir.mkdirs();}
+    String filename = new File(taskparams.outputPath).getName();
+    File exportFile = new File(Paths.get(cfgDir.toString(), filename).toString());
 
     String projectCfg = exportFile.getAbsolutePath().replace(EXT_FILE_KML, "_" + PROJECT_CONFIG);
     Files.copy(Paths.get(Objects.requireNonNull(getClass().getClassLoader().getResource(PROJECT_CONFIG)).toURI()),
