@@ -57,15 +57,14 @@ public class CityInformationAgent extends JPSAgent {
       ModelContext context = new ModelContext(route, getNamespace(cityObjectIri)+ "/");
       CityObject cityObject = context.createNewModel(CityObject.class, cityObjectIri);
       if (lazyload) {
-        context.recursivePullAll(cityObject, 0);
+        context.pullAll(cityObject);
       }
       else {
+        // new method here specially for cia
         context.recursivePullAll(cityObject, 1);
       }
-      ArrayList<Object> cityObjectList = new ArrayList<>();
-      cityObjectList.addAll(cityObject.getGenericAttributes());
-      cityObjectList.addAll(cityObject.getExternalReferences());
-      cityObjectList.add(cityObject); // breaks on this while work with generic attributes and external references.
+      ArrayList<CityObject> cityObjectList = new ArrayList<>();
+      cityObjectList.add(cityObject);
       cityObjectInformation.put(cityObjectList);
     }
 
