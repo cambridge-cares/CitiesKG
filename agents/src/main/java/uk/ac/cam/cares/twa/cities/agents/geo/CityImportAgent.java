@@ -42,10 +42,10 @@ import uk.ac.cam.cares.jps.aws.WatcherCallback;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.util.CommandHelper;
-import uk.ac.cam.cares.twa.cities.tasks.BlazegraphServerTask;
-import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
-import uk.ac.cam.cares.twa.cities.tasks.NquadsExporterTask;
-import uk.ac.cam.cares.twa.cities.tasks.NquadsUploaderTask;
+import uk.ac.cam.cares.twa.cities.tasks.geo.BlazegraphServerTask;
+import uk.ac.cam.cares.twa.cities.tasks.geo.ImporterTask;
+import uk.ac.cam.cares.twa.cities.tasks.geo.NquadsExporterTask;
+import uk.ac.cam.cares.twa.cities.tasks.geo.NquadsUploaderTask;
 
 
 /**
@@ -71,7 +71,7 @@ public class CityImportAgent extends JPSAgent {
 
   public static final String URI_LISTEN = "/import/source";
   public static final String URI_ACTION = "/import/citygml";
-  public static final String KEY_REQ_METHOD = "method";
+  public static final String KEY_REQ_METHOD = "method"; //move this constant to the JPSAgent
   public static final String KEY_REQ_URL = "requestUrl";
   public static final String KEY_DIRECTORY = "directory";
   public static final String KEY_SPLIT = "split";
@@ -105,6 +105,10 @@ public class CityImportAgent extends JPSAgent {
   public static final String SUB_SRSNAME = "srsname";
   public static final String OB_SRID = "currentSrid";
   public static final String OB_SRSNAME = "currentSrsname";
+
+  public static LinkedBlockingDeque<Server> localImportQueue;
+  public static LinkedBlockingDeque<File> remoteImportQueue;
+  public BlazegraphServerTask task = null;
 
   @Override
   public JSONObject processRequestParameters(JSONObject requestParams) {
@@ -341,8 +345,8 @@ public class CityImportAgent extends JPSAgent {
    * @param file- chunk to import
    */
   private void importChunk(File file) throws URISyntaxException {
-    BlockingQueue<Server> localImportQueue = new LinkedBlockingDeque<>();
-    BlockingQueue<File> remoteImportQueue = new LinkedBlockingDeque<>();
+    localImportQueue = new LinkedBlockingDeque<>();
+    remoteImportQueue = new LinkedBlockingDeque<>();
     if (!startBlazegraphInstance(localImportQueue, file.getAbsolutePath()).isRunning() ||
         !importToLocalBlazegraphInstance(localImportQueue, file).isRunning() ||
         !exportToNquads(remoteImportQueue, file).isRunning() ||
@@ -362,10 +366,9 @@ public class CityImportAgent extends JPSAgent {
    */
   private BlazegraphServerTask startBlazegraphInstance(BlockingQueue<Server> queue,
       String filepath) {
-    BlazegraphServerTask task = new BlazegraphServerTask(queue,
+    task = new BlazegraphServerTask(queue,
         filepath.replace(ImporterTask.EXT_FILE_GML, ImporterTask.EXT_FILE_JNL));
     serverExecutor.execute(task);
-
     return task;
   }
 
