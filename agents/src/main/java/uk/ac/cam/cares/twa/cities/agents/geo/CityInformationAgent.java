@@ -55,12 +55,11 @@ public class CityInformationAgent extends JPSAgent {
     JSONArray cityObjectInformation = new JSONArray();
     for (String cityObjectIri : uris) {
       ModelContext context = new ModelContext(route, getNamespace(cityObjectIri)+ "/");
-      CityObject cityObject = context.createNewModel(CityObject.class, cityObjectIri);
+      CityObject cityObject = context.createHollowModel(CityObject.class, cityObjectIri);
       if (lazyload) {
         context.pullAll(cityObject);
       }
       else {
-        // new method here specially for cia
         context.recursivePullAll(cityObject, 1);
       }
       ArrayList<CityObject> cityObjectList = new ArrayList<>();
