@@ -45,9 +45,9 @@ var KMLDataSource = /** @class */ (function (_super) {
         // response is a list of JSON elements
         var result = new Map();
 
-        if ($.isArray(response) && response.length > 0) {
-            if ($.isArray(response[0]) && response[0].length > 0) {
-                if ($.isArray(response[0][0]) && response[0][0].length > 0) {
+        if (jQuery.isArray(response) && response.length > 0) {
+            if (jQuery.isArray(response[0]) && response[0].length > 0) {
+                if (jQuery.isArray(response[0][0]) && response[0][0].length > 0) {
                     var data = response[0][0][0];
                     for (var key in data) {
                         if (key == null) {
@@ -110,10 +110,10 @@ var KMLDataSource = /** @class */ (function (_super) {
         console.log(clickedObject);
 
         // REQUEST FOR CityInformationAgent.
-        var iri = clickedObject.iriPrefix + clickedObject._name;
+        var iri = clickedObject._iriPrefix + clickedObject._name;
         iri.endsWith('/') ? iri : iri = iri + '/';
 
-        $.ajax({
+        jQuery.ajax({
             url: "http://localhost:8080/agents/cityobjectinformation",
             type: 'POST',
             data: JSON.stringify({iris: [iri]}),
