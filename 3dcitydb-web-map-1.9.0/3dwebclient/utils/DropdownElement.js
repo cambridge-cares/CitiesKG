@@ -64,19 +64,26 @@ function removePrefix(result){
 
 function getInputParams() {
 	var parameters = {};
-	var onto_elements = {};
-
 	var text_inputs = document.getElementsByClassName('text_gfa');
+	var onto_use = {};
+	var onto_programme = {};
+
 	for (let i = 0; i < text_inputs.length; i++) {
 		var text_item = text_inputs.item(i).firstChild;
 		var sibling = text_inputs.item(i).nextElementSibling.firstChild;
 		var checkbox = document.getElementById(text_inputs.item(i).firstChild.textContent);
 		if (checkbox !== null) {
-			onto_elements[text_item.textContent] = sibling.value;
-			parameters[checkbox.parentElement.className] = onto_elements;
+			if (checkbox.parentElement.className == USE_PREDICATE) {
+				onto_use[text_item.textContent] = sibling.value;
+			} else {
+				onto_programme[text_item.textContent] = sibling.value;
+			}
 		} else {
 			parameters[text_item.textContent] = sibling.value;
 		}
 	}
-	return parameters;
+	parameters[USE_PREDICATE] = onto_use;
+	parameters[PROGRAMME_PREDICATE] =  onto_programme;
+	console.log(parameters)
+	return JSON.stringify(parameters);
 }
