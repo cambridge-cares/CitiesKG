@@ -61,11 +61,6 @@ public class CityInformationAgentTest {
     }
 
     @Test
-    public void testProcessRequestParameters() {
-
-    }
-
-    @Test
     public void testValidateInput() {
         CityInformationAgent agent = new CityInformationAgent();
         JSONObject requestParams = new JSONObject();
