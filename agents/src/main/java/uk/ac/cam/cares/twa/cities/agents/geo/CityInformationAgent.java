@@ -3,7 +3,6 @@ package uk.ac.cam.cares.twa.cities.agents.geo;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
 import javax.servlet.annotation.WebServlet;
@@ -17,7 +16,6 @@ import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 import uk.ac.cam.cares.jps.base.http.Http;
-import uk.ac.cam.cares.twa.cities.models.geo.GenericAttribute;
 
 
 /**
