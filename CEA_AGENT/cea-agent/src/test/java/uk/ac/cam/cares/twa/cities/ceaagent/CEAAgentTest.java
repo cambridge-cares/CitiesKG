@@ -48,7 +48,7 @@ public class CEAAgentTest extends TestCase {
         CEAAgent agent = new CEAAgent();
         ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
 
-        assertEquals(47, agent.getClass().getDeclaredFields().length);
+        assertEquals(48, agent.getClass().getDeclaredFields().length);
 
         Field URI_ACTION;
         Field URI_UPDATE;
@@ -168,6 +168,8 @@ public class CEAAgentTest extends TestCase {
             FS = agent.getClass().getDeclaredField("FS");
             FS.setAccessible(true);
             assertEquals(FS.get(agent), System.getProperty("file.separator"));
+
+            // Test readConfig()
             ocgmlUri = agent.getClass().getDeclaredField("ocgmlUri");
             ocgmlUri.setAccessible(true);
             assertEquals(ocgmlUri.get(agent), config.getString("uri.ontology.ontocitygml"));
@@ -217,6 +219,122 @@ public class CEAAgentTest extends TestCase {
     public void testCEAAgentMethods() {
         CEAAgent agent = new CEAAgent();
         assertEquals(29, agent.getClass().getDeclaredMethods().length);
+    }
+
+    @Test
+    public void testProcessRequestParameters() {
+        CEAAgent agent = PowerMockito.spy(new CEAAgent());
+
+        TimeSeriesClient<OffsetDateTime> client = mock(TimeSeriesClient.class);
+
+        Method processRequestParameters = null;
+
+        //Test update
+        JSONObject requestParams = new JSONObject();
+        requestParams.put(CEAAgent.KEY_REQ_URL, "http://localhost:8086/agents/cea/update");
+        requestParams.put(CEAAgent.KEY_IRI, "['http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/']");
+        requestParams.put(CEAAgent.KEY_TARGET_URL, "http://localhost:8086/agents/cea/update");
+
+        doReturn(true).when(agent).validateInput(any());
+        doReturn("").when(agent).checkBlazegraphAndTimeSeriesInitialised(anyString(), any());
+        doReturn("testBuilding").when(agent).sparqlUpdate(any(),any(),anyString(), anyInt());
+        doNothing().when(agent).sparqlGenAttributeUpdate(anyString(),anyString());
+
+        List<OffsetDateTime> times = mock(List.class);
+        List<String> test_areas = mock(List.class);
+        List<Double> values = mock(List.class);
+
+        try {
+            PowerMockito.whenNew(TimeSeriesClient.class).withAnyArguments().thenReturn(client);
+            PowerMockito.doReturn(test_areas).when(agent, "getList", any(), anyString());
+            PowerMockito.doReturn(times).when(agent, "getTimesList", any(), anyString());
+            PowerMockito.doReturn(values).when(agent, "getTimeSeriesList", any(), anyString(), anyInt());
+            PowerMockito.doNothing().when(agent, "addDataToTimeSeries", any(),  any(),  any());
+        } catch(Exception e){
+            fail();
+        }
+
+        try{
+            processRequestParameters = agent.getClass().getDeclaredMethod("processRequestParameters", JSONObject.class);
+        } catch(NoSuchMethodException e) {
+            fail();
+        }
+
+
+        try {
+            JSONObject returnParams = (JSONObject) processRequestParameters.invoke(agent, requestParams);
+            verify(agent, times(1)).sparqlUpdate(any(),any(),anyString(), anyInt());
+            verify(agent, times(1)).sparqlGenAttributeUpdate(anyString(),anyString());
+            assertEquals(requestParams,returnParams);
+        } catch(InvocationTargetException | IllegalAccessException e) {
+            fail();
+        }
+
+        //Test run
+        requestParams.remove(CEAAgent.KEY_REQ_URL);
+        requestParams.put(CEAAgent.KEY_REQ_URL, "http://localhost:8086/agents/cea/run");
+
+        String test_value = "test";
+        try {
+            PowerMockito.doReturn(test_value).when(agent, "getValue", anyString(), anyString());
+            PowerMockito.doNothing().when(agent, "runCEA", anyList(),  anyList(),  anyInt());
+        } catch(Exception e){
+            fail();
+        }
+
+        try {
+            JSONObject returnParams = (JSONObject) processRequestParameters.invoke(agent, requestParams);
+            assertEquals(requestParams,returnParams);
+        } catch(InvocationTargetException | IllegalAccessException e) {
+            fail();
+        }
+
+        //Test query
+        requestParams.remove(CEAAgent.KEY_REQ_URL);
+        requestParams.put(CEAAgent.KEY_REQ_URL, "http://localhost:8086/agents/cea/query");
+
+        String testUnit = "testUnit";
+        String testScalar = "testScalar";
+        ArrayList<String> testList = mock(ArrayList.class);
+        when(testList.get(0)).thenReturn(testScalar);
+        when(testList.get(1)).thenReturn(testUnit);
+
+        String testReturnValue = "testAnnual";
+        TimeSeries<OffsetDateTime> timeSeries = mock(TimeSeries.class);
+
+        doReturn(testList).when(agent).getDataIRI(anyString(), anyString());
+        doReturn(testReturnValue).when(agent).calculateAnnual(any(), anyString());
+        doReturn(timeSeries).when(agent).retrieveData(anyString());
+        doReturn(testUnit).when(agent).getUnit(anyString());
+
+        List<String> time_series_strings = new ArrayList<>();
+        List<String> scalar_strings = new ArrayList<>();
+
+        try {
+            Field TIME_SERIES = agent.getClass().getDeclaredField("TIME_SERIES");
+            time_series_strings = (List<String>) TIME_SERIES.get(agent);
+            Field SCALARS = agent.getClass().getDeclaredField("SCALARS");
+            scalar_strings = (List<String>) SCALARS.get(agent);
+        } catch(NoSuchFieldException | IllegalAccessException e){
+            fail();
+        }
+
+        try {
+            JSONObject returnParams = (JSONObject) processRequestParameters.invoke(agent, requestParams);
+            for(String scalar: scalar_strings){
+                String result = returnParams.get(CEAAgent.ENERGY_PROFILE).toString();
+                String expected = "\""+scalar+"\""+":\"testScalar testUnit\"";
+                assertTrue(result.contains(expected));
+            }
+            for(String ts: time_series_strings){
+                String result = returnParams.get(CEAAgent.ENERGY_PROFILE).toString();
+                String expected = "\""+ts+"\""+":\"testAnnual testUnit\"";
+                assertTrue(result.contains(expected));
+            }
+        } catch(InvocationTargetException | IllegalAccessException e) {
+            fail();
+        }
+
     }
 
     @Test
@@ -755,17 +873,23 @@ public class CEAAgentTest extends TestCase {
     @Test
     public void testSparqlUpdate() throws Exception {
         CEAAgent agent = spy(new CEAAgent());
-        Method sparqlUpdate = agent.getClass().getDeclaredMethod("sparqlUpdate", String.class, String.class, String.class, String.class, String.class, LinkedHashMap.class, String.class);
+        Method sparqlUpdate = agent.getClass().getDeclaredMethod("sparqlUpdate", LinkedHashMap.class, LinkedHashMap.class, String.class, Integer.class);
         assertNotNull(sparqlUpdate);
 
         LinkedHashMap<String,String> iris_mock = mock(LinkedHashMap.class);
         when(iris_mock.get(anyString())).thenReturn("test");
 
+        LinkedHashMap<String,List<String>> scalars_mock = mock(LinkedHashMap.class);
+        List<String> test_scalars = new ArrayList<>();
+        test_scalars.add("test");
+        when(scalars_mock.get(anyString())).thenReturn(test_scalars);
+
+        Integer testCounter = 0;
         String uriString = "http://localhost/kings-lynn-open-data/cityobject/UUID_test/";
         String expected = "http://localhost/kings-lynn-open-data/energyprofile/";
 
         doNothing().when(agent).updateStore(anyString(), anyString());
-        String result = (String) sparqlUpdate.invoke(agent, "test", "test", "test", "test", "test", iris_mock, uriString );
+        String result = (String) sparqlUpdate.invoke(agent, scalars_mock, iris_mock, uriString, testCounter );
 
         assertTrue( result.contains(expected));
 

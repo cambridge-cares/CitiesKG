@@ -21,6 +21,8 @@ import java.util.*;
 import javax.servlet.annotation.WebServlet;
 import java.util.concurrent.*;
 import java.net.URISyntaxException;
+import java.util.stream.Stream;
+
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
@@ -64,7 +66,8 @@ public class CEAAgent extends JPSAgent {
     public static final String KEY_PV_WALL_WEST_SUPPLY= "PV_supply_wall_west";
     public static final String KEY_TIMES= "times";
 
-    public static final List<String> TIME_SERIES = Arrays.asList("grid_demand","electricity_demand","heating_demand", "cooling_demand", "PV_supply_roof","PV_supply_wall_south", "PV_supply_wall_north", "PV_supply_wall_east", "PV_supply_wall_west");
+    public List<String> TIME_SERIES = Arrays.asList(KEY_GRID_DEMAND,KEY_ELECTRICITY_DEMAND,KEY_HEATING_DEMAND,KEY_COOLING_DEMAND, KEY_PV_ROOF_SUPPLY,KEY_PV_WALL_SOUTH_SUPPLY, KEY_PV_WALL_NORTH_SUPPLY,KEY_PV_WALL_EAST_SUPPLY, KEY_PV_WALL_WEST_SUPPLY);
+    public List<String> SCALARS = Arrays.asList(KEY_PV_ROOF_AREA,KEY_PV_WALL_NORTH_AREA,KEY_PV_WALL_SOUTH_AREA,KEY_PV_WALL_EAST_AREA, KEY_PV_WALL_WEST_AREA);
 
     public final int NUM_CEA_THREADS = 1;
     private final ThreadPoolExecutor CEAExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_CEA_THREADS);
@@ -116,12 +119,12 @@ public class CEAAgent extends JPSAgent {
                         timeSeries.add(iriList);
                     }
 
+                    LinkedHashMap<String, List<String>> scalars = new LinkedHashMap<>();
+
                     // parse PV area data
-                    List<String> areas_roof = getList(requestParams, KEY_PV_ROOF_AREA);
-                    List<String> areas_wall_south = getList(requestParams, KEY_PV_WALL_SOUTH_AREA);
-                    List<String> areas_wall_north = getList(requestParams, KEY_PV_WALL_NORTH_AREA);
-                    List<String> areas_wall_east = getList(requestParams, KEY_PV_WALL_EAST_AREA);
-                    List<String> areas_wall_west= getList(requestParams, KEY_PV_WALL_WEST_AREA);
+                    for(String scalar: SCALARS){
+                        scalars.put(scalar, getList(requestParams, scalar));
+                    }
 
                     List<LinkedHashMap<String,String>> fixedIris = new ArrayList<>();
 
@@ -130,7 +133,7 @@ public class CEAAgent extends JPSAgent {
                         String buildingUri = checkBlazegraphAndTimeSeriesInitialised(uri, fixedIris);
                         if (buildingUri=="") {
                             createTimeSeries(uri,fixedIris);
-                            buildingUri = sparqlUpdate(areas_roof.get(i), areas_wall_south.get(i), areas_wall_north.get(i), areas_wall_east.get(i), areas_wall_west.get(i), fixedIris.get(i), uri);
+                            buildingUri = sparqlUpdate(scalars, fixedIris.get(i), uri, i);
                             sparqlGenAttributeUpdate(uri, buildingUri);
                         }
                         addDataToTimeSeries(timeSeries.get(i), times, fixedIris.get(i));
@@ -151,18 +154,20 @@ public class CEAAgent extends JPSAgent {
                 for (int i = 0; i < uriArray.length(); i++) {
                     String uri = uriArray.getString(i);
                     JSONObject data = new JSONObject();
-                    for (Field key : CEAOutputData.class.getDeclaredFields()) {
-                        ArrayList<String> results = getDataIRI(uri, key.getName());
-                        if (!results.isEmpty()) {
+                    List<String> allMeasures = new ArrayList<>();
+                    Stream.of(TIME_SERIES, SCALARS).forEach(allMeasures::addAll);
+                    for (String measurement: allMeasures) {
+                        ArrayList<String> result = getDataIRI(uri, measurement);
+                        if (!result.isEmpty()) {
                             String value;
-                            if (!key.getName().contains("area")) {
-                                value = calculateAnnual(retrieveData(results.get(0)), results.get(0));
+                            if (TIME_SERIES.contains(measurement)) {
+                                value = calculateAnnual(retrieveData(result.get(0)), result.get(0));
                             } else {
-                                value = results.get(0);
+                                value = result.get(0);
                             }
                             if(!(value.equals("0") || value.equals("0.0"))){
-                                value += " " + getUnit(results.get(1));
-                                data.put(key.getName(), value);
+                                value += " " + getUnit(result.get(1));
+                                data.put(measurement, value);
                             }
 
                         }
@@ -214,8 +219,7 @@ public class CEAAgent extends JPSAgent {
      * @return List of data
      */
     private List<String> getList (JSONObject requestParams, String key) {
-        String arrayString = requestParams.get(key).toString();
-        JSONArray array = new JSONArray(arrayString);
+        JSONArray array = (JSONArray) requestParams.get(key);
         List<String> list = new ArrayList<>();
         for (int j = 0; j < array.length(); j++) {
             list.add(array.getString(j));
@@ -231,14 +235,15 @@ public class CEAAgent extends JPSAgent {
      * @return List of data
      */
     private List<Double> getTimeSeriesList (JSONObject requestParams, String key, Integer index) {
-        String arrayString = requestParams.get(key).toString();
-        JSONArray array = new JSONArray(arrayString);
-
-        JSONArray timeDataArray = new JSONArray(array.get(index).toString());
         List<Double> timeSeriesList = new ArrayList<>();
 
-        for (int i = 0; i < timeDataArray.length(); i++) {
-            timeSeriesList.add(Double.valueOf(timeDataArray.get(i).toString()));
+        if (requestParams.has(key)) {
+            JSONArray array = (JSONArray) requestParams.get(key);
+            JSONArray timeDataArray = (JSONArray) array.get(index);
+
+            for (int i = 0; i < timeDataArray.length(); i++) {
+                timeSeriesList.add(Double.valueOf(timeDataArray.get(i).toString()));
+            }
         }
         return timeSeriesList;
     }
@@ -251,8 +256,7 @@ public class CEAAgent extends JPSAgent {
      * @return List of times
      */
     private List<OffsetDateTime> getTimesList (JSONObject requestParams, String key) {
-        String arrayString = requestParams.get(key).toString();
-        JSONArray array = new JSONArray(arrayString);
+        JSONArray array = (JSONArray) requestParams.get(key);
         List<OffsetDateTime> list = new ArrayList<>();
         for (int j = 0; j < array.length(); j++) {
             OffsetDateTime odt = OffsetDateTime.parse(array.getString(j));
@@ -344,6 +348,8 @@ public class CEAAgent extends JPSAgent {
             CEAExecutor.execute(task);
         }
         catch(URISyntaxException e){
+            e.printStackTrace();
+            throw new JPSRuntimeException(e);
         }
     }
     /**
@@ -366,7 +372,7 @@ public class CEAAgent extends JPSAgent {
 
             // Create a iri for each measurement
             List<String> iris = new ArrayList<>();
-            LinkedHashMap<String, String> iriMapping = new LinkedHashMap<>();;
+            LinkedHashMap<String, String> iriMapping = new LinkedHashMap<>();
             for(String measurement: TIME_SERIES){
                 String iri = getGraph(uriString,ENERGY_PROFILE)+measurement+"_"+UUID.randomUUID();
                 iris.add(iri);
@@ -677,16 +683,13 @@ public class CEAAgent extends JPSAgent {
     }
     /**
      * builds a SPARQL update using output from CEA simulations
-     * @param PV_roof_area the area of roof PV Cells
-     * @param PV_wall_south_area the area of south wall PV Cells
-     * @param PV_wall_north_area the area of north wall PV Cells
-     * @param PV_wall_east_area the area of east wall PV Cells
-     * @param PV_wall_west_area the area of west wall PV Cells
+     * @param scalars map of scalar measurements
      * @param tsIris map of time series iris
      * @param uriString city object id
+     * @param uriCounter keep track of uris
      * @return building uri in energy profile graph
      */
-    public String sparqlUpdate( String PV_roof_area, String PV_wall_south_area, String PV_wall_north_area, String PV_wall_east_area, String PV_wall_west_area, LinkedHashMap<String, String> tsIris, String uriString) {
+    public String sparqlUpdate( LinkedHashMap<String, List<String>> scalars, LinkedHashMap<String, String> tsIris, String uriString, Integer uriCounter) {
         String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
 
         String buildingUri = outputGraphUri + "Building_UUID_" + UUID.randomUUID() + "/";
@@ -776,7 +779,7 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(PVAreaRoofUri), "om:hasValue", NodeFactory.createURI(PVAreaRoofValueUri))
                         .addInsert("?graph", NodeFactory.createURI(PVAreaRoofValueUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(PVAreaRoofValueUri), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaRoofValueUri), "om:hasNumericalValue", PV_roof_area)
+                        .addInsert("?graph", NodeFactory.createURI(PVAreaRoofValueUri), "om:hasNumericalValue", scalars.get(KEY_PV_ROOF_AREA).get(uriCounter))
                         .addInsert("?graph", NodeFactory.createURI(PVAreaRoofValueUri), "om:hasUnit", "om:squareMetre")
                         .addInsert("?graph", NodeFactory.createURI(pvRoofPanelsUri), "thinkhome:producesEnergy", NodeFactory.createURI(PVRoofSupplyUri))
                         .addInsert("?graph", NodeFactory.createURI(PVRoofSupplyUri), "rdf:type", "ontoubemmp:ElectricitySupply")
@@ -796,7 +799,7 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(PVAreaWallSouthUri), "om:hasValue", NodeFactory.createURI(PVAreaWallSouthValueUri))
                         .addInsert("?graph", NodeFactory.createURI(PVAreaWallSouthValueUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(PVAreaWallSouthValueUri), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallSouthValueUri), "om:hasNumericalValue", PV_wall_south_area)
+                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallSouthValueUri), "om:hasNumericalValue", scalars.get(KEY_PV_WALL_SOUTH_AREA).get(uriCounter))
                         .addInsert("?graph", NodeFactory.createURI(PVAreaWallSouthValueUri), "om:hasUnit", "om:squareMetre")
                         .addInsert("?graph", NodeFactory.createURI(pvWallSouthPanelsUri), "thinkhome:producesEnergy", NodeFactory.createURI(PVWallSouthSupplyUri))
                         .addInsert("?graph", NodeFactory.createURI(PVWallSouthSupplyUri), "rdf:type", "ontoubemmp:ElectricitySupply")
@@ -816,7 +819,7 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(PVAreaWallNorthUri), "om:hasValue", NodeFactory.createURI(PVAreaWallNorthValueUri))
                         .addInsert("?graph", NodeFactory.createURI(PVAreaWallNorthValueUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(PVAreaWallNorthValueUri), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallNorthValueUri), "om:hasNumericalValue", PV_wall_north_area)
+                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallNorthValueUri), "om:hasNumericalValue", scalars.get(KEY_PV_WALL_NORTH_AREA).get(uriCounter))
                         .addInsert("?graph", NodeFactory.createURI(PVAreaWallNorthValueUri), "om:hasUnit", "om:squareMetre")
                         .addInsert("?graph", NodeFactory.createURI(pvWallNorthPanelsUri), "thinkhome:producesEnergy", NodeFactory.createURI(PVWallNorthSupplyUri))
                         .addInsert("?graph", NodeFactory.createURI(PVWallNorthSupplyUri), "rdf:type", "ontoubemmp:ElectricitySupply")
@@ -836,7 +839,7 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(PVAreaWallEastUri), "om:hasValue", NodeFactory.createURI(PVAreaWallEastValueUri))
                         .addInsert("?graph", NodeFactory.createURI(PVAreaWallEastValueUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(PVAreaWallEastValueUri), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallEastValueUri), "om:hasNumericalValue", PV_wall_east_area)
+                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallEastValueUri), "om:hasNumericalValue", scalars.get(KEY_PV_WALL_EAST_AREA).get(uriCounter))
                         .addInsert("?graph", NodeFactory.createURI(PVAreaWallEastValueUri), "om:hasUnit", "om:squareMetre")
                         .addInsert("?graph", NodeFactory.createURI(pvWallEastPanelsUri), "thinkhome:producesEnergy", NodeFactory.createURI(PVWallEastSupplyUri))
                         .addInsert("?graph", NodeFactory.createURI(PVWallEastSupplyUri), "rdf:type", "ontoubemmp:ElectricitySupply")
@@ -856,7 +859,7 @@ public class CEAAgent extends JPSAgent {
                         .addInsert("?graph", NodeFactory.createURI(PVAreaWallWestUri), "om:hasValue", NodeFactory.createURI(PVAreaWallWestValueUri))
                         .addInsert("?graph", NodeFactory.createURI(PVAreaWallWestValueUri), "rdf:type", "owl:NamedIndividual")
                         .addInsert("?graph", NodeFactory.createURI(PVAreaWallWestValueUri), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallWestValueUri), "om:hasNumericalValue", PV_wall_west_area)
+                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallWestValueUri), "om:hasNumericalValue", scalars.get(KEY_PV_WALL_WEST_AREA).get(uriCounter))
                         .addInsert("?graph", NodeFactory.createURI(PVAreaWallWestValueUri), "om:hasUnit", "om:squareMetre")
                         .addInsert("?graph", NodeFactory.createURI(pvWallWestPanelsUri), "thinkhome:producesEnergy", NodeFactory.createURI(PVWallWestSupplyUri))
                         .addInsert("?graph", NodeFactory.createURI(PVWallWestSupplyUri), "rdf:type", "ontoubemmp:ElectricitySupply")
@@ -906,19 +909,19 @@ public class CEAAgent extends JPSAgent {
                 .addPrefix("thinkhome", thinkhomeUri);
 
         switch(value) {
-            case "grid_demand":
+            case KEY_GRID_DEMAND:
                 wb2.addWhere("?energyProfileBuilding", "purlEnaeq:consumesEnergy", "?grid")
                         .addWhere("?grid", "rdf:type", "ontoubemmp:GridConsumption")
                         .addWhere("?grid", "om:hasValue", "?measure")
                            .addWhere("?measure", "om:hasUnit", "?unit");
                 break;
-            case "electricity_demand":
+            case KEY_ELECTRICITY_DEMAND:
                 wb2.addWhere("?energyProfileBuilding", "purlEnaeq:consumesEnergy", "?electricity")
                         .addWhere("?electricity", "rdf:type", "ontoubemmp:ElectricityConsumption")
                         .addWhere("?electricity", "om:hasValue", "?measure")
                         .addWhere("?measure", "om:hasUnit", "?unit");
                 break;
-            case "heating_demand":
+            case KEY_HEATING_DEMAND:
                 wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?heatingDevice")
                         .addWhere("?heatingDevice", "rdf:type", "purlEnaeq:HeatingSystem")
                         .addWhere("?heatingDevice", "purlEnaeq:consumesEnergy", "?heating")
@@ -926,7 +929,7 @@ public class CEAAgent extends JPSAgent {
                         .addWhere("?heating", "om:hasValue", "?measure")
                         .addWhere("?measure", "om:hasUnit", "?unit");
                 break;
-            case "cooling_demand":
+            case KEY_COOLING_DEMAND:
                 wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?coolingDevice")
                         .addWhere("?coolingDevice", "rdf:type", "ontoubemmp:CoolingSystem")
                         .addWhere("?coolingDevice", "purlEnaeq:consumesEnergy", "?cooling")
@@ -934,7 +937,7 @@ public class CEAAgent extends JPSAgent {
                         .addWhere("?cooling", "om:hasValue", "?measure")
                         .addWhere("?measure", "om:hasUnit", "?unit");
                 break;
-            case "PV_supply_roof":
+            case KEY_PV_ROOF_SUPPLY:
                 wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
                         .addWhere("?PVPanels", "rdf:type", "ontoubemmp:RoofPVPanels")
                         .addWhere("?PVPanels", "thinkhome:producesEnergy", "?supply")
@@ -942,7 +945,7 @@ public class CEAAgent extends JPSAgent {
                         .addWhere("?supply", "om:hasValue", "?measure")
                         .addWhere("?measure", "om:hasUnit", "?unit");
                 break;
-            case "PV_supply_wall_south":
+            case KEY_PV_WALL_SOUTH_SUPPLY:
                 wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
                         .addWhere("?PVPanels", "rdf:type", "ontoubemmp:SouthWallPVPanels")
                         .addWhere("?PVPanels", "thinkhome:producesEnergy", "?supply")
@@ -950,7 +953,7 @@ public class CEAAgent extends JPSAgent {
                         .addWhere("?supply", "om:hasValue", "?measure")
                         .addWhere("?measure", "om:hasUnit", "?unit");
                 break;
-            case "PV_supply_wall_north":
+            case KEY_PV_WALL_NORTH_SUPPLY:
                 wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
                         .addWhere("?PVPanels", "rdf:type", "ontoubemmp:NorthWallPVPanels")
                         .addWhere("?PVPanels", "thinkhome:producesEnergy", "?supply")
@@ -958,7 +961,7 @@ public class CEAAgent extends JPSAgent {
                         .addWhere("?supply", "om:hasValue", "?measure")
                         .addWhere("?measure", "om:hasUnit", "?unit");
                 break;
-            case "PV_supply_wall_east":
+            case KEY_PV_WALL_EAST_SUPPLY:
                 wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
                         .addWhere("?PVPanels", "rdf:type", "ontoubemmp:EastWallPVPanels")
                         .addWhere("?PVPanels", "thinkhome:producesEnergy", "?supply")
@@ -966,7 +969,7 @@ public class CEAAgent extends JPSAgent {
                         .addWhere("?supply", "om:hasValue", "?measure")
                         .addWhere("?measure", "om:hasUnit", "?unit");
                 break;
-            case "PV_supply_wall_west":
+            case KEY_PV_WALL_WEST_SUPPLY:
                 wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
                         .addWhere("?PVPanels", "rdf:type", "ontoubemmp:WestWallPVPanels")
                         .addWhere("?PVPanels", "thinkhome:producesEnergy", "?supply")
@@ -974,7 +977,7 @@ public class CEAAgent extends JPSAgent {
                         .addWhere("?supply", "om:hasValue", "?measure")
                         .addWhere("?measure", "om:hasUnit", "?unit");
                 break;
-            case "PV_area_roof":
+            case KEY_PV_ROOF_AREA:
                 wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
                         .addWhere("?PVPanels", "rdf:type", "ontoubemmp:RoofPVPanels")
                         .addWhere("?PVPanels", "ontoubemmp:hasArea", "?area")
@@ -983,7 +986,7 @@ public class CEAAgent extends JPSAgent {
                         .addWhere("?value", "om:hasNumericalValue", "?measure")
                         .addWhere("?value", "om:hasUnit", "?unit");
                 break;
-            case "PV_area_wall_south":
+            case KEY_PV_WALL_SOUTH_AREA:
                 wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
                         .addWhere("?PVPanels", "rdf:type", "ontoubemmp:SouthWallPVPanels")
                         .addWhere("?PVPanels", "ontoubemmp:hasArea", "?area")
@@ -992,7 +995,7 @@ public class CEAAgent extends JPSAgent {
                         .addWhere("?value", "om:hasNumericalValue", "?measure")
                         .addWhere("?value", "om:hasUnit", "?unit");
                 break;
-            case "PV_area_wall_north":
+            case KEY_PV_WALL_NORTH_AREA:
                 wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
                         .addWhere("?PVPanels", "rdf:type", "ontoubemmp:NorthWallPVPanels")
                         .addWhere("?PVPanels", "ontoubemmp:hasArea", "?area")
@@ -1001,7 +1004,7 @@ public class CEAAgent extends JPSAgent {
                         .addWhere("?value", "om:hasNumericalValue", "?measure")
                         .addWhere("?value", "om:hasUnit", "?unit");
                 break;
-            case "PV_area_wall_east":
+            case KEY_PV_WALL_EAST_AREA:
                 wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
                         .addWhere("?PVPanels", "rdf:type", "ontoubemmp:EastWallPVPanels")
                         .addWhere("?PVPanels", "ontoubemmp:hasArea", "?area")
@@ -1010,7 +1013,7 @@ public class CEAAgent extends JPSAgent {
                         .addWhere("?value", "om:hasNumericalValue", "?measure")
                         .addWhere("?value", "om:hasUnit", "?unit");
                 break;
-            case "PV_area_wall_west":
+            case KEY_PV_WALL_WEST_AREA:
                 wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
                         .addWhere("?PVPanels", "rdf:type", "ontoubemmp:WestWallPVPanels")
                         .addWhere("?PVPanels", "ontoubemmp:hasArea", "?area")
