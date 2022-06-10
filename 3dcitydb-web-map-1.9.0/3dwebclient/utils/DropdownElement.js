@@ -11,7 +11,7 @@ function buildQuery(predicate){
 
 function getDropdownElements(predicate, element_type, dropdown_type) {
 	$.ajax({
-		url:"http://theworldavatar.com:83/access-agent/access",
+		url:"http://www.theworldavatar.com:83/access-agent/access",
 		type: 'POST',
 		data: JSON.stringify({targetresourceiri:CONTEXT + "-" + CITY , sparqlquery: buildQuery(predicate)}),
 		dataType: 'json',
@@ -20,17 +20,17 @@ function getDropdownElements(predicate, element_type, dropdown_type) {
 			var results = JSON.parse(data["result"]);
 			for (index in results){
 				var checkbox_line = results[index]["g"];
-				appendElement(removePrefix(checkbox_line), element_type, dropdown_type)
+				appendElement(removePrefix(checkbox_line), predicate, element_type, dropdown_type)
 			}
 		}
 	});
 }
 
-function appendElement(line,element_type, dropdown_type){
+function appendElement(line, predicate, element_type, dropdown_type){
 	var some_element =
-			"<div>" +
+			"<div class='" + predicate + "'>" +
 			"<div id='" + line + "' class='checkbox'>" +
-			"<input type='checkbox' onchange='updateGfaRows()'/></div>" +
+			"<input type='checkbox' onchange='updateGfaRows()' onblur='getInputParams()'/></div>" +
 			"<div class=" + element_type + ">" + line + "</div>" +
 			"</div>";
 	$(dropdown_type).append(some_element)
@@ -64,13 +64,19 @@ function removePrefix(result){
 
 function getInputParams() {
 	var parameters = {};
+	var onto_elements = {};
 
 	var text_inputs = document.getElementsByClassName('text_gfa');
 	for (let i = 0; i < text_inputs.length; i++) {
 		var text_item = text_inputs.item(i).firstChild;
 		var sibling = text_inputs.item(i).nextElementSibling.firstChild;
-
-		parameters[text_item.textContent] = sibling.value;
+		var checkbox = document.getElementById(text_inputs.item(i).firstChild.textContent);
+		if (checkbox !== null) {
+			onto_elements[text_item.textContent] = sibling.value;
+			parameters[checkbox.parentElement.className] = onto_elements;
+		} else {
+			parameters[text_item.textContent] = sibling.value;
+		}
 	}
-	console.log(parameters);
+	return parameters;
 }
