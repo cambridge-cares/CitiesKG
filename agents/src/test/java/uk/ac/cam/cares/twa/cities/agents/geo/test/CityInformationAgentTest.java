@@ -32,7 +32,7 @@ public class CityInformationAgentTest {
     public void testNewCityInformationAgentFields() {
         CityInformationAgent agent = new CityInformationAgent();
 
-        assertEquals(7, agent.getClass().getDeclaredFields().length);
+        assertEquals(11, agent.getClass().getDeclaredFields().length);
 
         try {
             assertEquals("/cityobjectinformation", agent.getClass().getDeclaredField("URI_CITY_OBJECT_INFORMATION").get(agent));
@@ -57,7 +57,7 @@ public class CityInformationAgentTest {
     public void testNewCityInformationAgentMethods() {
         CityInformationAgent agent = new CityInformationAgent();
 
-        assertEquals(5, agent.getClass().getDeclaredMethods().length);
+        assertEquals(6, agent.getClass().getDeclaredMethods().length);
     }
 
     @Test
