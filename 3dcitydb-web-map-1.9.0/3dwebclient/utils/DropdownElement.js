@@ -100,11 +100,11 @@ function getValidPlots(){
 	$.ajax({
 		url: "http://localhost:8080/agents/cityobjectinformation",
 		type: 'POST',
-		data: JSON.stringify({'iris': [iri], 'filters': input_parameters}),
+		data: JSON.stringify({'iris': [iri], 'context': {"http://www.theworldavatar.com:83/access-agent/access": input_parameters}}),
 		dataType: 'json',
 		contentType: 'application/json',
 		success: function (data, status_message, xhr) {
-			console.log(data["filtered_objects"]);
+			console.log(data["filtered"]);
 		}
 	});
 }
