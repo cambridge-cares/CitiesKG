@@ -1,5 +1,7 @@
 var CONTEXT = "citieskg";
-var CITY = (new URL(window.location.href).searchParams.get('city'))
+var CITY = (new URL(window.location.href).searchParams.get('city'));
+var TOTAL_GFA_KEY = 'TotalGFA';
+var input_parameters;
 
 
 function buildQuery(predicate){
@@ -73,17 +75,36 @@ function getInputParams() {
 		var sibling = text_inputs.item(i).nextElementSibling.firstChild;
 		var checkbox = document.getElementById(text_inputs.item(i).firstChild.textContent);
 		if (checkbox !== null) {
-			if (checkbox.parentElement.className == USE_PREDICATE) {
-				onto_use[text_item.textContent] = sibling.value;
+			var text_item_onto_class = text_item.textContent.replace(" ", "");
+			if (checkbox.parentElement.className === USE_PREDICATE) {
+				onto_use[text_item_onto_class] = sibling.value;
 			} else {
-				onto_programme[text_item.textContent] = sibling.value;
+				onto_programme[text_item_onto_class] = sibling.value;
 			}
 		} else {
-			parameters[text_item.textContent] = sibling.value;
+			parameters[TOTAL_GFA_KEY] = sibling.value;
 		}
 	}
-	parameters[USE_PREDICATE] = onto_use;
-	parameters[PROGRAMME_PREDICATE] =  onto_programme;
-	console.log(parameters)
-	return JSON.stringify(parameters);
+	if (Object.keys(onto_use).length > 0) {
+		parameters[USE_PREDICATE] = onto_use;
+	}
+	if (Object.keys(onto_programme).length > 0) {
+		parameters[PROGRAMME_PREDICATE] =  onto_programme;
+	}
+	input_parameters = parameters;
+	getValidPlots();
+}
+
+function getValidPlots(){
+	var iri = "http://localhost:8080/agents/cityobjectinformation";
+	$.ajax({
+		url: "http://localhost:8080/agents/cityobjectinformation",
+		type: 'POST',
+		data: JSON.stringify({'iris': [iri], 'filters': input_parameters}),
+		dataType: 'json',
+		contentType: 'application/json',
+		success: function (data, status_message, xhr) {
+			console.log(data["filtered_objects"]);
+		}
+	});
 }
