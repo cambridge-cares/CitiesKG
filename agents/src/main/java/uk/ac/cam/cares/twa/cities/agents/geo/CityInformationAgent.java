@@ -186,17 +186,11 @@ public class CityInformationAgent extends JPSAgent {
     if (predicate.equals(KEY_USE_PREDICATE)) {
       for (String use_class: onto_class) {
         wb.addWhere(QM +ZONE, ONTOZONING_PREFIX+":" + KEY_USE_PREDICATE, ONTOZONING_PREFIX + ":" + use_class);
-        wb.addUnion( new WhereBuilder()
-            .addPrefix(ONTOZONING_PREFIX, onto_zoning)
-            .addWhere(QM +ZONE, ONTOZONING_PREFIX+":" + "mayAllowUse", ONTOZONING_PREFIX + ":" + use_class));
       }
     } else if (predicate.equals(KEY_PROGRAMME_PREDICATE)) {
+      wb.addWhere(QM +ZONE, ONTOZONING_PREFIX + ":" + KEY_USE_PREDICATE, QM + USE);
       for (String programme_class : onto_class) {
-        wb.addWhere(QM +ZONE, ONTOZONING_PREFIX + ":" + KEY_USE_PREDICATE, QM + USE);
         wb.addWhere(QM + USE,  ONTOZONING_PREFIX + ":" + KEY_PROGRAMME_PREDICATE, ONTOZONING_PREFIX + ":" + programme_class);
-        wb.addUnion( new WhereBuilder()
-            .addPrefix(ONTOZONING_PREFIX, onto_zoning)
-            .addWhere(QM + USE,  ONTOZONING_PREFIX + ":" + "mayAllowProgramme", ONTOZONING_PREFIX + ":" + programme_class));
       }
     }
     wb.addWhere(QM + CITY_OBJECT_ID, ONTOZONING_PREFIX + ":" + HAS_ZONE_PREDICATE, QM +ZONE);

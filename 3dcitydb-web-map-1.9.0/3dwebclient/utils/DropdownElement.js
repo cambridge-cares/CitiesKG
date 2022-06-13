@@ -75,7 +75,7 @@ function getInputParams() {
 		var sibling = text_inputs.item(i).nextElementSibling.firstChild;
 		var checkbox = document.getElementById(text_inputs.item(i).firstChild.textContent);
 		if (checkbox !== null) {
-			var text_item_onto_class = text_item.textContent.replace(" ", "");
+			var text_item_onto_class = text_item.textContent.replaceAll(" ", "");
 			if (checkbox.parentElement.className === USE_PREDICATE) {
 				onto_use[text_item_onto_class] = sibling.value;
 			} else {
