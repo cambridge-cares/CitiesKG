@@ -13,6 +13,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
+import uk.ac.cam.cares.twa.cities.AccessAgentMapping;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
 import uk.ac.cam.cares.jps.base.http.Http;
@@ -52,7 +53,16 @@ public class CityInformationAgent extends JPSAgent {
     }
     JSONArray cityObjectInformation = new JSONArray();
     for (String cityObjectIri : uris) {
-      ModelContext context = new ModelContext(route, getNamespace(cityObjectIri)+ "/");
+      String graphNamespace = getNamespace(cityObjectIri)+ "/";
+
+      // get route from graph namespace endpoint
+      // if endpoint is not found in mapping, use value read from config.properties
+      String route = AccessAgentMapping.getTargetResourceID(graphNamespace);
+      if (route != null) {
+        this.route = route;
+      }
+
+      ModelContext context = new ModelContext(this.route, graphNamespace);
       CityObject cityObject = context.createHollowModel(CityObject.class, cityObjectIri);
       if (lazyload) {
         context.pullAll(cityObject);
