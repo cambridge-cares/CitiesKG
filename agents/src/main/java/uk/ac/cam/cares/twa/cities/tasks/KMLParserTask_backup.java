@@ -13,7 +13,7 @@ import uk.ac.cam.cares.twa.cities.model.geo.Utilities;
 
 // the output of running this class should be the generation of the summary file in csv
 // (gmlid, envelope[xmin, xmax, ymin, ymax], envelopeCentroid, corresponding file)
-public class KMLParserTask implements Runnable{
+public class KMLParserTask_backup implements Runnable{
 
   private String[] filelist;
   private File currFile;
@@ -23,16 +23,16 @@ public class KMLParserTask implements Runnable{
   private String inputDir;
   public List<String[]> dataContent = new ArrayList<>();
   private List<String> gmlidList = new ArrayList<>();
-  private KMLTilingTask kmltiling;
+  private KMLTilingTask_backup kmltiling;
   private String outputFile;
 
-  public KMLParserTask(String intputPath, String outputDir, String CRSinDegree, String CRSinMeter, int initTileSize){
+  public KMLParserTask_backup(String intputPath, String outputDir, String CRSinDegree, String CRSinMeter, int initTileSize){
 
     this.filelist = Utilities.getInputFiles(intputPath);
     this.inputDir = Utilities.getInputDir(intputPath);
 
     this.outputDir = Utilities.createDir(outputDir);
-    this.kmltiling = new KMLTilingTask(CRSinDegree, CRSinMeter, outputDir, initTileSize); // 4326 --> 25833 or 4326 --> 3414
+    this.kmltiling = new KMLTilingTask_backup(CRSinDegree, CRSinMeter, outputDir, initTileSize); // 4326 --> 25833 or 4326 --> 3414
   }
 
   @Override
@@ -112,6 +112,7 @@ public class KMLParserTask implements Runnable{
     }
   }
 
+  /** for the record in CSV, this method convert double[] to a string with x0#y0#z0#x1#y1#z1 */
   private String arr2str (double[] arr){
     String output = "";
     String sep = "#";

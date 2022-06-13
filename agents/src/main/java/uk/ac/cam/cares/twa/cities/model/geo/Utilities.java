@@ -33,6 +33,7 @@ public class Utilities {
     this.inputDir = getInputDir(path);
   }
 
+  /** Retrieve input files from the path which can be either a directory or a file */
   public static String[] getInputFiles(String path){
     File inputPath = new File(path);
     String[] filesList = null;

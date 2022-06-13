@@ -16,15 +16,17 @@ import java.util.List;
 import org.apache.commons.io.FilenameUtils;
 import uk.ac.cam.cares.twa.cities.model.geo.Utilities;
 
-public class KMLCleanerTask implements Runnable{
+
+/** The KMLCleanerTask intends to remove duplicated entries of geometries due to the database
+ *  Not necessary to be used */
+public class KMLCleanerTask_backup implements Runnable{
   private String inputFolder;   // contains the split kml files
   private String outputFolder;  // contains cleaned kml files
   private String projectFolder; // contains the merged kml file and the original file
   private String[] filesList;
-  public KMLCleanerTask(String input, String output){
+  public KMLCleanerTask_backup(String input, String output){
     inputFolder = input;
     outputFolder = output;
-
   }
 
   @Override
@@ -89,7 +91,7 @@ public class KMLCleanerTask implements Runnable{
   public static void main(String[] args){
     String input = "C:\\Users\\Shiying\\PycharmProjects\\citygml_splitter\\ura_split_200";
     String output = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder";
-    KMLCleanerTask cleaner = new KMLCleanerTask(input, output);
+    KMLCleanerTask_backup cleaner = new KMLCleanerTask_backup(input, output);
     cleaner.run();
   }
 }

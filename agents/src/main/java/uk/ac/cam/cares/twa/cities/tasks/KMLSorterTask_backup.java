@@ -12,7 +12,7 @@ import java.nio.file.Files;
 import java.util.*;
 import uk.ac.cam.cares.twa.cities.model.geo.Utilities;
 
-public class KMLSorterTask implements Runnable {
+public class KMLSorterTask_backup implements Runnable {
 
     //TODO replace all / with system file separator
 
@@ -43,7 +43,7 @@ public class KMLSorterTask implements Runnable {
     private String inputPath;
     private HashMap<String, Boolean> fileStatus = new HashMap<>();
 
-    public KMLSorterTask(String inputPath, String projectFolder, String masterJSONFile, String sortedSummary){
+    public KMLSorterTask_backup(String inputPath, String projectFolder, String masterJSONFile, String sortedSummary){
 
         this.inputPath = inputPath;
         this.unsortedDir = Utilities.getInputDir(inputPath);

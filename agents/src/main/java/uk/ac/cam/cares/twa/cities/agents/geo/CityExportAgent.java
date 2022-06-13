@@ -1,19 +1,12 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
-import com.google.gson.JsonElement;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.stream.Stream;
@@ -22,13 +15,9 @@ import kong.unirest.Unirest;
 import kong.unirest.UnirestException;
 import org.apache.http.HttpException;
 import org.apache.http.protocol.HTTP;
-import org.citydb.config.project.database.DatabaseSrs;
-import org.citydb.database.connection.DatabaseMetaData;
-import org.eclipse.jetty.server.Server;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
-import org.openrdf.query.algebra.Str;
+import org.json.XML;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.tasks.ExporterExpTask;
@@ -40,10 +29,9 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
-import uk.ac.cam.cares.twa.cities.tasks.ImporterTask;
-import uk.ac.cam.cares.twa.cities.tasks.KMLParserTask;
-import uk.ac.cam.cares.twa.cities.tasks.KMLSorterTask;
-import uk.ac.cam.cares.twa.cities.tasks.KMLTilingTask;
+import uk.ac.cam.cares.twa.cities.tasks.KMLParserTask_backup;
+import uk.ac.cam.cares.twa.cities.tasks.KMLSorterTask_backup;
+import uk.ac.cam.cares.twa.cities.tasks.KMLTilingTask_backup;
 
 /**
  * A JPSAgent framework-based CityExportAgent class used to export urban model
@@ -71,13 +59,15 @@ public class CityExportAgent extends JPSAgent {
         public String[] displayMode;
         public String outputPath;
         public String[] gmlIds;
-        public Params (String namespaceIri, String directory, JSONObject serverInfo, String[] displayMode, String outputPath, String[] gmlIds){
+        public String srsname;
+        public Params (String namespaceIri, String directory, JSONObject serverInfo, String[] displayMode, String outputPath, String[] gmlIds, String srsname){
             this.namespaceIri = namespaceIri;
             this.outputDir = directory;
             this.serverInfo = serverInfo;
             this.displayMode = displayMode;
             this.outputPath = outputPath;
             this.gmlIds = gmlIds;
+            this.srsname = srsname;
         }
     }
 
@@ -98,6 +88,7 @@ public class CityExportAgent extends JPSAgent {
     private JSONArray gmlidParams;
     private String outputDir;
     private JSONObject serverInfo;
+    private String srsName;
     private String[] displayMode = {"false","false", "false", "false"};
 
     private String[] displayOptions = {"FOOTPRINT", "EXTRUDED", "GEOMETRY", "COLLADA"};
@@ -118,7 +109,7 @@ public class CityExportAgent extends JPSAgent {
             serverInfo = getServerInfo(namespaceIri);
 
             // test
-            String srsname = getCrsInfo(namespaceIri);
+            srsName = getCrsInfo(namespaceIri);
 
             // Process "displayform"
             List<String> availOptions = Arrays.asList(displayOptions);
@@ -158,7 +149,7 @@ public class CityExportAgent extends JPSAgent {
                     // Retrieve a list of gmlids from a file, and execute the export process
                     String[] gmlidArray = getGmlidFromFile(fileList.get(i));
                     String outputFileName = getOutputName(fileList.get(i));
-                    Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outputFileName, gmlidArray);
+                    Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outputFileName, gmlidArray, srsName);
                     taskParamsQueue.add(taskParams);
                     //lastTask = exportKml(gmlidArray, taskParams);
                     //result.put("outputPath", exportKml(gmlidArray, taskParams));  // this can not indicate that the process is done
@@ -188,7 +179,7 @@ public class CityExportAgent extends JPSAgent {
                 String[] gmlidsArray = new String[buildingIds.size()];
                 gmlidsArray = buildingIds.toArray(gmlidsArray);
                 String outSingleFileName = getOutputName(null);
-                Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outSingleFileName, gmlidsArray);
+                Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outSingleFileName, gmlidsArray,srsName);
                 //result.put("outputPath", exportKml(gmlidsArray, taskParams));
             }
 
@@ -264,46 +255,36 @@ public class CityExportAgent extends JPSAgent {
         return gmlidsArray;
     }
 
-    /** Using jdbc framework to query the TWA and get the srsInfo */
+    /** Using HTTP request to query the TWA and get the srsInfo
+     *  The postprocessing of the response is a bit complicated */
     private String getCrsInfo (String namespaceIri)  {
         String sparqlquery = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#> \n" +
             "SELECT ?s ?srid ?srsname { ?s ocgml:srid ?srid; ocgml:srsname ?srsname }";
+
+        String srsname = null;
 
         try { HttpResponse<?> response = Unirest.post(namespaceIri)
             .header(HTTP.CONTENT_TYPE, "application/sparql-query")
             .body(sparqlquery)
             .socketTimeout(300000)
-            .asEmpty();
+            .asString();
             int respStatus = response.getStatus();
+            String responseBody = null;
+            // handle the response
             if (respStatus != HttpURLConnection.HTTP_OK) {
                 throw new HttpException(namespaceIri + " " + respStatus);
+            } else {
+                responseBody = (String) response.getBody();
+                JSONObject json = XML.toJSONObject(responseBody);
+                JSONObject srsObject = (JSONObject) XML.toJSONObject(responseBody).getJSONObject("sparql").getJSONObject("results").getJSONObject("result").getJSONArray("binding").get(2);
+                srsname = srsObject.getString("literal");
             }
         } catch ( HttpException | UnirestException e) {
             throw new JPSRuntimeException(e);
         }
 
-        String srsname = null;
         return srsname;
-        /*
-        // jdbc:jena:remote:query=http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/&update=http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/
-        String connectionStr = "jdbc:jena:remote:query=" + namespaceIri + "&update=" + namespaceIri;
-
-        String srsname = null;
-
-        try (Connection conn = DriverManager.getConnection(connectionStr);
-            Statement statement = conn.createStatement();
-            ResultSet rs = statement.executeQuery(sparqlquery)) {
-            if (rs.next()) {
-                srsname = rs.getString("srsname");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return srsname;
-        */
-
     }
-
 
     /**
      * create the output path of the generated kml file for indexed input files.
@@ -406,13 +387,13 @@ public class CityExportAgent extends JPSAgent {
         long start = System.currentTimeMillis();
 
         // 1. KMLParserTask
-        KMLParserTask parserTask = new KMLParserTask(path2unsortedKML, path2sortedKML, CRSinDegree, CRSinMeter, initTileSize);
+        KMLParserTask_backup parserTask = new KMLParserTask_backup(path2unsortedKML, path2sortedKML, CRSinDegree, CRSinMeter, initTileSize);
         parserTask.run();
         double[] updatedExtent = parserTask.getUpdatedExtent();
         String summaryCSV = parserTask.getOutFile();
 
         // 2. KMLTilingTask
-        KMLTilingTask kmltiling = new KMLTilingTask(CRSinDegree, CRSinMeter, path2sortedKML, initTileSize);  // 25833
+        KMLTilingTask_backup kmltiling = new KMLTilingTask_backup(CRSinDegree, CRSinMeter, path2sortedKML, initTileSize);  // 25833
         kmltiling.setUp(summaryCSV);
         kmltiling.updateExtent(updatedExtent);  // whole berlin: new double[]{13.09278683392157, 13.758936971880468, 52.339762874361156, 52.662766032905616}
         kmltiling.run();
@@ -421,7 +402,7 @@ public class CityExportAgent extends JPSAgent {
 
 
         // 3. KMLSorterTask
-        KMLSorterTask kmlSorter=new KMLSorterTask(path2unsortedKML, path2sortedKML, masterJSONFile, sortedCSVFile);
+        KMLSorterTask_backup kmlSorter=new KMLSorterTask_backup(path2unsortedKML, path2sortedKML, masterJSONFile, sortedCSVFile);
         kmlSorter.run();
         long end = System.currentTimeMillis();
         System.out.println("The re-arrangement of KMLs takes: " + (end - start) / 1000 + " seconds.");
