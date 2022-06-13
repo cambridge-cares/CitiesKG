@@ -50,7 +50,7 @@ var KMLDataSource = /** @class */ (function (_super) {
                 if (jQuery.isArray(response[0][0]) && response[0][0].length > 0) {
                     var data = response[0][0][0];
                     for (var key in data) {
-                        if (key == null) {
+                        if (key == null || key == 'context') {
                             continue;
                         }
                         else if (key === "genericAttributeIris" || key === "externalReferencesIris"){
@@ -61,7 +61,6 @@ var KMLDataSource = /** @class */ (function (_super) {
                         }
                         else if (key === "externalReferences"){
                             this.extRefKeysManager(data[key], result);
-
                         }
                         else {
                             result[key] = data[key];
