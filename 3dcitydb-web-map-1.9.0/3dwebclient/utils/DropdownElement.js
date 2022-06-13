@@ -92,11 +92,12 @@ function getInputParams() {
 		parameters[PROGRAMME_PREDICATE] =  onto_programme;
 	}
 	input_parameters = parameters;
+	console.log(input_parameters);
 	getValidPlots();
 }
 
 function getValidPlots(){
-	var iri = "http://localhost:8080/agents/cityobjectinformation";
+	var iri = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/";
 	$.ajax({
 		url: "http://localhost:8080/agents/cityobjectinformation",
 		type: 'POST',

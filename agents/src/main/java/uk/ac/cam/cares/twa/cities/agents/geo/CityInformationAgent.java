@@ -16,7 +16,6 @@ import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
-import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
@@ -41,6 +40,7 @@ public class CityInformationAgent extends JPSAgent {
   public static final String KEY_TOTAL_GFA = "TotalGFA";
   public static final String KEY_USE_PREDICATE = "allowsUse";
   public static final String KEY_PROGRAMME_PREDICATE = "allowsProgramme";
+  public static final String HAS_ZONE_PREDICATE = "hasZone";
   private static final String QM  =  "?";
   private static final String ZONE = "zone";
   private static final String USE =  "use";
@@ -181,20 +181,25 @@ public class CityInformationAgent extends JPSAgent {
 
   private Query getFilterQuery(String predicate, ArrayList<String> onto_class) {
 
-    WhereBuilder wb =
-        new WhereBuilder()
-            .addPrefix(ONTOZONING_PREFIX, onto_zoning);
+    WhereBuilder wb = new WhereBuilder()
+        .addPrefix(ONTOZONING_PREFIX, onto_zoning);
     if (predicate.equals(KEY_USE_PREDICATE)) {
       for (String use_class: onto_class) {
         wb.addWhere(QM +ZONE, ONTOZONING_PREFIX+":" + KEY_USE_PREDICATE, ONTOZONING_PREFIX + ":" + use_class);
+        wb.addUnion( new WhereBuilder()
+            .addPrefix(ONTOZONING_PREFIX, onto_zoning)
+            .addWhere(QM +ZONE, ONTOZONING_PREFIX+":" + "mayAllowUse", ONTOZONING_PREFIX + ":" + use_class));
       }
     } else if (predicate.equals(KEY_PROGRAMME_PREDICATE)) {
       for (String programme_class : onto_class) {
         wb.addWhere(QM +ZONE, ONTOZONING_PREFIX + ":" + KEY_USE_PREDICATE, QM + USE);
         wb.addWhere(QM + USE,  ONTOZONING_PREFIX + ":" + KEY_PROGRAMME_PREDICATE, ONTOZONING_PREFIX + ":" + programme_class);
+        wb.addUnion( new WhereBuilder()
+            .addPrefix(ONTOZONING_PREFIX, onto_zoning)
+            .addWhere(QM + USE,  ONTOZONING_PREFIX + ":" + "mayAllowProgramme", ONTOZONING_PREFIX + ":" + programme_class));
       }
     }
-    wb.addWhere(QM + CITY_OBJECT_ID, ONTOZONING_PREFIX + ":hasZone", QM +ZONE);
+    wb.addWhere(QM + CITY_OBJECT_ID, ONTOZONING_PREFIX + ":" + HAS_ZONE_PREDICATE, QM +ZONE);
     SelectBuilder sb = new SelectBuilder()
         .addVar(QM + CITY_OBJECT_ID)
         .addGraph(NodeFactory.createURI("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/"), wb);
