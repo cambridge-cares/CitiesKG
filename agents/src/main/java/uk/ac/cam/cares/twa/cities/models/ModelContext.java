@@ -290,7 +290,7 @@ public class ModelContext {
    * objects in the normal {@link #loadAll(Class, String)} behaviour.
    */
   public <T extends Model> List<T> recursivePullAllWhere(Class<T> ofClass, WhereBuilder condition, int recursionRadius) {
-    currentPullSession = new RecursivePullSession(recursionRadius);
+    currentPullSession = new RecursivePullSession(recursionRadius-1);
     List<T> models = pullAllWhere(ofClass, condition);
     for (T model : models) currentPullSession.queue(model);
     currentPullSession.execute();
@@ -344,7 +344,7 @@ public class ModelContext {
    * objects, using the same field names in the normal {@link #loadPartial(Class, String, String...)} behaviour.
    */
   public <T extends Model> List<T> recursivePullPartialWhere(Class<T> ofClass, WhereBuilder condition, int recursionRadius, String... fieldNames) {
-    currentPullSession = new RecursivePullSession(recursionRadius);
+    currentPullSession = new RecursivePullSession(recursionRadius-1, fieldNames);
     List<T> models = pullPartialWhere(ofClass, condition, fieldNames);
     for (T model : models) currentPullSession.queue(model);
     currentPullSession.execute();
