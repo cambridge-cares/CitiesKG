@@ -2,7 +2,6 @@ package uk.ac.cam.cares.twa.cities.agents.geo;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.ResourceBundle;
 import java.util.Set;
 import javax.servlet.annotation.WebServlet;
@@ -52,17 +51,14 @@ public class CityInformationAgent extends JPSAgent {
       uris.add(iri.toString());
     }
     JSONArray cityObjectInformation = new JSONArray();
-    for (String cityObjectIri : uris) {
-      String graphNamespace = getNamespace(cityObjectIri)+ "/";
 
-      // get route from graph namespace endpoint
-      // if endpoint is not found in mapping, use value read from config.properties
-      String route = AccessAgentMapping.getTargetResourceID(graphNamespace);
+    for (String cityObjectIri : uris) {
+      String route = AccessAgentMapping.getTargetResourceID(cityObjectIri);
       if (route != null) {
         this.route = route;
       }
 
-      ModelContext context = new ModelContext(this.route, graphNamespace);
+      ModelContext context = new ModelContext(this.route, AccessAgentMapping.getNamespaceEndpoint(cityObjectIri));
       CityObject cityObject = context.createHollowModel(CityObject.class, cityObjectIri);
       if (lazyload) {
         context.pullAll(cityObject);
@@ -143,10 +139,5 @@ public class CityInformationAgent extends JPSAgent {
     ResourceBundle config = ResourceBundle.getBundle("config");
     lazyload = Boolean.getBoolean(config.getString("loading.status"));
     route = config.getString("uri.route");
-  }
-
-  private String getNamespace(String uriString) {
-    String[] splitUri = uriString.split("/");
-    return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 2));
   }
 }

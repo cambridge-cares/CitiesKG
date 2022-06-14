@@ -57,7 +57,7 @@ public class CityInformationAgentTest {
     public void testNewCityInformationAgentMethods() {
         CityInformationAgent agent = new CityInformationAgent();
 
-        assertEquals(5, agent.getClass().getDeclaredMethods().length);
+        assertEquals(4, agent.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -132,20 +132,5 @@ public class CityInformationAgentTest {
     public void testReadConfig() {
         // this test is deliberately left blank
         // method is already tested in testNewCityInformationAgentFields
-    }
-
-    @Test
-    public void testGetNamespace() {
-        String uriString = "http://localhost:9999/blazegraph/namespace/berlin/sparql/cityobject/UUID_123/";
-        CityInformationAgent agent = new CityInformationAgent();
-
-        try {
-            Method getNamespace = agent.getClass().getDeclaredMethod("getNamespace", String.class);
-            getNamespace.setAccessible(true);
-
-            assertEquals("http://localhost:9999/blazegraph/namespace/berlin/sparql", getNamespace.invoke(agent, uriString));
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            fail();
-        }
     }
 }
