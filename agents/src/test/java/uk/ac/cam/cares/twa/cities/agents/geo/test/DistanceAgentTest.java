@@ -189,10 +189,37 @@ public class DistanceAgentTest {
             requestParams.remove("distances");
         }
 
+        // test case when route is not overridden
+        iris.put("http://www.theworldavatar.com:83/citieskg/namespace/example/sparql/cityobject/UUID_1/");
+        try {
+            Field route = distanceAgent.getClass().getDeclaredField("route");
+            route.setAccessible(true);
+            distanceAgent.processRequestParameters(requestParams);
+            assertEquals(ResourceBundle.getBundle("config").getString("uri.route"), route.get(distanceAgent));
+        } catch (Exception e) {
+            fail();
+        } finally {
+            requestParams.remove("distances");
+        }
+
+        // test case when route is overridden
+        iris.remove(0);
+        iris.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/cityobject/UUID_1/");
+        try {
+            Field route = distanceAgent.getClass().getDeclaredField("route");
+            route.setAccessible(true);
+            distanceAgent.processRequestParameters(requestParams);
+            assertEquals("singaporeEPSG24500", route.get(distanceAgent));
+        } catch (Exception e) {
+            fail();
+        } finally {
+            requestParams.remove("distances");
+        }
+
         // test case when iris contains two values, request params should have a distance array with size 1
-        iris.put("http://localhost/berlin/cityobject/UUID_1/");
-        iris.put("http://localhost/berlin/cityobject/UUID_2/");
-        requestParams.put(DistanceAgent.KEY_IRIS, iris);
+        iris.remove(0);
+        iris.put("http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/UUID_1/");
+        iris.put("http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/UUID_2/");
         JSONArray result = new JSONArray().put(new JSONObject().put("distance", "10.0"));
         try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = Mockito.mockStatic(AccessAgentCaller.class)) {
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
@@ -206,8 +233,7 @@ public class DistanceAgentTest {
         }
 
         // test case when iris contains 3 values, request params should have a distance array with size 3
-        iris.put("http://localhost/berlin/cityobject/UUID_3/");
-        requestParams.put(DistanceAgent.KEY_IRIS, iris);
+        iris.put("http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/UUID_3/");
         try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = Mockito.mockStatic(AccessAgentCaller.class)) {
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
                     .thenReturn(result);
