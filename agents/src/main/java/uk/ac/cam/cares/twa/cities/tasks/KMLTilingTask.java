@@ -39,9 +39,12 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import javax.xml.stream.XMLStreamException;
 import org.gdal.ogr.Geometry;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+import uk.ac.cam.cares.twa.cities.agents.geo.CityExportAgent.Params;
 import uk.ac.cam.cares.twa.cities.model.geo.EnvelopeCentroid;
 import uk.ac.cam.cares.twa.cities.model.geo.Transform;
 import uk.ac.cam.cares.twa.cities.model.geo.Utilities;
@@ -55,9 +58,9 @@ import uk.ac.cam.cares.twa.cities.model.geo.Utilities;
  *
  *  KMLTiler: This class will help to calculate the NumColRow (number of rows and columns) based on the initial tile size
  *
- *  KMLSorter:
+ *  KMLSorter: Sort the unsorted KML files based on the csv_summary
  *
- *                 */
+ **/
 public class KMLTilingTask implements Runnable{
 
   // KMLTilingTask class variables
@@ -70,9 +73,9 @@ public class KMLTilingTask implements Runnable{
   private String displayForm;
 
   // KML Parsing
-  private final String outCsvName = "summary";
+  private static String outCsvName = "summary";
   private static String underScore = "_";
-  private final String outFileExt = ".csv";
+  private static String outFileExt = ".csv";
   private final String outputDir;
   public List<String[]> dataContent = new ArrayList<>();
   private List<String> gmlidList = new ArrayList<>();
@@ -91,27 +94,24 @@ public class KMLTilingTask implements Runnable{
   private int nCol;
   private static String layerName = "test";
   private static String[] displayOptions = {"FOOTPRINT", "EXTRUDED", "GEOMETRY", "COLLADA"};
-
   private double tileLength;  // RowNumber
   private double tileWidth;  // ColNumber
   private Path tilingCSV;  // created by KML tiling step, with tiles position
-
-
   // KML Sorting
   private HashMap<String, List<Feature>> tileFeatureMap = new HashMap<>(); // hashmap containing tile name as key,
   private HashMap<String, ArrayList<String[]>> csvData;
   private HashMap<String, Feature> featuresMap = new HashMap<>();// <gmlid, features>
   private HashMap<String, Boolean> fileStatus = new HashMap<>();
   private int count = 0; // count the number of buildings
-  private int files = 0;
   private int buildingInTiles = 0;
-
+  //private final BlockingQueue<Params> taskParamsQueue;
+  private Boolean stop = false;
 
   public KMLTilingTask(String path2unsortedKML, String path2sortedKML, int databaseCRS, String displayForm) {
 
     // KMLTilingTask: Initialize the variables
     CRSinMeter = databaseCRS; //"32648"; "25833"
-    if (Arrays.asList(displayOptions).indexOf(displayForm) != -1){
+    if (Arrays.asList(displayOptions).indexOf(displayForm.toUpperCase()) != -1){
       this.displayForm = displayForm; // "extruded"
     } else{
       throw new IllegalArgumentException("Invalid displayform is giving to KMLTilingTask.");
@@ -131,16 +131,27 @@ public class KMLTilingTask implements Runnable{
     Textent_Xmax = Double.NEGATIVE_INFINITY;
     Textent_Ymin = Double.POSITIVE_INFINITY;
     Textent_Ymax = Double.NEGATIVE_INFINITY;
+    System.out.println("KMLTilingTask Initialzation Thread Name: " + Thread.currentThread().getName());
+
+  }
+
+  public void stop() {
+    stop = true;
+  }
+
+  public boolean isRunning() {
+    return !stop;
   }
 
   @Override
   public void run() {
-
-    parseKML();
-
-    tilingKML();
-
-
+    while(isRunning()){
+        System.out.println("KMLTilingTask RUN Thread Name: " + Thread.currentThread().getName());
+        parseKML();
+        tilingKML();
+        sortingKML();
+        stop();
+      }
   }
 
   /** KML parsing : parse the kml to java object and calculate the extent of the whole region */
@@ -153,7 +164,7 @@ public class KMLTilingTask implements Runnable{
     for (String file : inputFiles){
       currFile = new File(file);
 
-      System.out.println("Reading the file: " + currFile);
+      System.out.println("Reading the file: " + currFile + " with the size of " + currFile.length());
 
       KMLRoot kmlRoot = null;
       try {
@@ -234,8 +245,8 @@ public class KMLTilingTask implements Runnable{
     csvContent.add(header);
     csvContent.addAll(dataContent);
 
-    Path outputCSV = Paths.get(this.outputDir, this.outCsvName, underScore,
-        String.valueOf(dataContent.size()), this.outFileExt);
+    Path outputCSV = Paths.get(this.outputDir, this.outCsvName + "_" +
+        String.valueOf(dataContent.size()) + this.outFileExt);
 
     try (CSVWriter writer = new CSVWriter(new FileWriter(outputCSV.toString()))) {
       writer.writeAll(csvContent);
@@ -256,7 +267,7 @@ public class KMLTilingTask implements Runnable{
     if (geomEnvelope[2] <= this.extent_Ymin) { this.extent_Ymin = geomEnvelope[2]; }
     if (geomEnvelope[3] >= this.extent_Ymax) { this.extent_Ymax = geomEnvelope[3]; }
 
-    double[] Tenvelope = Transform.reprojectEnvelope(geomEnvelope, Integer.valueOf(crsWGS48), Integer.valueOf(CRSinMeter));
+    double[] Tenvelope = Transform.reprojectEnvelope(geomEnvelope, crsWGS48, CRSinMeter);
 
     if (Tenvelope[0] <= this.Textent_Xmin) { this.Textent_Xmin = Tenvelope[0]; }
     if (Tenvelope[1] >= this.Textent_Xmax) { this.Textent_Xmax = Tenvelope[1]; }
@@ -276,7 +287,7 @@ public class KMLTilingTask implements Runnable{
     if (origEnvelop[2] <= this.extent_Ymin) { this.extent_Ymin = origEnvelop[2]; }
     if (origEnvelop[3] >= this.extent_Ymax) { this.extent_Ymax = origEnvelop[3]; }
 
-    double[][] Tgeometry = Transform.reprojectGeometry(geometry, Integer.valueOf(crsWGS48), Integer.valueOf(CRSinMeter));
+    double[][] Tgeometry = Transform.reprojectGeometry(geometry, crsWGS48, CRSinMeter);
 
     double[] Tenvelop = Transform.getEnvelop(Tgeometry);
 
@@ -295,7 +306,7 @@ public class KMLTilingTask implements Runnable{
     Path path2masterJson = createMasterJson();
 
     // Start calculating tile position
-    long start1 = System.currentTimeMillis();
+    //long start1 = System.currentTimeMillis();
     List<String[]> csvData = new ArrayList<>();
 
     // Read the csv_summary from KML parsing step (parserCSV)
@@ -332,8 +343,8 @@ public class KMLTilingTask implements Runnable{
 
     String[] CSVHeader = {"gmlid", "envelope", "envelopeCentroid", "tiles", "filename"};
 
-    this.tilingCSV = Paths.get(this.outputDir, "sorted", underScore, this.outCsvName, underScore,
-        String.valueOf(dataContent.size()), this.outFileExt);
+    this.tilingCSV = Paths.get(this.outputDir, "sorted"+ "_" + this.outCsvName + "_" +
+        String.valueOf(dataContent.size()) + this.outFileExt);
 
     try (CSVWriter writer = new CSVWriter(new FileWriter(this.tilingCSV.toString()))) {
         writer.writeNext(CSVHeader);
@@ -618,8 +629,11 @@ public class KMLTilingTask implements Runnable{
           MultiGeometry geoms = (MultiGeometry) placemark.getGeometry();
           for (de.micromata.opengis.kml.v_2_2_0.Geometry geom : geoms.getGeometry()) {
             Polygon polygon = (Polygon) geom;
-            polygon.setExtrude(true);
-            polygon.setTessellate(true);
+
+            if (displayForm == "extruded"){
+              polygon.setExtrude(true);
+              polygon.setTessellate(true);
+            }
           }
           // put feature info into list to be returned
           featuresInTile.add(feature);
