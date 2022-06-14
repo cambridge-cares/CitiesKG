@@ -43,6 +43,7 @@ public class ExporterExpTask implements Runnable {
   public ExporterExpTask(BlockingQueue<Params> taskParamsQueue) {
     this.taskParamsQueue = taskParamsQueue;
     this.lod = 5;   // by default: highest lod available
+    System.out.println("ExporterTask initialization Thread Name: " + Thread.currentThread().getName());
   }
 
   public boolean getStopStatus() {return stop;}
@@ -62,6 +63,7 @@ public class ExporterExpTask implements Runnable {
     while (isRunning()) {
       try {
         while (!taskParamsQueue.isEmpty()) {
+          System.out.println("ExporterTask RUN Thread Name: " + Thread.currentThread().getName());
           Params taskParams = taskParamsQueue.take();
           cfgfile = setupConfig(taskParams);  // modify the gmlIds within the config file
           kmlfile = setupKmlPath(taskParams);

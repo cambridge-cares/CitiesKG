@@ -9,12 +9,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import kong.unirest.UnirestException;
 import org.apache.http.HttpException;
 import org.apache.http.protocol.HTTP;
+import org.checkerframework.checker.units.qual.K;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.XML;
@@ -31,6 +33,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import uk.ac.cam.cares.twa.cities.tasks.KMLParserTask_backup;
 import uk.ac.cam.cares.twa.cities.tasks.KMLSorterTask_backup;
+import uk.ac.cam.cares.twa.cities.tasks.KMLTilingTask;
 import uk.ac.cam.cares.twa.cities.tasks.KMLTilingTask_backup;
 
 /**
@@ -90,7 +93,7 @@ public class CityExportAgent extends JPSAgent {
     private JSONObject serverInfo;
     private String srsName;
     private String[] displayMode = {"false","false", "false", "false"};
-
+    private String inputDisplayForm;
     private String[] displayOptions = {"FOOTPRINT", "EXTRUDED", "GEOMETRY", "COLLADA"};
     private String namespaceName;
     private String tmpDirsLocation = System.getProperty("java.io.tmpdir");    //System.getProperty("java.io.tmpdir");   //"C:/tmp";  // can not have empty space on the path
@@ -98,6 +101,7 @@ public class CityExportAgent extends JPSAgent {
     //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
     private final int NUM_EXPORTER_THREADS = 1;
     private final ThreadPoolExecutor exporterExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_EXPORTER_THREADS);
+    //private final ThreadPoolExecutor tilingExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_EXPORTER_THREADS);
 
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
@@ -114,12 +118,10 @@ public class CityExportAgent extends JPSAgent {
             // Process "displayform"
             List<String> availOptions = Arrays.asList(displayOptions);
 
-            JSONArray inputDisplayForm = requestParams.getJSONArray(KEY_DISPLAYFORM);
-            for ( int i = 0; i < inputDisplayForm.length(); i ++) {
-                int index = availOptions.indexOf(
-                    inputDisplayForm.get(i).toString().toUpperCase());
-                displayMode[index] = "true";
-            }
+            inputDisplayForm = requestParams.getString(KEY_DISPLAYFORM);
+            int index = availOptions.indexOf(inputDisplayForm.toUpperCase());
+            displayMode[index] = "true";
+
             //gmlids = getInputGmlids(requestParams); // this method will process the input when it is a path or an array of gmlid
             // If gmlid contains "*", it requires the whole list of gmlid from the namespace
             // This step can take long as querying the database is long with this sparql query
@@ -142,17 +144,13 @@ public class CityExportAgent extends JPSAgent {
                     e.printStackTrace();
                 }
 
-                ExporterTask lastTask = null;
                 BlockingQueue<Params> taskParamsQueue = new LinkedBlockingDeque<>();
                 for (int i = 0 ; i < fileList.size(); ++i){
-                    //Path gmlidFile : fileList) {
                     // Retrieve a list of gmlids from a file, and execute the export process
                     String[] gmlidArray = getGmlidFromFile(fileList.get(i));
                     String outputFileName = getOutputName(fileList.get(i));
                     Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outputFileName, gmlidArray, srsName);
                     taskParamsQueue.add(taskParams);
-                    //lastTask = exportKml(gmlidArray, taskParams);
-                    //result.put("outputPath", exportKml(gmlidArray, taskParams));  // this can not indicate that the process is done
                 }
 
                 System.out.println("After for loop, Thread Name: " + Thread.currentThread().getName());
@@ -160,16 +158,14 @@ public class CityExportAgent extends JPSAgent {
                 ExporterExpTask exporterExpTask = new ExporterExpTask(taskParamsQueue);
                 exporterExecutor.execute(exporterExpTask);
 
+                String path2unsortedKML = Paths.get(outputDir, "kmlFiles").toString() ;
+                String path2sortedKML = Paths.get(outputDir).toString();
 
-                // @todo: how to capture the signal that the export process is done
-                /*
-                while (lastTask.isRunning()){
+                int databaseCRS = Integer.valueOf(srsName.split(":")[1]);
 
-                    if (!lastTask.isRunning()){
-                        System.out.println(lastTask.getOutputpath() + " has stopped");
-                        tilingKML(outputDir, outputDir);
-                    }
-                }*/
+                KMLTilingTask kmlTilingTask = new KMLTilingTask(path2unsortedKML, path2sortedKML, databaseCRS, inputDisplayForm);
+
+                exporterExecutor.execute(kmlTilingTask);  // this step will add the final task to the exporterExecutor
 
             }else{
                 ArrayList<String> buildingIds = new ArrayList<>();
@@ -207,19 +203,16 @@ public class CityExportAgent extends JPSAgent {
                 }
 
                 // Check the displayform
-                if (!requestParams.getJSONArray(KEY_DISPLAYFORM).isEmpty()) {
+                if (!requestParams.getString(KEY_DISPLAYFORM).isEmpty()) {
                     List<String> availOptions = Arrays.asList(displayOptions);
-                    JSONArray inputDisplayForm = requestParams.getJSONArray(KEY_DISPLAYFORM);
-                    for ( int i = 0; i < inputDisplayForm.length(); i ++){
-                        int index = availOptions.indexOf(
-                            inputDisplayForm.get(i).toString().toUpperCase());
-                        if (index >= 0){
-                            System.out.println("Valid displayform: " + inputDisplayForm.get(i).toString());
-                        } else {
-                            System.out.println("InValid displayform: " + inputDisplayForm.get(i).toString());
-                        }
+                    String inputDisplayForm = requestParams.getString(KEY_DISPLAYFORM);
+                    int index = availOptions.indexOf(inputDisplayForm.toUpperCase());
+                    if (index >= 0){
+                        System.out.println("Valid displayform: " + inputDisplayForm);
+                    } else {
+                        System.out.println("InValid displayform: " + inputDisplayForm);
+                        throw new BadRequestException();
                     }
-
                 }
                 /*
                 if (!requestParams.getString(KEY_DISPLAYFORM).isEmpty()) {
