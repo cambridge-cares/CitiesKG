@@ -92,6 +92,9 @@ function getInputParams() {
 		parameters[PROGRAMME_PREDICATE] =  onto_programme;
 	}
 	input_parameters = parameters;
+	 if ((Object.keys(onto_use).length != 0) && (Object.keys(onto_programme).length != 0)) {
+		 throwNotification();
+	 }
 	console.log(input_parameters);
 	getValidPlots();
 }
@@ -108,4 +111,14 @@ function getValidPlots(){
 			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
 		}
 	});
+}
+
+function throwNotification() {
+	var popup =  document.createElement('div');
+	popup.id = "pop_up";
+	popup.className = 'pop_up_box';
+	popup.innerHTML = "Choose uses or programmes but not both!";
+	document.body.appendChild(popup);
+	setTimeout(function() {
+		$('.pop_up_box').hide() }, 5000);
 }
