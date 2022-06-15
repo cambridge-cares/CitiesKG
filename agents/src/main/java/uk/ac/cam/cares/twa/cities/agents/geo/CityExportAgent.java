@@ -31,10 +31,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
-import uk.ac.cam.cares.twa.cities.tasks.KMLParserTask_backup;
-import uk.ac.cam.cares.twa.cities.tasks.KMLSorterTask_backup;
 import uk.ac.cam.cares.twa.cities.tasks.KMLTilingTask;
-import uk.ac.cam.cares.twa.cities.tasks.KMLTilingTask_backup;
 
 /**
  * A JPSAgent framework-based CityExportAgent class used to export urban model
@@ -127,7 +124,7 @@ public class CityExportAgent extends JPSAgent {
             // This step can take long as querying the database is long with this sparql query
             // 2 modes:
             // 1) [*]
-            // 2) explicit gmlids
+            // 2) explicit gmlids in an array
 
             outputDir = Paths.get(tmpDirsLocation, "export").toString();
             gmlidParams = requestParams.getJSONArray(KEY_GMLID);
@@ -214,16 +211,6 @@ public class CityExportAgent extends JPSAgent {
                         throw new BadRequestException();
                     }
                 }
-                /*
-                if (!requestParams.getString(KEY_DISPLAYFORM).isEmpty()) {
-                    List<String> availOptions = Arrays.asList(displayOptions);
-                    int index = availOptions.indexOf(
-                        requestParams.getString(KEY_DISPLAYFORM).toUpperCase());
-                    if (index > 0) {
-                        System.out.println("Valid displayform: " + requestParams.getString(KEY_DISPLAYFORM));
-                    }
-                }*/
-
                 return true;
             } catch (Exception e) {
                 throw new BadRequestException();
@@ -364,50 +351,6 @@ public class CityExportAgent extends JPSAgent {
         exporterExecutor.execute(task);
 
         return task;
-    }
-
-    /**
-     * Re-arrange and tiling the unsorted KMLs output from ImpExp tool
-     *
-     * @param path2unsortedKML the path of the directory that contains the unsorted KMLs
-     */
-    private static void tilingKML(String path2unsortedKML, String path2sortedKML){
-        //String inputfile = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder_1\\charlottenberg_extruded_blaze.kml";
-        //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
-        String CRSinDegree = "4326";  // global WGS 84
-        String CRSinMeter = "25833";//"32648"; "25833"
-        int initTileSize = 250;
-        long start = System.currentTimeMillis();
-
-        // 1. KMLParserTask
-        KMLParserTask_backup parserTask = new KMLParserTask_backup(path2unsortedKML, path2sortedKML, CRSinDegree, CRSinMeter, initTileSize);
-        parserTask.run();
-        double[] updatedExtent = parserTask.getUpdatedExtent();
-        String summaryCSV = parserTask.getOutFile();
-
-        // 2. KMLTilingTask
-        KMLTilingTask_backup kmltiling = new KMLTilingTask_backup(CRSinDegree, CRSinMeter, path2sortedKML, initTileSize);  // 25833
-        kmltiling.setUp(summaryCSV);
-        kmltiling.updateExtent(updatedExtent);  // whole berlin: new double[]{13.09278683392157, 13.758936971880468, 52.339762874361156, 52.662766032905616}
-        kmltiling.run();
-        String masterJSONFile = kmltiling.getmasterJSONFile();
-        String sortedCSVFile = kmltiling.getsortedCSVFile();
-
-
-        // 3. KMLSorterTask
-        KMLSorterTask_backup kmlSorter=new KMLSorterTask_backup(path2unsortedKML, path2sortedKML, masterJSONFile, sortedCSVFile);
-        kmlSorter.run();
-        long end = System.currentTimeMillis();
-        System.out.println("The re-arrangement of KMLs takes: " + (end - start) / 1000 + " seconds.");
-
-    }
-
-    public static void main(String[] args) {
-        //String inputDir = "C:\\Users\\ShiyingLi\\Documents\\CKG\\Exported_data\\exported_data_whole\\";
-        String inputDir = "C:\\Users\\ShiyingLi\\Documents\\CKG\\Exported_data\\ura_footprint_2000";
-        //String inputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\charlottenberg_extruded_blaze.kml";
-        String outputDir = "C:\\Users\\ShiyingLi\\Documents\\CKG\\Exported_data\\testfolder\\";
-        tilingKML(inputDir, outputDir);
     }
 
 }
