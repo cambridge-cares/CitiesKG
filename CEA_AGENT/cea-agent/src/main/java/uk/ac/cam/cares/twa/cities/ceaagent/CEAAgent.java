@@ -13,7 +13,6 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URL;
 import java.time.OffsetDateTime;
@@ -50,6 +49,7 @@ public class CEAAgent extends JPSAgent {
     public static final String BUILDING = "building";
     public static final String SURFACE_GEOMETRY = "surfacegeometry";
     public static final String ENERGY_PROFILE = "energyprofile";
+    public static final String DATABASE_SRS = "databasesrs";
     public static final String KEY_GRID_DEMAND = "grid_demand";
     public static final String KEY_ELECTRICITY_DEMAND = "electricity_demand";
     public static final String KEY_HEATING_DEMAND = "heating_demand";
@@ -87,10 +87,11 @@ public class CEAAgent extends JPSAgent {
     private String timeSeriesUri;
     private String thinkhomeUri;
     private static String unitOntologyUri;
-    private static String QUERY_ROUTE;
-    private static String UPDATE_ROUTE;
     private String requestUrl;
     private String targetUrl;
+
+    private Map<String, String> accessAgentRoutes = new HashMap<>();
+
     public CEAAgent() {
         readConfig();
     }
@@ -141,14 +142,16 @@ public class CEAAgent extends JPSAgent {
                 } else if (requestUrl.contains(URI_ACTION)) {
                     ArrayList<CEAInputData> testData = new ArrayList<>();
                     ArrayList<String> uriStringArray = new ArrayList<>();
+                    String crs= new String();
                     for (int i = 0; i < uriArray.length(); i++) {
                         String uri = uriArray.getString(i);
                         uriStringArray.add(uri);
-                        testData.add(new CEAInputData(getValue(uri, "Envelope"), getValue(uri, "Height")));
+                        testData.add(new CEAInputData(getValue(uri, "Footprint"), getValue(uri, "Height")));
+                        if(i==0) crs = getValue(uri, "CRS"); //just get crs once - assuming all iris in same namespace
                     }
                     // Manually set thread number to 0 - multiple threads not working so needs investigating
-                    // Potentially issue is  CEA is already multi-threaded
-                    runCEA(testData, uriStringArray, 0);
+                    // Potentially issue is CEA is already multi-threaded
+                    runCEA(testData, uriStringArray, 0, crs);
                 }
             } else if (requestUrl.contains(URI_QUERY)) {
                 for (int i = 0; i < uriArray.length(); i++) {
@@ -169,7 +172,6 @@ public class CEAAgent extends JPSAgent {
                                 value += " " + getUnit(result.get(1));
                                 data.put(measurement, value);
                             }
-
                         }
                     }
                     requestParams.append(ENERGY_PROFILE, data);
@@ -289,7 +291,6 @@ public class CEAAgent extends JPSAgent {
                 requestParams.get(KEY_PV_WALL_WEST_AREA).toString().isEmpty() ||
                 requestParams.get(KEY_PV_WALL_WEST_SUPPLY).toString().isEmpty() ||
                 requestParams.get(KEY_TIMES).toString().isEmpty();
-
         return error;
     }
 
@@ -322,8 +323,6 @@ public class CEAAgent extends JPSAgent {
      */
     private void readConfig() {
         ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
-        UPDATE_ROUTE = config.getString("uri.route.local");
-        QUERY_ROUTE = config.getString("uri.route.local");
         ocgmlUri = config.getString("uri.ontology.ontocitygml");
         unitOntologyUri = config.getString("uri.ontology.om");
         ontoUBEMMPUri = config.getString("uri.ontology.ontoubemmp");
@@ -333,18 +332,20 @@ public class CEAAgent extends JPSAgent {
         thinkhomeUri=config.getString("uri.ontology.thinkhome");
         purlInfrastructureUri=config.getString("uri.ontology.purl.infrastructure");
         timeSeriesUri=config.getString("uri.ts");
+        accessAgentRoutes.put(config.getString("namespace.local.kingslynn"),config.getString("uri.route.local.kingslynn"));
+        accessAgentRoutes.put(config.getString("namespace.local.pirmasens"),config.getString("uri.route.local.pirmasens"));
     }
 
     /**
      * runs CEATask on CEAInputData and returns CEAOutputData
      *
-     * @param buildingData input data on building envelope and height
+     * @param buildingData input data on building footprint and height
      * @param uris list of input uris
      * @param threadNumber int tracking thread that is running
      */
-    private void runCEA(ArrayList<CEAInputData> buildingData, ArrayList<String> uris, Integer threadNumber) {
+    private void runCEA(ArrayList<CEAInputData> buildingData, ArrayList<String> uris, Integer threadNumber, String crs) {
         try {
-            RunCEATask task = new RunCEATask(buildingData, new URI(targetUrl), uris, threadNumber);
+            RunCEATask task = new RunCEATask(buildingData, new URI(targetUrl), uris, threadNumber, crs);
             CEAExecutor.execute(task);
         }
         catch(URISyntaxException e){
@@ -363,7 +364,7 @@ public class CEAAgent extends JPSAgent {
             String timeseries_props;
             if(System.getProperty("os.name").toLowerCase().contains("win")){
                 timeseries_props = new File(
-                    Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
+                        Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
             }
             else{
                 timeseries_props = FS+"target"+FS+"classes"+FS+TIME_SERIES_CLIENT_PROPS;
@@ -380,9 +381,9 @@ public class CEAAgent extends JPSAgent {
             }
             fixedIris.add(iriMapping);
 
-                // Check whether IRIs have a time series linked and if not initialize the corresponding time series
+            // Check whether IRIs have a time series linked and if not initialize the corresponding time series
             if(!timeSeriesExist(iris)) {
-                    // All values are doubles
+                // All values are doubles
                 List<Class<?>> classes =  new ArrayList<>();
                 for(int i=0; i<iris.size(); i++){
                     classes.add(Double.class);
@@ -414,13 +415,13 @@ public class CEAAgent extends JPSAgent {
         for (String iri : iriMap.values()){
             iris.add(iri);
         }
-            // If CreateTimeSeries has not been run, get time series client
+        // If CreateTimeSeries has not been run, get time series client
         if(tsClient==null){
             try{
                 String timeseries_props;
-                 if(System.getProperty("os.name").toLowerCase().contains("win")){
+                if(System.getProperty("os.name").toLowerCase().contains("win")){
                     timeseries_props = new File(
-                    Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
                 }
                 else{
                     timeseries_props = FS+"target"+FS+"classes"+FS+TIME_SERIES_CLIENT_PROPS;
@@ -481,7 +482,7 @@ public class CEAAgent extends JPSAgent {
      */
     private String getNamespace(String uriString) {
         String[] splitUri = uriString.split("/");
-        return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 2));
+        return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 2))+"/";
     }
 
     /**
@@ -493,7 +494,7 @@ public class CEAAgent extends JPSAgent {
      */
     private String getGraph(String uriString, String graph) {
         String namespace = getNamespace(uriString);
-        return namespace + "/" + graph + "/";
+        return namespace + graph + "/";
     }
 
     /**
@@ -505,6 +506,18 @@ public class CEAAgent extends JPSAgent {
     private String getUUID(String uriString) {
         String[] splitUri = uriString.split("/");
         return splitUri[splitUri.length-1];
+    }
+
+    /**
+     * Returns route for use with AccessAgent
+     *
+     * @param iriString iri of object to be queried
+     * @return route of endpoint that iri belongs to
+     */
+    private String getRoute(String iriString) {
+        String namespaceEndpoint = getNamespace(iriString);
+        String route = accessAgentRoutes.get(namespaceEndpoint);
+        return route;
     }
 
     /**
@@ -520,10 +533,10 @@ public class CEAAgent extends JPSAgent {
         Query q = getQuery(uriString, value);
 
         //Use access agent
-        JSONArray queryResultArray = this.queryStore(QUERY_ROUTE, q.toString());
+        JSONArray queryResultArray = this.queryStore(getRoute(uriString), q.toString());
 
         if(!queryResultArray.isEmpty()){
-            if(value!="Envelope") {
+            if(value!="Footprint") {
                 result = queryResultArray.getJSONObject(0).get(value).toString();
             }
             else{
@@ -545,7 +558,7 @@ public class CEAAgent extends JPSAgent {
         Double minimum=Double.MAX_VALUE;
 
         for(Integer i=0; i<results.length(); i++){
-            String geom = results.getJSONObject(i).get("Envelope").toString();
+            String geom = results.getJSONObject(i).get("Footprint").toString();
             String[] split = geom.split("#");
             // store z values of surface
             for(Integer j=1; j<=split.length; j++) {
@@ -578,16 +591,18 @@ public class CEAAgent extends JPSAgent {
      */
     private Query getQuery(String uriString, String value) {
         switch(value) {
-            case "Envelope":
+            case "Footprint":
                 return getGeometryQuery(uriString);
             case "Height":
                 return getHeightQuery(uriString);
+            case "CRS":
+                return getCrsQuery(uriString);
         }
         return null;
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve an envelope.
+     * builds a SPARQL query for a specific URI to retrieve a footprint.
      * @param uriString city object id
      * @return returns a query string
      */
@@ -607,10 +622,10 @@ public class CEAAgent extends JPSAgent {
             WhereBuilder wb = new WhereBuilder()
                     .addPrefix("ocgml", ocgmlUri)
                     .addWhere("?surf", "ocgml:cityObjectId", "?s")
-                    .addWhere("?surf", "ocgml:GeometryType", "?Envelope")
-                    .addFilter("!isBlank(?Envelope)");
+                    .addWhere("?surf", "ocgml:GeometryType", "?Footprint")
+                    .addFilter("!isBlank(?Footprint)");
             SelectBuilder sb = new SelectBuilder()
-                    .addVar("?Envelope")
+                    .addVar("?Footprint")
                     .addGraph(NodeFactory.createURI(getGraph(uriString,SURFACE_GEOMETRY)), wb);
             sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getGraph(uriString,BUILDING)+getUUID(uriString)+"/"));
             return sb.build();
@@ -650,6 +665,23 @@ public class CEAAgent extends JPSAgent {
 
         return sb.build();
     }
+
+    /**
+     * builds a SPARQL query for a CRS using namespace from uri
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getCrsQuery(String uriString) {
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ocgml", ocgmlUri)
+                .addWhere("?s", "ocgml:srid", "?CRS");
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?CRS")
+                .addGraph(NodeFactory.createURI(getGraph(uriString,DATABASE_SRS)), wb);
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getNamespace(uriString)));
+        return sb.build();
+    }
+
     /**
      * builds a SPARQL update to add cityobject generic attribute that links to energy profile graph
      * @param uriString city object id
@@ -679,7 +711,7 @@ public class CEAAgent extends JPSAgent {
         UpdateRequest ur = ub.buildRequest();
 
         //Use access agent
-        this.updateStore(UPDATE_ROUTE, ur.toString());
+        this.updateStore(getRoute(uriString), ur.toString());
     }
     /**
      * builds a SPARQL update using output from CEA simulations
@@ -875,7 +907,7 @@ public class CEAAgent extends JPSAgent {
         UpdateRequest ur = ub.buildRequest();
 
         //Use access agent
-        this.updateStore(UPDATE_ROUTE, ur.toString());
+        this.updateStore(getRoute(uriString), ur.toString());
 
         return buildingUri;
 
@@ -913,7 +945,7 @@ public class CEAAgent extends JPSAgent {
                 wb2.addWhere("?energyProfileBuilding", "purlEnaeq:consumesEnergy", "?grid")
                         .addWhere("?grid", "rdf:type", "ontoubemmp:GridConsumption")
                         .addWhere("?grid", "om:hasValue", "?measure")
-                           .addWhere("?measure", "om:hasUnit", "?unit");
+                        .addWhere("?measure", "om:hasUnit", "?unit");
                 break;
             case KEY_ELECTRICITY_DEMAND:
                 wb2.addWhere("?energyProfileBuilding", "purlEnaeq:consumesEnergy", "?electricity")
@@ -1033,7 +1065,7 @@ public class CEAAgent extends JPSAgent {
 
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
 
-        JSONArray queryResultArray = new JSONArray(this.queryStore(QUERY_ROUTE, sb.build().toString()));
+        JSONArray queryResultArray = new JSONArray(this.queryStore(getRoute(uriString), sb.build().toString()));
 
         if(!queryResultArray.isEmpty()){
             result.add(queryResultArray.getJSONObject(0).get("measure").toString());
@@ -1053,16 +1085,16 @@ public class CEAAgent extends JPSAgent {
         SelectBuilder sb = new SelectBuilder();
 
         wb.addPrefix("ocgml", ocgmlUri)
-                    .addWhere("?genAttribute", "ocgml:cityObjectId", "?s")
-                    .addWhere("?genAttribute", "ocgml:attrName", "energyProfileBuildingRepresentation")
-                    .addWhere("?genAttribute", "ocgml:uriVal", "?energyProfileBuilding");
+                .addWhere("?genAttribute", "ocgml:cityObjectId", "?s")
+                .addWhere("?genAttribute", "ocgml:attrName", "energyProfileBuildingRepresentation")
+                .addWhere("?genAttribute", "ocgml:uriVal", "?energyProfileBuilding");
 
         sb.addVar("?genAttribute")
                 .addGraph(NodeFactory.createURI(getGraph(uriString,CITY_OBJECT_GEN_ATT)), wb);
 
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
 
-        JSONArray queryResultArray = new JSONArray(this.queryStore(QUERY_ROUTE, sb.build().toString()));
+        JSONArray queryResultArray = new JSONArray(this.queryStore(getRoute(uriString), sb.build().toString()));
         String building = "";
 
         if(!queryResultArray.isEmpty()){
@@ -1147,7 +1179,7 @@ public class CEAAgent extends JPSAgent {
                 .addVar("?PV_supply_wall_east").addVar("?PV_supply_wall_west").addWhere(wb2);
         sb.setVar( Var.alloc( "energyProfileBuilding" ), NodeFactory.createURI(building));
 
-        JSONArray queryResultArray = new JSONArray(this.queryStore(QUERY_ROUTE, sb.build().toString()));
+        JSONArray queryResultArray = new JSONArray(this.queryStore(getRoute(uriString), sb.build().toString()));
         LinkedHashMap<String, String> tsIris = new LinkedHashMap<>();
 
         if(!queryResultArray.isEmpty()){
@@ -1188,7 +1220,7 @@ public class CEAAgent extends JPSAgent {
             String timeseries_props;
             if(System.getProperty("os.name").toLowerCase().contains("win")){
                 timeseries_props = new File(
-                    Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
+                        Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
             }
             else{
                 timeseries_props = FS+"target"+FS+"classes"+FS+TIME_SERIES_CLIENT_PROPS;

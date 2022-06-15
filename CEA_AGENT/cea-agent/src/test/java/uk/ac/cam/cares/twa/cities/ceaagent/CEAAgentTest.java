@@ -61,6 +61,7 @@ public class CEAAgentTest extends TestCase {
         Field CITY_OBJECT_GEN_ATT;
         Field BUILDING;
         Field ENERGY_PROFILE;
+        Field DATABASE_SRS;
         Field SURFACE_GEOMETRY;
         Field KEY_GRID_DEMAND;
         Field KEY_ELECTRICITY_DEMAND;
@@ -92,8 +93,7 @@ public class CEAAgentTest extends TestCase {
         Field timeSeriesUri;
         Field thinkhomeUri;
         Field unitOntologyUri;
-        Field QUERY_ROUTE;
-        Field UPDATE_ROUTE;
+        Field accessAgentRoutes;
         Field requestUrl;
         Field targetUrl;
 
@@ -120,6 +120,8 @@ public class CEAAgentTest extends TestCase {
             assertEquals(BUILDING.get(agent), "building");
             ENERGY_PROFILE = agent.getClass().getDeclaredField("ENERGY_PROFILE");
             assertEquals(ENERGY_PROFILE.get(agent), "energyprofile");
+            DATABASE_SRS = agent.getClass().getDeclaredField("DATABASE_SRS");
+            assertEquals(DATABASE_SRS.get(agent), "databasesrs");
             SURFACE_GEOMETRY = agent.getClass().getDeclaredField("SURFACE_GEOMETRY");
             assertEquals(SURFACE_GEOMETRY.get(agent), "surfacegeometry");
             KEY_GRID_DEMAND = agent.getClass().getDeclaredField("KEY_GRID_DEMAND");
@@ -203,12 +205,10 @@ public class CEAAgentTest extends TestCase {
             targetUrl = agent.getClass().getDeclaredField("targetUrl");
             targetUrl.setAccessible(true);
             assertNull(targetUrl.get(agent));
-            QUERY_ROUTE = agent.getClass().getDeclaredField("QUERY_ROUTE");
-            QUERY_ROUTE.setAccessible(true);
-            assertEquals(QUERY_ROUTE.get(agent), config.getString("uri.route.local"));
-            UPDATE_ROUTE = agent.getClass().getDeclaredField("UPDATE_ROUTE");
-            UPDATE_ROUTE.setAccessible(true);
-            assertEquals(UPDATE_ROUTE.get(agent), config.getString("uri.route.local"));
+            accessAgentRoutes = agent.getClass().getDeclaredField("accessAgentRoutes");
+            accessAgentRoutes.setAccessible(true);
+            Map<String,String> accessAgentMap = (HashMap<String,String>) accessAgentRoutes.get(agent);
+            assertEquals(accessAgentMap.get(config.getString("namespace.local.kingslynn")), config.getString("uri.route.local.kingslynn"));
 
         } catch (NoSuchFieldException | IllegalAccessException e) {
             fail();
@@ -218,7 +218,7 @@ public class CEAAgentTest extends TestCase {
     @Test
     public void testCEAAgentMethods() {
         CEAAgent agent = new CEAAgent();
-        assertEquals(29, agent.getClass().getDeclaredMethods().length);
+        assertEquals(31, agent.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -277,7 +277,7 @@ public class CEAAgentTest extends TestCase {
         String test_value = "test";
         try {
             PowerMockito.doReturn(test_value).when(agent, "getValue", anyString(), anyString());
-            PowerMockito.doNothing().when(agent, "runCEA", anyList(),  anyList(),  anyInt());
+            PowerMockito.doNothing().when(agent, "runCEA", anyList(),  anyList(),  anyInt(), anyString());
         } catch(Exception e){
             fail();
         }
@@ -600,7 +600,7 @@ public class CEAAgentTest extends TestCase {
         ThreadPoolExecutor executor = mock(ThreadPoolExecutor.class);
 
         CEAAgent agent = new CEAAgent();
-        Method runCEA = agent.getClass().getDeclaredMethod("runCEA", ArrayList.class, ArrayList.class, Integer.class);
+        Method runCEA = agent.getClass().getDeclaredMethod("runCEA", ArrayList.class, ArrayList.class, Integer.class, String.class);
         assertNotNull(runCEA);
         runCEA.setAccessible(true);
 
@@ -617,11 +617,12 @@ public class CEAAgentTest extends TestCase {
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
+        String test_CRS = "27700";
 
         RunCEATask task = mock(RunCEATask.class);
         PowerMockito.whenNew(RunCEATask.class).withAnyArguments().thenReturn(task);
 
-        runCEA.invoke(agent, testData, testArray, test_thread);
+        runCEA.invoke(agent, testData, testArray, test_thread, test_CRS);
         verify(executor, times(1)).execute(task);
     }
 
@@ -720,7 +721,7 @@ public class CEAAgentTest extends TestCase {
         getNamespace.setAccessible(true);
 
         String result = (String) getNamespace.invoke(agent, uri);
-        assertEquals("http://localhost/berlin", result);
+        assertEquals("http://localhost/berlin/", result);
 
     }
 
@@ -758,6 +759,23 @@ public class CEAAgentTest extends TestCase {
     }
 
     @Test
+    public void testGetRoute()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+
+        CEAAgent agent = new CEAAgent();
+        String uri = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_b24ba8e2-bb21-45e8-b1b1/";
+        ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
+
+        Method getRoute = agent.getClass().getDeclaredMethod("getRoute", String.class);
+        assertNotNull(getRoute);
+        getRoute.setAccessible(true);
+
+        String result = (String) getRoute.invoke(agent, uri);
+        assertEquals(config.getString("uri.route.local.kingslynn"), result);
+
+    }
+
+    @Test
     public void testGetValue() throws Exception {
         CEAAgent agent = PowerMockito.spy(new CEAAgent());
 
@@ -765,11 +783,13 @@ public class CEAAgentTest extends TestCase {
         String value = "Height";
         String result = "5.2";
 
-        Query dummy  = mock(Query.class);
-
         doReturn(new JSONArray("[{'"+value+"': '"+result+"'}]")).when(agent).queryStore(anyString(), anyString());
 
+        Query dummy  = mock(Query.class);
         PowerMockito.doReturn(dummy).when(agent, "getQuery", uriString, value);
+
+        String route = "test_route";
+        PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
 
         Method getValue = agent.getClass().getDeclaredMethod("getValue", String.class, String.class);
         assertNotNull(getValue);
@@ -785,7 +805,7 @@ public class CEAAgentTest extends TestCase {
         String geom2 = "559267.200000246#313892.7999989044#1.7#559280.5400002463#313892.7999989044#1.7#559280.5400002463#313908.7499989033#1.7#559267.200000246#313908.7499989033#1.7#559267.200000246#313892.7999989044#1.7";
         String geom3 = "559267.200000246#313892.7999989044#0.0#559280.5400002463#313892.7999989044#0.0#559280.5400002463#313908.7499989033#0.0#559267.200000246#313908.7499989033#0.0#559267.200000246#313892.7999989044#0.0";
 
-        JSONArray results = new JSONArray("[{'Envelope': '"+geom1+"'}, {'Envelope': '"+geom2+"'},{'Envelope': '"+geom3+"'}]");
+        JSONArray results = new JSONArray("[{'Footprint': '"+geom1+"'}, {'Footprint': '"+geom2+"'},{'Footprint': '"+geom3+"'}]");
 
         Method getFootprint = agent.getClass().getDeclaredMethod("getFootprint", JSONArray.class);
         assertNotNull(getFootprint);
@@ -797,17 +817,21 @@ public class CEAAgentTest extends TestCase {
 
     @Test
     public void testGetQuery()
-            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+            throws Exception {
 
-        CEAAgent agent = new CEAAgent();
-        String case1 = "Envelope";
+        CEAAgent agent = PowerMockito.spy(new CEAAgent());
+        String case1 = "Footprint";
         String case2 = "Height";
+        String case3 = "CRS";
         String uri1 = "http://localhost/berlin/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
         String uri2 = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
         Method getQuery = agent.getClass().getDeclaredMethod("getQuery", String.class, String.class);
         assertNotNull(getQuery);
         getQuery.setAccessible(true);
+
+        String route = "test_route";
+        PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
 
         Query q1 = (Query) getQuery.invoke(agent, uri1, case1);
         assertTrue(q1.toString().contains("ocgml:GeometryType"));
@@ -817,6 +841,8 @@ public class CEAAgentTest extends TestCase {
         assertTrue(q2.toString().contains("height"));
         Query q3 = (Query) getQuery.invoke(agent, uri2, case2);
         assertTrue(q3.toString().contains("ocgml:measuredHeight"));
+        Query q4 = (Query) getQuery.invoke(agent, uri2, case3);
+        assertTrue(q4.toString().contains("ocgml:srid"));
 
     }
 
@@ -856,13 +882,31 @@ public class CEAAgentTest extends TestCase {
     }
 
     @Test
+    public void testGetCrsQuery()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
+
+        Method getCrsQuery = agent.getClass().getDeclaredMethod("getCrsQuery", String.class);
+        assertNotNull(getCrsQuery);
+        getCrsQuery.setAccessible(true);
+
+        Query q = (Query) getCrsQuery.invoke(agent, uri);
+        assertTrue(q.toString().contains("ocgml:srid"));
+        assertTrue(q.toString().contains("CRS"));
+    }
+
+    @Test
     public void testSparqlGenAttributeUpdate() throws Exception {
-        CEAAgent agent = spy(new CEAAgent());
+        CEAAgent agent = PowerMockito.spy(new CEAAgent());
         Method sparqlGenAttributeUpdate = agent.getClass().getDeclaredMethod("sparqlGenAttributeUpdate", String.class, String.class);
         assertNotNull(sparqlGenAttributeUpdate);
 
         String uriString = "http://localhost/kings-lynn-open-data/cityobject/UUID_test/";
         String energyProfileString = "http://localhost/kings-lynn-open-data/energyprofile/UUID_test/";
+
+        String route = "test_route";
+        PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
 
         doNothing().when(agent).updateStore(anyString(), anyString());
         sparqlGenAttributeUpdate.invoke(agent, uriString, energyProfileString);
@@ -872,7 +916,7 @@ public class CEAAgentTest extends TestCase {
 
     @Test
     public void testSparqlUpdate() throws Exception {
-        CEAAgent agent = spy(new CEAAgent());
+        CEAAgent agent = PowerMockito.spy(new CEAAgent());
         Method sparqlUpdate = agent.getClass().getDeclaredMethod("sparqlUpdate", LinkedHashMap.class, LinkedHashMap.class, String.class, Integer.class);
         assertNotNull(sparqlUpdate);
 
@@ -883,6 +927,9 @@ public class CEAAgentTest extends TestCase {
         List<String> test_scalars = new ArrayList<>();
         test_scalars.add("test");
         when(scalars_mock.get(anyString())).thenReturn(test_scalars);
+
+        String route = "test_route";
+        PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
 
         Integer testCounter = 0;
         String uriString = "http://localhost/kings-lynn-open-data/cityobject/UUID_test/";
@@ -906,8 +953,9 @@ public class CEAAgentTest extends TestCase {
         String test_measure = "35.2";
         String unit = "unit";
         String test_unit = "m^2";
+        String route = "test_route";
 
-
+        PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
         doReturn(new JSONArray("[{'"+measure+"': '"+test_measure+"', '"+unit+"': '"+test_unit+"'}]")).when(agent).queryStore(anyString(), anyString());
         PowerMockito.doReturn("testGraph").when(agent, "getGraph", anyString(), anyString());
 
@@ -929,9 +977,11 @@ public class CEAAgentTest extends TestCase {
         String measure = "energyProfileBuilding";
         String test_measure = "test_uri";
         String graph = "test_graph";
+        String route = "test_route";
 
         doReturn(new JSONArray("[{'"+measure+"': '"+test_measure+"'}]")).when(agent).queryStore(anyString(), anyString());
         PowerMockito.doReturn(graph).when(agent, "getGraph", anyString(), anyString());
+        PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
 
         Method checkGenAttributeInitialised = agent.getClass().getDeclaredMethod("checkGenAttributeInitialised", String.class);
         assertNotNull(checkGenAttributeInitialised);
@@ -956,6 +1006,9 @@ public class CEAAgentTest extends TestCase {
         doReturn(new JSONArray("[{'"+measure+"': '"+test_measure+"'}]")).when(agent).queryStore(anyString(), anyString());
         PowerMockito.doReturn(graph).when(agent, "getGraph", anyString(), anyString());
         PowerMockito.doReturn(building).when(agent, "checkGenAttributeInitialised", anyString());
+
+        String route = "test_route";
+        PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
 
         Method checkBlazegraphAndTimeSeriesInitialised = agent.getClass().getDeclaredMethod("checkBlazegraphAndTimeSeriesInitialised", String.class, List.class);
         assertNotNull(checkBlazegraphAndTimeSeriesInitialised);

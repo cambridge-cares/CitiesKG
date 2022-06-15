@@ -35,7 +35,8 @@ public class RunCEATaskTest extends TestCase {
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
-            task = new RunCEATask(testData, testURI, testArray,test_thread);
+            String test_CRS = "27700";
+            task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
             assertNotNull(task);
         } catch (Exception e) {
             fail();
@@ -51,14 +52,16 @@ public class RunCEATaskTest extends TestCase {
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
-            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread);
+            String test_CRS = "27700";
+            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
 
-            assertEquals(10, task.getClass().getDeclaredFields().length);
+            assertEquals(11, task.getClass().getDeclaredFields().length);
 
             Field inputs;
             Field uris;
             Field endpointUri;
             Field threadNumber;
+            Field crs;
             Field CTYPE_JSON;
             Field stop;
             Field SHAPEFILE_SCRIPT;
@@ -78,6 +81,9 @@ public class RunCEATaskTest extends TestCase {
             threadNumber = task.getClass().getDeclaredField("threadNumber");
             threadNumber.setAccessible(true);
             assertEquals(threadNumber.get(task), test_thread);
+            threadNumber = task.getClass().getDeclaredField("crs");
+            threadNumber.setAccessible(true);
+            assertEquals(threadNumber.get(task), test_CRS);
             CTYPE_JSON = task.getClass().getDeclaredField("CTYPE_JSON");
             assertEquals(CTYPE_JSON.get(task), "application/json");
             stop = task.getClass().getDeclaredField("stop");
@@ -110,7 +116,8 @@ public class RunCEATaskTest extends TestCase {
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
-            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread);
+            String test_CRS = "27700";
+            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
 
             assertEquals(7, task.getClass().getDeclaredMethods().length);
 
@@ -129,7 +136,8 @@ public class RunCEATaskTest extends TestCase {
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
-            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread);
+            String test_CRS = "27700";
+            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
 
             Field stopField = task.getClass().getDeclaredField("stop");
             stopField.setAccessible(true);
@@ -151,7 +159,8 @@ public class RunCEATaskTest extends TestCase {
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
-        RunCEATask task = PowerMockito.spy(new RunCEATask(testData, testURI, testArray,test_thread));
+        String test_CRS = "27700";
+        RunCEATask task = PowerMockito.spy(new RunCEATask(testData, testURI, testArray,test_thread, test_CRS));
 
         ProcessBuilder builder = mock(ProcessBuilder.class);
         PowerMockito.whenNew(ProcessBuilder.class).withAnyArguments().thenReturn(builder);
@@ -190,7 +199,8 @@ public class RunCEATaskTest extends TestCase {
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
-            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread);
+            String test_CRS = "27700";
+            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
 
             File myTempDir = new File(System.getProperty("java.io.tmpdir"));
             File newDirectory = new File(myTempDir, "new_directory");
@@ -223,7 +233,8 @@ public class RunCEATaskTest extends TestCase {
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
-        RunCEATask task = PowerMockito.spy(new RunCEATask(testData, testURI, testArray,test_thread));
+        String test_CRS = "27700";
+        RunCEATask task = PowerMockito.spy(new RunCEATask(testData, testURI, testArray,test_thread, test_CRS));
 
         FileReader fReader = mock(FileReader.class);
         PowerMockito.whenNew(FileReader.class).withAnyArguments().thenReturn(fReader);
@@ -265,7 +276,8 @@ public class RunCEATaskTest extends TestCase {
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
-        RunCEATask task = PowerMockito.spy(new RunCEATask(testData, testURI, testArray,test_thread));
+        String test_CRS = "27700";
+        RunCEATask task = PowerMockito.spy(new RunCEATask(testData, testURI, testArray,test_thread, test_CRS));
 
         FileReader fReader = mock(FileReader.class);
         PowerMockito.whenNew(FileReader.class).withAnyArguments().thenReturn(fReader);
@@ -317,7 +329,8 @@ public class RunCEATaskTest extends TestCase {
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
-            task = new RunCEATask(testData, testURI, testArray, test_thread);
+            String test_CRS = "27700";
+            task = new RunCEATask(testData, testURI, testArray, test_thread, test_CRS);
 
             data = new CEAOutputData();
 
@@ -363,7 +376,8 @@ public class RunCEATaskTest extends TestCase {
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
-        RunCEATask task = PowerMockito.spy(new RunCEATask(testData, testURI, testArray, test_thread));
+        String test_CRS = "27700";
+        RunCEATask task = PowerMockito.spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS));
 
         Method run = task.getClass().getDeclaredMethod("run");
 

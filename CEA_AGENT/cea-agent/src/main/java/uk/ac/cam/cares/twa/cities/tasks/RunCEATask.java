@@ -25,6 +25,7 @@ public class RunCEATask implements Runnable {
     private final ArrayList<String> uris;
     private final URI endpointUri;
     private final int threadNumber;
+    private final String crs;
     public static final String CTYPE_JSON = "application/json";
     private Boolean stop = false;
     private static final String SHAPEFILE_SCRIPT = "create_shapefile.py";
@@ -32,11 +33,12 @@ public class RunCEATask implements Runnable {
     private static final String CREATE_WORKFLOW_SCRIPT = "create_cea_workflow.py";
     private static final String FS = System.getProperty("file.separator");
 
-    public RunCEATask(ArrayList<CEAInputData> buildingData, URI endpointUri, ArrayList<String> uris, int thread) {
+    public RunCEATask(ArrayList<CEAInputData> buildingData, URI endpointUri, ArrayList<String> uris, int thread, String crs) {
         this.inputs = buildingData;
         this.endpointUri = endpointUri;
         this.uris = uris;
         this.threadNumber = thread;
+        this.crs = crs;
     }
 
     public void stop() {
@@ -330,6 +332,7 @@ public class RunCEATask implements Runnable {
                             Objects.requireNonNull(getClass().getClassLoader().getResource(SHAPEFILE_SCRIPT)).toURI()).getAbsolutePath());
                     args.add(dataString.replace("\"", "\\\""));
                     args.add(strTmp);
+                    args.add(crs);
 
                     args2.add("python");
                     args2.add(new File(
@@ -350,7 +353,7 @@ public class RunCEATask implements Runnable {
 
                     args.add("/bin/bash");
                     args.add("-c");
-                    args.add("export PROJ_LIB=/venv/share/lib && python " + shapefile +" '"+ dataString +"' " +strTmp);
+                    args.add("export PROJ_LIB=/venv/share/lib && python " + shapefile +" '"+ dataString +"' " +strTmp+" "+crs);
 
                     args2.add("/bin/bash");
                     args2.add("-c");
@@ -360,14 +363,14 @@ public class RunCEATask implements Runnable {
                     args3.add("/bin/bash");
                     args3.add("-c");
                     args3.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath);
-                    
+
                 }
 
                 // create the shapefile process and run
                 runProcess(args);
-                 // create the workflow process and run
+                // create the workflow process and run
                 runProcess(args2);
-                    // Run workflow that runs all CEA scripts
+                // Run workflow that runs all CEA scripts
                 runProcess(args3);
 
                 CEAOutputData result = extractTimeSeriesOutputs(strTmp);

@@ -12,11 +12,13 @@ from pyproj import CRS
 import os
 
 
-def create_shapefile(geometries, heights, shapefile):
+def create_shapefile(geometries, heights, crs, shapefile):
     """
     :param geometries: Contains string of coordinates representing building envelope
 
     :param heights: Height above ground of building
+
+    :param crs: coordinate reference system of the data
 
     :param shapefile: Name and path of shapefile to be created
 
@@ -29,59 +31,52 @@ def create_shapefile(geometries, heights, shapefile):
     names = []
     i = 0
     floors_ag = []
-    # heights_ag = []
+
     # Convert geometry data to arrays of points
     for geom in geometries:
 
         split_data = geom.split("#")
-        points = [[] for i in range(4)]
-        #upperboundz = 0
-        #lowerboundz=0
-        # Extract x-y footprint data
-        for a in range(0, 4):
-            for b in range(0, 3):
-                if b == 0 or b == 1:
-                    points[a].append(float(split_data[a * 3 + b]))
-                else:
-                    points[a].append(0.0)
-                    #if a == 0:
-                        #lowerboundz = float(split_data[a * 3 + b])
-                    #if a == 2:
-                        #upperboundz = float(split_data[a * 3 + b])
+        number_points = int((len(split_data)/3) - 1)
+        points = [[] for i in range(number_points)]
+        for a in range(number_points):
+            for b in range(3):
+                points[a].append(float(split_data[a * 3 + b]))
 
-        #heights_ag.append(upperboundz-lowerboundz)
         geometry_values.append(str(points))
         floors_bg.append(0)
         height_bg.append(0)
-        floor_height.append(3.2)
-        names.append("B00" + str(i))
+        floor_height.append(3.2)  # approximate floor-to-floor height
+        if i<10:
+            names.append("B00" + str(i))
+        elif i<100:
+            names.append("B0" + str(i))
+        else:
+            names.append("B" + str(i))
+
         i = i+1
 
-    # Set floors_ag to building height divided by HDB floor-to-floor height 3.6m (rounded down)
+    # Set floors_ag to building height divided by approximate floor-to-floor height
     for x in range(len(heights)):
         floors = round(heights[x] / floor_height[x])
         if floors != 0:
             floors_ag.append(floors)
         else:
-            floors_ag.append(1)
+            floors_ag.append(1)  # number of floors must be at least 1
 
     zone_data = {'Name': names,
-            'floors_bg': floors_bg,
-            'floors_ag': floors_ag,
-            'geometry': geometry_values,
-            'height_bg': height_bg,
-            'height_ag': heights}
+                 'floors_bg': floors_bg,
+                 'floors_ag': floors_ag,
+                 'geometry': geometry_values,
+                 'height_bg': height_bg,
+                 'height_ag': heights}
 
     df = pd.DataFrame(data=zone_data)
 
     geometry = [shapely.geometry.polygon.Polygon(json.loads(g)) for g in df.geometry]
     df.drop('geometry', axis=1)
 
-    # crs = CRS.from_user_input(24500)
-    # churchill, kings lynn
-    crs = CRS.from_user_input(27700)
-    # pirmasens
-    # crs = CRS.from_user_input(3857)
+    # crs is ESPG coordinate reference system id
+    crs = CRS.from_user_input(int(crs))
 
     gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
     gdf.to_file(shapefile, driver='ESRI Shapefile', encoding='ISO-8859-1')
@@ -99,7 +94,7 @@ def main(argv):
         heights.append(float(data['height']))
 
     try:
-        create_shapefile(geometries, heights, shapefile)
+        create_shapefile(geometries, heights, argv.crs, shapefile)
     except IOError:
         print('Error while processing file: ' + shapefile)
 
@@ -110,6 +105,7 @@ if __name__ == '__main__':
     # add arguments to the parser
     parser.add_argument("data")
     parser.add_argument("zone_file_location")
+    parser.add_argument("crs")
 
     # parse the arguments
     args = parser.parse_args()
