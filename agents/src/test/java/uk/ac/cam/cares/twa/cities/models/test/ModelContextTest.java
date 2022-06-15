@@ -1,8 +1,6 @@
 package uk.ac.cam.cares.twa.cities.models.test;
 
-import com.bigdata.rdf.sail.sparql.ast.ASTIsBlank;
-import com.github.jsonldjava.utils.Obj;
-import com.hp.hpl.jena.rdf.model.ModelCon;
+import com.sun.org.apache.xpath.internal.operations.Mod;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang.ArrayUtils;
@@ -11,17 +9,17 @@ import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
-import org.jooq.JSON;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.tartarus.snowball.ext.IrishStemmer;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
+import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.twa.cities.models.*;
+import uk.ac.cam.cares.twa.cities.models.Model;
 
+import javax.validation.constraints.AssertFalse;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -134,6 +132,51 @@ public class ModelContextTest {
     assertFalse(context.isQuads());
     ModelContext context1 = new ModelContext(testResourceId, testNamespace);
     assertTrue(context1.isQuads());
+  }
+
+  @Test
+  public void testcreatePrototypeModel() {
+
+    ModelContext context = new ModelContext(testResourceId);
+    Method createPrototypeModel = null;
+
+    try {
+      createPrototypeModel = context.getClass().getDeclaredMethod("createPrototypeModel", Class.class, String.class);
+      createPrototypeModel.setAccessible(true);
+      createPrototypeModel.invoke(context, TestModel.class, "http://testiri.com/test");
+    } catch (Exception e) {
+      assertEquals("Quad Model cannot be initialised in triple context.", e.getCause().getMessage());
+    }
+
+    ModelContext context1 = new ModelContext(testResourceId, testNamespace);
+    try {
+      TestModel testModel = (TestModel) createPrototypeModel.invoke(context1, TestModel.class, "http://testiri.com/test");
+      assertEquals("http://testiri.com/test", testModel.getIri());
+      assertEquals(context1, testModel.getContext());
+      assertTrue(context1.members.containsValue(testModel));
+    } catch (InvocationTargetException | IllegalAccessException e) {
+      fail();
+    }
+
+    try{
+      createPrototypeModel.invoke(context1, TestModel.class, "http://testiri.com/test");
+    }catch (Exception e) {
+      assertEquals("Model already registered for IRI.", e.getCause().getMessage());
+    }
+  }
+
+  @Test
+  public void testcreateNewModel() throws NoSuchFieldException {
+
+    ModelContext context = new ModelContext(testResourceId, testNamespace);
+    TestModel testModel = context.createNewModel(TestModel.class, "http://testiri.com/test");
+    assertEquals("http://testiri.com/test", testModel.getIri());
+    assertEquals(context, testModel.getContext());
+    assertTrue(context.members.containsValue(testModel));
+
+    for (FieldInterface field : metaModel.fieldMap.values()){
+      assertFalse(testModel.isClean(field.field.getName()));
+    }
   }
 
   @Test
