@@ -129,6 +129,14 @@ public class ModelContextTest {
   }
 
   @Test
+  public void testisQuads(){
+    ModelContext context = new ModelContext(testResourceId);
+    assertFalse(context.isQuads());
+    ModelContext context1 = new ModelContext(testResourceId, testNamespace);
+    assertTrue(context1.isQuads());
+  }
+
+  @Test
   public void testPushNewObject() {
 
     ModelContext context = Mockito.spy(new ModelContext(testResourceId, testNamespace));
