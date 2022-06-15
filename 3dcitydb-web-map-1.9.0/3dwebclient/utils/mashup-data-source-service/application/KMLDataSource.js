@@ -110,7 +110,7 @@ var KMLDataSource = /** @class */ (function (_super) {
 
         // REQUEST FOR CityInformationAgent.
         var iri = clickedObject._iriPrefix + clickedObject._name;
-        iri.endsWith('/') ? iri : iri = iri + '/';
+        iri = iri.endsWith('/') ? iri : iri + '/';
 
         jQuery.ajax({
             url: "http://localhost:8080/agents/cityobjectinformation",
