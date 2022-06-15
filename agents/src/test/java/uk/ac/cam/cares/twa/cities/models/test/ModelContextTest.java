@@ -1,5 +1,7 @@
 package uk.ac.cam.cares.twa.cities.models.test;
 
+import com.bigdata.rdf.sail.sparql.ast.ASTIsBlank;
+import com.github.jsonldjava.utils.Obj;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang.ArrayUtils;
@@ -44,6 +46,78 @@ public class ModelContextTest {
   private int countTriples(ModelContext context) {
     JSONArray response = context.query("SELECT (COUNT(*) AS ?count) WHERE { ?a ?b ?c }");
     return response.getJSONObject(0).getInt("count");
+  }
+
+  @Test
+  public void testNewModelContextFields(){
+    ModelContext context = new ModelContext(testResourceId, testNamespace);
+
+    assertEquals(19, context.getClass().getDeclaredFields().length);
+
+    try {
+      Field model = context.getClass().getDeclaredField("MODEL");
+      model.setAccessible(true);
+      assertEquals("model", model.get(context));
+
+      Field graph = context.getClass().getDeclaredField("GRAPH");
+      graph.setAccessible(true);
+      assertEquals("graph", graph.get(context));
+
+      Field predicate = context.getClass().getDeclaredField("PREDICATE");
+      predicate.setAccessible(true);;
+      assertEquals("predicate", predicate.get(context));
+
+      Field value = context.getClass().getDeclaredField("VALUE");
+      value.setAccessible(true);
+      assertEquals("value", value.get(context));
+
+      Field datatype = context.getClass().getDeclaredField("DATATYPE");
+      datatype.setAccessible(true);
+      assertEquals("datatype", datatype.get(context));
+
+      Field isblank = context.getClass().getDeclaredField("ISBLANK");
+      isblank.setAccessible(true);
+      assertEquals("isblank", isblank.get(context));
+
+      Field isblank_fun = context.getClass().getDeclaredField("ISBLANK_FUN");
+      isblank_fun.setAccessible(true);
+      assertEquals("ISBLANK", isblank_fun.get(context));
+
+      Field datatype_fun = context.getClass().getDeclaredField("DATATYPE_FUN");
+      datatype_fun.setAccessible(true);
+      assertEquals("DATATYPE", datatype_fun.get(context));
+
+      Field QM = context.getClass().getDeclaredField("QM");
+      QM.setAccessible(true);
+      assertEquals("?", QM.get(context));
+
+      Field OP = context.getClass().getDeclaredField("OP");
+      OP.setAccessible(true);
+      assertEquals("(", OP.get(context));
+
+      Field CP = context.getClass().getDeclaredField("CP");
+      CP.setAccessible(true);
+      assertEquals(")", CP.get(context));
+
+      Field Quad_Model_In_Triple_Context_Error_Text = context.getClass().getDeclaredField("QUAD_MODEL_IN_TRIPLE_CONTEXT_ERROR_TEXT");
+      Quad_Model_In_Triple_Context_Error_Text.setAccessible(true);
+      assertEquals("Quad Model cannot be initialised in triple context.", Quad_Model_In_Triple_Context_Error_Text.get(context));
+
+      Field Object_Not_Found_Exception_Text = context.getClass().getDeclaredField("OBJECT_NOT_FOUND_EXCEPTION_TEXT");
+      Object_Not_Found_Exception_Text.setAccessible(true);
+      assertEquals("Object not found in database.", Object_Not_Found_Exception_Text.get(context));
+
+      Field Model_Already_Registered_Exception_Text = context.getClass().getDeclaredField("MODEL_ALREADY_REGISTERED_EXCEPTION_TEXT");
+      Model_Already_Registered_Exception_Text.setAccessible(true);
+      assertEquals("Model already registered for IRI.", Model_Already_Registered_Exception_Text.get(context));
+
+      Field Execution_Character_Threshold = context.getClass().getDeclaredField("EXECUTION_CHARACTER_THRESHOLD");
+      Execution_Character_Threshold.setAccessible(true);
+      assertEquals(250000, Execution_Character_Threshold.get(context));
+
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      e.printStackTrace();
+    }
   }
 
   @Test
