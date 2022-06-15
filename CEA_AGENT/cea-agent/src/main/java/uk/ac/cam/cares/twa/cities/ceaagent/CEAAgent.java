@@ -146,7 +146,10 @@ public class CEAAgent extends JPSAgent {
                     for (int i = 0; i < uriArray.length(); i++) {
                         String uri = uriArray.getString(i);
                         uriStringArray.add(uri);
-                        testData.add(new CEAInputData(getValue(uri, "Footprint"), getValue(uri, "Height")));
+                        //Set default value if height can not be obtained from knowledge graph
+                        String height = getValue(uri, "Height");
+                        height = height.length() == 0 ? "10.0" : height;
+                        testData.add(new CEAInputData(getValue(uri, "Footprint"), height));
                         if(i==0) crs = getValue(uri, "CRS"); //just get crs once - assuming all iris in same namespace
                     }
                     // Manually set thread number to 0 - multiple threads not working so needs investigating
