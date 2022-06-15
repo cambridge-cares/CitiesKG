@@ -27,6 +27,8 @@ public class BuildingsMergeTask implements Callable<Void> {
     private final ModelContext context;
     private final ThematicSurfaceDiscoveryAgent.Params params;
 
+    private final List<List<String>> mergeBuildingId = new ArrayList<>();
+
     public BuildingsMergeTask(List<String> buildingIris, ThematicSurfaceDiscoveryAgent.Params params) {
         this.buildingIris = buildingIris;
         this.context = params.makeContext();
@@ -45,14 +47,19 @@ public class BuildingsMergeTask implements Callable<Void> {
         }
 
         for(int i = 0; i < cityObjectsList.size(); i++){
+            List<String> merges = new ArrayList<>();
             EnvelopeType envelop1 = cityObjectsList.get(i).getEnvelopeType();
             org.locationtech.jts.geom.Polygon polygon1 =  envelop1.getPolygon();
-            for(int j = 1; j < cityObjectsList.size(); j++){
+            for(int j = i+1; j < cityObjectsList.size()-i; j++){
                 EnvelopeType envelop2 = cityObjectsList.get(j).getEnvelopeType();
                 org.locationtech.jts.geom.Polygon polygon2 =  envelop2.getPolygon();
                 if (!polygon2.disjoint(polygon1)){
-
+                    merges.add(cityObjectsList.get(j).getIri());
                 }
+            }
+            if (merges != null){
+                merges.add(cityObjectsList.get(i).getIri());
+                mergeBuildingId.add(merges);
             }
         }
         return null;
