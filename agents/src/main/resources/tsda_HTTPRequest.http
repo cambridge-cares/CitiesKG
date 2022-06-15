@@ -14,4 +14,4 @@ Content-Type: application/json
 {"namespace": "http://10.25.188.180:9999/blazegraph/namespace/onemapsgEPSG24500/sparql/",
   "lod3": "true",
   "threshold": "5",
-  "mode": "merge"}
+  "mode": "split"}
