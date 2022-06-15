@@ -1,6 +1,5 @@
 package uk.ac.cam.cares.twa.cities.models.test;
 
-import com.sun.org.apache.xpath.internal.operations.Mod;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang.ArrayUtils;
@@ -13,16 +12,16 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.w3.xlink.TypeType;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
-import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.twa.cities.models.*;
 import uk.ac.cam.cares.twa.cities.models.Model;
 
-import javax.validation.constraints.AssertFalse;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -166,16 +165,24 @@ public class ModelContextTest {
   }
 
   @Test
-  public void testcreateNewModel() throws NoSuchFieldException {
+  public void testisTruthy(){
 
     ModelContext context = new ModelContext(testResourceId, testNamespace);
-    TestModel testModel = context.createNewModel(TestModel.class, "http://testiri.com/test");
-    assertEquals("http://testiri.com/test", testModel.getIri());
-    assertEquals(context, testModel.getContext());
-    assertTrue(context.members.containsValue(testModel));
+    assertTrue(context.isTruthy("true"));
+    assertTrue(context.isTruthy("1"));
+    assertFalse(context.isTruthy("not true"));
+  }
 
-    for (FieldInterface field : metaModel.fieldMap.values()){
-      assertFalse(testModel.isClean(field.field.getName()));
+  @Test
+  public void testgetModelVar() {
+
+    ModelContext context = new ModelContext(testResourceId, testNamespace);
+    try{
+      Field MODEL = context.getClass().getDeclaredField("MODEL");
+      MODEL.setAccessible(true);
+      assertEquals(NodeFactory.createVariable((String) MODEL.get(context)), context.getModelVar());
+    } catch(NoSuchFieldException | IllegalAccessException e){
+      fail();
     }
   }
 
