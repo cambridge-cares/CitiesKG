@@ -48,7 +48,7 @@ function updateGfaRows(){
 		var checkbox = checkboxes.item(i).firstChild;
 		if (checkbox.checked) {
 			var clicked_element =
-					"<div>" +
+					"<div class='gfa'>" +
 					"<div class='text_gfa' style='width: 180px'>" + checkboxes.item(i).id + "</div>" +
 					"<div class='text_input'><input type='text' maxLength='5' size='3' onblur='getInputParams()'/></div>" +
 					"</div>" +
@@ -114,10 +114,19 @@ function getValidPlots(){
 }
 
 function throwNotification() {
-	var popup =  document.createElement('div');
-	popup.id = "pop_up";
+	var popup = document.createElement('div');
 	popup.className = 'pop_up_box';
-	popup.innerHTML = "Choose uses or programmes but not both!";
+
+	var mark = document.createElement('div');
+	mark.className = 'mark';
+	mark.innerHTML = "!";
+
+	var explanation =  document.createElement('div');
+	explanation.className = 'alert';
+	explanation.innerHTML = "Choose uses or programmes but not both! In the future we will provide filtering possibilities.";
+
+	popup.appendChild(mark);
+	popup.appendChild(explanation);
 	document.body.appendChild(popup);
 	setTimeout(function() {
 		$('.pop_up_box').hide() }, 5000);

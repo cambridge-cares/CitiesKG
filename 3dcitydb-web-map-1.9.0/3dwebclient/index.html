@@ -221,8 +221,8 @@
             }
 			
 			      #programmeFinder_toolbox {
-                width: 1100px;
-                height: 60px;
+                width: 1080px;
+                height: 55px;
                 display: none;
                 background: rgba(42, 42, 42, 0.5);
                 border: 3px #505050 solid;
@@ -264,7 +264,7 @@
             .finder_dynamic_box {
                 display: none;
                 width: 260px;
-                height: 200px;
+                height: 400px;
                 margin: 2px;
                 padding: 2px 2px;
                 position: relative;
@@ -287,26 +287,45 @@
                 display: inline-block;
                 padding: 3px;
                 transform: rotate(45deg);
+                transform-origin:70% 70%;
             }
 
             .pop_up_box {
-                display: block;
-                position: absolute;
                 top: 42%;
                 left: 42%;
-                width: 300px;
-                height: 25px;
+                width: 400px;
+                margin: 5px;
+                height: 40px;
                 margin: 4px;
                 padding: 4px 4px;
-                position: relative;
+                position: absolute;
                 border: 2px #505050 solid;
                 background: rgba(42, 42, 42, 0.6);
                 border-radius: 4px;
                 color: #fff;
+            }
+
+            .mark{
+                display:inline-block;
+                padding: 5px;
+                line-height: 32px;
+                width: 20px;
+                vertical-align: top;
+                alignment: right;
                 font-family: sans-serif;
+                font-weight: bold;
+                font-size: 24pt;
+            }
+
+            .alert{
+                display:inline-block;
+                padding: 5px;
+                line-height: 16px;
+                width: 360px;
+                vertical-align: top;
+                alignment: right;
+                font-family: sans-serif;;
                 font-size: 10pt;
-                text-align: center;
-                line-height: 18pt;
             }
 
         </style>
@@ -345,7 +364,7 @@
               <td>
                   <div>
                       <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
-                          <div style="width:240px" class="cesium-button">Choose Use<div class="arrow down"></div></div>
+                          <div style="width:240px" class="cesium-button">Choose Use<div  id='use_arrow' class="arrow down"></div></div>
                       </div>
                       <div id="choose_uses" class="finder_dynamic_box" ></div>
                   </div>
@@ -353,7 +372,7 @@
               <td>
                   <div>
                       <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
-                          <div style="width:240px" class="cesium-button">Choose Programme<div class="arrow down"></div></div>
+                          <div style="width:240px" class="cesium-button">Choose Programme<div id='programme_arrow' class="arrow down"></div></div>
                       </div>
                       <div id="choose_programmes" class="finder_dynamic_box"></div>
                   </div>
@@ -361,7 +380,7 @@
               <td>
                   <div>
                       <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
-                          <div style="width:240px" class="cesium-button">Assign GFA(s)<div class="arrow down"></div></div>
+                          <div style="width:240px" class="cesium-button">Assign GFA(s)<div id='gfa_arrow' class="arrow down"></div></div>
                       </div>
                       <div id="assignGFA" class="finder_dynamic_box">
                           <div>
@@ -803,10 +822,12 @@
             function showChooseUses() {
                 var citydb_addsplashwindow = document.getElementById("choose_uses");
                 if (!expanded7) {
+                    document.getElementById('use_arrow').style.transform = "rotate(225deg)";
                     citydb_addsplashwindow.style.display = "block";
                     expanded7 = true;
                 } else {
                     citydb_addsplashwindow.style.display = "none";
+                    document.getElementById('use_arrow').style.transform = "rotate(45deg)";
                     expanded7 = false;
                 }
             }
@@ -815,9 +836,11 @@
             function showChooseProgrammes() {
                 var programme_window = document.getElementById("choose_programmes");
                 if (!expanded8) {
+                    document.getElementById('programme_arrow').style.transform = "rotate(225deg)";
                     programme_window.style.display = "block";
                     expanded8 = true;
                 } else {
+                    document.getElementById('programme_arrow').style.transform = "rotate(45deg)";
                     programme_window.style.display = "none";
                     expanded8 = false;
                 }
@@ -828,14 +851,18 @@
             function showAssignGFAValues() {
                 var citydb_addsplashwindow = document.getElementById("assignGFA");
                 if (!expanded10) {
+                    document.getElementById('gfa_arrow').style.transform = "rotate(225deg)";
                     citydb_addsplashwindow.style.display = "block";
                     expanded10 = true;
 
                 } else {
+                    document.getElementById('gfa_arrow').style.transform = "rotate(45deg)";
                     citydb_addsplashwindow.style.display = "none";
                     expanded10 = false;
                 }
             }
+
+
             var USE_PREDICATE = 'allowsUse';
             var PROGRAMME_PREDICATE = 'allowsProgramme';
 
