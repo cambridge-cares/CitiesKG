@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.models.test;
 
 import com.bigdata.rdf.sail.sparql.ast.ASTIsBlank;
 import com.github.jsonldjava.utils.Obj;
+import com.hp.hpl.jena.rdf.model.ModelCon;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang.ArrayUtils;
@@ -116,8 +117,15 @@ public class ModelContextTest {
       assertEquals(250000, Execution_Character_Threshold.get(context));
 
     } catch (NoSuchFieldException | IllegalAccessException e) {
-      e.printStackTrace();
+      fail();
     }
+  }
+
+  @Test
+  public void testNewModelContextMethods(){
+
+    ModelContext context = new ModelContext(testResourceId, testNamespace);
+    assertEquals(37, context.getClass().getDeclaredMethods().length);
   }
 
   @Test
