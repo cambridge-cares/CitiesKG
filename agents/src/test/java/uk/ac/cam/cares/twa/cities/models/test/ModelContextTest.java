@@ -4,10 +4,16 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
+import org.apache.jena.datatypes.xsd.impl.XSDDouble;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
+import org.apache.jena.update.Update;
+import org.apache.jena.update.UpdateRequest;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
@@ -182,6 +188,81 @@ public class ModelContextTest {
       MODEL.setAccessible(true);
       assertEquals(NodeFactory.createVariable((String) MODEL.get(context)), context.getModelVar());
     } catch(NoSuchFieldException | IllegalAccessException e){
+      fail();
+    }
+  }
+
+  @Test
+  public void testmakeChangeDeltas(){
+
+    ModelContext context = new ModelContext(testResourceId, testNamespace);
+
+    TestModel testModel = TestModel.createRandom(context, 12345, 3, 0);
+
+    UpdateRequest deletions_actual = new UpdateRequest();
+    UpdateRequest deletions_expected = new UpdateRequest();
+    UpdateBuilder insertions_actual = new UpdateBuilder();
+    UpdateBuilder insertions_expected = new UpdateBuilder();
+
+    Method makeChangeDeltas;
+    //Case 1: only insertion, no deletion, anyInserts = true
+    //Case 2: both insertion and deletion, anyInserts = true
+    //Case 3: no insertion, no deletion, anyInserts = false
+    try {
+      makeChangeDeltas = context.getClass().getDeclaredMethod("makeChangeDeltas", Model.class, UpdateRequest.class, UpdateBuilder.class);
+      makeChangeDeltas.setAccessible(true);
+      Node self = null;
+      //Case 1
+      for(Map.Entry<FieldKey, FieldInterface> entry : metaModel.fieldMap.entrySet()){
+        FieldInterface fieldInterface = entry.getValue();
+        FieldKey key = entry.getKey();
+        self = NodeFactory.createURI(testModel.getIri());
+        Node predicate = NodeFactory.createURI(key.predicate);
+        Node graph = NodeFactory.createURI(testNamespace + key.graphName);
+        for (Node valueValue : fieldInterface.getNodes(testModel)) {
+          Triple triple = new Triple(key.backward ? valueValue : self, predicate, key.backward ? self : valueValue);
+          insertions_expected.addInsert(new Quad(graph, triple));
+        }
+      }
+      assertTrue((Boolean) makeChangeDeltas.invoke(context, testModel, deletions_actual, insertions_actual));
+      assertEquals(insertions_expected.build().toString(), insertions_actual.build().toString());
+      assertEquals(deletions_expected.toString(), deletions_actual.toString());
+      testModel.setClean();
+
+      //Case 2
+      deletions_actual = new UpdateRequest();
+      deletions_expected = new UpdateRequest();
+      insertions_actual = new UpdateBuilder();
+      insertions_expected = new UpdateBuilder();
+
+      testModel.setDoubleProp(7.77);
+
+      Node predicate = NodeFactory.createURI("http://dbpedia.org/ontology/doubleprop");
+      Node graph = NodeFactory.createURI("http://localhost:9999/blazegraph/namespace/test/sparql/testmodels");
+      WhereBuilder where = new WhereBuilder().addWhere(self, predicate, "?value");
+      Node value = NodeFactory.createLiteralByValue(7.77, new XSDDouble("double"));
+      deletions_expected.add(new UpdateBuilder().addGraph(graph, where).buildDeleteWhere());
+      insertions_expected.addInsert(new Quad(graph, new Triple(self, predicate, value)));
+
+      assertTrue((Boolean) makeChangeDeltas.invoke(context, testModel, deletions_actual, insertions_actual));
+      assertEquals(insertions_expected.build().toString(), insertions_actual.build().toString());
+      assertEquals(deletions_expected.toString(), deletions_actual.toString());
+      testModel.setClean();
+
+      //Case 3
+      deletions_actual = new UpdateRequest();
+      deletions_expected = new UpdateRequest();
+      insertions_actual = new UpdateBuilder();
+
+      assertFalse((Boolean) makeChangeDeltas.invoke(context, testModel, deletions_actual, insertions_actual));
+      try{
+        insertions_actual.build();
+      } catch(IllegalStateException e){
+        assertEquals("At least one delete or insert must be specified", e.getMessage());
+      }
+      assertEquals(deletions_expected.toString(), deletions_actual.toString());
+
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
       fail();
     }
   }
