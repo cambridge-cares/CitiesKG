@@ -33,11 +33,11 @@ public class ThematicSurfaceDiscoveryTask implements Runnable {
   @Override
   public void run() {
     try {
-      if (params.mode == ThematicSurfaceDiscoveryAgent.Mode.MERGE){
-        buildingMergeTaskList.add(new BuildingsMergeTask(buildingIris, params));
-        executor.invokeAll(buildingMergeTaskList);
-      }else {
-        // Parallelised collection of buildings' lodXMultiSurfaces and registration of tasks to process them.
+//      if (params.mode == ThematicSurfaceDiscoveryAgent.Mode.MERGE){
+//        buildingMergeTaskList.add(new BuildingsMergeTask(buildingIris, params));
+//        executor.invokeAll(buildingMergeTaskList);
+//      }else {
+//        // Parallelised collection of buildings' lodXMultiSurfaces and registration of tasks to process them.
         List<BuildingHullsRegistrationTask> buildingRegistrationTasks = new ArrayList<>();
         for (String buildingIri : buildingIris)
           buildingRegistrationTasks.add(new BuildingHullsRegistrationTask(buildingIri, params, lxmsThematicisationTaskQueue));
@@ -49,7 +49,7 @@ public class ThematicSurfaceDiscoveryTask implements Runnable {
         resolveIndeterminateFlips();
         // Parallelised stage 2: restructuring of hierarchy and push to database
         executor.invokeAll(lxmsThematicisationTaskList);
-      }
+//      }
     } catch (InterruptedException e) {
       throw new JPSRuntimeException(e);
     }

@@ -594,8 +594,26 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
  }
 
   private void spatialRelation () {
-//    1. query cityobject evenlope 2. spatial relationship
-    int size = this.buildings.size();
+    for(SurfaceGeometry root: roots) {
+      SelectBuilder srsQuery = new SelectBuilder();
+      SPARQLUtils.addPrefix(SchemaManagerAdapter.ONTO_FOOTPRINT_ID, srsQuery);
+      srsQuery.addVar(QM + "model").addWhere(QM + "model", SchemaManagerAdapter.ONTO_FOOTPRINT_ID, NodeFactory.createURI(root.getIri()));
+      JSONArray srsResponse = context.query(srsQuery.buildString());
+
+      if (!srsResponse.isEmpty()){
+        context.pullAllWhere(
+                SurfaceGeometry.class,
+                new WhereBuilder().addWhere(
+                        ModelContext.getModelVar(),
+                        NodeFactory.createURI(SPARQLUtils.expandQualifiedName(SchemaManagerAdapter.ONTO_ROOT_ID)),
+                        NodeFactory.createURI(root.getIri())
+                )
+        );
+      }
+
+
+      List<SurfaceGeometry> children = root.getChildGeometries();
+    }
   }
   /**
    * Compute the average coordinate of the centroids of a number of SurfaaceGeometry objects, i.e. their collcetive
