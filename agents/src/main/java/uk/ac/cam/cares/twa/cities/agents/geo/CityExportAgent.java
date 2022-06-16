@@ -106,15 +106,13 @@ public class CityExportAgent extends JPSAgent {
 
         if (validateInput(requestParams)) {
 
+            // Process "namespaceIri"
             namespaceIri = requestParams.getString(KEY_NAMESPACE);
             serverInfo = getServerInfo(namespaceIri);
-
-            // test
-            srsName = getCrsInfo(namespaceIri);
+            srsName = getCrsInfo(namespaceIri);  // "EPSG:25833"
 
             // Process "displayform"
             List<String> availOptions = Arrays.asList(displayOptions);
-
             inputDisplayForm = requestParams.getString(KEY_DISPLAYFORM);
             int index = availOptions.indexOf(inputDisplayForm.toUpperCase());
             displayMode[index] = "true";

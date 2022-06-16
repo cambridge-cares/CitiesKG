@@ -39,12 +39,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import javax.xml.stream.XMLStreamException;
 import org.gdal.ogr.Geometry;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.twa.cities.agents.geo.CityExportAgent.Params;
 import uk.ac.cam.cares.twa.cities.model.geo.EnvelopeCentroid;
 import uk.ac.cam.cares.twa.cities.model.geo.Transform;
 import uk.ac.cam.cares.twa.cities.model.geo.Utilities;
@@ -64,8 +61,8 @@ import uk.ac.cam.cares.twa.cities.model.geo.Utilities;
 public class KMLTilingTask implements Runnable{
 
   // KMLTilingTask class variables
-  private final int crsWGS48 = 4326; // global WGS 84 on cesium
-  private final int initTileSize = 250; // in meter. The tilting of the extent should be done in meter
+  private static int crsWGS48 = 4326; // global WGS 84 on cesium
+  private static int initTileSize = 250; // in meter. The tilting of the extent should be done in meter
 
   private int CRSinMeter;  // 23855 for berlin in meter in blazegraph
   private String unsortedKMLdir; // directory that contains the unsorted KML files
@@ -76,7 +73,7 @@ public class KMLTilingTask implements Runnable{
   private static String outCsvName = "summary";
   private static String underScore = "_";
   private static String outFileExt = ".csv";
-  private final String outputDir;
+  private String outputDir;
   public List<String[]> dataContent = new ArrayList<>();
   private List<String> gmlidList = new ArrayList<>();
   private Path parserCSV;  // created by KML parsing step, without tiles position
@@ -343,8 +340,8 @@ public class KMLTilingTask implements Runnable{
 
     String[] CSVHeader = {"gmlid", "envelope", "envelopeCentroid", "tiles", "filename"};
 
-    this.tilingCSV = Paths.get(this.outputDir, "sorted"+ "_" + this.outCsvName + "_" +
-        String.valueOf(dataContent.size()) + this.outFileExt);
+    this.tilingCSV = Paths.get(this.outputDir, "sorted"+ "_" + outCsvName + "_" +
+        String.valueOf(dataContent.size()) + outFileExt);
 
     try (CSVWriter writer = new CSVWriter(new FileWriter(this.tilingCSV.toString()))) {
         writer.writeNext(CSVHeader);
@@ -363,9 +360,9 @@ public class KMLTilingTask implements Runnable{
   private int[] calcNumRowCol() {
 
     this.nCol = (int) (Math.ceil(
-        (this.Textent_Ymax - this.Textent_Ymin) / this.initTileSize));
+        (this.Textent_Ymax - this.Textent_Ymin) / initTileSize));
     this.nRow = (int) (Math.ceil(
-        (this.Textent_Xmax - this.Textent_Xmin) / this.initTileSize));
+        (this.Textent_Xmax - this.Textent_Xmin) / initTileSize));
 
     this.tileLength = (this.Textent_Xmax - this.Textent_Xmin) / this.nRow;
     this.tileWidth = (this.Textent_Ymax - this.Textent_Ymin) / this.nCol;
@@ -515,18 +512,7 @@ public class KMLTilingTask implements Runnable{
     System.out.println("start: " + start + " ms\nend: " + end + " ms"); // @todo: need to genrate the run journal file
     System.out.println("buildings: " + this.count);
     System.out.println("Features have written: " + this.buildingInTiles);
-    //System.out.println("files sorted: " + this.files);
 
-    // Copy MasterJson to the outputDir, the end product is ready to deploy
-    /*
-    Path src = Paths.get(this.masterJSONFile);
-    String masterFile = new File(this.masterJSONFile).getName();
-    Path dest = Paths.get(this.outputDir + "\\" + masterFile);
-    try {
-      Files.copy(src, dest);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }*/
   }
 
   /** KML Sorting: Only execute one time in the beginning */
