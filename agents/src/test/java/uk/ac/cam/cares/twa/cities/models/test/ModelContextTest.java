@@ -315,7 +315,29 @@ public class ModelContextTest {
       deletions_expected.add(new UpdateBuilder().addWhere(where).buildDeleteWhere());
     }
     assertEquals(deletions_expected.toString(), deletions_actual.toString());
+  }
 
+  @Test
+  public void testmakeDeleteZealousDeltas(){
+
+    ModelContext context = new ModelContext(testResourceId, testNamespace);
+    TestModel testModel = TestModel.createRandom(context, 12345, 3, 0);
+
+    Method makeDeleteZealousDeltas;
+    UpdateRequest deletions_expected = new UpdateRequest();
+    UpdateRequest deletions_actual = new UpdateRequest();
+
+    try{
+      makeDeleteZealousDeltas = context.getClass().getDeclaredMethod("makeDeleteZealousDeltas", Model.class, UpdateRequest.class);
+      makeDeleteZealousDeltas.setAccessible(true);
+      makeDeleteZealousDeltas.invoke(context, testModel, deletions_actual);
+      Node self = NodeFactory.createURI(testModel.getIri());
+      deletions_expected.add(new UpdateBuilder().addWhere("?value", "?predicate", self).buildDeleteWhere());
+      deletions_expected.add(new UpdateBuilder().addWhere(self, "?predicate", "?value").buildDeleteWhere());
+      assertEquals(deletions_expected.toString(), deletions_actual.toString());
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e){
+      fail();
+    }
   }
 
   @Test
