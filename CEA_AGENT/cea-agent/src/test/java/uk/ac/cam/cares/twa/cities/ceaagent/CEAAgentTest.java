@@ -209,6 +209,7 @@ public class CEAAgentTest extends TestCase {
             accessAgentRoutes.setAccessible(true);
             Map<String,String> accessAgentMap = (HashMap<String,String>) accessAgentRoutes.get(agent);
             assertEquals(accessAgentMap.get(config.getString("namespace.local.kingslynn")), config.getString("uri.route.local.kingslynn"));
+            assertEquals(accessAgentMap.get(config.getString("namespace.local.pirmasens")), config.getString("uri.route.local.pirmasens"));
 
         } catch (NoSuchFieldException | IllegalAccessException e) {
             fail();
