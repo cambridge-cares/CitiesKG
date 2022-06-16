@@ -32,6 +32,7 @@ public class AccessAgentMapping {
             case "http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/": return AccessAgentMappingEnum.BERLIN.TARGET_RESOURCE_ID;
             case "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/": return AccessAgentMappingEnum.SINGAPORE_EPSG_24500.TARGET_RESOURCE_ID;
             case "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/": return AccessAgentMappingEnum.SINGAPORE_EPSG_4326.TARGET_RESOURCE_ID;
+            case "http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/": return AccessAgentMappingEnum.KINGSLYNN_EPSG_3857.TARGET_RESOURCE_ID;
             default: return null;
         }
     }
