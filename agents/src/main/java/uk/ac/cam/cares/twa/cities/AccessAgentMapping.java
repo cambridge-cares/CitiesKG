@@ -10,7 +10,8 @@ public class AccessAgentMapping {
     enum AccessAgentMappingEnum {
         BERLIN("citieskg-berlin"),
         SINGAPORE_EPSG_24500("singaporeEPSG24500"),
-        SINGAPORE_EPSG_4326("citieskg-singaporeEPSG4326");
+        SINGAPORE_EPSG_4326("citieskg-singaporeEPSG4326"),
+        KINGSLYNN_EPSG_3857("citieskg-kingslynnEPSG3857");
 
         private final String TARGET_RESOURCE_ID;
 
