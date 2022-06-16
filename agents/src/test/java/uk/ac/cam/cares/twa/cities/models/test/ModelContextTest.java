@@ -268,6 +268,57 @@ public class ModelContextTest {
   }
 
   @Test
+  public void testmakeDeleteDeltas(){
+
+    //Case 1 : isQuads = true
+    ModelContext context = new ModelContext(testResourceId, testNamespace);
+    TestModel testModel = TestModel.createRandom(context, 12345, 3, 0);
+    UpdateRequest deletions_expected = new UpdateRequest();
+    UpdateRequest deletions_actual = new UpdateRequest();
+    Method makeDeleteDeltas = null;
+
+    try{
+      makeDeleteDeltas = context.getClass().getDeclaredMethod("makeDeleteDeltas", Model.class, UpdateRequest.class);
+      makeDeleteDeltas.setAccessible(true);
+      makeDeleteDeltas.invoke(context, testModel, deletions_actual);
+    } catch(NoSuchMethodException | InvocationTargetException | IllegalAccessException e){
+      fail();
+    }
+
+    for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.fieldMap.entrySet()) {
+      FieldKey key = entry.getKey();
+      Node self = NodeFactory.createURI(testModel.getIri());
+      Node predicate = NodeFactory.createURI(key.predicate);
+      Node graph = NodeFactory.createURI(testNamespace + key.graphName);
+      WhereBuilder where = new WhereBuilder().addWhere(key.backward ? "?value" : self, predicate, key.backward ? self : "?value");
+      deletions_expected.add(new UpdateBuilder().addGraph(graph, where).buildDeleteWhere());
+    }
+    assertEquals(deletions_expected.toString(), deletions_actual.toString());
+
+    //Case 2: isQuads = false
+    ModelContext context1 = new ModelContext(testResourceId);
+    TripleTestModel testModel1 = context1.createNewModel(TripleTestModel.class, "http://testiri.com/test");
+    deletions_expected = new UpdateRequest();
+    deletions_actual = new UpdateRequest();
+
+    try{
+      makeDeleteDeltas.invoke(context1, testModel1, deletions_actual);
+    } catch(InvocationTargetException | IllegalAccessException e){
+      fail();
+    }
+
+    for (Map.Entry<FieldKey, FieldInterface> entry : MetaModel.get(TripleTestModel.class).fieldMap.entrySet()) {
+      FieldKey key = entry.getKey();
+      Node self = NodeFactory.createURI(testModel1.getIri());
+      Node predicate = NodeFactory.createURI(key.predicate);
+      WhereBuilder where = new WhereBuilder().addWhere(key.backward ? "?value" : self, predicate, key.backward ? self : "?value");
+      deletions_expected.add(new UpdateBuilder().addWhere(where).buildDeleteWhere());
+    }
+    assertEquals(deletions_expected.toString(), deletions_actual.toString());
+
+  }
+
+  @Test
   public void testPushNewObject() {
 
     ModelContext context = Mockito.spy(new ModelContext(testResourceId, testNamespace));
