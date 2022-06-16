@@ -168,6 +168,7 @@ public class CEAAgent extends JPSAgent {
                             String value;
                             if (TIME_SERIES.contains(measurement)) {
                                 value = calculateAnnual(retrieveData(result.get(0)), result.get(0));
+                                measurement = "Annual "+ measurement;
                             } else {
                                 value = result.get(0);
                             }

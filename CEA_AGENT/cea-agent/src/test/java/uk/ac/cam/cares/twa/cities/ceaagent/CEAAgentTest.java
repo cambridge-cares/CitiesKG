@@ -329,7 +329,7 @@ public class CEAAgentTest extends TestCase {
             }
             for(String ts: time_series_strings){
                 String result = returnParams.get(CEAAgent.ENERGY_PROFILE).toString();
-                String expected = "\""+ts+"\""+":\"testAnnual testUnit\"";
+                String expected = "\"Annual "+ts+"\""+":\"testAnnual testUnit\"";
                 assertTrue(result.contains(expected));
             }
         } catch(InvocationTargetException | IllegalAccessException e) {
