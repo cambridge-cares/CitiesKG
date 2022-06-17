@@ -15,6 +15,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpException;
 import org.apache.http.protocol.HTTP;
 import org.eclipse.rdf4j.rio.ntriples.NTriplesParser;
+import org.semanticweb.owlapi.formats.NQuadsDocumentFormat;
 import org.semanticweb.owlapi.formats.NTriplesDocumentFormat;
 import org.semanticweb.owlapi.io.StringDocumentSource;
 import org.semanticweb.owlapi.io.StringDocumentTarget;
@@ -45,12 +46,13 @@ public class OwlConverter {
 
     OWLOntologyManager manager = OntManagers.createManager();
     StringDocumentTarget sdt = new StringDocumentTarget();
-    NTriplesDocumentFormat nTriplesFormat = new NTriplesDocumentFormat();
+    //NTriplesDocumentFormat format = new NTriplesDocumentFormat();
+    NQuadsDocumentFormat format = new NQuadsDocumentFormat();
 
     try {
       File file = new File(fileName);
       OWLOntology ontology = manager.loadOntologyFromOntologyDocument(file);
-      ontology.saveOntology(nTriplesFormat, sdt);
+      ontology.saveOntology(format, sdt);
     } catch (OWLOntologyCreationException | OWLOntologyStorageException e) {
       throw new Exception("Loading ontology failed.");
     }
@@ -61,7 +63,7 @@ public class OwlConverter {
   private static String processOntologyToNquads(String ont, String ontIRI, String endpointIRI) {
 
     ont = ont.replace("_:", "<" + ontIRI + "#");
-    ont = ont.replace(" <http", "> <http:");
+    ont = ont.replace(" <http", "> <http");
     ont = ont.replace(" .", "> .");
     ont = ont.replace(">>", ">");
     ont = ont.replace("\">", "\"");
