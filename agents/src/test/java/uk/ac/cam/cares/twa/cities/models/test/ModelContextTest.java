@@ -1553,7 +1553,57 @@ public class ModelContextTest {
 
   }
 
+  @Test
+  public void testbuildVectorQuery(){
 
+    //Case 1: isQuads = true
+    ModelContext context1 = new ModelContext(testResourceId, testNamespace);
+    TestModel testModel1 = TestModel.createRandom(context1, 12345, 3, 0);
+
+    Node model = NodeFactory.createURI(testModel1.getIri());
+    Method buildVectorQuery = null;
+    String[] fieldNames = {"intProp", "backwardVector"};
+    SelectBuilder select;
+
+    try{
+      buildVectorQuery = context1.getClass().getDeclaredMethod("buildVectorQuery", Node.class, FieldKey.class);
+      buildVectorQuery.setAccessible(true);
+      for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.vectorFieldList) {
+        FieldInterface field = entry.getValue();
+        if (fieldNames.length > 0 && !ArrayUtils.contains(fieldNames, field.field.getName())) continue;
+        Node predicate = NodeFactory.createURI(entry.getKey().predicate);
+        select = new SelectBuilder().addVar("?value").addVar("?datatype").addVar("?isblank");
+        WhereBuilder where = new WhereBuilder().addWhere(entry.getKey().backward ? "?value" : model, predicate, entry.getKey().backward ? model : "?value");
+        select.addGraph(NodeFactory.createURI(testNamespace + entry.getKey().graphName), where);
+        select.addBind("DATATYPE" + "(" + "?" + "value" + ")", "?" + "datatype").addBind("ISBLANK" + "(" + "?" + "value" + ")", "?" + "isblank");
+        assertEquals(select.buildString(), buildVectorQuery.invoke(context1, model, entry.getKey()).toString());
+      }
+    } catch(NoSuchMethodException | ParseException | IllegalAccessException | InvocationTargetException e){
+      fail();
+    }
+
+    //Case 2: isQuads = false
+    ModelContext context2 = new ModelContext(testResourceId);
+    TripleTestModel testModel2 = context2.createNewModel(TripleTestModel.class, "http://testiri.com/test");
+
+    model = NodeFactory.createURI(testModel2.getIri());
+    try{
+      for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.vectorFieldList) {
+        FieldInterface field = entry.getValue();
+        if (fieldNames.length > 0 && !ArrayUtils.contains(fieldNames, field.field.getName())) continue;
+        Node predicate = NodeFactory.createURI(entry.getKey().predicate);
+        select = new SelectBuilder().addVar("?value").addVar("?datatype").addVar("?isblank");
+        WhereBuilder where = new WhereBuilder().addWhere(entry.getKey().backward ? "?value" : model, predicate, entry.getKey().backward ? model : "?value");
+        select.addWhere(where);
+        select.addBind("DATATYPE" + "(" + "?" + "value" + ")", "?" + "datatype").addBind("ISBLANK" + "(" + "?" + "value" + ")", "?" + "isblank");
+        assertEquals(select.buildString(), buildVectorQuery.invoke(context2, model, entry.getKey()).toString());
+      }
+    } catch(ParseException | IllegalAccessException | InvocationTargetException e){
+      fail();
+    }
+
+
+    }
   public JSONArray createModelResponse_false_1(){
 
     JSONArray jsonArray = new JSONArray()
