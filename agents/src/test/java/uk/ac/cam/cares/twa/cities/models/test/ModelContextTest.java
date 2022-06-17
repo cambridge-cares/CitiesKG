@@ -1461,6 +1461,48 @@ public class ModelContextTest {
 
   }
 
+  @Test
+  public void testbuildPullAllInDirectionQuery(){
+
+    // Case 1: is Quads = true (backward = true , false)
+    ModelContext context1 = new ModelContext(testResourceId, testNamespace);
+    TestModel testModel1 = TestModel.createRandom(context1, 12345, 3, 0);
+    Node model = NodeFactory.createURI(testModel1.getIri());
+    SelectBuilder select;
+    WhereBuilder where;
+    Method buildPullAllInDirectionQuery = null;
+    try{
+      buildPullAllInDirectionQuery = context1.getClass().getDeclaredMethod("buildPullAllInDirectionQuery", Node.class, boolean.class);
+      buildPullAllInDirectionQuery.setAccessible(true);
+      for(boolean backward : new boolean[]{false, true}){
+        select = new SelectBuilder().addVar("?value").addVar("?predicate").addVar("?datatype").addVar("?isblank");
+        where = new WhereBuilder().addWhere(backward ? "?value" : model, "?predicate", backward ? model : "?value");
+        select.addVar("?graph").addGraph("?graph", where);
+        select.addBind("DATATYPE" + "(" + "?" + "value" + ")", "?" + "datatype").addBind("ISBLANK" + "(" + "?" + "value" + ")", "?" + "isblank");
+        assertEquals(select.buildString(), buildPullAllInDirectionQuery.invoke(context1, model, backward).toString());
+      }
+    } catch(NoSuchMethodException | ParseException | IllegalAccessException | InvocationTargetException e){
+      fail();
+    }
+
+    // Case 2: is Quads = false (backward = true , false)
+    ModelContext context2 = new ModelContext(testResourceId);
+    TripleTestModel testModel2 = context2.createNewModel(TripleTestModel.class, "http://testiri.com/test");
+    model = NodeFactory.createURI(testModel2.getIri());
+    try{
+      for(boolean backward : new boolean[]{false, true}){
+        select = new SelectBuilder().addVar("?value").addVar("?predicate").addVar("?datatype").addVar("?isblank");
+        where = new WhereBuilder().addWhere(backward ? "?value" : model, "?predicate", backward ? model : "?value");
+        select.addWhere(where);
+        select.addBind("DATATYPE" + "(" + "?" + "value" + ")", "?" + "datatype").addBind("ISBLANK" + "(" + "?" + "value" + ")", "?" + "isblank");
+        assertEquals(select.buildString(), buildPullAllInDirectionQuery.invoke(context2, model, backward).toString());
+      }
+    } catch(ParseException | IllegalAccessException | InvocationTargetException e){
+      fail();
+    }
+  }
+
+
   public JSONArray createModelResponse_false_1(){
 
     JSONArray jsonArray = new JSONArray()
