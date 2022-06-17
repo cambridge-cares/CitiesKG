@@ -1260,6 +1260,45 @@ public class ModelContextTest {
     }
   }
 
+  @Test
+  public void testreadScalarsResponse(){
+
+    ModelContext context = new ModelContext(testResourceId, testNamespace);
+    TestModel testModel1 = TestModel.createRandom(context, 12345, 3, 0);
+    TestModel testModel2 = TestModel.createRandom(context, 1234, 3, 0);
+    JSONArray jsonArray = new JSONArray().put(new JSONObject().put("isblank0", "false").put("value0", "teststring").put("datatype0", "http://www.w3.org/2001/XMLSchema#string"));
+    Field cleanval;
+    Object[] cleanValues1;
+    Object[] cleanValues2;
+    Method readScalarsResponse;
+    FieldInterface field;
+
+    try{
+      readScalarsResponse = context.getClass().getDeclaredMethod("readScalarsResponse", Model.class, JSONObject.class);
+      readScalarsResponse.setAccessible(true);
+      cleanval = Model.class.getDeclaredField("cleanValues");
+      cleanval.setAccessible(true);
+      cleanValues1= (Object[]) cleanval.get(testModel1);
+      cleanValues2= (Object[]) cleanval.get(testModel2);
+
+      readScalarsResponse.invoke(context, testModel1, jsonArray.getJSONObject(0));
+
+      for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.scalarFieldList) {
+        field = entry.getValue();
+        if (!jsonArray.getJSONObject(0).has("value" + field.index)) continue;
+        field.put(testModel2, context.isTruthy(jsonArray.getJSONObject(0).getString("isblank" + field.index)) ? null : jsonArray.getJSONObject(0).getString("value" + field.index),
+                jsonArray.getJSONObject(0).optString("datatype" + field.index));
+        cleanValues2[field.index] = field.getMinimised(testModel2);
+        assertEquals(cleanValues2[field.index], cleanValues1[field.index]);
+      }
+      assertEquals(testModel2.getStringProp(), testModel1.getStringProp());
+
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e){
+      fail();
+    }
+
+  }
+
   public JSONArray createResponsefortestLoadAllWhere_1(){
     JSONArray jsonArray = new JSONArray()
             .put(new JSONObject().put("predicate", "http://dbpedia.org/ontology/bigintprop").put("isblank", "true")
