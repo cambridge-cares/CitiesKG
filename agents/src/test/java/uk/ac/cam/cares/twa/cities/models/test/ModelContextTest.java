@@ -205,11 +205,9 @@ public class ModelContextTest {
     cleanval.setAccessible(true);
     Object[] cleanValues = (Object[]) cleanval.get(testModel);
 
-    Class<?> c = Class.forName("uk.ac.cam.cares.twa.cities.models.Model.SpecialFieldInstruction");
-    c.getEnumConstants();
-//    for (FieldInterface field : metaModel.fieldMap.values()){
-//      assertEquals(Model.SpecialFieldInstruction.NEW, cleanValues[field.index]);
-//    }
+    for (FieldInterface field : metaModel.fieldMap.values()){
+      assertEquals(Model.SpecialFieldInstruction.NEW, cleanValues[field.index]);
+    }
   }
 
   @Test
