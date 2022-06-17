@@ -1222,6 +1222,44 @@ public class ModelContextTest {
     }
   }
 
+  @Test
+  public void testreadPullVectorsResponse(){
+
+    ModelContext context = new ModelContext(testResourceId, testNamespace);
+    TestModel testModel1 = TestModel.createRandom(context, 12345, 3, 0);
+    TestModel testModel2 = TestModel.createRandom(context, 1234, 3, 0);
+    String[] fieldNames = {"forwardVector"};
+    JSONArray response = forwardvectorResponse();
+    Field cleanval;
+    Object[] cleanValues1;
+    Object[] cleanValues2;
+    Method readPullVectorsResponse;
+    FieldInterface field;
+    try{
+      readPullVectorsResponse = context.getClass().getDeclaredMethod("readPullVectorsResponse", Model.class, FieldInterface.class, JSONArray.class, int.class, int.class);
+      readPullVectorsResponse.setAccessible(true);
+      cleanval = Model.class.getDeclaredField("cleanValues");
+      cleanval.setAccessible(true);
+      cleanValues1= (Object[]) cleanval.get(testModel1);
+      cleanValues2= (Object[]) cleanval.get(testModel2);
+      for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.vectorFieldList) {
+        field = entry.getValue();
+        if (fieldNames.length > 0 && !ArrayUtils.contains(fieldNames, field.field.getName())) continue;
+        readPullVectorsResponse.invoke(context, testModel1, field, response, 0, response.length());
+        field.clear(testModel2);
+        for (int i = 0; i < response.length(); i++) {
+          JSONObject row = response.getJSONObject(i);
+          field.put(testModel2, context.isTruthy(row.getString("isblank")) ? null : row.getString("value"), row.optString("datatype"));
+        }
+        cleanValues2[field.index] = field.getMinimised(testModel2);
+        assertEquals(cleanValues2[field.index], cleanValues1[field.index]);
+      }
+      assertEquals(testModel2.getForwardVector(), testModel1.getForwardVector());
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e){
+      fail();
+    }
+  }
+
   public JSONArray createResponsefortestLoadAllWhere_1(){
     JSONArray jsonArray = new JSONArray()
             .put(new JSONObject().put("predicate", "http://dbpedia.org/ontology/bigintprop").put("isblank", "true")
