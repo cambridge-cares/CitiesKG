@@ -785,7 +785,7 @@ public class ModelContext {
    * @return the deserialised {@link JSONArray} of rows in the response.
    */
   public JSONArray query(String query) {
-    System.err.println(query);
+    System.out.println(query);
     if (targetResourceId.startsWith("HARDCODE:")) {
       String endpoint = targetResourceId.substring(9);
       String responseString = new RemoteStoreClient(endpoint).execute(query);
