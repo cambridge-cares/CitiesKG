@@ -1299,6 +1299,40 @@ public class ModelContextTest {
 
   }
 
+  @Test
+  public void testreadPullAllInDirectionResponse(){
+
+    ModelContext context1 = new ModelContext(testResourceId, testNamespace);
+    ModelContext context2 = new ModelContext(testResourceId, testNamespace);
+    TestModel testModel1 = TestModel.createRandom(context1, 12345, 3, 0);
+    TestModel testModel2 = TestModel.createRandom(context2, 12345, 3, 0);
+    JSONArray jsonArray = creatResponse1_0();
+
+    Method readPullInDirectionResponse;
+    try{
+      readPullInDirectionResponse = context1.getClass().getDeclaredMethod("readPullAllInDirectionResponse", Model.class, JSONArray.class, boolean.class, int.class, int.class);
+      readPullInDirectionResponse.setAccessible(true);
+
+      readPullInDirectionResponse.invoke(context1, testModel1, jsonArray, false, 0, jsonArray.length());
+
+      for (int index = 0; index < jsonArray.length(); index++) {
+        JSONObject row = jsonArray.getJSONObject(index);
+        String graph = row.optString("graph", "");
+        if (testNamespace != null && graph.startsWith(testNamespace))
+          graph = graph.substring(testNamespace.length());
+        FieldKey key = new FieldKey(graph, row.getString("predicate"), false);
+        FieldInterface field = metaModel.fieldMap.get(key);
+        if (field == null) continue;
+        field.put(testModel2, context2.isTruthy(row.getString("isblank")) ? null : row.getString("value"), row.optString("datatype"));
+      }
+      assertEquals(testModel2, testModel1);
+
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e){
+      fail();
+    }
+
+  }
+
   public JSONArray createResponsefortestLoadAllWhere_1(){
     JSONArray jsonArray = new JSONArray()
             .put(new JSONObject().put("predicate", "http://dbpedia.org/ontology/bigintprop").put("isblank", "true")
