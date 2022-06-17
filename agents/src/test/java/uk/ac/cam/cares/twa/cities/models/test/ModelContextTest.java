@@ -1601,9 +1601,16 @@ public class ModelContextTest {
     } catch(ParseException | IllegalAccessException | InvocationTargetException e){
       fail();
     }
+  }
 
+  @Test
+  public void testoptGetModel(){
+    ModelContext context = new ModelContext(testResourceId, testNamespace);
+    TestModel testModel = TestModel.createRandom(context, 12345, 3, 0);
+    assertEquals(testModel, context.optGetModel(TestModel.class, testModel.getIri()));
+    assertNull(context.optGetModel(TestModel.class, "http://testiri.com/test"));
+  }
 
-    }
   public JSONArray createModelResponse_false_1(){
 
     JSONArray jsonArray = new JSONArray()
