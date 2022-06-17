@@ -1502,6 +1502,57 @@ public class ModelContextTest {
     }
   }
 
+  @Test
+  public void testbuildScalarsQuery(){
+
+    //Case 1: isQuads = true
+    ModelContext context1 = new ModelContext(testResourceId, testNamespace);
+    TestModel testModel1 = TestModel.createRandom(context1, 12345, 3, 0);
+    Method buildScalarsQuery = null;
+    Node model = NodeFactory.createURI(testModel1.getIri());
+    String[] fieldNames = {"intProp", "backwardVector"};
+    SelectBuilder select = new SelectBuilder();
+    try{
+      buildScalarsQuery = context1.getClass().getDeclaredMethod("buildScalarsQuery", Node.class, MetaModel.class, String[].class);
+      buildScalarsQuery.setAccessible(true);
+      for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.scalarFieldList) {
+        FieldInterface field = entry.getValue();
+        FieldKey key = entry.getKey();
+        if (fieldNames.length > 0 && !ArrayUtils.contains(fieldNames, field.field.getName())) continue;
+        Node predicate = NodeFactory.createURI(key.predicate);
+        select.addVar("?value" + field.index).addVar("?datatype" + field.index).addVar("?isblank" + field.index);
+        WhereBuilder where = new WhereBuilder().addWhere(key.backward ? "?value" + field.index : model, predicate, key.backward ? model : "?value" + field.index);
+        select.addGraph(NodeFactory.createURI(testNamespace + key.graphName), where);
+        select.addBind("DATATYPE" + "(" + "?value" + field.index + ")", "?datatype" + field.index).addBind("ISBLANK" + "(" + "?value" + field.index + ")", "?isblank" + field.index);
+      }
+      assertEquals(select.buildString(), buildScalarsQuery.invoke(context1, model, metaModel, fieldNames).toString());
+    } catch (NoSuchMethodException | ParseException | IllegalAccessException | InvocationTargetException e){
+      fail();
+    }
+
+    //Case 2: isQuads = false
+    ModelContext context2 = new ModelContext(testResourceId);
+    TripleTestModel testModel2 = context2.createNewModel(TripleTestModel.class, "http://testiri.com/test");
+    model = NodeFactory.createURI(testModel2.getIri());
+    select = new SelectBuilder();
+    try{
+      for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.scalarFieldList) {
+        FieldInterface field = entry.getValue();
+        FieldKey key = entry.getKey();
+        if (fieldNames.length > 0 && !ArrayUtils.contains(fieldNames, field.field.getName())) continue;
+        Node predicate = NodeFactory.createURI(key.predicate);
+        select.addVar("?value" + field.index).addVar("?datatype" + field.index).addVar("?isblank" + field.index);
+        WhereBuilder where = new WhereBuilder().addWhere(key.backward ? "?value" + field.index : model, predicate, key.backward ? model : "?value" + field.index);
+        select.addWhere(where);
+        select.addBind("DATATYPE" + "(" + "?value" + field.index + ")", "?datatype" + field.index).addBind("ISBLANK" + "(" + "?value" + field.index + ")", "?isblank" + field.index);
+      }
+      assertEquals(select.buildString(), buildScalarsQuery.invoke(context2, model, metaModel, fieldNames).toString());
+    } catch (ParseException | IllegalAccessException | InvocationTargetException e){
+      fail();
+    }
+
+  }
+
 
   public JSONArray createModelResponse_false_1(){
 
