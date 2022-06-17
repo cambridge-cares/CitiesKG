@@ -193,6 +193,26 @@ public class ModelContextTest {
   }
 
   @Test
+  public void testcreateNewModel() throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException {
+
+    ModelContext context = new ModelContext(testResourceId, testNamespace);
+    TestModel testModel = context.createNewModel(TestModel.class, "http://testiri.com/test");
+    assertEquals("http://testiri.com/test", testModel.getIri());
+    assertEquals(context, testModel.getContext());
+    assertTrue(context.members.containsValue(testModel));
+
+    Field cleanval = Model.class.getDeclaredField("cleanValues");
+    cleanval.setAccessible(true);
+    Object[] cleanValues = (Object[]) cleanval.get(testModel);
+
+    Class<?> c = Class.forName("uk.ac.cam.cares.twa.cities.models.Model.SpecialFieldInstruction");
+    c.getEnumConstants();
+//    for (FieldInterface field : metaModel.fieldMap.values()){
+//      assertEquals(Model.SpecialFieldInstruction.NEW, cleanValues[field.index]);
+//    }
+  }
+
+  @Test
   public void testmakeChangeDeltas(){
 
     ModelContext context = new ModelContext(testResourceId, testNamespace);
@@ -205,14 +225,12 @@ public class ModelContextTest {
     UpdateBuilder insertions_expected = new UpdateBuilder();
 
     Method makeChangeDeltas;
-    //Case 1: only insertion, no deletion, anyInserts = true
-    //Case 2: both insertion and deletion, anyInserts = true
-    //Case 3: no insertion, no deletion, anyInserts = false
+
     try {
       makeChangeDeltas = context.getClass().getDeclaredMethod("makeChangeDeltas", Model.class, UpdateRequest.class, UpdateBuilder.class);
       makeChangeDeltas.setAccessible(true);
       Node self = null;
-      //Case 1
+      //Case 1: only insertion, no deletion, anyInserts = true
       for(Map.Entry<FieldKey, FieldInterface> entry : metaModel.fieldMap.entrySet()){
         FieldInterface fieldInterface = entry.getValue();
         FieldKey key = entry.getKey();
@@ -229,7 +247,7 @@ public class ModelContextTest {
       assertEquals(deletions_expected.toString(), deletions_actual.toString());
       testModel.setClean();
 
-      //Case 2
+      //Case 2: both insertion and deletion, anyInserts = true
       deletions_actual = new UpdateRequest();
       deletions_expected = new UpdateRequest();
       insertions_actual = new UpdateBuilder();
@@ -249,7 +267,7 @@ public class ModelContextTest {
       assertEquals(deletions_expected.toString(), deletions_actual.toString());
       testModel.setClean();
 
-      //Case 3
+      //Case 3: no insertion, no deletion, anyInserts = false
       deletions_actual = new UpdateRequest();
       deletions_expected = new UpdateRequest();
       insertions_actual = new UpdateBuilder();
@@ -753,7 +771,7 @@ public class ModelContextTest {
   }
 
   @Test
-  public void testPullAll() {
+  public void testloadAll() {
 
     ModelContext pushContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
 
@@ -787,6 +805,48 @@ public class ModelContextTest {
     Mockito.doReturn(jsonArray2).when(pullContext).query(Mockito.contains(query2.buildString()));
 
     TestModel pullModel = pullContext.loadAll(TestModel.class, pushModel.getIri());
+    Mockito.verify(pullContext, Mockito.times(1)).query(query1.buildString());
+    Mockito.verify(pullContext, Mockito.times(1)).query(query2.buildString());
+    assertEquals(pushModel, pullModel);
+
+  }
+
+  @Test
+  public void testpullAll() {
+
+    ModelContext pushContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
+
+    Mockito.doNothing().when(pushContext).update(Mockito.contains("CLEAR ALL"));
+    pushContext.update("CLEAR ALL");
+    Mockito.verify(pushContext, Mockito.times(1)).update(Mockito.contains("CLEAR ALL"));
+
+    TestModel pushModel = TestModel.createRandom(pushContext, 12345, 3, 3);
+    Mockito.doNothing().when(pushContext).update(Mockito.contains("INSERT DATA"));
+    pushContext.pushAllChanges();
+    Mockito.verify(pushContext, Mockito.times(1)).update(Mockito.contains("INSERT DATA"));
+
+    ModelContext pullContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
+
+    JSONArray jsonArray1 = creatResponse1_0();
+    JSONArray jsonArray2 = createResponse2_0();
+
+
+    Method buildQuery;
+    SelectBuilder query1 = null;
+    SelectBuilder query2 = null;
+    try {
+      buildQuery = pullContext.getClass().getDeclaredMethod("buildPullAllInDirectionQuery", Node.class, boolean.class);
+      buildQuery.setAccessible(true);
+      query1 = (SelectBuilder) buildQuery.invoke(pullContext, NodeFactory.createURI(pushModel.getIri()), false);
+      query2 = (SelectBuilder) buildQuery.invoke(pullContext, NodeFactory.createURI(pushModel.getIri()), true);
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+      e.printStackTrace();
+    }
+    Mockito.doReturn(jsonArray1).when(pullContext).query(Mockito.contains(query1.buildString()));
+    Mockito.doReturn(jsonArray2).when(pullContext).query(Mockito.contains(query2.buildString()));
+
+    TestModel pullModel = pullContext.createHollowModel(TestModel.class, pushModel.getIri());
+    pullContext.pullAll(pullModel);
     Mockito.verify(pullContext, Mockito.times(1)).query(query1.buildString());
     Mockito.verify(pullContext, Mockito.times(1)).query(query2.buildString());
     assertEquals(pushModel, pullModel);
