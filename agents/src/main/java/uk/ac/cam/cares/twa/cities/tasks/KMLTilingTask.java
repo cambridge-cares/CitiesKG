@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
+import com.github.jsonldjava.utils.Obj;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.opencsv.CSVParser;
@@ -61,18 +62,18 @@ import uk.ac.cam.cares.twa.cities.model.geo.Utilities;
 public class KMLTilingTask implements Runnable{
 
   // KMLTilingTask class variables
-  private static int crsWGS48 = 4326; // global WGS 84 on cesium
-  private static int initTileSize = 250; // in meter. The tilting of the extent should be done in meter
+  private static final int crsWGS48 = 4326; // global WGS 84 on cesium
+  private static final int initTileSize = 250; // in meter. The tilting of the extent should be done in meter
 
-  private int CRSinMeter;  // 23855 for berlin in meter in blazegraph
+  private final int CRSinMeter;  // 23855 for berlin in meter in blazegraph
   private String unsortedKMLdir; // directory that contains the unsorted KML files
   private String sortedKMLdir; // directory that contains the sorted KML files
   private String displayForm;
 
   // KML Parsing
-  private static String outCsvName = "summary";
-  private static String underScore = "_";
-  private static String outFileExt = ".csv";
+  private static final String outCsvName = "summary";
+  private static final String underScore = "_";
+  private static final String outFileExt = ".csv";
   private String outputDir;
   public List<String[]> dataContent = new ArrayList<>();
   private List<String> gmlidList = new ArrayList<>();
@@ -89,8 +90,8 @@ public class KMLTilingTask implements Runnable{
   private double Textent_Ymax;
   private int nRow;
   private int nCol;
-  private static String layerName = "test";
-  private static String[] displayOptions = {"FOOTPRINT", "EXTRUDED", "GEOMETRY", "COLLADA"};
+  private static final String layerName = "test";
+  private static final String[] displayOptions = {"FOOTPRINT", "EXTRUDED", "GEOMETRY", "COLLADA"};
   private double tileLength;  // RowNumber
   private double tileWidth;  // ColNumber
   private Path tilingCSV;  // created by KML tiling step, with tiles position
@@ -101,10 +102,11 @@ public class KMLTilingTask implements Runnable{
   private HashMap<String, Boolean> fileStatus = new HashMap<>();
   private int count = 0; // count the number of buildings
   private int buildingInTiles = 0;
+  private String iriprefix;
   //private final BlockingQueue<Params> taskParamsQueue;
   private Boolean stop = false;
 
-  public KMLTilingTask(String path2unsortedKML, String path2sortedKML, int databaseCRS, String displayForm) {
+  public KMLTilingTask(String path2unsortedKML, String path2sortedKML, int databaseCRS, String displayForm, String namespaceIri) {
 
     // KMLTilingTask: Initialize the variables
     CRSinMeter = databaseCRS; //"32648"; "25833"
@@ -115,7 +117,7 @@ public class KMLTilingTask implements Runnable{
     }
     unsortedKMLdir = path2unsortedKML;
     sortedKMLdir = path2sortedKML;
-
+    iriprefix = namespaceIri;
     this.outputDir = Utilities.createDir(sortedKMLdir);
 
     // KML Tiling: Initialize the extent for the tiling step; extent in 4326 same as in kml; Textent -- transformed extent (in meter for berlin)
@@ -410,9 +412,9 @@ public class KMLTilingTask implements Runnable{
   /** KML Tiling: To Note: Need to be careful with latitude and longitude , Check with epsg.io
   * Creation of MasterJson file, which is used to name the tiles' filename in KMLSorterTask.java */
   private Path createMasterJson(){
-    LinkedHashMap masterjson = new LinkedHashMap();
+    LinkedHashMap<String, Object> masterjson = new LinkedHashMap<>();
     masterjson.put("version", "1.0.0");
-    masterjson.put("layername", this.layerName);  // should not be hardcoded, usually "test"
+    masterjson.put("layername", layerName);  // should not be hardcoded, usually "test"
     masterjson.put("fileextension", ".kml");
     masterjson.put("displayform", displayForm); // should not be hardcoded, e.g., "extruded"
     masterjson.put("minLodPixels", 10);
@@ -420,12 +422,14 @@ public class KMLTilingTask implements Runnable{
     masterjson.put("colnum", this.nCol );
     masterjson.put("rownum", this.nRow);
 
-    LinkedHashMap bbox = new LinkedHashMap();
+    LinkedHashMap<String, Double> bbox = new LinkedHashMap<>();
     bbox.put("xmin", this.extent_Ymin);
     bbox.put("xmax", this.extent_Ymax);
     bbox.put("ymin", this.extent_Xmin);
     bbox.put("ymax", this.extent_Xmax);
     masterjson.put("bbox", bbox);
+
+    masterjson.put("iriprefix", this.iriprefix + "cityobject/");
 
     // This GSON library can help to write pretty-printed json file
     Gson gson = new GsonBuilder().setPrettyPrinting().create();

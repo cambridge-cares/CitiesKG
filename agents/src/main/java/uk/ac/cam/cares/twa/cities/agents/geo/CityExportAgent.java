@@ -7,22 +7,17 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import kong.unirest.UnirestException;
 import org.apache.http.HttpException;
 import org.apache.http.protocol.HTTP;
-import org.checkerframework.checker.units.qual.K;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.XML;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.twa.cities.tasks.ExporterExpTask;
 import uk.ac.cam.cares.twa.cities.tasks.ExporterTask;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
@@ -60,12 +55,12 @@ public class CityExportAgent extends JPSAgent {
         public String outputPath;
         public String[] gmlIds;
         public String srsname;
-        public Params (String namespaceIri, String directory, JSONObject serverInfo, String[] displayMode, String outputPath, String[] gmlIds, String srsname){
+        public Params (String namespaceIri, JSONObject serverInfo, String srsname, String outputDir, String outputPath, String[] displayMode, String[] gmlIds){
             this.namespaceIri = namespaceIri;
-            this.outputDir = directory;
+            this.outputDir = outputDir;
             this.serverInfo = serverInfo;
             this.displayMode = displayMode;
-            this.outputPath = outputPath;
+            this.outputPath = outputPath;  // export/kmlFiles
             this.gmlIds = gmlIds;
             this.srsname = srsname;
         }
@@ -78,27 +73,24 @@ public class CityExportAgent extends JPSAgent {
     public static final String KEY_REQ_METHOD = "method";
     public static final String KEY_NAMESPACE = "namespace";
     public static final String KEY_DISPLAYFORM = "displayform";
-    public static final String FS = System.getProperty("file.separator");
 
     // Export files names
-    private String outFileName = "test";
-    private String outFileExtension = ".kml";
+    private static final String outFileName = "test";
+    private static final String outFileExtension = ".kml";
 
     private String namespaceIri;
-    private JSONArray gmlidParams;
     private String outputDir;
-    private JSONObject serverInfo;
     private String srsName;
     private String[] displayMode = {"false","false", "false", "false"};
     private String inputDisplayForm;
-    private String[] displayOptions = {"FOOTPRINT", "EXTRUDED", "GEOMETRY", "COLLADA"};
+    private static final String[] displayOptions = {"FOOTPRINT", "EXTRUDED", "GEOMETRY", "COLLADA"};
     private String namespaceName;
-    private String tmpDirsLocation = System.getProperty("java.io.tmpdir");    //System.getProperty("java.io.tmpdir");   //"C:/tmp";  // can not have empty space on the path
+    private static final String tmpDirsLocation = System.getProperty("java.io.tmpdir");    //System.getProperty("java.io.tmpdir");   //"C:/tmp";  // can not have empty space on the path
     // Default task parameters
     //@todo: ImpExp.main() fails if there is more than one thread of it at a time. It needs further investigation.
     private final int NUM_EXPORTER_THREADS = 1;
     private final ThreadPoolExecutor exporterExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_EXPORTER_THREADS);
-    //private final ThreadPoolExecutor tilingExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_EXPORTER_THREADS);
+
 
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
@@ -108,7 +100,7 @@ public class CityExportAgent extends JPSAgent {
 
             // Process "namespaceIri"
             namespaceIri = requestParams.getString(KEY_NAMESPACE);
-            serverInfo = getServerInfo(namespaceIri);
+            JSONObject serverInfo = getServerInfo(namespaceIri);
             srsName = getCrsInfo(namespaceIri);  // "EPSG:25833"
 
             // Process "displayform"
@@ -121,46 +113,49 @@ public class CityExportAgent extends JPSAgent {
             // If gmlid contains "*", it requires the whole list of gmlid from the namespace
             // This step can take long as querying the database is long with this sparql query
             // 2 modes:
-            // 1) [*]
+            // 1) [*]  --> tiling is mandatory
             // 2) explicit gmlids in an array
 
             outputDir = Paths.get(tmpDirsLocation, "export").toString();
-            gmlidParams = requestParams.getJSONArray(KEY_GMLID);
+            JSONArray gmlidParams = requestParams.getJSONArray(KEY_GMLID);
 
             if (gmlidParams.length() == 1 && gmlidParams.get(0).equals("*")) {
                 String preparedGmlids = Paths.get(tmpDirsLocation, namespaceName).toString();
+                File gmlidDir = new File(preparedGmlids);
 
-                ArrayList<Path> fileList = new ArrayList<>();
-                try (Stream<Path> paths = Files.walk(Paths.get(preparedGmlids))) {
-                    paths
-                        .filter(Files::isRegularFile)
-                        .forEach(fileList::add);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                if (gmlidDir.isDirectory() && gmlidDir.length() > 0) {
+                    ArrayList<Path> fileList = new ArrayList<>();
+                    try (Stream<Path> paths = Files.walk(Paths.get(preparedGmlids))) {
+                        paths
+                            .filter(Files::isRegularFile)
+                            .forEach(fileList::add);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    for (int i = 0 ; i < fileList.size(); ++i){
+                        // Retrieve a list of gmlids from a file, and execute the export process
+                        String[] gmlidArray = getGmlidFromFile(fileList.get(i));
+                        String outputFileName = getOutputName(fileList.get(i));
+                        Params taskParams = new Params(namespaceIri, serverInfo, srsName, outputDir, outputFileName, displayMode, gmlidArray);
+                        exportKml(taskParams);
+                    }
+
+                    System.out.println("After for loop, Thread Name: " + Thread.currentThread().getName());
+                } else {
+                    ArrayList<String> buildingIds = new ArrayList<>();
+                    for (Object id : gmlidParams) {
+                        buildingIds.add(id.toString());
+                    }
+                    String[] gmlidsArray = new String[buildingIds.size()];
+                    gmlidsArray = buildingIds.toArray(gmlidsArray);
+                    String outSingleFileName = getOutputName(null);
+                    Params taskParams = new Params(namespaceIri, serverInfo, srsName, outputDir, outSingleFileName, displayMode, gmlidsArray);
+                    exportKml(taskParams);
                 }
 
-                BlockingQueue<Params> taskParamsQueue = new LinkedBlockingDeque<>();
-                for (int i = 0 ; i < fileList.size(); ++i){
-                    // Retrieve a list of gmlids from a file, and execute the export process
-                    String[] gmlidArray = getGmlidFromFile(fileList.get(i));
-                    String outputFileName = getOutputName(fileList.get(i));
-                    Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outputFileName, gmlidArray, srsName);
-                    taskParamsQueue.add(taskParams);
-                }
+                tilingKml();
 
-                System.out.println("After for loop, Thread Name: " + Thread.currentThread().getName());
-
-                ExporterExpTask exporterExpTask = new ExporterExpTask(taskParamsQueue);
-                exporterExecutor.execute(exporterExpTask);
-
-                String path2unsortedKML = Paths.get(outputDir, "kmlFiles").toString() ;
-                String path2sortedKML = Paths.get(outputDir).toString();
-
-                int databaseCRS = Integer.valueOf(srsName.split(":")[1]);
-
-                KMLTilingTask kmlTilingTask = new KMLTilingTask(path2unsortedKML, path2sortedKML, databaseCRS, inputDisplayForm);
-
-                exporterExecutor.execute(kmlTilingTask);  // this step will add the final task to the exporterExecutor
 
             }else{
                 ArrayList<String> buildingIds = new ArrayList<>();
@@ -170,8 +165,8 @@ public class CityExportAgent extends JPSAgent {
                 String[] gmlidsArray = new String[buildingIds.size()];
                 gmlidsArray = buildingIds.toArray(gmlidsArray);
                 String outSingleFileName = getOutputName(null);
-                Params taskParams = new Params(namespaceIri, outputDir, serverInfo, displayMode, outSingleFileName, gmlidsArray,srsName);
-                //result.put("outputPath", exportKml(gmlidsArray, taskParams));
+                Params taskParams = new Params(namespaceIri, serverInfo, srsName, outputDir, outSingleFileName, displayMode, gmlidsArray);
+                exportKml(taskParams);
             }
 
         }
@@ -239,7 +234,7 @@ public class CityExportAgent extends JPSAgent {
         String sparqlquery = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#> \n" +
             "SELECT ?s ?srid ?srsname { ?s ocgml:srid ?srid; ocgml:srsname ?srsname }";
 
-        String srsname = null;
+        String srsname;
 
         try { HttpResponse<?> response = Unirest.post(namespaceIri)
             .header(HTTP.CONTENT_TYPE, "application/sparql-query")
@@ -247,7 +242,7 @@ public class CityExportAgent extends JPSAgent {
             .socketTimeout(300000)
             .asString();
             int respStatus = response.getStatus();
-            String responseBody = null;
+            String responseBody;
             // handle the response
             if (respStatus != HttpURLConnection.HTTP_OK) {
                 throw new HttpException(namespaceIri + " " + respStatus);
@@ -266,16 +261,16 @@ public class CityExportAgent extends JPSAgent {
 
     /**
      * create the output path of the generated kml file for indexed input files.
-     * @param - indexed file
-     * @return - the output location of the kml file
+     * @param inputFile - indexed file
+     * @return String - the output location of the kml file
      */
     private String getOutputName (Path inputFile) {
 
         // Create the export directory if this does not exist
         if (!new File(outputDir).exists()){ new File(outputDir).mkdirs(); }
 
-        String outputPath = null;
-        String path = null;
+        String outputPath;
+        String path;
         if (inputFile ==  null) {
             outputPath =  Paths.get(outputDir, outFileName + outFileExtension).toString();
 
@@ -285,17 +280,9 @@ public class CityExportAgent extends JPSAgent {
             String filename = elem[elem.length - 1];
             String index = filename.substring(filename.indexOf("_") + 1, filename.indexOf("."));
             String exportFilename = outFileName + "_" + index + outFileExtension;
-            outputPath = Paths.get(outputDir.toString(), exportFilename).toString();
+            outputPath = Paths.get(outputDir, exportFilename).toString();
         }
-        /*
-        File outputFile = new File(outputPath);
-        if (!outputFile.exists()){
-            try {
-                outputFile.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }*/
+
         return outputPath;
     }
 
@@ -317,8 +304,6 @@ public class CityExportAgent extends JPSAgent {
     private JSONObject getServerInfo (String endpointUri) {
 
         JSONObject serverInfo = new JSONObject();
-        //JSONArray uriGmlids = requestParams.getJSONArray(KEY_GMLID);
-        //String endpointUri = uriGmlids.get(0).toString();
 
         String[] splitstr = endpointUri.split("/");
 
@@ -334,8 +319,10 @@ public class CityExportAgent extends JPSAgent {
         String[] subarray = Arrays.copyOfRange(splitstr, 3, splitstr.length);
         String namespace = "/" + String.join("/", subarray) + "/";
         namespaceName = subarray[2];
+
+        assert server != null;
         if (server.isEmpty() || port.isEmpty() || namespace.isEmpty()) {
-            return null;
+            throw new IllegalArgumentException();
         }
         serverInfo.put ("host", server);
         serverInfo.put ("port", port);
@@ -343,12 +330,21 @@ public class CityExportAgent extends JPSAgent {
         return serverInfo;
     }
 
-    private ExporterTask exportKml (String[] gmlIds, Params taskParams){
+    private ExporterTask exportKml (Params taskParams){
 
-        ExporterTask task = new ExporterTask(gmlIds, taskParams.outputPath, serverInfo, taskParams.displayMode);
-        exporterExecutor.execute(task);
+        ExporterTask exporterTask = new ExporterTask(taskParams);
+        exporterExecutor.execute(exporterTask);
 
-        return task;
+        return exporterTask;
+    }
+
+    private KMLTilingTask tilingKml(){
+        String path2unsortedKML = Paths.get(outputDir, "kmlFiles").toString() ;
+        String path2sortedKML = Paths.get(outputDir).toString();
+        int databaseCRS = Integer.valueOf(srsName.split(":")[1]);
+        KMLTilingTask kmlTilingTask = new KMLTilingTask(path2unsortedKML, path2sortedKML, databaseCRS, inputDisplayForm, namespaceIri);
+        exporterExecutor.execute(kmlTilingTask);  // this step will add the final task to the exporterExecutor
+        return kmlTilingTask;
     }
 
 }
