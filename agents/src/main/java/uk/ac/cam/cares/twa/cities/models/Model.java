@@ -22,13 +22,13 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
  */
 public abstract class Model {
 
-  enum SpecialFieldInstruction {
+  public enum SpecialFieldInstruction {
     NEW,
     UNPULLED,
     FORCE_PUSH
   }
 
-  enum LifeCycle {
+  public enum LifeCycle {
     LIVE,
     TO_DELETE,
     TO_DELETE_ZEALOUS,
