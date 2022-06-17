@@ -193,7 +193,7 @@ public class ModelContextTest {
   }
 
   @Test
-  public void testcreateNewModel() throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException {
+  public void testcreateNewModel() {
 
     ModelContext context = new ModelContext(testResourceId, testNamespace);
     TestModel testModel = context.createNewModel(TestModel.class, "http://testiri.com/test");
@@ -201,13 +201,46 @@ public class ModelContextTest {
     assertEquals(context, testModel.getContext());
     assertTrue(context.members.containsValue(testModel));
 
-    Field cleanval = Model.class.getDeclaredField("cleanValues");
-    cleanval.setAccessible(true);
-    Object[] cleanValues = (Object[]) cleanval.get(testModel);
+    Field cleanval;
+    Object[] cleanValues = new Object[0];
+    try{
+      cleanval = Model.class.getDeclaredField("cleanValues");
+      cleanval.setAccessible(true);
+      cleanValues= (Object[]) cleanval.get(testModel);
+    } catch (NoSuchFieldException | IllegalAccessException e){
+      fail();
+    }
+
 
     for (FieldInterface field : metaModel.fieldMap.values()){
       assertEquals(Model.SpecialFieldInstruction.NEW, cleanValues[field.index]);
     }
+  }
+
+  @Test
+  public void testcreateHollowModel() {
+
+    ModelContext context = new ModelContext(testResourceId, testNamespace);
+    TestModel testModel = context.createHollowModel(TestModel.class, "http://testiri.com/test");
+    assertEquals("http://testiri.com/test", testModel.getIri());
+    assertEquals(context, testModel.getContext());
+    assertTrue(context.members.containsValue(testModel));
+
+    Field cleanval;
+    Object[] cleanValues = new Object[0];
+    try{
+      cleanval = Model.class.getDeclaredField("cleanValues");
+      cleanval.setAccessible(true);
+      cleanValues= (Object[]) cleanval.get(testModel);
+    } catch (NoSuchFieldException | IllegalAccessException e){
+      fail();
+    }
+
+
+    for (FieldInterface field : metaModel.fieldMap.values()){
+      assertEquals(Model.SpecialFieldInstruction.UNPULLED, cleanValues[field.index]);
+    }
+
   }
 
   @Test
