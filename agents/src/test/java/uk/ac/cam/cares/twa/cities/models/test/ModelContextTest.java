@@ -17,6 +17,7 @@ import org.apache.jena.update.UpdateRequest;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.w3.xlink.TypeType;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -317,6 +318,47 @@ public class ModelContextTest {
   }
 
   @Test
+  public void testPushChanges() {
+    ModelContext context = Mockito.spy((new ModelContext(testResourceId, testNamespace)));
+    TestModel testModel = Mockito.spy(TestModel.createRandom(context, 12345, 3, 0));
+    UpdateRequest deletions = new UpdateRequest();
+    UpdateBuilder insertions = new UpdateBuilder();
+
+    Mockito.doNothing().when(context).update(Mockito.contains("CLEAR ALL"));
+    context.update("CLEAR ALL");
+    Mockito.verify(context, Mockito.times(1)).update("CLEAR ALL");
+
+    Method makeChangeDeltas = null;
+    try {
+      makeChangeDeltas = context.getClass().getDeclaredMethod("makeChangeDeltas", Model.class, UpdateRequest.class, UpdateBuilder.class);
+      makeChangeDeltas.setAccessible(true);
+      makeChangeDeltas.invoke(context, testModel, deletions, insertions);
+      deletions.add(insertions.build());
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e){
+      fail();
+    }
+    Mockito.doNothing().when(context).update(deletions.toString());
+    context.pushChanges(testModel);
+    Mockito.verify(context, Mockito.times(1)).update(deletions.toString());
+
+    deletions = new UpdateRequest();
+    insertions = new UpdateBuilder();
+    testModel.setDoubleProp(7.77);
+    try {
+      makeChangeDeltas.invoke(context, testModel, deletions, insertions);
+      deletions.add(insertions.build());
+    } catch (IllegalAccessException | InvocationTargetException e){
+      fail();
+    }
+    Mockito.doNothing().when(context).update(deletions.toString());
+    context.pushChanges(testModel);
+    Mockito.verify(context, Mockito.times(1)).update(deletions.toString());
+
+    Mockito.doReturn(new JSONArray().put(new JSONObject().put("count", "26"))).when(context).query(Mockito.contains("SELECT (COUNT(*) AS ?count) WHERE { ?a ?b ?c }"));
+    assertEquals(metaModel.scalarFieldList.size() + (metaModel.vectorFieldList.size() - 1) * 3, countTriples(context));
+  }
+
+  @Test
   public void testmakeDeleteDeltas(){
 
     //Case 1 : isQuads = true
@@ -410,31 +452,6 @@ public class ModelContextTest {
     Mockito.doReturn(new JSONArray().put(new JSONObject().put("count", "26"))).when(context).query(Mockito.contains("SELECT (COUNT(*) AS ?count) WHERE { ?a ?b ?c }"));
     assertEquals(metaModel.scalarFieldList.size() + (metaModel.vectorFieldList.size() - 1) * 3, countTriples(context));
 
-  }
-
-  @Test
-  public void testPushChanges() {
-    ModelContext context = Mockito.spy((new ModelContext(testResourceId, testNamespace)));
-
-    Mockito.doNothing().when(context).update(Mockito.contains("CLEAR ALL"));
-    Mockito.doNothing().when(context).update(Mockito.contains("INSERT DATA"));
-
-    context.update("CLEAR ALL");
-
-    TestModel testModel = Mockito.spy(TestModel.createRandom(context, 12345, 3, 3));
-    testModel.pushChanges();
-    testModel.setDoubleProp(7.77);
-    testModel.pushChanges();
-
-    Mockito.verify(context, Mockito.times(1)).update("CLEAR ALL");
-    Mockito.verify(context, Mockito.times(2)).update(Mockito.contains("INSERT DATA"));
-    Mockito.verify(context, Mockito.never()).query(Mockito.contains("DELETE"));
-    Mockito.verify(context, Mockito.times(1)).update(Mockito.contains("DELETE"));
-    Mockito.verify(context, Mockito.times(2)).update(Mockito.contains("doubleprop"));
-    Mockito.verify(context, Mockito.times(1)).update(Mockito.contains("stringprop"));
-
-    Mockito.doReturn(new JSONArray().put(new JSONObject().put("count", "26"))).when(context).query(Mockito.contains("SELECT (COUNT(*) AS ?count) WHERE { ?a ?b ?c }"));
-    assertEquals(metaModel.scalarFieldList.size() + (metaModel.vectorFieldList.size() - 1) * 3, countTriples(context));
   }
 
   @Test
