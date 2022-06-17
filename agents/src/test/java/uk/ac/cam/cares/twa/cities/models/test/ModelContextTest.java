@@ -854,7 +854,7 @@ public class ModelContextTest {
   }
 
   @Test
-  public void testPullRecursive() {
+  public void testrecursiveLoadAll() {
 
     ModelContext pushContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
 
@@ -905,6 +905,77 @@ public class ModelContextTest {
 
 
     TestModel pullModel = pullContext.recursiveLoadAll(TestModel.class, pushModel.getIri(), 2);
+
+    Mockito.verify(pullContext, Mockito.times(1)).query(query1_0.buildString());
+    Mockito.verify(pullContext, Mockito.times(1)).query(query2_0.buildString());
+    Mockito.verify(pullContext, Mockito.times(1)).query(query1_1.buildString());
+    Mockito.verify(pullContext, Mockito.times(1)).query(query2_1.buildString());
+    Mockito.verify(pullContext, Mockito.times(1)).query(query1_2.buildString());
+    Mockito.verify(pullContext, Mockito.times(1)).query(query2_2.buildString());
+
+
+    assertEquals(pushModel, pullModel);
+    assertEquals(pushModel.getModelProp(), pullModel.getModelProp());
+    assertEquals(pushModel.getModelProp().getModelProp(), pullModel.getModelProp().getModelProp());
+    assertNotEquals(pushModel.getModelProp().getModelProp().getModelProp(), pullModel.getModelProp().getModelProp().getModelProp());
+
+    ModelContext comparisonContext = new ModelContext(testResourceId, testNamespace);
+    TestModel comparisonModel = comparisonContext.createHollowModel(TestModel.class, pushModel.getModelProp().getModelProp().getModelProp().getIri());
+    assertEquals(comparisonModel, pullModel.getModelProp().getModelProp().getModelProp());
+  }
+
+  @Test
+  public void testrecursivePullAll() {
+
+    ModelContext pushContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
+
+    Mockito.doNothing().when(pushContext).update(Mockito.contains("CLEAR ALL"));
+    pushContext.update("CLEAR ALL");
+    Mockito.verify(pushContext, Mockito.times(1)).update(Mockito.contains("CLEAR ALL"));
+
+    TestModel pushModel = TestModel.createRandom(pushContext, 12345, 3, 3);
+    Mockito.doNothing().when(pushContext).update(Mockito.contains("INSERT DATA"));
+    pushContext.pushAllChanges();
+    Mockito.verify(pushContext, Mockito.times(1)).update(Mockito.contains("INSERT DATA"));
+
+    ModelContext pullContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
+
+    JSONArray jsonArray1_0 = creatResponse1_0();
+    JSONArray jsonArray2_0 = createResponse2_0();
+    JSONArray jsonArray1_1 = createResponse1_1();
+    JSONArray jsonArray2_1 = createResponse2_1();
+    JSONArray jsonArray1_2 = createResponse1_2();
+    JSONArray jsonArray2_2 = createResponse2_2();
+
+    Method buildQuery;
+    SelectBuilder query1_0 = null;
+    SelectBuilder query2_0 = null;
+    SelectBuilder query1_1 = null;
+    SelectBuilder query2_1 = null;
+    SelectBuilder query1_2 = null;
+    SelectBuilder query2_2 = null;
+
+    try {
+      buildQuery = pullContext.getClass().getDeclaredMethod("buildPullAllInDirectionQuery", Node.class, boolean.class);
+      buildQuery.setAccessible(true);
+      query1_0 = (SelectBuilder) buildQuery.invoke(pullContext, NodeFactory.createURI(pushModel.getIri()), false);
+      query2_0 = (SelectBuilder) buildQuery.invoke(pullContext, NodeFactory.createURI(pushModel.getIri()), true);
+      query1_1 = (SelectBuilder) buildQuery.invoke(pullContext, NodeFactory.createURI(pushModel.getModelProp().getIri()), false);
+      query2_1 = (SelectBuilder) buildQuery.invoke(pullContext, NodeFactory.createURI(pushModel.getModelProp().getIri()), true);
+      query1_2 = (SelectBuilder) buildQuery.invoke(pullContext, NodeFactory.createURI(pushModel.getModelProp().getModelProp().getIri()), false);
+      query2_2 = (SelectBuilder) buildQuery.invoke(pullContext, NodeFactory.createURI(pushModel.getModelProp().getModelProp().getIri()), true);
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+      e.printStackTrace();
+    }
+    Mockito.doReturn(jsonArray1_0).when(pullContext).query(Mockito.contains(query1_0.buildString()));
+    Mockito.doReturn(jsonArray2_0).when(pullContext).query(Mockito.contains(query2_0.buildString()));
+    Mockito.doReturn(jsonArray1_1).when(pullContext).query(Mockito.contains(query1_1.buildString()));
+    Mockito.doReturn(jsonArray2_1).when(pullContext).query(Mockito.contains(query2_1.buildString()));
+    Mockito.doReturn(jsonArray1_2).when(pullContext).query(Mockito.contains(query1_2.buildString()));
+    Mockito.doReturn(jsonArray2_2).when(pullContext).query(Mockito.contains(query2_2.buildString()));
+
+    TestModel pullModel = pullContext.createHollowModel(TestModel.class, pushModel.getIri());
+    pullContext.recursivePullAll(pullModel, 2);
 
     Mockito.verify(pullContext, Mockito.times(1)).query(query1_0.buildString());
     Mockito.verify(pullContext, Mockito.times(1)).query(query2_0.buildString());
