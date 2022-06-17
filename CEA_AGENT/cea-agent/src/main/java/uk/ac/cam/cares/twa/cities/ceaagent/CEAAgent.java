@@ -11,8 +11,7 @@ import uk.ac.cam.cares.twa.cities.tasks.*;
 import org.json.JSONObject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.time.OffsetDateTime;
@@ -89,6 +88,7 @@ public class CEAAgent extends JPSAgent {
     private static String unitOntologyUri;
     private String requestUrl;
     private String targetUrl;
+    private String localRoute;
 
     private Map<String, String> accessAgentRoutes = new HashMap<>();
 
@@ -128,14 +128,20 @@ public class CEAAgent extends JPSAgent {
                     }
 
                     List<LinkedHashMap<String,String>> fixedIris = new ArrayList<>();
-
+                    String route = new String();
                     for (int i = 0; i < uriArray.length(); i++) {
                         String uri = uriArray.getString(i);
-                        String buildingUri = checkBlazegraphAndTimeSeriesInitialised(uri, fixedIris);
+                        // Only set routes once - assuming all iris passed have same namespace
+                        // Will not be necessary if namespace is passed in request params
+                        if(i==0) {
+                            route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
+                            setTimeSeriesClientProperties(getNamespace(uri));
+                        }
+                        String buildingUri = checkBlazegraphAndTimeSeriesInitialised(uri, fixedIris, route);
                         if (buildingUri=="") {
                             createTimeSeries(uri,fixedIris);
-                            buildingUri = sparqlUpdate(scalars, fixedIris.get(i), uri, i);
-                            sparqlGenAttributeUpdate(uri, buildingUri);
+                            buildingUri = sparqlUpdate(scalars, fixedIris.get(i), uri, i, route);
+                            sparqlGenAttributeUpdate(uri, buildingUri, route);
                         }
                         addDataToTimeSeries(timeSeries.get(i), times, fixedIris.get(i));
                     }
@@ -143,27 +149,38 @@ public class CEAAgent extends JPSAgent {
                     ArrayList<CEAInputData> testData = new ArrayList<>();
                     ArrayList<String> uriStringArray = new ArrayList<>();
                     String crs= new String();
+                    String route = new String();
+
                     for (int i = 0; i < uriArray.length(); i++) {
                         String uri = uriArray.getString(i);
+                        // Only set route once - assuming all iris passed in same namespace
+                        // Will not be necessary if namespace is passed in request params
+                        if(i==0) route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
                         uriStringArray.add(uri);
                         //Set default value if height can not be obtained from knowledge graph
-                        String height = getValue(uri, "Height");
+                        String height = getValue(uri, "Height", route);
                         height = height.length() == 0 ? "10.0" : height;
-                        testData.add(new CEAInputData(getValue(uri, "Footprint"), height));
-                        if(i==0) crs = getValue(uri, "CRS"); //just get crs once - assuming all iris in same namespace
+                        testData.add(new CEAInputData(getValue(uri, "Footprint", route), height));
+                        if(i==0) crs = getValue(uri, "CRS", route); //just get crs once - assuming all iris in same namespace
                     }
                     // Manually set thread number to 0 - multiple threads not working so needs investigating
                     // Potentially issue is CEA is already multi-threaded
                     runCEA(testData, uriStringArray, 0, crs);
                 }
             } else if (requestUrl.contains(URI_QUERY)) {
+                String route = new String();
                 for (int i = 0; i < uriArray.length(); i++) {
                     String uri = uriArray.getString(i);
+                    // Only set route once - assuming all iris passed in same namespace
+                    if(i==0) {
+                        route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
+                        setTimeSeriesClientProperties(getNamespace(uri));
+                    }
                     JSONObject data = new JSONObject();
                     List<String> allMeasures = new ArrayList<>();
                     Stream.of(TIME_SERIES, SCALARS).forEach(allMeasures::addAll);
                     for (String measurement: allMeasures) {
-                        ArrayList<String> result = getDataIRI(uri, measurement);
+                        ArrayList<String> result = getDataIRI(uri, measurement, route);
                         if (!result.isEmpty()) {
                             String value;
                             if (TIME_SERIES.contains(measurement)) {
@@ -336,8 +353,11 @@ public class CEAAgent extends JPSAgent {
         thinkhomeUri=config.getString("uri.ontology.thinkhome");
         purlInfrastructureUri=config.getString("uri.ontology.purl.infrastructure");
         timeSeriesUri=config.getString("uri.ts");
-        accessAgentRoutes.put(config.getString("namespace.local.kingslynn"),config.getString("uri.route.local.kingslynn"));
-        accessAgentRoutes.put(config.getString("namespace.local.pirmasens"),config.getString("uri.route.local.pirmasens"));
+        accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/", config.getString("berlin.targetresourceid"));
+        accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/", config.getString("singaporeEPSG24500.targetresourceid"));
+        accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/", config.getString("singaporeEPSG4326.targetresourceid"));
+        accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/", config.getString("kingslynnEPSG3857.targetresourceid"));
+        localRoute = config.getString("uri.route.local");
     }
 
     /**
@@ -525,19 +545,87 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
+     * Sets the endpoint in the time series client properties file using
+     * the namespace provided
+     *
+     * @param namespace endpoint for querying/updating
+     */
+    private void setTimeSeriesClientProperties(String namespace) {
+        try {
+
+            String timeseries_props;
+            Boolean isDocker = false;
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                timeseries_props = new File(
+                        Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
+            } else {
+                timeseries_props = FS + "target" + FS + "classes" + FS + TIME_SERIES_CLIENT_PROPS;
+                isDocker = true;
+            }
+            File PropertiesFile = new File(timeseries_props);
+
+            String oldFileContent = "";
+
+            BufferedReader reader;
+            FileWriter writer;
+
+            reader = new BufferedReader(new FileReader(PropertiesFile));
+
+            // Read all the lines of times series client properties file into oldFileContent
+            String line = reader.readLine();
+            String oldQueryString="";
+            String oldUpdateString="";
+
+            while (line != null)
+            {
+                oldFileContent = oldFileContent + line + System.lineSeparator();
+
+                if (line.contains("sparql.query.endpoint")) oldQueryString = line;
+                if (line.contains("sparql.update.endpoint")) oldUpdateString = line;
+
+                line = reader.readLine();
+            }
+
+            // If building docker image, transform localhost in namespace to host.docker.internal
+            String[] localHostStrings = {"localhost", "127.0.0.1"};
+            if(isDocker) {
+                for(String s : localHostStrings){
+                    if(namespace.contains(s)) namespace = namespace.replace(s, "host.docker.internal");
+                }
+            }
+
+            // Replace oldQueryString and oldUpdateString with namespace given
+            String newFileContent = oldFileContent.replace(oldQueryString, "sparql.query.endpoint="+namespace);
+            newFileContent = newFileContent.replace(oldUpdateString, "sparql.update.endpoint="+namespace);
+
+            //Rewrite the input text file with newFileContent
+            writer = new FileWriter(PropertiesFile);
+            writer.write(newFileContent);
+
+            reader.close();
+            writer.close();
+
+        } catch (URISyntaxException | IOException e) {
+            e.printStackTrace();
+            throw new JPSRuntimeException(e);
+        }
+    }
+
+    /**
      * executes query on SPARQL endpoint and retrieves requested value of building
      * @param uriString city object id
      * @param value building value requested
+     * @param route route to pass to access agent
      * @return geometry as string
      */
-    private String getValue(String uriString, String value)  {
+    private String getValue(String uriString, String value, String route)  {
 
         String result = "";
 
         Query q = getQuery(uriString, value);
 
         //Use access agent
-        JSONArray queryResultArray = this.queryStore(getRoute(uriString), q.toString());
+        JSONArray queryResultArray = this.queryStore(route, q.toString());
 
         if(!queryResultArray.isEmpty()){
             if(value!="Footprint") {
@@ -690,8 +778,9 @@ public class CEAAgent extends JPSAgent {
      * builds a SPARQL update to add cityobject generic attribute that links to energy profile graph
      * @param uriString city object id
      * @param energyProfileBuildingUri building id in energy profile namespace
+     * @param route route to pass to access agent
      */
-    public void sparqlGenAttributeUpdate( String uriString, String energyProfileBuildingUri) {
+    public void sparqlGenAttributeUpdate( String uriString, String energyProfileBuildingUri, String route) {
         String genAttributeGraphUri = getGraph(uriString, CITY_OBJECT_GEN_ATT);
 
         String genAttributeUri = genAttributeGraphUri + "UUID_" + UUID.randomUUID() + "/";
@@ -715,7 +804,7 @@ public class CEAAgent extends JPSAgent {
         UpdateRequest ur = ub.buildRequest();
 
         //Use access agent
-        this.updateStore(getRoute(uriString), ur.toString());
+        this.updateStore(route, ur.toString());
     }
     /**
      * builds a SPARQL update using output from CEA simulations
@@ -723,9 +812,10 @@ public class CEAAgent extends JPSAgent {
      * @param tsIris map of time series iris
      * @param uriString city object id
      * @param uriCounter keep track of uris
+     * @param route route to pass to access agent
      * @return building uri in energy profile graph
      */
-    public String sparqlUpdate( LinkedHashMap<String, List<String>> scalars, LinkedHashMap<String, String> tsIris, String uriString, Integer uriCounter) {
+    public String sparqlUpdate( LinkedHashMap<String, List<String>> scalars, LinkedHashMap<String, String> tsIris, String uriString, Integer uriCounter, String route) {
         String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
 
         String buildingUri = outputGraphUri + "Building_UUID_" + UUID.randomUUID() + "/";
@@ -911,7 +1001,7 @@ public class CEAAgent extends JPSAgent {
         UpdateRequest ur = ub.buildRequest();
 
         //Use access agent
-        this.updateStore(getRoute(uriString), ur.toString());
+        this.updateStore(route, ur.toString());
 
         return buildingUri;
 
@@ -921,9 +1011,10 @@ public class CEAAgent extends JPSAgent {
      * Retrieves iris from KG for the data type requested
      * @param uriString city object id
      * @param value type of data from TIME_SERIES
+     * @param route route to pass to access agent
      * @return list of iris
      */
-    public ArrayList<String> getDataIRI(String uriString, String value) {
+    public ArrayList<String> getDataIRI(String uriString, String value, String route) {
         ArrayList<String> result = new ArrayList<>();
 
         WhereBuilder wb1 = new WhereBuilder();
@@ -1069,7 +1160,7 @@ public class CEAAgent extends JPSAgent {
 
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
 
-        JSONArray queryResultArray = new JSONArray(this.queryStore(getRoute(uriString), sb.build().toString()));
+        JSONArray queryResultArray = new JSONArray(this.queryStore(route, sb.build().toString()));
 
         if(!queryResultArray.isEmpty()){
             result.add(queryResultArray.getJSONObject(0).get("measure").toString());
@@ -1082,9 +1173,10 @@ public class CEAAgent extends JPSAgent {
     /**
      * Check generic attribute is initialised in KG
      * @param uriString city object id
+     * @param route route to pass to access agent
      * @return building in energy profile graph
      */
-    public String checkGenAttributeInitialised(String uriString){
+    public String checkGenAttributeInitialised(String uriString, String route){
         WhereBuilder wb = new WhereBuilder();
         SelectBuilder sb = new SelectBuilder();
 
@@ -1098,7 +1190,7 @@ public class CEAAgent extends JPSAgent {
 
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
 
-        JSONArray queryResultArray = new JSONArray(this.queryStore(getRoute(uriString), sb.build().toString()));
+        JSONArray queryResultArray = new JSONArray(this.queryStore(route, sb.build().toString()));
         String building = "";
 
         if(!queryResultArray.isEmpty()){
@@ -1111,10 +1203,11 @@ public class CEAAgent extends JPSAgent {
      * Check if energy profile in KG has been initialised already for given building and time series already exist
      * @param uriString city object id
      * @param fixedIris map of time series iris to data types
+     * @param route route to pass to access agent
      * @return building in energy profile graph
      */
-    public String checkBlazegraphAndTimeSeriesInitialised(String uriString, List<LinkedHashMap<String,String>> fixedIris){
-        String building = checkGenAttributeInitialised(uriString);
+    public String checkBlazegraphAndTimeSeriesInitialised(String uriString, List<LinkedHashMap<String,String>> fixedIris, String route){
+        String building = checkGenAttributeInitialised(uriString, route);
         if(building.equals("")){
             return "";
         }
@@ -1183,7 +1276,7 @@ public class CEAAgent extends JPSAgent {
                 .addVar("?PV_supply_wall_east").addVar("?PV_supply_wall_west").addWhere(wb2);
         sb.setVar( Var.alloc( "energyProfileBuilding" ), NodeFactory.createURI(building));
 
-        JSONArray queryResultArray = new JSONArray(this.queryStore(getRoute(uriString), sb.build().toString()));
+        JSONArray queryResultArray = new JSONArray(this.queryStore(route, sb.build().toString()));
         LinkedHashMap<String, String> tsIris = new LinkedHashMap<>();
 
         if(!queryResultArray.isEmpty()){

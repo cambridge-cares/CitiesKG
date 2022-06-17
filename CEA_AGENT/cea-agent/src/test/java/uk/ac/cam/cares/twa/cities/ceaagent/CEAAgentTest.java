@@ -1,6 +1,8 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
 import junit.framework.TestCase;
+import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -48,7 +50,7 @@ public class CEAAgentTest extends TestCase {
         CEAAgent agent = new CEAAgent();
         ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
 
-        assertEquals(48, agent.getClass().getDeclaredFields().length);
+        assertEquals(49, agent.getClass().getDeclaredFields().length);
 
         Field URI_ACTION;
         Field URI_UPDATE;
@@ -96,6 +98,7 @@ public class CEAAgentTest extends TestCase {
         Field accessAgentRoutes;
         Field requestUrl;
         Field targetUrl;
+        Field localRoute;
 
         try {
             URI_ACTION = agent.getClass().getDeclaredField("URI_ACTION");
@@ -208,9 +211,13 @@ public class CEAAgentTest extends TestCase {
             accessAgentRoutes = agent.getClass().getDeclaredField("accessAgentRoutes");
             accessAgentRoutes.setAccessible(true);
             Map<String,String> accessAgentMap = (HashMap<String,String>) accessAgentRoutes.get(agent);
-            assertEquals(accessAgentMap.get(config.getString("namespace.local.kingslynn")), config.getString("uri.route.local.kingslynn"));
-            assertEquals(accessAgentMap.get(config.getString("namespace.local.pirmasens")), config.getString("uri.route.local.pirmasens"));
-
+            assertEquals(accessAgentMap.get("http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/"), config.getString("berlin.targetresourceid"));
+            assertEquals(accessAgentMap.get("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/"), config.getString("singaporeEPSG24500.targetresourceid"));
+            assertEquals(accessAgentMap.get("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/"), config.getString("singaporeEPSG4326.targetresourceid"));
+            assertEquals(accessAgentMap.get("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/"), config.getString("kingslynnEPSG3857.targetresourceid"));
+            localRoute = agent.getClass().getDeclaredField("localRoute");
+            localRoute.setAccessible(true);
+            assertEquals(localRoute.get(agent), config.getString("uri.route.local"));
         } catch (NoSuchFieldException | IllegalAccessException e) {
             fail();
         }
@@ -219,7 +226,7 @@ public class CEAAgentTest extends TestCase {
     @Test
     public void testCEAAgentMethods() {
         CEAAgent agent = new CEAAgent();
-        assertEquals(31, agent.getClass().getDeclaredMethods().length);
+        assertEquals(32, agent.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -229,17 +236,36 @@ public class CEAAgentTest extends TestCase {
         TimeSeriesClient<OffsetDateTime> client = mock(TimeSeriesClient.class);
 
         Method processRequestParameters = null;
+        try{
+            processRequestParameters = agent.getClass().getDeclaredMethod("processRequestParameters", JSONObject.class);
+        } catch(NoSuchMethodException e) {
+            fail();
+        }
 
-        //Test update
         JSONObject requestParams = new JSONObject();
+
+        // Test empty request params
+        try {
+            processRequestParameters.invoke(agent, requestParams);
+        } catch(Exception e) {
+            assert e instanceof InvocationTargetException;
+            assertEquals(((InvocationTargetException) e).getTargetException().getClass(),
+                    BadRequestException.class);
+        }
+
+        // Test update endpoint
         requestParams.put(CEAAgent.KEY_REQ_URL, "http://localhost:8086/agents/cea/update");
         requestParams.put(CEAAgent.KEY_IRI, "['http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/']");
         requestParams.put(CEAAgent.KEY_TARGET_URL, "http://localhost:8086/agents/cea/update");
 
         doReturn(true).when(agent).validateInput(any());
-        doReturn("").when(agent).checkBlazegraphAndTimeSeriesInitialised(anyString(), any());
-        doReturn("testBuilding").when(agent).sparqlUpdate(any(),any(),anyString(), anyInt());
-        doNothing().when(agent).sparqlGenAttributeUpdate(anyString(),anyString());
+        doReturn("").when(agent).checkBlazegraphAndTimeSeriesInitialised(anyString(), any(), anyString());
+        doReturn("testBuilding").when(agent).sparqlUpdate(any(),any(),anyString(), anyInt(), anyString());
+        doNothing().when(agent).sparqlGenAttributeUpdate(anyString(),anyString(), anyString());
+        doReturn(new JSONArray("[{'': ''}]")).when(agent).queryStore(anyString(), anyString());
+
+        String route = "test_route";
+        String namespace = "test_namespace";
 
         List<OffsetDateTime> times = mock(List.class);
         List<String> test_areas = mock(List.class);
@@ -251,21 +277,17 @@ public class CEAAgentTest extends TestCase {
             PowerMockito.doReturn(times).when(agent, "getTimesList", any(), anyString());
             PowerMockito.doReturn(values).when(agent, "getTimeSeriesList", any(), anyString(), anyInt());
             PowerMockito.doNothing().when(agent, "addDataToTimeSeries", any(),  any(),  any());
+            PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
+            PowerMockito.doReturn(namespace).when(agent, "getNamespace", anyString());
+            PowerMockito.doNothing().when(agent, "setTimeSeriesClientProperties", any());
         } catch(Exception e){
             fail();
         }
 
-        try{
-            processRequestParameters = agent.getClass().getDeclaredMethod("processRequestParameters", JSONObject.class);
-        } catch(NoSuchMethodException e) {
-            fail();
-        }
-
-
         try {
             JSONObject returnParams = (JSONObject) processRequestParameters.invoke(agent, requestParams);
-            verify(agent, times(1)).sparqlUpdate(any(),any(),anyString(), anyInt());
-            verify(agent, times(1)).sparqlGenAttributeUpdate(anyString(),anyString());
+            verify(agent, times(1)).sparqlUpdate(any(),any(),anyString(), anyInt(), anyString());
+            verify(agent, times(1)).sparqlGenAttributeUpdate(anyString(),anyString(), anyString());
             assertEquals(requestParams,returnParams);
         } catch(InvocationTargetException | IllegalAccessException e) {
             fail();
@@ -277,7 +299,7 @@ public class CEAAgentTest extends TestCase {
 
         String test_value = "test";
         try {
-            PowerMockito.doReturn(test_value).when(agent, "getValue", anyString(), anyString());
+            PowerMockito.doReturn(test_value).when(agent, "getValue", anyString(), anyString(), anyString());
             PowerMockito.doNothing().when(agent, "runCEA", anyList(),  anyList(),  anyInt(), anyString());
         } catch(Exception e){
             fail();
@@ -303,7 +325,7 @@ public class CEAAgentTest extends TestCase {
         String testReturnValue = "testAnnual";
         TimeSeries<OffsetDateTime> timeSeries = mock(TimeSeries.class);
 
-        doReturn(testList).when(agent).getDataIRI(anyString(), anyString());
+        doReturn(testList).when(agent).getDataIRI(anyString(), anyString(), anyString());
         doReturn(testReturnValue).when(agent).calculateAnnual(any(), anyString());
         doReturn(timeSeries).when(agent).retrieveData(anyString());
         doReturn(testUnit).when(agent).getUnit(anyString());
@@ -764,7 +786,7 @@ public class CEAAgentTest extends TestCase {
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         CEAAgent agent = new CEAAgent();
-        String uri = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_b24ba8e2-bb21-45e8-b1b1/";
+        String uri = "http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/cityobject/test_UUID";
         ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
 
         Method getRoute = agent.getClass().getDeclaredMethod("getRoute", String.class);
@@ -772,7 +794,25 @@ public class CEAAgentTest extends TestCase {
         getRoute.setAccessible(true);
 
         String result = (String) getRoute.invoke(agent, uri);
-        assertEquals(config.getString("uri.route.local.kingslynn"), result);
+        assertEquals(config.getString("kingslynnEPSG3857.targetresourceid"), result);
+
+    }
+
+    @Test
+    public void testSetTimeSeriesClientProperties()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+
+        CEAAgent agent = new CEAAgent();
+        String namespace = "http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/";
+
+        Method setTimeSeriesClientProperties = agent.getClass().getDeclaredMethod("setTimeSeriesClientProperties", String.class);
+        assertNotNull(setTimeSeriesClientProperties);
+        setTimeSeriesClientProperties.setAccessible(true);
+
+        setTimeSeriesClientProperties.invoke(agent, namespace);
+
+        ResourceBundle properties = ResourceBundle.getBundle("timeseriesclient");
+        assertEquals(namespace, properties.getString("sparql.query.endpoint"));
 
     }
 
@@ -783,20 +823,18 @@ public class CEAAgentTest extends TestCase {
         String uriString = "test";
         String value = "Height";
         String result = "5.2";
+        String route = "test_route";
 
         doReturn(new JSONArray("[{'"+value+"': '"+result+"'}]")).when(agent).queryStore(anyString(), anyString());
 
         Query dummy  = mock(Query.class);
         PowerMockito.doReturn(dummy).when(agent, "getQuery", uriString, value);
 
-        String route = "test_route";
-        PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
-
-        Method getValue = agent.getClass().getDeclaredMethod("getValue", String.class, String.class);
+        Method getValue = agent.getClass().getDeclaredMethod("getValue", String.class, String.class, String.class);
         assertNotNull(getValue);
         getValue.setAccessible(true);
 
-        assertEquals( result, getValue.invoke(agent, uriString, value));
+        assertEquals( result, getValue.invoke(agent, uriString, value, route));
     }
 
     @Test
@@ -849,7 +887,7 @@ public class CEAAgentTest extends TestCase {
 
     @Test
     public void testGetGeometryQuery()
-            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+            throws Exception {
         CEAAgent agent = new CEAAgent();
         String uri = "http://localhost/berlin/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
@@ -900,17 +938,16 @@ public class CEAAgentTest extends TestCase {
     @Test
     public void testSparqlGenAttributeUpdate() throws Exception {
         CEAAgent agent = PowerMockito.spy(new CEAAgent());
-        Method sparqlGenAttributeUpdate = agent.getClass().getDeclaredMethod("sparqlGenAttributeUpdate", String.class, String.class);
+        Method sparqlGenAttributeUpdate = agent.getClass().getDeclaredMethod("sparqlGenAttributeUpdate", String.class, String.class, String.class);
         assertNotNull(sparqlGenAttributeUpdate);
 
         String uriString = "http://localhost/kings-lynn-open-data/cityobject/UUID_test/";
         String energyProfileString = "http://localhost/kings-lynn-open-data/energyprofile/UUID_test/";
 
         String route = "test_route";
-        PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
 
         doNothing().when(agent).updateStore(anyString(), anyString());
-        sparqlGenAttributeUpdate.invoke(agent, uriString, energyProfileString);
+        sparqlGenAttributeUpdate.invoke(agent, uriString, energyProfileString, route);
 
         verify(agent, times(1)).updateStore(anyString(), anyString());
     }
@@ -918,7 +955,7 @@ public class CEAAgentTest extends TestCase {
     @Test
     public void testSparqlUpdate() throws Exception {
         CEAAgent agent = PowerMockito.spy(new CEAAgent());
-        Method sparqlUpdate = agent.getClass().getDeclaredMethod("sparqlUpdate", LinkedHashMap.class, LinkedHashMap.class, String.class, Integer.class);
+        Method sparqlUpdate = agent.getClass().getDeclaredMethod("sparqlUpdate", LinkedHashMap.class, LinkedHashMap.class, String.class, Integer.class, String.class);
         assertNotNull(sparqlUpdate);
 
         LinkedHashMap<String,String> iris_mock = mock(LinkedHashMap.class);
@@ -930,14 +967,13 @@ public class CEAAgentTest extends TestCase {
         when(scalars_mock.get(anyString())).thenReturn(test_scalars);
 
         String route = "test_route";
-        PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
 
         Integer testCounter = 0;
         String uriString = "http://localhost/kings-lynn-open-data/cityobject/UUID_test/";
         String expected = "http://localhost/kings-lynn-open-data/energyprofile/";
 
         doNothing().when(agent).updateStore(anyString(), anyString());
-        String result = (String) sparqlUpdate.invoke(agent, scalars_mock, iris_mock, uriString, testCounter );
+        String result = (String) sparqlUpdate.invoke(agent, scalars_mock, iris_mock, uriString, testCounter, route );
 
         assertTrue( result.contains(expected));
 
@@ -956,15 +992,14 @@ public class CEAAgentTest extends TestCase {
         String test_unit = "m^2";
         String route = "test_route";
 
-        PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
         doReturn(new JSONArray("[{'"+measure+"': '"+test_measure+"', '"+unit+"': '"+test_unit+"'}]")).when(agent).queryStore(anyString(), anyString());
         PowerMockito.doReturn("testGraph").when(agent, "getGraph", anyString(), anyString());
 
-        Method getDataIRI = agent.getClass().getDeclaredMethod("getDataIRI", String.class, String.class);
+        Method getDataIRI = agent.getClass().getDeclaredMethod("getDataIRI", String.class, String.class, String.class);
         assertNotNull(getDataIRI);
         getDataIRI.setAccessible(true);
 
-        ArrayList<String> result = (ArrayList<String>) getDataIRI.invoke(agent, uriString, test_value);
+        ArrayList<String> result = (ArrayList<String>) getDataIRI.invoke(agent, uriString, test_value, route);
 
         assertTrue(result.contains(test_measure));
         assertTrue(result.contains(test_unit));
@@ -982,13 +1017,12 @@ public class CEAAgentTest extends TestCase {
 
         doReturn(new JSONArray("[{'"+measure+"': '"+test_measure+"'}]")).when(agent).queryStore(anyString(), anyString());
         PowerMockito.doReturn(graph).when(agent, "getGraph", anyString(), anyString());
-        PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
 
-        Method checkGenAttributeInitialised = agent.getClass().getDeclaredMethod("checkGenAttributeInitialised", String.class);
+        Method checkGenAttributeInitialised = agent.getClass().getDeclaredMethod("checkGenAttributeInitialised", String.class, String.class);
         assertNotNull(checkGenAttributeInitialised);
         checkGenAttributeInitialised.setAccessible(true);
 
-        String result = (String) checkGenAttributeInitialised.invoke(agent, uriString);
+        String result = (String) checkGenAttributeInitialised.invoke(agent, uriString, route);
 
         assertTrue(result.equals(test_measure));
     }
@@ -1006,16 +1040,15 @@ public class CEAAgentTest extends TestCase {
 
         doReturn(new JSONArray("[{'"+measure+"': '"+test_measure+"'}]")).when(agent).queryStore(anyString(), anyString());
         PowerMockito.doReturn(graph).when(agent, "getGraph", anyString(), anyString());
-        PowerMockito.doReturn(building).when(agent, "checkGenAttributeInitialised", anyString());
+        PowerMockito.doReturn(building).when(agent, "checkGenAttributeInitialised", anyString(), anyString());
 
         String route = "test_route";
-        PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
 
-        Method checkBlazegraphAndTimeSeriesInitialised = agent.getClass().getDeclaredMethod("checkBlazegraphAndTimeSeriesInitialised", String.class, List.class);
+        Method checkBlazegraphAndTimeSeriesInitialised = agent.getClass().getDeclaredMethod("checkBlazegraphAndTimeSeriesInitialised", String.class, List.class, String.class);
         assertNotNull(checkBlazegraphAndTimeSeriesInitialised);
         checkBlazegraphAndTimeSeriesInitialised.setAccessible(true);
 
-        String result = (String) checkBlazegraphAndTimeSeriesInitialised.invoke(agent, uriString, fixedIris);
+        String result = (String) checkBlazegraphAndTimeSeriesInitialised.invoke(agent, uriString, fixedIris, route);
 
         assertTrue(result.equals(building));
         assertTrue(fixedIris.get(0).containsKey(measure));
