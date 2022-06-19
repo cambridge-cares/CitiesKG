@@ -40,20 +40,42 @@ function appendElement(line, predicate, element_type, dropdown_type){
 
 function updateGfaRows(){
 	var parent = document.getElementById("assignGFA");
-	while (parent.childElementCount > 1) {
-		parent.removeChild(parent.lastChild);
+	var children = Array.from(parent.children);
+	for (var i = 0; i < children.length; i++) {
+		var child = children[i];
+		if (child.className === 'gfa') {
+			var checkbox_id = child.firstChild.textContent;
+			var checkbox = document.getElementById(checkbox_id).firstChild;
+			var text_input = child.childNodes[1].firstChild;
+			if (!checkbox.checked || (text_input.value === "")) {
+				parent.removeChild(child);
+			}
+		}
 	}
 	var checkboxes = document.getElementsByClassName('checkbox')
+	var text_inputs = Array.from(document.getElementsByClassName('text_gfa'));
 	for (let i = 0; i < checkboxes.length; i++) {
-		var checkbox = checkboxes.item(i).firstChild;
+		checkbox = checkboxes.item(i).firstChild;
 		if (checkbox.checked) {
-			var clicked_element =
-					"<div class='gfa'>" +
-					"<div class='text_gfa' style='width: 180px'>" + checkboxes.item(i).id + "</div>" +
-					"<div class='text_input'><input type='text' maxLength='5' size='3' onblur='getInputParams()'/></div>" +
-					"</div>" +
-					"<hr size='1'>";
-			$("#assignGFA").append(clicked_element)
+			checkbox_id = checkboxes.item(i).id.toString();
+			var exists = false;
+			for (let i = 0; i < text_inputs.length; i++) {
+				var checkbox_label = text_inputs[i].firstChild.textContent.toString();
+				if (checkbox_label === checkbox_id) {
+					exists = true;
+					break;
+				}
+			}
+			if (!exists) {
+				var clicked_element =
+						"<div class='gfa'>" +
+						"<div class='text_gfa' style='width: 180px'>" + checkboxes.item(
+								i).id + "</div>" +
+						"<div class='text_input'><input type='text' maxLength='5' size='3' onblur='getInputParams()'/></div>" +
+						"<hr size='1'>" +
+					  "</div>" ;
+				$("#assignGFA").append(clicked_element)
+			}
 		}
 	}
 }
@@ -95,7 +117,7 @@ function getInputParams() {
 	 if ((Object.keys(onto_use).length != 0) && (Object.keys(onto_programme).length != 0)) {
 		 throwNotification();
 	 }
-	console.log(input_parameters);
+	//console.log(input_parameters);
 	getValidPlots();
 }
 
