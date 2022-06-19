@@ -20,9 +20,14 @@ function getDropdownElements(predicate, element_type, dropdown_type) {
 		contentType: 'application/json',
 		success: function(data, status_message, xhr){
 			var results = JSON.parse(data["result"]);
-			for (index in results){
-				var checkbox_line = results[index]["g"];
-				appendElement(removePrefix(checkbox_line), predicate, element_type, dropdown_type)
+			var checkbox_lines = [];
+			for (let index in results) {
+				var checkbox_line = removePrefix(results[index]["g"]);
+				checkbox_lines.push(checkbox_line);
+			}
+			checkbox_lines.sort()
+			for (let index in checkbox_lines) {
+				appendElement(checkbox_lines[index], predicate, element_type, dropdown_type)
 			}
 		}
 	});
