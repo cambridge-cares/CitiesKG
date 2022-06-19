@@ -374,7 +374,7 @@
                       <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
                           <div style="width:240px" class="cesium-button">Choose Programme<div id='programme_arrow' class="arrow down"></div></div>
                       </div>
-                      <div id="choose_programmes" class="finder_dynamic_box"></div>
+                      <div id="choose_programmes" class="finder_dynamic_box" onblur="showChooseProgrammes()"></div>
                   </div>
               </td>
               <td>
@@ -820,13 +820,23 @@
 
             var expanded7 = false;
             function showChooseUses() {
-                var citydb_addsplashwindow = document.getElementById("choose_uses");
+                var programme_window = document.getElementById("choose_programmes");
+                document.getElementById('programme_arrow').style.transform = "rotate(45deg)";
+                programme_window.style.display = "none";
+                expanded8 = false;
+
+                var gfa_window = document.getElementById("assignGFA");
+                document.getElementById('gfa_arrow').style.transform = "rotate(45deg)";
+                gfa_window.style.display = "none";
+                expanded10 = false;
+
+                var use_window = document.getElementById("choose_uses");
                 if (!expanded7) {
                     document.getElementById('use_arrow').style.transform = "rotate(225deg)";
-                    citydb_addsplashwindow.style.display = "block";
+                    use_window.style.display = "block";
                     expanded7 = true;
                 } else {
-                    citydb_addsplashwindow.style.display = "none";
+                    use_window.style.display = "none";
                     document.getElementById('use_arrow').style.transform = "rotate(45deg)";
                     expanded7 = false;
                 }
@@ -834,6 +844,16 @@
 
             var expanded8 = false
             function showChooseProgrammes() {
+                var use_window = document.getElementById("choose_uses");
+                use_window.style.display = "none";
+                document.getElementById('use_arrow').style.transform = "rotate(45deg)";
+                expanded7 = false;
+
+                var gfa_window = document.getElementById("assignGFA");
+                document.getElementById('gfa_arrow').style.transform = "rotate(45deg)";
+                gfa_window.style.display = "none";
+                expanded10 = false;
+
                 var programme_window = document.getElementById("choose_programmes");
                 if (!expanded8) {
                     document.getElementById('programme_arrow').style.transform = "rotate(225deg)";
@@ -849,19 +869,28 @@
 
             var expanded10 =  false
             function showAssignGFAValues() {
-                var citydb_addsplashwindow = document.getElementById("assignGFA");
+                var use_window = document.getElementById("choose_uses");
+                use_window.style.display = "none";
+                document.getElementById('use_arrow').style.transform = "rotate(45deg)";
+                expanded7 = false;
+
+                var programme_window = document.getElementById("choose_programmes");
+                document.getElementById('programme_arrow').style.transform = "rotate(45deg)";
+                programme_window.style.display = "none";
+                expanded8 = false;
+
+                var gfa_window = document.getElementById("assignGFA");
                 if (!expanded10) {
                     document.getElementById('gfa_arrow').style.transform = "rotate(225deg)";
-                    citydb_addsplashwindow.style.display = "block";
+                    gfa_window.style.display = "block";
                     expanded10 = true;
 
                 } else {
                     document.getElementById('gfa_arrow').style.transform = "rotate(45deg)";
-                    citydb_addsplashwindow.style.display = "none";
+                    gfa_window.style.display = "none";
                     expanded10 = false;
                 }
             }
-
 
             var USE_PREDICATE = 'allowsUse';
             var PROGRAMME_PREDICATE = 'allowsProgramme';
