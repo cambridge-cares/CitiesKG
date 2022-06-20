@@ -67,6 +67,7 @@
 
 .cesium-navigation-help-details {
     color: #ffffff;
+    font-size: 15px;
 }
 
 .cesium-navigation-button {
@@ -109,4 +110,10 @@
 
 .cesium-navigation-button-unselected:hover {
     background-color: rgba(76, 76, 76, 0.75);
+}
+
+.ckg-logo {
+    width: 60px;
+    height: auto;
+    text-align: center;
 }
