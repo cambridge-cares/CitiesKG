@@ -122,7 +122,7 @@ function getInputParams() {
 	 if ((Object.keys(onto_use).length != 0) && (Object.keys(onto_programme).length != 0)) {
 		 throwNotification();
 	 }
-	//console.log(input_parameters);
+	console.log(input_parameters);
 	getValidPlots();
 }
 
@@ -150,11 +150,11 @@ function throwNotification() {
 
 	var explanation =  document.createElement('div');
 	explanation.className = 'alert';
-	explanation.innerHTML = "Choose uses or programmes but not both! In the future we will provide filtering possibilities.";
+	explanation.innerHTML = "Choose uses or programmes but not both! In the future, programmes will be filtered based on chosen uses.";
 
 	popup.appendChild(mark);
 	popup.appendChild(explanation);
 	document.body.appendChild(popup);
 	setTimeout(function() {
-		$('.pop_up_box').hide() }, 5000);
+		$('.pop_up_box').hide() }, 6000);
 }
