@@ -16,9 +16,9 @@ Content-Type: application/json
 // displayform: footprint, extruded, geometry
 //  "directory":  "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder",
 
-{ "namespace" : "http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/",
-  "gmlid":  ["BLDG_0003000b006b51e2"],
-  "displayform": "extruded"
+{ "namespace" : "http://127.0.0.1:9999/blazegraph/namespace/uraEPSG4326/sparql/",
+  "gmlid":  ["UUID_0d0b9792-823f-484d-bfbe-ab4d1003cf66"],
+  "displayform": "footprint"
 }
 
 
