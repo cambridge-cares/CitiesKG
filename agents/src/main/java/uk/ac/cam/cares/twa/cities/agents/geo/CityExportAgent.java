@@ -101,7 +101,8 @@ public class CityExportAgent extends JPSAgent {
             // Process "namespaceIri"
             namespaceIri = requestParams.getString(KEY_NAMESPACE);
             JSONObject serverInfo = getServerInfo(namespaceIri);
-            srsName = getCrsInfo(namespaceIri);  // "EPSG:25833"
+            //srsName = getCrsInfo(namespaceIri);  // "EPSG:25833"
+            srsName = "EPSG:4326";
 
             // Process "displayform"
             List<String> availOptions = Arrays.asList(displayOptions);
