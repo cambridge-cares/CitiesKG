@@ -1,6 +1,5 @@
 package org.citydb.database.adapter.blazegraph;
 
-import org.apache.jena.base.Sys;
 import org.apache.jena.datatypes.DatatypeFormatException;
 import org.apache.jena.sparql.expr.ExprEvalException;
 import org.citydb.config.geometry.GeometryObject;

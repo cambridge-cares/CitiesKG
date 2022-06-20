@@ -156,7 +156,6 @@ public class CityExportAgent extends JPSAgent {
 
                 tilingKml();
 
-
             }else{
                 ArrayList<String> buildingIds = new ArrayList<>();
                 for (Object id : gmlidParams) {
@@ -168,8 +167,7 @@ public class CityExportAgent extends JPSAgent {
                 Params taskParams = new Params(namespaceIri, serverInfo, srsName, outputDir, outSingleFileName, displayMode, gmlidsArray);
                 exportKml(taskParams);
             }
-
-        }
+            }
         // It will return the file path of the exported file
         System.out.println("This msg is coming from the end of CityExportAgent");
         System.out.println("Thread Name: " + Thread.currentThread().getName());

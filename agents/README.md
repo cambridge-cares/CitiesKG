@@ -79,11 +79,11 @@ mvn initialize
 
 2. If the initialization is done successfully, you should be able to run the following to create the war package:
 
-
 ```
 mvn clean install
 ```
 3. There is one dependency `blazegraph-jar-2.1.5.jar` which needs to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
+
 
 ```
     <dependency>
@@ -254,7 +254,13 @@ In order to use the extended 3DCityDB-Web-Map-Client for city agents make sure t
 
 * your browser support WebGL (visit http://get.webgl.org/ for checking it).
 * open source JavaScript runtime environment Node.js is installed on your machine (visit https://nodejs.org/en/ to download the latest version). 
-* the extended web-map-client does not have node_modules folder thus, download original web-map-client via the following GitHub link (https://github.com/3dcitydb/3dcitydb-web-map/releases) and copy node_modules folder in `/CitiesKG/3dcitydb-web-map-1.9.0/`.
+* the extended web-map-client does not have node_modules folder. To install required dependencies run:
+
+```
+npm install
+```
+
+in ```../CitiesKG/3dcitydb-web-map-1.9.0/``` directory.
 
 To run the web-map-client, in a shell environment navigate to the folder where *server.js* file is located `/CitiesKG/3dcitydb-web-map-1.9.0/` and simply run the following command to launch the server:
 

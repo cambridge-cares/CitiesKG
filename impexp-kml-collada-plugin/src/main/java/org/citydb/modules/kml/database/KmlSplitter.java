@@ -140,7 +140,7 @@ public class KmlSplitter {
 				PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
 
 				// Assign one gmlid, the predicateTokens
-				if (((String)gmlidUri).contains("*")){
+				if (((String)gmlidUri).contains("*")){ // Query with * will refer to the whole database. No need to set parameters
 						// @TODO: as the preparedstatement will create different query for particular gmlid or *
 				} else {
 					stmt.setString(1, (String)gmlidUri);

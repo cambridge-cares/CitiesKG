@@ -2,11 +2,8 @@ package org.citydb.database.adapter.blazegraph;
 
 import org.apache.jena.arq.querybuilder.ExprFactory;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
-import org.citydb.citygml.exporter.util.Metadata;
 import org.citydb.config.geometry.BoundingBox;
 import org.citydb.config.geometry.GeometryObject;
-import org.citydb.config.geometry.GeometryType;
-import org.citydb.config.geometry.MultiPolygon;
 import org.citydb.config.project.database.DatabaseSrs;
 import org.citydb.config.project.database.DatabaseSrsType;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
@@ -26,7 +23,6 @@ import java.net.URL;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import org.locationtech.jts.geom.LinearRing;
 
 public class UtilAdapter extends AbstractUtilAdapter {
 
@@ -290,7 +286,6 @@ public class UtilAdapter extends AbstractUtilAdapter {
             convertedGeometry.add(reverseConverted);
         }
 
-
         GeometryCollection geometryCollection = null;
         Geometry union = null;
         if (numGeometry > 1) {
@@ -306,10 +301,11 @@ public class UtilAdapter extends AbstractUtilAdapter {
 
         // need to reverse the coordinates to match POSTGIS results --> move to somewhere
         //Geometry union = geospatial.UnaryUnion(convertedGeometry);
-        //Coordinate[] convertedCoords = converted.getCoordinates();  // @Note: this does not work with multipolygon. The coordinates are combined together.
+
+        //Coordinate[] convertedCoords = converted.getCoordinates();
         //Coordinate[] reversedConvertedCoords = geospatial.reverseCoordinates(convertedCoords);
-        //Geometry convertedColl = fac.createPolygon(reversedConvertedCoords);
-        //GeometryObject geomObj2d = databaseAdapter.getGeometryConverter().getGeometry(converted);
+
+
         converted3d = GeoSpatialProcessor.convertTo3d(geomObj2d, geometry);  // convert 2d to 3d coordinates
 
         //double[][] convertedCoords = result.getCoordinates();

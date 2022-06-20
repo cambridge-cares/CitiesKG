@@ -212,7 +212,8 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
         }
         catch (IOException e){
             exists = false;
-        }**/
+        }
+        */
 
         return exists;
     }

@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "express": "4.4.4",
+    "compression": "1.0.8",
+    "jsdoc": "3.3.0-alpha9",
+    "request": "2.36.0",
+    "yargs": "1.2.6"
+  }
+}

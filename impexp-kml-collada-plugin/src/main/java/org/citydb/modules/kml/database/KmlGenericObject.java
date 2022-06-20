@@ -29,7 +29,6 @@ package org.citydb.modules.kml.database;
 
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
-import javax.print.DocFlavor.STRING;
 import net.opengis.kml._2.AltitudeModeEnumType;
 import net.opengis.kml._2.BoundaryType;
 import net.opengis.kml._2.LinearRingType;
@@ -2349,27 +2348,24 @@ public abstract class KmlGenericObject<T> {
 		return x3dMaterial;
 	}
 
-		protected void fillGenericObjectForCollada (ResultSet rs,boolean generateTextureAtlas,
-		boolean supportsNestedImplicitGeometries) throws SQLException {
-			fillGenericObjectForCollada(rs, generateTextureAtlas, null, supportsNestedImplicitGeometries);
-		}
+	protected void fillGenericObjectForCollada(ResultSet rs, boolean generateTextureAtlas, boolean supportsNestedImplicitGeometries) throws SQLException {
+		fillGenericObjectForCollada(rs, generateTextureAtlas, null, supportsNestedImplicitGeometries);
+	}
 
-		protected void fillGenericObjectForCollada (ResultSet _rs,
-		boolean generateTextureAtlas, AffineTransformer globalTransformer,
-		boolean supportsNestedImplicitGeometries) throws SQLException {
-			HashSet<String> exportedGmlIds = new HashSet<String>();
+	protected void fillGenericObjectForCollada(ResultSet _rs, boolean generateTextureAtlas, AffineTransformer globalTransformer, boolean supportsNestedImplicitGeometries) throws SQLException {
+		HashSet<String> exportedGmlIds = new HashSet<String>();
 
-			String selectedTheme = config.getProject().getKmlExporter().getAppearanceTheme();
-			boolean exportAppearance = !selectedTheme.equals(KmlExporter.THEME_NONE);
-			int texImageCounter = 0;
+		String selectedTheme = config.getProject().getKmlExporter().getAppearanceTheme();
+		boolean exportAppearance = !selectedTheme.equals(KmlExporter.THEME_NONE);
+		int texImageCounter = 0;
 
-			DisplayForm colladaDisplayForm = null;
-			for (DisplayForm displayForm : getDisplayForms()) {
-				if (displayForm.getForm() == DisplayForm.COLLADA) {
-					colladaDisplayForm = displayForm;
-					break;
-				}
+		DisplayForm colladaDisplayForm = null;
+		for (DisplayForm displayForm : getDisplayForms()) {
+			if (displayForm.getForm() == DisplayForm.COLLADA) {
+				colladaDisplayForm = displayForm;
+				break;
 			}
+		}
 
 			X3DMaterial x3dWallMaterial = getX3dMaterialFromIntColor(colladaDisplayForm.getRgba0());
 			X3DMaterial x3dRoofMaterial = null;
@@ -3243,14 +3239,13 @@ public abstract class KmlGenericObject<T> {
 		case BLAZE:
 			convertedPointGeom = convertToWGS84(GeometryObject.createPoint(coords, coords.length, dbSrs.getSrid()));
 			break;
-		}
 
+		}
 		if (convertedPointGeom != null)
 			pointCoords = convertedPointGeom.getCoordinates(0);
 
-			return pointCoords;
-
-		}
+		return pointCoords;
+	}
 
 		protected GeometryObject convertToWGS84 (GeometryObject geomObj) throws SQLException {
 			GeometryObject convertedGeomObj = null;
