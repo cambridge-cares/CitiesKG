@@ -3,9 +3,9 @@
 
 ## Description
 
-The CEA agent can be used to interact with the [City Energy Analyst (CEA)](https://www.cityenergyanalyst.com/) and the data it produces.
+The CEA agent can be used to interact with the [City Energy Analyst (CEA)](https://www.cityenergyanalyst.com/) and the data it produces on building energy demands and the electricity supply available if PV panels are placed on available surfaces.
 
-The CEAAgent provides three endpoints:
+The CEA Agent provides three endpoints:
 
 ### 1. Run
 Available at http://localhost:58085/agents/cea/run
@@ -21,7 +21,7 @@ Example request:
 
 In order for the agent to run the CEA successfully, the following queries must return a result with an IRI of format `<{blazegraph url + namespace}/sparql/cityobject/{UUID}/>`:
 
-For CRS:
+For coordinate reference system (CRS) of the namespace:
 
 ```
 PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
@@ -45,7 +45,7 @@ WHERE
       }}
 ```
 
-For building height two different queries are possible. For IRIs containing kings-lynn-open-data the following query is used.
+For building height, two different queries are possible. For IRIs containing kings-lynn-open-data the following query is used.
 ```
 
 PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
@@ -97,7 +97,7 @@ Example response:
     ],
     "acceptHeaders": "*/*",
     "method": "POST",
-    "requestUrl": "http://localhost:8084/agents/cea/query",
+    "requestUrl": "http://localhost:58085/agents/cea/query",
     "energyprofile": [
         {
             "Annual heating_demand": "46715.11 kWh",
@@ -116,7 +116,7 @@ Example response:
 }
 
 ```
-
+The 3dWebMapClient can be set up to visualise data produced by the CEA Agent (instructions to run are [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#3dcitydb-web-map-client)). The City Information Agent (CIA) is used when a building on the 3dWebMapClient is selected, to query data stored in the KG on the building. If the parameter "context=energy" is included in the url, the query endpoint of CEA will be contacted for energy data. eg `http://localhost:8000/3dwebclient/index.html?city=kingslynn&context=energy` (NB. this currently requires running web map client and CitiesKG/agents from [CIA branch](https://github.com/cambridge-cares/CitiesKG/tree/99-dev-city-information-agent/agents) (**Update when released**)
 
 ## Build Instructions
 
@@ -138,7 +138,7 @@ The agent also requires a postgreSQL database for the time series client to save
     timeseriesclient.properties
 ```
 
-The username and password for the postgreSQL database need to be provided in:
+The username and password for the postgreSQL database need to be provided in single-word text files in:
 ```
 ./credentials/
     postgres_username.txt
@@ -165,7 +165,7 @@ The route to be passed to the access agent then needs to be provided in uri.rout
 ./cea-agent/src/main/resources
     CEAAgentConfig.properties
 ```
-eg. `uri.route.local=http://localhost:48080/docker-kings-lynn`
+eg. `uri.route.local=http://host.docker.internal:48080/docker-kings-lynn`
 
 ### Running
 
