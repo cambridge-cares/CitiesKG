@@ -18,9 +18,12 @@ import org.citydb.database.adapter.DatabaseAdapterFactory;
 import org.citydb.database.adapter.blazegraph.BlazegraphConfigBuilder;
 import org.citydb.database.adapter.blazegraph.GeometryConverterAdapter;
 import org.junit.jupiter.api.Test;
-import org.apache.jena.graph.Node;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import org.apache.jena.graph.Node;
 
 public class GeometryConverterAdapterTest {
   private final String TEST_DB_ADAPTER_TYPE = "Blazegraph";

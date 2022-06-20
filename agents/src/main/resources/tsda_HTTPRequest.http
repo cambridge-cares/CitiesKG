@@ -1,0 +1,15 @@
+PUT http://localhost:8080/agents/discovery/thematicsurface
+Content-Type: application/json
+
+// the config.properties in this folder must also have uri.route set to your target resource
+// specification of no lod arguments -> all of lods 1, 2, 3, 4 "true".
+// specify "cityObjectIRI": "http://localhost:9999/blazegraph/namespace/building/..../" to only process one building.
+// specify "mode": "restructre" to convert lodXMultiSurfaces into thematic surfaces
+//               : "footprint" to add lod0footprint only instead of restructuring
+//               : "validate" to do "comment" behaviour, but on thematic surfaces instead of lodXMultiSurfaces
+
+{"namespace": "http://127.0.0.1:9999/blazegraph/namespace/test/sparql/",
+  "lod1": "true",
+  "lod2": "true",
+  "thresholdAngle": "5",
+  "mode": "validate"}

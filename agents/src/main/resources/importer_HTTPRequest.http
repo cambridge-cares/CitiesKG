@@ -2,6 +2,6 @@ POST http://localhost:8080/agents/import/source
 Content-Type: application/json
 
 {"directory":"C:\\tmp\\import",
-  "targetURL": "http://127.0.0.1:9995/blazegraph/namespace/testdata/sparql",
+  "targetURL": "http://127.0.0.1:9999/blazegraph/namespace/testdata/sparql",
   "srid": "25833",
-  "srsName": "urn:ogc:def:crs,crs:EPSG::25833,crs:EPSG::5783"}
+  "srsName": "EPSG:25833"}
