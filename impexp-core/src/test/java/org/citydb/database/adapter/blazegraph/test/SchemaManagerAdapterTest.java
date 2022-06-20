@@ -1,6 +1,5 @@
 package org.citydb.database.adapter.blazegraph.test;
 
-
 import org.citydb.citygml.importer.database.content.CityGMLImportManager;
 import org.citydb.citygml.importer.database.content.DBObjectTestHelper;
 import org.junit.jupiter.api.Test;

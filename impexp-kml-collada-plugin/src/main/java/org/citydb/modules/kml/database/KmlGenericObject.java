@@ -2171,17 +2171,9 @@ public abstract class KmlGenericObject<T> {
 					eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
 
 					polygon = kmlFactory.createPolygonType();
-					switch (config.getProject().getKmlExporter().getAltitudeMode()) {
-						case ABSOLUTE:
-							polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.ABSOLUTE));
-							break;
-						case RELATIVE:
-							polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
-							break;
-						case CLAMP_TO_GROUND:
-							polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
-							break;
-					}
+					polygon.setTessellate(true);
+					polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.ABSOLUTE));
+
 
 					// in case that the Building, Bridge or Tunnel don't have thematic Surface, but normal LODxSurface, the "surfaceType" variable will be null.
 					// in this case, the thematic surface e.g. WallSurface, RoofSurface can be determined by using a walk-around-way e.g. calculate the Normal-vector
@@ -2289,6 +2281,17 @@ public abstract class KmlGenericObject<T> {
 						}
 					}
 
+//				switch (surfaceType) {
+//					case "WallSurface":
+//						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
+//						break;
+//					case 'RoofSurface':
+//						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
+//						break;
+//					case 'GroundSurface':
+//						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
+//						break;
+//				}
 					multiGeometry = multiGeometries.get(surfaceType);
 					if (multiGeometry == null) {
 						multiGeometry = kmlFactory.createMultiGeometryType();
@@ -2328,6 +2331,7 @@ public abstract class KmlGenericObject<T> {
 
 		return placemarkList;
 	}
+
 
 	protected X3DMaterial getX3dMaterialFromIntColor(int rgbColor) {
 		java.awt.Color color = new java.awt.Color(rgbColor, true);

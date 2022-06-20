@@ -1,16 +1,18 @@
 package org.citydb.database.adapter.blazegraph;
 
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import org.apache.jena.base.Sys;
-import org.citydb.registry.ObjectRegistry;
-import org.junit.jupiter.api.Test;
-import org.locationtech.jts.geom.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
 
 public class GeoSpatialProcessorTest {
 

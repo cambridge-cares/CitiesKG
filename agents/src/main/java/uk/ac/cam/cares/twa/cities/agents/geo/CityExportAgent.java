@@ -18,7 +18,7 @@ import org.json.JSONObject;
 import org.json.XML;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.twa.cities.tasks.ExporterTask;
+import uk.ac.cam.cares.twa.cities.tasks.geo.ExporterTask;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;

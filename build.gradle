@@ -19,15 +19,17 @@ subprojects {
     compileJava.options.encoding = 'UTF-8'
 
     repositories {
+        mavenCentral {
+            content {
+                excludeModule("javax.media", "jai_core")
+            }
+        }
         maven {
             url 'https://repo.osgeo.org/repository/release'
         }
         maven {
             url 'https://citydb.jfrog.io/artifactory/maven'
         }
-
-        mavenCentral()
-
     }
 
     task processLicense(type: Copy) {
