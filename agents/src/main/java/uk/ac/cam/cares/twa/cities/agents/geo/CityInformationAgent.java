@@ -66,6 +66,8 @@ public class CityInformationAgent extends JPSAgent {
       else {
         context.recursivePullAll(cityObject, 1);
       }
+
+      cityObject.setEnvelopeType(null);
       ArrayList<CityObject> cityObjectList = new ArrayList<>();
       cityObjectList.add(cityObject);
       cityObjectInformation.put(cityObjectList);
