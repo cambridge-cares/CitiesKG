@@ -289,9 +289,7 @@
                 <typeName xmlns:ns2="http://www.opengis.net/citygml/vegetation/2.0">ns2:PlantCover</typeName>
                 <typeName xmlns:ns2="http://www.opengis.net/citygml/waterbody/2.0">ns2:WaterBody</typeName>
             </typeNames>
-            <gmlIds>
-                <id>{{gmlid}}</id>
-            </gmlIds>
+            <gmlIds>{{gmlid}}</gmlIds>
             <bbox mode="no_tiling">
                 <extent srsRef="UUID_5f85d491-3385-4baf-825c-cc6a7ac91a61">
                     <lowerCorner></lowerCorner>
@@ -468,7 +466,7 @@
             <displayForm>
                 <form>4</form>
                 <active>false</active>
-                <visibleFrom>-1</visibleFrom>
+                <visibleFrom>0</visibleFrom>
                 <rgba0>-3355444</rgba0>
                 <rgba1>-1</rgba1>
                 <rgba2>-1</rgba2>
@@ -853,7 +851,7 @@
             <displayForm>
                 <form>4</form>
                 <active>false</active>
-                <visibleFrom>-1</visibleFrom>
+                <visibleFrom>0</visibleFrom>
                 <rgba0>-3355444</rgba0>
                 <rgba1>-1</rgba1>
                 <rgba2>-1</rgba2>
@@ -973,7 +971,7 @@
             <displayForm>
                 <form>4</form>
                 <active>false</active>
-                <visibleFrom>-1</visibleFrom>
+                <visibleFrom>0</visibleFrom>
                 <rgba0>-1</rgba0>
                 <rgba1>-1</rgba1>
                 <rgba2>-1</rgba2>

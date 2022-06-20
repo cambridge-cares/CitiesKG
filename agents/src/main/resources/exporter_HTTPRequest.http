@@ -15,9 +15,10 @@ Content-Type: application/json
 // lod : 5 as default = highest LOD available
 // displayform: footprint, extruded, geometry
 //  "directory":  "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder",
+// sg_data" :UUID_0d0b9792-823f-484d-bfbe-ab4d1003cf66
 
 { "namespace" : "http://127.0.0.1:9999/blazegraph/namespace/uraEPSG4326/sparql/",
-  "gmlid":  ["UUID_0d0b9792-823f-484d-bfbe-ab4d1003cf66"],
+  "gmlid":  ["*"],
   "displayform": "footprint"
 }
 

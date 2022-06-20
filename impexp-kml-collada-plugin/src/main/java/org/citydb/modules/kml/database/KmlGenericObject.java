@@ -1532,10 +1532,21 @@ public abstract class KmlGenericObject<T> {
 			Object buildingGeometryObj = rs.getObject(1);
 			String datatype = null;
 
+			if (isBlazegraph){
+				datatype = rs.getString("datatype");  // Added by Shiying
+			}
+
 			if (!rs.wasNull() && buildingGeometryObj != null) {
 				eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
 
-				GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
+				GeometryObject unconvertedGeom = null;
+				// Added by Shiying: convert the # string to geometry, it has to be 3D?
+				if (isBlazegraph){
+					//buildingGeometryObj = StatementTransformer.Str2Geometry(buildingGeometryObj.toString(), datatype);
+					unconvertedGeom = GeoSpatialProcessor.create3dPolygon(buildingGeometryObj.toString(), datatype);
+				} else {
+					unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
+				}
 
 				if (unconvertedGeom == null || (unconvertedGeom.getGeometryType() != GeometryType.POLYGON && unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON))
 					continue;
