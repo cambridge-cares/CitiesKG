@@ -164,6 +164,7 @@ public class GenericCityObject extends KmlGenericObject{
 							rs.next();
 							//if (rs.getLong(4) != 0 || rs.getLong(1) != 0)
 							if (rs.getString(4) != null || rs.getString(1) != null)
+								System.out.println("GenericCityObject: " + rs.getString(1));
 								break; // result set not empty
 						}
 
