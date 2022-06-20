@@ -4,7 +4,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import java.util.Iterator;
 import java.util.ResourceBundle;
 import java.util.Set;
 import javax.servlet.annotation.WebServlet;
@@ -16,6 +15,8 @@ import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
+import org.apache.jena.sparql.path.Path;
+import org.apache.jena.sparql.path.PathFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
@@ -38,8 +39,10 @@ public class CityInformationAgent extends JPSAgent {
   public static final String KEY_CONTEXT = "context";
   public static final String KEY_CITY_OBJECT_INFORMATION = "cityobjectinformation";
   public static final String KEY_TOTAL_GFA = "TotalGFA";
-  public static final String KEY_USE_PREDICATE = "allowsUse";
-  public static final String KEY_PROGRAMME_PREDICATE = "allowsProgramme";
+  public static final String ALLOWS_USE = "allowsUse";
+  public static final String MAY_ALLOW_USE = "mayAllowUse";
+  public static final String ALLOWS_PROGRAMME = "allowsProgramme";
+  public static final String MAY_ALLOW_PROGRAMME = "mayAllowProgramme";
   public static final String HAS_ZONE_PREDICATE = "hasZone";
   private static final String QM  =  "?";
   private static final String ZONE = "zone";
@@ -95,10 +98,10 @@ public class CityInformationAgent extends JPSAgent {
           JSONObject filters = requestParams.getJSONObject(KEY_CONTEXT).getJSONObject(agentURL);
           if (filters.keySet().size() > 1) {
             String predicate = "";
-            if (filters.keySet().contains(KEY_USE_PREDICATE)) {
-              predicate = KEY_USE_PREDICATE;
+            if (filters.keySet().contains(ALLOWS_USE)) {
+              predicate = ALLOWS_USE;
             } else {
-              predicate = KEY_PROGRAMME_PREDICATE;
+              predicate = ALLOWS_PROGRAMME;
             }
             ArrayList<String> onto_elements = new ArrayList<>(filters.getJSONObject(predicate).keySet());
             response.put("filtered", getFilteredObjects(predicate, onto_elements));
@@ -141,11 +144,11 @@ public class CityInformationAgent extends JPSAgent {
                   if (!agentKeyValuePairs.keySet().contains(KEY_TOTAL_GFA)) {
                     throw new BadRequestException();
                   } else {
-                    if (agentKeyValuePairs.keySet().contains(KEY_USE_PREDICATE) && agentKeyValuePairs.keySet()
-                        .contains(KEY_PROGRAMME_PREDICATE)) {
+                    if (agentKeyValuePairs.keySet().contains(ALLOWS_USE) && agentKeyValuePairs.keySet()
+                        .contains(ALLOWS_PROGRAMME)) {
                       throw new BadRequestException();
-                    } else if (!(agentKeyValuePairs.keySet().contains(KEY_USE_PREDICATE) || agentKeyValuePairs.keySet()
-                        .contains(KEY_PROGRAMME_PREDICATE))) {
+                    } else if (!(agentKeyValuePairs.keySet().contains(ALLOWS_USE) || agentKeyValuePairs.keySet()
+                        .contains(ALLOWS_PROGRAMME))) {
                       if (agentKeyValuePairs.keySet().size() > 1) {
                         throw new BadRequestException();
                       }
@@ -183,14 +186,20 @@ public class CityInformationAgent extends JPSAgent {
 
     WhereBuilder wb = new WhereBuilder()
         .addPrefix(ONTOZONING_PREFIX, onto_zoning);
-    if (predicate.equals(KEY_USE_PREDICATE)) {
+    if (predicate.equals(ALLOWS_USE)) {
       for (String use_class: onto_class) {
-        wb.addWhere(QM +ZONE, ONTOZONING_PREFIX+":" + KEY_USE_PREDICATE, ONTOZONING_PREFIX + ":" + use_class);
+        Path allow = PathFactory.pathLink(NodeFactory.createURI(onto_zoning + ALLOWS_USE));
+        Path mayAllow = PathFactory.pathLink(NodeFactory.createURI(onto_zoning + MAY_ALLOW_USE));
+        Path fullPath = PathFactory.pathAlt(allow, mayAllow);
+        wb.addWhere(QM +ZONE, fullPath.toString(), ONTOZONING_PREFIX + ":" + use_class);
       }
-    } else if (predicate.equals(KEY_PROGRAMME_PREDICATE)) {
-      wb.addWhere(QM +ZONE, ONTOZONING_PREFIX + ":" + KEY_USE_PREDICATE, QM + USE);
+    } else if (predicate.equals(ALLOWS_PROGRAMME)) {
+      wb.addWhere(QM +ZONE, ONTOZONING_PREFIX + ":" + ALLOWS_USE, QM + USE);
       for (String programme_class : onto_class) {
-        wb.addWhere(QM + USE,  ONTOZONING_PREFIX + ":" + KEY_PROGRAMME_PREDICATE, ONTOZONING_PREFIX + ":" + programme_class);
+        Path allow = PathFactory.pathLink(NodeFactory.createURI(onto_zoning + ALLOWS_PROGRAMME));
+        Path mayAllow = PathFactory.pathLink(NodeFactory.createURI(onto_zoning + MAY_ALLOW_PROGRAMME));
+        Path fullPath = PathFactory.pathAlt(allow, mayAllow);
+        wb.addWhere(QM + USE, fullPath.toString(), ONTOZONING_PREFIX + ":" + programme_class);
       }
     }
     wb.addWhere(QM + CITY_OBJECT_ID, ONTOZONING_PREFIX + ":" + HAS_ZONE_PREDICATE, QM +ZONE);
