@@ -1,7 +1,7 @@
 package uk.ac.cam.cares.twa.cities.utils.owlconverter;
 
 import com.github.owlcs.ontapi.OntManagers;
-import com.sun.tools.corba.se.idl.InvalidArgument;
+import com.sun.javaws.exceptions.InvalidArgumentException;
 import java.io.File;
 import java.net.HttpURLConnection;
 import org.apache.http.HttpException;
@@ -62,9 +62,9 @@ public class OwlConverter {
    *
    * @param args Array of CLI arguments.
    * @return Information if the input is valid.
-   * @throws InvalidArgument In case of errors with instantiating a file or IRIs based on input.
+   * @throws InvalidArgumentException In case of errors with instantiating a file or IRIs based on input.
    */
-  private static boolean validateInput(String[] args) throws  InvalidArgument {
+  private static boolean validateInput(String[] args) throws  InvalidArgumentException {
     boolean valid = false;
 
     try {
@@ -72,11 +72,11 @@ public class OwlConverter {
       IRI iriOnt = IRI.create(args[1]);
       IRI iriSparql = IRI.create(args[2]);
 
-      if (ontFile.exists() && iriOnt.isIRI() && iriSparql.isIRI()) {
+      if (IRI.create(ontFile.toURI()).isIRI() && iriOnt.isIRI() && iriSparql.isIRI()) {
         valid = true;
       }
     } catch (Exception e ) {
-      throw new InvalidArgument(ERR_INVALID_INPUT);
+      throw new InvalidArgumentException(new String[]{ERR_INVALID_INPUT});
     }
 
     return valid;
