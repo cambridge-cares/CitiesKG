@@ -124,7 +124,8 @@ public class CityExportAgent extends JPSAgent {
                 String preparedGmlids = Paths.get(tmpDirsLocation, namespaceName).toString();
                 File gmlidDir = new File(preparedGmlids);
 
-                if (gmlidDir.isDirectory() && gmlidDir.length() > 0) {
+                if (gmlidDir.isDirectory() && gmlidDir.list().length > 0) {
+                    System.out.println("Found the prepared GMLID list and number of files = " + gmlidDir.list().length);
                     ArrayList<Path> fileList = new ArrayList<>();
                     try (Stream<Path> paths = Files.walk(Paths.get(preparedGmlids))) {
                         paths
