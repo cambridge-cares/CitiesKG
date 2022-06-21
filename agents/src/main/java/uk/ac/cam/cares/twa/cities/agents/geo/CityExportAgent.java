@@ -342,9 +342,26 @@ public class CityExportAgent extends JPSAgent {
         String path2unsortedKML = Paths.get(outputDir, "kmlFiles").toString() ;
         String path2sortedKML = Paths.get(outputDir).toString();
         int databaseCRS = Integer.valueOf(srsName.split(":")[1]);
+        //int databaseCRS = 32648;
         KMLTilingTask kmlTilingTask = new KMLTilingTask(path2unsortedKML, path2sortedKML, databaseCRS, inputDisplayForm, namespaceIri);
         exporterExecutor.execute(kmlTilingTask);  // this step will add the final task to the exporterExecutor
         return kmlTilingTask;
+    }
+
+    private KMLTilingTask tilingKml(String path2unsortedKML, String path2sortedKML){
+        String displayForm = "footprint";
+        int databaseCRS = 32648;
+        String namespaceIri = "";
+        KMLTilingTask kmlTilingTask = new KMLTilingTask(path2unsortedKML, path2sortedKML, databaseCRS, displayForm, namespaceIri);
+        exporterExecutor.execute(kmlTilingTask);  // this step will add the final task to the exporterExecutor
+        return kmlTilingTask;
+    }
+
+    public static void main(String[] args) {
+        String path2unsortedKML = "C:\\Program Files\\Apache Software Foundation\\Tomcat 9.0\\temp\\export\\kmlFiles";
+        String path2sortedKML = "C:\\Program Files\\Apache Software Foundation\\Tomcat 9.0\\temp\\export";
+        CityExportAgent exportAgent = new CityExportAgent();
+        exportAgent.tilingKml(path2unsortedKML, path2sortedKML);
     }
 
 }
