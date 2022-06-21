@@ -1,9 +1,9 @@
 package uk.ac.cam.cares.twa.cities.utils.owlconverter;
 
 import com.github.owlcs.ontapi.OntManagers;
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import java.io.File;
 import java.net.HttpURLConnection;
+import java.util.InputMismatchException;
 import org.apache.http.HttpException;
 import org.apache.http.protocol.HTTP;
 import org.semanticweb.owlapi.model.IRI;
@@ -62,9 +62,9 @@ public class OwlConverter {
    *
    * @param args Array of CLI arguments.
    * @return Information if the input is valid.
-   * @throws InvalidArgumentException In case of errors with instantiating a file or IRIs based on input.
+   * @throws InputMismatchException In case of errors with instantiating a file or IRIs based on input.
    */
-  private static boolean validateInput(String[] args) throws  InvalidArgumentException {
+  private static boolean validateInput(String[] args) throws  InputMismatchException {
     boolean valid = false;
 
     try {
@@ -76,7 +76,7 @@ public class OwlConverter {
         valid = true;
       }
     } catch (Exception e ) {
-      throw new InvalidArgumentException(new String[]{ERR_INVALID_INPUT});
+      throw new InputMismatchException(ERR_INVALID_INPUT);
     }
 
     return valid;

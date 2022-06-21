@@ -85,8 +85,7 @@ public class OwlConverterTest {
     try {
       validateInput.invoke(oc, new Object[] {input});
     } catch (InvocationTargetException e) {
-      assertEquals(e.getTargetException().getMessage(), "Invalid arguments supplied: "
-          + "{Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI> }");
+      assertEquals(e.getTargetException().getMessage(), "Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI>");
     } catch (IllegalAccessException e) {
       fail();
     }
@@ -95,8 +94,8 @@ public class OwlConverterTest {
       input[0] = "a";
       validateInput.invoke(oc, new Object[] {input});
     } catch (InvocationTargetException e) {
-      assertEquals(e.getTargetException().getMessage(), "Invalid arguments supplied: "
-          + "{Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI> }");
+      assertEquals(e.getTargetException().getMessage(), "Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI>");
+          
     } catch (IllegalAccessException e) {
       fail();
     }
@@ -105,8 +104,8 @@ public class OwlConverterTest {
       input[1] = "b";
       validateInput.invoke(oc, new Object[] {input});
     } catch (InvocationTargetException e) {
-      assertEquals(e.getTargetException().getMessage(), "Invalid arguments supplied: "
-          + "{Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI> }");
+      assertEquals(e.getTargetException().getMessage(), "Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI>");
+          
     } catch (IllegalAccessException e) {
       fail();
     }
@@ -115,8 +114,8 @@ public class OwlConverterTest {
       input[2] = "c";
       validateInput.invoke(oc, new Object[] {input});
     } catch (InvocationTargetException e) {
-      assertEquals(e.getTargetException().getMessage(), "Invalid arguments supplied: "
-          + "{Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI> }");
+      assertEquals(e.getTargetException().getMessage(), "Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI>");
+          
     } catch (IllegalAccessException e) {
       fail();
     }
@@ -125,8 +124,8 @@ public class OwlConverterTest {
       input[1] = null;
       validateInput.invoke(oc, new Object[] {input});
     } catch (InvocationTargetException e) {
-      assertEquals(e.getTargetException().getMessage(), "Invalid arguments supplied: "
-          + "{Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI> }");
+      assertEquals(e.getTargetException().getMessage(), "Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI>");
+          
     } catch (IllegalAccessException e) {
       fail();
     }
@@ -135,8 +134,8 @@ public class OwlConverterTest {
       input[0] = null;
       validateInput.invoke(oc, new Object[] {input});
     } catch (InvocationTargetException e) {
-      assertEquals(e.getTargetException().getMessage(), "Invalid arguments supplied: "
-          + "{Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI> }");
+      assertEquals(e.getTargetException().getMessage(), "Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI>");
+          
     } catch (IllegalAccessException e) {
       fail();
     }
@@ -146,8 +145,8 @@ public class OwlConverterTest {
       input[1] = "b";
       validateInput.invoke(oc, new Object[] {input});
     } catch (InvocationTargetException e) {
-      assertEquals(e.getTargetException().getMessage(), "Invalid arguments supplied: "
-          + "{Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI> }");
+      assertEquals(e.getTargetException().getMessage(), "Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI>");
+          
     } catch (IllegalAccessException e) {
       fail();
     }
@@ -157,8 +156,8 @@ public class OwlConverterTest {
       input[1] = "b";
       validateInput.invoke(oc, new Object[] {input});
     } catch (InvocationTargetException e) {
-      assertEquals(e.getTargetException().getMessage(), "Invalid arguments supplied: "
-          + "{Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI> }");
+      assertEquals(e.getTargetException().getMessage(), "Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI>");
+          
     } catch (IllegalAccessException e) {
       fail();
     }
@@ -169,8 +168,8 @@ public class OwlConverterTest {
       input[0] = testfile;
       validateInput.invoke(oc, new Object[] {input});
     } catch (InvocationTargetException e) {
-      assertEquals(e.getTargetException().getMessage(), "Invalid arguments supplied: "
-          + "{Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI> }");
+      assertEquals(e.getTargetException().getMessage(), "Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI>");
+          
     } catch (IllegalAccessException e) {
       fail();
     }
@@ -179,8 +178,8 @@ public class OwlConverterTest {
       input[1] = "b";
       validateInput.invoke(oc, new Object[] {input});
     } catch (InvocationTargetException e) {
-      assertEquals(e.getTargetException().getMessage(), "Invalid arguments supplied: "
-          + "{Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI> }");
+      assertEquals(e.getTargetException().getMessage(), "Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI>");
+          
     } catch (IllegalAccessException e) {
       fail();
     }
@@ -189,8 +188,8 @@ public class OwlConverterTest {
       input[2] = "c";
       validateInput.invoke(oc, new Object[] {input});
     } catch (InvocationTargetException e) {
-      assertEquals(e.getTargetException().getMessage(), "Invalid arguments supplied: "
-          + "{Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI> }");
+      assertEquals(e.getTargetException().getMessage(), "Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI>");
+          
     } catch (IllegalAccessException e) {
       fail();
     }
@@ -199,8 +198,8 @@ public class OwlConverterTest {
       input[1] = testOntoIri;
       validateInput.invoke(oc, new Object[] {input});
     } catch (InvocationTargetException e) {
-      assertEquals(e.getTargetException().getMessage(), "Invalid arguments supplied: "
-          + "{Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI> }");
+      assertEquals(e.getTargetException().getMessage(), "Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI>");
+          
     } catch (IllegalAccessException e) {
       fail();
     }
@@ -209,8 +208,8 @@ public class OwlConverterTest {
       input[0] = "a";
       validateInput.invoke(oc, new Object[] {input});
     } catch (InvocationTargetException e) {
-      assertEquals(e.getTargetException().getMessage(), "Invalid arguments supplied: "
-          + "{Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI> }");
+      assertEquals(e.getTargetException().getMessage(), "Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI>");
+          
     } catch (IllegalAccessException e) {
       fail();
     }
@@ -219,8 +218,8 @@ public class OwlConverterTest {
       input[2] = testSparqlIri;
       validateInput.invoke(oc, new Object[] {input});
     } catch (InvocationTargetException e) {
-      assertEquals(e.getTargetException().getMessage(), "Invalid arguments supplied: "
-          + "{Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI> }");
+      assertEquals(e.getTargetException().getMessage(), "Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI>");
+          
     } catch (IllegalAccessException e) {
       fail();
     }
@@ -230,8 +229,8 @@ public class OwlConverterTest {
       input[2] = testSparqlIri;
       validateInput.invoke(oc, new Object[] {input});
     } catch (InvocationTargetException e) {
-      assertEquals(e.getTargetException().getMessage(), "Invalid arguments supplied: "
-          + "{Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI> }");
+      assertEquals(e.getTargetException().getMessage(), "Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI>");
+          
     } catch (IllegalAccessException e) {
       fail();
     }
@@ -242,8 +241,8 @@ public class OwlConverterTest {
       input[2] = testSparqlIri;
       validateInput.invoke(oc, new Object[] {input});
     } catch (InvocationTargetException e) {
-      assertEquals(e.getTargetException().getMessage(), "Invalid arguments supplied: "
-          + "{Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI> }");
+      assertEquals(e.getTargetException().getMessage(), "Mandatory CLI arguments: <OWL file path> <ontology IRI> <SPARQL endpoint IRI>");
+          
     } catch (IllegalAccessException e) {
       fail();
     }
