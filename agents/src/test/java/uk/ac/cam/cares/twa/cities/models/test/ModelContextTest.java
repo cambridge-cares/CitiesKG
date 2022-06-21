@@ -1133,9 +1133,103 @@ public class ModelContextTest {
     assertEquals(pushModel.getModelProp().getForwardVector(), pullModel.getModelProp().getForwardVector());
     assertEquals(pushModel.getModelProp().getModelProp().getForwardVector(), pullModel.getModelProp().getModelProp().getForwardVector());
     assertNotEquals(pushModel.getModelProp().getModelProp().getModelProp().getForwardVector(), pullModel.getModelProp().getModelProp().getModelProp().getForwardVector());
-
-
   }
+
+  @Test
+  public void testrecursiveLoadPartial(){
+
+    ModelContext pushContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
+
+    Mockito.doNothing().when(pushContext).update(Mockito.contains("CLEAR ALL"));
+    pushContext.update("CLEAR ALL");
+    Mockito.verify(pushContext, Mockito.times(1)).update(Mockito.contains("CLEAR ALL"));
+
+    TestModel pushModel = TestModel.createRandom(pushContext, 12345, 1, 3);
+    Mockito.doNothing().when(pushContext).update(Mockito.contains("INSERT DATA"));
+    pushContext.pushAllChanges();
+    Mockito.verify(pushContext, Mockito.times(1)).update(Mockito.contains("INSERT DATA"));
+
+    ModelContext pullContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
+
+    JSONArray scalarsResponse_1 = new JSONArray()
+            .put(new JSONObject().put("value5", "https://eg/examplenamespace/4771c262-0f35-32c8-8865-a04b1a6c2e5d")
+                    .put("isblank0", "false").put("isblank5", "false").put("value0", "randomString-287790814")
+                    .put("datatype0", "http://www.w3.org/2001/XMLSchema#string"));
+    JSONArray scalarsResponse_2 = new JSONArray()
+            .put(new JSONObject().put("value5", "https://eg/examplenamespace/0ed64570-dc61-3703-9f4c-f8975b068b75")
+                    .put("isblank0", "false").put("isblank5", "false").put("value0", "randomString1525380402")
+                    .put("datatype0", "http://www.w3.org/2001/XMLSchema#string"));
+    JSONArray scalarsResponse_3 = new JSONArray()
+            .put(new JSONObject().put("value5", "https://eg/examplenamespace/1d5fd7f8-5cb6-3dcf-88d8-edadc309dc81")
+                    .put("isblank0", "false").put("isblank5", "false").put("value0", "randomString-2050421886")
+                    .put("datatype0", "http://www.w3.org/2001/XMLSchema#string"));
+    JSONArray vectorResponse_1 = new JSONArray()
+            .put(new JSONObject().put("datatype", "http://www.w3.org/2001/XMLSchema#double").put("isblank", "false")
+                    .put("value", "0.34911535662488336"));
+    JSONArray vectorResponse_2 = new JSONArray()
+            .put(new JSONObject().put("datatype", "http://www.w3.org/2001/XMLSchema#double").put("isblank", "false")
+                    .put("value", "0.517410013055376"));
+    JSONArray vectorResponse_3 = new JSONArray()
+            .put(new JSONObject().put("datatype", "http://www.w3.org/2001/XMLSchema#double").put("isblank", "false")
+                    .put("value", "0.034685238715615796"));
+
+    Method buildScalarsQuery;
+    SelectBuilder scalarsQuery_1 = null;
+    SelectBuilder scalarsQuery_2 = null;
+    SelectBuilder scalarsQuery_3 = null;
+    SelectBuilder vectorQuery_1 = null;
+    SelectBuilder vectorQuery_2 = null;
+    SelectBuilder vectorQuery_3 = null;
+    Method buildVectorQuery;
+
+    String[] fieldNames = {"stringProp", "modelProp", "forwardVector"};
+    try {
+      buildScalarsQuery = pullContext.getClass().getDeclaredMethod("buildScalarsQuery", Node.class, MetaModel.class, String[].class);
+      buildScalarsQuery.setAccessible(true);
+      buildVectorQuery = pullContext.getClass().getDeclaredMethod("buildVectorQuery", Node.class, FieldKey.class);
+      buildVectorQuery.setAccessible(true);
+
+      scalarsQuery_1 = (SelectBuilder) buildScalarsQuery.invoke(pullContext, NodeFactory.createURI(pushModel.getIri()), metaModel, fieldNames);
+      scalarsQuery_2 = (SelectBuilder) buildScalarsQuery.invoke(pullContext, NodeFactory.createURI(pushModel.getModelProp().getIri()), metaModel, fieldNames);
+      scalarsQuery_3 = (SelectBuilder) buildScalarsQuery.invoke(pullContext, NodeFactory.createURI(pushModel.getModelProp().getModelProp().getIri()), metaModel, fieldNames);
+
+      for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.vectorFieldList) {
+        if (fieldNames.length > 0 && !ArrayUtils.contains(fieldNames, entry.getValue().field.getName())) continue;
+        vectorQuery_1 = ((SelectBuilder) buildVectorQuery.invoke(pullContext, NodeFactory.createURI(pushModel.getIri()), entry.getKey()));
+        vectorQuery_2 = ((SelectBuilder) buildVectorQuery.invoke(pullContext, NodeFactory.createURI(pushModel.getModelProp().getIri()), entry.getKey()));
+        vectorQuery_3 = ((SelectBuilder) buildVectorQuery.invoke(pullContext, NodeFactory.createURI(pushModel.getModelProp().getModelProp().getIri()), entry.getKey()));
+      }
+
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+      e.printStackTrace();
+    }
+
+    Mockito.doReturn(scalarsResponse_1).when(pullContext).query(scalarsQuery_1.buildString());
+    Mockito.doReturn(scalarsResponse_2).when(pullContext).query(scalarsQuery_2.buildString());
+    Mockito.doReturn(scalarsResponse_3).when(pullContext).query(scalarsQuery_3.buildString());
+    Mockito.doReturn(vectorResponse_1).when(pullContext).query(vectorQuery_1.buildString());
+    Mockito.doReturn(vectorResponse_2).when(pullContext).query(vectorQuery_2.buildString());
+    Mockito.doReturn(vectorResponse_3).when(pullContext).query(vectorQuery_3.buildString());
+
+    TestModel pullModel = pullContext.recursiveLoadPartial(TestModel.class, pushModel.getIri(), 2, fieldNames);
+
+    Mockito.verify(pullContext, Mockito.times(1)).query(scalarsQuery_1.buildString());
+    Mockito.verify(pullContext, Mockito.times(1)).query(scalarsQuery_2.buildString());
+    Mockito.verify(pullContext, Mockito.times(1)).query(scalarsQuery_3.buildString());
+    Mockito.verify(pullContext, Mockito.times(1)).query(vectorQuery_1.buildString());
+    Mockito.verify(pullContext, Mockito.times(1)).query(vectorQuery_2.buildString());
+    Mockito.verify(pullContext, Mockito.times(1)).query(vectorQuery_3.buildString());
+
+    assertEquals(pushModel.getStringProp(), pullModel.getStringProp());
+    assertEquals(pushModel.getModelProp().getStringProp(), pullModel.getModelProp().getStringProp());
+    assertEquals(pushModel.getModelProp().getModelProp().getStringProp(), pullModel.getModelProp().getModelProp().getStringProp());
+    assertNotEquals(pushModel.getModelProp().getModelProp().getModelProp().getStringProp(), pullModel.getModelProp().getModelProp().getModelProp().getStringProp());
+    assertTrue(pushModel.getForwardVector().equals(pullModel.getForwardVector()));
+    assertEquals(pushModel.getModelProp().getForwardVector(), pullModel.getModelProp().getForwardVector());
+    assertEquals(pushModel.getModelProp().getModelProp().getForwardVector(), pullModel.getModelProp().getModelProp().getForwardVector());
+    assertNotEquals(pushModel.getModelProp().getModelProp().getModelProp().getForwardVector(), pullModel.getModelProp().getModelProp().getModelProp().getForwardVector());
+  }
+
   public JSONArray createResponseForTestPullScalars_1(){
     JSONArray jsonArray = new JSONArray()
             .put(new JSONObject().put("value4", "https://eg/examplenamespace/randomuris/1402202751").put("value3","0.8330913489710237")
