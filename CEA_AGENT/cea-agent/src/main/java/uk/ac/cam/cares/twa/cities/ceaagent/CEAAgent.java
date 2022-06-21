@@ -550,7 +550,7 @@ public class CEAAgent extends JPSAgent {
      *
      * @param namespace endpoint for querying/updating
      */
-    private void setTimeSeriesClientProperties(String namespace) {
+    private String setTimeSeriesClientProperties(String namespace) {
         try {
 
             String timeseries_props;
@@ -604,6 +604,8 @@ public class CEAAgent extends JPSAgent {
 
             reader.close();
             writer.close();
+
+            return newFileContent;
 
         } catch (URISyntaxException | IOException e) {
             e.printStackTrace();

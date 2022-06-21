@@ -19,6 +19,10 @@ import uk.ac.cam.cares.twa.cities.tasks.RunCEATask;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Field;
@@ -279,7 +283,7 @@ public class CEAAgentTest extends TestCase {
             PowerMockito.doNothing().when(agent, "addDataToTimeSeries", any(),  any(),  any());
             PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
             PowerMockito.doReturn(namespace).when(agent, "getNamespace", anyString());
-            PowerMockito.doNothing().when(agent, "setTimeSeriesClientProperties", any());
+            PowerMockito.doReturn("").when(agent, "setTimeSeriesClientProperties", any());
         } catch(Exception e){
             fail();
         }
@@ -800,19 +804,46 @@ public class CEAAgentTest extends TestCase {
 
     @Test
     public void testSetTimeSeriesClientProperties()
-            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+            throws Exception {
+
+        String prop1 = "db.url=jdbc:postgresql://localhost:5432/timeseries";
+        String prop2 = "sparql.query.endpoint=";
+        String prop3 = "sparql.update.endpoint=";
+
+        File file = mock(File.class);
+        PowerMockito.whenNew(File.class).withAnyArguments().thenReturn(file);
+
+        BufferedReader bReader = mock(BufferedReader.class);
+        PowerMockito.whenNew(BufferedReader.class).withAnyArguments().thenReturn(bReader);
+
+        FileReader fReader = mock(FileReader.class);
+        PowerMockito.whenNew(FileReader.class).withAnyArguments().thenReturn(fReader);
+
+        FileWriter fWriter = mock(FileWriter.class);
+        PowerMockito.whenNew(FileWriter.class).withAnyArguments().thenReturn(fWriter);
+
+        doReturn(prop1, prop2,prop3, null, prop1, prop2,prop3, null).when(bReader).readLine();
 
         CEAAgent agent = new CEAAgent();
-        String namespace = "http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/";
-
         Method setTimeSeriesClientProperties = agent.getClass().getDeclaredMethod("setTimeSeriesClientProperties", String.class);
-        assertNotNull(setTimeSeriesClientProperties);
         setTimeSeriesClientProperties.setAccessible(true);
+        assertNotNull(setTimeSeriesClientProperties);
 
-        setTimeSeriesClientProperties.invoke(agent, namespace);
+        String namespace1 = "http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/";
+        String namespace2 = "http://localhost:9999/citieskg/namespace/kingslynnEPSG3857/sparql/";
 
-        ResourceBundle properties = ResourceBundle.getBundle("timeseriesclient");
-        assertEquals(namespace, properties.getString("sparql.query.endpoint"));
+        String output1 = (String) setTimeSeriesClientProperties.invoke(agent, namespace1);
+
+        assertTrue(output1.contains(prop2+namespace1));
+        assertTrue(output1.contains(prop3+namespace1));
+
+        String output2 = (String) setTimeSeriesClientProperties.invoke(agent, namespace2);
+
+        if (!System.getProperty("os.name").toLowerCase().contains("win")) {
+            namespace2 = namespace2.replace("localhost", "host.docker.internal");
+        }
+        assertTrue(output2.contains(prop2+namespace2));
+        assertTrue(output2.contains(prop3+namespace2));
 
     }
 
