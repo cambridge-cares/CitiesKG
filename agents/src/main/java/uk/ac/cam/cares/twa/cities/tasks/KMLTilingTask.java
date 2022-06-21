@@ -162,9 +162,8 @@ public class KMLTilingTask implements Runnable{
     long start = System.currentTimeMillis();
     for (String file : inputFiles){
       currFile = new File(file);
-
+      int before = dataContent.size();
       System.out.println("Reading the file: " + currFile + " with the size of " + currFile.length());
-
       KMLRoot kmlRoot = null;
       try {
         kmlRoot = KMLRoot.create(currFile);
@@ -173,6 +172,7 @@ public class KMLTilingTask implements Runnable{
         e.printStackTrace();
       }
       this.getPlacemarks(kmlRoot.getFeature(), currFile);
+      System.out.println("After reading " + currFile.getName() + " file has the length = " + String.valueOf(dataContent.size() - before));
     }
 
     long end1 = System.currentTimeMillis();
