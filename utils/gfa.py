@@ -8,10 +8,33 @@ import math
 import geopandas as gpd
 import json
 from concurrent.futures import ProcessPoolExecutor
+from SPARQLWrapper import SPARQLWrapper, JSON
+from shapely.geometry import Polygon, Point, LineString, MultiLineString
+from multiprocessing import Pool
+
 
 """
 Helper functions to process dataframes, e.g. filter.
 """
+
+
+def envelopeStringToPolygon(envelopeString, geodetic = False, flip=True):
+    pointsAsString = envelopeString.split('#')
+    numOfPoints = int(len(pointsAsString)/3)
+    points = []
+    for i in range(numOfPoints):
+        startIndex = i*3
+        x,y,z = float(pointsAsString[startIndex]), float(pointsAsString[startIndex+1]), float(pointsAsString[startIndex+2])
+        if geodetic:
+            if flip:
+                points.append((y,x))
+            else:
+                points.append((x,y))
+        else:
+            points.append((x,y,z))
+    return Polygon(points)
+
+
 def to_list(dataframe, column):
     final_list = []
     for i in dataframe.index:
@@ -437,13 +460,51 @@ def compute_gfa(plots_for_GFA, plot_setbacks, dcp):
     return gfas
 
 
-def process_plots(fn_plots):
-    plots = gpd.read_file(fn_plots).to_crs(epsg=3857)
+def getPlots(endpoint):
+    sparql = SPARQLWrapper(endpoint)
+    sparql.setQuery(
+        """PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
+        PREFIX geo: <http://www.bigdata.com/rdf/geospatial#>
+        SELECT ?cityObjectId ?Geometry ?ZoningType ?GPR
+        WHERE { 
+        GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/> { 
+        SERVICE geo:search {
+        ?cityObjectId geo:predicate ocgml:EnvelopeType .
+        ?cityObjectId geo:searchDatatype <http://localhost/blazegraph/literals/POLYGON-3-15> .
+        ?cityObjectId geo:customFields "X0#Y0#Z0#X1#Y1#Z1#X2#Y2#Z2#X3#Y3#Z3#X4#Y4#Z4" .
+        ?cityObjectId geo:customFieldsLowerBounds "103.815651#1.279372#0#103.815651#1.279372#0#103.815651#1.279372#0#103.815651#1.279372#0#103.815651#1.279372#0" .
+        ?cityObjectId geo:customFieldsUpperBounds "103.863544#1.306702#1000#103.863544#1.306702#1000#103.863544#1.306702#1000#103.863544#1.306702#1000#103.863544#1.306702#1000" .
+        ?cityObjectId geo:customFieldsValues ?envelopes . }
+        BIND(IRI(REPLACE(STR(?cityObjectId), "cityobject", "genericcityobject")) AS ?Id) }
+        GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/surfacegeometry/>
+        { ?surfaceId ocgml:cityObjectId ?Id ;
+                     ocgml:GeometryType ?Geometry .
+        hint:Prior hint:runLast "true" .}
+        GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobjectgenericattrib/> {
+        ?genAttrId ocgml:cityObjectId ?cityObjectId ;
+                   ocgml:attrName 'LU_DESC' ;
+                   ocgml:strVal ?ZoningType . 
+        ?genAttrId2 ocgml:cityObjectId ?cityObjectId ;
+                    ocgml:attrName 'GPR'; 
+                    ocgml:strVal ?GPR . } } """)
+
+    sparql.setReturnFormat(JSON)
+    results = sparql.query().convert()
+    queryResults = pd.DataFrame(results['results']['bindings'])
+    queryResults = queryResults.applymap(lambda cell:cell['value'])
+    geometries = gpd.GeoSeries(queryResults['Geometry'].map(lambda geo: envelopeStringToPolygon(geo, geodetic=True, flip=False)), crs='EPSG:4326')
+    queried_plots = gpd.GeoDataFrame(queryResults, geometry=geometries).to_crs(epsg=3857).drop(columns = ['Geometry'])
+
+    return queried_plots
+
+
+def process_plots(queried_plots):
+    plots = queried_plots
     plots.geometry = plots.geometry.simplify(0.1)
     plots = plots[~(plots.geometry.type == "MultiPolygon")]
     plots['site_area'] = plots.area
     plots = plots.loc[plots['site_area' ] >= 50]
-    plots = plots.rename(columns = {'INC_CRC':'PlotId', 'LU_DESC':'PlotType'})
+    plots = plots.rename(columns = {'cityObjectId':'PlotId', 'ZoningType':'PlotType'})
     plots['GPR'] = pd.to_numeric(plots['GPR'], errors = 'coerce')
     plots = plots[~plots['PlotType'].isin(['ROAD','WATERBODY', 'PARK', 'OPEN SPACE', 'CEMETERY', 'BEACH AREA'])]
     plots['context_storeys'] = float('NaN')
@@ -512,8 +573,8 @@ def read_road_regulations(fn_roads, fn_road_plots):
 def run_estimate_gfa():
 
     # file paths
+    endpoint = "http://theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql"
     root = "C:/Users/AydaGrisiute/Desktop/demonstrator/"
-    fn_plots = root + "URA_plots/G_MP19_LAND_USE_PL.shp"
     fn_con = root + "conservation_areas/master-plan-2019-sdcp-conservation-area-layer-geojson.geojson"
     fn_hc = root + "height_control/G_MP08_BUILDHTCTRL_STY_PL.shp"
     fn_sb_boundary = root + "street_blocks/G_MP08_STREET_BLK_PLAN_PL.shp"
@@ -532,19 +593,19 @@ def run_estimate_gfa():
         Urban Design Guidelines - 171 boundaries; 
         Development Control Plans
     """
-
+    plots = getPlots(endpoint)
     with ProcessPoolExecutor(max_workers=8) as executor:
         # plot task
-        plots = executor.submit(gfa.process_plots, fn_plots)
+        plots = executor.submit(process_plots, plots)
 
         # regulation tasks
-        lh = executor.submit(gfa.read_landed_housing, fn_landed_housing)
-        con = executor.submit(gfa.read_conservation_control, fn_con)
-        hc = executor.submit(gfa.read_height_control, fn_hc)
-        sb = executor.submit(gfa.read_street_block_control, fn_sb_boundary, fn_sb_reg)
-        udr = executor.submit(gfa.read_urban_design_guidelines, fn_udr)
-        dcp = executor.submit(gfa.read_development_control, fn_control_plans)
-        road_plots = executor.submit(gfa.read_road_regulations, fn_roads, fn_road_plots)
+        lh = executor.submit(read_landed_housing, fn_landed_housing)
+        con = executor.submit(read_conservation_control, fn_con)
+        hc = executor.submit(read_height_control, fn_hc)
+        sb = executor.submit(read_street_block_control, fn_sb_boundary, fn_sb_reg)
+        udr = executor.submit(read_urban_design_guidelines, fn_udr)
+        dcp = executor.submit(read_development_control, fn_control_plans)
+        road_plots = executor.submit(read_road_regulations, fn_roads, fn_road_plots)
 
         plots = plots.result()
         lh = lh.result()
@@ -565,7 +626,7 @@ def run_estimate_gfa():
 
     tasks = [(plots, con, 0.1), (plots, hc, 0.1), (plots, sb, 0.1), (plots, udr, 0.1)]
     with Pool(4) as pool:
-        intersections = pool.starmap(gfa.intersect_with_regulation, tasks)
+        intersections = pool.starmap(intersect_with_regulation, tasks)
         con_int = intersections[0]
         hc_int = intersections[1]
         sb_int = intersections[2]
@@ -618,9 +679,9 @@ def run_estimate_gfa():
     """
 
     plots = set_partywall(plots, sb_int, udr_int)  # 474 plots with partywalls
-    plots_for_GFA = plots.loc[~plots["PlotId"].isin(unclear_plots), :].copy()  # filtering unclear plots
-    plots_for_GFA = plots_for_GFA[~plots_for_GFA['PlotType'].isin(invalid_zones)]  # filtering additional zoning types
-    plots_for_GFA = set_partywall_edges(plots_for_GFA, plots)  # 480 plots
+    plots_for_GFA = plots.loc[~plots["PlotId"].isin(unclear_plots), :].copy() 
+    plots_for_GFA = plots_for_GFA[~plots_for_GFA['PlotType'].isin(invalid_zones)]
+    plots_for_GFA = set_partywall_edges(plots_for_GFA, plots)
     print('Partywalls set')
 
     """
