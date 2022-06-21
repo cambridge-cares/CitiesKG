@@ -81,7 +81,7 @@ public class CityExportAgent extends JPSAgent {
     private String namespaceIri;
     private String outputDir;
     private String srsName;
-    private String[] displayMode = {"false","false", "false", "false"};
+
     private String inputDisplayForm;
     private static final String[] displayOptions = {"FOOTPRINT", "EXTRUDED", "GEOMETRY", "COLLADA"};
     private String namespaceName;
@@ -108,6 +108,7 @@ public class CityExportAgent extends JPSAgent {
             List<String> availOptions = Arrays.asList(displayOptions);
             inputDisplayForm = requestParams.getString(KEY_DISPLAYFORM);
             int index = availOptions.indexOf(inputDisplayForm.toUpperCase());
+            String[] displayMode = {"false","false", "false", "false"};
             displayMode[index] = "true";
 
             //gmlids = getInputGmlids(requestParams); // this method will process the input when it is a path or an array of gmlid
