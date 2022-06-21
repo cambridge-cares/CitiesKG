@@ -177,9 +177,9 @@ public class GeoSpatialProcessor {
 
     /* Equivalent ST_UNION with multiple Geometry together */
     public Geometry UnaryUnion(List<Geometry> geomlist) {
-
+        /*
         Geometry merged = geomlist.get(0);
-        PrecisionModel pm = new PrecisionModel(100000000);
+        PrecisionModel pm = new PrecisionModel(1000000000);
         GeometryPrecisionReducer geometryPrecisionReducer = new GeometryPrecisionReducer(pm);
         merged = geometryPrecisionReducer.reduce(merged);
         //System.out.println(geometryPrecisionReducer.reduce(merged));
@@ -188,17 +188,14 @@ public class GeoSpatialProcessor {
             merged = geometryPrecisionReducer.reduce(merged);
             merged = merged.union(geo);
         }
-        /*
-        PrecisionModel pm = new PrecisionModel(100000000);
-        GeometryPrecisionReducer geometryPrecisionReducer = new GeometryPrecisionReducer(pm);
-
+        */
         GeometryFactory fac = new GeometryFactory();
         Geometry[] col = geomlist.toArray(new Geometry[0]);
         GeometryCollection coll = new GeometryCollection(col, fac);
         UnaryUnionOp op = new UnaryUnionOp(coll);
-        Geometry union = op.union();*/
+        Geometry union = op.union();
 
-        return merged;
+        return union;
     }
 
     /*Convert the input String into list of coordinates
