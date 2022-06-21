@@ -120,12 +120,17 @@ public class OwlConverter {
    */
   private static String processOntologyToNquads(String ont, String ontIRI, String endpointIRI) {
 
+    String[] ontTokens = ontIRI.split("/");
+    String ontName = ontTokens[ontTokens.length - 1];
+    String[] ontNameTokens = ontName.split("\\.");
+    ontName = ontNameTokens[0];
+
     ont = ont.replace("_:", "<" + ontIRI + "#");
     ont = ont.replace(" <http", "> <http");
     ont = ont.replace(" .", "> .");
     ont = ont.replace(">>", ">");
     ont = ont.replace("\">", "\"");
-    ont = ont.replace(" .", " <" + endpointIRI + "ontology/> .");
+    ont = ont.replace(" .", " <" + endpointIRI + ontName + "/> .");
 
     return ont;
   }
@@ -146,7 +151,7 @@ public class OwlConverter {
           .asEmpty();
       int respStatus = response.getStatus();
       if (respStatus != HttpURLConnection.HTTP_OK) {
-        throw new HttpException(endpointIRI + " " + respStatus);
+        throw new HttpException(endpointIRI + " responded with code: " + respStatus);
       }
     }
   }
