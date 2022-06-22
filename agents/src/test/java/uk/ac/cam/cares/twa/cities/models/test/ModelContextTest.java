@@ -2949,15 +2949,12 @@ public class ModelContextTest {
 
     //current pull session != null
     RecursivePullSession pullSession = new RecursivePullSession(1, context);
-    Field currentPullSession;
     Field traversedIris;
     Field pendingPullQueue;
     Set<String> iris;
     Queue<Model> pullQueue;
     try {
-      currentPullSession = context.getClass().getDeclaredField("currentPullSession");
-      currentPullSession.setAccessible(true);
-      currentPullSession.set(context, pullSession);
+      context.currentPullSession = pullSession;
       traversedIris = pullSession.getClass().getDeclaredField("traversedIris");
       pendingPullQueue = pullSession.getClass().getDeclaredField("pendingPullQueue");
       traversedIris.setAccessible(true);
@@ -2968,7 +2965,7 @@ public class ModelContextTest {
       assertTrue(iris.contains(testModel3.getIri()));
       assertTrue(pullQueue.contains(testModel3));
     } catch (NoSuchFieldException | IllegalAccessException e) {
-      e.printStackTrace();
+      fail();
     }
   }
 }
