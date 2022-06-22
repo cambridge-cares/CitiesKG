@@ -22,85 +22,6 @@ import java.util.stream.Collectors;
 
 public class ModelContext {
 
-  private static class MemberKey {
-    public final Class<?> ofClass;
-    public final String iri;
-
-    public MemberKey(Class<?> ofClass, String iri) {
-      this.ofClass = ofClass;
-      this.iri = iri;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(ofClass, iri);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj instanceof MemberKey && ((MemberKey) obj).ofClass.equals(ofClass) && ((MemberKey) obj).iri.equals(iri);
-    }
-  }
-
-  /**
-   * {@link RecursivePullSession} operates in a loop where it calls {@link ModelContext#pullAll(Model)} on all items in
-   * its working queue, causing invocations of {@link ModelContext#getModel(Class, String)} by {@link FieldInterface}s,
-   * which are reported to {@link RecursivePullSession#queue(Model)}, where they are added to the pending queue. The
-   * pending queue is then moved to the working queue and the process repeats.
-   * <p>
-   * Each round of pulling retrieves nodes one step away from the previous round's nodes, i.e. an additional degree of
-   * separation from the origin provided in the session construction. Repeat visits are prevented by tracking the set of
-   * traversed nodes. The number of rounds of pulling thus defines the maximum separation radius from the origin to
-   * retrieve, which is our interpretation of {@code recursionRadius} for a non-acyclic graph. The breadth-first
-   * strategy is necessary to prevent paths from cutting each other off.
-   * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
-   * @version $Id$
-   */
-  private class RecursivePullSession {
-
-    private Queue<Model> pendingPullQueue = new LinkedList<>();
-    private Queue<Model> workingPullQueue = new LinkedList<>();
-    private final Set<String> traversedIris = new HashSet<>();
-    private int remainingDegreesOfSeparation;
-
-    private final boolean partial;
-    private final String[] fieldNames;
-
-    RecursivePullSession(int recursionRadius) {
-      this.remainingDegreesOfSeparation = recursionRadius;
-      this.partial = false;
-      this.fieldNames = null;
-    }
-
-    RecursivePullSession(int recursionRadius, String... fieldNames) {
-      this.remainingDegreesOfSeparation = recursionRadius;
-      this.partial = true;
-      this.fieldNames = fieldNames;
-    }
-
-    void execute() {
-      // each loop, we load models at +1 increasing radius (degrees of separation) from before.
-      while (remainingDegreesOfSeparation >= 0) {
-        remainingDegreesOfSeparation--;
-        // switch queues
-        Queue<Model> temp = workingPullQueue;
-        workingPullQueue = pendingPullQueue;
-        pendingPullQueue = temp;
-        // go through working queue; each pull may add to the pending queue
-        while (!workingPullQueue.isEmpty()) {
-          if (partial) pullPartial(workingPullQueue.poll(), fieldNames);
-          else pullAll(workingPullQueue.poll());
-        }
-      }
-    }
-
-    void queue(Model model) {
-      if (traversedIris.add(model.iri))
-        pendingPullQueue.add(model);
-    }
-
-  }
-
   private RecursivePullSession currentPullSession;
 
   // SPARQL variable names
@@ -290,7 +211,7 @@ public class ModelContext {
    * objects in the normal {@link #loadAll(Class, String)} behaviour.
    */
   public <T extends Model> List<T> recursivePullAllWhere(Class<T> ofClass, WhereBuilder condition, int recursionRadius) {
-    currentPullSession = new RecursivePullSession(recursionRadius-1);
+    currentPullSession = new RecursivePullSession(recursionRadius-1, this);
     List<T> models = pullAllWhere(ofClass, condition);
     for (T model : models) currentPullSession.queue(model);
     currentPullSession.execute();
@@ -344,7 +265,7 @@ public class ModelContext {
    * objects, using the same field names in the normal {@link #loadPartial(Class, String, String...)} behaviour.
    */
   public <T extends Model> List<T> recursivePullPartialWhere(Class<T> ofClass, WhereBuilder condition, int recursionRadius, String... fieldNames) {
-    currentPullSession = new RecursivePullSession(recursionRadius-1, fieldNames);
+    currentPullSession = new RecursivePullSession(recursionRadius-1, this, fieldNames);
     List<T> models = pullPartialWhere(ofClass, condition, fieldNames);
     for (T model : models) currentPullSession.queue(model);
     currentPullSession.execute();
@@ -417,7 +338,7 @@ public class ModelContext {
    *                        a hollow model if not already registered in the context, but not pulled.
    */
   public void recursivePullAll(Model model, int recursionRadius) {
-    currentPullSession = new RecursivePullSession(recursionRadius);
+    currentPullSession = new RecursivePullSession(recursionRadius, this);
     currentPullSession.queue(model);
     currentPullSession.execute();
     currentPullSession = null;
@@ -507,7 +428,7 @@ public class ModelContext {
    *                        model does not have a named field, that name is ignored.
    */
   public void recursivePullPartial(Model model, int recursionRadius, String... fieldNames) {
-    currentPullSession = new RecursivePullSession(recursionRadius, fieldNames);
+    currentPullSession = new RecursivePullSession(recursionRadius, this, fieldNames);
     currentPullSession.queue(model);
     currentPullSession.execute();
     currentPullSession = null;
