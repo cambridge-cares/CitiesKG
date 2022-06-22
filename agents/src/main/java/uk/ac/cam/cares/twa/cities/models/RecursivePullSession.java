@@ -64,5 +64,4 @@ public class RecursivePullSession {
         if (traversedIris.add(model.iri))
             pendingPullQueue.add(model);
     }
-
 }
