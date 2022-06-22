@@ -16,6 +16,8 @@ import java.util.Set;
  * traversed nodes. The number of rounds of pulling thus defines the maximum separation radius from the origin to
  * retrieve, which is our interpretation of {@code recursionRadius} for a non-acyclic graph. The breadth-first
  * strategy is necessary to prevent paths from cutting each other off.
+ * If execute method is called from outside ModelContext, it is required to set the currentpullsession field of ModelContext
+ * before the call to execute function to update the queue and traverediris during recursion
  * @author <a href="mailto:jec226@cam.ac.uk">Jefferson Chua</a>
  * @version $Id$
  */
