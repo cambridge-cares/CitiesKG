@@ -363,7 +363,7 @@ function getAndLoadLayers(folder) {
         // if data includes 'Tiles', only add MasterJSON as layer, else add all files
         if (data.includes("Tiles")) {
             for (let i = 0; i < data.length; i++) {
-                if (data[i].match(new RegExp("\\w*_extruded_MasterJSON.json"))) {
+                if (data[i].match(new RegExp("\\w*_\\w*_MasterJSON.json"))) {
                     filepathname = folderpath + data[i]
                     options.url = filepathname;
                     options.name = (new URL(window.location.href)).searchParams.get('city');
@@ -533,6 +533,7 @@ function computeDistance() {
 		centroids.push(center);
         var iri = entity._iriPrefix + entity._name;
         iri = iri.endsWith('/') ? iri : iri + '/';
+        iri = iri.replace(new RegExp('_(\\w*Surface)'), '');
 		iriArr.push(iri);
 	};
 	console.log(centroids);
