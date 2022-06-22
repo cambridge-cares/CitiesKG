@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 public class ModelContext {
 
-  private RecursivePullSession currentPullSession;
+  public RecursivePullSession currentPullSession;
 
   // SPARQL variable names
   private static final String MODEL = "model";
