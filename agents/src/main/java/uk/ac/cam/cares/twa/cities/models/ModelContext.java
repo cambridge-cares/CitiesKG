@@ -802,7 +802,7 @@ public class ModelContext {
    * @param update the update string.
    */
   public void update(String update) {
-    System.err.println(update);
+    System.out.println(update);
     if (targetResourceId.startsWith("HARDCODE:")) {
       String endpoint = targetResourceId.substring(9);
       new RemoteStoreClient(endpoint, endpoint).executeUpdate(update);

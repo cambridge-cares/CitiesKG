@@ -1,31 +1,20 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo;
 
-import net.opengis.citygml.building._1.BuildingType;
-import net.opengis.kml._2.LinearRingType;
-import net.opengis.kml._2.PolygonType;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
-import org.citydb.config.geometry.MultiPoint;
-import org.citydb.config.geometry.Polygon;
 import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.json.JSONArray;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.*;
 import uk.ac.cam.cares.twa.cities.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.twa.cities.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.models.geo.*;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Query envelope of building and check spatial relationship of every building for merging.
@@ -50,7 +39,8 @@ public class BuildingsMergeTask implements Callable<Void> {
         List<CityObject> cityObjectsList = new ArrayList<>();
         List<String> footpringList = new ArrayList<>();
         GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
-        HashMap<String, MultiPolygon> footprints = new HashMap<>();
+        Map<String, org.locationtech.jts.geom.Geometry> footprints = new HashMap<>();
+        try{
         for (String buildingIri : buildingIris) {
             //1. find lod0footprintId
             SelectBuilder srsQuery = new SelectBuilder();
@@ -74,60 +64,56 @@ public class BuildingsMergeTask implements Callable<Void> {
                         )
                 ));
                 context.getModel(SurfaceGeometry.class, iri).setChildGeometries(footprintChilds);
-                List<org.locationtech.jts.geom.Polygon> footPolyList = new ArrayList<>();
+                Collection<org.locationtech.jts.geom.Geometry> footPolyList = new ArrayList<>();
+                GeometryFactory factory = new GeometryFactory();
                 for (int i = 0; i<footprintChilds.size(); i++){
                     if (footprintChilds.get(i).getGeometryType() != null)
                     {
-                        footPolyList.add(footprintChilds.get(i).getGeometryType().getPolygon());
+                        Polygon foot = footprintChilds.get(i).getGeometryType().getPolygon();
+                        footPolyList.add(foot.getBoundary());
                     }
                 }
-                org.locationtech.jts.geom.Polygon[] footPolys = footPolyList.stream().toArray(org.locationtech.jts.geom.Polygon[]::new);
-                GeometryFactory factory = new GeometryFactory();
-                MultiPolygon polygon = new MultiPolygon(footPolys, factory);
-                footprints.put(iri, polygon);
+                GeometryCollection geometryCollection = (GeometryCollection) factory.buildGeometry( footPolyList );
+                org.locationtech.jts.geom.Geometry pMerge = geometryCollection.union();
+//                System.out.println(pMerge.isValid());
+                footprints.put(iri, pMerge);
             }
         }
-        //2. polygon of footprint
-
-//        for(String footprintId : footpringList){
-//            List<String> merges = new ArrayList<>();
-//            List<SurfaceGeometry> childFootprint = context.getModel(SurfaceGeometry.class, footprintId).getChildGeometries();
-//////            EnvelopeType envelop1 = cityObjectsList.get(i).getEnvelopeType();
-//////            org.locationtech.jts.geom.Polygon polygon1 =  envelop1.getPolygon();
-////
-////            String footPrintId = bldgList.get(i).getLod0FootprintId().getIri();
-////            WhereBuilder whereFoot = new WhereBuilder();
-////            SPARQLUtils.addPrefix(SchemaManagerAdapter.ONTO_FOOTPRINT_ID, whereFoot);
-////            whereFoot.addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_ID, NodeFactory.createURI(footPrintId));
-////            childFootprint.addAll(context.pullAllWhere(SurfaceGeometry.class, whereFoot));
-////
-//            org.locationtech.jts.geom.Polygon[] footPolys = null;
-////            LinearRingType footLinear = new LinearRingType();
-////            List<String> cords =  new ArrayList<>();
-//            for (int i = 0; i < childFootprint.size(); i++){
-////                Coordinate[] coordinates = geospatial.str2coords(childFootprint.get(k).getGeometryType().toString()).toArray(new Coordinate[0]);
-////                cords.add(coordinates.toString());
-//                footPolys[i] = childFootprint.get(i).getGeometryType().getPolygon();
-//            }
-//            GeometryFactory factory = new GeometryFactory();
-//            MultiPolygon polygon1 = new MultiPolygon(footPolys, factory);
-//
-//            for(int j = i+1; j < cityObjectsList.size()-i; j++){
-////                EnvelopeType envelop2 = cityObjectsList.get(j).getEnvelopeType();
-////                org.locationtech.jts.geom.Polygon polygon2 =  envelop2.getPolygon();
-//                org.locationtech.jts.geom.Polygon polygon2 = bldgList.get(j).getLod0FootprintId().getGeometryType().getPolygon();
-//                if (!polygon2.disjoint(polygon1)){
-//
-//                    merges.add(cityObjectsList.get(j).getIri());
-//                }
-//            }
-////            if (merges.size() > 0){
-////                merges.add(cityObjectsList.get(i).getIri());
-////                mergeBuildingId.add(merges);
-////            }
-//        }
-
         //2. check intersection of surface in list mergeBuildingId
+        Iterator<Map.Entry<String, org.locationtech.jts.geom.Geometry>> iter1 = footprints.entrySet().iterator();
+
+            while (iter1.hasNext()) {
+                Map.Entry<String, org.locationtech.jts.geom.Geometry> next1 = iter1.next();
+                org.locationtech.jts.geom.Geometry polygon1 = next1.getValue();
+                List<String> merges = new ArrayList<>();
+                Iterator<Map.Entry<String, org.locationtech.jts.geom.Geometry>> iter2 = iter1;
+                int count1 = 0;
+                int count2 = 0;
+                while (iter2.hasNext()) {
+                    Map.Entry<String, org.locationtech.jts.geom.Geometry> next2 = iter2.next();
+                    org.locationtech.jts.geom.Geometry polygon2 =next2.getValue();
+                    if(next1.getKey() != next2.getKey()){
+                        if (polygon1.intersects(polygon2)||polygon1.touches(polygon2)||polygon1.overlaps(polygon2)){
+                            count1++;
+                            System.out.println("intersection:" + count1);
+                            merges.add(next2.getKey());
+                        }else{
+                            count2++;
+                            System.out.println("no relation:" + count2);}
+
+                    }
+                }
+                if (merges.size() > 0){
+                    merges.add(next1.getKey());
+                    mergeBuildingId.add(merges);
+                }
+            }
+        }catch (Exception e){
+            System.err.println(e);
+        }
+
+
+
         for(int i = 0; i < mergeBuildingId.size(); i++){
             List<String> buildings = mergeBuildingId.get(i);
             for(int j = 0; j < buildings.size(); j++){
