@@ -26,10 +26,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -2920,4 +2917,58 @@ public class ModelContextTest {
 
   }
 
+  @Test
+  public void testgetModel(){
+
+    ModelContext context = new ModelContext(testResourceId, testNamespace);
+    TestModel testModel1 = context.createNewModel(TestModel.class, "http://testiri.com/test1");
+    TestModel testModel2 = context.createNewModel(TestModel.class, "http://testiri.com/test2");
+    TestModel testModel3 = context.createNewModel(TestModel.class, "http://testiri.com/test3");
+
+    //model exists
+    assertEquals(testModel2, context.getModel(TestModel.class, "http://testiri.com/test2"));
+
+    //check returned model is hollow when model ==null
+    TestModel testModel = context.getModel(TestModel.class, "http://testiri.com/test");
+    assertEquals("http://testiri.com/test", testModel.getIri());
+    assertEquals(context, testModel.getContext());
+    assertTrue(context.members.containsValue(testModel));
+
+    Field cleanval;
+    Object[] cleanValues = new Object[0];
+    try{
+      cleanval = Model.class.getDeclaredField("cleanValues");
+      cleanval.setAccessible(true);
+      cleanValues= (Object[]) cleanval.get(testModel);
+    } catch (NoSuchFieldException | IllegalAccessException e){
+      fail();
+    }
+    for (FieldInterface field : metaModel.fieldMap.values()){
+      assertEquals(Model.SpecialFieldInstruction.UNPULLED, cleanValues[field.index]);
+    }
+
+    //current pull session != null
+    RecursivePullSession pullSession = new RecursivePullSession(1, context);
+    Field currentPullSession;
+    Field traversedIris;
+    Field pendingPullQueue;
+    Set<String> iris;
+    Queue<Model> pullQueue;
+    try {
+      currentPullSession = context.getClass().getDeclaredField("currentPullSession");
+      currentPullSession.setAccessible(true);
+      currentPullSession.set(context, pullSession);
+      traversedIris = pullSession.getClass().getDeclaredField("traversedIris");
+      pendingPullQueue = pullSession.getClass().getDeclaredField("pendingPullQueue");
+      traversedIris.setAccessible(true);
+      pendingPullQueue.setAccessible(true);
+      assertEquals(testModel3, context.getModel(TestModel.class, "http://testiri.com/test3"));
+      iris = (Set<String>) traversedIris.get(pullSession);
+      pullQueue = (Queue<Model>) pendingPullQueue.get(pullSession);
+      assertTrue(iris.contains(testModel3.getIri()));
+      assertTrue(pullQueue.contains(testModel3));
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      e.printStackTrace();
+    }
+  }
 }
