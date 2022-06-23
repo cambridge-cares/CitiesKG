@@ -237,8 +237,6 @@ public class OptimizedSparqlQuery {
       PreparedStatement psQuery = connection.prepareStatement(querystr, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
       psQuery.setURL(1, url);
       rs = psQuery.executeQuery();
-
-
     } catch (SQLException e) {
       e.printStackTrace();  //@TODO: to define how to handle
     }

@@ -55,12 +55,14 @@ public class CityExportAgent extends JPSAgent {
         public String outputPath;
         public String[] gmlIds;
         public String srsname;
-        public Params (String namespaceIri, JSONObject serverInfo, String srsname, String outputDir, String outputPath, String[] displayMode, String[] gmlIds){
+        public int lod;
+        public Params (String namespaceIri, JSONObject serverInfo, String srsname, String outputDir, String outputPath, String[] displayMode, int lod, String[] gmlIds){
             this.namespaceIri = namespaceIri;
             this.outputDir = outputDir;
             this.serverInfo = serverInfo;
             this.displayMode = displayMode;
             this.outputPath = outputPath;  // export/kmlFiles
+            this.lod = lod;
             this.gmlIds = gmlIds;
             this.srsname = srsname;
         }
@@ -73,6 +75,7 @@ public class CityExportAgent extends JPSAgent {
     public static final String KEY_REQ_METHOD = "method";
     public static final String KEY_NAMESPACE = "namespace";
     public static final String KEY_DISPLAYFORM = "displayform";
+    public static final String KEY_LOD = "lod";
 
     // Export files names
     private static final String outFileName = "test";
@@ -81,6 +84,7 @@ public class CityExportAgent extends JPSAgent {
     private String namespaceIri;
     private String outputDir;
     private String srsName;
+    private int lod;
 
     private String inputDisplayForm;
     private static final String[] displayOptions = {"FOOTPRINT", "EXTRUDED", "GEOMETRY", "COLLADA"};
@@ -111,6 +115,9 @@ public class CityExportAgent extends JPSAgent {
             String[] displayMode = {"false","false", "false", "false"};
             displayMode[index] = "true";
 
+            // Process "lod"
+            lod = requestParams.getInt(KEY_LOD);
+
             //gmlids = getInputGmlids(requestParams); // this method will process the input when it is a path or an array of gmlid
             // If gmlid contains "*", it requires the whole list of gmlid from the namespace
             // This step can take long as querying the database is long with this sparql query
@@ -140,7 +147,7 @@ public class CityExportAgent extends JPSAgent {
                         // Retrieve a list of gmlids from a file, and execute the export process
                         String[] gmlidArray = getGmlidFromFile(fileList.get(i));
                         String outputFileName = getOutputName(fileList.get(i));
-                        Params taskParams = new Params(namespaceIri, serverInfo, srsName, outputDir, outputFileName, displayMode, gmlidArray);
+                        Params taskParams = new Params(namespaceIri, serverInfo, srsName, outputDir, outputFileName, displayMode, lod, gmlidArray);
                         exportKml(taskParams);
                     }
 
@@ -153,7 +160,7 @@ public class CityExportAgent extends JPSAgent {
                     String[] gmlidsArray = new String[buildingIds.size()];
                     gmlidsArray = buildingIds.toArray(gmlidsArray);
                     String outSingleFileName = getOutputName(null);
-                    Params taskParams = new Params(namespaceIri, serverInfo, srsName, outputDir, outSingleFileName, displayMode, gmlidsArray);
+                    Params taskParams = new Params(namespaceIri, serverInfo, srsName, outputDir, outSingleFileName, displayMode, lod, gmlidsArray);
                     exportKml(taskParams);
                 }
 
@@ -167,7 +174,7 @@ public class CityExportAgent extends JPSAgent {
                 String[] gmlidsArray = new String[buildingIds.size()];
                 gmlidsArray = buildingIds.toArray(gmlidsArray);
                 String outSingleFileName = getOutputName(null);
-                Params taskParams = new Params(namespaceIri, serverInfo, srsName, outputDir, outSingleFileName, displayMode, gmlidsArray);
+                Params taskParams = new Params(namespaceIri, serverInfo, srsName, outputDir, outSingleFileName, displayMode, lod, gmlidsArray);
                 exportKml(taskParams);
             }
             }
@@ -205,6 +212,12 @@ public class CityExportAgent extends JPSAgent {
                         throw new BadRequestException();
                     }
                 }
+
+                // Check if the lod is correctly set
+                if (requestParams.getInt(KEY_LOD) >= 0 && requestParams.getInt(KEY_LOD) <= 5){
+                    System.out.println("Valid LOD : " + requestParams.getInt(KEY_LOD));
+                }
+
                 return true;
             } catch (Exception e) {
                 throw new BadRequestException();
@@ -350,8 +363,8 @@ public class CityExportAgent extends JPSAgent {
     }
 
     private KMLTilingTask tilingKml(String path2unsortedKML, String path2sortedKML){
-        String displayForm = "footprint";
-        int databaseCRS = 32648;
+        String displayForm = "geometry";
+        int databaseCRS = 25833;  // 32648
         String namespaceIri = "";
         KMLTilingTask kmlTilingTask = new KMLTilingTask(path2unsortedKML, path2sortedKML, databaseCRS, displayForm, namespaceIri);
         exporterExecutor.execute(kmlTilingTask);  // this step will add the final task to the exporterExecutor
