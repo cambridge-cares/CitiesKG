@@ -558,8 +558,8 @@ public class ModelContextTest {
 
     ModelContext pullContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
 
-    JSONArray jsonArray = createResponsefortestLoadAllWhere_1();
-    JSONArray jsonArray1 = createResponsefortestLoadAllWhere_2();
+    JSONArray jsonArray = createResponseForTestLoadAllWhere_1();
+    JSONArray jsonArray1 = createResponseForTestLoadAllWhere_2();
 
     Method buildQuery;
     SelectBuilder query1 = null;
@@ -681,8 +681,8 @@ public class ModelContextTest {
 
     ModelContext pullContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
 
-    JSONArray jsonArray = createResponsefortestLoadAllWhere_1();
-    JSONArray jsonArray1 = createResponsefortestLoadAllWhere_2();
+    JSONArray jsonArray = createResponseForTestLoadAllWhere_1();
+    JSONArray jsonArray1 = createResponseForTestLoadAllWhere_2();
 
     Method buildQuery;
     SelectBuilder query1 = null;
@@ -746,7 +746,7 @@ public class ModelContextTest {
 
     ModelContext pullContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
 
-    JSONArray jsonArray = createResponsefortestRecursiveLoadPartialWhere();
+    JSONArray jsonArray = createResponseForTestRecursiveLoadPartialWhere();
 
     Method buildScalarsQuery;
     SelectBuilder scalarsQuery = null;
@@ -869,7 +869,7 @@ public class ModelContextTest {
 
     ModelContext pullContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
 
-    JSONArray jsonArray = createResponsefortestLoadPartialWhere();
+    JSONArray jsonArray = createResponseForTestLoadPartialWhere();
     JSONArray jsonArray1 = new JSONArray();
 
     Method buildScalarsQuery;
@@ -1380,7 +1380,7 @@ public class ModelContextTest {
     TestModel testModel1 = TestModel.createRandom(context, 12345, 3, 0);
     TestModel testModel2 = TestModel.createRandom(context, 1234, 3, 0);
     String[] fieldNames = {"forwardVector"};
-    JSONArray response = forwardvectorResponse();
+    JSONArray response = forwardVectorResponse();
     Field cleanval;
     Object[] cleanValues1;
     Object[] cleanValues2;
@@ -1957,8 +1957,8 @@ public class ModelContextTest {
     JSONArray jsonArray = createResponseForTestPullScalars_1();
     JSONArray jsonArray1 = createResponseForTestPullScalars_2();
     JSONArray jsonArray2 = new JSONArray();
-    JSONArray jsonArray3 = forwardvectorResponse();
-    JSONArray jsonArray4 = backwardvectorResponse();
+    JSONArray jsonArray3 = forwardVectorResponse();
+    JSONArray jsonArray4 = backwardVectorResponse();
 
     Method buildScalarsQuery;
     SelectBuilder scalarsQuery = null;
@@ -2026,8 +2026,8 @@ public class ModelContextTest {
 
     JSONArray jsonArray1 = createResponseForTestPullScalars_2();
     JSONArray jsonArray2 = new JSONArray();
-    JSONArray jsonArray3 = forwardvectorResponse();
-    JSONArray jsonArray4 = backwardvectorResponse();
+    JSONArray jsonArray3 = forwardVectorResponse();
+    JSONArray jsonArray4 = backwardVectorResponse();
 
     Method buildScalarsQuery;
     SelectBuilder query = null;
@@ -2449,7 +2449,7 @@ public class ModelContextTest {
     return jsonArray;
   }
 
-  public JSONArray createResponsefortestRecursiveLoadPartialWhere(){
+  public JSONArray createResponseForTestRecursiveLoadPartialWhere(){
 
     JSONArray jsonArray = new JSONArray()
             .put(new JSONObject().put("value5", "https://eg/examplenamespace/1d5fd7f8-5cb6-3dcf-88d8-edadc309dc81").put("value1", "486786104").put("isblank1", "false").put("isblank5", "false")
@@ -2466,7 +2466,7 @@ public class ModelContextTest {
     return jsonArray;
   }
 
-  public JSONArray createResponsefortestLoadAllWhere_1(){
+  public JSONArray createResponseForTestLoadAllWhere_1(){
     JSONArray jsonArray = new JSONArray()
             .put(new JSONObject().put("predicate", "http://dbpedia.org/ontology/bigintprop").put("isblank", "true")
                     .put("model", "https://eg/examplenamespace/0ed64570-dc61-3703-9f4c-f8975b068b75").put("value", "a8d946b1eae26a772283da9c3c51c117").put("graph", "http://localhost:9999/blazegraph/namespace/test/sparql/testmodels"))
@@ -2651,7 +2651,7 @@ public class ModelContextTest {
 
     return jsonArray;
   }
-  public JSONArray createResponsefortestLoadAllWhere_2(){
+  public JSONArray createResponseForTestLoadAllWhere_2(){
 
     JSONArray jsonArray = new JSONArray()
             .put(new JSONObject().put("predicate", "http://dbpedia.org/ontology/modelprop").put("isblank", "false")
@@ -2687,7 +2687,7 @@ public class ModelContextTest {
 
     return jsonArray;
   }
-  public JSONArray createResponsefortestLoadPartialWhere(){
+  public JSONArray createResponseForTestLoadPartialWhere(){
 
     JSONArray jsonArray = new JSONArray()
             .put(new JSONObject().put("value1", "486786104").put("isblank1", "false").put("model", "https://eg/examplenamespace/0ed64570-dc61-3703-9f4c-f8975b068b75")
@@ -2704,7 +2704,7 @@ public class ModelContextTest {
     return jsonArray;
   }
 
-  public JSONArray forwardvectorResponse(){
+  public JSONArray forwardVectorResponse(){
     JSONArray jsonArray = new JSONArray()
             .put(new JSONObject().put("datatype", "http://www.w3.org/2001/XMLSchema#double").put("isblank","false").put("value", "0.34911535662488336"))
             .put(new JSONObject().put("datatype", "http://www.w3.org/2001/XMLSchema#double").put("isblank", "false").put("value", "0.9138466810904882"))
@@ -2712,7 +2712,7 @@ public class ModelContextTest {
 
     return jsonArray;
   }
-  public JSONArray backwardvectorResponse(){
+  public JSONArray backwardVectorResponse(){
     JSONArray jsonArray = new JSONArray()
             .put(new JSONObject().put("isblank","false").put("value", "https://eg/examplenamespace/randomuris/1924478780"))
             .put(new JSONObject().put("isblank","true").put("value", "e636a2847c83a665ba5a8b1049c7527f"))
