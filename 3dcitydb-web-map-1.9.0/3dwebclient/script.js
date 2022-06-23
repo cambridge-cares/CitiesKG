@@ -202,6 +202,10 @@ function initClient() {
     // display current infos of active layer in the main menu
     observeActiveLayer();
 
+    // set CIA context based on input in url
+    var cia_context = (new URL(window.location.href)).searchParams.get('context');
+    this.cia_context = cia_context ? cia_context : '';
+
     // load city based on input in url
     var city = (new URL(window.location.href)).searchParams.get('city');
     loadCity(city);
@@ -1207,6 +1211,7 @@ function createInfoTable(res, citydbLayer) {
 
     var thematicDataUrl = citydbLayer.thematicDataUrl;
     cesiumEntity.description = "Loading feature information...";
+    cesiumEntity._cia_context = this.cia_context;
 
     citydbLayer.dataSourceController.fetchData(gmlid, function (kvp) {
         if (!kvp) {

@@ -90,10 +90,14 @@ public class CityInformationAgent extends JPSAgent {
         }
         String[] params = new String[0];
         HttpPost request =  Http.post(agentURL, requestBody, "application/json","application/json", params);
-        JSONObject response = new JSONObject(Http.execute(request));
+        try {
+          JSONObject response = new JSONObject(Http.execute(request));
+          // specific agent response added to the city information response.
+          requestParams.append(agentURL, response);
+        } catch (Exception e) {
+          // ignore if no response from context endpoint
+        }
 
-        // specific agent response added to the city information response.
-        requestParams.append(agentURL, response);
       }
     }
 

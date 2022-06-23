@@ -45,11 +45,14 @@ var KMLDataSource = /** @class */ (function (_super) {
         // response is a list of JSON elements
         var result = new Map();
 
-        if (jQuery.isArray(response) && response.length > 0) {
-            if (jQuery.isArray(response[0]) && response[0].length > 0) {
-                if (jQuery.isArray(response[0][0]) && response[0][0].length > 0) {
-                    var data = response[0][0][0];
-                    for (var key in data) {
+        var cityResponse = response["cityobjectinformation"];
+        var energyResponse = response["context"] ? response[Object.keys(response["context"])[0]] : null;
+
+        if (jQuery.isArray(cityResponse) && cityResponse.length > 0) {
+            if (jQuery.isArray(cityResponse[0]) && cityResponse[0].length > 0) {
+                if (jQuery.isArray(cityResponse[0][0]) && cityResponse[0][0].length > 0) {
+                    var cityobjectdata = cityResponse[0][0][0];
+                    for (var key in cityobjectdata) {
                         if (key == null || key == 'context') {
                             continue;
                         }
@@ -57,20 +60,34 @@ var KMLDataSource = /** @class */ (function (_super) {
                             continue;
                         }
                         else if (key === "genericAttributes"){
-                            this.genAttrKeysManager(data[key],result);
+                            this.genAttrKeysManager(cityobjectdata[key],result);
                         }
                         else if (key === "externalReferences"){
-                            this.extRefKeysManager(data[key], result);
+                            this.extRefKeysManager(cityobjectdata[key], result);
                         }
                         else {
-                            result[key] = data[key];
+                            result[key] = cityobjectdata[key];
                         }
                     }
                 }
             }
         }
+
+        if (jQuery.isArray(energyResponse) && energyResponse.length > 0) {
+            if (jQuery.isArray(energyResponse[0]['energyprofile']) && energyResponse[0]['energyprofile'].length > 0) {
+                var energydata = energyResponse[0]['energyprofile'][0];
+                for (var key in energydata) {
+                    if (key == null) {
+                        continue;
+                    } else {
+                        result[key] = energydata[key];
+                    }
+                }
+            }
+        }
+
 		return result;
-		};
+    };
 
     KMLDataSource.prototype.genAttrKeysManager = function (data, result) {
         for (var index in data) {
@@ -105,6 +122,17 @@ var KMLDataSource = /** @class */ (function (_super) {
         }
     };
 
+    KMLDataSource.prototype.contextManager = function(context) {
+        switch (context) {
+            case 'energy':
+                return 'http://localhost:58085/agents/cea/query';
+                break;
+            default:
+                return '';
+                break;
+        }
+    };
+
     KMLDataSource.prototype.queryUsingId = function (id, callback, limit, clickedObject) {
         console.log(clickedObject);
 
@@ -112,15 +140,21 @@ var KMLDataSource = /** @class */ (function (_super) {
         var iri = clickedObject._iriPrefix + clickedObject._name;
         iri.endsWith('/') ? iri : iri = iri + '/';
 
+        var context_url = this.contextManager(clickedObject._cia_context);
+        var context_obj = {};
+        context_obj[context_url] = {};
+
+        var cia_data = context_url ? {iris: [iri], context: context_obj} : {iris: [iri]};
+
         jQuery.ajax({
             url: "http://localhost:8080/agents/cityobjectinformation",
             type: 'POST',
-            data: JSON.stringify({iris: [iri]}),
+            data: JSON.stringify(cia_data),
             dataType: 'json',
             contentType: 'application/json',
             success: function (data, status_message, xhr) {
-                console.log(data["cityobjectinformation"]);
-                callback(data["cityobjectinformation"]);
+                console.log(data);
+                callback(data);
 		}});		
     };
 	
