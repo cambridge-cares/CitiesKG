@@ -40,7 +40,7 @@ public abstract class Model {
   @Getter String iri;
   @Getter ModelContext context;
   final MetaModel metaModel;
-  LifeCycle state;
+  public LifeCycle state;
 
   // Minimised copies of field values at the last synchronisation with the database, indexed by FieldInterface.index.
   final Object[] cleanValues;
