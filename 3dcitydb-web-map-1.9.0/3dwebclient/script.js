@@ -367,7 +367,7 @@ function getAndLoadLayers(folder) {
         // if data includes 'Tiles', only add MasterJSON as layer, else add all files
         if (data.includes("Tiles")) {
             for (let i = 0; i < data.length; i++) {
-                if (data[i].match(new RegExp("\\w*_extruded_MasterJSON.json"))) {
+                if (data[i].match(new RegExp("\\w*_\\w*_MasterJSON.json"))) {
                     filepathname = folderpath + data[i]
                     options.url = filepathname;
                     options.name = (new URL(window.location.href)).searchParams.get('city');
@@ -525,6 +525,7 @@ function listHighlightedObjects() {
 //---Extended Web-Map-Client part---//
 
 function computeDistance() {
+    var iriArr = [];
 	var highlightedObjects = webMap.getAllHighlighted3DObjects();
 	var centroids = [];
 	for (var i = 0; i < highlightedObjects.length; i++) {
@@ -534,17 +535,20 @@ function computeDistance() {
 		var center = Cesium.BoundingSphere.fromPoints(positions).center;
 		console.log(center);
 		centroids.push(center);
-		
+        var iri = entity._iriPrefix + entity._name;
+        iri = iri.endsWith('/') ? iri : iri + '/';
+        iri = iri.replace(new RegExp('_(\\w*Surface)'), '');
+		iriArr.push(iri);
 	};
-	console.log(centroids );
-	
-	var redLine = cesiumViewer.entities.add({
+	console.log(centroids);
+
+    var redLine = cesiumViewer.entities.add({
 		name: "Distance line",
 		polyline: {
 			positions: centroids,
 			width: 2,
 			material: new Cesium.PolylineDashMaterialProperty({
-            color: Cesium.Color.GOLD,
+            color: Cesium.Color.WHITE,
 			dashLength: 15,
           }),
 			cmalpToGround: true,
@@ -563,14 +567,14 @@ function computeDistance() {
     pixelOffset : new Cesium.Cartesian2(0, 20),
     eyeOffset: new Cesium.Cartesian3(0,0,-50),
 	text: labelText,
-	fillColor : Cesium.Color.GOLD,
+	fillColor : Cesium.Color.WHITE,
 	}
     });
-	
-	$.ajax({
+
+    jQuery.ajax({
 		url:"http://localhost:8080/agents/distance",
 		type: 'POST',
-		data: JSON.stringify({iris: webMap.getAllHighlightedObjects()}),
+		data: JSON.stringify({iris: iriArr}),
 		dataType: 'json',
 		contentType: 'application/json',
 		success: function(data, status_message, xhr){
