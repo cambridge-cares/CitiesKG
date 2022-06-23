@@ -176,9 +176,7 @@ Please note that splitting of large files into smaller chunks to improve perform
 In the `resources/config.properties` file, the property `uri.route` must be specified. This is the target resource 
 ID which queries and updates will be addressed to. By default, this is an AccessAgent string, where e.g. 
 `http://localhost:48080/churchill` is interpreted as "using an AccessAgent instance hosted at `http://localhost:48080`, 
-access the knowledge graph `churchill` registered in ontokgrouter". Therefore, an AccessAgent instance is required to use this. However, a URI prefixed with `HARDCODE:` e.g. 
-`HARDCODE:http://localhost:9999/blazegraph/namespace/churchill/sparql` will be interpreted as a literal endpoint to 
-query directly, which does not require AccessAgent.
+access the knowledge graph `churchill` registered in ontokgrouter". Therefore, an AccessAgent instance is required to use this.
 
 ### Request
 

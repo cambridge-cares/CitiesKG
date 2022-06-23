@@ -45,8 +45,6 @@ public class DistanceAgent extends JPSAgent {
   public static final String KEY_IRIS = "iris";
   public static final String KEY_DISTANCES = "distances";
 
-  public static final String KEY_QUERY_RESULT = "result";
-
   private static final String RDF_SCHEMA = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
   private static final String XML_SCHEMA = "http://www.w3.org/2001/XMLSchema#";
   private static final String OWL_SCHEMA = "http://www.w3.org/2002/07/owl#";
@@ -73,7 +71,6 @@ public class DistanceAgent extends JPSAgent {
   private static final String VALUE_PREDICATE = "hasValue";
   private static final String QST_MARK = "?";
   private static final String COLON = ":";
-  private static final String SLASH = "/";
 
   // Variables fetched from config.properties file.
   private static String ocgmlUri;
