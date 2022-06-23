@@ -238,6 +238,72 @@ public class ModelContextTest {
   }
 
   @Test
+  public void testPushAllChanges(){
+
+    ModelContext context = Mockito.spy(new ModelContext(testResourceId, testNamespace));
+    TestModel testModel1 = TestModel.createRandom(context, 12345, 3, 0);
+    Mockito.doNothing().when(context).update(Mockito.contains("INSERT DATA"));
+    Mockito.doNothing().when(context).update(Mockito.contains("DELETE"));
+    Node self;
+    UpdateRequest deletions = new UpdateRequest();
+    UpdateBuilder insertions = new UpdateBuilder();
+
+    //Case 1: LIVE
+    for(Map.Entry<FieldKey, FieldInterface> entry : metaModel.fieldMap.entrySet()){
+      FieldInterface fieldInterface = entry.getValue();
+      FieldKey key = entry.getKey();
+      self = NodeFactory.createURI(testModel1.getIri());
+      Node predicate = NodeFactory.createURI(key.predicate);
+      Node graph = NodeFactory.createURI(testNamespace + key.graphName);
+      for (Node valueValue : fieldInterface.getNodes(testModel1)) {
+        Triple triple = new Triple(key.backward ? valueValue : self, predicate, key.backward ? self : valueValue);
+        insertions.addInsert(new Quad(graph, triple));
+      }
+    }
+    context.pushAllChanges();
+    Mockito.verify(context, Mockito.times(1)).update(deletions.add(insertions.build()).toString());
+
+    //Case 2: TO_DELETE
+    deletions = new UpdateRequest();
+    testModel1.delete(false);
+
+    for (Map.Entry<FieldKey, FieldInterface> entry : metaModel.fieldMap.entrySet()) {
+      FieldKey key = entry.getKey();
+      self = NodeFactory.createURI(testModel1.getIri());
+      Node predicate = NodeFactory.createURI(key.predicate);
+      Node graph = NodeFactory.createURI(testNamespace + key.graphName);
+      WhereBuilder where = new WhereBuilder().addWhere(key.backward ? "?value" : self, predicate, key.backward ? self : "?value");
+      deletions.add(new UpdateBuilder().addGraph(graph, where).buildDeleteWhere());
+    }
+    context.pushAllChanges();
+    Mockito.verify(context, Mockito.times(1)).update(deletions.toString());
+    assertFalse(context.members.containsValue(testModel1));
+
+    //Case 3: TO_DELETE_ZEALOUS
+    testModel1 = TestModel.createRandom(context, 12345, 3, 0);
+    context.pushAllChanges();
+    testModel1.delete(true);
+    deletions = new UpdateRequest();
+
+    self = NodeFactory.createURI(testModel1.getIri());
+    deletions.add(new UpdateBuilder().addWhere("?value", "?predicate", self).buildDeleteWhere());
+    deletions.add(new UpdateBuilder().addWhere(self, "?predicate", "?value").buildDeleteWhere());
+    context.pushAllChanges();
+    Mockito.verify(context, Mockito.times(1)).update(deletions.toString());
+    assertFalse(context.members.containsValue(testModel1));
+
+    //Case 4: DESTROYED
+    deletions = new UpdateRequest();
+    testModel1 = TestModel.createRandom(context, 12345, 3, 0);
+    context.pushAllChanges();
+    testModel1.state = Model.LifeCycle.DESTROYED;
+    context.pushAllChanges();
+    Mockito.verify(context, Mockito.times(0)).update(deletions.toString());
+    assertFalse(context.members.containsValue(testModel1));
+
+  }
+
+  @Test
   public void testmakeChangeDeltas(){
 
     ModelContext context = new ModelContext(testResourceId, testNamespace);
