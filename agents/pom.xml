@@ -121,9 +121,6 @@
             </plugins>
         </pluginManagement>
     </build>
-    <properties>
-        <tomcat.version>8.5.47</tomcat.version>
-    </properties>
     <dependencies>
         <dependency>
             <groupId>uk.ac.cam.cares.jps</groupId>

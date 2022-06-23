@@ -121,12 +121,6 @@
      </dependency>
      <dependency>
        <groupId>org.geotools</groupId>
-       <artifactId>gt-main</artifactId>
-       <version>20.1</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.geotools</groupId>
        <artifactId>gt-epsg-extension</artifactId>
        <version>20.1</version>
        <scope>compile</scope>
