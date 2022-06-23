@@ -288,7 +288,7 @@ public class ModelContextTest {
 
     ModelContext pullContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
 
-    JSONArray jsonArray1 = creatResponse1_0();
+    JSONArray jsonArray1 = createResponse1_0();
     JSONArray jsonArray2 = createResponse2_0();
 
 
@@ -329,7 +329,7 @@ public class ModelContextTest {
 
     ModelContext pullContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
 
-    JSONArray jsonArray1_0 = creatResponse1_0();
+    JSONArray jsonArray1_0 = createResponse1_0();
     JSONArray jsonArray2_0 = createResponse2_0();
     JSONArray jsonArray1_1 = createResponse1_1();
     JSONArray jsonArray2_1 = createResponse2_1();
@@ -952,7 +952,7 @@ public class ModelContextTest {
 
     ModelContext pullContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
 
-    JSONArray jsonArray1_0 = creatResponse1_0();
+    JSONArray jsonArray1_0 = createResponse1_0();
     JSONArray jsonArray2_0 = createResponse2_0();
     JSONArray jsonArray1_1 = createResponse1_1();
     JSONArray jsonArray2_1 = createResponse2_1();
@@ -1023,7 +1023,7 @@ public class ModelContextTest {
 
     ModelContext pullContext = Mockito.spy(new ModelContext(testResourceId, testNamespace));
 
-    JSONArray jsonArray1 = creatResponse1_0();
+    JSONArray jsonArray1 = createResponse1_0();
     JSONArray jsonArray2 = createResponse2_0();
 
 
@@ -1056,7 +1056,7 @@ public class ModelContextTest {
     ModelContext context2 = new ModelContext(testResourceId, testNamespace);
     TestModel testModel1 = TestModel.createRandom(context1, 12345, 3, 0);
     TestModel testModel2 = TestModel.createRandom(context2, 12345, 3, 0);
-    JSONArray jsonArray = creatResponse1_0();
+    JSONArray jsonArray = createResponse1_0();
 
     Method readPullInDirectionResponse;
     try{
@@ -2231,7 +2231,7 @@ public class ModelContextTest {
 
   }
 
-  public JSONArray creatResponse1_0(){
+  public JSONArray createResponse1_0(){
     JSONArray jsonArray = new JSONArray()
             .put(new JSONObject().put("predicate", "http://www.theworldavatar.com/ontology/ontoland/OntoLand.owl#stringprop").put("datatype","http://www.w3.org/2001/XMLSchema#string")
                     .put("isblank","false").put("value", "randomString-287790814").put("graph", "http://localhost:9999/blazegraph/namespace/test/sparql/testmodels"))

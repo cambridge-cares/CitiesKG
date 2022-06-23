@@ -32,7 +32,7 @@ public class RecursivePullSessionTest {
         assertEquals(2, RecursivePullSession.class.getDeclaredMethods().length);
 
     }
-    public JSONArray creatResponse1_0(){
+    public JSONArray createResponse1_0(){
         JSONArray jsonArray = new JSONArray()
                 .put(new JSONObject().put("predicate", "http://www.theworldavatar.com/ontology/ontoland/OntoLand.owl#stringprop").put("datatype","http://www.w3.org/2001/XMLSchema#string")
                         .put("isblank","false").put("value", "randomString-287790814").put("graph", "http://localhost:9999/blazegraph/namespace/test/sparql/testmodels"))
@@ -186,7 +186,7 @@ public class RecursivePullSessionTest {
         //pullAll
         RecursivePullSession pullSession = new RecursivePullSession(1, pullContext);
 
-        JSONArray jsonArray1_0 = creatResponse1_0();
+        JSONArray jsonArray1_0 = createResponse1_0();
         JSONArray jsonArray2_0 = createResponse2_0();
         JSONArray jsonArray1_1 = createResponse1_1();
         JSONArray jsonArray2_1 = createResponse2_1();
