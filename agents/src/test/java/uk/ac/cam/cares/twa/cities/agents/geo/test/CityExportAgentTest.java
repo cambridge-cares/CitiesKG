@@ -1,5 +1,7 @@
 package uk.ac.cam.cares.twa.cities.agents.geo.test;
 
+import java.lang.reflect.Field;
+import org.checkerframework.checker.units.qual.C;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
@@ -11,6 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
+import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,12 +29,66 @@ public class CityExportAgentTest {
     @Test
     public void testNewCityExportAgent() {
         CityExportAgent agent;
+
         try {
             agent = new CityExportAgent();
             assertNotNull(agent);
         } catch (Exception e) {
             fail();
         }
+    }
+
+    @Test
+    public void testNewCityExportAgentFields() {
+        CityExportAgent agent = new CityExportAgent();
+
+        assertEquals(12, agent.getClass().getDeclaredFields().length);
+
+        Field URI_ACTION;
+        Field KEY_GMLID;
+        Field KEY_REQ_URL;
+        Field KEY_REQ_METHOD;
+        Field KEY_NAMESPACE;
+        Field KEY_DISPLAYFORM;
+        Field KEY_LOD;
+        Field outFileName;
+        Field outFileExtension;
+        Field tmpDirsLocation;
+        Field NUM_EXPORTER_THREADS;
+
+        try {
+            URI_ACTION = agent.getClass().getDeclaredField("URI_ACTION");
+            assertEquals(URI_ACTION.get(agent), "/export/kml");
+            KEY_GMLID = agent.getClass().getDeclaredField("KEY_GMLID");
+            assertEquals(KEY_GMLID.get(agent), "gmlid");
+            KEY_REQ_URL = agent.getClass().getDeclaredField("KEY_REQ_URL");
+            assertEquals(KEY_REQ_URL.get(agent), "requestUrl");
+            KEY_REQ_METHOD = agent.getClass().getDeclaredField("KEY_REQ_METHOD");
+            assertEquals(KEY_REQ_METHOD.get(agent), "method");
+            KEY_NAMESPACE = agent.getClass().getDeclaredField("KEY_NAMESPACE");
+            assertEquals(KEY_NAMESPACE.get(agent), "namespace");
+            KEY_DISPLAYFORM = agent.getClass().getDeclaredField("KEY_DISPLAYFORM");
+            assertEquals(KEY_DISPLAYFORM.get(agent), "displayform");
+            KEY_LOD = agent.getClass().getDeclaredField("KEY_LOD");
+            assertEquals(KEY_LOD.get(agent), "lod");
+
+            outFileName = agent.getClass().getDeclaredField("outFileName");
+            assertEquals(outFileName.get(agent), "test");
+            outFileExtension = agent.getClass().getDeclaredField("outFileExtension");
+            assertEquals(outFileExtension.get(agent), ".kml");
+            tmpDirsLocation = agent.getClass().getDeclaredField("tmpDirsLocation");
+            assertEquals(tmpDirsLocation.get(agent), System.getProperty("java.io.tmpdir"));
+            NUM_EXPORTER_THREADS = agent.getClass().getDeclaredField("NUM_EXPORTER_THREADS");
+            assertEquals(NUM_EXPORTER_THREADS.get(agent), 1);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testNewCityExportAgentMethods() {
+        CityExportAgent agent = new CityExportAgent();
+        assertEquals(18, agent.getClass().getDeclaredMethods().length);
     }
 
     @Test
