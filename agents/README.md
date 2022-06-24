@@ -1,7 +1,7 @@
 # Semantic 3D City Agents
 
 The Semantic City Agents is an intelligent automation for Dynamic Geospatial Knowledge Graphs. 
-It contains 3 agents: CityImportAgent, CityExportAgent and DistanceAgent. All 3 agents works with the semantic cities database - [Cities Knowledge Graphs](http://www.theworldavatar.com:83/citieskg/#query).
+It contains 6 agents: CityImportAgent, CityExportAgent, DistanceAgent, CityInformationAgent, ThematicSurfaceDiscoveryAgent, and CEAAgent. All agents works with the semantic cities database - [Cities Knowledge Graphs](http://www.theworldavatar.com:83/citieskg/#query).
 
 ## System requirements
 
@@ -19,7 +19,7 @@ These detailed instructions describes the setup on a windows machine, for Mac OS
 
 * Java JRE or JDK >= 1.8
 * [Tomcat 9](https://www.liquidweb.com/kb/installing-tomcat-9-on-windows/)
-* [Maven](https://maven.apache.org/) - Dependency Management
+* [Maven](https://maven.apache.org/) - Dependency Management >= 3.8.4
 * Python 3
 
 JDK or JRE will need to be installed on the Windows Server before you can configure Tomcat 9 on the server.
@@ -77,13 +77,13 @@ cd <main project directory>
 mvn initialize
 ```
 
-2. If the initialization is done successfully, you should be able to run the following to create the war package:
+3. If the initialization is done successfully, you should be able to run the following to create the war package:
 
 
 ```
 mvn clean install
 ```
-3. There is one dependency `blazegraph-jar-2.1.5.jar` which needs to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
+4. There is one dependency `blazegraph-jar-2.1.5.jar` which needs to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
 
 ```
     <dependency>
@@ -92,7 +92,6 @@ mvn clean install
       <version>2.1.5</version>
       <scope>provided</scope>
     </dependency>
-
 ```
 
 This dependency can be either found in your .m2 repository or downloaded from this [website](https://search.maven.org/search?q=g:com.blazegraph%20AND%20a:blazegraph-jar&core=gav).
@@ -250,9 +249,9 @@ A complete and comprehensive documentation on the 3DCityDB-Web-Map-Client is ava
 
 In order to use the extended 3DCityDB-Web-Map-Client for city agents make sure that:
 
-* your browser support WebGL (visit http://get.webgl.org/ for checking it).
-* open source JavaScript runtime environment Node.js is installed on your machine (visit https://nodejs.org/en/ to download the latest version). 
-* the extended web-map-client does not have node_modules folder thus, download original web-map-client via the following GitHub link (https://github.com/3dcitydb/3dcitydb-web-map/releases) and copy node_modules folder in `/CitiesKG/3dcitydb-web-map-1.9.0/`.
+* Your browser support WebGL (visit http://get.webgl.org/ for checking it).
+* Open source JavaScript runtime environment Node.js is installed on your machine (visit https://nodejs.org/en/ to download the latest version). 
+* The extended web-map-client does not have node_modules folder thus, download original web-map-client via the following GitHub link (https://github.com/3dcitydb/3dcitydb-web-map/releases) and copy node_modules folder in `/CitiesKG/3dcitydb-web-map-1.9.0/`.
 
 To run the web-map-client, in a shell environment navigate to the folder where *server.js* file is located `/CitiesKG/3dcitydb-web-map-1.9.0/` and simply run the following command to launch the server:
 
@@ -263,7 +262,7 @@ To run the web-map-client, in a shell environment navigate to the folder where *
 The web-map-client is now available via the URL (http://localhost:8080/3dwebclient/index.html). Place the .kml file in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/` and add the web link of the .kml file in `URL(*)` input field of the web-map-client Toolbox widget. In the input field `Name(*)`, a proper layer name must be specified as well. After clicking AddLayer, the .kml file will be visualised in the web-map-client.
 
 Solutions to common issues:
-* DistanceAgent URL, used in POST request, is hardcoded in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/script.js`. If agents are deployed on another port than 8080, agent URL needs to be updated accordingly in *script.js*.
+* DistanceAgent and CityInformationAgent URL, used in POST request, is hardcoded in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/script.js` and `CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/utils/mashup-data-source-service/application/KMLDataSource.js` respectively. If agents are deployed on another port than 8080, agent URL needs to be updated accordingly in the respective files.
 * If *DistanceAgent* is used with .kml files that were generated not by *ExporterAgent*, .kml file should have `<name>` value exactly same way as it is stored in the KG.
 
 ## Contributing
