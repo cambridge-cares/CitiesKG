@@ -1188,7 +1188,7 @@ public class CEAAgent extends JPSAgent {
                 .addWhere("?genAttribute", "ocgml:attrName", "energyProfileBuildingRepresentation")
                 .addWhere("?genAttribute", "ocgml:uriVal", "?energyProfileBuilding");
 
-        sb.addVar("?genAttribute")
+        sb.addVar("?energyProfileBuilding")
                 .addGraph(NodeFactory.createURI(getGraph(uriString,CITY_OBJECT_GEN_ATT)), wb);
 
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
