@@ -14,6 +14,10 @@ class AccessAgentMappingTest {
                 AccessAgentMapping.getTargetResourceID("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/cityobject/UUID_123/"));
         assertEquals("citieskg-singaporeEPSG4326",
                 AccessAgentMapping.getTargetResourceID("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_123/"));
+        assertEquals("citieskg-kingslynnEPSG3857",
+                AccessAgentMapping.getTargetResourceID("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/cityobject/UUID_123/"));
+        assertEquals("citieskg-kingslynnEPSG27700",
+                AccessAgentMapping.getTargetResourceID("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/cityobject/UUID_123/"));
         assertNull(AccessAgentMapping.getTargetResourceID("http://www.theworldavatar.com:83/citieskg/namespace/test/sparql/cityobject/UUID_123/"));
     }
 
