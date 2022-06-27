@@ -132,7 +132,7 @@ You'll need to provide your credentials (github username/personal access token) 
 
 ### postgreSQL
 
-The agent also requires a postgreSQL database for the time series client to save data in. The address of the database used needs to be provided in:
+The agent also requires a postgreSQL database for the time series client to save data in. The address of the database used, as well as the SPARQL query and update endpoints, need to be provided in:
 ```
 ./cea-agent/src/main/resources
     timeseriesclient.properties

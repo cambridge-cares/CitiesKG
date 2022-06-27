@@ -135,7 +135,6 @@ public class CEAAgent extends JPSAgent {
                         // Will not be necessary if namespace is passed in request params
                         if(i==0) {
                             route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
-                            setTimeSeriesClientProperties(getNamespace(uri));
                         }
                         String buildingUri = checkBlazegraphAndTimeSeriesInitialised(uri, fixedIris, route);
                         if (buildingUri=="") {
@@ -174,7 +173,6 @@ public class CEAAgent extends JPSAgent {
                     // Only set route once - assuming all iris passed in same namespace
                     if(i==0) {
                         route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
-                        setTimeSeriesClientProperties(getNamespace(uri));
                     }
                     JSONObject data = new JSONObject();
                     List<String> allMeasures = new ArrayList<>();
@@ -543,75 +541,6 @@ public class CEAAgent extends JPSAgent {
         String namespaceEndpoint = getNamespace(iriString);
         String route = accessAgentRoutes.get(namespaceEndpoint);
         return route;
-    }
-
-    /**
-     * Sets the endpoint in the time series client properties file using
-     * the namespace provided
-     *
-     * @param namespace endpoint for querying/updating
-     */
-    private String setTimeSeriesClientProperties(String namespace) {
-        try {
-
-            String timeseries_props;
-            Boolean isDocker = false;
-            if (System.getProperty("os.name").toLowerCase().contains("win")) {
-                timeseries_props = new File(
-                        Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
-            } else {
-                timeseries_props = FS + "target" + FS + "classes" + FS + TIME_SERIES_CLIENT_PROPS;
-                isDocker = true;
-            }
-            File PropertiesFile = new File(timeseries_props);
-
-            String oldFileContent = "";
-
-            BufferedReader reader;
-            FileWriter writer;
-
-            reader = new BufferedReader(new FileReader(PropertiesFile));
-
-            // Read all the lines of times series client properties file into oldFileContent
-            String line = reader.readLine();
-            String oldQueryString="";
-            String oldUpdateString="";
-
-            while (line != null)
-            {
-                oldFileContent = oldFileContent + line + System.lineSeparator();
-
-                if (line.contains("sparql.query.endpoint")) oldQueryString = line;
-                if (line.contains("sparql.update.endpoint")) oldUpdateString = line;
-
-                line = reader.readLine();
-            }
-
-            // If building docker image, transform localhost in namespace to host.docker.internal
-            String[] localHostStrings = {"localhost", "127.0.0.1"};
-            if(isDocker) {
-                for(String s : localHostStrings){
-                    if(namespace.contains(s)) namespace = namespace.replace(s, "host.docker.internal");
-                }
-            }
-
-            // Replace oldQueryString and oldUpdateString with namespace given
-            String newFileContent = oldFileContent.replace(oldQueryString, "sparql.query.endpoint="+namespace);
-            newFileContent = newFileContent.replace(oldUpdateString, "sparql.update.endpoint="+namespace);
-
-            //Rewrite the input text file with newFileContent
-            writer = new FileWriter(PropertiesFile);
-            writer.write(newFileContent);
-
-            reader.close();
-            writer.close();
-
-            return newFileContent;
-
-        } catch (URISyntaxException | IOException e) {
-            e.printStackTrace();
-            throw new JPSRuntimeException(e);
-        }
     }
 
     /**
