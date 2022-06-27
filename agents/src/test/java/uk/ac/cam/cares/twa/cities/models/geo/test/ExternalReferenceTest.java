@@ -54,7 +54,7 @@ public class ExternalReferenceTest {
         ExternalReference externalReference = new ExternalReference();
 
         assertNotNull(externalReference.getClass().getDeclaredMethod("getCityObjectId"));
-        assertNotNull(externalReference.getClass().getDeclaredMethod("setCityObjectId", CityObject.class));
+        assertNotNull(externalReference.getClass().getDeclaredMethod("setCityObjectId", URI.class));
 
         assertNotNull(externalReference.getClass().getDeclaredMethod("getInfoSys"));
         assertNotNull(externalReference.getClass().getDeclaredMethod("setInfoSys", String.class));
