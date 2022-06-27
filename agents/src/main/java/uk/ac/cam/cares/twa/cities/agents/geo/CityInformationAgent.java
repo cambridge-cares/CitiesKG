@@ -75,10 +75,12 @@ public class CityInformationAgent extends JPSAgent {
 
     requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
 
-    //{"iris": ["http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/BLDG_0003000000a50c90/"],
-    //  "context": {"http://www.theworldavatar.com:83/citieskg/otheragentIRI": {"key1":"value1", "key2": value2"},
-    //  "http://www.theworldavatar.com:83/citieskg/anotheragentIRI": {"key3":"value3", "key4": value4"},}
-    //  }
+    /**
+     * {"iris": ["http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/BLDG_0003000000a50c90/"],
+     * "context": {"http://www.theworldavatar.com:83/citieskg/otheragentIRI": {"key1":"value1", "key2": value2"},
+     * "http://www.theworldavatar.com:83/citieskg/anotheragentIRI": {"key3":"value3", "key4": value4"},}
+     * }
+     **/
 
     // passing information from original request to other agents mentioned in the context.
     if (requestParams.keySet().contains(KEY_CONTEXT)) {
