@@ -208,8 +208,8 @@ Before:
 
 ![Before](README-resources/tsda-restructure-before.png)
 
-Red, blue and green indicate classified roof, wall and ground surfaces, where a composite surface whose components 
-are all the same theme is also considered that theme. Brown is a "mixed" composite surface with components of 
+Red, blue and green indicate classified roof, wall and ground surfaces, where a composite surface whose components
+are all the same theme is also considered that theme. Brown is a "mixed" composite surface with components of
 different themes, and is therefore destroyed in the conversion. After:
 
 ![After](README-resources/tsda-restructure-after.png)
@@ -232,9 +232,9 @@ which counts all the combinations of original data themes and classified themes.
 
 ### Footprint mode
 
-Footprint mode inspects building(s)' `lodXMultiSurface`s, identifying themes as in restructure mode, and then 
-*copies* identifies ground surfaces into a new SurfaceGeometry tree which is linked to the building by 
-`lod0FootprintId`. Unlike restructure mode, this does not destroy the old `lodXMultiSurface`. This is useful if the 
+Footprint mode inspects building(s)' `lodXMultiSurface`s, identifying themes as in restructure mode, and then
+*copies* identifies ground surfaces into a new SurfaceGeometry tree which is linked to the building by
+`lod0FootprintId`. Unlike restructure mode, this does not destroy the old `lodXMultiSurface`. This is useful if the
 large triple overhead of a full thematicisation is not desired, but footprints are needed to be extracted for other use.
 
 ## 3DCityDB-Web-Map-Client
@@ -245,7 +245,7 @@ We use the 3DCityDB-Web-Map-Client to visualise *CityExportAgent* exported .kml 
 
 A complete and comprehensive documentation on the 3DCityDB-Web-Map-Client is available online here (https://github.com/3dcitydb/3dcitydb-web-map) and here (https://3dcitydb-docs.readthedocs.io/en/release-v4.2.3/webmap/index.html).
 
- ### Getting Started
+### Getting Started
 
 In order to use the extended 3DCityDB-Web-Map-Client for city agents make sure that:
 

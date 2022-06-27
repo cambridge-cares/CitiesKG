@@ -20,10 +20,10 @@ public class BlazegraphGeoDatatypeTest {
   private final String TEST_URI = "http://localhost/blazegraph/literals/POINT-1-3";
   private final String TEST_GEOLITERAL = "1#2#3";
   private final String TEST_GEODATATYPE = "{\"config\":{\"fields\":["
-      + "{\"serviceMapping\":\"X0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
-      + "{\"serviceMapping\":\"Y0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
-      + "{\"serviceMapping\":\"Z0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"}],"
-      + "\"uri\":\"" + TEST_URI + "\"}}";
+          + "{\"serviceMapping\":\"X0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
+          + "{\"serviceMapping\":\"Y0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"},"
+          + "{\"serviceMapping\":\"Z0\",\"multiplier\":\"100000\",\"valueType\":\"DOUBLE\"}],"
+          + "\"uri\":\"" + TEST_URI + "\"}}";
 
   @Test
   public void testNewBlazegraphGeoDatatype() {
@@ -53,7 +53,7 @@ public class BlazegraphGeoDatatypeTest {
       geodatatype.setAccessible(true);
 
       assertEquals("com.bigdata.rdf.store.AbstractTripleStore.geoSpatialDatatypeConfig.",
-          KEY_MAIN.get(dt));
+              KEY_MAIN.get(dt));
       assertEquals(TEST_GEODATATYPE, geodatatype.get(dt));
 
     } catch (URISyntaxException | NoSuchFieldException | IllegalAccessException e) {
@@ -84,7 +84,7 @@ public class BlazegraphGeoDatatypeTest {
       Method getGeodatatype = dt.getClass().getDeclaredMethod("getGeodatatype");
       assertEquals(TEST_GEODATATYPE, getGeodatatype.invoke(dt));
     } catch (URISyntaxException | NoSuchMethodException | IllegalAccessException
-        | InvocationTargetException e) {
+            | InvocationTargetException e) {
       fail();
     }
   }
