@@ -551,7 +551,7 @@ function computeDistance() {
             color: Cesium.Color.WHITE,
 			dashLength: 15,
           }),
-			cmalpToGround: true,
+			clampToGround: true,
 		}
 	});
 	
@@ -562,12 +562,15 @@ function computeDistance() {
         label: {
     font : 'bold 22px arial',
     showBackground : false,
+    heightReference :Cesium.HeightReference.CLAMP_TO_GROUND,
     horizontalOrigin : Cesium.HorizontalOrigin.CENTER,
     verticalOrigin : Cesium.VerticalOrigin.CENTER,
     pixelOffset : new Cesium.Cartesian2(0, 20),
     eyeOffset: new Cesium.Cartesian3(0,0,-50),
 	text: labelText,
 	fillColor : Cesium.Color.WHITE,
+    backgroundColor : new Cesium.Color(0.0, 0.0, 0.0, 0.7),
+    showBackground : true,
 	}
     });
 
