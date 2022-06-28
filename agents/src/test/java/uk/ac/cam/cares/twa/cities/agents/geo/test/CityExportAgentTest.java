@@ -42,7 +42,7 @@ public class CityExportAgentTest {
     public void testNewCityExportAgentFields() {
         CityExportAgent agent = new CityExportAgent();
 
-        assertEquals(12, agent.getClass().getDeclaredFields().length);
+        assertEquals(11, agent.getClass().getDeclaredFields().length);
 
         Field URI_ACTION;
         Field KEY_GMLID;
@@ -88,7 +88,7 @@ public class CityExportAgentTest {
     @Test
     public void testNewCityExportAgentMethods() {
         CityExportAgent agent = new CityExportAgent();
-        assertEquals(18, agent.getClass().getDeclaredMethods().length);
+        assertEquals(11, agent.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -108,6 +108,7 @@ public class CityExportAgentTest {
         String localhostURL = "http://localhost";
 
         // General keys and value check
+
         try {
             validateInput.invoke(agent, requestParams);
         } catch (Exception e) {
@@ -206,6 +207,46 @@ public class CityExportAgentTest {
         } catch (Exception e) {
             fail();
         }
+
+        requestParams.put(CityExportAgent.KEY_NAMESPACE, localhostURL);
+        requestParams.put(CityExportAgent.KEY_LOD, 2);
+        requestParams.put(CityExportAgent.KEY_DISPLAYFORM, "extruded");
+
+        try {
+            assertTrue((Boolean) validateInput.invoke(agent, requestParams));
+        } catch (Exception e) {
+            fail();
+        }
+
+        // For illegal arguments
+        requestParams.put(CityExportAgent.KEY_LOD, 100);
+        requestParams.put(CityExportAgent.KEY_DISPLAYFORM, "xxx");
+
+        try {
+            assertFalse((Boolean) validateInput.invoke(agent, requestParams));
+        } catch (Exception e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testGetGmlidFromFile(){
+
+    }
+
+    @Test
+    public void testGetCrsInfo(){
+
+    }
+
+    @Test
+    public void testGetOutputName(){
+
+    }
+
+    @Test
+    public void testGetServerInfo(){
+
     }
 
     @Test
@@ -235,4 +276,9 @@ public class CityExportAgentTest {
 
     }
 
+
+    @Test
+    public void testTilingKML(){
+
+    }
 }

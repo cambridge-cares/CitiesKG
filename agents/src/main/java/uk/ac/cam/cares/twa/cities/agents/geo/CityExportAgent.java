@@ -105,8 +105,8 @@ public class CityExportAgent extends JPSAgent {
             // Process "namespaceIri"
             namespaceIri = requestParams.getString(KEY_NAMESPACE);
             JSONObject serverInfo = getServerInfo(namespaceIri);
-            //srsName = getCrsInfo(namespaceIri);  // "EPSG:25833"
-            srsName = "EPSG:4326";
+            srsName = getCrsInfo(namespaceIri);  // "EPSG:25833"
+            //srsName = "EPSG:4326";
 
             // Process "displayform"
             List<String> availOptions = Arrays.asList(displayOptions);
@@ -209,7 +209,7 @@ public class CityExportAgent extends JPSAgent {
                         System.out.println("Valid displayform: " + inputDisplayForm);
                     } else {
                         System.out.println("InValid displayform: " + inputDisplayForm);
-                        throw new BadRequestException();
+                        throw new IllegalArgumentException();
                     }
                 }
 
@@ -298,14 +298,6 @@ public class CityExportAgent extends JPSAgent {
         }
 
         return outputPath;
-    }
-
-    /**
-     * create the output path of the generated kml file as default no arguments.
-     * @return the output location of the kml file
-     */
-    private String getOutputName () {
-        return getOutputName(null);
     }
 
     /**
