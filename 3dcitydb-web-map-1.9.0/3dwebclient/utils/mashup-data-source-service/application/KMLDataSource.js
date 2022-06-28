@@ -37,26 +37,132 @@ var KMLDataSource = /** @class */ (function (_super) {
             }
         }
     };
+	
+	//---Extended Web-Map-Client version---//
+	
+	
     KMLDataSource.prototype.responseCesiumToKvp = function (response) {
         // response is a list of JSON elements
-        // only support Data https://cesium.com/docs/cesiumjs-ref-doc/KmlFeatureData.html
         var result = new Map();
-        /*  <Data name="">
-                <displayName></displayName>
-                <value></value>
-            </Data
-         */
-        for (var key in response) {
-            // if no displayName is available -> use attribute name instead
-            if (response[key] && response[key].displayName) {
-                result[response[key].displayName] = response[key].value;
-            }
-            else {
-                result[key] = response[key].value;
+
+        var cityResponse = response["cityobjectinformation"];
+        var energyResponse = response["context"] ? response[Object.keys(response["context"])[0]] : null;
+
+        if (jQuery.isArray(cityResponse) && cityResponse.length > 0) {
+            if (jQuery.isArray(cityResponse[0]) && cityResponse[0].length > 0) {
+                if (jQuery.isArray(cityResponse[0][0]) && cityResponse[0][0].length > 0) {
+                    var cityobjectdata = cityResponse[0][0][0];
+                    for (var key in cityobjectdata) {
+                        if (key == null || key == 'context') {
+                            continue;
+                        }
+                        else if (key === "genericAttributeIris" || key === "externalReferencesIris"){
+                            continue;
+                        }
+                        else if (key === "genericAttributes"){
+                            this.genAttrKeysManager(cityobjectdata[key],result);
+                        }
+                        else if (key === "externalReferences"){
+                            this.extRefKeysManager(cityobjectdata[key], result);
+                        }
+                        else {
+                            result[key] = cityobjectdata[key];
+                        }
+                    }
+                }
             }
         }
-        return result;
+
+        if (jQuery.isArray(energyResponse) && energyResponse.length > 0) {
+            if (jQuery.isArray(energyResponse[0]['energyprofile']) && energyResponse[0]['energyprofile'].length > 0) {
+                var energydata = energyResponse[0]['energyprofile'][0];
+                for (var key in energydata) {
+                    if (key == null) {
+                        continue;
+                    } else {
+                        result[key] = energydata[key];
+                    }
+                }
+            }
+        }
+
+		return result;
     };
+
+    KMLDataSource.prototype.genAttrKeysManager = function (data, result) {
+        for (var index in data) {
+            var object = data[index];
+            var name = object["attrName"];
+            var value;
+            var data_type = object["dataType"];
+            switch (data_type) {
+                case 2:
+                    value = object["intVal"];
+                    break;
+                case 3:
+                    value = object["realVal"];
+                    break;
+                case 4:
+                    value = object["uriVal"];
+                    break;
+                default:
+                    value = object["strVal"];
+            }
+            result[name] = value;
+        }
+
+    };
+
+    KMLDataSource.prototype.extRefKeysManager = function (data, result) {
+        for (var index in data){
+            var object = data[index];
+            var name = object["infoSys"];
+            var value = object["URI"];
+            result[name] = value;
+        }
+    };
+
+    KMLDataSource.prototype.contextManager = function(context) {
+        switch (context) {
+            case 'energy':
+                return 'http://localhost:58085/agents/cea/query';
+                break;
+            default:
+                return '';
+                break;
+        }
+    };
+
+    KMLDataSource.prototype.queryUsingId = function (id, callback, limit, clickedObject) {
+        console.log(clickedObject);
+
+        // REQUEST FOR CityInformationAgent.
+        var iri = clickedObject._iriPrefix + clickedObject._name;
+        iri = iri.endsWith('/') ? iri : iri + '/';
+        iri = iri.replace(new RegExp('_(\\w*Surface)'), '');
+
+        var context_url = this.contextManager(clickedObject._cia_context);
+        var context_obj = {};
+        context_obj[context_url] = {};
+
+        var cia_data = context_url ? {iris: [iri], context: context_obj} : {iris: [iri]};
+
+        jQuery.ajax({
+            url: "http://localhost:8080/agents/cityobjectinformation",
+            type: 'POST',
+            data: JSON.stringify(cia_data),
+            dataType: 'json',
+            contentType: 'application/json',
+            success: function (data, status_message, xhr) {
+                console.log(data);
+                callback(data);
+		}});		
+    };
+	
+	
+	//---Extended Web-Map-Client version---//
+	
+	
     KMLDataSource.prototype.responseOwnToKvp = function (response) {
         // response is a list of XML DOM element
         var result = new Map();
@@ -75,6 +181,7 @@ var KMLDataSource = /** @class */ (function (_super) {
         }
         return result;
     };
+	
     KMLDataSource.prototype.countFromResult = function (res) {
         return res.getSize();
     };
@@ -98,38 +205,7 @@ var KMLDataSource = /** @class */ (function (_super) {
         // TODO
         return null;
     };
-    KMLDataSource.prototype.queryUsingId = function (id, callback, limit, clickedObject) {
-        if (this._thirdPartyHandler) {
-            // prioritize the implementation of the provided 3rd-party handler
-            switch (this._thirdPartyHandler.type) {
-                case ThirdPartyHandler.Cesium: {
-                    // the handler is Cesium.KMLDataSource
-                    var entities = this._thirdPartyHandler.handler.entities;
-                    var entity = entities.getById(id);
-                    // entity is Cesium.KMLFeatureData
-                    var extendedData = entity.kml.extendedData;
-                    if (typeof extendedData === "undefined"
-                        || (Object.keys(extendedData).length === 0 && extendedData.constructor === Object)) {
-                        // empty response -> use custom implementation
-                        this.queryUsingIdCustom(id, callback, limit, clickedObject);
-                    }
-                    else {
-                        callback(extendedData);
-                    }
-                    break;
-                }
-                default: {
-                    // no valid handler found
-                    callback(null);
-                    break;
-                }
-            }
-        }
-        else {
-            // using own implementation
-            this.queryUsingIdCustom(id, callback);
-        }
-    };
+	
     KMLDataSource.prototype.queryUsingIdCustom = function (id, callback, limit, clickedObject) {
         this._useOwnKmlParser = true;
         // read KML file
