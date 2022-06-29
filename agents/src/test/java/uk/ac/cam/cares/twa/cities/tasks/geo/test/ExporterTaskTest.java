@@ -34,7 +34,7 @@ public class ExporterTaskTest {
     public String namespaceIri = "http://127.0.0.1:9999/blazegraph/namespace/test/sparql";
     public JSONObject serverInfo = new JSONObject().put("host", "127.0.0.1").put("port", "9999").put("namespace", "/blazegraph/namespace/test/sparql");
     public String srsname = "EPSG:25833";
-    public String outputDir = System.getProperty("java.io.tmpdir") + this.FS + "export";
+    public String outputDir = System.getProperty("java.io.tmpdir") + "export";
     public String outputPath = outputDir + this.FS + "test.kml";
     public String[] displayMode = {"false", "true", "false", "false"};
     public int lod = 2;
