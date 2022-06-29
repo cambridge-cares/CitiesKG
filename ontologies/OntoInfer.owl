@@ -24,8 +24,8 @@
     <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#applicableTo -->
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#applicableTo">
-        <rdfs:domain rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Graph"/>
-        <rdfs:range rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Algorithm"/>
+        <rdfs:domain rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Algorithm"/>
+        <rdfs:range rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Namespace"/>
     </owl:ObjectProperty>
     
 
@@ -36,6 +36,16 @@
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
         <rdfs:domain rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Algorithm"/>
         <rdfs:range rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#performedBy -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#performedBy">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <rdfs:range rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Agent"/>
     </owl:ObjectProperty>
     
 
@@ -289,6 +299,8 @@
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankAlgorithm">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#CentralityDetection"/>
+        <applicableTo rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#singaporeEPSG4326"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankTask"/>
     </owl:NamedIndividual>
     
 
@@ -297,6 +309,15 @@
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankTask">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphInferenceAgent"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#singaporeEPSG4326 -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#singaporeEPSG4326">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Namespace"/>
     </owl:NamedIndividual>
 </rdf:RDF>
 
