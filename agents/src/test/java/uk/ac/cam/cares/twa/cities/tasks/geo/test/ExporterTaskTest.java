@@ -1,7 +1,11 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo.test;
 
+import org.citydb.ImpExp;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
@@ -32,7 +36,7 @@ public class ExporterTaskTest {
     public String srsname = "EPSG:25833";
     public String outputDir = System.getProperty("java.io.tmpdir") + this.FS + "export";
     public String outputPath = outputDir + this.FS + "test.kml";
-    public String[] displayMode = {"false", "true" ,"false", "false"};
+    public String[] displayMode = {"false", "true", "false", "false"};
     public int lod = 2;
     public String[] gmlIds = {"BLDG_123a"};
     public CityExportAgent.Params taskParams = new CityExportAgent.Params(namespaceIri, serverInfo, srsname, outputDir, outputPath, displayMode, lod, gmlIds);
@@ -64,7 +68,6 @@ public class ExporterTaskTest {
 
     @Test
     public void testNewExporterTaskFields() {
-
         try {
             ExporterTask task = new ExporterTask(this.taskParams);
             assertEquals(17, task.getClass().getDeclaredFields().length);
@@ -151,7 +154,21 @@ public class ExporterTaskTest {
 
     @Test
     public void testRun() {
+        tearDown();
+        ExporterTask task = new ExporterTask(this.taskParams);
+        assertTrue(task.isRunning());
 
+        try (MockedStatic<ImpExp> mock = Mockito.mockStatic(ImpExp.class)) {
+            task.run();
+            assertTrue(this.cfgFile.exists());
+            assertTrue(this.kmlDir.exists());
+            mock.verify(() -> ImpExp.main(ArgumentMatchers.any()), Mockito.times(1));
+            assertFalse(task.isRunning());
+        } catch (Exception e) {
+            fail();
+        } finally {
+            tearDown();
+        }
     }
 
     @Test
@@ -204,7 +221,15 @@ public class ExporterTaskTest {
 
     @Test
     public void testCreateGmlIds() {
+        try {
+            ExporterTask task = new ExporterTask(this.taskParams);
+            Method createGmlids = task.getClass().getDeclaredMethod("createGmlids", String[].class);
+            createGmlids.setAccessible(true);
 
+            assertEquals("<id>BLDG_123a</id>\n", createGmlids.invoke(task, (Object) this.gmlIds));
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            fail();
+        }
     }
 
     public void tearDown() {
