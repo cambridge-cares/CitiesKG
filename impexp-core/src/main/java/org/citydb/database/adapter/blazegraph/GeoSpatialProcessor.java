@@ -10,7 +10,6 @@ import org.locationtech.jts.geom.*;
 import org.locationtech.jts.operation.union.UnaryUnionOp;
 import org.locationtech.jts.operation.valid.IsValidOp;
 import org.locationtech.jts.operation.valid.TopologyValidationError;
-import org.locationtech.jts.precision.GeometryPrecisionReducer;
 import org.opengis.geometry.MismatchedDimensionException;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -23,6 +22,26 @@ import java.util.List;
 
 
 public class GeoSpatialProcessor {
+
+    public static class GeomDataType {
+
+        public String geomType;
+        public int geomDim;
+        public int[] dimOfRings;
+
+        public GeomDataType(String datatypeURI) { // e.g. http://localhost/blazegraph/literals/POLYGON-3-81
+            String datatype = datatypeURI.substring(
+                datatypeURI.lastIndexOf('/') + 1); // e.g. POLYGON-3-81
+            String[] datatypeList = datatype.split("-");
+            this.geomType = datatypeList[0];
+            this.geomDim = Integer.parseInt(datatypeList[1]);
+            this.dimOfRings = new int[datatypeList.length - 2];
+            for (int i = 2; i < datatypeList.length; ++i) {
+                dimOfRings[i-2] = Integer.parseInt(datatypeList[i]);
+            }
+        }
+    }
+
     public GeoSpatialProcessor() {
     }
 
@@ -38,7 +57,6 @@ public class GeoSpatialProcessor {
 
         GeometryFactory fac = new GeometryFactory();
         IsValidOp isValidOp = new IsValidOp(geom); // Polygon 2D consists of LinearRing with shell and hole
-        boolean result_boolean = isValidOp.isValid();
         Object[] details = new Object[3];
 
         TopologyValidationError error = isValidOp.getValidationError();
@@ -200,7 +218,7 @@ public class GeoSpatialProcessor {
      * */
     public static List<Coordinate> str2coords(String st_geometry) {
         String[] pointXYZList = null;
-        List<Coordinate> coords = new LinkedList<Coordinate>();
+        List<Coordinate> coords = new LinkedList<>();
 
         if (st_geometry.contains(",")) {
             //System.out.println("====================== InputString is from POSTGIS");
@@ -213,9 +231,9 @@ public class GeoSpatialProcessor {
                 //coordinates.removeAll(Arrays.asList(null, ""));
                 pointXYZ = coordinates.toArray(new String[0]);
                 if (pointXYZ.length == 2) {
-                    coords.add(new Coordinate(Double.valueOf(pointXYZ[0]), Double.valueOf(pointXYZ[1])));
+                    coords.add(new Coordinate(Double.parseDouble(pointXYZ[0]), Double.parseDouble(pointXYZ[1])));
                 } else if (pointXYZ.length == 3) {
-                    coords.add(new Coordinate(Double.valueOf(pointXYZ[0]), Double.valueOf(pointXYZ[1]), Double.valueOf(pointXYZ[2])));
+                    coords.add(new Coordinate(Double.parseDouble(pointXYZ[0]), Double.parseDouble(pointXYZ[1]), Double.parseDouble(pointXYZ[2])));
                 } else {
                     System.out.println("InputString has no valid format");
                     return null;
@@ -227,12 +245,12 @@ public class GeoSpatialProcessor {
             if (pointXYZList.length % 3 == 0) {
                 // 3d coordinates
                 for (int i = 0; i < pointXYZList.length; i = i + 3) {
-                    coords.add(new Coordinate(Double.valueOf(pointXYZList[i]), Double.valueOf(pointXYZList[i + 1]), Double.valueOf(pointXYZList[i + 2])));
+                    coords.add(new Coordinate(Double.parseDouble(pointXYZList[i]), Double.parseDouble(pointXYZList[i + 1]), Double.parseDouble(pointXYZList[i + 2])));
                 }
             } else if (pointXYZList.length % 2 == 0) {
                 // 2d coordinates
                 for (int i = 0; i < pointXYZList.length; i = i + 2) {
-                    coords.add(new Coordinate(Double.valueOf(pointXYZList[i]), Double.valueOf(pointXYZList[i + 1])));
+                    coords.add(new Coordinate(Double.parseDouble(pointXYZList[i]), Double.parseDouble(pointXYZList[i + 1])));
                 }
             }
         } else {
@@ -243,9 +261,16 @@ public class GeoSpatialProcessor {
 
     }
 
-    public Geometry createGeometry(String coordlist, String geomtype, int dimension, int[] dimOfRings) {
+    /** Convert blazegraph # String to Geometry object **/
+
+    public static Geometry createGeometry(String geomStr, String datatypeURI) {
         GeometryFactory fac = new GeometryFactory();
-        Coordinate[] coordinates = str2coords(coordlist).toArray(new Coordinate[0]);
+        Coordinate[] coordinates = str2coords(geomStr).toArray(new Coordinate[0]);
+
+        GeomDataType dataType = new GeomDataType(datatypeURI);
+        String geomtype = dataType.geomType;
+        int dimension = dataType.geomDim;
+        int[] dimOfRings = dataType.dimOfRings;
 
         Geometry geom = null;
         if (geomtype.equals("POLYGON")){
@@ -311,16 +336,11 @@ public class GeoSpatialProcessor {
 
 
     /* Todo String geomtype, int dimension, int[] dimOfRings */
-    public static GeometryObject create3dPolygon(String coordlist, String datatypeURI){
+    public static GeometryObject create3dPolygon(String coordlist, String datatypeURI, int objectSrid){
 
-        String datatype = datatypeURI.substring(datatypeURI.lastIndexOf('/') + 1);
-        String[] datatype_list = datatype.split("-");
-        String geomtype = datatype_list[0];  // usually "POLYGON"
-        int dim = Integer.valueOf(datatype_list[1]);
-        int[] dimOfRings = new int[datatype_list.length-2];
-        for (int i = 2; i < datatype_list.length; ++i){
-            dimOfRings[i-2] = Integer.valueOf(datatype_list[i]);
-        }
+        GeomDataType geomType = new GeomDataType(datatypeURI);
+        int dim = geomType.geomDim;
+        int[] dimOfRings = geomType.dimOfRings;
         // put in createGeopmetry (extracted, geomtype, listOfDim)
         //Geometry geomobj = geospatial.createGeometry(extracted, geomtype, dim, dimOfRings);
 
@@ -331,10 +351,10 @@ public class GeoSpatialProcessor {
         if (dimOfRings.length == 1){
             double[] ord = new double[coords.length];
             for (int i = 0; i < coords.length; ++i) {
-                ord[i] = Double.valueOf(coords[i]);
+                ord[i] = Double.parseDouble(coords[i]);
             }
 
-            geom = GeometryObject.createPolygon(ord, dim, 4326); // the first argument should be double[]
+            geom = GeometryObject.createPolygon(ord, dim, objectSrid); // the first argument should be double[]
 
         }else {
             double[][] ord = new double[dimOfRings.length][];
@@ -342,11 +362,11 @@ public class GeoSpatialProcessor {
             for (int i = 0; i < dimOfRings.length; ++i){
                 ord[i] = new double[dimOfRings[i]];
                 for (int j = 0; j < dimOfRings[i]; ++j){
-                    ord[i][j] = Double.valueOf(coords[start_index + j]);
+                    ord[i][j] = Double.parseDouble(coords[start_index + j]);
                 }
                 start_index += dimOfRings[i];
             }
-            geom = GeometryObject.createPolygon(ord, dim, 4326);  // the first argument should be double[][], in which the first ring should be exterior
+            geom = GeometryObject.createPolygon(ord, dim, objectSrid);  // the first argument should be double[][], in which the first ring should be exterior
         }
 
         return geom;
