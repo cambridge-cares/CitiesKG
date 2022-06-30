@@ -4,7 +4,7 @@ import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
-import com.opencsv.exceptions.CsvValidationException;
+import com.opencsv.exceptions.CsvException;
 import de.micromata.opengis.kml.v_2_2_0.Feature;
 import gov.nasa.worldwind.ogc.kml.KMLAbstractFeature;
 import gov.nasa.worldwind.ogc.kml.KMLRoot;
@@ -404,10 +404,22 @@ class KMLTilingTaskTest {
             CSVParser parser = new CSVParserBuilder().withEscapeChar('\0').build();
             try (CSVReader reader = new CSVReaderBuilder(new FileReader(this.summcsv.getAbsolutePath())).withCSVParser(parser).build()) {
                 String[] header = reader.readNext();
-// check csv contents?
-            }
+                List<String[]> rows = reader.readAll();
+                String[] row = rows.get(0);
 
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IOException | CsvValidationException e) {
+                assertEquals("gmlid", header[0]);
+                assertEquals("envelope", header[1]);
+                assertEquals("envelopeCentroid", header[2]);
+                assertEquals("filename", header[3]);
+                assertEquals(1, rows.size());
+                assertEquals(dataArr[0], row[0]);
+                assertEquals(dataArr[1], row[1]);
+                assertEquals(dataArr[2], row[2]);
+                assertEquals(dataArr[3], row[3]);
+            } catch (IOException | CsvException e) {
+                fail();
+            }
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             fail();
         }
     }
