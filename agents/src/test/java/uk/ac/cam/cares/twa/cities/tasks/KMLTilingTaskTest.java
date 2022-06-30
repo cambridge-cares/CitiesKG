@@ -1,11 +1,20 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
+import com.opencsv.exceptions.CsvValidationException;
 import de.micromata.opengis.kml.v_2_2_0.Feature;
+import gov.nasa.worldwind.ogc.kml.KMLAbstractFeature;
+import gov.nasa.worldwind.ogc.kml.KMLRoot;
 import org.junit.Before;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import javax.xml.stream.XMLStreamException;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -36,6 +45,17 @@ class KMLTilingTaskTest {
     @Before
     public void before() {
         tearDown();
+    }
+
+    // create unsorted dir and copy unsorted kml file from test resources to unsorted dir
+    public void setUp() {
+        try {
+            this.unsortedDir.mkdirs();
+            File kml = new File(Objects.requireNonNull(this.getClass().getResource("/testoutput.kml")).getFile());
+            Files.copy(kml.toPath(), this.unsortedKmlFile.toPath());
+        } catch (IOException e) {
+            fail();
+        }
     }
 
     @AfterEach
@@ -255,24 +275,139 @@ class KMLTilingTaskTest {
             Method parseKml = task.getClass().getDeclaredMethod("parseKML");
             parseKml.setAccessible(true);
 
-            // create unsorted dir and copy unsorted kml file from test resources to unsorted dir
-            this.unsortedDir.mkdirs();
-            File kml = new File(Objects.requireNonNull(this.getClass().getResource("/testoutput.kml")).getFile());
-            Files.copy(kml.toPath(), this.unsortedKmlFile.toPath());
-            System.out.println("test");
+            setUp();
 
             parseKml.invoke(task);
 
-            // if getPlacemarks method is successfully called, dataContent and gmlidList should be updated
-            Field dataContent = task.getClass().getDeclaredField("dataContent");
+            // if getPlacemarks method is successfully called, dataContent and gmlidList should be updated, extent and Textent should be updated
             Field gmlidList = task.getClass().getDeclaredField("gmlidList");
             gmlidList.setAccessible(true);
-            assertEquals(1, ((ArrayList<String[]>) dataContent.get(task)).size());
-            assertEquals("BLDG_123a", ((ArrayList<String>) gmlidList.get(task)).get(0));
+            Field dataContent = task.getClass().getDeclaredField("dataContent");
+            Field extent_Xmin = task.getClass().getDeclaredField("extent_Xmin");
+            extent_Xmin.setAccessible(true);
+            Field extent_Xmax = task.getClass().getDeclaredField("extent_Xmax");
+            extent_Xmax.setAccessible(true);
+            Field extent_Ymin = task.getClass().getDeclaredField("extent_Ymin");
+            extent_Ymin.setAccessible(true);
+            Field extent_Ymax = task.getClass().getDeclaredField("extent_Ymax");
+            extent_Ymax.setAccessible(true);
+            Field Textent_Xmin = task.getClass().getDeclaredField("Textent_Xmin");
+            Textent_Xmin.setAccessible(true);
+            Field Textent_Xmax = task.getClass().getDeclaredField("Textent_Xmax");
+            Textent_Xmax.setAccessible(true);
+            Field Textent_Ymin = task.getClass().getDeclaredField("Textent_Ymin");
+            Textent_Ymin.setAccessible(true);
+            Field Textent_Ymax = task.getClass().getDeclaredField("Textent_Ymax");
+            Textent_Ymax.setAccessible(true);
+
+            assertTrue(((ArrayList<String>) gmlidList.get(task)).size() > 0);
+            assertTrue(((ArrayList<String[]>) dataContent.get(task)).size() > 0);
+            assertTrue((Double) extent_Xmin.get(task) != Double.POSITIVE_INFINITY);
+            assertTrue((Double) extent_Xmax.get(task) != Double.NEGATIVE_INFINITY);
+            assertTrue((Double) extent_Ymin.get(task) != Double.POSITIVE_INFINITY);
+            assertTrue((Double) extent_Ymax.get(task) != Double.NEGATIVE_INFINITY);
+            assertTrue((Double) Textent_Xmin.get(task) != Double.POSITIVE_INFINITY);
+            assertTrue((Double) Textent_Xmax.get(task) != Double.NEGATIVE_INFINITY);
+            assertTrue((Double) Textent_Ymin.get(task) != Double.POSITIVE_INFINITY);
+            assertTrue((Double) Textent_Ymax.get(task) != Double.NEGATIVE_INFINITY);
 
             // if createCSVFile is called, csv summary file should exist in output dir
             assertTrue(this.summcsv.exists());
-        } catch (IOException | NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testGetPlacemarks() {
+        try {
+            KMLTilingTask task = new KMLTilingTask(this.path2unsortedKML, this.path2sortedKML, this.databaseCRS, this.displayForm, this.namespaceIri);
+            Method getPlacemarks = task.getClass().getDeclaredMethod("getPlacemarks", KMLAbstractFeature.class, File.class);
+            getPlacemarks.setAccessible(true);
+
+            setUp();
+            KMLRoot root = KMLRoot.create(this.unsortedKmlFile);
+            root.parse();
+
+            getPlacemarks.invoke(task, root.getFeature(), this.unsortedKmlFile);
+
+            // if getPlacemarks method is successfully called, dataContent and gmlidList should be updated, extent and Textent should be updated
+            Field gmlidList = task.getClass().getDeclaredField("gmlidList");
+            gmlidList.setAccessible(true);
+            Field dataContent = task.getClass().getDeclaredField("dataContent");
+            Field extent_Xmin = task.getClass().getDeclaredField("extent_Xmin");
+            extent_Xmin.setAccessible(true);
+            Field extent_Xmax = task.getClass().getDeclaredField("extent_Xmax");
+            extent_Xmax.setAccessible(true);
+            Field extent_Ymin = task.getClass().getDeclaredField("extent_Ymin");
+            extent_Ymin.setAccessible(true);
+            Field extent_Ymax = task.getClass().getDeclaredField("extent_Ymax");
+            extent_Ymax.setAccessible(true);
+            Field Textent_Xmin = task.getClass().getDeclaredField("Textent_Xmin");
+            Textent_Xmin.setAccessible(true);
+            Field Textent_Xmax = task.getClass().getDeclaredField("Textent_Xmax");
+            Textent_Xmax.setAccessible(true);
+            Field Textent_Ymin = task.getClass().getDeclaredField("Textent_Ymin");
+            Textent_Ymin.setAccessible(true);
+            Field Textent_Ymax = task.getClass().getDeclaredField("Textent_Ymax");
+            Textent_Ymax.setAccessible(true);
+
+            ArrayList<String> gmlidListArrList = (ArrayList<String>) gmlidList.get(task);
+            ArrayList<String[]> dataContentArrList = (ArrayList<String[]>) dataContent.get(task);
+            String[] dataContentArr = dataContentArrList.get(0);
+            assertEquals(1, gmlidListArrList.size());
+            assertEquals("BLDG_123a", gmlidListArrList.get(0));
+            assertEquals(1, dataContentArrList.size());
+            assertEquals("BLDG_123a", dataContentArr[0]);
+            assertEquals("1.0#4.0#1.0#4.0", dataContentArr[1]);
+            assertEquals("2.5#2.5", dataContentArr[2]);
+            assertEquals(this.unsortedKmlFile.getName(), dataContentArr[3]);
+            assertEquals(1.0, extent_Xmin.get(task));
+            assertEquals(4.0, extent_Xmax.get(task));
+            assertEquals(1.0, extent_Ymin.get(task));
+            assertEquals(4.0, extent_Ymax.get(task));
+        } catch (IOException | XMLStreamException | NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testArr2Str() {
+        try {
+            KMLTilingTask task = new KMLTilingTask(this.path2unsortedKML, this.path2sortedKML, this.databaseCRS, this.displayForm, this.namespaceIri);
+            Method arr2str = task.getClass().getDeclaredMethod("arr2str", double[].class);
+            arr2str.setAccessible(true);
+
+            double[] arr = {0.0, 1.0, 2.0, 3.0};
+
+            assertEquals("0.0#1.0#2.0#3.0", arr2str.invoke(task, arr));
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testCreateCSVFile() {
+        try {
+            KMLTilingTask task = new KMLTilingTask(this.path2unsortedKML, this.path2sortedKML, this.databaseCRS, this.displayForm, this.namespaceIri);
+            Method createCSVFile = task.getClass().getDeclaredMethod("createCSVFile", List.class);
+            createCSVFile.setAccessible(true);
+
+            String[] dataArr = {"BLDG_123a", "0.0#1.0#2.0#3.0", "1.0#1.0", "testoutput.kml"};
+            List<String[]> dataContent = new ArrayList<>();
+            dataContent.add(dataArr);
+
+            createCSVFile.invoke(task, dataContent);
+
+            assertTrue(this.summcsv.exists());
+
+            CSVParser parser = new CSVParserBuilder().withEscapeChar('\0').build();
+            try (CSVReader reader = new CSVReaderBuilder(new FileReader(this.summcsv.getAbsolutePath())).withCSVParser(parser).build()) {
+                String[] header = reader.readNext();
+// check csv contents?
+            }
+
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IOException | CsvValidationException e) {
             fail();
         }
     }
