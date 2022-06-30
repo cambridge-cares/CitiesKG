@@ -97,6 +97,8 @@ public class GeoSpatialProcessor {
     /**
      * Simulate ST_Transform for blazegraph based on JTS, equivalent ST_Transform(Geometry g1, integer srid)
      * https://postgis.net/docs/ST_Transform.html
+     * transform between Geometry defined by geotools
+     *
      *
      * @param sourceGeometry     - Geometry to be transformed
      * @param srcSRID            - Source srid
@@ -105,12 +107,7 @@ public class GeoSpatialProcessor {
      */
     public Geometry Transform(Geometry sourceGeometry, int srcSRID, int dstSRID) {
 
-        GeometryFactory fac = new GeometryFactory();
-
-        // need to reverse the coordinates of the polygpn
-        //Coordinate[] sourceCoords = getReversedCoordinates(geom);
-
-        //Geometry sourceGeometry = fac.createGeometry(geom);
+        //GeometryFactory fac = new GeometryFactory();
 
         Geometry targetGeometry = null;
         try {
@@ -296,12 +293,19 @@ public class GeoSpatialProcessor {
     }
 
     // Reverse the coordinates X and Y
-    public Coordinate[] reverseCoordinates (Coordinate[] original) {
+    public Coordinate[] reverseCoordinates (Coordinate[] original, int dim) {
 
         Coordinate[] reversed = new Coordinate[original.length];
+
         for (int i = 0; i < original.length; i++) {
-            reversed[i] = new Coordinate(original[i].getY(), original[i].getX(), original[i].getZ());
+            if (dim == 2) {
+                reversed[i] = new CoordinateXY(original[i].getY(), original[i].getX());
+            }else {
+                reversed[i] = new CoordinateXYZM(original[i].getY(), original[i].getX(),
+                    original[i].getZ(), 0.0);
+            }
         }
+
         return reversed;
     }
 
@@ -311,7 +315,7 @@ public class GeoSpatialProcessor {
 
         String datatype = datatypeURI.substring(datatypeURI.lastIndexOf('/') + 1);
         String[] datatype_list = datatype.split("-");
-        String geomtype = datatype_list[0];
+        String geomtype = datatype_list[0];  // usually "POLYGON"
         int dim = Integer.valueOf(datatype_list[1]);
         int[] dimOfRings = new int[datatype_list.length-2];
         for (int i = 2; i < datatype_list.length; ++i){
@@ -322,22 +326,27 @@ public class GeoSpatialProcessor {
 
         GeometryBuilder builder = new GeometryBuilder();
         String[] coords = coordlist.split("#");
-        double[] ord = new double[coords.length];
-        for (int i = 0; i < coords.length; ++i) {
-            ord[i] = Double.valueOf(coords[i]);
-        }
-        Polygon polygon3d = null;
-        Geometry geomObj = null;
-        LinearRing lingring3d = null;
-        Coordinate[] coordinates = str2coords(coordlist).toArray(new Coordinate[0]);
+
         GeometryObject geom = null;
-        if (dimOfRings.length == 1) {
-            //polygon3d = builder.polygonZ(ord);
-            //lingring3d = builder.linearRingZ(ord);
-            geom = GeometryObject.createPolygon(ord, dim, 4326);
-            //LinearRing shell = fac.createLinearRing(coordinates);
-            //geom = fac.createPolygon(shell);
-            //System.out.println(polygon3d);
+        if (dimOfRings.length == 1){
+            double[] ord = new double[coords.length];
+            for (int i = 0; i < coords.length; ++i) {
+                ord[i] = Double.valueOf(coords[i]);
+            }
+
+            geom = GeometryObject.createPolygon(ord, dim, 4326); // the first argument should be double[]
+
+        }else {
+            double[][] ord = new double[dimOfRings.length][];
+            int start_index = 0;
+            for (int i = 0; i < dimOfRings.length; ++i){
+                ord[i] = new double[dimOfRings[i]];
+                for (int j = 0; j < dimOfRings[i]; ++j){
+                    ord[i][j] = Double.valueOf(coords[start_index + j]);
+                }
+                start_index += dimOfRings[i];
+            }
+            geom = GeometryObject.createPolygon(ord, dim, 4326);  // the first argument should be double[][], in which the first ring should be exterior
         }
 
         return geom;
