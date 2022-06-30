@@ -425,7 +425,7 @@ class KMLTilingTaskTest {
     }
 
     @Test
-    public void testUpdateExtent() {
+    public void testUpdateExtent1DArray() {
         try {
             KMLTilingTask task = new KMLTilingTask(this.path2unsortedKML, this.path2sortedKML, this.databaseCRS, this.displayForm, this.namespaceIri);
             Method updateExtent = task.getClass().getDeclaredMethod("updateExtent", double[].class);
@@ -448,29 +448,78 @@ class KMLTilingTaskTest {
             Textent_Ymax.setAccessible(true);
 
             // test case where geom envelope is not within current envelope, extent should be updated
-            double[] geomEnvelope1 = {2.0, 2.0, 2.0, 2.0};
+            double[] geomEnvelope1 = {0.0, 1.0, 0.0, 1.0};
             updateExtent.invoke(task, geomEnvelope1);
-            assertEquals(2.0, extent_Xmin.get(task));
-            assertEquals(2.0, extent_Xmax.get(task));
-            assertEquals(2.0, extent_Ymin.get(task));
-            assertEquals(2.0, extent_Ymax.get(task));
-            assertEquals(2.0, Textent_Xmin.get(task));
-            assertEquals(2.0, Textent_Xmax.get(task));
-            assertEquals(2.0, Textent_Ymin.get(task));
-            assertEquals(2.0, Textent_Ymax.get(task));
+            assertEquals(0.0, extent_Xmin.get(task));
+            assertEquals(1.0, extent_Xmax.get(task));
+            assertEquals(0.0, extent_Ymin.get(task));
+            assertEquals(1.0, extent_Ymax.get(task));
+            assertEquals(0.0, Textent_Xmin.get(task));
+            assertEquals(1.0, Textent_Xmax.get(task));
+            assertEquals(0.0, Textent_Ymin.get(task));
+            assertEquals(1.0, Textent_Ymax.get(task));
 
+            // test case where geom envelope is within current envelope, and extent should not be updated
+            double[] geomEnvelope2 = {0.2, 0.8, 0.2, 0.8};
+            updateExtent.invoke(task, geomEnvelope2);
+            assertEquals(0.0, extent_Xmin.get(task));
+            assertEquals(1.0, extent_Xmax.get(task));
+            assertEquals(0.0, extent_Ymin.get(task));
+            assertEquals(1.0, extent_Ymax.get(task));
+            assertEquals(0.0, Textent_Xmin.get(task));
+            assertEquals(1.0, Textent_Xmax.get(task));
+            assertEquals(0.0, Textent_Ymin.get(task));
+            assertEquals(1.0, Textent_Ymax.get(task));
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
+            fail();
+        }
+    }
 
-//            // test case where geom envelope is within current envelope, and extent should not be updated
-//            double[] geomEnvelope2 = {3.0, 1.0, 3.0, 1.0};
-//            updateExtent.invoke(task, geomEnvelope2);
-//            assertEquals(2.0, extent_Xmin.get(task));
-//            assertEquals(2.0, extent_Xmax.get(task));
-//            assertEquals(2.0, extent_Ymin.get(task));
-//            assertEquals(2.0, extent_Ymax.get(task));
-//            assertEquals(2.0, Textent_Xmin.get(task));
-//            assertEquals(2.0, Textent_Xmax.get(task));
-//            assertEquals(2.0, Textent_Ymin.get(task));
-//            assertEquals(2.0, Textent_Ymax.get(task));
+    @Test
+    public void testUpdateExtent2DArray() {
+        try {
+            KMLTilingTask task = new KMLTilingTask(this.path2unsortedKML, this.path2sortedKML, this.databaseCRS, this.displayForm, this.namespaceIri);
+            Method updateExtent = task.getClass().getDeclaredMethod("updateExtent", double[][].class);
+            Field extent_Xmin = task.getClass().getDeclaredField("extent_Xmin");
+            extent_Xmin.setAccessible(true);
+            Field extent_Xmax = task.getClass().getDeclaredField("extent_Xmax");
+            extent_Xmax.setAccessible(true);
+            Field extent_Ymin = task.getClass().getDeclaredField("extent_Ymin");
+            extent_Ymin.setAccessible(true);
+            Field extent_Ymax = task.getClass().getDeclaredField("extent_Ymax");
+            extent_Ymax.setAccessible(true);
+            Field Textent_Xmin = task.getClass().getDeclaredField("Textent_Xmin");
+            Textent_Xmin.setAccessible(true);
+            Field Textent_Xmax = task.getClass().getDeclaredField("Textent_Xmax");
+            Textent_Xmax.setAccessible(true);
+            Field Textent_Ymin = task.getClass().getDeclaredField("Textent_Ymin");
+            Textent_Ymin.setAccessible(true);
+            Field Textent_Ymax = task.getClass().getDeclaredField("Textent_Ymax");
+            Textent_Ymax.setAccessible(true);
+
+            // test case where geom envelope is not within current envelope, extent should be updated
+            double[][] geomEnvelope1 = {{0.0, 0.0}, {0.0, 1.0}, {1.0, 1.0}, {1.0, 0.0}, {0.0, 0.0}};
+            updateExtent.invoke(task, (Object) geomEnvelope1);
+            assertEquals(0.0, extent_Xmin.get(task));
+            assertEquals(1.0, extent_Xmax.get(task));
+            assertEquals(0.0, extent_Ymin.get(task));
+            assertEquals(1.0, extent_Ymax.get(task));
+            assertEquals(0.0, Textent_Xmin.get(task));
+            assertEquals(1.0, Textent_Xmax.get(task));
+            assertEquals(0.0, Textent_Ymin.get(task));
+            assertEquals(1.0, Textent_Ymax.get(task));
+
+            // test case where geom envelope is within current envelope, and extent should not be updated
+            double[][] geomEnvelope2 = {{0.2, 0.2}, {0.2, 0.8}, {0.8, 0.8}, {0.8, 0.2}, {0.2, 0.2}};
+            updateExtent.invoke(task, (Object) geomEnvelope2);
+            assertEquals(0.0, extent_Xmin.get(task));
+            assertEquals(1.0, extent_Xmax.get(task));
+            assertEquals(0.0, extent_Ymin.get(task));
+            assertEquals(1.0, extent_Ymax.get(task));
+            assertEquals(0.0, Textent_Xmin.get(task));
+            assertEquals(1.0, Textent_Xmax.get(task));
+            assertEquals(0.0, Textent_Ymin.get(task));
+            assertEquals(1.0, Textent_Ymax.get(task));
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
             fail();
         }
