@@ -24,12 +24,8 @@ import gov.nasa.worldwind.ogc.kml.KMLPlacemark;
 import gov.nasa.worldwind.ogc.kml.KMLPoint;
 import gov.nasa.worldwind.ogc.kml.KMLPolygon;
 import gov.nasa.worldwind.ogc.kml.KMLRoot;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -728,9 +724,9 @@ public class KMLTilingTask implements Runnable{
     this.buildingInTiles += list.size();
     Kml kml = new Kml();
     kml.createAndSetDocument().withName(name).withOpen(false).withFeature(list).withStyleSelector(styles);
-    try {
-      kml.marshal(file);
-    } catch (FileNotFoundException e) {
+    try (OutputStream out = new FileOutputStream(file)) {
+      kml.marshal(out);
+    } catch (IOException e) {
       e.printStackTrace();
     }
   }
