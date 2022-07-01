@@ -806,8 +806,6 @@ class KMLTilingTaskTest {
             tilingCSV.setAccessible(true);
             Field csvData = task.getClass().getDeclaredField("csvData");
             csvData.setAccessible(true);
-            Field featuresMap = task.getClass().getDeclaredField("featuresMap");
-            featuresMap.setAccessible(true);
             Field fileStatus = task.getClass().getDeclaredField("fileStatus");
             fileStatus.setAccessible(true);
             Field nRow = task.getClass().getDeclaredField("nRow");
@@ -816,7 +814,6 @@ class KMLTilingTaskTest {
             nCol.setAccessible(true);
 
             // test case when there is one file
-            // check setup and teardown
             setUp(true, false, true);
             tilingCSV.set(task, this.sortedcsv.toPath());
             nRow.set(task, 1);
@@ -826,25 +823,11 @@ class KMLTilingTaskTest {
 
             assertTrue(this.tilesDir.exists());
             assertEquals(1, ((Map<?, ?>) csvData.get(task)).size());
-            //assertTrue((Boolean) ((Map<?, ?>) fileStatus.get(task)).get(this.unsortedKmlFile));
+            assertTrue((Boolean) ((Map<?, ?>) fileStatus.get(task)).get(this.unsortedKmlFile.getAbsolutePath()));
             assertTrue(this.tilekml.exists());
-
-
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
             fail();
         }
-        // put sorted csv
-        // put unsorted kml
-
-        // test case when theres 1 file
-
-        // csvdata field should not be empty
-        // features map should have something
-        // file status should be read
-        // 0,0 dir should be created/ tile 0 0  file exists
-
-
-
     }
 
 }
