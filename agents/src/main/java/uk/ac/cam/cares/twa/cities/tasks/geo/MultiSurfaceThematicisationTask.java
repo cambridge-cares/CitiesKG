@@ -585,7 +585,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
 //        context.pushChanges(buildingModel);
         context.delete(cityObjectModel,true);
 //        context.pushChanges(cityObjectModel);
-        context.pushAllChanges();;
+        context.pushAllChanges();
 
         }else{
         context.members.clear();

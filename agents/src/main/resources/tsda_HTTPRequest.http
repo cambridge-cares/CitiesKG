@@ -11,7 +11,7 @@ Content-Type: application/json
 //               : "merge" to check whether a building has been separated into differenct parts and stored under several UUID, then merge them
 // "cityObjectIRI": "http://192.168.0.101:9999/blazegraph/namespace/onemapsgEPSG24500/sparql/building/UUID_enhanced_v_6_0_0_0/",
 
-{"namespace": "http://10.25.188.180:9999/blazegraph/namespace/onemapsgEPSG24500/sparql/",
+{"namespace": "http://10.25.188.180:9999/blazegraph/namespace/onemapsgTEST/sparql/",
   "lod3": "true",
   "threshold": "5",
   "mode": "merge"}
