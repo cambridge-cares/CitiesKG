@@ -88,7 +88,6 @@ class KMLTilingTaskTest {
     @AfterEach
     public void tearDown() {
         if (Objects.requireNonNull(this.tilekml.exists())) {
-            // not deleting for sortingKml, check this
             if (!this.tilekml.delete()) {
                 fail();
             }
