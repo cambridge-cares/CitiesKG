@@ -9,6 +9,7 @@ import com.opencsv.exceptions.CsvException;
 import de.micromata.opengis.kml.v_2_2_0.Feature;
 import gov.nasa.worldwind.ogc.kml.KMLAbstractFeature;
 import gov.nasa.worldwind.ogc.kml.KMLRoot;
+import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -112,25 +113,10 @@ class KMLTilingTaskTest {
                 fail();
             }
         }
-        File tile0dir = new File (this.tilesDir + this.FS + "0");
-        File tile00dir = new File (tile0dir.getAbsolutePath() + this.FS + "0");
-        if (Objects.requireNonNull(tile00dir.exists())) {
-            if (!tile00dir.delete()) {
-                fail();
-            }
-        }
-        if (Objects.requireNonNull(tile0dir.exists())) {
-            if (!tile0dir.delete()) {
-                fail();
-            }
-        }
         if (Objects.requireNonNull(this.tilesDir.exists())) {
-            if (!this.tilesDir.delete()) {
-                fail();
-            }
-        }
-        if (Objects.requireNonNull(this.tilesDir.exists())) {
-            if (!this.tilesDir.delete()) {
+            try {
+                FileUtils.deleteDirectory(this.tilesDir);
+            } catch (IOException e) {
                 fail();
             }
         }
