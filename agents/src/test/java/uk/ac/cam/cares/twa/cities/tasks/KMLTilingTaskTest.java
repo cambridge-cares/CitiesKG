@@ -6,7 +6,7 @@ import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
-import de.micromata.opengis.kml.v_2_2_0.Feature;
+import de.micromata.opengis.kml.v_2_2_0.*;
 import gov.nasa.worldwind.ogc.kml.KMLAbstractFeature;
 import gov.nasa.worldwind.ogc.kml.KMLRoot;
 import org.apache.commons.io.FileUtils;
@@ -822,10 +822,285 @@ class KMLTilingTaskTest {
             sortingKml.invoke(task);
 
             assertTrue(this.tilesDir.exists());
-            assertEquals(1, ((Map<?, ?>) csvData.get(task)).size());
-            assertTrue((Boolean) ((Map<?, ?>) fileStatus.get(task)).get(this.unsortedKmlFile.getAbsolutePath()));
+            assertEquals(1, ((Map<String, ArrayList<String[]>>) csvData.get(task)).size());
+            assertTrue((Boolean) ((Map<String, Boolean>) fileStatus.get(task)).get(this.unsortedKmlFile.getAbsolutePath()));
             assertTrue(this.tilekml.exists());
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testInitFileStatus() {
+        try {
+            KMLTilingTask task = new KMLTilingTask(this.path2unsortedKML, this.path2sortedKML, this.databaseCRS, this.displayForm, this.namespaceIri);
+            Method initFileStatus = task.getClass().getDeclaredMethod("initFilesStatus", String.class);
+            initFileStatus.setAccessible(true);
+            Field fileStatus = task.getClass().getDeclaredField("fileStatus");
+            fileStatus.setAccessible(true);
+
+            setUp(true, false, false);
+
+            initFileStatus.invoke(task, this.unsortedDir.getAbsolutePath());
+
+            assertFalse((Boolean) ((Map<String, Boolean>) fileStatus.get(task)).get(this.unsortedKmlFile.getAbsolutePath()));
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testIsImported() {
+        try {
+            KMLTilingTask task = new KMLTilingTask(this.path2unsortedKML, this.path2sortedKML, this.databaseCRS, this.displayForm, this.namespaceIri);
+            Method isImported = task.getClass().getDeclaredMethod("isImported", String.class);
+            isImported.setAccessible(true);
+            Field fileStatus = task.getClass().getDeclaredField("fileStatus");
+            fileStatus.setAccessible(true);
+
+            Map<String, Boolean> fileStatusMap = (Map<String, Boolean>) fileStatus.get(task);
+
+            fileStatusMap.put("testpath", false);
+            assertFalse((Boolean) isImported.invoke(task, "testpath"));
+            fileStatusMap.put("testpath", true);
+            assertTrue((Boolean) isImported.invoke(task, "testpath"));
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testUpdateFileStatus() {
+        try {
+            KMLTilingTask task = new KMLTilingTask(this.path2unsortedKML, this.path2sortedKML, this.databaseCRS, this.displayForm, this.namespaceIri);
+            Method updateFileStatus = task.getClass().getDeclaredMethod("updateFileStatus", String.class, boolean.class);
+            updateFileStatus.setAccessible(true);
+            Field fileStatus = task.getClass().getDeclaredField("fileStatus");
+            fileStatus.setAccessible(true);
+
+            Map<String, Boolean> fileStatusMap = (Map<String, Boolean>) fileStatus.get(task);
+
+            fileStatusMap.put("testpath", false);
+            assertFalse(fileStatusMap.get("testpath"));
+            updateFileStatus.invoke(task, "testpath", true);
+            assertTrue(fileStatusMap.get("testpath"));
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testReadCSV2Map() {
+        try {
+            KMLTilingTask task = new KMLTilingTask(this.path2unsortedKML, this.path2sortedKML, this.databaseCRS, this.displayForm, this.namespaceIri);
+            Method readCSV2Map = task.getClass().getDeclaredMethod("readCSV2Map", String.class);
+            readCSV2Map.setAccessible(true);
+
+            setUp(false, false, true);
+
+            HashMap<String, ArrayList<String[]>> map = (HashMap<String, ArrayList<String[]>>) readCSV2Map.invoke(task, this.sortedcsv.getAbsolutePath());
+            assertEquals(1, map.size());
+            assertTrue(map.containsKey("0#0"));
+            String[] row = map.get("0#0").get(0);
+            assertEquals("BLDG_123a", row[0]);
+            assertEquals("0.0#1.0#2.0#3.0", row[1]);
+            assertEquals("1.0#1.0", row[2]);
+            assertEquals("0#0", row[3]);
+            assertEquals("testoutput.kml", row[4]);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testGetFeaturesInTile() {
+        try {
+            KMLTilingTask task = new KMLTilingTask(this.path2unsortedKML, this.path2sortedKML, this.databaseCRS, this.displayForm, this.namespaceIri);
+            Method getFeaturesInTile = task.getClass().getDeclaredMethod("getFeaturesInTile", HashMap.class);
+            getFeaturesInTile.setAccessible(true);
+            Field fileStatus = task.getClass().getDeclaredField("fileStatus");
+            fileStatus.setAccessible(true);
+            Field featuresMap = task.getClass().getDeclaredField("featuresMap");
+            featuresMap.setAccessible(true);
+
+            setUp(true, false, false);
+            Map<String, Boolean> fileStatusMap = (Map<String, Boolean>) fileStatus.get(task);
+            fileStatusMap.put(this.unsortedKmlFile.getAbsolutePath(), false);
+
+            HashMap<String, ArrayList<String>> map = new HashMap<>();
+            map.put(this.unsortedKmlFile.getAbsolutePath(), new ArrayList<>(Collections.singleton("BLDG_123a")));
+
+            List<Feature> features = (List<Feature>) getFeaturesInTile.invoke(task, map);
+
+            assertEquals(1, features.size());
+            assertTrue(fileStatusMap.get(this.unsortedKmlFile.getAbsolutePath()));
+            assertEquals(0, ((Map<String, Feature>) featuresMap.get(task)).size());
+
+            Polygon polygon = (Polygon) (((MultiGeometry) (((Placemark) features.get(0)).getGeometry())).getGeometry()).get(0);
+            assertTrue(polygon.isExtrude());
+            assertTrue(polygon.isTessellate());
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testGetBuildingsInTile() {
+        try {
+            KMLTilingTask task = new KMLTilingTask(this.path2unsortedKML, this.path2sortedKML, this.databaseCRS, this.displayForm, this.namespaceIri);
+            Method getBuildingsInTile = task.getClass().getDeclaredMethod("getBuildingsInTile", int.class, int.class);
+            getBuildingsInTile.setAccessible(true);
+            Field csvData = task.getClass().getDeclaredField("csvData");
+            csvData.setAccessible(true);
+            Field count = task.getClass().getDeclaredField("count");
+            count.setAccessible(true);
+
+            HashMap<String, ArrayList<String[]>> map = new HashMap<>();
+            String[] row1 = {"BLDG_123a", "0.0#1.0#2.0#3.0", "1.0#1.0", "0#0", "testoutput.kml"};
+            String[] row2 = {"BLDG_123b", "0.0#1.0#2.0#3.0", "1.0#1.0", "0#0", "testoutput.kml"};
+            ArrayList<String[]> rows = new ArrayList<>();
+            rows.add(row1);
+            rows.add(row2);
+            map.put("0#0", rows);
+            csvData.set(task, map);
+
+            HashMap<String, ArrayList<String>> buildings = (HashMap<String, ArrayList<String>>) getBuildingsInTile.invoke(task, 0, 0);
+
+            assertTrue(buildings.containsKey(this.unsortedKmlFile.getAbsolutePath()));
+            assertEquals(1, buildings.size());
+            ArrayList<String> list = buildings.get(this.unsortedKmlFile.getAbsolutePath());
+            assertEquals(2, list.size());
+            assertEquals("BLDG_123a", list.get(0));
+            assertEquals("BLDG_123b", list.get(1));
+            assertEquals(2, count.get(task));
+        } catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException | InvocationTargetException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testCreateFeatureLists() {
+        try {
+            KMLTilingTask task = new KMLTilingTask(this.path2unsortedKML, this.path2sortedKML, this.databaseCRS, this.displayForm, this.namespaceIri);
+            Method createFeatureLists = task.getClass().getDeclaredMethod("createFeatureLists");
+            createFeatureLists.setAccessible(true);
+            Field nRow = task.getClass().getDeclaredField("nRow");
+            nRow.setAccessible(true);
+            Field nCol = task.getClass().getDeclaredField("nCol");
+            nCol.setAccessible(true);
+            Field tileFeatureMap = task.getClass().getDeclaredField("tileFeatureMap");
+            tileFeatureMap.setAccessible(true);
+
+            nRow.set(task, 2);
+            nCol.set(task, 2);
+
+            createFeatureLists.invoke(task);
+
+            HashMap<String, List<Feature>> map = (HashMap<String, List<Feature>>) tileFeatureMap.get(task);
+            assertEquals(4, map.size());
+            assertTrue(map.containsKey("test_Tile_0_0_extruded"));
+            assertEquals(0, map.get("test_Tile_0_0_extruded").size());
+            assertTrue(map.containsKey("test_Tile_0_1_extruded"));
+            assertEquals(0, map.get("test_Tile_0_1_extruded").size());
+            assertTrue(map.containsKey("test_Tile_1_0_extruded"));
+            assertEquals(0, map.get("test_Tile_1_0_extruded").size());
+            assertTrue(map.containsKey("test_Tile_1_1_extruded"));
+            assertEquals(0, map.get("test_Tile_1_1_extruded").size());
+        } catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException | InvocationTargetException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testGetFeaturesFromKml() {
+        try {
+            KMLTilingTask task = new KMLTilingTask(this.path2unsortedKML, this.path2sortedKML, this.databaseCRS, this.displayForm, this.namespaceIri);
+            Method getFeaturesFromKml = task.getClass().getDeclaredMethod("getFeaturesFromKml", File.class);
+            getFeaturesFromKml.setAccessible(true);
+
+            setUp(true, false, false);
+
+            HashMap<String, Feature> map = (HashMap<String, Feature>) getFeaturesFromKml.invoke(task, this.unsortedKmlFile);
+
+            assertEquals(1, map.size());
+            assertTrue(map.containsKey("BLDG_123a"));
+            assertEquals("BLDG_123a", map.get("BLDG_123a").getName());
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testGetStylesFromKml() {
+        try {
+            KMLTilingTask task = new KMLTilingTask(this.path2unsortedKML, this.path2sortedKML, this.databaseCRS, this.displayForm, this.namespaceIri);
+            Method getStylesFromKml = task.getClass().getDeclaredMethod("getStylesFromKml", File.class);
+            getStylesFromKml.setAccessible(true);
+
+            setUp(true, false, false);
+
+            List<StyleSelector> list = (List<StyleSelector>) getStylesFromKml.invoke(task, this.unsortedKmlFile);
+
+            assertEquals(1, list.size());
+            Style style = (Style) list.get(0);
+            assertEquals("FF0000FF", style.getLineStyle().getColor());
+            assertEquals(2.0, style.getLineStyle().getWidth());
+            assertEquals("FF0000FF", style.getPolyStyle().getColor());
+            assertEquals("$[description]", style.getBalloonStyle().getText());
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testCreateTilesDirs() {
+        try {
+            KMLTilingTask task = new KMLTilingTask(this.path2unsortedKML, this.path2sortedKML, this.databaseCRS, this.displayForm, this.namespaceIri);
+            Method createTilesDirs = task.getClass().getDeclaredMethod("createTilesDirs", String.class);
+            createTilesDirs.setAccessible(true);
+            Field nRow = task.getClass().getDeclaredField("nRow");
+            nRow.setAccessible(true);
+            Field nCol = task.getClass().getDeclaredField("nCol");
+            nCol.setAccessible(true);
+
+            nRow.set(task, 1);
+            nCol.set(task, 1);
+
+            createTilesDirs.invoke(task, this.sortedDir.getAbsolutePath());
+
+            assertTrue(this.tilesDir.exists());
+            assertTrue(new File(this.tilesDir.getAbsolutePath() + this.FS + "0").exists());
+            assertTrue(new File(this.tilesDir.getAbsolutePath() + this.FS + "0" + this.FS + "0").exists());
+        } catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException | InvocationTargetException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testWriteKml() {
+        try {
+            KMLTilingTask task = new KMLTilingTask(this.path2unsortedKML, this.path2sortedKML, this.databaseCRS, this.displayForm, this.namespaceIri);
+            Method writeKml = task.getClass().getDeclaredMethod("writeKml", File.class, List.class, List.class, String.class);
+            writeKml.setAccessible(true);
+            Field buildingInTiles = task.getClass().getDeclaredField("buildingInTiles");
+            buildingInTiles.setAccessible(true);
+
+            if (!new File(this.tilesDir + this.FS + "0" + this.FS + "0").mkdirs()) fail();
+            List<Feature> features = new ArrayList<>(Collections.singleton(new Placemark().withName("feature").withStyleUrl("#style1")));
+            List<StyleSelector> styles = new ArrayList<>(Collections.singleton(new Style().withLineStyle(new LineStyle().withWidth(1.0))));
+
+            writeKml.invoke(task, this.tilekml, features, styles, "test");
+
+            assertTrue(this.tilekml.exists());
+
+            assertEquals(1, buildingInTiles.get(task));
+            Document doc = (Document) Kml.unmarshal(this.tilekml).getFeature();
+            assertEquals(1, doc.getFeature().size());
+            assertEquals("feature", doc.getFeature().get(0).getName());
+            assertEquals("#style1", doc.getFeature().get(0).getStyleUrl());
+            assertEquals(1, doc.getStyleSelector().size());
+            assertEquals(1.0, ((Style) doc.getStyleSelector().get(0)).getLineStyle().getWidth());
+        } catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException | InvocationTargetException e) {
             fail();
         }
     }
