@@ -33,13 +33,13 @@ public class ExporterTaskTest {
     public String FS = System.getProperty("file.separator");
     public String namespaceIri = "http://127.0.0.1:9999/blazegraph/namespace/test/sparql";
     public JSONObject serverInfo = new JSONObject().put("host", "127.0.0.1").put("port", "9999").put("namespace", "/blazegraph/namespace/test/sparql");
-    public String srsname = "EPSG:25833";
+    public int srid = 25833;
     public String outputDir = System.getProperty("java.io.tmpdir") + "export";
     public String outputPath = outputDir + this.FS + "test.kml";
     public String[] displayMode = {"false", "true", "false", "false"};
     public int lod = 2;
     public String[] gmlIds = {"BLDG_123a"};
-    public CityExportAgent.Params taskParams = new CityExportAgent.Params(namespaceIri, serverInfo, srsname, outputDir, outputPath, displayMode, lod, gmlIds);
+    public CityExportAgent.Params taskParams = new CityExportAgent.Params(namespaceIri, serverInfo, srid, outputDir, outputPath, displayMode, lod, gmlIds);
 
     // for tear down of directories and files
     public File kmlDir = new File(this.outputDir + this.FS + "kmlFiles");
