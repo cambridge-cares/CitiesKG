@@ -512,6 +512,7 @@ public class KMLTilingTask implements Runnable{
     System.out.println("start: " + start + " ms\nend: " + end + " ms"); // @todo: need to genrate the run journal file
     System.out.println("buildings: " + this.count);
     System.out.println("Features have written: " + this.buildingInTiles);
+    System.out.println("The tiling process is done!!");
 
   }
 
