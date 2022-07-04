@@ -1,18 +1,6 @@
 package uk.ac.cam.cares.twa.cities.model.geo;
 
-import com.opencsv.CSVParser;
-import com.opencsv.CSVParserBuilder;
-import com.opencsv.CSVReader;
-import com.opencsv.CSVReaderBuilder;
-import com.opencsv.CSVWriter;
-import com.opencsv.exceptions.CsvException;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -21,10 +9,6 @@ import java.util.Set;
 public class Utilities {
 
   private String[] filesList;
-  private File currFile;
-  private String outCsvFile = "sorted_summary";
-  private String outFileExt = ".csv";
-  private String outputDir = "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\";
   private String inputDir;
 
   public Utilities(String path) {
