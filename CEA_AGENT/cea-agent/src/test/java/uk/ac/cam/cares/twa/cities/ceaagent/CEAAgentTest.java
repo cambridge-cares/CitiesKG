@@ -1,16 +1,12 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
-import junit.framework.TestCase;
-import org.apache.jena.arq.querybuilder.SelectBuilder;
-import org.apache.jena.arq.querybuilder.WhereBuilder;
+import org.jooq.exception.DataAccessException;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedConstruction;
+import org.mockito.MockedStatic;
+import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeries;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeriesClient;
 import org.apache.jena.query.Query;
@@ -19,10 +15,6 @@ import uk.ac.cam.cares.twa.cities.tasks.RunCEATask;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Field;
@@ -30,12 +22,11 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
-import static org.mockito.Mockito.*;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({CEAAgent.class})
-@PowerMockIgnore({"javax.management.*", "javax.script.*"})
-public class CEAAgentTest extends TestCase {
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class CEAAgentTest {
     @Test
     public void testCEAAgent() {
        CEAAgent agent;
@@ -235,19 +226,17 @@ public class CEAAgentTest extends TestCase {
     }
 
     @Test
-    public void testProcessRequestParameters() {
-        CEAAgent agent = PowerMockito.spy(new CEAAgent());
+    public void testProcessRequestParameters()
+            throws NoSuchMethodException, InvocationTargetException , IllegalAccessException, NoSuchFieldException {
 
-        TimeSeriesClient<OffsetDateTime> client = mock(TimeSeriesClient.class);
-
-        Method processRequestParameters = null;
-        try{
-            processRequestParameters = agent.getClass().getDeclaredMethod("processRequestParameters", JSONObject.class);
-        } catch(NoSuchMethodException e) {
-            fail();
-        }
-
+        CEAAgent agent = spy(new CEAAgent());
+        Method processRequestParameters = agent.getClass().getDeclaredMethod("processRequestParameters", JSONObject.class);
         JSONObject requestParams = new JSONObject();
+
+        // set route
+        Field localRoute = agent.getClass().getDeclaredField("localRoute");
+        localRoute.setAccessible(true);
+        localRoute.set(agent, "test_route");
 
         // Test empty request params
         try {
@@ -258,74 +247,106 @@ public class CEAAgentTest extends TestCase {
                     BadRequestException.class);
         }
 
-        // Test update endpoint
+        // test data
+        String measure_grid = "grid_demand";
+        String measure_elec = "electricity_demand";
+        String measure_heating = "heating_demand";
+        String measure_cooling = "cooling_demand";
+        String measure_PV_roof = "PV_supply_roof";
+        String measure_PV_south = "PV_supply_wall_south";
+        String measure_PV_north = "PV_supply_wall_north";
+        String measure_PV_east = "PV_supply_wall_east";
+        String measure_PV_west = "PV_supply_wall_west";
+        String measure_building = "energyProfileBuilding";
+        String test_measure = "test_uri1";
+        String building = "test_building_uri";
+        String measure_height = "Height";
+        String test_height = "5.0";
+        String measure_footprint = "Footprint";
+        String test_footprint1 = "559267.200000246#313892.7999989044#0.0#559280.5400002463#313892.7999989044#0.0#559280.5400002463#313908.7499989033#0.0#559267.200000246#313908.7499989033#0.0#559267.200000246#313892.7999989044#0.0";
+        String measure_crs = "CRS";
+        String test_crs = "test_crs";
+
+        JSONArray expected_ts = new JSONArray().put(new JSONObject().put(measure_grid, test_measure).put(measure_elec, test_measure).put(measure_heating, test_measure).put(measure_cooling, test_measure)
+                .put(measure_PV_roof, test_measure).put(measure_PV_south, test_measure).put(measure_PV_north, test_measure).put(measure_PV_east, test_measure).put(measure_PV_west, test_measure));
+        JSONArray expected_building = new JSONArray().put(new JSONObject().put(measure_building, building));
+        JSONArray expected_height = new JSONArray().put(new JSONObject().put(measure_height, test_height));
+        JSONArray expected_footprint = new JSONArray().put(new JSONObject().put(measure_footprint, test_footprint1));
+        JSONArray expected_crs = new JSONArray().put(new JSONObject().put(measure_crs, test_crs));
+
+        // Test the update endpoint
         requestParams.put(CEAAgent.KEY_REQ_URL, "http://localhost:8086/agents/cea/update");
         requestParams.put(CEAAgent.KEY_IRI, "['http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/']");
         requestParams.put(CEAAgent.KEY_TARGET_URL, "http://localhost:8086/agents/cea/update");
+        requestParams.put(CEAAgent.KEY_REQ_METHOD, HttpMethod.POST);
 
-        doReturn(true).when(agent).validateInput(any());
-        doReturn("").when(agent).checkBlazegraphAndTimeSeriesInitialised(anyString(), any(), anyString());
-        doReturn("testBuilding").when(agent).sparqlUpdate(any(),any(),anyString(), anyInt(), anyString());
-        doNothing().when(agent).sparqlGenAttributeUpdate(anyString(),anyString(), anyString());
-        doReturn(new JSONArray("[{'': ''}]")).when(agent).queryStore(anyString(), anyString());
+        JSONArray arrayMock = mock(JSONArray.class);
+        when(arrayMock.length()).thenReturn(1);
+        when(arrayMock.getString(anyInt())).thenReturn(OffsetDateTime.now().toString()).thenReturn("4.2");
+        when(arrayMock.get(anyInt())).thenReturn(arrayMock);
 
-        String route = "test_route";
-        String namespace = "test_namespace";
+        requestParams.put(CEAAgent.KEY_GRID_DEMAND, arrayMock);
+        requestParams.put(CEAAgent.KEY_ELECTRICITY_DEMAND, arrayMock);
+        requestParams.put(CEAAgent.KEY_HEATING_DEMAND, arrayMock);
+        requestParams.put(CEAAgent.KEY_COOLING_DEMAND, arrayMock);
+        requestParams.put(CEAAgent.KEY_PV_ROOF_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_PV_ROOF_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PV_WALL_SOUTH_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_PV_WALL_SOUTH_SUPPLY,arrayMock);
+        requestParams.put(CEAAgent.KEY_PV_WALL_NORTH_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_PV_WALL_NORTH_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PV_WALL_EAST_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_PV_WALL_EAST_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PV_WALL_WEST_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_PV_WALL_WEST_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_TIMES, arrayMock);
 
-        List<OffsetDateTime> times = mock(List.class);
-        List<String> test_areas = mock(List.class);
-        List<Double> values = mock(List.class);
+        doNothing().when(agent).updateStore(anyString(), anyString());
 
-        try {
-            PowerMockito.whenNew(TimeSeriesClient.class).withAnyArguments().thenReturn(client);
-            PowerMockito.doReturn(test_areas).when(agent, "getList", any(), anyString());
-            PowerMockito.doReturn(times).when(agent, "getTimesList", any(), anyString());
-            PowerMockito.doReturn(values).when(agent, "getTimeSeriesList", any(), anyString(), anyInt());
-            PowerMockito.doNothing().when(agent, "addDataToTimeSeries", any(),  any(),  any());
-            PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
-            PowerMockito.doReturn(namespace).when(agent, "getNamespace", anyString());
-        } catch(Exception e){
-            fail();
+        JSONObject returnParams;
+
+        try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = mockStatic(AccessAgentCaller.class)) {
+
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn(expected_building).thenReturn(expected_ts);
+
+            try (MockedConstruction<TimeSeriesClient> mockTs = mockConstruction(TimeSeriesClient.class)) {
+
+                returnParams = (JSONObject) processRequestParameters.invoke(agent, requestParams);
+                verify(mockTs.constructed().get(0), times(1)).addTimeSeriesData(any());
+                assertEquals(requestParams, returnParams);
+
+            }
+
+            //Test the run endpoint
+            requestParams.remove(CEAAgent.KEY_REQ_URL);
+            requestParams.put(CEAAgent.KEY_REQ_URL, "http://localhost:8086/agents/cea/run");
+
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn(expected_height).thenReturn(expected_footprint).thenReturn(expected_crs);
+
+            try (MockedConstruction<RunCEATask> mockTask = mockConstruction(RunCEATask.class)) {
+                ThreadPoolExecutor executor = mock(ThreadPoolExecutor.class);
+                Field CEAExecutor = agent.getClass().getDeclaredField("CEAExecutor");
+                CEAExecutor.setAccessible(true);
+                CEAExecutor.set(agent, executor);
+
+                returnParams = (JSONObject) processRequestParameters.invoke(agent, requestParams);
+                verify(executor, times(1)).execute(mockTask.constructed().get(0));
+                assertEquals(requestParams, returnParams);
+            }
         }
 
-        try {
-            JSONObject returnParams = (JSONObject) processRequestParameters.invoke(agent, requestParams);
-            verify(agent, times(1)).sparqlUpdate(any(),any(),anyString(), anyInt(), anyString());
-            verify(agent, times(1)).sparqlGenAttributeUpdate(anyString(),anyString(), anyString());
-            assertEquals(requestParams,returnParams);
-        } catch(InvocationTargetException | IllegalAccessException e) {
-            fail();
-        }
-
-        //Test run
-        requestParams.remove(CEAAgent.KEY_REQ_URL);
-        requestParams.put(CEAAgent.KEY_REQ_URL, "http://localhost:8086/agents/cea/run");
-
-        String test_value = "test";
-        try {
-            PowerMockito.doReturn(test_value).when(agent, "getValue", anyString(), anyString(), anyString());
-            PowerMockito.doNothing().when(agent, "runCEA", anyList(),  anyList(),  anyInt(), anyString());
-        } catch(Exception e){
-            fail();
-        }
-
-        try {
-            JSONObject returnParams = (JSONObject) processRequestParameters.invoke(agent, requestParams);
-            assertEquals(requestParams,returnParams);
-        } catch(InvocationTargetException | IllegalAccessException e) {
-            fail();
-        }
-
-        //Test query
+        //Test the query endpoint
         requestParams.remove(CEAAgent.KEY_REQ_URL);
         requestParams.put(CEAAgent.KEY_REQ_URL, "http://localhost:8086/agents/cea/query");
 
+        //Test time series data
         String testUnit = "testUnit";
         String testScalar = "testScalar";
         ArrayList<String> testList = mock(ArrayList.class);
         when(testList.get(0)).thenReturn(testScalar);
         when(testList.get(1)).thenReturn(testUnit);
-
         String testReturnValue = "testAnnual";
         TimeSeries<OffsetDateTime> timeSeries = mock(TimeSeries.class);
 
@@ -334,34 +355,21 @@ public class CEAAgentTest extends TestCase {
         doReturn(timeSeries).when(agent).retrieveData(anyString());
         doReturn(testUnit).when(agent).getUnit(anyString());
 
-        List<String> time_series_strings = new ArrayList<>();
-        List<String> scalar_strings = new ArrayList<>();
+        Field TIME_SERIES = agent.getClass().getDeclaredField("TIME_SERIES");
+        List<String> time_series_strings = (List<String>) TIME_SERIES.get(agent);
+        Field SCALARS = agent.getClass().getDeclaredField("SCALARS");
+        List<String> scalar_strings = (List<String>) SCALARS.get(agent);
 
-        try {
-            Field TIME_SERIES = agent.getClass().getDeclaredField("TIME_SERIES");
-            time_series_strings = (List<String>) TIME_SERIES.get(agent);
-            Field SCALARS = agent.getClass().getDeclaredField("SCALARS");
-            scalar_strings = (List<String>) SCALARS.get(agent);
-        } catch(NoSuchFieldException | IllegalAccessException e){
-            fail();
+        returnParams = (JSONObject) processRequestParameters.invoke(agent, requestParams);
+        String result = returnParams.get(CEAAgent.ENERGY_PROFILE).toString();
+        for (String scalar : scalar_strings) {
+            String expected = "\"" + scalar + "\"" + ":\"testScalar testUnit\"";
+            assertTrue(result.contains(expected));
         }
-
-        try {
-            JSONObject returnParams = (JSONObject) processRequestParameters.invoke(agent, requestParams);
-            for(String scalar: scalar_strings){
-                String result = returnParams.get(CEAAgent.ENERGY_PROFILE).toString();
-                String expected = "\""+scalar+"\""+":\"testScalar testUnit\"";
-                assertTrue(result.contains(expected));
-            }
-            for(String ts: time_series_strings){
-                String result = returnParams.get(CEAAgent.ENERGY_PROFILE).toString();
-                String expected = "\"Annual "+ts+"\""+":\"testAnnual testUnit\"";
-                assertTrue(result.contains(expected));
-            }
-        } catch(InvocationTargetException | IllegalAccessException e) {
-            fail();
+        for (String ts : time_series_strings) {
+            String expected = "\"Annual " + ts + "\"" + ":\"testAnnual testUnit\"";
+            assertTrue(result.contains(expected));
         }
-
     }
 
     @Test
@@ -563,6 +571,7 @@ public class CEAAgentTest extends TestCase {
         requestParams.put("test_key_1", test_list_1);
         requestParams.put("test_key_2", test_list_2);
 
+        // test value list retrieved correctly
         List<String> result = (List<String>) getList.invoke(agent, requestParams, "test_key_2" );
         assertEquals(test_list_2, result);
 
@@ -593,6 +602,7 @@ public class CEAAgentTest extends TestCase {
         expected_list.add(4.5);
         expected_list.add(5.5);
 
+        // test time series retrieved correctly
         List<Double> result = (List<Double>) getTimeSeriesList.invoke(agent, requestParams, "test_key_1" , 1);
         assertEquals(expected_list, result);
 
@@ -617,6 +627,7 @@ public class CEAAgentTest extends TestCase {
         requestParams.put("test_key_1", test_list_1);
         requestParams.put("test_key_2", test_list_2);
 
+        // test times retrieved correctly
         List<Double> result = (List<Double>) getTimesList.invoke(agent, requestParams, "test_key_1" );
         assertEquals(test_list_1, result);
 
@@ -624,93 +635,96 @@ public class CEAAgentTest extends TestCase {
 
     @Test
     public void testRunCEA() throws Exception {
-        ThreadPoolExecutor executor = mock(ThreadPoolExecutor.class);
+        try (MockedConstruction<RunCEATask> mockTask = mockConstruction(RunCEATask.class)) {
 
-        CEAAgent agent = new CEAAgent();
-        Method runCEA = agent.getClass().getDeclaredMethod("runCEA", ArrayList.class, ArrayList.class, Integer.class, String.class);
-        assertNotNull(runCEA);
-        runCEA.setAccessible(true);
+            ThreadPoolExecutor executor = mock(ThreadPoolExecutor.class);
 
-        Field CEAExecutor = agent.getClass().getDeclaredField("CEAExecutor");
-        CEAExecutor.setAccessible(true);
-        CEAExecutor.set(agent, executor);
+            CEAAgent agent = new CEAAgent();
+            Method runCEA = agent.getClass().getDeclaredMethod("runCEA", ArrayList.class, ArrayList.class, Integer.class, String.class);
+            assertNotNull(runCEA);
+            runCEA.setAccessible(true);
 
-        Field targetUrl = agent.getClass().getDeclaredField("targetUrl");
-        targetUrl.setAccessible(true);
-        targetUrl.set(agent, "test");
+            Field CEAExecutor = agent.getClass().getDeclaredField("CEAExecutor");
+            CEAExecutor.setAccessible(true);
+            CEAExecutor.set(agent, executor);
 
-        ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test","test"));
-        ArrayList<String> testArray = new ArrayList<>();
-        testArray.add("testUri");
-        Integer test_thread = 0;
-        String test_CRS = "27700";
+            Field targetUrl = agent.getClass().getDeclaredField("targetUrl");
+            targetUrl.setAccessible(true);
+            targetUrl.set(agent, "test");
 
-        RunCEATask task = mock(RunCEATask.class);
-        PowerMockito.whenNew(RunCEATask.class).withAnyArguments().thenReturn(task);
+            ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
+            testData.add(new CEAInputData("test", "test"));
+            ArrayList<String> testArray = new ArrayList<>();
+            testArray.add("testUri");
+            Integer test_thread = 0;
+            String test_CRS = "27700";
 
-        runCEA.invoke(agent, testData, testArray, test_thread, test_CRS);
-        verify(executor, times(1)).execute(task);
+            // Test executor called with run CEA task
+            runCEA.invoke(agent, testData, testArray, test_thread, test_CRS);
+            verify(executor, times(1)).execute(mockTask.constructed().get(0));
+        }
     }
 
     @Test
     public void testCreateTimeSeries() throws Exception {
-        TimeSeriesClient<OffsetDateTime> client = mock(TimeSeriesClient.class);
-        PowerMockito.whenNew(TimeSeriesClient.class).withAnyArguments().thenReturn(client);
+        try (MockedConstruction<TimeSeriesClient> mockTs = mockConstruction(TimeSeriesClient.class)) {
 
-        CEAAgent agent = new CEAAgent();
-        Method createTimeSeries = agent.getClass().getDeclaredMethod("createTimeSeries", String.class, List.class);
-        assertNotNull(createTimeSeries);
-        createTimeSeries.setAccessible(true);
+            CEAAgent agent = new CEAAgent();
+            Method createTimeSeries = agent.getClass().getDeclaredMethod("createTimeSeries", String.class, List.class);
+            assertNotNull(createTimeSeries);
+            createTimeSeries.setAccessible(true);
 
-        List<LinkedHashMap<String,String>> fixedIris = new ArrayList<>();
-        String prefix = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/";
-        String testUri = prefix+ "cityobject/UUID_test/";
+            List<LinkedHashMap<String, String>> fixedIris = new ArrayList<>();
+            String prefix = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/";
+            String testUri = prefix + "cityobject/UUID_test/";
 
-        createTimeSeries.invoke(agent, testUri, fixedIris);
+            createTimeSeries.invoke(agent, testUri, fixedIris);
 
-        Field TIME_SERIES = agent.getClass().getDeclaredField("TIME_SERIES");
-        List<String> time_series_strings = (List<String>) TIME_SERIES.get(agent);
+            Field TIME_SERIES = agent.getClass().getDeclaredField("TIME_SERIES");
+            List<String> time_series_strings = (List<String>) TIME_SERIES.get(agent);
 
-        for(String time_series: time_series_strings){
-            assertTrue(fixedIris.get(0).get(time_series).contains(prefix+ "energyprofile/"+time_series));
+            // Ensure iris created correctly and time series initialised
+            for (String time_series : time_series_strings) {
+                assertTrue(fixedIris.get(0).get(time_series).contains(prefix + "energyprofile/" + time_series));
+            }
+            verify(mockTs.constructed().get(0), times(1)).initTimeSeries(anyList(), anyList(), anyString());
         }
-        verify(client, times(1)).initTimeSeries(anyList(), anyList(), anyString());
     }
 
     @Test
     public void testAddDataToTimeSeries() throws Exception {
-        TimeSeriesClient<OffsetDateTime> client = mock(TimeSeriesClient.class);
-        PowerMockito.whenNew(TimeSeriesClient.class).withAnyArguments().thenReturn(client);
+        try(MockedConstruction<TimeSeriesClient> mockTs = mockConstruction(TimeSeriesClient.class)) {
 
-        CEAAgent agent = new CEAAgent();
-        Method addDataToTimeSeries = agent.getClass().getDeclaredMethod("addDataToTimeSeries", List.class, List.class, LinkedHashMap.class);
-        assertNotNull(addDataToTimeSeries);
-        addDataToTimeSeries.setAccessible(true);
+            CEAAgent agent = new CEAAgent();
+            Method addDataToTimeSeries = agent.getClass().getDeclaredMethod("addDataToTimeSeries", List.class, List.class, LinkedHashMap.class);
+            assertNotNull(addDataToTimeSeries);
+            addDataToTimeSeries.setAccessible(true);
 
-        LinkedHashMap<String,String> iris = new LinkedHashMap<>();
-        iris.put("test_value_1", "test_iri_1");
-        iris.put("test_value_2", "test_iri_2");
+            LinkedHashMap<String, String> iris = new LinkedHashMap<>();
+            iris.put("test_value_1", "test_iri_1");
+            iris.put("test_value_2", "test_iri_2");
 
-        List<List<String>> values = new ArrayList<>();
-        List<String> test_list_1 = new ArrayList<>();
-        test_list_1.add("1.5");
-        test_list_1.add("2.5");
-        List<String> test_list_2 = new ArrayList<>();
-        test_list_2.add("3.5");
-        test_list_2.add("4.5");
-        values.add(test_list_1);
-        values.add(test_list_2);
+            List<List<String>> values = new ArrayList<>();
+            List<String> test_list_1 = new ArrayList<>();
+            test_list_1.add("1.5");
+            test_list_1.add("2.5");
+            List<String> test_list_2 = new ArrayList<>();
+            test_list_2.add("3.5");
+            test_list_2.add("4.5");
+            values.add(test_list_1);
+            values.add(test_list_2);
 
-        List<OffsetDateTime> times = new ArrayList<>();
-        times.add(OffsetDateTime.now());
-        times.add(OffsetDateTime.now());
+            List<OffsetDateTime> times = new ArrayList<>();
+            times.add(OffsetDateTime.now());
+            times.add(OffsetDateTime.now());
 
-        addDataToTimeSeries.invoke(agent, values, times, iris);
+            addDataToTimeSeries.invoke(agent, values, times, iris);
 
-        verify(client, times(1)).getMaxTime(anyString());
-        verify(client, times(1)).getMinTime(anyString());
-        verify(client, times(1)).addTimeSeriesData(any());
+            // Ensure correct methods on time series client are called
+            verify(mockTs.constructed().get(0), times(1)).getMaxTime(anyString());
+            verify(mockTs.constructed().get(0), times(1)).getMinTime(anyString());
+            verify(mockTs.constructed().get(0), times(1)).addTimeSeriesData(any());
+        }
     }
 
     @Test
@@ -730,10 +744,21 @@ public class CEAAgentTest extends TestCase {
         tsClient.setAccessible(true);
         tsClient.set(agent, client);
 
-        Boolean result = (Boolean) timeSeriesExist.invoke(agent, iris);
-        verify(client, times(1)).checkDataHasTimeSeries(anyString());
+        when(client.checkDataHasTimeSeries(anyString()))
+                .thenReturn(false)
+                .thenThrow(new DataAccessException("ERROR: relation \"dbTable\" does not exist"))
+                .thenReturn(true);
 
+        // Ensure returns result of checkDataHasTimeSeries
+        Boolean result = (Boolean) timeSeriesExist.invoke(agent, iris);
         assertFalse(result);
+
+        result = (Boolean) timeSeriesExist.invoke(agent, iris);
+        assertFalse(result);
+
+        result = (Boolean) timeSeriesExist.invoke(agent, iris);
+        assertTrue(result);
+
     }
 
     @Test
@@ -747,6 +772,7 @@ public class CEAAgentTest extends TestCase {
         assertNotNull(getNamespace);
         getNamespace.setAccessible(true);
 
+        // Ensure namespace is extracted correctly
         String result = (String) getNamespace.invoke(agent, uri);
         assertEquals("http://localhost/berlin/", result);
 
@@ -764,6 +790,7 @@ public class CEAAgentTest extends TestCase {
         assertNotNull(getGraph);
         getGraph.setAccessible(true);
 
+        // Ensure Graph IRI is formed correctly
         String result = (String) getGraph.invoke(agent, uri, graph);
         assertEquals("http://localhost/berlin/building/", result);
 
@@ -780,6 +807,7 @@ public class CEAAgentTest extends TestCase {
         assertNotNull(getUUID);
         getUUID.setAccessible(true);
 
+        // Ensure UUID is extracted correctly
         String result = (String) getUUID.invoke(agent, uri);
         assertEquals("UUID_583747b0-1655-4761-8050-4036436a1052", result);
 
@@ -797,34 +825,45 @@ public class CEAAgentTest extends TestCase {
         assertNotNull(getRoute);
         getRoute.setAccessible(true);
 
+        // Ensure route is retrieved correctly
         String result = (String) getRoute.invoke(agent, uri);
         assertEquals(config.getString("kingslynnEPSG3857.targetresourceid"), result);
 
     }
 
     @Test
-    public void testGetValue() throws Exception {
-        CEAAgent agent = PowerMockito.spy(new CEAAgent());
+    public void testGetValue() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
 
-        String uriString = "test";
+        String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
         String value = "Height";
         String result = "5.2";
         String route = "test_route";
 
-        doReturn(new JSONArray("[{'"+value+"': '"+result+"'}]")).when(agent).queryStore(anyString(), anyString());
-
-        Query dummy  = mock(Query.class);
-        PowerMockito.doReturn(dummy).when(agent, "getQuery", uriString, value);
+        JSONArray expected = new JSONArray().put(new JSONObject().put(value, result));
+        JSONArray expectedBlank = new JSONArray();
 
         Method getValue = agent.getClass().getDeclaredMethod("getValue", String.class, String.class, String.class);
         assertNotNull(getValue);
         getValue.setAccessible(true);
 
-        assertEquals( result, getValue.invoke(agent, uriString, value, route));
+        try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = mockStatic(AccessAgentCaller.class)) {
+
+            //test with mocked AccessAgentCaller when it returns a string
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn(expected);
+            assertEquals(result, getValue.invoke(agent, uriString, value, route));
+
+            //test with mocked AccessAgentCaller when there is no string to return
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn((expectedBlank));
+            assertEquals("", getValue.invoke(agent,uriString, value, route));
+        }
     }
 
     @Test
-    public void testGetFootprint() throws Exception {
+    public void testGetFootprint()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
         String geom1 = "559267.200000246#313892.7999989044#1.7#559280.5400002463#313892.7999989044#1.7#559280.5400002463#313908.7499989033#6.7#559267.200000246#313908.7499989033#6.7#559267.200000246#313892.7999989044#1.7";
         String geom2 = "559267.200000246#313892.7999989044#1.7#559280.5400002463#313892.7999989044#1.7#559280.5400002463#313908.7499989033#1.7#559267.200000246#313908.7499989033#1.7#559267.200000246#313892.7999989044#1.7";
@@ -836,15 +875,16 @@ public class CEAAgentTest extends TestCase {
         assertNotNull(getFootprint);
         getFootprint.setAccessible(true);
 
+        // Ensure Footprint geometry is correctly found
         assertEquals(geom3, getFootprint.invoke(agent, results));
 
     }
 
     @Test
     public void testGetQuery()
-            throws Exception {
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
-        CEAAgent agent = PowerMockito.spy(new CEAAgent());
+        CEAAgent agent = new CEAAgent();
         String case1 = "Footprint";
         String case2 = "Height";
         String case3 = "CRS";
@@ -855,9 +895,8 @@ public class CEAAgentTest extends TestCase {
         assertNotNull(getQuery);
         getQuery.setAccessible(true);
 
-        String route = "test_route";
-        PowerMockito.doReturn(route).when(agent, "getRoute", anyString());
 
+        // Ensure queries contains correct predicates and objects depending on value sent
         Query q1 = (Query) getQuery.invoke(agent, uri1, case1);
         assertTrue(q1.toString().contains("ocgml:GeometryType"));
         Query q2 = (Query) getQuery.invoke(agent, uri1, case2);
@@ -873,7 +912,7 @@ public class CEAAgentTest extends TestCase {
 
     @Test
     public void testGetGeometryQuery()
-            throws Exception {
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
         String uri = "http://localhost/berlin/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
@@ -881,9 +920,10 @@ public class CEAAgentTest extends TestCase {
         assertNotNull(getGeometryQuery);
         getGeometryQuery.setAccessible(true);
 
+        // Ensure query contains correct predicate and object
         Query q = (Query) getGeometryQuery.invoke(agent, uri);
         assertTrue(q.toString().contains("ocgml:GeometryType"));
-
+        assertTrue(q.toString().contains("Footprint"));
     }
 
     @Test
@@ -897,12 +937,14 @@ public class CEAAgentTest extends TestCase {
         assertNotNull(getHeightQuery);
         getHeightQuery.setAccessible(true);
 
+        // Ensure query contains correct predicate and object
         Query q1 = (Query) getHeightQuery.invoke(agent, uri1);
         assertTrue(q1.toString().contains("ocgml:attrName"));
         assertTrue(q1.toString().contains("ocgml:realVal"));
         assertTrue(q1.toString().contains("height"));
         Query q2 = (Query) getHeightQuery.invoke(agent, uri2);
         assertTrue(q2.toString().contains("ocgml:measuredHeight"));
+        assertTrue(q2.toString().contains("Height"));
 
     }
 
@@ -916,31 +958,34 @@ public class CEAAgentTest extends TestCase {
         assertNotNull(getCrsQuery);
         getCrsQuery.setAccessible(true);
 
+        // Ensure query contains correct predicate and object
         Query q = (Query) getCrsQuery.invoke(agent, uri);
         assertTrue(q.toString().contains("ocgml:srid"));
         assertTrue(q.toString().contains("CRS"));
     }
 
     @Test
-    public void testSparqlGenAttributeUpdate() throws Exception {
-        CEAAgent agent = PowerMockito.spy(new CEAAgent());
+   public void testSparqlGenAttributeUpdate()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = spy(new CEAAgent());
         Method sparqlGenAttributeUpdate = agent.getClass().getDeclaredMethod("sparqlGenAttributeUpdate", String.class, String.class, String.class);
         assertNotNull(sparqlGenAttributeUpdate);
 
-        String uriString = "http://localhost/kings-lynn-open-data/cityobject/UUID_test/";
-        String energyProfileString = "http://localhost/kings-lynn-open-data/energyprofile/UUID_test/";
+        String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
+        String energyProfileString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/energyprofile/UUID_test/";
 
         String route = "test_route";
 
         doNothing().when(agent).updateStore(anyString(), anyString());
         sparqlGenAttributeUpdate.invoke(agent, uriString, energyProfileString, route);
 
+        //test update store is called once
         verify(agent, times(1)).updateStore(anyString(), anyString());
     }
 
     @Test
-    public void testSparqlUpdate() throws Exception {
-        CEAAgent agent = PowerMockito.spy(new CEAAgent());
+    public void testSparqlUpdate() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = spy(new CEAAgent());
         Method sparqlUpdate = agent.getClass().getDeclaredMethod("sparqlUpdate", LinkedHashMap.class, LinkedHashMap.class, String.class, Integer.class, String.class);
         assertNotNull(sparqlUpdate);
 
@@ -955,22 +1000,22 @@ public class CEAAgentTest extends TestCase {
         String route = "test_route";
 
         Integer testCounter = 0;
-        String uriString = "http://localhost/kings-lynn-open-data/cityobject/UUID_test/";
-        String expected = "http://localhost/kings-lynn-open-data/energyprofile/";
+        String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
+        String expected = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/energyprofile/";
 
         doNothing().when(agent).updateStore(anyString(), anyString());
         String result = (String) sparqlUpdate.invoke(agent, scalars_mock, iris_mock, uriString, testCounter, route );
 
+        //test string contains correct graph and update store is called once
         assertTrue( result.contains(expected));
-
         verify(agent, times(1)).updateStore(anyString(), anyString());
     }
 
     @Test
-    public void testGetDataIri() throws Exception {
-        CEAAgent agent = PowerMockito.spy(new CEAAgent());
+    public void testGetDataIri() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
 
-        String uriString = "test";
+        String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
         String test_value = "PV_area_roof";
         String measure = "measure";
         String test_measure = "35.2";
@@ -978,67 +1023,97 @@ public class CEAAgentTest extends TestCase {
         String test_unit = "m^2";
         String route = "test_route";
 
-        doReturn(new JSONArray("[{'"+measure+"': '"+test_measure+"', '"+unit+"': '"+test_unit+"'}]")).when(agent).queryStore(anyString(), anyString());
-        PowerMockito.doReturn("testGraph").when(agent, "getGraph", anyString(), anyString());
+        JSONArray expected = new JSONArray().put(new JSONObject().put(measure, test_measure).put(unit, test_unit));
+        JSONArray expectedBlank = new JSONArray();
 
         Method getDataIRI = agent.getClass().getDeclaredMethod("getDataIRI", String.class, String.class, String.class);
         assertNotNull(getDataIRI);
         getDataIRI.setAccessible(true);
 
-        ArrayList<String> result = (ArrayList<String>) getDataIRI.invoke(agent, uriString, test_value, route);
+        try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = mockStatic(AccessAgentCaller.class)) {
 
-        assertTrue(result.contains(test_measure));
-        assertTrue(result.contains(test_unit));
+            //test with mocked AccessAgentCaller when it returns data
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn(expected);
+            ArrayList<String> result = (ArrayList<String>) getDataIRI.invoke(agent, uriString, test_value, route);
+            assertTrue(result.contains(test_measure));
+            assertTrue(result.contains(test_unit));
+
+            //test with mocked AccessAgentCaller when there is nothing returned
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn((expectedBlank));
+            result = (ArrayList<String>) getDataIRI.invoke(agent, uriString, test_value, route);
+
+            assertTrue(result.isEmpty());
+        }
     }
 
     @Test
-    public void testCheckGenAttributeInitialised() throws Exception {
-        CEAAgent agent = PowerMockito.spy(new CEAAgent());
+    public void testCheckGenAttributeInitialised() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
 
-        String uriString = "test";
+        String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
         String measure = "energyProfileBuilding";
         String test_measure = "test_uri";
-        String graph = "test_graph";
         String route = "test_route";
 
-        doReturn(new JSONArray("[{'"+measure+"': '"+test_measure+"'}]")).when(agent).queryStore(anyString(), anyString());
-        PowerMockito.doReturn(graph).when(agent, "getGraph", anyString(), anyString());
+        JSONArray expected = new JSONArray().put(new JSONObject().put(measure, test_measure));
+        JSONArray expectedBlank = new JSONArray();
 
         Method checkGenAttributeInitialised = agent.getClass().getDeclaredMethod("checkGenAttributeInitialised", String.class, String.class);
         assertNotNull(checkGenAttributeInitialised);
         checkGenAttributeInitialised.setAccessible(true);
 
-        String result = (String) checkGenAttributeInitialised.invoke(agent, uriString, route);
+        try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = mockStatic(AccessAgentCaller.class)) {
 
-        assertTrue(result.equals(test_measure));
+            //test with mocked AccessAgentCaller when it returns a string.
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn(expected);
+            assertEquals(test_measure, checkGenAttributeInitialised.invoke(agent, uriString, route));
+
+            //test with mocked AccessAgentCaller when there is no string to return.
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn((expectedBlank));
+            assertEquals("", checkGenAttributeInitialised.invoke(agent, uriString, route));
+        }
     }
 
     @Test
-    public void testCheckBlazegraphAndTimeSeriesInitialised() throws Exception {
-        CEAAgent agent = PowerMockito.spy(new CEAAgent());
+    public void testCheckBlazegraphAndTimeSeriesInitialised() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
 
-        String uriString = "test";
+        String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
         List<LinkedHashMap<String,String>> fixedIris = new ArrayList<>();
-        String measure = "grid_demand";
-        String test_measure = "test_uri";
-        String graph = "test_graph";
+        String measure_grid = "grid_demand";
+        String measure_building = "energyProfileBuilding";
+        String test_measure = "test_uri1";
         String building = "test_building_uri";
-
-        doReturn(new JSONArray("[{'"+measure+"': '"+test_measure+"'}]")).when(agent).queryStore(anyString(), anyString());
-        PowerMockito.doReturn(graph).when(agent, "getGraph", anyString(), anyString());
-        PowerMockito.doReturn(building).when(agent, "checkGenAttributeInitialised", anyString(), anyString());
-
         String route = "test_route";
+
+        JSONArray expected_grid = new JSONArray().put(new JSONObject().put(measure_grid, test_measure));
+        JSONArray expected_building = new JSONArray().put(new JSONObject().put(measure_building, building));
+        JSONArray expectedBlank = new JSONArray();
+
 
         Method checkBlazegraphAndTimeSeriesInitialised = agent.getClass().getDeclaredMethod("checkBlazegraphAndTimeSeriesInitialised", String.class, List.class, String.class);
         assertNotNull(checkBlazegraphAndTimeSeriesInitialised);
         checkBlazegraphAndTimeSeriesInitialised.setAccessible(true);
 
-        String result = (String) checkBlazegraphAndTimeSeriesInitialised.invoke(agent, uriString, fixedIris, route);
+        try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = mockStatic(AccessAgentCaller.class)) {
 
-        assertTrue(result.equals(building));
-        assertTrue(fixedIris.get(0).containsKey(measure));
-        assertTrue(fixedIris.get(0).containsValue(test_measure));
+            //test with mocked AccessAgentCaller when it returns a string.
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn(expected_building).thenReturn(expected_grid);
+            assertEquals(building, checkBlazegraphAndTimeSeriesInitialised.invoke(agent, uriString, fixedIris, route));
+            assertTrue(fixedIris.get(0).containsKey(measure_grid));
+            assertTrue(fixedIris.get(0).containsValue(test_measure));
+
+            //test with mocked AccessAgentCaller when there is no string to return.
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn((expectedBlank));
+            assertEquals("", checkBlazegraphAndTimeSeriesInitialised.invoke(agent, uriString, fixedIris, route));
+        }
+
     }
 
     @Test
@@ -1051,6 +1126,7 @@ public class CEAAgentTest extends TestCase {
         String test_m2 = "http://www.ontology-of-units-of-measure.org/resource/om-2/squareMetre";
         String test_other = "test";
 
+        // Ensure units retrieved correctly
         assertEquals(getUnit.invoke(agent, test_kwh), "kWh");
         assertEquals(getUnit.invoke(agent, test_m2), "m^2");
         assertEquals(getUnit.invoke(agent, test_other), "");
@@ -1058,21 +1134,20 @@ public class CEAAgentTest extends TestCase {
 
     @Test
     public void testRetrieveData() throws Exception {
-        TimeSeriesClient<OffsetDateTime> client = mock(TimeSeriesClient.class);
-        PowerMockito.whenNew(TimeSeriesClient.class).withAnyArguments().thenReturn(client);
+        try(MockedConstruction<TimeSeriesClient> mockTs = mockConstruction(TimeSeriesClient.class)) {
+            CEAAgent agent = new CEAAgent();
+            Method retrieveData = agent.getClass().getDeclaredMethod("retrieveData", String.class);
+            assertNotNull(retrieveData);
 
-        CEAAgent agent = new CEAAgent();
-        Method retrieveData = agent.getClass().getDeclaredMethod("retrieveData", String.class);
-        assertNotNull(retrieveData);
+            String iri = "test";
+            List<String> iris = new ArrayList<>();
+            iris.add(iri);
 
-        String iri = "test";
-        List<String> iris = new ArrayList<>();
-        iris.add(iri);
+            retrieveData.invoke(agent, iri);
 
-        retrieveData.invoke(agent, iri);
-
-        verify(client, times(1)).getTimeSeries(iris);
-
+            // Ensure method to get time series client was invoked once
+            verify(mockTs.constructed().get(0), times(1)).getTimeSeries(iris);
+        }
     }
 
     @Test
@@ -1087,13 +1162,18 @@ public class CEAAgentTest extends TestCase {
         iris.add( iri1);
         iris.add( iri2);
 
+        Double value1 = 1.687;
+        Double value2 = 2.141;
+        Double value3 = 3.621;
+        Double value4 = 4.7;
+
         List<List<?>> values = new ArrayList<>();
         List<Double> test_list_1 = new ArrayList<>();
-        test_list_1.add(1.687);
-        test_list_1.add(2.141);
+        test_list_1.add(value1);
+        test_list_1.add(value2);
         List<Double> test_list_2 = new ArrayList<>();
-        test_list_2.add(3.621);
-        test_list_2.add(4.7);
+        test_list_2.add(value3);
+        test_list_2.add(value4);
         values.add(test_list_1);
         values.add(test_list_2);
 
@@ -1102,7 +1182,11 @@ public class CEAAgentTest extends TestCase {
         times.add(OffsetDateTime.now());
         TimeSeries<OffsetDateTime> timeSeries = new TimeSeries<>(times, iris, values);
 
-        assertEquals(calculateAnnual.invoke(agent, timeSeries, iri1), "3.83");
-        assertEquals(calculateAnnual.invoke(agent, timeSeries, iri2), "8.32");
+        Double expected1= 3.83;
+        Double expected2= 8.32;
+
+        // Ensure values in time series are summed and rounded correctly
+        assertEquals(calculateAnnual.invoke(agent, timeSeries, iri1), expected1.toString());
+        assertEquals(calculateAnnual.invoke(agent, timeSeries, iri2), expected2.toString());
     }
 }

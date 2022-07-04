@@ -263,7 +263,7 @@ public class CEAAgent extends JPSAgent {
             JSONArray timeDataArray = (JSONArray) array.get(index);
 
             for (int i = 0; i < timeDataArray.length(); i++) {
-                timeSeriesList.add(Double.valueOf(timeDataArray.get(i).toString()));
+                timeSeriesList.add(Double.valueOf(timeDataArray.getString(i)));
             }
         }
         return timeSeriesList;
