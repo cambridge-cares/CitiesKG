@@ -185,47 +185,6 @@ public class StatementTransformer {
         return sparqlString.toString();
     }
 
-    public static String getSPARQLStatement_BuildingPartQuery_bak (String sqlQuery) {
-        String SparqlString = null;
-        SelectBuilder sb = new SelectBuilder();
-        ExprFactory exprF1 = sb.getExprFactory();
-        sb.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML);
-        sb.addVar("?geomtype").addVar(exprF1.datatype("?geomtype"),"?type");
-
-        Node graphName1 = NodeFactory.createURI(IRI_GRAPH_BASE + "thematicsurface/");
-        WhereBuilder subwhr1 = new WhereBuilder().addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML);
-        subwhr1.addWhere("?ts_id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "objectClassId", "35");
-        subwhr1.addWhere("?ts_id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "buildingId", "?");
-        subwhr1.addWhere("?ts_id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "lod2MultiSurfaceId", "?lod2MSid");
-        WhereBuilder whr1 = new WhereBuilder().addGraph(graphName1, subwhr1);
-        sb.addWhere(whr1);
-
-        Node graphName2 = NodeFactory.createURI(IRI_GRAPH_BASE + "surfacegeometry/");
-        WhereBuilder subwhr2 = new WhereBuilder().addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML);
-        WhereBuilder whr2 = new WhereBuilder().addGraph(graphName2, subwhr2);
-        subwhr2.addWhere("?sg_id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "rootId", "?lod2MSid");
-        subwhr2.addWhere("?sg_id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "GeometryType", "?geomtype");
-        try {
-            subwhr2.addFilter("!isBlank(?geomtype)");
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        sb.addWhere(whr2);
-        SparqlString = sb.build().toString();
-        return SparqlString;
-    }
-
-    /*
-    * PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
-      SELECT  ?id ?objectclass_id (? AS ?gmlid)
-      FROM <http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/>
-      WHERE
-        { ?id ocgml:objectClassId  ?objectclass_id .
-          ?id ocgml:gmlId ?gmlid
-          FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) ).
-          FILTER ( ?gmlid =  ?)
-         }
-      * */
     public static String getTopFeatureId(SQLStatement sqlStatement) throws ParseException {
         StringBuilder sparqlString = new StringBuilder();
         List<PlaceHolder<?>> placeHolders = sqlStatement.getInvolvedPlaceHolders();
@@ -300,31 +259,6 @@ public class StatementTransformer {
                 "FILTER (!isBlank(?geom)) }");
 
         return sparqlString.toString();
-    }
-
-    // Analyze SQL statement and transform it to a SPARQL query (Normal usuage: single gmlid or multiple gmlid or *)
-    public static String getTopFeatureId_bak(SQLStatement sqlStatement) throws ParseException {
-        Select select = (Select) sqlStatement;
-        List<ProjectionToken> projectionTokens = select.getProjection();
-        Set<Table> InvolvedTables = sqlStatement.getInvolvedTables();
-        List<PredicateToken> predicateTokens = select.getSelection();
-
-        // Build SPARQL query statement
-        SelectBuilder sb = new SelectBuilder();
-        sb.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML);
-        String varnames = getVarNames(projectionTokens);
-        String iri_graph_object = getGraphUri(InvolvedTables);
-        sb.addVar(varnames).from(iri_graph_object);
-
-        sb.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "objectClassId", "?objectclass_id");
-        sb.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "gmlId", "?gmlid");
-//        sb.setLimit(3000);//temporal use
-//        sb.setOffset(1501);
-        List<PlaceHolder<?>> placeHolders = sqlStatement.getInvolvedPlaceHolders();
-
-        applyPredicate(sb, predicateTokens, placeHolders);
-        Query q = sb.build();
-        return q.toString();
     }
 
     public static void applyPredicate (SelectBuilder sb, List<PredicateToken> predicateTokens, List<PlaceHolder<?>> placeHolders) throws ParseException {
@@ -581,19 +515,4 @@ public class StatementTransformer {
         return union;
     }
 
-    // For testing purpose
-    /*
-    public static void main(String[] args) throws ParseException {
-        String sqlquery =  "SELECT ST_Union(get_valid_area.simple_geom) " +
-                "FROM (SELECT * FROM (SELECT * FROM (SELECT ST_Force2D(sg.geometry) AS simple_geom " +
-                "FROM citydb.SURFACE_GEOMETRY sg WHERE sg.root_id IN( " +
-                "SELECT b.lod2_multi_surface_id FROM citydb.BUILDING b WHERE b.id = ? AND b.lod2_multi_surface_id IS NOT NULL " +
-                "UNION SELECT b.lod2_solid_id FROM citydb.BUILDING b WHERE b.id = ? AND b.lod2_solid_id IS NOT NULL " +
-                "UNION SELECT ts.lod2_multi_surface_id FROM citydb.THEMATIC_SURFACE ts WHERE ts.building_id = ? " +
-                "AND ts.lod2_multi_surface_id IS NOT NULL ) AND sg.geometry IS NOT NULL) AS get_geoms " +
-                "WHERE ST_IsValid(get_geoms.simple_geom) = 'TRUE') AS get_valid_geoms " +
-                "WHERE ST_Area(ST_Transform(get_valid_geoms.simple_geom,4326)::geography, true) > 0.001) AS get_valid_area";
-        String output = getSPARQLqueryStage2(sqlquery, "2");
-        System.out.println(output);
-    }*/
 }
