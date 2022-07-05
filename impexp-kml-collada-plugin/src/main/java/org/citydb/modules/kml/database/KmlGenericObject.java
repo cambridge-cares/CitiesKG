@@ -1692,6 +1692,9 @@ public abstract class KmlGenericObject<T> {
 				for (ResultSet rs : sparqlResults) {
 					while (rs.next()) {
 						String row = rs.getString(1);  // "geometry"
+						Object buildingGeometryObj = rs.getObject("geometry");
+						String datatype = rs.getString("datatype");
+
 						simpleGeom.add(row);
 					}
 				}
