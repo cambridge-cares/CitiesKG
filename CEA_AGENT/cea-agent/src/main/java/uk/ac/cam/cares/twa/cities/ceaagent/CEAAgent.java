@@ -630,17 +630,6 @@ public class CEAAgent extends JPSAgent {
      * @param uriString city object id
      * @return returns a query string
      */
-    /*
-    // Old implementation using Envelope
-    private Query getGeometryQuery(String uriString) {
-        SelectBuilder sb = new SelectBuilder()
-                .addPrefix( "ocgml", ocgmlUri )
-                .addVar("?Envelope")
-                .addGraph(NodeFactory.createURI(getGraph(uriString,CITY_OBJECT)), "?s", "ocgml:EnvelopeType", "?Envelope");
-        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
-
-        return sb.build();
-    }*/
     private Query getGeometryQuery(String uriString) {
         try {
             WhereBuilder wb = new WhereBuilder()

@@ -121,6 +121,7 @@
             </plugins>
         </pluginManagement>
     </build>
+
     <dependencies>
         <dependency>
             <groupId>uk.ac.cam.cares.jps</groupId>
