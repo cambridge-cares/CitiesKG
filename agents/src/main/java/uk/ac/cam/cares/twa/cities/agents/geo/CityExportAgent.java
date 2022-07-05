@@ -349,7 +349,7 @@ public class CityExportAgent extends JPSAgent {
         String path2sortedKML = Paths.get(outputDir).toString();
         //int databaseCRS = Integer.valueOf(srsName.split(":")[1]);
         int databaseCRS = 0;
-        if (namespaceIri.contains("singapore")){
+        if (srid == 4326){
             ResourceBundle config = ResourceBundle.getBundle("config");
             databaseCRS = Integer.valueOf(config.getString("crsInMeter.singapore"));
         } else {
@@ -362,10 +362,10 @@ public class CityExportAgent extends JPSAgent {
 
     private KMLTilingTask tilingKml(String path2unsortedKML, String path2sortedKML){
         String displayForm = "extruded";
-        String namespaceIri = "singapore";
+        int srid = 4326; // singapore
 
         int databaseCRS = 0;
-        if (namespaceIri.contains("singapore")){
+        if (srid == 4326){
             ResourceBundle config = ResourceBundle.getBundle("config");
             databaseCRS = Integer.valueOf(config.getString("crsInMeter.singapore"));
         } else {

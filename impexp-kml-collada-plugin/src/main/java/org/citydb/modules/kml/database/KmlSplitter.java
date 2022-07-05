@@ -152,7 +152,7 @@ public class KmlSplitter {
 				ResultSet rs = stmt.executeQuery();
 				long endTime = System.currentTimeMillis();
 
-				System.out.println("The first query getTopFeatureId takes: " + String.valueOf(endTime - startTime) + " milliseconds");
+				//System.out.println("The first query getTopFeatureId takes: " + String.valueOf(endTime - startTime) + " milliseconds");
 
 				ArrayList<Integer> numbers = new ArrayList<>(Arrays.asList(64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26)); // correct solution
 

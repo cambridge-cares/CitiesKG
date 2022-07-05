@@ -1708,6 +1708,7 @@ public abstract class KmlGenericObject<T> {
 
 					GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(
 							buildingGeometryObj);
+					unconvertedGeom.setSrid(databaseSrid);
 					//if (unconvertedGeom == null || (unconvertedGeom.getGeometryType() != GeometryType.POLYGON && unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON)) {
 					//	continue;  // out of loop, no loop here so this condition is not needed
 					//}
