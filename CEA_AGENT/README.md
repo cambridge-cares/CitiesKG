@@ -116,7 +116,7 @@ Example response:
 }
 
 ```
-The 3dWebMapClient can be set up to visualise data produced by the CEA Agent (instructions to run are [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#3dcitydb-web-map-client)). The City Information Agent (CIA) is used when a building on the 3dWebMapClient is selected, to query data stored in the KG on the building. If the parameter "context=energy" is included in the url, the query endpoint of CEA will be contacted for energy data. eg `http://localhost:8000/3dwebclient/index.html?city=kingslynn&context=energy` (NB. this currently requires running web map client and CitiesKG/agents from [CIA branch](https://github.com/cambridge-cares/CitiesKG/tree/99-dev-city-information-agent/agents) (**Update when released**)
+The 3dWebMapClient can be set up to visualise data produced by the CEA Agent (instructions to run are [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#3dcitydb-web-map-client)). The City Information Agent (CIA) is used when a building on the 3dWebMapClient is selected, to query data stored in the KG on the building. If the parameter "context=energy" is included in the url, the query endpoint of CEA will be contacted for energy data. eg `http://localhost:8000/3dwebclient/index.html?city=kingslynn&context=energy` (NB. this currently requires running web map client and CitiesKG/agents from [develop branch](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents) (**Update when released**)
 
 ## Build Instructions
 
@@ -166,6 +166,8 @@ The route to be passed to the access agent then needs to be provided in uri.rout
     CEAAgentConfig.properties
 ```
 eg. `uri.route.local=http://host.docker.internal:48080/docker-kings-lynn`
+
+If you no longer want to use a local route, ensure you leave uri.route.local empty.
 
 ### Running
 
