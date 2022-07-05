@@ -62,6 +62,8 @@ def create_shapefile(geometries, heights, crs, shapefile):
             floors_ag.append(floors)
         else:
             floors_ag.append(1)  # number of floors must be at least 1
+        if heights[x] <= 1.0:
+            heights[x] = 1.00001  # CEA fails if height is less than or equal to 1 so set a minimum height of 1.00001 m
 
     zone_data = {'Name': names,
                  'floors_bg': floors_bg,
