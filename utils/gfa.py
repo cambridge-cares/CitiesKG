@@ -472,8 +472,8 @@ def getPlots(endpoint):
         ?cityObjectId geo:predicate ocgml:EnvelopeType .
         ?cityObjectId geo:searchDatatype <http://localhost/blazegraph/literals/POLYGON-3-15> .
         ?cityObjectId geo:customFields "X0#Y0#Z0#X1#Y1#Z1#X2#Y2#Z2#X3#Y3#Z3#X4#Y4#Z4" .
-        ?cityObjectId geo:customFieldsLowerBounds "103.815651#1.279372#0#103.815651#1.279372#0#103.815651#1.279372#0#103.815651#1.279372#0#103.815651#1.279372#0" .
-        ?cityObjectId geo:customFieldsUpperBounds "103.863544#1.306702#1000#103.863544#1.306702#1000#103.863544#1.306702#1000#103.863544#1.306702#1000#103.863544#1.306702#1000" .
+        ?cityObjectId geo:customFieldsLowerBounds "1.279372#103.815651#0#1.279372#103.815651#0#1.279372#103.815651#0#1.279372#103.815651#0#1.279372#103.815651#0".
+        ?cityObjectId geo:customFieldsUpperBounds  "1.306702#103.863544#1000#1.306702#103.863544#1000#1.306702#103.863544#1000#1.306702#103.863544#1000#1.306702#103.863544#1000".
         ?cityObjectId geo:customFieldsValues ?envelopes . }
         BIND(IRI(REPLACE(STR(?cityObjectId), "cityobject", "genericcityobject")) AS ?Id) }
         GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/surfacegeometry/>
