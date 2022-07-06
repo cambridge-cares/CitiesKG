@@ -407,17 +407,6 @@ public class StatementTransformerTest {
     }
 
     @Test
-    public void testStr2Geometry() {
-        StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
-
-        // test case when datatypeURI is null
-        assertEquals("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))", StatementTransformer.Str2Geometry("0.0#0.0#1.0#0.0#1.0#1.0#0.0#1.0#0.0#0.0", null).toString());
-
-        // test case when datatypeURI is not null
-        assertEquals("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))", StatementTransformer.Str2Geometry("0.0#0.0#0.0#1.0#0.0#0.0#1.0#1.0#0.0#0.0#1.0#0.0#0.0#0.0#0.0", "POLYGON-3-15").toString());
-    }
-
-    @Test
     public void testFilterResult() {
         StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
 
