@@ -109,27 +109,27 @@ public class RunCEATask implements Runnable {
             for(int n=0; n<PV_columns.get(0).length; n++) {
                 if(PV_columns.get(0)[n].equals("PV_roofs_top_m2")) {
                     for(int m=1; m<PV_columns.size(); m++) {
-                        result.PV_area_roof.add(PV_columns.get(m)[n]);
+                        result.PVRoofArea.add(PV_columns.get(m)[n]);
                     }
                 }
                 else if(PV_columns.get(0)[n].equals("PV_walls_south_m2")) {
                     for(int m=1; m<PV_columns.size(); m++) {
-                        result.PV_area_wall_south.add(PV_columns.get(m)[n]);
+                        result.PVWallSouthArea.add(PV_columns.get(m)[n]);
                     }
                 }
                 else if(PV_columns.get(0)[n].equals("PV_walls_north_m2")) {
                     for(int m=1; m<PV_columns.size(); m++) {
-                        result.PV_area_wall_north.add(PV_columns.get(m)[n]);
+                        result.PVWallNorthArea.add(PV_columns.get(m)[n]);
                     }
                 }
                 else if(PV_columns.get(0)[n].equals("PV_walls_east_m2")) {
                     for(int m=1; m<PV_columns.size(); m++) {
-                        result.PV_area_wall_east.add(PV_columns.get(m)[n]);
+                        result.PVWallEastArea.add(PV_columns.get(m)[n]);
                     }
                 }
                 else if(PV_columns.get(0)[n].equals("PV_walls_west_m2")) {
                     for(int m=1; m<PV_columns.size(); m++) {
-                        result.PV_area_wall_west.add(PV_columns.get(m)[n]);
+                        result.PVWallWestArea.add(PV_columns.get(m)[n]);
                     }
                 }
             }
@@ -259,15 +259,15 @@ public class RunCEATask implements Runnable {
                 PV_file.close();
                 PV.close();
 
-                result.grid_demand.add(grid_results);
-                result.electricity_demand.add(electricity_results);
-                result.heating_demand.add(heating_results);
-                result.cooling_demand.add(cooling_results);
-                result.PV_supply_roof.add(PV_roof_results);
-                result.PV_supply_wall_south.add(PV_wall_south_results);
-                result.PV_supply_wall_north.add(PV_wall_north_results);
-                result.PV_supply_wall_east.add(PV_wall_east_results);
-                result.PV_supply_wall_west.add(PV_wall_west_results);
+                result.GridConsumption.add(grid_results);
+                result.ElectricityConsumption.add(electricity_results);
+                result.HeatingConsumption.add(heating_results);
+                result.CoolingConsumption.add(cooling_results);
+                result.PVRoofSupply.add(PV_roof_results);
+                result.PVWallSouthSupply.add(PV_wall_south_results);
+                result.PVWallNorthSupply.add(PV_wall_north_results);
+                result.PVWallEastSupply.add(PV_wall_east_results);
+                result.PVWallWestSupply.add(PV_wall_west_results);
 
                 if(i==0) result.times = timestamps; //only add times once
             }

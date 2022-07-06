@@ -49,23 +49,23 @@ public class CEAAgent extends JPSAgent {
     public static final String SURFACE_GEOMETRY = "surfacegeometry";
     public static final String ENERGY_PROFILE = "energyprofile";
     public static final String DATABASE_SRS = "databasesrs";
-    public static final String KEY_GRID_DEMAND = "grid_demand";
-    public static final String KEY_ELECTRICITY_DEMAND = "electricity_demand";
-    public static final String KEY_HEATING_DEMAND = "heating_demand";
-    public static final String KEY_COOLING_DEMAND = "cooling_demand";
-    public static final String KEY_PV_ROOF_AREA = "PV_area_roof";
-    public static final String KEY_PV_WALL_NORTH_AREA = "PV_area_wall_north";
-    public static final String KEY_PV_WALL_SOUTH_AREA = "PV_area_wall_south";
-    public static final String KEY_PV_WALL_EAST_AREA = "PV_area_wall_east";
-    public static final String KEY_PV_WALL_WEST_AREA = "PV_area_wall_west";
-    public static final String KEY_PV_ROOF_SUPPLY= "PV_supply_roof";
-    public static final String KEY_PV_WALL_NORTH_SUPPLY= "PV_supply_wall_north";
-    public static final String KEY_PV_WALL_SOUTH_SUPPLY= "PV_supply_wall_south";
-    public static final String KEY_PV_WALL_EAST_SUPPLY= "PV_supply_wall_east";
-    public static final String KEY_PV_WALL_WEST_SUPPLY= "PV_supply_wall_west";
+    public static final String KEY_GRID_CONSUMPTION = "GridConsumption";
+    public static final String KEY_ELECTRICITY_CONSUMPTION = "ElectricityConsumption";
+    public static final String KEY_HEATING_CONSUMPTION = "HeatingConsumption";
+    public static final String KEY_COOLING_CONSUMPTION = "CoolingConsumption";
+    public static final String KEY_PV_ROOF_AREA = "PVRoofArea";
+    public static final String KEY_PV_WALL_NORTH_AREA = "PVWallNorthArea";
+    public static final String KEY_PV_WALL_SOUTH_AREA = "PVWallSouthArea";
+    public static final String KEY_PV_WALL_EAST_AREA = "PVWallEastArea";
+    public static final String KEY_PV_WALL_WEST_AREA = "PVWallWestArea";
+    public static final String KEY_PV_ROOF_SUPPLY= "PVRoofSupply";
+    public static final String KEY_PV_WALL_NORTH_SUPPLY= "PVWallNorthSupply";
+    public static final String KEY_PV_WALL_SOUTH_SUPPLY= "PVWallSouthSupply";
+    public static final String KEY_PV_WALL_EAST_SUPPLY= "PVWallEastSupply";
+    public static final String KEY_PV_WALL_WEST_SUPPLY= "PVWallWestSupply";
     public static final String KEY_TIMES= "times";
 
-    public List<String> TIME_SERIES = Arrays.asList(KEY_GRID_DEMAND,KEY_ELECTRICITY_DEMAND,KEY_HEATING_DEMAND,KEY_COOLING_DEMAND, KEY_PV_ROOF_SUPPLY,KEY_PV_WALL_SOUTH_SUPPLY, KEY_PV_WALL_NORTH_SUPPLY,KEY_PV_WALL_EAST_SUPPLY, KEY_PV_WALL_WEST_SUPPLY);
+    public List<String> TIME_SERIES = Arrays.asList(KEY_GRID_CONSUMPTION,KEY_ELECTRICITY_CONSUMPTION,KEY_HEATING_CONSUMPTION,KEY_COOLING_CONSUMPTION, KEY_PV_ROOF_SUPPLY,KEY_PV_WALL_SOUTH_SUPPLY, KEY_PV_WALL_NORTH_SUPPLY,KEY_PV_WALL_EAST_SUPPLY, KEY_PV_WALL_WEST_SUPPLY);
     public List<String> SCALARS = Arrays.asList(KEY_PV_ROOF_AREA,KEY_PV_WALL_NORTH_AREA,KEY_PV_WALL_SOUTH_AREA,KEY_PV_WALL_EAST_AREA, KEY_PV_WALL_WEST_AREA);
 
     public final int NUM_CEA_THREADS = 1;
@@ -85,6 +85,7 @@ public class CEAAgent extends JPSAgent {
     private String purlInfrastructureUri;
     private String timeSeriesUri;
     private String thinkhomeUri;
+    private String ontoBuiltEnvUri;
     private static String unitOntologyUri;
     private String requestUrl;
     private String targetUrl;
@@ -127,22 +128,29 @@ public class CEAAgent extends JPSAgent {
                         scalars.put(scalar, getList(requestParams, scalar));
                     }
 
-                    List<LinkedHashMap<String,String>> fixedIris = new ArrayList<>();
                     String route = new String();
                     for (int i = 0; i < uriArray.length(); i++) {
+                        LinkedHashMap<String,String> tsIris = new LinkedHashMap<>();
+                        LinkedHashMap<String,String> scalarIris = new LinkedHashMap<>();
+
                         String uri = uriArray.getString(i);
                         // Only set routes once - assuming all iris passed have same namespace
                         // Will not be necessary if namespace is passed in request params
                         if(i==0) {
                             route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
                         }
-                        String buildingUri = checkBlazegraphAndTimeSeriesInitialised(uri, fixedIris, route);
-                        if (buildingUri=="") {
-                            createTimeSeries(uri,fixedIris);
-                            buildingUri = sparqlUpdate(scalars, fixedIris.get(i), uri, i, route);
-                            sparqlGenAttributeUpdate(uri, buildingUri, route);
+                        String building = checkBuildingInitialised(uri, route);
+                        if(building.equals("")){
+                            building = initialiseBuilding(uri, route);
                         }
-                        addDataToTimeSeries(timeSeries.get(i), times, fixedIris.get(i));
+                        if(!checkDataInitialised(uri, building, tsIris, scalarIris, route)) {
+                            createTimeSeries(uri,tsIris);
+                            initialiseData(uri, i, scalars, building, tsIris, scalarIris, route);
+                        }
+                        else{
+                            updateScalars(uri, route, scalarIris, scalars, i);
+                        }
+                        addDataToTimeSeries(timeSeries.get(i), times, tsIris);
                     }
                 } else if (requestUrl.contains(URI_ACTION)) {
                     ArrayList<CEAInputData> testData = new ArrayList<>();
@@ -174,19 +182,24 @@ public class CEAAgent extends JPSAgent {
                     if(i==0) {
                         route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
                     }
+                    String building = checkBuildingInitialised(uri, route);
+                    if(building.equals("")){
+                        return requestParams;
+                    }
                     JSONObject data = new JSONObject();
                     List<String> allMeasures = new ArrayList<>();
                     Stream.of(TIME_SERIES, SCALARS).forEach(allMeasures::addAll);
                     for (String measurement: allMeasures) {
-                        ArrayList<String> result = getDataIRI(uri, measurement, route);
+                        ArrayList<String> result = getDataIRI(uri, building, measurement, route);
                         if (!result.isEmpty()) {
                             String value;
                             if (TIME_SERIES.contains(measurement)) {
                                 value = calculateAnnual(retrieveData(result.get(0)), result.get(0));
                                 measurement = "Annual "+ measurement;
                             } else {
-                                value = result.get(0);
+                                value = getNumericalValue(uri, result.get(0), route);
                             }
+                            // Return non-zero values
                             if(!(value.equals("0") || value.equals("0.0"))){
                                 value += " " + getUnit(result.get(1));
                                 data.put(measurement, value);
@@ -295,10 +308,10 @@ public class CEAAgent extends JPSAgent {
     private boolean validateUpdateInput(JSONObject requestParams) {
         boolean error = requestParams.get(KEY_IRI).toString().isEmpty() ||
                 requestParams.get(KEY_TARGET_URL).toString().isEmpty() ||
-                requestParams.get(KEY_GRID_DEMAND).toString().isEmpty() ||
-                requestParams.get(KEY_ELECTRICITY_DEMAND).toString().isEmpty() ||
-                requestParams.get(KEY_HEATING_DEMAND).toString().isEmpty() ||
-                requestParams.get(KEY_COOLING_DEMAND).toString().isEmpty() ||
+                requestParams.get(KEY_GRID_CONSUMPTION).toString().isEmpty() ||
+                requestParams.get(KEY_ELECTRICITY_CONSUMPTION).toString().isEmpty() ||
+                requestParams.get(KEY_HEATING_CONSUMPTION).toString().isEmpty() ||
+                requestParams.get(KEY_COOLING_CONSUMPTION).toString().isEmpty() ||
                 requestParams.get(KEY_PV_ROOF_AREA).toString().isEmpty() ||
                 requestParams.get(KEY_PV_ROOF_SUPPLY).toString().isEmpty() ||
                 requestParams.get(KEY_PV_WALL_SOUTH_AREA).toString().isEmpty() ||
@@ -350,7 +363,8 @@ public class CEAAgent extends JPSAgent {
         purlEnaeqUri=config.getString("uri.ontology.purl.enaeq");
         thinkhomeUri=config.getString("uri.ontology.thinkhome");
         purlInfrastructureUri=config.getString("uri.ontology.purl.infrastructure");
-        timeSeriesUri=config.getString("uri.ts");
+        timeSeriesUri=config.getString("uri.ontology.ts");
+        ontoBuiltEnvUri=config.getString("uri.ontology.ontobuiltenv");
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/", config.getString("berlin.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/", config.getString("singaporeEPSG24500.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/", config.getString("singaporeEPSG4326.targetresourceid"));
@@ -377,12 +391,12 @@ public class CEAAgent extends JPSAgent {
         }
     }
     /**
-     * Creates and intialises a time series using the time series client
+     * Creates and initialises a time series using the time series client
      *
      * @param uriString input city object id
-     * @param fixedIris list of maps containing time series iris mapped to measurement type
+     * @param fixedIris map containing time series iris mapped to measurement type
      */
-    private void createTimeSeries(String uriString, List<LinkedHashMap<String,String>> fixedIris ) {
+    private void createTimeSeries(String uriString, LinkedHashMap<String,String> fixedIris ) {
         try{
             String timeseries_props;
             if(System.getProperty("os.name").toLowerCase().contains("win")){
@@ -396,13 +410,11 @@ public class CEAAgent extends JPSAgent {
 
             // Create a iri for each measurement
             List<String> iris = new ArrayList<>();
-            LinkedHashMap<String, String> iriMapping = new LinkedHashMap<>();
             for(String measurement: TIME_SERIES){
-                String iri = getGraph(uriString,ENERGY_PROFILE)+measurement+"_"+UUID.randomUUID();
+                String iri = getGraph(uriString,ENERGY_PROFILE)+measurement+"_"+UUID.randomUUID()+ "/";
                 iris.add(iri);
-                iriMapping.put(measurement, iri);
+                fixedIris.put(measurement, iri);
             }
-            fixedIris.add(iriMapping);
 
             // Check whether IRIs have a time series linked and if not initialize the corresponding time series
             if(!timeSeriesExist(iris)) {
@@ -422,7 +434,6 @@ public class CEAAgent extends JPSAgent {
             e.printStackTrace();
             throw new JPSRuntimeException(e);
         }
-
 
     }
 
@@ -529,6 +540,16 @@ public class CEAAgent extends JPSAgent {
     private String getUUID(String uriString) {
         String[] splitUri = uriString.split("/");
         return splitUri[splitUri.length-1];
+    }
+
+    /**
+     * gets building uri from input city object uri
+     *
+     * @param uriString input city object id
+     * @return Building uri
+     */
+    private String getBuildingUri(String uriString) {
+        return getGraph(uriString,BUILDING)+getUUID(uriString)+"/";
     }
 
     /**
@@ -640,7 +661,7 @@ public class CEAAgent extends JPSAgent {
             SelectBuilder sb = new SelectBuilder()
                     .addVar("?Footprint")
                     .addGraph(NodeFactory.createURI(getGraph(uriString,SURFACE_GEOMETRY)), wb);
-            sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getGraph(uriString,BUILDING)+getUUID(uriString)+"/"));
+            sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
             return sb.build();
 
         } catch (ParseException e) {
@@ -664,7 +685,7 @@ public class CEAAgent extends JPSAgent {
                     .addWhere("?s", "ocgml:measuredHeight", "?Height");
             sb.addVar("?Height")
                     .addGraph(NodeFactory.createURI(getGraph(uriString,BUILDING)), wb);
-            sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getGraph(uriString,BUILDING)+getUUID(uriString)+"/"));
+            sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
         }
         else{
             wb.addPrefix("ocgml", ocgmlUri)
@@ -696,260 +717,79 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL update to add cityobject generic attribute that links to energy profile graph
-     * @param uriString city object id
-     * @param energyProfileBuildingUri building id in energy profile namespace
-     * @param route route to pass to access agent
+     * Add Where for Building Consumption
+     * @param builder update builder
+     * @param type energy type in ontology
      */
-    public void sparqlGenAttributeUpdate( String uriString, String energyProfileBuildingUri, String route) {
-        String genAttributeGraphUri = getGraph(uriString, CITY_OBJECT_GEN_ATT);
-
-        String genAttributeUri = genAttributeGraphUri + "UUID_" + UUID.randomUUID() + "/";
-
-        UpdateBuilder ub =
-                new UpdateBuilder()
-                        .addPrefix("ocgml", ocgmlUri)
-                        .addInsert("?graph", NodeFactory.createURI(genAttributeUri), "ocgml:id", NodeFactory.createURI(genAttributeUri))
-                        .addInsert("?graph", NodeFactory.createURI(genAttributeUri), "ocgml:cityObjectId", NodeFactory.createURI(uriString))
-                        .addInsert("?graph", NodeFactory.createURI(genAttributeUri), "ocgml:attrName", "energyProfileBuildingRepresentation")
-                        .addInsert("?graph", NodeFactory.createURI(genAttributeUri), "ocgml:dataType", 4)
-                        .addInsert("?graph", NodeFactory.createURI(genAttributeUri), "ocgml:uriVal", NodeFactory.createURI(energyProfileBuildingUri))
-                        .addInsert("?graph", NodeFactory.createURI(genAttributeUri), "ocgml:dateVal", NodeFactory.createBlankNode())
-                        .addInsert("?graph", NodeFactory.createURI(genAttributeUri), "ocgml:intVal", NodeFactory.createBlankNode())
-                        .addInsert("?graph", NodeFactory.createURI(genAttributeUri), "ocgml:realVal", NodeFactory.createBlankNode())
-                        .addInsert("?graph", NodeFactory.createURI(genAttributeUri), "ocgml:strVal", NodeFactory.createBlankNode())
-                        .addInsert("?graph", NodeFactory.createURI(genAttributeUri), "ocgml:parentGenattribId", NodeFactory.createBlankNode())
-                        .addInsert("?graph", NodeFactory.createURI(genAttributeUri), "ocgml:rootGenattribId", NodeFactory.createBlankNode());
-        ub.setVar(Var.alloc("graph"), NodeFactory.createURI(genAttributeGraphUri));
-
-        UpdateRequest ur = ub.buildRequest();
-
-        //Use access agent
-        this.updateStore(route, ur.toString());
+    public void addBuildingConsumptionWhere(WhereBuilder builder, String type){
+        builder.addWhere("?building", "purlEnaeq:consumesEnergy", "?grid")
+                .addWhere("?grid", "rdf:type", type)
+                .addWhere("?grid", "om:hasValue", "?measure")
+                .addWhere("?measure", "om:hasUnit", "?unit");
     }
+
     /**
-     * builds a SPARQL update using output from CEA simulations
-     * @param scalars map of scalar measurements
-     * @param tsIris map of time series iris
-     * @param uriString city object id
-     * @param uriCounter keep track of uris
-     * @param route route to pass to access agent
-     * @return building uri in energy profile graph
+     * Add Where for Device Consumption
+     * @param builder update builder
+     * @param system type of device
      */
-    public String sparqlUpdate( LinkedHashMap<String, List<String>> scalars, LinkedHashMap<String, String> tsIris, String uriString, Integer uriCounter, String route) {
-        String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
+    public void addConsumptionDeviceWhere(WhereBuilder builder, String system){
+        builder.addWhere("?building", "ontoubemmp:hasDevice", "?device")
+                .addWhere("?device", "rdf:type", system)
+                .addWhere("?device", "purlEnaeq:consumesEnergy", "?energy")
+                .addWhere("?energy", "rdf:type", "ontoubemmp:ThermalConsumption")
+                .addWhere("?energy", "om:hasValue", "?measure")
+                .addWhere("?measure", "om:hasUnit", "?unit");
+    }
 
-        String buildingUri = outputGraphUri + "Building_UUID_" + UUID.randomUUID() + "/";
-        String heatingUri = outputGraphUri + "HeatingSystem_UUID_" + UUID.randomUUID() + "/";
-        String coolingUri = outputGraphUri + "CoolingSystem_UUID_" + UUID.randomUUID() + "/";
-        String pvRoofPanelsUri = outputGraphUri + "PV_RoofPanels_UUID_" + UUID.randomUUID()+ "/";
-        String pvWallSouthPanelsUri = outputGraphUri + "PV_WallSouthPanels_UUID_" + UUID.randomUUID()+ "/";
-        String pvWallNorthPanelsUri = outputGraphUri + "PV_WallNorthPanels_UUID_" + UUID.randomUUID()+ "/";
-        String pvWallEastPanelsUri = outputGraphUri + "PV_WallEastPanels_UUID_" + UUID.randomUUID()+ "/";
-        String pvWallWestPanelsUri = outputGraphUri + "PV_WallWestPanels_UUID_" + UUID.randomUUID()+ "/";
+    /**
+     * Add Where for Device Supply
+     * @param builder update builder
+     * @param panelType type of panels
+     */
+    public void addSupplyDeviceWhere(WhereBuilder builder, String panelType){
+        builder.addWhere("?building", "ontoubemmp:hasDevice", "?PVPanels")
+                .addWhere("?PVPanels", "rdf:type", panelType)
+                .addWhere("?PVPanels", "thinkhome:producesEnergy", "?supply")
+                .addWhere("?supply", "rdf:type", "ontoubemmp:ElectricitySupply")
+                .addWhere("?supply", "om:hasValue", "?measure")
+                .addWhere("?measure", "om:hasUnit", "?unit");
+    }
 
-        String PVAreaRoofUri = outputGraphUri + "PVAreaRoof_UUID_" + UUID.randomUUID()+ "/";
-        String PVAreaRoofValueUri = outputGraphUri + "PVAreaRoofValue_UUID_" + UUID.randomUUID()+ "/";
-        String PVAreaWallSouthUri = outputGraphUri + "PVAreaWallSouth_UUID_" + UUID.randomUUID()+ "/";
-        String PVAreaWallSouthValueUri = outputGraphUri + "PVAreaWallSouthValue_UUID_" + UUID.randomUUID()+ "/";
-        String PVAreaWallNorthUri = outputGraphUri + "PVAreaWallNorth_UUID_" + UUID.randomUUID()+ "/";
-        String PVAreaWallNorthValueUri = outputGraphUri + "PVAreaWallNorthValue_UUID_" + UUID.randomUUID()+ "/";
-        String PVAreaWallEastUri = outputGraphUri + "PVAreaWallEast_UUID_" + UUID.randomUUID()+ "/";
-        String PVAreaWallEastValueUri = outputGraphUri + "PVAreaWallEastValue_UUID_" + UUID.randomUUID()+ "/";
-        String PVAreaWallWestUri = outputGraphUri + "PVAreaWallWest_UUID_" + UUID.randomUUID()+ "/";
-        String PVAreaWallWestValueUri = outputGraphUri + "PVAreaWallWestValue_UUID_" + UUID.randomUUID()+ "/";
-        String gridConsumptionUri = outputGraphUri + "GridConsumption_UUID_" + UUID.randomUUID()+ "/";
-        String electricityConsumptionUri = outputGraphUri + "ElectricityConsumption_UUID_" + UUID.randomUUID()+ "/";
-        String heatingConsumptionUri = outputGraphUri + "HeatingConsumption_UUID_" + UUID.randomUUID()+ "/";
-        String coolingConsumptionUri = outputGraphUri + "CoolingConsumption_UUID_" + UUID.randomUUID()+ "/";
-        String PVRoofSupplyUri = outputGraphUri + "PVRoofSupply_UUID_" + UUID.randomUUID()+ "/";
-        String PVWallSouthSupplyUri = outputGraphUri + "PVWallSouthSupply_UUID_" + UUID.randomUUID()+ "/";
-        String PVWallNorthSupplyUri = outputGraphUri + "PVWallNorthSupply_UUID_" + UUID.randomUUID()+ "/";
-        String PVWallEastSupplyUri = outputGraphUri + "PVWallEastSupply_UUID_" + UUID.randomUUID()+ "/";
-        String PVWallWestSupplyUri = outputGraphUri + "PVWallWestSupply_UUID_" + UUID.randomUUID()+ "/";
-
-        UpdateBuilder ub =
-                new UpdateBuilder()
-                        .addPrefix("ontoubemmp", ontoUBEMMPUri)
-                        .addPrefix("rdf", rdfUri)
-                        .addPrefix("owl", owlUri)
-                        .addPrefix("purlEnaeq", purlEnaeqUri)
-                        .addPrefix("om", unitOntologyUri)
-                        .addPrefix("thinkhome", thinkhomeUri)
-                        .addPrefix("purlInf", purlInfrastructureUri)
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "rdf:type", "purlInf:Building")
-                        .addInsert("?graph", NodeFactory.createURI(gridConsumptionUri), "rdf:type", "ontoubemmp:GridConsumption")
-                        .addInsert("?graph", NodeFactory.createURI(gridConsumptionUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(gridConsumptionUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(gridConsumptionUri), "om:hasValue", NodeFactory.createURI(tsIris.get("grid_demand")))
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("grid_demand")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("grid_demand")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("grid_demand")), "om:hasUnit", "om:kilowattHour")
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "purlEnaeq:consumesEnergy", NodeFactory.createURI(gridConsumptionUri))
-                        .addInsert("?graph", NodeFactory.createURI(electricityConsumptionUri), "rdf:type", "ontoubemmp:ElectricityConsumption")
-                        .addInsert("?graph", NodeFactory.createURI(electricityConsumptionUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(electricityConsumptionUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(electricityConsumptionUri), "om:hasValue", NodeFactory.createURI(tsIris.get("electricity_demand")))
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("electricity_demand")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("electricity_demand")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("electricity_demand")), "om:hasUnit", "om:kilowattHour")
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "purlEnaeq:consumesEnergy", NodeFactory.createURI(electricityConsumptionUri))
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(heatingUri))
-                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "rdf:type", "purlEnaeq:HeatingSystem")
-                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(heatingConsumptionUri), "rdf:type", "ontoubemmp:ThermalConsumption")
-                        .addInsert("?graph", NodeFactory.createURI(heatingConsumptionUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(heatingConsumptionUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(heatingConsumptionUri), "om:hasValue", NodeFactory.createURI(tsIris.get("heating_demand")))
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("heating_demand")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("heating_demand")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("heating_demand")), "om:hasUnit", "om:kilowattHour")
-                        .addInsert("?graph", NodeFactory.createURI(heatingUri), "purlEnaeq:consumesEnergy", NodeFactory.createURI(heatingConsumptionUri))
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(coolingUri))
-                        .addInsert("?graph", NodeFactory.createURI(coolingUri), "rdf:type", "ontoubemmp:CoolingSystem")
-                        .addInsert("?graph", NodeFactory.createURI(coolingUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(coolingConsumptionUri), "rdf:type", "ontoubemmp:ThermalConsumption")
-                        .addInsert("?graph", NodeFactory.createURI(coolingConsumptionUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(coolingConsumptionUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(coolingConsumptionUri), "om:hasValue", NodeFactory.createURI(tsIris.get("cooling_demand")))
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("cooling_demand")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("cooling_demand")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("cooling_demand")), "om:hasUnit", "om:kilowattHour")
-                        .addInsert("?graph", NodeFactory.createURI(coolingUri), "purlEnaeq:consumesEnergy", NodeFactory.createURI(coolingConsumptionUri))
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(pvRoofPanelsUri))
-                        .addInsert("?graph", NodeFactory.createURI(pvRoofPanelsUri), "rdf:type", "ontoubemmp:RoofPVPanels")
-                        .addInsert("?graph", NodeFactory.createURI(pvRoofPanelsUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(pvRoofPanelsUri), "ontoubemmp:hasArea", NodeFactory.createURI(PVAreaRoofUri))
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaRoofUri), "rdf:type", "ontoubemmp:PVPanelsArea")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaRoofUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaRoofUri), "om:hasDimension", "om:area-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaRoofUri), "om:hasValue", NodeFactory.createURI(PVAreaRoofValueUri))
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaRoofValueUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaRoofValueUri), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaRoofValueUri), "om:hasNumericalValue", scalars.get(KEY_PV_ROOF_AREA).get(uriCounter))
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaRoofValueUri), "om:hasUnit", "om:squareMetre")
-                        .addInsert("?graph", NodeFactory.createURI(pvRoofPanelsUri), "thinkhome:producesEnergy", NodeFactory.createURI(PVRoofSupplyUri))
-                        .addInsert("?graph", NodeFactory.createURI(PVRoofSupplyUri), "rdf:type", "ontoubemmp:ElectricitySupply")
-                        .addInsert("?graph", NodeFactory.createURI(PVRoofSupplyUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(PVRoofSupplyUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(PVRoofSupplyUri), "om:hasValue", NodeFactory.createURI(tsIris.get("PV_supply_roof")))
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_roof")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_roof")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_roof")), "om:hasUnit", "om:kilowattHour")
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(pvWallSouthPanelsUri))
-                        .addInsert("?graph", NodeFactory.createURI(pvWallSouthPanelsUri), "rdf:type", "ontoubemmp:SouthWallPVPanels")
-                        .addInsert("?graph", NodeFactory.createURI(pvWallSouthPanelsUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(pvWallSouthPanelsUri), "ontoubemmp:hasArea", NodeFactory.createURI(PVAreaWallSouthUri))
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallSouthUri), "rdf:type", "ontoubemmp:PVPanelsArea")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallSouthUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallSouthUri), "om:hasDimension", "om:area-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallSouthUri), "om:hasValue", NodeFactory.createURI(PVAreaWallSouthValueUri))
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallSouthValueUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallSouthValueUri), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallSouthValueUri), "om:hasNumericalValue", scalars.get(KEY_PV_WALL_SOUTH_AREA).get(uriCounter))
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallSouthValueUri), "om:hasUnit", "om:squareMetre")
-                        .addInsert("?graph", NodeFactory.createURI(pvWallSouthPanelsUri), "thinkhome:producesEnergy", NodeFactory.createURI(PVWallSouthSupplyUri))
-                        .addInsert("?graph", NodeFactory.createURI(PVWallSouthSupplyUri), "rdf:type", "ontoubemmp:ElectricitySupply")
-                        .addInsert("?graph", NodeFactory.createURI(PVWallSouthSupplyUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(PVWallSouthSupplyUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(PVWallSouthSupplyUri), "om:hasValue", NodeFactory.createURI(tsIris.get("PV_supply_wall_south")))
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_south")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_south")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_south")), "om:hasUnit", "om:kilowattHour")
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(pvWallNorthPanelsUri))
-                        .addInsert("?graph", NodeFactory.createURI(pvWallNorthPanelsUri), "rdf:type", "ontoubemmp:NorthWallPVPanels")
-                        .addInsert("?graph", NodeFactory.createURI(pvWallNorthPanelsUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(pvWallNorthPanelsUri), "ontoubemmp:hasArea", NodeFactory.createURI(PVAreaWallNorthUri))
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallNorthUri), "rdf:type", "ontoubemmp:PVPanelsArea")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallNorthUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallNorthUri), "om:hasDimension", "om:area-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallNorthUri), "om:hasValue", NodeFactory.createURI(PVAreaWallNorthValueUri))
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallNorthValueUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallNorthValueUri), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallNorthValueUri), "om:hasNumericalValue", scalars.get(KEY_PV_WALL_NORTH_AREA).get(uriCounter))
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallNorthValueUri), "om:hasUnit", "om:squareMetre")
-                        .addInsert("?graph", NodeFactory.createURI(pvWallNorthPanelsUri), "thinkhome:producesEnergy", NodeFactory.createURI(PVWallNorthSupplyUri))
-                        .addInsert("?graph", NodeFactory.createURI(PVWallNorthSupplyUri), "rdf:type", "ontoubemmp:ElectricitySupply")
-                        .addInsert("?graph", NodeFactory.createURI(PVWallNorthSupplyUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(PVWallNorthSupplyUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(PVWallNorthSupplyUri), "om:hasValue", NodeFactory.createURI(tsIris.get("PV_supply_wall_north")))
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_north")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_north")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_north")), "om:hasUnit", "om:kilowattHour")
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(pvWallEastPanelsUri))
-                        .addInsert("?graph", NodeFactory.createURI(pvWallEastPanelsUri), "rdf:type", "ontoubemmp:EastWallPVPanels")
-                        .addInsert("?graph", NodeFactory.createURI(pvWallEastPanelsUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(pvWallEastPanelsUri), "ontoubemmp:hasArea", NodeFactory.createURI(PVAreaWallEastUri))
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallEastUri), "rdf:type", "ontoubemmp:PVPanelsArea")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallEastUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallEastUri), "om:hasDimension", "om:area-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallEastUri), "om:hasValue", NodeFactory.createURI(PVAreaWallEastValueUri))
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallEastValueUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallEastValueUri), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallEastValueUri), "om:hasNumericalValue", scalars.get(KEY_PV_WALL_EAST_AREA).get(uriCounter))
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallEastValueUri), "om:hasUnit", "om:squareMetre")
-                        .addInsert("?graph", NodeFactory.createURI(pvWallEastPanelsUri), "thinkhome:producesEnergy", NodeFactory.createURI(PVWallEastSupplyUri))
-                        .addInsert("?graph", NodeFactory.createURI(PVWallEastSupplyUri), "rdf:type", "ontoubemmp:ElectricitySupply")
-                        .addInsert("?graph", NodeFactory.createURI(PVWallEastSupplyUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(PVWallEastSupplyUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(PVWallEastSupplyUri), "om:hasValue", NodeFactory.createURI(tsIris.get("PV_supply_wall_east")))
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_east")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_east")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_east")), "om:hasUnit", "om:kilowattHour")
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoubemmp:hasDevice", NodeFactory.createURI(pvWallWestPanelsUri))
-                        .addInsert("?graph", NodeFactory.createURI(pvWallWestPanelsUri), "rdf:type", "ontoubemmp:WestWallPVPanels")
-                        .addInsert("?graph", NodeFactory.createURI(pvWallWestPanelsUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(pvWallWestPanelsUri), "ontoubemmp:hasArea", NodeFactory.createURI(PVAreaWallWestUri))
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallWestUri), "rdf:type", "ontoubemmp:PVPanelsArea")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallWestUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallWestUri), "om:hasDimension", "om:area-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallWestUri), "om:hasValue", NodeFactory.createURI(PVAreaWallWestValueUri))
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallWestValueUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallWestValueUri), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallWestValueUri), "om:hasNumericalValue", scalars.get(KEY_PV_WALL_WEST_AREA).get(uriCounter))
-                        .addInsert("?graph", NodeFactory.createURI(PVAreaWallWestValueUri), "om:hasUnit", "om:squareMetre")
-                        .addInsert("?graph", NodeFactory.createURI(pvWallWestPanelsUri), "thinkhome:producesEnergy", NodeFactory.createURI(PVWallWestSupplyUri))
-                        .addInsert("?graph", NodeFactory.createURI(PVWallWestSupplyUri), "rdf:type", "ontoubemmp:ElectricitySupply")
-                        .addInsert("?graph", NodeFactory.createURI(PVWallWestSupplyUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(PVWallWestSupplyUri), "om:hasDimension", "om:energy-Dimension")
-                        .addInsert("?graph", NodeFactory.createURI(PVWallWestSupplyUri), "om:hasValue", NodeFactory.createURI(tsIris.get("PV_supply_wall_west")))
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_west")), "rdf:type", "om:Measure")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_west")), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(tsIris.get("PV_supply_wall_west")), "om:hasUnit", "om:kilowattHour");
-
-        ub.setVar(Var.alloc("graph"), NodeFactory.createURI(outputGraphUri));
-
-        UpdateRequest ur = ub.buildRequest();
-
-        //Use access agent
-        this.updateStore(route, ur.toString());
-
-        return buildingUri;
-
+    /**
+     * Add Where for Device Area
+     * @param builder update builder
+     * @param panelType type of panels
+     */
+    public void addSupplyDeviceAreaWhere(WhereBuilder builder, String panelType){
+        builder.addWhere("?building", "ontoubemmp:hasDevice", "?PVPanels")
+                .addWhere("?PVPanels", "rdf:type", panelType)
+                .addWhere("?PVPanels", "ontoubemmp:hasArea", "?area")
+                .addWhere("?area", "rdf:type", "ontoubemmp:PVPanelsArea")
+                .addWhere("?area", "om:hasValue", "?measure")
+                .addWhere("?measure", "om:hasNumericalValue", "?value")
+                .addWhere("?measure", "om:hasUnit", "?unit");
     }
 
     /**
      * Retrieves iris from KG for the data type requested
      * @param uriString city object id
-     * @param value type of data from TIME_SERIES
+     * @param building uri of building in energyprofile graph
+     * @param value type of data from TIME_SERIES or SCALARS
      * @param route route to pass to access agent
      * @return list of iris
      */
-    public ArrayList<String> getDataIRI(String uriString, String value, String route) {
+    public ArrayList<String> getDataIRI(String uriString, String building, String value, String route) {
         ArrayList<String> result = new ArrayList<>();
 
-        WhereBuilder wb1 = new WhereBuilder();
         SelectBuilder sb = new SelectBuilder();
-        WhereBuilder wb2 = new WhereBuilder();
+        WhereBuilder wb = new WhereBuilder();
 
-        wb1.addPrefix("ocgml", ocgmlUri)
-                .addWhere("?genAttribute", "ocgml:cityObjectId", "?s")
-                .addWhere("?genAttribute", "ocgml:attrName", "energyProfileBuildingRepresentation")
-                .addWhere("?genAttribute", "ocgml:uriVal", "?energyProfileBuilding");
+        if(building.equals("")) {
+            return result;
+        }
 
-        sb.addGraph(NodeFactory.createURI(getGraph(uriString,CITY_OBJECT_GEN_ATT)), wb1);
-
-        wb2.addPrefix("ocgml", ocgmlUri)
+        wb.addPrefix("ocgml", ocgmlUri)
                 .addPrefix("rdf", rdfUri)
                 .addPrefix("om", unitOntologyUri)
                 .addPrefix("purlEnaeq", purlEnaeqUri)
@@ -957,118 +797,47 @@ public class CEAAgent extends JPSAgent {
                 .addPrefix("thinkhome", thinkhomeUri);
 
         switch(value) {
-            case KEY_GRID_DEMAND:
-                wb2.addWhere("?energyProfileBuilding", "purlEnaeq:consumesEnergy", "?grid")
-                        .addWhere("?grid", "rdf:type", "ontoubemmp:GridConsumption")
-                        .addWhere("?grid", "om:hasValue", "?measure")
-                        .addWhere("?measure", "om:hasUnit", "?unit");
+            case KEY_GRID_CONSUMPTION:
+                addBuildingConsumptionWhere(wb,"ontoubemmp:GridConsumption");
                 break;
-            case KEY_ELECTRICITY_DEMAND:
-                wb2.addWhere("?energyProfileBuilding", "purlEnaeq:consumesEnergy", "?electricity")
-                        .addWhere("?electricity", "rdf:type", "ontoubemmp:ElectricityConsumption")
-                        .addWhere("?electricity", "om:hasValue", "?measure")
-                        .addWhere("?measure", "om:hasUnit", "?unit");
+            case KEY_ELECTRICITY_CONSUMPTION:
+                addBuildingConsumptionWhere(wb,"ontoubemmp:ElectricityConsumption");
                 break;
-            case KEY_HEATING_DEMAND:
-                wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?heatingDevice")
-                        .addWhere("?heatingDevice", "rdf:type", "purlEnaeq:HeatingSystem")
-                        .addWhere("?heatingDevice", "purlEnaeq:consumesEnergy", "?heating")
-                        .addWhere("?heating", "rdf:type", "ontoubemmp:ThermalConsumption")
-                        .addWhere("?heating", "om:hasValue", "?measure")
-                        .addWhere("?measure", "om:hasUnit", "?unit");
+            case KEY_HEATING_CONSUMPTION:
+                addConsumptionDeviceWhere(wb, "purlEnaeq:HeatingSystem");
                 break;
-            case KEY_COOLING_DEMAND:
-                wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?coolingDevice")
-                        .addWhere("?coolingDevice", "rdf:type", "ontoubemmp:CoolingSystem")
-                        .addWhere("?coolingDevice", "purlEnaeq:consumesEnergy", "?cooling")
-                        .addWhere("?cooling", "rdf:type", "ontoubemmp:ThermalConsumption")
-                        .addWhere("?cooling", "om:hasValue", "?measure")
-                        .addWhere("?measure", "om:hasUnit", "?unit");
+            case KEY_COOLING_CONSUMPTION:
+                addConsumptionDeviceWhere(wb, "ontoubemmp:CoolingSystem");
                 break;
             case KEY_PV_ROOF_SUPPLY:
-                wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                        .addWhere("?PVPanels", "rdf:type", "ontoubemmp:RoofPVPanels")
-                        .addWhere("?PVPanels", "thinkhome:producesEnergy", "?supply")
-                        .addWhere("?supply", "rdf:type", "ontoubemmp:ElectricitySupply")
-                        .addWhere("?supply", "om:hasValue", "?measure")
-                        .addWhere("?measure", "om:hasUnit", "?unit");
+                addSupplyDeviceWhere(wb,"ontoubemmp:RoofPVPanels");
                 break;
             case KEY_PV_WALL_SOUTH_SUPPLY:
-                wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                        .addWhere("?PVPanels", "rdf:type", "ontoubemmp:SouthWallPVPanels")
-                        .addWhere("?PVPanels", "thinkhome:producesEnergy", "?supply")
-                        .addWhere("?supply", "rdf:type", "ontoubemmp:ElectricitySupply")
-                        .addWhere("?supply", "om:hasValue", "?measure")
-                        .addWhere("?measure", "om:hasUnit", "?unit");
+                addSupplyDeviceWhere(wb,"ontoubemmp:SouthWallPVPanels");
                 break;
             case KEY_PV_WALL_NORTH_SUPPLY:
-                wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                        .addWhere("?PVPanels", "rdf:type", "ontoubemmp:NorthWallPVPanels")
-                        .addWhere("?PVPanels", "thinkhome:producesEnergy", "?supply")
-                        .addWhere("?supply", "rdf:type", "ontoubemmp:ElectricitySupply")
-                        .addWhere("?supply", "om:hasValue", "?measure")
-                        .addWhere("?measure", "om:hasUnit", "?unit");
+                addSupplyDeviceWhere(wb,"ontoubemmp:NorthWallPVPanels");
                 break;
             case KEY_PV_WALL_EAST_SUPPLY:
-                wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                        .addWhere("?PVPanels", "rdf:type", "ontoubemmp:EastWallPVPanels")
-                        .addWhere("?PVPanels", "thinkhome:producesEnergy", "?supply")
-                        .addWhere("?supply", "rdf:type", "ontoubemmp:ElectricitySupply")
-                        .addWhere("?supply", "om:hasValue", "?measure")
-                        .addWhere("?measure", "om:hasUnit", "?unit");
+                addSupplyDeviceWhere(wb,"ontoubemmp:EastWallPVPanels");
                 break;
             case KEY_PV_WALL_WEST_SUPPLY:
-                wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                        .addWhere("?PVPanels", "rdf:type", "ontoubemmp:WestWallPVPanels")
-                        .addWhere("?PVPanels", "thinkhome:producesEnergy", "?supply")
-                        .addWhere("?supply", "rdf:type", "ontoubemmp:ElectricitySupply")
-                        .addWhere("?supply", "om:hasValue", "?measure")
-                        .addWhere("?measure", "om:hasUnit", "?unit");
+                addSupplyDeviceWhere(wb,"ontoubemmp:WestWallPVPanels");
                 break;
             case KEY_PV_ROOF_AREA:
-                wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                        .addWhere("?PVPanels", "rdf:type", "ontoubemmp:RoofPVPanels")
-                        .addWhere("?PVPanels", "ontoubemmp:hasArea", "?area")
-                        .addWhere("?area", "rdf:type", "ontoubemmp:PVPanelsArea")
-                        .addWhere("?area", "om:hasValue", "?value")
-                        .addWhere("?value", "om:hasNumericalValue", "?measure")
-                        .addWhere("?value", "om:hasUnit", "?unit");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:RoofPVPanels");
                 break;
             case KEY_PV_WALL_SOUTH_AREA:
-                wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                        .addWhere("?PVPanels", "rdf:type", "ontoubemmp:SouthWallPVPanels")
-                        .addWhere("?PVPanels", "ontoubemmp:hasArea", "?area")
-                        .addWhere("?area", "rdf:type", "ontoubemmp:PVPanelsArea")
-                        .addWhere("?area", "om:hasValue", "?value")
-                        .addWhere("?value", "om:hasNumericalValue", "?measure")
-                        .addWhere("?value", "om:hasUnit", "?unit");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:SouthWallPVPanels");
                 break;
             case KEY_PV_WALL_NORTH_AREA:
-                wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                        .addWhere("?PVPanels", "rdf:type", "ontoubemmp:NorthWallPVPanels")
-                        .addWhere("?PVPanels", "ontoubemmp:hasArea", "?area")
-                        .addWhere("?area", "rdf:type", "ontoubemmp:PVPanelsArea")
-                        .addWhere("?area", "om:hasValue", "?value")
-                        .addWhere("?value", "om:hasNumericalValue", "?measure")
-                        .addWhere("?value", "om:hasUnit", "?unit");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:NorthWallPVPanels");
                 break;
             case KEY_PV_WALL_EAST_AREA:
-                wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                        .addWhere("?PVPanels", "rdf:type", "ontoubemmp:EastWallPVPanels")
-                        .addWhere("?PVPanels", "ontoubemmp:hasArea", "?area")
-                        .addWhere("?area", "rdf:type", "ontoubemmp:PVPanelsArea")
-                        .addWhere("?area", "om:hasValue", "?value")
-                        .addWhere("?value", "om:hasNumericalValue", "?measure")
-                        .addWhere("?value", "om:hasUnit", "?unit");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:EastWallPVPanels");
                 break;
             case KEY_PV_WALL_WEST_AREA:
-                wb2.addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanels")
-                        .addWhere("?PVPanels", "rdf:type", "ontoubemmp:WestWallPVPanels")
-                        .addWhere("?PVPanels", "ontoubemmp:hasArea", "?area")
-                        .addWhere("?area", "rdf:type", "ontoubemmp:PVPanelsArea")
-                        .addWhere("?area", "om:hasValue", "?value")
-                        .addWhere("?value", "om:hasNumericalValue", "?measure")
-                        .addWhere("?value", "om:hasUnit", "?unit");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:WestWallPVPanels");
                 break;
             default:
                 return result;
@@ -1077,9 +846,9 @@ public class CEAAgent extends JPSAgent {
 
         sb.addVar("?measure")
                 .addVar("?unit")
-                .addGraph(NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)), wb2);
+                .addGraph(NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)), wb);
 
-        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
+        sb.setVar( Var.alloc( "building" ), NodeFactory.createURI(building));
 
         JSONArray queryResultArray = new JSONArray(this.queryStore(route, sb.build().toString()));
 
@@ -1092,124 +861,317 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Check generic attribute is initialised in KG
+     * Gets numerical value of specified measurement
+     * @param uriString city object id
+     * @param measureUri Uri of the measurement with numerical value in KG
+     * @param route route to pass to access agent
+     * @return list of iris
+     */
+    public String getNumericalValue(String uriString, String measureUri, String route) {
+        String result = "";
+
+        WhereBuilder wb = new WhereBuilder().addPrefix("om", unitOntologyUri)
+            .addWhere("?measure", "om:hasNumericalValue", "?value");
+
+        SelectBuilder sb = new SelectBuilder().addVar("?value")
+                .addGraph(NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)), wb);
+
+        sb.setVar( Var.alloc( "measure" ), NodeFactory.createURI(measureUri));
+
+        JSONArray queryResultArray = new JSONArray(this.queryStore(route, sb.build().toString()));
+
+        if(!queryResultArray.isEmpty()){
+            result = queryResultArray.getJSONObject(0).get("value").toString();
+        }
+        return result;
+    }
+
+    /**
+     * Check building linked to ontoCityGML is initialised in KG
      * @param uriString city object id
      * @param route route to pass to access agent
-     * @return building in energy profile graph
+     * @return building
      */
-    public String checkGenAttributeInitialised(String uriString, String route){
+    public String checkBuildingInitialised(String uriString, String route){
         WhereBuilder wb = new WhereBuilder();
         SelectBuilder sb = new SelectBuilder();
 
-        wb.addPrefix("ocgml", ocgmlUri)
-                .addWhere("?genAttribute", "ocgml:cityObjectId", "?s")
-                .addWhere("?genAttribute", "ocgml:attrName", "energyProfileBuildingRepresentation")
-                .addWhere("?genAttribute", "ocgml:uriVal", "?energyProfileBuilding");
+        wb.addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
+                .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s");
 
-        sb.addVar("?energyProfileBuilding")
-                .addGraph(NodeFactory.createURI(getGraph(uriString,CITY_OBJECT_GEN_ATT)), wb);
+        sb.addVar("?building").addGraph(NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)), wb);
 
-        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
 
         JSONArray queryResultArray = new JSONArray(this.queryStore(route, sb.build().toString()));
         String building = "";
-
         if(!queryResultArray.isEmpty()){
-            building = queryResultArray.getJSONObject(0).get("energyProfileBuilding").toString();
+            building = queryResultArray.getJSONObject(0).get("building").toString();
         }
         return building;
     }
 
     /**
-     * Check if energy profile in KG has been initialised already for given building and time series already exist
+     * Initialise building in KG and link to ontoCityGMLRepresentation
      * @param uriString city object id
-     * @param fixedIris map of time series iris to data types
      * @param route route to pass to access agent
-     * @return building in energy profile graph
+     * @return building
      */
-    public String checkBlazegraphAndTimeSeriesInitialised(String uriString, List<LinkedHashMap<String,String>> fixedIris, String route){
-        String building = checkGenAttributeInitialised(uriString, route);
-        if(building.equals("")){
-            return "";
-        }
-        WhereBuilder wb1 = new WhereBuilder();
-        WhereBuilder wb2 = new WhereBuilder();
-        SelectBuilder sb = new SelectBuilder();
+    public String initialiseBuilding(String uriString, String route){
 
-        wb1.addPrefix("ocgml", ocgmlUri)
-                .addPrefix("rdf", rdfUri)
-                .addPrefix("purlEnaeq", purlEnaeqUri)
-                .addPrefix("ontoubemmp", ontoUBEMMPUri)
-                .addPrefix("thinkhome", thinkhomeUri)
-                .addPrefix("purlInf", purlInfrastructureUri)
-                .addPrefix("om", unitOntologyUri)
-                .addWhere("?energyProfileBuilding", "rdf:type", "purlInf:Building")
-                .addWhere("?energyProfileBuilding", "purlEnaeq:consumesEnergy", "?grid")
-                .addWhere("?grid", "rdf:type", "ontoubemmp:GridConsumption")
-                .addWhere("?grid", "om:hasValue", "?grid_demand")
-                .addWhere("?energyProfileBuilding", "purlEnaeq:consumesEnergy", "?electricity")
-                .addWhere("?electricity", "rdf:type", "ontoubemmp:ElectricityConsumption")
-                .addWhere("?electricity", "om:hasValue", "?electricity_demand")
-                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?heating")
-                .addWhere("?heating", "rdf:type", "purlEnaeq:HeatingSystem")
-                .addWhere("?heating", "purlEnaeq:consumesEnergy", "?heatingConsumption")
-                .addWhere("?heatingConsumption", "om:hasValue", "?heating_demand")
-                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?cooling")
-                .addWhere("?cooling", "rdf:type", "ontoubemmp:CoolingSystem")
-                .addWhere("?cooling", "purlEnaeq:consumesEnergy", "?coolingConsumption")
-                .addWhere("?coolingConsumption", "om:hasValue", "?cooling_demand")
-                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanelsRoof")
-                .addWhere("?PVPanelsRoof", "rdf:type", "ontoubemmp:RoofPVPanels")
-                .addWhere("?PVPanelsRoof", "thinkhome:producesEnergy", "?PVSupplyRoof")
-                .addWhere("?PVSupplyRoof", "om:hasValue", "?PV_supply_roof")
-                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanelsSouthWalls")
-                .addWhere("?PVPanelsSouthWalls", "rdf:type", "ontoubemmp:SouthWallPVPanels")
-                .addWhere("?PVPanelsSouthWalls", "thinkhome:producesEnergy", "?PVSupplySouthWalls")
-                .addWhere("?PVSupplySouthWalls", "om:hasValue", "?PV_supply_wall_south")
-                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanelsNorthWalls")
-                .addWhere("?PVPanelsNorthWalls", "rdf:type", "ontoubemmp:NorthWallPVPanels")
-                .addWhere("?PVPanelsNorthWalls", "thinkhome:producesEnergy", "?PVSupplyNorthWalls")
-                .addWhere("?PVSupplyNorthWalls", "om:hasValue", "?PV_supply_wall_north")
-                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanelsEastWalls")
-                .addWhere("?PVPanelsEastWalls", "rdf:type", "ontoubemmp:EastWallPVPanels")
-                .addWhere("?PVPanelsEastWalls", "thinkhome:producesEnergy", "?PVSupplyEastWalls")
-                .addWhere("?PVSupplyEastWalls", "om:hasValue", "?PV_supply_wall_east")
-                .addWhere("?energyProfileBuilding", "ontoubemmp:hasDevice", "?PVPanelsWestWalls")
-                .addWhere("?PVPanelsWestWalls", "rdf:type", "ontoubemmp:WestWallPVPanels")
-                .addWhere("?PVPanelsWestWalls", "thinkhome:producesEnergy", "?PVSupplyWestWalls")
-                .addWhere("?PVSupplyWestWalls", "om:hasValue", "?PV_supply_wall_west");
-        wb2.addPrefix("ts", timeSeriesUri)
-                .addWhere("?grid_demand", "ts:hasTimeSeries", "?gridTS")
-                .addWhere("?electricity_demand", "ts:hasTimeSeries", "?electricityTS")
-                .addWhere("?heating_demand", "ts:hasTimeSeries", "?heatingTS")
-                .addWhere("?cooling_demand", "ts:hasTimeSeries", "?coolingTS")
-                .addWhere("?PV_supply_roof", "ts:hasTimeSeries", "?PVSupplyRoofTS")
-                .addWhere("?PV_supply_wall_south", "ts:hasTimeSeries", "?PVSupplySouthWallsTS")
-                .addWhere("?PV_supply_wall_north", "ts:hasTimeSeries", "?PVSupplyNorthWallsTS")
-                .addWhere("?PV_supply_wall_east", "ts:hasTimeSeries", "?PVSupplyEastWallsTS")
-                .addWhere("?PV_supply_wall_west", "ts:hasTimeSeries", "?PVSupplyWestWallsTS");
+        String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
 
+        String buildingUri = outputGraphUri + "Building_" + UUID.randomUUID() + "/";
 
-        sb.addVar("?energyProfileBuilding")
-                .addGraph(NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)), wb1);
-        sb.addVar("?grid_demand").addVar("?electricity_demand").addVar("?heating_demand").addVar("?cooling_demand")
-                .addVar("?PV_supply_roof").addVar("?PV_supply_wall_south").addVar("?PV_supply_wall_north")
-                .addVar("?PV_supply_wall_east").addVar("?PV_supply_wall_west").addWhere(wb2);
-        sb.setVar( Var.alloc( "energyProfileBuilding" ), NodeFactory.createURI(building));
+        UpdateBuilder ub =
+                new UpdateBuilder()
+                        .addPrefix("rdf", rdfUri)
+                        .addPrefix("owl", owlUri)
+                        .addPrefix("purlInf", purlInfrastructureUri)
+                        .addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
+                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "rdf:type", "purlInf:Building")
+                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "rdf:type", "owl:NamedIndividual")
+                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoBuiltEnv:hasOntoCityGMLRepresentation", NodeFactory.createURI(getBuildingUri(uriString)));
 
-        JSONArray queryResultArray = new JSONArray(this.queryStore(route, sb.build().toString()));
-        LinkedHashMap<String, String> tsIris = new LinkedHashMap<>();
+        ub.setVar(Var.alloc("graph"), NodeFactory.createURI(outputGraphUri));
 
-        if(!queryResultArray.isEmpty()){
-            for(String measure: TIME_SERIES){
-                if (queryResultArray.getJSONObject(0).has(measure)) {
-                    tsIris.put(measure, queryResultArray.getJSONObject(0).get(measure).toString());
+        UpdateRequest ur = ub.buildRequest();
+
+        //Use access agent
+        this.updateStore(route, ur.toString());
+
+        return buildingUri;
+    }
+
+    /**
+     * Check if energy profile data already exist in KG and get IRIs if they do
+     * @param uriString city object uri
+     * @param building building uri in energy profile graph
+     * @param tsIris map of time series iris to data types
+     * @param scalarIris map of iris in kg to data type
+     * @param route route to pass to access agent
+     * @return if time series are initialised
+     */
+    public Boolean checkDataInitialised(String uriString, String building, LinkedHashMap<String,String> tsIris, LinkedHashMap<String,String> scalarIris, String route){
+        ArrayList<String> result;
+        List<String> allMeasures = new ArrayList<>();
+        Stream.of(TIME_SERIES, SCALARS).forEach(allMeasures::addAll);
+        for (String measurement: allMeasures) {
+            result = getDataIRI(uriString, building, measurement, route);
+            if (!result.isEmpty()) {
+                if (TIME_SERIES.contains(measurement)) {
+                    tsIris.put(measurement, result.get(0));
+                } else {
+                    scalarIris.put(measurement, result.get(0));
                 }
+            } else {
+                return false;
             }
-            fixedIris.add(tsIris);
-            return building;
         }
-        return "";
+        return true;
+    }
+
+    /**
+     * Create update for energy consumption
+     * @param builder update builder
+     * @param consumer iri of building/device
+     * @param consumptionType type in ontology
+     * @param quantity om:quantity iri
+     * @param measure om:measure iri
+     */
+    public void createConsumptionUpdate(UpdateBuilder builder, String consumer, String consumptionType, String quantity, String measure){
+        builder.addInsert("?graph", NodeFactory.createURI(quantity), "rdf:type", consumptionType)
+                .addInsert("?graph", NodeFactory.createURI(quantity), "rdf:type", "owl:NamedIndividual")
+                .addInsert("?graph", NodeFactory.createURI(quantity), "om:hasDimension", "om:energy-Dimension")
+                .addInsert("?graph", NodeFactory.createURI(quantity), "om:hasValue", NodeFactory.createURI(measure))
+                .addInsert("?graph", NodeFactory.createURI(measure), "rdf:type", "om:Measure")
+                .addInsert("?graph", NodeFactory.createURI(measure), "rdf:type", "owl:NamedIndividual")
+                .addInsert("?graph", NodeFactory.createURI(measure), "om:hasUnit", "om:kilowattHour")
+                .addInsert("?graph", NodeFactory.createURI(consumer), "purlEnaeq:consumesEnergy",NodeFactory.createURI(quantity));
+    }
+
+    /**
+     * Create update for device energy consumption
+     * @param builder update builder
+     * @param building iri of building
+     * @param device iri of device
+     * @param deviceType device type in ontology
+     * @param consumptionType onsumption type in ontology
+     * @param quantity om:quantity iri
+     * @param measure om:measure iri
+     */
+    public void createDeviceConsumptionUpdate(UpdateBuilder builder, String building, String device, String deviceType, String consumptionType, String quantity, String measure){
+          builder.addInsert("?graph", NodeFactory.createURI(building), "ontoubemmp:hasDevice", NodeFactory.createURI(device))
+                .addInsert("?graph", NodeFactory.createURI(device), "rdf:type", deviceType)
+                .addInsert("?graph", NodeFactory.createURI(device), "rdf:type", "owl:NamedIndividual");
+          createConsumptionUpdate(builder, device, consumptionType, quantity, measure);
+    }
+
+    /**
+     * Create update for PV Panel Supply
+     * @param builder update builder
+     * @param PVPanels iri of PV panels
+     * @param quantity om:quantity iri
+     * @param measure om:measure iri
+     */
+    public void createPVPanelSupplyUpdate(UpdateBuilder builder, String PVPanels, String quantity, String measure){
+        builder.addInsert("?graph", NodeFactory.createURI(PVPanels), "thinkhome:producesEnergy", NodeFactory.createURI(quantity))
+                .addInsert("?graph", NodeFactory.createURI(quantity), "rdf:type", "ontoubemmp:ElectricitySupply")
+                .addInsert("?graph", NodeFactory.createURI(quantity), "rdf:type", "owl:NamedIndividual")
+                .addInsert("?graph", NodeFactory.createURI(quantity), "om:hasDimension", "om:energy-Dimension")
+                .addInsert("?graph", NodeFactory.createURI(quantity), "om:hasValue", NodeFactory.createURI(measure))
+                .addInsert("?graph", NodeFactory.createURI(measure), "rdf:type", "om:Measure")
+                .addInsert("?graph", NodeFactory.createURI(measure), "rdf:type", "owl:NamedIndividual")
+                .addInsert("?graph", NodeFactory.createURI(measure), "om:hasUnit", "om:kilowattHour");
+    }
+
+    /**
+     * Create update for PV Panel areas
+     * @param builder update builder
+     * @param building iri of building
+     * @param PVPanels iri of PV panels
+     * @param panelType panel type in ontology
+     * @param quantity om:quantity iri
+     * @param measure om:measure iri
+     * @param value numerical value
+     */
+    public void createPVPanelAreaUpdate(UpdateBuilder builder, String building, String PVPanels, String panelType, String quantity, String measure, String value){
+        builder.addInsert("?graph", NodeFactory.createURI(building), "ontoubemmp:hasDevice", NodeFactory.createURI(PVPanels))
+                .addInsert("?graph", NodeFactory.createURI(PVPanels), "rdf:type", panelType)
+                .addInsert("?graph", NodeFactory.createURI(PVPanels), "rdf:type", "owl:NamedIndividual")
+                .addInsert("?graph", NodeFactory.createURI(PVPanels), "ontoubemmp:hasArea", NodeFactory.createURI(quantity))
+                .addInsert("?graph", NodeFactory.createURI(quantity), "rdf:type", "ontoubemmp:PVPanelsArea")
+                .addInsert("?graph", NodeFactory.createURI(quantity), "rdf:type", "owl:NamedIndividual")
+                .addInsert("?graph", NodeFactory.createURI(quantity), "om:hasDimension", "om:area-Dimension")
+                .addInsert("?graph", NodeFactory.createURI(quantity), "om:hasValue", NodeFactory.createURI(measure))
+                .addInsert("?graph", NodeFactory.createURI(measure), "rdf:type", "owl:NamedIndividual")
+                .addInsert("?graph", NodeFactory.createURI(measure), "rdf:type", "om:Measure")
+                .addInsert("?graph", NodeFactory.createURI(measure), "om:hasNumericalValue", value)
+                .addInsert("?graph", NodeFactory.createURI(measure), "om:hasUnit", "om:squareMetre");
+    }
+
+    /**
+     * Initialise energy profile data in KG
+     * @param uriString city object uri
+     * @param uriCounter keep track of uris
+     * @param scalars map of scalar measurements
+     * @param buildingUri building uri
+     * @param tsIris map of time series iris to data types
+     * @param scalarIris map of iris in kg to data types
+     * @param route route to pass to access agent
+     */
+    public void initialiseData(String uriString, Integer uriCounter, LinkedHashMap<String, List<String>> scalars, String buildingUri, LinkedHashMap<String,String> tsIris, LinkedHashMap<String,String> scalarIris, String route){
+
+        UpdateBuilder ub =
+                new UpdateBuilder()
+                        .addPrefix("ontoubemmp", ontoUBEMMPUri)
+                        .addPrefix("rdf", rdfUri)
+                        .addPrefix("owl", owlUri)
+                        .addPrefix("purlEnaeq", purlEnaeqUri)
+                        .addPrefix("om", unitOntologyUri)
+                        .addPrefix("thinkhome", thinkhomeUri)
+                        .addPrefix("purlInf", purlInfrastructureUri);
+
+        String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
+
+        //Device uris
+        String heatingUri = outputGraphUri + "HeatingSystem_" + UUID.randomUUID() + "/";
+        String coolingUri = outputGraphUri + "CoolingSystem_" + UUID.randomUUID() + "/";
+        String pvRoofPanelsUri = outputGraphUri + "PVRoofPanels_" + UUID.randomUUID() + "/";
+        String pvWallSouthPanelsUri = outputGraphUri + "PVWallSouthPanels_" + UUID.randomUUID() + "/";
+        String pvWallNorthPanelsUri = outputGraphUri + "PVWallNorthPanels_" + UUID.randomUUID() + "/";
+        String pvWallEastPanelsUri = outputGraphUri + "PVWallEastPanels_" + UUID.randomUUID() + "/";
+        String pvWallWestPanelsUri = outputGraphUri + "PVWallWestPanels_" + UUID.randomUUID() + "/";
+
+        // save om:measure uris for scalars and create om:quantity uris for scalars and time series
+        // (time series om:measure iris already created in createTimeSeries)
+        for (String measurement: SCALARS) {
+            String measure = outputGraphUri + measurement+"Value_" + UUID.randomUUID() + "/";
+            scalarIris.put(measurement, measure);
+            String quantity = outputGraphUri + measurement+"Quantity_" + UUID.randomUUID() + "/";
+            switch(measurement){
+                case(KEY_PV_ROOF_AREA):
+                    createPVPanelAreaUpdate(ub, buildingUri, pvRoofPanelsUri, "ontoubemmp:RoofPVPanels", quantity, measure, scalars.get(KEY_PV_ROOF_AREA).get(uriCounter));
+                    break;
+                case(KEY_PV_WALL_SOUTH_AREA):
+                    createPVPanelAreaUpdate(ub, buildingUri, pvWallSouthPanelsUri, "ontoubemmp:SouthWallPVPanels", quantity, measure, scalars.get(KEY_PV_WALL_SOUTH_AREA).get(uriCounter));
+                    break;
+                case(KEY_PV_WALL_NORTH_AREA):
+                    createPVPanelAreaUpdate(ub, buildingUri, pvWallNorthPanelsUri, "ontoubemmp:NorthWallPVPanels", quantity, measure, scalars.get(KEY_PV_WALL_NORTH_AREA).get(uriCounter));
+                    break;
+                case(KEY_PV_WALL_EAST_AREA):
+                    createPVPanelAreaUpdate(ub, buildingUri, pvWallEastPanelsUri, "ontoubemmp:EastWallPVPanels", quantity, measure, scalars.get(KEY_PV_WALL_EAST_AREA).get(uriCounter));
+                    break;
+                case(KEY_PV_WALL_WEST_AREA):
+                    createPVPanelAreaUpdate(ub, buildingUri, pvWallWestPanelsUri, "ontoubemmp:WestWallPVPanels", quantity, measure, scalars.get(KEY_PV_WALL_WEST_AREA).get(uriCounter));
+                    break;
+            }
+        }
+
+        for (String measurement: TIME_SERIES) {
+            String quantity = outputGraphUri + measurement + "Quantity_" + UUID.randomUUID() + "/";
+            if (measurement.equals(KEY_GRID_CONSUMPTION) || measurement.equals(KEY_ELECTRICITY_CONSUMPTION)) {
+                createConsumptionUpdate(ub, buildingUri, "ontoubemmp:" + measurement, quantity, tsIris.get(measurement));
+            }
+            else if (measurement.equals(KEY_COOLING_CONSUMPTION)) {
+                createDeviceConsumptionUpdate(ub, buildingUri, coolingUri, "ontoubemmp:CoolingSystem","ontoubemmp:ThermalConsumption" , quantity, tsIris.get(measurement));
+            }
+            else if (measurement.equals(KEY_HEATING_CONSUMPTION)) {
+                createDeviceConsumptionUpdate(ub, buildingUri, heatingUri,"purlEnaeq:HeatingSystem","ontoubemmp:ThermalConsumption" , quantity, tsIris.get(measurement));
+            }
+            else if (measurement.equals(KEY_PV_ROOF_SUPPLY)){
+                createPVPanelSupplyUpdate(ub, pvRoofPanelsUri, quantity, tsIris.get(measurement));
+            }
+            else if (measurement.equals(KEY_PV_WALL_SOUTH_SUPPLY)){
+                createPVPanelSupplyUpdate(ub, pvWallSouthPanelsUri, quantity, tsIris.get(measurement));
+            }
+            else if (measurement.equals(KEY_PV_WALL_NORTH_SUPPLY)){
+                createPVPanelSupplyUpdate(ub, pvWallNorthPanelsUri, quantity, tsIris.get(measurement));
+            }
+            else if (measurement.equals(KEY_PV_WALL_EAST_SUPPLY)){
+                createPVPanelSupplyUpdate(ub, pvWallEastPanelsUri, quantity, tsIris.get(measurement));
+            }
+            else if (measurement.equals(KEY_PV_WALL_WEST_SUPPLY)){
+                createPVPanelSupplyUpdate(ub, pvWallWestPanelsUri, quantity, tsIris.get(measurement));
+            }
+
+        }
+
+        ub.setVar(Var.alloc("graph"), NodeFactory.createURI(outputGraphUri));
+
+        UpdateRequest ur = ub.buildRequest();
+
+        //Use access agent
+        this.updateStore(route, ur.toString());
+    }
+
+    /**
+     * Update numerical value of scalars in KG
+     * @param scalars map of scalar measurements
+     * @param scalarIris map of iris in kg to data types
+     * @param route route to pass to access agent
+     * @param uriCounter keep track of uris
+     */
+    public void updateScalars(String uriString, String route, LinkedHashMap<String,String> scalarIris, LinkedHashMap<String, List<String>> scalars, Integer uriCounter) {
+
+        for (String measurement: SCALARS) {
+            UpdateBuilder ub1 = new UpdateBuilder().addPrefix("om", unitOntologyUri)
+                    .addDelete("?graph", NodeFactory.createURI(scalarIris.get(measurement)), "om:hasNumericalValue", "?s")
+                    .addWhere(NodeFactory.createURI(scalarIris.get(measurement)), "om:hasNumericalValue", "?s");
+            ub1.setVar(Var.alloc("graph"), NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)));
+
+            UpdateBuilder ub2 = new UpdateBuilder().addPrefix("om", unitOntologyUri)
+                    .addInsert("?graph", NodeFactory.createURI(scalarIris.get(measurement)), "om:hasNumericalValue", scalars.get(measurement).get(uriCounter));
+            ub2.setVar(Var.alloc("graph"), NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)));
+
+            UpdateRequest ur1 = ub1.buildRequest();
+            UpdateRequest ur2 = ub2.buildRequest();
+
+            //Use access agent
+            this.updateStore(route, ur1.toString());
+            this.updateStore(route, ur2.toString());
+        }
+
     }
 
     /**
