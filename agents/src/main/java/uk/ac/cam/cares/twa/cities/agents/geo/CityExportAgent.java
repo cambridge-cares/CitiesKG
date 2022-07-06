@@ -209,7 +209,7 @@ public class CityExportAgent extends JPSAgent {
                         System.out.println("Valid displayform: " + inputDisplayForm);
                     } else {
                         System.out.println("InValid displayform: " + inputDisplayForm);
-                        throw new BadRequestException();
+                        throw new IllegalArgumentException();
                     }
                 }
 
@@ -301,14 +301,6 @@ public class CityExportAgent extends JPSAgent {
     }
 
     /**
-     * create the output path of the generated kml file as default no arguments.
-     * @return the output location of the kml file
-     */
-    private String getOutputName () {
-        return getOutputName(null);
-    }
-
-    /**
      * retrieves the server information from the endpointUri -- host, port, namespace
      *
      * @param  - endpointUri which is namespaceIri that contains
@@ -357,7 +349,7 @@ public class CityExportAgent extends JPSAgent {
         String path2sortedKML = Paths.get(outputDir).toString();
         //int databaseCRS = Integer.valueOf(srsName.split(":")[1]);
         int databaseCRS = 0;
-        if (namespaceIri.contains("singapore")){
+        if (srid == 4326){
             ResourceBundle config = ResourceBundle.getBundle("config");
             databaseCRS = Integer.valueOf(config.getString("crsInMeter.singapore"));
         } else {
@@ -370,10 +362,10 @@ public class CityExportAgent extends JPSAgent {
 
     private KMLTilingTask tilingKml(String path2unsortedKML, String path2sortedKML){
         String displayForm = "extruded";
-        String namespaceIri = "singapore";
+        int srid = 4326; // singapore
 
         int databaseCRS = 0;
-        if (namespaceIri.contains("singapore")){
+        if (srid == 4326){
             ResourceBundle config = ResourceBundle.getBundle("config");
             databaseCRS = Integer.valueOf(config.getString("crsInMeter.singapore"));
         } else {

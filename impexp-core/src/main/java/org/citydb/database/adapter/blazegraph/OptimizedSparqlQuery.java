@@ -47,21 +47,14 @@ public class OptimizedSparqlQuery {
     StringBuilder sparqlbuilder = new StringBuilder();
     String lodXMultiSurfaceId = "lod" + Integer.valueOf(lodExport) + "MultiSurfaceId";
 
-    if (IRI_GRAPH_BASE.contains("theworldavatar")) { // slightly temporary adjustment for TWA missing link
-    sparqlbuilder.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-        "SELECT " +  "?fixedlodXMSid" +
-        " WHERE {" +
-        "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> {" +
-        "?ts_id ocgml:objectClassId 35 ; ocgml:buildingId " + QST_MARK +" ; ocgml:" + lodXMultiSurfaceId + " " + LODXMSID + " . ");
-    sparqlbuilder.append("BIND(IRI(CONCAT(STR(" + LODXMSID + "), '/')) AS " +  "?fixedlodXMSid" + ") } }");
-    }else{
-      sparqlbuilder.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-          "SELECT " + "?lodXMSid" +
-          " WHERE {" +
-          "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> {" +
-          "?ts_id ocgml:objectClassId 35 ; ocgml:buildingId " + QST_MARK +" ; ocgml:" +  lodXMultiSurfaceId + " " + "?lodXMSid" + " . ");
-      sparqlbuilder.append("} }");
-    }
+    sparqlbuilder.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + ">\n" +
+            "SELECT " + "?lodXMSid\n" +
+            " WHERE {\n" +
+            "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> {\n" +
+            "?ts_id ocgml:objectClassId 35 ; ocgml:buildingId " + QST_MARK +" ;\n" +
+            "ocgml:" +  lodXMultiSurfaceId + " " + "?lodXMSid" + " . ");
+    sparqlbuilder.append("} }");
+
     return sparqlbuilder.toString();
   }
 
@@ -70,11 +63,11 @@ public class OptimizedSparqlQuery {
   */
   public static String getBuildingPartQuery_part2() {
     StringBuilder sparqlbuilder = new StringBuilder();
-    sparqlbuilder.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-        "SELECT ?geomtype (datatype(?geomtype) AS ?datatype) " +
-        "WHERE {" +
-        "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> {" +
-        "?sg_id ocgml:rootId " + QST_MARK + " ; ocgml:GeometryType ?geomtype . FILTER(!isBlank(?geomtype))} }");
+    sparqlbuilder.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + ">\n" +
+        "SELECT ?geomtype (datatype(?geomtype) AS ?datatype)\n" +
+        "WHERE {\n" +
+        "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> {\n" +
+        "?sg_id ocgml:rootId " + QST_MARK + " ; \nocgml:GeometryType ?geomtype . \nFILTER(!isBlank(?geomtype))} }");
     return sparqlbuilder.toString();
   }
 
@@ -112,13 +105,19 @@ public class OptimizedSparqlQuery {
     ArrayList<ResultSet> results = new ArrayList<>();  // GroundSurface
     int num = 0;
     while (rs1.next()){
-      String fixedlod2MSid = rs1.getString(1); // fixedlod2MSid
+      String lodXMSid = rs1.getString(1); // lodXMSid
+
+      // @TODO: check if the link has missing slash at the end, if yes, fix it
+      if (!lodXMSid.endsWith("/")) {
+        // append a backslash to it
+        lodXMSid = lodXMSid + "/";
+      }
       String sparqlStr2 = getBuildingPartQuery_part2();
       psQuery = connection.prepareStatement(sparqlStr2, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
-      if (fixedlod2MSid != null){
+      if (lodXMSid != null){
         try {
-          url = new URL(fixedlod2MSid);
+          url = new URL(lodXMSid);
           psQuery.setURL(1, url);
           rs2 = psQuery.executeQuery();
 
@@ -148,7 +147,7 @@ public class OptimizedSparqlQuery {
     String lodId = "?lodId";
 
     // subquery 1.1
-    sparqlStr.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+    sparqlStr.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
         "SELECT (" + lodId + " AS ?rootId) " +
         "WHERE { " +
         "GRAPH <" + IRI_GRAPH_BASE + "building/> {" +
@@ -163,7 +162,7 @@ public class OptimizedSparqlQuery {
     String lodXSolidId = "lod" + lodLevel + "SolidId";
     // subquery 1.2
     sparqlStr.setLength(0);
-    sparqlStr.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+    sparqlStr.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
         "SELECT (" + lodId + " AS ?rootId) " +
         "\nWHERE\n { " +
         "GRAPH <" + IRI_GRAPH_BASE + "building/> { \n" +
@@ -177,7 +176,7 @@ public class OptimizedSparqlQuery {
 
     // subquery 1.3
     sparqlStr.setLength(0);
-    sparqlStr.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+    sparqlStr.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
         "SELECT (" + lodId + " AS ?rootId) " +
         "\nWHERE\n { " +
         "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> { \n" +
