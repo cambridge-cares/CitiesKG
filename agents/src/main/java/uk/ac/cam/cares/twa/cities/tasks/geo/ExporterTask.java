@@ -43,7 +43,7 @@ public class ExporterTask implements Runnable {
   public ExporterTask(Params taskParams) {
     //this.taskParamsQueue = taskParamsQueue;
     this.taskParams = taskParams;
-    this.lod = 5;   // by default: highest lod available
+    this.lod = taskParams.lod;   // by default: highest lod available
     System.out.println("ExporterTask initialization Thread Name: " + Thread.currentThread().getName());
   }
 

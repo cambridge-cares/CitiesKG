@@ -19,7 +19,8 @@ Content-Type: application/json
 
 { "namespace" : "http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/",
   "gmlid":  ["*"],
-  "displayform": "geometry"
+  "lod": 2,
+  "displayform": "extruded"
 }
 
 
