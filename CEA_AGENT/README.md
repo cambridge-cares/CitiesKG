@@ -155,6 +155,7 @@ Currently included are:
 - singaporeEPSG24500
 - citieskg-singaporeEPSG4326
 - citieskg-kingslynnEPSG3857
+- citieskg-kingslynnEPSG27700
 
 If not included, you will need to add a mapping to accessAgentRoutes in CEAAgent. 
 
