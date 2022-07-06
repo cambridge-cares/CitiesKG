@@ -1,16 +1,23 @@
 package org.citydb.database.adapter.blazegraph.test;
 
-import org.apache.jena.iri.IRI;
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.citydb.citygml.importer.database.content.DBObjectTestHelper;
 import org.citydb.config.project.kmlExporter.DisplayForm;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.AbstractSQLAdapter;
 import org.citydb.database.adapter.blazegraph.StatementTransformer;
+import org.citydb.sqlbuilder.expression.PlaceHolder;
+import org.citydb.sqlbuilder.schema.Column;
+import org.citydb.sqlbuilder.schema.Table;
+import org.citydb.sqlbuilder.select.ProjectionToken;
+import org.citydb.sqlbuilder.select.Select;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
-import javax.swing.plaf.nimbus.State;
 import java.lang.reflect.Field;
+import java.sql.*;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -62,7 +69,7 @@ public class StatementTransformerTest {
     @Test
     public void testNewStatementTransformerMethods() {
         StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
-        assertEquals(22, transformer.getClass().getDeclaredMethods().length);
+        assertEquals(20, transformer.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -200,4 +207,225 @@ public class StatementTransformerTest {
         assertEquals(expected, StatementTransformer.getSPARQLStatement_BuildingPartQuery_part2());
     }
 
+    @Test
+    public void testGetTopFeatureId() {
+        StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
+
+        // test case when * and SingaporeEPSG4326 namespace
+        try {
+            Field IRI_GRAPH_BASE = transformer.getClass().getDeclaredField("IRI_GRAPH_BASE");
+            IRI_GRAPH_BASE.setAccessible(true);
+            IRI_GRAPH_BASE.set(transformer, "http://127.0.0.1:9999/blazegraph/namespace/singaporeEPSG4326/sparql/");
+
+            Select select = Mockito.mock(Select.class, Mockito.RETURNS_MOCKS);
+            List<PlaceHolder> list = new ArrayList<>(Collections.singleton(new PlaceHolder("*")));
+
+            Mockito.doReturn(list).when(select).getInvolvedPlaceHolders();
+
+            String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> \n" +
+                    "SELECT ?id ?objectclass_id ?gmlid\n" +
+                    "\nWHERE { \n" +
+                    "GRAPH <http://127.0.0.1:9999/blazegraph/namespace/singaporeEPSG4326/sparql/cityobject/> \n" +
+                    "{ ?id ocgml:id ?Id ; ocgml:gmlId ?gmlid ; ocgml:objectClassId  ?objectclass_id . \n" +
+                    "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )} \n" +
+                    "GRAPH <http://127.0.0.1:9999/blazegraph/namespace/singaporeEPSG4326/sparql/cityobjectgenericattrib/> \n" +
+                    "{ ?ObjectIdAttr ocgml:cityObjectId ?Id ; ocgml:attrName 'LU_DESC' . } }";
+            assertEquals(expected, StatementTransformer.getTopFeatureId(select));
+        } catch (NoSuchFieldException | IllegalAccessException | ParseException e) {
+            fail();
+        }
+
+        // test case where placeHolders.size() == 1 and *
+        try {
+            Field IRI_GRAPH_BASE = transformer.getClass().getDeclaredField("IRI_GRAPH_BASE");
+            IRI_GRAPH_BASE.setAccessible(true);
+            IRI_GRAPH_BASE.set(transformer, "http://127.0.0.1:9999/blazegraph/namespace/test/sparql/");
+
+            Select select = Mockito.mock(Select.class, Mockito.RETURNS_MOCKS);
+            List<PlaceHolder> list = new ArrayList<>(Collections.singleton(new PlaceHolder("*")));
+
+            Mockito.doReturn(list).when(select).getInvolvedPlaceHolders();
+
+            String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> \n" +
+                    "SELECT ?id ?objectclass_id ?gmlid\n" +
+                    "FROM <http://127.0.0.1:9999/blazegraph/namespace/test/sparql/cityobject/> \n" +
+                    "\nWHERE\n " +
+                    "{ ?id ocgml:objectClassId  ?objectclass_id ; \n ocgml:gmlId ?gmlid . \n" +
+                    "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )}";
+            assertEquals(expected, StatementTransformer.getTopFeatureId(select));
+        } catch (NoSuchFieldException | IllegalAccessException | ParseException e) {
+            fail();
+        }
+
+        // test case for single and multiple objects
+        try {
+            Select select = Mockito.mock(Select.class, Mockito.RETURNS_MOCKS);
+            List<PlaceHolder> list = new ArrayList<>(Collections.singleton(new PlaceHolder("BLDG_123a")));
+
+            Mockito.doReturn(list).when(select).getInvolvedPlaceHolders();
+
+            String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> \n" +
+                    "SELECT ?id ?objectclass_id (? AS ?gmlid) \n" +
+                    "FROM <http://127.0.0.1:9999/blazegraph/namespace/test/sparql/cityobject/> \n" +
+                    "\nWHERE\n " +
+                    "{ ?id ocgml:objectClassId  ?objectclass_id ;\n ocgml:gmlId ?\n" +
+                    "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )\n }";
+            assertEquals(expected, StatementTransformer.getTopFeatureId(select));
+        } catch (ParseException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void getSPARQLStatement_BuildingPartGeometry() {
+        StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
+                "SELECT distinct ?surf ?geomtype (datatype(?geomtype) as ?datatype) ?surftype " +
+                "WHERE { ?surf ocgml:cityObjectId ? ;" +
+                "ocgml:GeometryType ?geomtype ." +
+                "FILTER (!isBlank(?geomtype)) }";
+        assertEquals(expected, StatementTransformer.getSPARQLStatement_BuildingPartGeometry());
+    }
+
+    @Test
+    public void testGetSPARQLStatement_BuildingPartGeometry_part2() {
+        StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
+                "SELECT distinct ?surf ?geomtype ?surftype (datatype(?geomtype) as ?datatype) " +
+                "WHERE { GRAPH <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/thematicsurface/> " +
+                "{?themsurf ocgml:buildingId ? ; " +
+                "ocgml:objectClassId ?surftype.}" +
+                "GRAPH <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/surfacegeometry/> " +
+                "{?surf ocgml:cityObjectId ?themsurf; " +
+                "ocgml:GeometryType ?geomtype . " +
+                "FILTER (!isBlank(?geomtype)) }}";
+        assertEquals(expected, StatementTransformer.getSPARQLStatement_BuildingPartGeometry_part2());
+    }
+
+    @Test
+    public void testGetSPARQLStatement_SurfaceGeometry() {
+        StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
+        String expected = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
+                "SELECT ?geom (DATATYPE(?geom) as ?datatype)" +
+                "WHERE { ? ocgml:GeometryType ?geom ." +
+                "FILTER (!isBlank(?geom)) }";
+        assertEquals(expected, StatementTransformer.getSPARQLStatement_SurfaceGeometry());
+    }
+
+    @Test
+    public void testApplyPredicate() {
+        // this test is deliberately left blank
+    }
+
+    @Test
+    public void testGetGraphUri() {
+        StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
+        Set<Table> involvedTables = new HashSet<>();
+        involvedTables.add(new Table("cityobject"));
+        assertEquals("http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/cityobject/", StatementTransformer.getGraphUri(involvedTables));
+    }
+
+    @Test
+    public void testGetVarNames() {
+        StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
+        List<ProjectionToken> list = new ArrayList<>();
+        Table table = new Table("table");
+        list.add(new Column(table, "var1", "name"));
+        list.add(new Column(table, "var2", "name"));
+        list.add(new Column(table, "var3", "name"));
+
+        assertEquals("?var1 ?var2 ?var3", StatementTransformer.getVarNames(list));
+    }
+
+    @Test
+    public void testGetSPARQQLAggregateGeometriesForLOD2OrHigher() {
+        // this test is deliberately left blank
+    }
+
+    @Test
+    public void testExecuteQuery() {
+        StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
+        PreparedStatement ps = Mockito.mock(PreparedStatement.class);
+        Connection conn = Mockito.mock(Connection.class);
+        ResultSet rs = Mockito.mock(ResultSet.class);
+        try {
+            Mockito.when(conn.prepareStatement(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt(), ArgumentMatchers.anyInt())).thenReturn(ps);
+            Mockito.when(ps.executeQuery()).thenReturn(rs);
+            Mockito.when(rs.next()).thenReturn(true).thenReturn(false);
+            Mockito.when(rs.getString(ArgumentMatchers.anyString())).thenReturn("result");
+
+            assertEquals("result", StatementTransformer.executeQuery(conn, "test", "test").get(0));
+        } catch (SQLException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testGetSPARQLqueryStage2() {
+        StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
+        String expected = "PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl>\n" +
+                "\n" +
+                "SELECT  ?geometry\n" +
+                "FROM <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/surfacegeometry/>\n" +
+                "WHERE\n" +
+                "  { ?id  ocgml:rootId        ?rootId ;\n" +
+                "         ocgml:GeometryType  ?geometry\n" +
+                "    FILTER ( ! isBlank(?geometry) )\n" +
+                "      { SELECT  (?lod2MultiSurfaceId AS ?rootId)\n" +
+                "        WHERE\n" +
+                "          { GRAPH <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/building/>\n" +
+                "              { ?id  ocgml:buildingId      ? ;\n" +
+                "                     ocgml:lod2MultiSurfaceId  ?lod2MultiSurfaceId\n" +
+                "                FILTER ( ! isBlank(?lod2MultiSurfaceId) )\n" +
+                "              }}\n" +
+                "      }\n" +
+                "    UNION\n" +
+                "      { SELECT  (?lod2SolidId AS ?rootId)\n" +
+                "        WHERE\n" +
+                "          { GRAPH <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/building/>\n" +
+                "              { ?id  ocgml:buildingId   ? ;\n" +
+                "                     ocgml:lod2SolidId  ?lod2SolidId\n" +
+                "                FILTER ( ! isBlank(?lod2SolidId) )\n" +
+                "              }}\n" +
+                "      }\n" +
+                "    UNION\n" +
+                "      { SELECT  (?lod2MultiSurfaceId AS ?rootId)\n" +
+                "        WHERE\n" +
+                "          { GRAPH <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/thematicsurface/>\n" +
+                "              { ?id  ocgml:buildingId      ? ;\n" +
+                "                     ocgml:lod2MultiSurfaceId  ?lod2MultiSurfaceId\n" +
+                "                FILTER ( ! isBlank(?lod2MultiSurfaceId) )\n" +
+                "              }}\n" +
+                "      }\n" +
+                "  }\n";
+
+        try {
+            assertEquals(expected, StatementTransformer.getSPARQLqueryStage2("test", "2"));
+        } catch (ParseException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testStr2Geometry() {
+        StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
+
+        // test case when datatypeURI is null
+        assertEquals("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))", StatementTransformer.Str2Geometry("0.0#0.0#1.0#0.0#1.0#1.0#0.0#1.0#0.0#0.0", null).toString());
+
+        // test case when datatypeURI is not null
+        assertEquals("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))", StatementTransformer.Str2Geometry("0.0#0.0#0.0#1.0#0.0#0.0#1.0#1.0#0.0#0.0#1.0#0.0#0.0#0.0#0.0", "POLYGON-3-15").toString());
+    }
+
+    @Test
+    public void testFilterResult() {
+        StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
+
+        // test case when pass if condition
+        List<String> extracted = new ArrayList<>(Collections.singleton("0.0#0.0#1.0#0.0#1.0#1.0#0.0#1.0#0.0#0.0"));
+        assertEquals("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))", StatementTransformer.filterResult(extracted, 0.5).toString());
+
+        // test case when fail if condition
+        assertEquals("GEOMETRYCOLLECTION EMPTY", StatementTransformer.filterResult(extracted, 2.0).toString());
+    }
 }
