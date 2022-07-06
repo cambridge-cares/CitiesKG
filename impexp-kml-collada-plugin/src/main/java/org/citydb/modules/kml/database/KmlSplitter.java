@@ -148,7 +148,7 @@ public class KmlSplitter {
 				}
 
 				long startTime = System.currentTimeMillis();
-				//System.out.println(stmt);  // only the parameterized query
+				System.out.println("Processing: " + (String)gmlidUri);  // only the parameterized query
 				ResultSet rs = stmt.executeQuery();
 				long endTime = System.currentTimeMillis();
 

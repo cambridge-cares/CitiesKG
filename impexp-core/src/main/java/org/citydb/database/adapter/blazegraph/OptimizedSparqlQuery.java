@@ -148,7 +148,7 @@ public class OptimizedSparqlQuery {
     String lodId = "?lodId";
 
     // subquery 1.1
-    sparqlStr.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+    sparqlStr.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
         "SELECT (" + lodId + " AS ?rootId) " +
         "WHERE { " +
         "GRAPH <" + IRI_GRAPH_BASE + "building/> {" +
@@ -163,7 +163,7 @@ public class OptimizedSparqlQuery {
     String lodXSolidId = "lod" + lodLevel + "SolidId";
     // subquery 1.2
     sparqlStr.setLength(0);
-    sparqlStr.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+    sparqlStr.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
         "SELECT (" + lodId + " AS ?rootId) " +
         "\nWHERE\n { " +
         "GRAPH <" + IRI_GRAPH_BASE + "building/> { \n" +
@@ -177,7 +177,7 @@ public class OptimizedSparqlQuery {
 
     // subquery 1.3
     sparqlStr.setLength(0);
-    sparqlStr.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+    sparqlStr.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
         "SELECT (" + lodId + " AS ?rootId) " +
         "\nWHERE\n { " +
         "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> { \n" +

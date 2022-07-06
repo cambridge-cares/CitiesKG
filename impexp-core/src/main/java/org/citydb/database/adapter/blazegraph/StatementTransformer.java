@@ -125,10 +125,10 @@ public class StatementTransformer {
     }
 
     public static String getExtrusionHeight(){
-        String sparql = "PREFIX  ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-                        "SELECT  ?envelope " +
-                        "FROM <" + IRI_GRAPH_BASE + "cityobject/" + "> " +
-                        "WHERE { ?s ocgml:EnvelopeType ?envelope ; ocgml:id ? . }";
+        String sparql = "PREFIX  ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
+                        "SELECT  ?envelope \n" +
+                        "FROM <" + IRI_GRAPH_BASE + "cityobject/" + "> \n" +
+                        "WHERE { ?s ocgml:EnvelopeType ?envelope ; ocgml:id ? . } \n";
         return sparql;
     }
 

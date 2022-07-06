@@ -299,7 +299,14 @@ public class GeoSpatialProcessor {
 
     public Geometry createGeometry(String coordlist) {
         GeometryFactory fac = new GeometryFactory();
-        Geometry geom = fac.createPolygon(str2coords(coordlist).toArray(new Coordinate[0]));
+        // @TODO: check for closed ring: Points of LinearRing do not form a closed linestring
+        Geometry geom = null;
+        try{
+            geom = fac.createPolygon(str2coords(coordlist).toArray(new Coordinate[0]));
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
 
         // Either coordlist to double[] or to Coordinates[]
         //GeometryObject geomObj = GeometryObject.createPolygon();
