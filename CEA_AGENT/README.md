@@ -5,6 +5,8 @@
 
 The CEA agent can be used to interact with the [City Energy Analyst (CEA)](https://www.cityenergyanalyst.com/) and the data it produces on building energy demands and the electricity supply available if PV panels are placed on available surfaces.
 
+The agent reads data from quads stored in a namespace in a Blazegraph workbench. Geometry data is currently queried from OntoCityGml graphs and the resulting output data is added to the named graph 'energyprofile'.
+
 The CEA Agent provides three endpoints:
 
 ### 1. Run
