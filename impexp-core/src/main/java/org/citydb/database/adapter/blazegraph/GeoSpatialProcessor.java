@@ -177,7 +177,8 @@ public class GeoSpatialProcessor {
 
     /* Equivalent ST_UNION with multiple Geometry together */
     public Geometry UnaryUnion(List<Geometry> geomlist) {
-        /*
+
+        /*  // This section works for LOD3 extruded e.g., TV tower
         Geometry merged = geomlist.get(0);
         PrecisionModel pm = new PrecisionModel(1000000000);
         GeometryPrecisionReducer geometryPrecisionReducer = new GeometryPrecisionReducer(pm);
@@ -189,6 +190,7 @@ public class GeoSpatialProcessor {
             merged = merged.union(geo);
         }
         */
+        // This section works for mostly LOD2 extruded
         GeometryFactory fac = new GeometryFactory();
         Geometry[] col = geomlist.toArray(new Geometry[0]);
         GeometryCollection coll = new GeometryCollection(col, fac);
