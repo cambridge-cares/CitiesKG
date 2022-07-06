@@ -69,7 +69,7 @@ public class StatementTransformerTest {
     @Test
     public void testNewStatementTransformerMethods() {
         StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
-        assertEquals(20, transformer.getClass().getDeclaredMethods().length);
+        assertEquals(19, transformer.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -151,9 +151,10 @@ public class StatementTransformerTest {
     @Test
     public void testGetExtrusionHeight() {
         StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
-        String expected = "PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> " +
-                "SELECT  ?envelope FROM <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/cityobject/> " +
-                "WHERE { ?s ocgml:EnvelopeType ?envelope ; ocgml:id ? . }";
+        String expected = "PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl> \n" +
+                "SELECT  ?envelope \n" +
+                "FROM <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/cityobject/> \n" +
+                "WHERE { ?s ocgml:EnvelopeType ?envelope ; ocgml:id ? . } \n";
         assertEquals(expected, StatementTransformer.getExtrusionHeight());
     }
 
