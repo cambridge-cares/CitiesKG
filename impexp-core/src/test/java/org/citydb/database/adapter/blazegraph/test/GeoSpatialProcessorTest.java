@@ -1,4 +1,4 @@
-package org.citydb.database.adapter.blazegraph;
+package org.citydb.database.adapter.blazegraph.test;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.citydb.config.geometry.GeometryObject;
+import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
