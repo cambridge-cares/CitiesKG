@@ -45,7 +45,7 @@ PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/Onto
 INSERT DATA
 {
 GRAPH <{PREFIX}databasesrs/> {
-<{PREFIX}>	ocgmL:srid>	27700 .
+<{PREFIX}>	ocgml:srid>	27700 .
 <{PREFIX}>	ocgml:srsname "EPSG:27700" .
 }}
 ```
