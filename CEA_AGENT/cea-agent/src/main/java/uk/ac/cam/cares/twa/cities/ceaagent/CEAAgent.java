@@ -47,6 +47,7 @@ public class CEAAgent extends JPSAgent {
     public static final String CITY_OBJECT_GEN_ATT = "cityobjectgenericattrib";
     public static final String BUILDING = "building";
     public static final String SURFACE_GEOMETRY = "surfacegeometry";
+    public static final String THEMATIC_SURFACE = "thematicsurface";
     public static final String ENERGY_PROFILE = "energyprofile";
     public static final String DATABASE_SRS = "databasesrs";
     public static final String KEY_GRID_CONSUMPTION = "GridConsumption";
@@ -164,10 +165,16 @@ public class CEAAgent extends JPSAgent {
                         // Will not be necessary if namespace is passed in request params
                         if(i==0) route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
                         uriStringArray.add(uri);
-                        //Set default value if height can not be obtained from knowledge graph
-                        String height = getValue(uri, "Height", route);
+                        // Set default value of 10m if height can not be obtained from knowledge graph
+                        // Will only require one height query if height is represented in data consistently
+                        String height = getValue(uri, "HeightMeasuredHeigh", route);
+                        height = height.length() == 0 ? getValue(uri, "HeightMeasuredHeight", route): height;
+                        height = height.length() == 0 ? getValue(uri, "HeightGenAttr", route): height;
                         height = height.length() == 0 ? "10.0" : height;
-                        testData.add(new CEAInputData(getValue(uri, "Footprint", route), height));
+                        // Get footprint from ground thematic surface or find from surface geometries depending on data
+                        String footprint = getValue(uri, "FootprintThematicSurface", route);
+                        footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
+                        testData.add(new CEAInputData(footprint, height));
                         if(i==0) crs = getValue(uri, "CRS", route); //just get crs once - assuming all iris in same namespace
                     }
                     // Manually set thread number to 0 - multiple threads not working so needs investigating
@@ -581,7 +588,7 @@ public class CEAAgent extends JPSAgent {
         JSONArray queryResultArray = this.queryStore(route, q.toString());
 
         if(!queryResultArray.isEmpty()){
-            if(value!="Footprint") {
+            if(value!="FootprintSurfaceGeom") {
                 result = queryResultArray.getJSONObject(0).get(value).toString();
             }
             else{
@@ -593,7 +600,7 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * finds footprint of building from array of building surfaces by searching for constant minimum z in geometries
-     * NB. On data TSDA has run on, the surface should be labelled with a ground surface id so this won't be necessary
+     * NB. On data TSDA has run on, the thematic surface is labelled with a ground surface id so this is not required
      * @param results array of building surfaces
      * @return footprint geometry as string
      */
@@ -603,7 +610,7 @@ public class CEAAgent extends JPSAgent {
         Double minimum=Double.MAX_VALUE;
 
         for(Integer i=0; i<results.length(); i++){
-            String geom = results.getJSONObject(i).get("Footprint").toString();
+            String geom = results.getJSONObject(i).get("FootprintSurfaceGeom").toString();
             String[] split = geom.split("#");
             // store z values of surface
             for(Integer j=1; j<=split.length; j++) {
@@ -636,10 +643,16 @@ public class CEAAgent extends JPSAgent {
      */
     private Query getQuery(String uriString, String value) {
         switch(value) {
-            case "Footprint":
-                return getGeometryQuery(uriString);
-            case "Height":
-                return getHeightQuery(uriString);
+            case "FootprintSurfaceGeom":
+                return getGeometryQuerySurfaceGeom(uriString);
+            case "FootprintThematicSurface":
+                return getGeometryQueryThematicSurface(uriString);
+            case "HeightMeasuredHeigh":
+                return getHeightQueryMeasuredHeigh(uriString);
+            case "HeightMeasuredHeight":
+                return getHeightQueryMeasuredHeight(uriString);
+            case "HeightGenAttr":
+                return getHeightQueryGenAttr(uriString);
             case "CRS":
                 return getCrsQuery(uriString);
         }
@@ -647,21 +660,51 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve a footprint.
+     * builds a SPARQL query for a specific URI to retrieve a footprint for building linked to surface geometries.
      * @param uriString city object id
      * @return returns a query string
      */
-    private Query getGeometryQuery(String uriString) {
+    private Query getGeometryQuerySurfaceGeom(String uriString) {
         try {
             WhereBuilder wb = new WhereBuilder()
                     .addPrefix("ocgml", ocgmlUri)
                     .addWhere("?surf", "ocgml:cityObjectId", "?s")
-                    .addWhere("?surf", "ocgml:GeometryType", "?Footprint")
-                    .addFilter("!isBlank(?Footprint)");
+                    .addWhere("?surf", "ocgml:GeometryType", "?FootprintSurfaceGeom")
+                    .addFilter("!isBlank(?FootprintSurfaceGeom)");
             SelectBuilder sb = new SelectBuilder()
-                    .addVar("?Footprint")
+                    .addVar("?FootprintSurfaceGeom")
                     .addGraph(NodeFactory.createURI(getGraph(uriString,SURFACE_GEOMETRY)), wb);
             sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
+            return sb.build();
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * builds a SPARQL query for a specific URI to retrieve a footprint for building linked to thematic surfaces.
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getGeometryQueryThematicSurface(String uriString) {
+        try {
+            WhereBuilder wb1 = new WhereBuilder()
+                    .addPrefix("ocgml", ocgmlUri)
+                    .addWhere("?surf", "ocgml:cityObjectId", "?s")
+                    .addWhere("?surf", "ocgml:GeometryType", "?FootprintThematicSurface")
+                    .addFilter("!isBlank(?FootprintThematicSurface)");
+            WhereBuilder wb2 = new WhereBuilder()
+                    .addPrefix("ocgml", ocgmlUri)
+                    .addWhere("?s", "ocgml:buildingId", "?building")
+                    .addWhere("?s", "ocgml:objectClassId", "?groundSurfId")
+                    .addFilter("?groundSurfId = 35"); //Thematic Surface Ids are 33:roof, 34:wall and 35:ground
+            SelectBuilder sb = new SelectBuilder()
+                    .addVar("?FootprintThematicSurface")
+                    .addGraph(NodeFactory.createURI(getGraph(uriString,SURFACE_GEOMETRY)), wb1)
+                    .addGraph(NodeFactory.createURI(getGraph(uriString,THEMATIC_SURFACE)), wb2);
+            sb.setVar( Var.alloc( "building" ), NodeFactory.createURI(getBuildingUri(uriString)));
             return sb.build();
 
         } catch (ParseException e) {
@@ -672,30 +715,56 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve the building height.
+     * builds a SPARQL query for a specific URI to retrieve the building height for data with ocgml:measuredHeight attribute
      * @param uriString city object id
      * @return returns a query string
      */
-    private Query getHeightQuery(String uriString) {
+    private Query getHeightQueryMeasuredHeight(String uriString) {
         WhereBuilder wb = new WhereBuilder();
         SelectBuilder sb = new SelectBuilder();
-        if(uriString.contains("kings-lynn-open-data"))
-        {
-            wb.addPrefix("ocgml", ocgmlUri)
-                    .addWhere("?s", "ocgml:measuredHeight", "?Height");
-            sb.addVar("?Height")
-                    .addGraph(NodeFactory.createURI(getGraph(uriString,BUILDING)), wb);
-            sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
-        }
-        else{
-            wb.addPrefix("ocgml", ocgmlUri)
-                    .addWhere("?o", "ocgml:attrName", "height")
-                    .addWhere("?o", "ocgml:realVal", "?Height")
-                    .addWhere("?o", "ocgml:cityObjectId", "?s");
-            sb.addVar("?Height")
-                    .addGraph(NodeFactory.createURI(getGraph(uriString,CITY_OBJECT_GEN_ATT)), wb);
-            sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
-        }
+
+        wb.addPrefix("ocgml", ocgmlUri)
+                .addWhere("?s", "ocgml:measuredHeight", "?HeightMeasuredHeight");
+        sb.addVar("?HeightMeasuredHeight")
+                .addGraph(NodeFactory.createURI(getGraph(uriString,BUILDING)), wb);
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
+
+        return sb.build();
+    }
+
+    /**
+     * builds a SPARQL query for a specific URI to retrieve the building height for data with ocgml:measuredHeigh attribute
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getHeightQueryMeasuredHeigh(String uriString) {
+        WhereBuilder wb = new WhereBuilder();
+        SelectBuilder sb = new SelectBuilder();
+        wb.addPrefix("ocgml", ocgmlUri)
+                .addWhere("?s", "ocgml:measuredHeigh", "?HeightMeasuredHeigh");
+        sb.addVar("?HeightMeasuredHeigh")
+                .addGraph(NodeFactory.createURI(getGraph(uriString,BUILDING)), wb);
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
+
+        return sb.build();
+    }
+
+    /**
+     * builds a SPARQL query for a specific URI to retrieve the building height for data with generic attribute with ocgml:attrName 'height'
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getHeightQueryGenAttr(String uriString) {
+        WhereBuilder wb = new WhereBuilder();
+        SelectBuilder sb = new SelectBuilder();
+
+        wb.addPrefix("ocgml", ocgmlUri)
+                .addWhere("?o", "ocgml:attrName", "height")
+                .addWhere("?o", "ocgml:realVal", "?HeightGenAttr")
+                .addWhere("?o", "ocgml:cityObjectId", "?s");
+        sb.addVar("?HeightGenAttr")
+                .addGraph(NodeFactory.createURI(getGraph(uriString,CITY_OBJECT_GEN_ATT)), wb);
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
 
         return sb.build();
     }

@@ -21,55 +21,94 @@ Example request:
 ```
 
 
-In order for the agent to run the CEA successfully, the following queries must return a result with an IRI of format `<{blazegraph url + namespace}/sparql/cityobject/{UUID}/>`:
+In order for the agent to run the CEA successfully, the queries below must return a result with an IRI of format `<{PREFIX}cityobject/{UUID}/>` where PREFIX is the prefix to IRIs in the namespace you are working with. 
 
-For coordinate reference system (CRS) of the namespace:
+For example:
+ - `http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_b5a7b032-1877-4c2b-9e00-714b33a426f7/` - the PREFIX is: `http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/`
+
+ - `http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/building/UUID_7cb00a09-528b-4016-b3d6-80c5a9442d95/` - the PREFIX is `http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/`.
+
+Query for coordinate reference system (CRS) EPSG id of the namespace:
 
 ```
 PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
 
 SELECT  ?CRS
 WHERE
-  { GRAPH <{blazegraph url + namespace}/sparql/databasesrs/>
-      { <{blazegraph url + namespace}/sparql/> ocgml:srid  ?CRS}}
+  { GRAPH <{PREFIX}databasesrs/>
+      { <{PREFIX}> ocgml:srid  ?CRS}}
+```
+If no CRS is stored in the namespace please insert the data in the databasesrs graph. For example:
+```
+PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
+
+INSERT DATA
+{
+GRAPH <{PREFIX}databasesrs/> {
+<{PREFIX}>	ocgmL:srid>	27700 .
+<{PREFIX}>	ocgml:srsname "EPSG:27700" .
+}}
 ```
 
-For building surfaces, which the footprint is selected from:
+Query for footprint of the building - the agent will try querying for the thematic surface with surface id 35 which corresponds to a ground surface:
 ```
 PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
 
 SELECT  ?Footprint
 WHERE
-  { GRAPH <{blazegraph url + namespace}/sparql/surfacegeometry/>
-      { ?surf  ocgml:cityObjectId  <{blazegraph url + namespace}/sparql/building/{UUID}/> ;
+  { GRAPH <{PREFIX}surfacegeometry/>
+      { ?surf  ocgml:cityObjectId  ?id ;
+               ocgml:GeometryType  ?Footprint
+        FILTER ( ! isBlank(?Footprint) )
+   GRAPH <{PREFIX}thematicsurface/> 
+       { ?id ocgml:buildingId <{PREFIX}building/{UUID}/>;
+    		 ocgml:objectClassId ?groundSurfId.
+   FILTER(?groundSurfId = 35) 
+   }}
+```
+If unsuccessful, the agent will query all building surface geometries with the following query, which the footprint is selected from by searching for the surface with the minimum constant height:
+```
+PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
+
+SELECT  ?Footprint
+WHERE
+  { GRAPH <{PREFIX}surfacegeometry/>
+      { ?surf  ocgml:cityObjectId  <{PREFIX}building/{UUID}/> ;
                ocgml:GeometryType  ?Footprint
         FILTER ( ! isBlank(?Footprint) )
       }}
 ```
 
-For building height, two different queries are possible. For IRIs containing kings-lynn-open-data the following query is used.
-```
-
-PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
-
-SELECT  ?Height
-WHERE
-  { GRAPH <{blazegraph url + namespace}/sparql/building/>
-      { <{blazegraph url + namespace}/sparql/building/{UUID}/> ocgml:measuredHeight  ?Height}}
-```
-Otherwise:
+For building height, the three different following queries are possible. Each are tried in this order until a result is retrieved. If all unsuccessful, a default value for height of 10.0m is set.
 ```
 PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
 
 SELECT  ?Height
 WHERE
-  { GRAPH <{blazegraph url + namespace}/sparql/cityobjectgenericattrib/>
+  { GRAPH <{PREFIX}building/>
+      { <{PREFIX}building/{UUID}/> ocgml:measuredHeigh  ?Height}}
+```
+
+```
+PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
+
+SELECT  ?Height
+WHERE
+  { GRAPH <{PREFIX}building/>
+      { <{PREFIX}building/{UUID}/> ocgml:measuredHeight  ?Height}}
+```
+```
+PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
+
+SELECT  ?Height
+WHERE
+  { GRAPH <{PREFIX}cityobjectgenericattrib/>
       { ?o  ocgml:attrName      "height" ;
             ocgml:realVal       ?Height ;
-            ocgml:cityObjectId  <{blazegraph url + namespace}/sparql/cityobject/{UUID}/>}}
+            ocgml:cityObjectId  <{PREFIX}cityobject/{UUID}/>}}
 
 ```
-If both unsuccessful, a default value for height of 10.0m is set.
+
 
 
 ### 2. Update
@@ -134,7 +173,7 @@ You'll need to provide your credentials (github username/personal access token) 
 
 ### postgreSQL
 
-The agent also requires a postgreSQL database for the time series client to save data in. The address of the database used, as well as the SPARQL query and update endpoints, need to be provided in:
+The agent also requires a postgreSQL database for the time series client to save data in. The address of the database used, as well as the SPARQL query and update endpoints (eg. `http://host.docker.internal:9999/blazegraph/namespace/kings-lynn/sparql`), need to be provided in:
 ```
 ./cea-agent/src/main/resources
     timeseriesclient.properties

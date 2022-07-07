@@ -48,7 +48,7 @@ public class CEAAgentTest {
         CEAAgent agent = new CEAAgent();
         ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
 
-        assertEquals(50, agent.getClass().getDeclaredFields().length);
+        assertEquals(51, agent.getClass().getDeclaredFields().length);
 
         Field URI_ACTION;
         Field URI_UPDATE;
@@ -63,6 +63,7 @@ public class CEAAgentTest {
         Field ENERGY_PROFILE;
         Field DATABASE_SRS;
         Field SURFACE_GEOMETRY;
+        Field THEMATIC_SURFACE;
         Field KEY_GRID_CONSUMPTION;
         Field KEY_ELECTRICITY_CONSUMPTION;
         Field KEY_HEATING_CONSUMPTION;
@@ -126,6 +127,8 @@ public class CEAAgentTest {
             assertEquals(DATABASE_SRS.get(agent), "databasesrs");
             SURFACE_GEOMETRY = agent.getClass().getDeclaredField("SURFACE_GEOMETRY");
             assertEquals(SURFACE_GEOMETRY.get(agent), "surfacegeometry");
+            THEMATIC_SURFACE = agent.getClass().getDeclaredField("THEMATIC_SURFACE");
+            assertEquals(THEMATIC_SURFACE.get(agent), "thematicsurface");
             KEY_GRID_CONSUMPTION = agent.getClass().getDeclaredField("KEY_GRID_CONSUMPTION");
             assertEquals(KEY_GRID_CONSUMPTION.get(agent), "GridConsumption");
             KEY_ELECTRICITY_CONSUMPTION = agent.getClass().getDeclaredField("KEY_ELECTRICITY_CONSUMPTION");
@@ -230,7 +233,7 @@ public class CEAAgentTest {
     @Test
     public void testCEAAgentMethods() {
         CEAAgent agent = new CEAAgent();
-        assertEquals(42, agent.getClass().getDeclaredMethods().length);
+        assertEquals(45, agent.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -256,32 +259,21 @@ public class CEAAgentTest {
         }
 
         // test data
-        String measure_grid = "GridConsumption";
-        String measure_elec = "ElectricityConsumption";
-        String measure_heating = "HeatingConsumption";
-        String measure_cooling = "CoolingConsumption";
-        String measure_PV_roof = "PVRoofSupply";
-        String measure_PV_south = "PVWallSouthSupply";
-        String measure_PV_north = "PVWallNorthSupply";
-        String measure_PV_east = "PVWallEastSupply";
-        String measure_PV_west = "PVWallWestSupply";
         String measure_building = "building";
         String test_measure = "test_uri1";
         String test_unit = "test_uri2";
         String building = "test_building_uri";
-        String measure_height = "Height";
+        String measure_height = "HeightMeasuredHeigh";
         String test_height = "5.0";
-        String measure_footprint = "Footprint";
-        String test_footprint1 = "559267.200000246#313892.7999989044#0.0#559280.5400002463#313892.7999989044#0.0#559280.5400002463#313908.7499989033#0.0#559267.200000246#313908.7499989033#0.0#559267.200000246#313892.7999989044#0.0";
+        String measure_footprint = "FootprintThematicSurface";
+        String test_footprint = "559267.200000246#313892.7999989044#0.0#559280.5400002463#313892.7999989044#0.0#559280.5400002463#313908.7499989033#0.0#559267.200000246#313908.7499989033#0.0#559267.200000246#313892.7999989044#0.0";
         String measure_crs = "CRS";
         String test_crs = "test_crs";
         String testScalar = "testScalar";
 
-        JSONArray expected_ts = new JSONArray().put(new JSONObject().put(measure_grid, test_measure).put(measure_elec, test_measure).put(measure_heating, test_measure).put(measure_cooling, test_measure)
-                .put(measure_PV_roof, test_measure).put(measure_PV_south, test_measure).put(measure_PV_north, test_measure).put(measure_PV_east, test_measure).put(measure_PV_west, test_measure));
         JSONArray expected_building = new JSONArray().put(new JSONObject().put(measure_building, building));
         JSONArray expected_height = new JSONArray().put(new JSONObject().put(measure_height, test_height));
-        JSONArray expected_footprint = new JSONArray().put(new JSONObject().put(measure_footprint, test_footprint1));
+        JSONArray expected_footprint = new JSONArray().put(new JSONObject().put(measure_footprint, test_footprint));
         JSONArray expected_crs = new JSONArray().put(new JSONObject().put(measure_crs, test_crs));
         JSONArray expected_iri = new JSONArray().put(new JSONObject().put("measure", test_measure).put("unit", test_unit));
         JSONArray expected_value = new JSONArray().put(new JSONObject().put("value", testScalar));
@@ -868,7 +860,7 @@ public class CEAAgentTest {
         CEAAgent agent = new CEAAgent();
 
         String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
-        String value = "Height";
+        String value = "HeightMeasuredHeight";
         String result = "5.2";
         String route = "test_route";
 
@@ -901,7 +893,7 @@ public class CEAAgentTest {
         String geom2 = "559267.200000246#313892.7999989044#1.7#559280.5400002463#313892.7999989044#1.7#559280.5400002463#313908.7499989033#1.7#559267.200000246#313908.7499989033#1.7#559267.200000246#313892.7999989044#1.7";
         String geom3 = "559267.200000246#313892.7999989044#0.0#559280.5400002463#313892.7999989044#0.0#559280.5400002463#313908.7499989033#0.0#559267.200000246#313908.7499989033#0.0#559267.200000246#313892.7999989044#0.0";
 
-        JSONArray results = new JSONArray("[{'Footprint': '"+geom1+"'}, {'Footprint': '"+geom2+"'},{'Footprint': '"+geom3+"'}]");
+        JSONArray results = new JSONArray("[{'FootprintSurfaceGeom': '"+geom1+"'}, {'FootprintSurfaceGeom': '"+geom2+"'},{'FootprintSurfaceGeom': '"+geom3+"'}]");
 
         Method getFootprint = agent.getClass().getDeclaredMethod("getFootprint", JSONArray.class);
         assertNotNull(getFootprint);
@@ -917,67 +909,114 @@ public class CEAAgentTest {
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         CEAAgent agent = new CEAAgent();
-        String case1 = "Footprint";
-        String case2 = "Height";
-        String case3 = "CRS";
-        String uri1 = "http://localhost/berlin/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
-        String uri2 = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
+        String case1 = "FootprintSurfaceGeom";
+        String case2 = "FootprintThematicSurface";
+        String case3 = "HeightMeasuredHeight";
+        String case4 = "HeightMeasuredHeigh";
+        String case5 = "HeightGenAttr";
+        String case6 = "CRS";
+        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
         Method getQuery = agent.getClass().getDeclaredMethod("getQuery", String.class, String.class);
         assertNotNull(getQuery);
         getQuery.setAccessible(true);
 
-
-        // Ensure queries contains correct predicates and objects depending on value sent
-        Query q1 = (Query) getQuery.invoke(agent, uri1, case1);
+        // Ensure queries contains correct predicates depending on value sent
+        Query q1 = (Query) getQuery.invoke(agent, uri, case1);
         assertTrue(q1.toString().contains("ocgml:GeometryType"));
-        Query q2 = (Query) getQuery.invoke(agent, uri1, case2);
-        assertTrue(q2.toString().contains("ocgml:attrName"));
-        assertTrue(q2.toString().contains("ocgml:realVal"));
-        assertTrue(q2.toString().contains("height"));
-        Query q3 = (Query) getQuery.invoke(agent, uri2, case2);
+        Query q2 = (Query) getQuery.invoke(agent, uri, case2);
+        assertTrue(q2.toString().contains("ocgml:objectClassId"));
+        Query q3 = (Query) getQuery.invoke(agent, uri, case3);
         assertTrue(q3.toString().contains("ocgml:measuredHeight"));
-        Query q4 = (Query) getQuery.invoke(agent, uri2, case3);
-        assertTrue(q4.toString().contains("ocgml:srid"));
-
+        Query q4 = (Query) getQuery.invoke(agent, uri, case4);
+        assertTrue(q4.toString().contains("ocgml:measuredHeigh"));
+        Query q5 = (Query) getQuery.invoke(agent, uri, case5);
+        assertTrue(q5.toString().contains("ocgml:attrName"));
+        Query q6 = (Query) getQuery.invoke(agent, uri, case6);
+        assertTrue(q6.toString().contains("ocgml:srid"));
     }
 
     @Test
-    public void testGetGeometryQuery()
+    public void testGetGeometryQueryThematicSurface()
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
         String uri = "http://localhost/berlin/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
-        Method getGeometryQuery = agent.getClass().getDeclaredMethod("getGeometryQuery", String.class);
-        assertNotNull(getGeometryQuery);
-        getGeometryQuery.setAccessible(true);
+        Method getGeometryQueryThematicSurface = agent.getClass().getDeclaredMethod("getGeometryQueryThematicSurface", String.class);
+        assertNotNull(getGeometryQueryThematicSurface);
+        getGeometryQueryThematicSurface.setAccessible(true);
 
         // Ensure query contains correct predicate and object
-        Query q = (Query) getGeometryQuery.invoke(agent, uri);
+        Query q = (Query) getGeometryQueryThematicSurface.invoke(agent, uri);
         assertTrue(q.toString().contains("ocgml:GeometryType"));
-        assertTrue(q.toString().contains("Footprint"));
+        assertTrue(q.toString().contains("FootprintThematicSurface"));
+        assertTrue(q.toString().contains("ocgml:objectClassId"));
+        assertTrue(q.toString().contains("groundSurfId"));
     }
 
     @Test
-    public void testGetHeightQuery()
+    public void testGetGeometryQuerySurfaceGeom()
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
-        String uri1 = "http://localhost/berlin/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
-        String uri2 = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
+        String uri = "http://localhost/berlin/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
-        Method getHeightQuery = agent.getClass().getDeclaredMethod("getHeightQuery", String.class);
-        assertNotNull(getHeightQuery);
-        getHeightQuery.setAccessible(true);
+        Method getGeometryQuerySurfaceGeom = agent.getClass().getDeclaredMethod("getGeometryQuerySurfaceGeom", String.class);
+        assertNotNull(getGeometryQuerySurfaceGeom);
+        getGeometryQuerySurfaceGeom.setAccessible(true);
+
+        // Ensure query contains correct predicates and objects
+        Query q = (Query) getGeometryQuerySurfaceGeom.invoke(agent, uri);
+        assertTrue(q.toString().contains("ocgml:GeometryType"));
+        assertTrue(q.toString().contains("FootprintSurfaceGeom"));
+    }
+
+    @Test
+    public void testGetHeightQueryMeasuredHeigh()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
+
+        Method getHeightQueryMeasuredHeigh = agent.getClass().getDeclaredMethod("getHeightQueryMeasuredHeigh", String.class);
+        assertNotNull(getHeightQueryMeasuredHeigh);
+        getHeightQueryMeasuredHeigh.setAccessible(true);
 
         // Ensure query contains correct predicate and object
-        Query q1 = (Query) getHeightQuery.invoke(agent, uri1);
-        assertTrue(q1.toString().contains("ocgml:attrName"));
-        assertTrue(q1.toString().contains("ocgml:realVal"));
-        assertTrue(q1.toString().contains("height"));
-        Query q2 = (Query) getHeightQuery.invoke(agent, uri2);
-        assertTrue(q2.toString().contains("ocgml:measuredHeight"));
-        assertTrue(q2.toString().contains("Height"));
+        Query q = (Query) getHeightQueryMeasuredHeigh.invoke(agent, uri);
+        assertTrue(q.toString().contains("ocgml:measuredHeigh"));
+        assertTrue(q.toString().contains("HeightMeasuredHeigh"));
+    }
 
+    @Test
+    public void testGetHeightQueryMeasuredHeight()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
+
+        Method getHeightQueryMeasuredHeight = agent.getClass().getDeclaredMethod("getHeightQueryMeasuredHeight", String.class);
+        assertNotNull(getHeightQueryMeasuredHeight);
+        getHeightQueryMeasuredHeight.setAccessible(true);
+
+        // Ensure query contains correct predicate and object
+        Query q = (Query) getHeightQueryMeasuredHeight.invoke(agent, uri);
+        assertTrue(q.toString().contains("ocgml:measuredHeight"));
+        assertTrue(q.toString().contains("HeightMeasuredHeight"));
+    }
+
+    @Test
+    public void testGetHeightQueryGenAttr()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
+
+        Method getHeightQueryGenAttr = agent.getClass().getDeclaredMethod("getHeightQueryGenAttr", String.class);
+        assertNotNull(getHeightQueryGenAttr);
+        getHeightQueryGenAttr.setAccessible(true);
+
+        // Ensure query contains correct predicate and object
+        Query q = (Query) getHeightQueryGenAttr.invoke(agent, uri);
+        assertTrue(q.toString().contains("ocgml:attrName"));
+        assertTrue(q.toString().contains("ocgml:realVal"));
+        assertTrue(q.toString().contains("HeightGenAttr"));
     }
 
     @Test
