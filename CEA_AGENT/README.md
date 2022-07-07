@@ -207,6 +207,7 @@ The route to be passed to the access agent then needs to be provided in uri.rout
 ./cea-agent/src/main/resources
     CEAAgentConfig.properties
 ```
+The route should contain the port number your access agent is running on (eg. 48080) and the label set in your ontokgrouter (eg docker-kings-lynn). host.docker.internal is required to access localhost from a docker container.
 eg. `uri.route.local=http://host.docker.internal:48080/docker-kings-lynn`
 
 If you no longer want to use a local route, ensure you leave uri.route.local empty.
