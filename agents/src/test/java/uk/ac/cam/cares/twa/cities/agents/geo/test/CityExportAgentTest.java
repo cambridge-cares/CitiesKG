@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.openrdf.query.algebra.Str;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityExportAgent;
 import javax.ws.rs.BadRequestException;
@@ -18,9 +19,11 @@ import javax.ws.rs.HttpMethod;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
+import uk.ac.cam.cares.twa.cities.tasks.geo.ExporterTask;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -306,8 +309,28 @@ public class CityExportAgentTest {
     @Test
     public void testGetOutputName(){
         Path inputFile = new File(System.getProperty("java.io.tmpdir") + "chunk_0.txt").toPath();
+        Field outputDir;
+        Field outFileName;
+        Field outFileExtension;
         Method getOutputName = null;
         CityExportAgent agent = new CityExportAgent();
+
+        try {
+            outputDir = agent.getClass().getDeclaredField("outputDir");
+            outputDir.setAccessible(true);
+            outputDir.set(agent,System.getProperty("java.io.tmpdir") );
+            assertEquals(outputDir.get(agent), System.getProperty("java.io.tmpdir"));
+
+            outFileName = agent.getClass().getDeclaredField("outFileName");
+            outFileName.setAccessible(true);
+            assertEquals(outFileName.get(agent), "test");
+
+            outFileExtension = agent.getClass().getDeclaredField("outFileExtension");
+            outFileExtension.setAccessible(true);
+            assertEquals(outFileExtension.get(agent), ".kml");
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
 
         try {
             getOutputName = agent.getClass().getDeclaredMethod("getOutputName", Path.class);
@@ -318,7 +341,8 @@ public class CityExportAgentTest {
 
         try {
             String outputName = (String) getOutputName.invoke(agent, inputFile);
-            assertEquals(outputName, "83");
+            String actualOutput = System.getProperty("java.io.tmpdir") + "test" + "_0.kml";
+            assertEquals(outputName, actualOutput);
         } catch (Exception e) {
             fail();
         }
@@ -348,26 +372,42 @@ public class CityExportAgentTest {
     public void testExportKml() {
         CityExportAgent agent = new CityExportAgent();
         Method exportKml = null;
+        Method getServerInfo = null;
+        ExporterTask task = null;
+        // Prepare the testTaskParams
+        String namespaceIri = "http://www.theworldavatar.com:83/citieskg/namespace/testdata/sparql/";
+        JSONObject serverInfo = null;
         try {
-            exportKml = agent.getClass().getDeclaredMethod("exportKml", String[].class, String.class, JSONObject.class);
-            exportKml.setAccessible(true);
+            getServerInfo = agent.getClass().getDeclaredMethod("getServerInfo", String.class);
+            getServerInfo.setAccessible(true);
+            serverInfo = (JSONObject) getServerInfo.invoke(agent, namespaceIri);
         } catch (NoSuchMethodException e) {
             fail();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
         }
 
+        int srid = 4326;
+        String outputDir = Paths.get(System.getProperty("java.io.tmpdir"), "export").toString();
+        String outputPath = Paths.get(outputDir, "test.kml").toString();
+        String[] displayMode = {"false","true", "false", "false"}; // extruded
+        int lod = 2;
         String[] gmlIds = data;
-        JSONObject serverInfo = new JSONObject();
 
-        File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
-        String outputPath = outputFile.getAbsolutePath();
-        String actualPath = outputPath.replace(".kml", "_extruded.kml");
-
+        CityExportAgent.Params testTaskParams = new CityExportAgent.Params(namespaceIri, serverInfo, srid, outputDir, outputPath, displayMode, lod, gmlIds);
         try {
-            assert exportKml != null;
-            assertEquals(actualPath, exportKml.invoke(agent, gmlIds, outputPath, serverInfo));
-        } catch (Exception e) {
+            exportKml = agent.getClass().getDeclaredMethod("exportKml", CityExportAgent.Params.class);
+            exportKml.setAccessible(true);
+            task = (ExporterTask) exportKml.invoke(agent, testTaskParams);
+            assertTrue(task.isRunning());
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             fail();
+        } finally {
+            task.stop();
         }
+
 
     }
 
