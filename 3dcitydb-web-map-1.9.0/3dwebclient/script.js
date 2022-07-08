@@ -274,6 +274,8 @@ function loadCity(city) {
         loadBerlin();
     } else if (city == 'kingslynn') {
         loadKingsLynn();
+    } else if (city == 'singapore') {
+        loadSingapore();
     }
 }
 
@@ -336,6 +338,26 @@ function loadKingsLynn() {
 
     // find relevant files and load layers
     getAndLoadLayers('exported_kingslynn');
+}
+
+function loadSingapore() {
+    // set title
+    document.title = 'Singapore';
+
+    // set camera view
+    var cameraPostion = {
+        latitude: 1.286014,
+        longitude: 103.836364,
+        height: 2000,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+
+    flyToCameraPosition(cameraPostion);
+
+    // find relevant files and load layers
+    getAndLoadLayers('exported_singapore');
 }
 
 // send get request to server to discover files in specified folder, create and load layers
