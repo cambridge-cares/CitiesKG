@@ -1,0 +1,41 @@
+- script: create-new-scenario
+  parameters:
+    project: testProject
+    scenario: testScenario
+    output-path: directory_path
+    zone: filepath_zone
+    terrain:
+    streets:
+- script: weather-helper
+  parameters:
+    scenario: scenario_path
+    weather: Zuerich-ETHZ_1990-2010_TMY
+- script: surroundings-helper
+  parameters:
+    scenario: scenario_path
+    buffer: 200.
+- script: terrain-helper
+  parameters:
+    scenario: scenario_path
+- script: data-initializer
+  parameters:
+    scenario: scenario_path
+    databases-path: CH
+- script: archetypes-mapper
+  parameters:
+    scenario: scenario_path
+- script: radiation
+  parameters:
+    scenario: scenario_path
+- script: schedule-maker
+  parameters:
+    scenario: scenario_path
+- script: demand
+  parameters:
+    scenario: scenario_path
+    loads-output: ['GRID', 'QH_sys', 'QC_sys', 'E_sys']
+    massflows-output: []
+    temperatures-output: []
+- script: photovoltaic
+  parameters:
+    scenario: scenario_path
