@@ -37,12 +37,6 @@ public class OptimizedSparqlQuery {
   }
 
 
-
-
-
-
-  /* Note: The data in the TWA contains some missing "/" in the graph, it requires a temporary solution before the fix in the TWA
-  * */
   public static String getBuildingPartQuery_part1(int lodExport){
     StringBuilder sparqlbuilder = new StringBuilder();
     String lodXMultiSurfaceId = "lod" + Integer.valueOf(lodExport) + "MultiSurfaceId";
