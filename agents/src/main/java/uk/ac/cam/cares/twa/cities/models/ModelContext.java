@@ -283,9 +283,11 @@ public class ModelContext {
     Node modelNode = NodeFactory.createVariable(MODEL);
     MetaModel metaModel = MetaModel.get(ofClass);
     Set<String> resultIris = new HashSet<>();
+    Boolean scalar = false;
     // Scalars
     SelectBuilder scalarsQuery = buildScalarsQuery(modelNode, metaModel, fieldNames);
     if (scalarsQuery.getVars().size() > 0) {
+      scalar = true;
       if (condition != null) scalarsQuery.addWhere(condition);
       scalarsQuery.addVar(modelNode);
       JSONArray scalarsResponse = query(scalarsQuery.buildString());
@@ -310,16 +312,19 @@ public class ModelContext {
       // Identify intervals corresponding to each single Model and read the intervals in
       String previousIri = response.getJSONObject(0).getString(MODEL);
       int end, start = 0;
+      String nextIri = null;
       for (end = 1; end < response.length(); end++) {
-        String nextIri = response.getJSONObject(end).getString(MODEL);
+        nextIri = response.getJSONObject(end).getString(MODEL);
         if (!nextIri.equals(previousIri)) {
           // Only pull objects which have a scalar match
-          if (resultIris.contains(previousIri))
+          if (resultIris.contains(previousIri) || !scalar)
             readPullVectorsResponse(getModel(ofClass, previousIri), field, response, start, end);
           start = end;
           previousIri = nextIri;
         }
       }
+      if(nextIri!=null && (resultIris.contains(previousIri) || !scalar))
+        readPullVectorsResponse(getModel(ofClass, previousIri), field, response, start, end);
     }
     // Note that we do not directly use a HashSet<T> to avoid expensive equals() invocations on Model classes.
     return resultIris.stream().map((resultIri) -> getModel(ofClass, resultIri)).collect(Collectors.toList());
