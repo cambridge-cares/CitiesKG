@@ -4,14 +4,12 @@ import java.lang.reflect.Field;
 import java.nio.file.Path;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
-import org.checkerframework.checker.units.qual.C;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.openrdf.query.algebra.Str;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityExportAgent;
 import javax.ws.rs.BadRequestException;
@@ -22,7 +20,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
-import uk.ac.cam.cares.twa.cities.agents.geo.CityImportAgent;
+import uk.ac.cam.cares.twa.cities.tasks.KMLTilingTask;
 import uk.ac.cam.cares.twa.cities.tasks.geo.ExporterTask;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,9 +30,6 @@ public class CityExportAgentTest {
 
     public String[] data = {"abc", "def"};
     public JSONArray testGmlIds = new JSONArray(data);
-
-    public String outFileName = "/test.kml";
-    public String outTmpDir = "java.io.tmpdir";
 
     @Test
     public void testNewCityExportAgent() {
@@ -118,10 +113,8 @@ public class CityExportAgentTest {
         }
 
         JSONObject requestParams = new JSONObject();
-        JSONObject requestParamsError = new JSONObject();
         Set<String> keys = new HashSet<>();
         String localhostURL = "http://localhost:8080/agents/";
-
 
         // General keys and value check
         try {
@@ -255,9 +248,7 @@ public class CityExportAgentTest {
         if (gmlidF.exists()){
             try {
                 getGmlidFromFile.invoke(agent, gmlidFile);
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
+            } catch (InvocationTargetException | IllegalAccessException e) {
                 e.printStackTrace();
             }
         }
@@ -353,13 +344,12 @@ public class CityExportAgentTest {
     public void testGetServerInfo(){
         String namespaceIri = "http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/";
         CityExportAgent agent = new CityExportAgent();
-        JSONObject serverInfo = null;
 
-        Method getServerInfo = null;
+        Method getServerInfo;
         try {
             getServerInfo = agent.getClass().getDeclaredMethod("getServerInfo", String.class);
             getServerInfo.setAccessible(true);
-            serverInfo = (JSONObject) getServerInfo.invoke(agent, namespaceIri);
+            JSONObject serverInfo = (JSONObject) getServerInfo.invoke(agent, namespaceIri);
             assertEquals(serverInfo.get("port"), "83");
             assertEquals(serverInfo.get("host"), "www.theworldavatar.com");
             assertEquals(serverInfo.get("namespace"), "/citieskg/namespace/berlin/sparql/");
@@ -371,8 +361,8 @@ public class CityExportAgentTest {
     @Test
     public void testExportKml() {
         CityExportAgent agent = new CityExportAgent();
-        Method exportKml = null;
-        Method getServerInfo = null;
+        Method exportKml;
+        Method getServerInfo;
         ExporterTask task = null;
         // Prepare the testTaskParams
         String namespaceIri = "http://www.theworldavatar.com:83/citieskg/namespace/testdata/sparql/";
@@ -381,12 +371,9 @@ public class CityExportAgentTest {
             getServerInfo = agent.getClass().getDeclaredMethod("getServerInfo", String.class);
             getServerInfo.setAccessible(true);
             serverInfo = (JSONObject) getServerInfo.invoke(agent, namespaceIri);
-        } catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException | InvocationTargetException |IllegalAccessException e) {
+            e.printStackTrace();
             fail();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
         }
 
         int srid = 4326;
@@ -404,16 +391,59 @@ public class CityExportAgentTest {
             assertTrue(task.isRunning());
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             fail();
-        } finally {
+        }finally {
+            assert task != null;
             task.stop();
         }
 
-
     }
-
 
     @Test
     public void testTilingKML(){
+        CityExportAgent agent = new CityExportAgent();
+        Field outputDir;
+        Method tilingKml ;
+        String outputFolder = Paths.get(System.getProperty("java.io.tmpdir"), "export").toString();
+        KMLTilingTask task = null;
+        try{
+            outputDir = agent.getClass().getDeclaredField("outputDir");
+            outputDir.setAccessible(true);
+            assertNull(outputDir.get(agent));
+            outputDir.set(agent, outputFolder);
+            assertEquals(outputDir.get(agent), outputFolder);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+            fail();
+        }
 
+
+        Field inputDisplayForm;
+        Field namespaceIri;
+
+        String testNamespace = "http://www.theworldavatar.com:83/citieskg/namespace/testdata/sparql/";
+        String testDisplayForm = "extruded";
+        try{
+            namespaceIri = agent.getClass().getDeclaredField("namespaceIri");
+            namespaceIri.setAccessible(true);
+            namespaceIri.set(agent, testNamespace);
+
+            inputDisplayForm = agent.getClass().getDeclaredField("inputDisplayForm");
+            inputDisplayForm.setAccessible(true);
+            inputDisplayForm.set(agent, testDisplayForm);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            tilingKml = agent.getClass().getDeclaredMethod("tilingKml");
+            tilingKml.setAccessible(true);
+            task = (KMLTilingTask) tilingKml.invoke(agent);
+            assertTrue(task.isRunning());
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException E) {
+            fail();
+        } finally {
+            assert task != null;
+            task.stop();
+        }
     }
 }
