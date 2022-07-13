@@ -316,8 +316,8 @@ public class DBSurfaceGeometry implements DBImporter {
 				surfaceGeometry.setLocalProperty(CoreConstants.OBJECT_PARENT_URIID, parentURL);
 				surfaceGeometry.setLocalProperty(CoreConstants.CITYOBJECT_URIID, cityobjectURL);
 			} catch (MalformedURLException e) {
-				psGeomElem.setObject(++index, NodeFactory.createBlankNode());
-				psGeomElem.setObject(++index, NodeFactory.createBlankNode());
+				setBlankNode(psGeomElem, ++index);
+				setBlankNode(psGeomElem, ++index);
 			}
 		}
 
@@ -423,7 +423,7 @@ public class DBSurfaceGeometry implements DBImporter {
 					// set parentId
 					if (importer.isBlazegraph()) {
 						if (parentId != 0) { psGeomElem.setURL(++index, parentURL);} // SPARQL = 4
-						else{ psGeomElem.setObject(++index, NodeFactory.createBlankNode());}
+						else{ setBlankNode(psGeomElem, ++index);}
 					}else{
 						if (parentId != 0) { psGeomElem.setLong(++index, parentId);} // SQL = 3
 						else{ psGeomElem.setNull(++index, Types.NULL);}

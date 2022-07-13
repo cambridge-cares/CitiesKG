@@ -33,32 +33,19 @@ var SplashController = /** @class */ (function () {
         contents.className = 'cesium-navigation-help-instructions';
         contents.style.display = "none";
         contents.innerHTML = '\
-            <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center;">3DCityDB Web Map Client</div>\
+            <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Cities Knowledge Graph</div>\
             <hr width="50%" style="margin-top: -10px; border-color: grey;">\
-            <div class="cesium-navigation-help-details" style="padding: 5px; text-align: center;">This tool employs the JavaScript library <a href="https://cesiumjs.org/" target="_blank">CesiumJS</a> and is a part of the</div>\
+            <div class="cesium-navigation-help-details" style="padding: 5px; text-align: center">Semantic Web representation of city data with a dynamic knowledge graph.</div>\
             <table>\
-                <tr>\
-                    <td><img src="' + 'images/3DCityDB_Logo.png' + '" width="76" height="81" /></td>\
+            <tr>\
+                    <td><img src="' + 'images/CKG_Logo.png' + '" class="ckg-logo"/></td>\
                     <td>\
-                        <!-- <div class="cesium-navigation-help-pan">Chair of Geoinformatics</div>\ -->\
-                        <div class="cesium-navigation-help-details"><a href="https://www.3dcitydb.org/3dcitydb/" target="_blank">3D City Database</a> (3DCityDB) <br> Software Suite.</div>\
+                        <div class="cesium-navigation-help-details">Cities Knowledge Graph is a joint project by Cambridge CARES and the Singapore-ETH Centre.</div>\
                     </td>\
                 </tr>\
             </table>\
-            \
-            <div class="cesium-navigation-help-details" style="padding: 5px 5px 5px 5px; text-align: center;">Developed and maintained by:</div>\
-            <table>\
-                <tr>\
-                    <td><img src="' + 'images/TUM_Logo.svg' + '" width="76" height="40" /></td>\
-                    <td>\
-                        <!-- <div class="cesium-navigation-help-pan">Chair of Geoinformatics</div>\ -->\
-                        <div class="cesium-navigation-help-details"><a href="https://www.gis.bgu.tum.de/en/home/" target="_blank">TUM, Chair of Geoinformatics</a></div>\
-                    </td>\
-                </tr>\
-            </table>\
-            <div class="cesium-navigation-help-zoom" style="padding: 5px 5px 5px 5px; text-align: center;">\
-                <button class="cesium-button" style="font-size: medium; padding: 10px 15px 10px 15px; text-align: center;" onclick="splashController.addSplashWindow(jQuery)">Show splash window</button>\
-            </div>';
+            <div class="cesium-navigation-help-details" style="padding: 5px 5px 5px 5px; text-align: center">This web platform is generated using the Semantic 3D City Database, our graph equivalent of the 3D City Database by TUM.</div>\
+            ';
         container.appendChild(contents);
         // Handle switching
         infoButton.onclick = function () {

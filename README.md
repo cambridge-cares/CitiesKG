@@ -80,6 +80,11 @@ The Importer/Exporter uses [Gradle](https://gradle.org/) as build system. To bui
     
 The script automatically downloads all required dependencies for building and running the Importer/Exporter. So make sure you are connected to the internet. The build process runs on all major operating systems and only requires a Java 8 JDK or higher to run.
 
+In case building fails (e.g. due to "Error: Could not find or load main class org.gradle.wrapper.GradleWrapperMain"), try downgrading gradle to version 6.9.1. Therefore, install gradle 6.9.1 following this [guide] and subsequently run:
+
+    > gradle wrapper
+    > gradlew installDist
+
 If the build was successful, you will find the Importer/Exporter package under `impexp-client/build/install`. To launch the application, simply use the starter scripts in the `bin` subfolder.
 
 You may also choose to build an installer for the Importer/Exporter with the following command.
@@ -87,6 +92,42 @@ You may also choose to build an installer for the Importer/Exporter with the fol
     > gradlew buildInstaller
 
 The installer package will be available under `impexp-client/build/distributions`.
+
+GDAL Library Java bindings
+--------
+GDAL version: 3.4.0
+Java bindings (https://gdal.org/api/java/index.html)
+Java bindings for **Windows** (https://trac.osgeo.org/gdal/wiki/GdalOgrInJavaBuildInstructions)
+1. Install the GDAL core components from this link: https://www.gisinternals.com/query.html?content=filelist&file=release-1916-x64-gdal-3-4-1-mapserver-7-6-4.zip
+2. Change the environment variables:
+3. Append to PATH  - C:\Program Files\GDALGDAL_DATA - C:\Program Files\GDAL\gdal-data
+   GDAL_DRIVER_PATH  - C:\Program Files\GDAL\gdalplugins
+   PROJ_LIB: C:\Program Files\GDAL\projlib
+   Change PROJ_LIB to the corresponding GDAL folder
+4. Test to see if GDAL is installed by opening Command Prompt and type in:   gdalinfo --version
+5. Copy and paste the following dlls from C:\Program Files\GDAL into your Java
+     JDK bin folder (example: C:\Program Files\Java\jdk1.8.0_171\bin)
+     In some version, if you don’t find <gdalalljni.dll>, you could copy and paste the following dlls
+     gdalconstjni.dll
+     gdaljni.dll
+     ogrjni.dll
+     osrjni.dll
+6. Add the gdal java binding into the configuration file of your program.
+
+Java bindings for **Mac** (https://trac.osgeo.org/gdal/wiki/GdalOgrInJavaBuildInstructionsUnix)
+1. Install the Java JDK, SWIG and Ant compilation tools
+2. Download GDAL source code from https://gdal.org/download.html
+3. Compile GDAL source code (The following is an example of compile, pay attention to the path of your **gdal, Java and JDK version**):
+   cd gdal
+   ./configure --with-threads --disable-static --without-grass --with-jasper=/usr/local/lib --with-libtiff=/usr/local/lib --with-jpeg=/usr/local/lib --with-gif=/usr/local/lib --with-png=/usr/local/lib --with-geotiff=/usr/local/lib --with-pcraster=internal --with-geos=/usr/local/lib --with-static-proj4=/usr/local/lib --with-expat=/usr/local/lib --with-curl=/usr/local/lib --with-netcdf=/usr/local/lib --with-hdf5=/usr/local/lib --with-opencl --with-libz=internal --without-python --with-java --with-jvm-lib=/Library/Java/JavaVirtualMachines/openjdk-**x.x.x**.jdk/Contents/Home
+   make
+   sudo make install
+4. Use make install to dynamic link library _libgdalalljni.20.dylib_ and _libgdalalljni.dylib_, copy to /usr/local/lib:
+   cd swig/java
+   make CFLAGS="-I/Library/Java/JavaVirtualMachines/openjdk-**x.x.x**.jdk/Contents/Home/include -I//Library/Java/JavaVirtualMachines/openjdk-**x.x.x**.jdk/Contents/Home/include/darwin"
+   sudo make install
+5. _make_ command will generate what we need **gdal.jar**, which is a dependency package we need for Java development and must be added to the project.
+6. Copied _libgdalalljni.20.dylib_ and _libgdalalljni.dylib_ to /Library/Java/Extensions
 
 Cooperation partners and supporters  
 -----------------------------------
@@ -191,3 +232,6 @@ This project is licensed under the XYZ  License - see the [LICENSE.md](LICENSE.m
 * A great city is not to be confounded with a populous one. *- Aristotle*
 * This project is funded by the National Research Foundation (NRF), Prime Ministers Office, Singapore under its Campus for Research Excellence and Technological Enterprise (CREATE) programme. 
 
+
+
+[guide]: https://gradle.org/install/

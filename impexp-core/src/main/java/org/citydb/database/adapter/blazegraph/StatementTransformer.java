@@ -1,6 +1,11 @@
 package org.citydb.database.adapter.blazegraph;
 // implemented by SHIYING LI
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import org.apache.jena.arq.querybuilder.ExprFactory;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
@@ -8,7 +13,10 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
+import org.citydb.config.project.kmlExporter.DisplayForm;
+import org.citydb.config.project.kmlExporter.KmlExporter;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
+import org.citydb.database.schema.mapping.MappingConstants;
 import org.citydb.sqlbuilder.SQLStatement;
 import org.citydb.sqlbuilder.expression.PlaceHolder;
 import org.citydb.sqlbuilder.schema.Column;
@@ -25,6 +33,7 @@ import java.util.*;
 
 
 public class StatementTransformer {
+    private static final String QST_MARK = "?";
     private static String IRI_GRAPH_BASE;
     private static String PREFIX_ONTOCITYGML;
     private static String IRI_GRAPH_OBJECT_REL = "cityobject/";
@@ -32,7 +41,7 @@ public class StatementTransformer {
 
     public String sqlStatement;
     public String sparqlStatement;
-    private final AbstractDatabaseAdapter databaseAdapter;
+    private static AbstractDatabaseAdapter databaseAdapter;
 
     public StatementTransformer(AbstractDatabaseAdapter databaseAdapter) {
         this.databaseAdapter = databaseAdapter;
@@ -42,18 +51,86 @@ public class StatementTransformer {
         IRI_GRAPH_BASE = "http://" + databaseAdapter.getConnectionDetails().getServer() +
                 ":" + databaseAdapter.getConnectionDetails().getPort() +
                 databaseAdapter.getConnectionDetails().getSid();
+        // check if IRI_GRAPH_BASE ends with /, else append /
+        IRI_GRAPH_BASE = (IRI_GRAPH_BASE.endsWith("/")) ? IRI_GRAPH_BASE : IRI_GRAPH_BASE + "/";
         IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
     }
+
+    /* GenericCityObject */
+    public static String getGenericCityObjectBasisData(int lodToExportFrom){
+        String sparql = "PREFIX  ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
+                "SELECT ?id ?lod1ImplicitRefPoint ?lod1ImplicitTransformation ?cityObjectId \n" +
+                "WHERE { " +
+                "GRAPH <" + IRI_GRAPH_BASE + "genericcityobject/" + "> \n" +
+                "{ ?id ocgml:lod1ImplicitRefPoint ?lod1ImplicitRefPoint;\n" +
+                "ocgml:lod1ImplicitTransformation ?lod1ImplicitTransformation;\n" +
+                "ocgml:id ? . } \n" +
+                "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/" + "> \n" +
+                " { ?cityObjectId ocgml:cityObjectId ? . } }";
+        return sparql;
+    }
+
+    public static String getGenericCityObjectQuery(int lodToExportFrom, DisplayForm displayForm, boolean isImplicit, boolean exportAppearance){
+        String query = null;
+
+        switch (displayForm.getForm()) {
+            case DisplayForm.FOOTPRINT:
+            case DisplayForm.EXTRUDED:
+                query = getSurfaceGeometries(exportAppearance, isImplicit);
+                break;
+            default:
+                StringBuilder tmp = new StringBuilder().append("PREFIX  ocgml: <" + PREFIX_ONTOCITYGML + "> \n")
+                        .append("SELECT ?, '5' as ?objectclass_id "); // dummy
+                if (databaseAdapter.getSQLAdapter().requiresPseudoTableInSelect())
+                    tmp.append(" FROM ")
+                            .append(databaseAdapter.getSQLAdapter().getPseudoTableName());
+
+                query = tmp.toString();
+        }
+
+        return query;
+    }
+
+    public static String getSurfaceGeometries(boolean exportAppearance, boolean isImplicit){
+        //TODO: translate the SQL query to SPARQL
+        StringBuilder query = new StringBuilder().append("PREFIX  ocgml: <" + PREFIX_ONTOCITYGML + "> \n")
+                .append("SELECT ")
+                .append(isImplicit ? "?ImplicitGeometryType" : "?GeometryType")
+                .append(" ?id ?parentId (? AS ?rootId) ?gmlId ?isXlink (datatype(?GeometryType) AS ?datatype)\n");
+        /*
+        if (exportAppearance) {
+            query.append(", sd.x3d_shininess, sd.x3d_transparency, sd.x3d_ambient_intensity, ")
+                    .append("sd.x3d_specular_color, sd.x3d_diffuse_color, sd.x3d_emissive_color, sd.x3d_is_smooth, ")
+                    .append("sd.tex_image_id, ti.tex_image_uri, tp.texture_coordinates, coalesce(a.theme, '<unknown>') theme ");
+        }
+        */
+        query.append("FROM ").append("<" + IRI_GRAPH_BASE + "surfacegeometry/" + ">");
+        /*
+        if (exportAppearance) {
+            query.append("LEFT JOIN ").append(schema).append(".textureparam tp ON tp.surface_geometry_id = sg.id ")
+                    .append("LEFT JOIN ").append(schema).append(".surface_data sd ON sd.id = tp.surface_data_id ")
+                    .append("LEFT JOIN ").append(schema).append(".tex_image ti ON ti.id = sd.tex_image_id ")
+                    .append("LEFT JOIN ").append(schema).append(".appear_to_surface_data a2sd ON a2sd.surface_data_id = sd.id ")
+                    .append("LEFT JOIN ").append(schema).append(".appearance a ON a2sd.appearance_id = a.id ");
+        }
+        */
+        query.append("WHERE {?id ocgml:GeometryType ?GeometryType; ocgml:parentId ?parentId; ocgml:gmlId ?gmlId; ocgml:isXlink ?isXlink; ocgml:rootId ? . } \n")
+                .append("ORDER BY ?id");
+
+        return query.toString();
+
+    }
+
 
     public static String getIriObjectBase(){
         return IRI_GRAPH_BASE;
     }
 
     public static String getExtrusionHeight(){
-        String sparql = "PREFIX  ocgml: <" + PREFIX_ONTOCITYGML + ">" +
-                        "SELECT  ?envelope " +
-                        "FROM <" + IRI_GRAPH_BASE + "cityobject/" + ">" +
-                        "WHERE { ?s ocgml:EnvelopeType ?envelope ; ocgml:id ? . }";
+        String sparql = "PREFIX  ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
+                        "SELECT  ?envelope \n" +
+                        "FROM <" + IRI_GRAPH_BASE + "cityobject/" + "> \n" +
+                        "WHERE { ?s ocgml:EnvelopeType ?envelope ; ocgml:id ? . } \n";
         return sparql;
     }
 
@@ -68,8 +145,12 @@ public class StatementTransformer {
         return sparql;
     }
 
-
-    public static String getSPARQLStatement_BuildingPartQuery (String sqlQuery) {
+    /*
+    * Retrieve the existing GroundSurface from the database
+    * Note: The data in the TWA contains some missing "/" in the graph, it requires a temporary solution before the fix in the TWA
+    * For the TWA, query across different graphs need to be divided.
+    * */
+    public static String getSPARQLStatement_BuildingPartQuery_part1 (String sqlQuery) {
         StringBuilder sparqlString = new StringBuilder();
 
         if (IRI_GRAPH_BASE.contains("theworldavatar")){
@@ -104,58 +185,80 @@ public class StatementTransformer {
         return sparqlString.toString();
     }
 
-    public static String getSPARQLStatement_BuildingPartQuery_bak (String sqlQuery) {
-        String SparqlString = null;
-        SelectBuilder sb = new SelectBuilder();
-        ExprFactory exprF1 = sb.getExprFactory();
-        sb.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML);
-        sb.addVar("?geomtype").addVar(exprF1.datatype("?geomtype"),"?type");
+    public static String getTopFeatureId(SQLStatement sqlStatement) throws ParseException {
+        StringBuilder sparqlString = new StringBuilder();
+        List<PlaceHolder<?>> placeHolders = sqlStatement.getInvolvedPlaceHolders();
+        Object gmlidInput = placeHolders.get(0).getValue();
 
-        Node graphName1 = NodeFactory.createURI(IRI_GRAPH_BASE + "thematicsurface/");
-        WhereBuilder subwhr1 = new WhereBuilder().addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML);
-        subwhr1.addWhere("?ts_id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "objectClassId", "35");
-        subwhr1.addWhere("?ts_id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "buildingId", "?");
-        subwhr1.addWhere("?ts_id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "lod2MultiSurfaceId", "?lod2MSid");
-        WhereBuilder whr1 = new WhereBuilder().addGraph(graphName1, subwhr1);
-        sb.addWhere(whr1);
+        // for exporting the whole database
+        if (((String)gmlidInput).contains("*") && IRI_GRAPH_BASE.contains("singaporeEPSG4326")) {  // this namespace only exists in CKG server
 
-        Node graphName2 = NodeFactory.createURI(IRI_GRAPH_BASE + "surfacegeometry/");
-        WhereBuilder subwhr2 = new WhereBuilder().addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML);
-        WhereBuilder whr2 = new WhereBuilder().addGraph(graphName2, subwhr2);
-        subwhr2.addWhere("?sg_id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "rootId", "?lod2MSid");
-        subwhr2.addWhere("?sg_id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "GeometryType", "?geomtype");
-        try {
-            subwhr2.addFilter("!isBlank(?geomtype)");
-        } catch (ParseException e) {
-            e.printStackTrace();
+            sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
+                    "SELECT ?id ?objectclass_id ?gmlid\n" +
+                    "\nWHERE { \n" +
+                        "GRAPH <" + IRI_GRAPH_BASE + "cityobject/> \n" +
+                    "{ ?id ocgml:id ?Id ; ocgml:gmlId ?gmlid ; ocgml:objectClassId  ?objectclass_id . \n" +
+                    "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )} \n" +
+                        "GRAPH <" + IRI_GRAPH_BASE + "cityobjectgenericattrib/> \n" +
+                    "{ ?ObjectIdAttr ocgml:cityObjectId ?Id ; ocgml:attrName 'LU_DESC' . } }");
+        } else if (placeHolders.size() == 1 && ((String)gmlidInput).contains("*")){
+            sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
+                "SELECT ?id ?objectclass_id ?gmlid\n" +
+                "FROM <" + IRI_GRAPH_BASE + "cityobject/> \n" +
+                "\nWHERE\n " +
+                "{ ?id ocgml:objectClassId  ?objectclass_id ; \n ocgml:gmlId ?gmlid . \n"
+                + "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )}");
+
+        } else {
+            // for single object also multiple objects
+            sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
+                "SELECT ?id ?objectclass_id (" + QST_MARK + " AS ?gmlid) \n" +
+                "FROM <" + IRI_GRAPH_BASE + "cityobject/> \n" +
+                "\nWHERE\n " +
+                "{ ?id ocgml:objectClassId  ?objectclass_id ;\n ocgml:gmlId " + QST_MARK + "\n" +
+                "FILTER ( ?objectclass_id IN (64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26) )\n }");
         }
-        sb.addWhere(whr2);
-        SparqlString = sb.build().toString();
-        return SparqlString;
+        return sparqlString.toString();
     }
 
+    public static String getSPARQLStatement_BuildingPartGeometry() {
+        StringBuilder sparqlString = new StringBuilder();
 
-    // Analyze SQL statement and transform it to a SPARQL query (Normal usuage: single gmlid or multiple gmlid or *)
-    public static String getTopFeatureId (SQLStatement sqlStatement) throws ParseException {
-        Select select = (Select) sqlStatement;
-        List<ProjectionToken> projectionTokens = select.getProjection();
-        Set<Table> InvolvedTables = sqlStatement.getInvolvedTables();
-        List<PredicateToken> predicateTokens = select.getSelection();
+        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+                "SELECT distinct ?surf ?geomtype (datatype(?geomtype) as ?datatype) ?surftype " +
+                "WHERE { ?surf ocgml:cityObjectId ? ;" +
+                "ocgml:GeometryType ?geomtype ." +
+                "FILTER (!isBlank(?geomtype)) }");
 
-        // Build SPARQL query statement
-        SelectBuilder sb = new SelectBuilder();
-        sb.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML);
-        String varnames = getVarNames(projectionTokens);
-        String iri_graph_object = getGraphUri(InvolvedTables);
-        sb.addVar(varnames).from(iri_graph_object);
+        return sparqlString.toString();
+    }
 
-        sb.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "objectClassId", "?objectclass_id");
-        sb.addWhere("?id", SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML + "gmlId", "?gmlid");
-        List<PlaceHolder<?>> placeHolders = sqlStatement.getInvolvedPlaceHolders();
+    public static String getSPARQLStatement_BuildingPartGeometry_part2() {
+        StringBuilder sparqlString = new StringBuilder();
 
-        applyPredicate(sb, predicateTokens, placeHolders);
-        Query q = sb.build();
-        return q.toString();
+        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+                "SELECT distinct ?surf ?geomtype ?surftype (datatype(?geomtype) as ?datatype) " +
+                "WHERE { " +
+                "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> " +
+                "{?themsurf ocgml:buildingId ? ; " +
+                "ocgml:objectClassId ?surftype.}" +
+                "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> " +
+                "{?surf ocgml:cityObjectId ?themsurf; " +
+                "ocgml:GeometryType ?geomtype . " +
+                "FILTER (!isBlank(?geomtype)) }}");
+
+        return sparqlString.toString();
+    }
+
+    public static String getSPARQLStatement_SurfaceGeometry () {
+        StringBuilder sparqlString = new StringBuilder();
+
+        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+                "SELECT ?geom (DATATYPE(?geom) as ?datatype)" +
+                "WHERE { ? ocgml:GeometryType ?geom ." +
+                "FILTER (!isBlank(?geom)) }");
+
+        return sparqlString.toString();
     }
 
     public static void applyPredicate (SelectBuilder sb, List<PredicateToken> predicateTokens, List<PlaceHolder<?>> placeHolders) throws ParseException {
@@ -237,6 +340,78 @@ public class StatementTransformer {
         return varStr.toString();
     }
 
+    /* Optimized SPARQL query for TWA
+     * Purpose: Get AggregateGeometries to create groundsurface for the extraction
+     * alternative solution of getSPARQLqueryStage2
+     * This part will include the value assignment and execution
+     */
+
+    public static ArrayList<ResultSet> getSPARQLAggregateGeometriesForLOD2OrHigher(PreparedStatement psQuery, Connection connection, int lodToExportFrom, String buildingPartId) {
+
+        StringBuilder sparqlString = new StringBuilder();
+        ResultSet rs = null;
+        ArrayList<String> rootIds = new ArrayList<String>();
+
+        // subquery 1.1
+        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+            "SELECT (?lod2MultiSurfaceId AS ?rootId) " +
+            "\nWHERE\n { " +
+                "GRAPH <" + IRI_GRAPH_BASE + "building/> { \n" +
+            " ?id ocgml:buildingId " +  QST_MARK + " ;\n  ocgml:lod2MultiSurfaceId ?lod2MultiSurfaceId " +
+            "FILTER (!isBlank(?lod2MultiSurfaceId)) }}");
+        rootIds.addAll(executeQuery(connection, sparqlString.toString(), buildingPartId));
+
+        // subquery 1.2
+        sparqlString.setLength(0);
+        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+            "SELECT (?lod2SolidId AS ?rootId) " +
+            "\nWHERE\n { " +
+            "GRAPH <" + IRI_GRAPH_BASE + "building/> { \n" +
+            " ?id ocgml:buildingId " +  QST_MARK + " ;  \n ocgml:lod2SolidId  ?lod2SolidId\n" +
+            "FILTER (!isBlank(?lod2SolidId)) }}");
+        rootIds.addAll(executeQuery(connection, sparqlString.toString(), buildingPartId));
+
+        // subquery 1.3
+        sparqlString.setLength(0);
+        sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+            "SELECT (?lod2MultiSurfaceId AS ?rootId) " +
+            "\nWHERE\n { " +
+            "GRAPH <" + IRI_GRAPH_BASE + "thematicsurface/> { \n" +
+            " ?id ocgml:buildingId " +  QST_MARK + " ;  \n ocgml:lod2MultiSurfaceId  ?lod2MultiSurfaceId\n" +
+            "FILTER (!isBlank(?lod2MultiSurfaceId)) }}");
+        rootIds.addAll(executeQuery(connection, sparqlString.toString(), buildingPartId));
+
+        // query stage 2 for extractig the aggregated geometries
+        System.out.println(rootIds.size());
+        return null;
+    }
+
+    public static ArrayList<String> executeQuery(Connection connection, String querystr, String buildingPartId){
+
+        URL url = null;
+        ResultSet rs = null;
+        ArrayList<String> results = new ArrayList<String>();
+        try {
+            url = new URL(buildingPartId);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            PreparedStatement psQuery = connection.prepareStatement(querystr, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            psQuery.setURL(1, url);
+            rs = psQuery.executeQuery();
+
+            while (rs.next()) {
+                results.add(rs.getString("rootId"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();  //@TODO: to define how to handle
+        }
+        return results;
+    }
+
+
     // Get AggregateGeometries to create groundsurface for the extraction
     public static String getSPARQLqueryStage2 (String sqlquery, String LoD) throws ParseException {
 
@@ -299,36 +474,16 @@ public class StatementTransformer {
         return query2.toString();
     }
 
-    public static Geometry Str2Geometry (String extracted, String datatypeURI){
-        GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
-
-        if (datatypeURI == null){
-            Geometry geomobj = geospatial.createGeometry(extracted);
-            return geomobj;
-
-        }else{  // if the polygon contains multiple rings of the dimension X1, X2
-            // extract the pattern "POLYGON-X1-X2" which is the last part of the URI
-            String datatype = datatypeURI.substring(datatypeURI.lastIndexOf('/') + 1);
-            String[] datatype_list = datatype.split("-");
-            String geomtype = datatype_list[0];
-            int dim = Integer.valueOf(datatype_list[1]);
-            int[] dimOfRings = new int[datatype_list.length-2];
-            for (int i = 2; i < datatype_list.length; ++i){
-                dimOfRings[i-2] = Integer.valueOf(datatype_list[i]);
-            }
-            // put in createGeopmetry (extracted, geomtype, listOfDim)
-            Geometry geomobj = geospatial.createGeometry(extracted, geomtype, dim, dimOfRings);
-            return geomobj;
-        }
-    }
 
     public static Geometry filterResult(List<String> extracted, double tolerance) {
         GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
         List<Geometry> geom2union = new ArrayList<>();
 
         for (int i = 0; i < extracted.size(); ++i){
-            Geometry geomobj = geospatial.createGeometry(extracted.get(i));
-            if (geospatial.IsValid(geomobj) && geospatial.CalculateArea(geospatial.Transform(geomobj, 4326, 4326)) > tolerance){
+            String geomStr = extracted.get(i);
+            System.out.println(geomStr);
+            Geometry geomobj = geospatial.createGeometry(geomStr);
+            if (geospatial.IsValid(geomobj) && geospatial.CalculateArea(geospatial.Transform(geomobj, 4326, 4326)) > tolerance){ // this has no need to changed, this condition will not affect the output
                 geom2union.add(geomobj);
             }
         }
@@ -336,18 +491,4 @@ public class StatementTransformer {
         return union;
     }
 
-    // For testing purpose
-    public static void main(String[] args) throws ParseException {
-        String sqlquery =  "SELECT ST_Union(get_valid_area.simple_geom) " +
-                "FROM (SELECT * FROM (SELECT * FROM (SELECT ST_Force2D(sg.geometry) AS simple_geom " +
-                "FROM citydb.SURFACE_GEOMETRY sg WHERE sg.root_id IN( " +
-                "SELECT b.lod2_multi_surface_id FROM citydb.BUILDING b WHERE b.id = ? AND b.lod2_multi_surface_id IS NOT NULL " +
-                "UNION SELECT b.lod2_solid_id FROM citydb.BUILDING b WHERE b.id = ? AND b.lod2_solid_id IS NOT NULL " +
-                "UNION SELECT ts.lod2_multi_surface_id FROM citydb.THEMATIC_SURFACE ts WHERE ts.building_id = ? " +
-                "AND ts.lod2_multi_surface_id IS NOT NULL ) AND sg.geometry IS NOT NULL) AS get_geoms " +
-                "WHERE ST_IsValid(get_geoms.simple_geom) = 'TRUE') AS get_valid_geoms " +
-                "WHERE ST_Area(ST_Transform(get_valid_geoms.simple_geom,4326)::geography, true) > 0.001) AS get_valid_area";
-        String output = getSPARQLqueryStage2(sqlquery, "2");
-        System.out.println(output);
-    }
 }
