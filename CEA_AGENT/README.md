@@ -45,7 +45,7 @@ PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/Onto
 INSERT DATA
 {
 GRAPH <{PREFIX}databasesrs/> {
-<{PREFIX}>	ocgml:srid>	27700 .
+<{PREFIX}>	ocgml:srid	27700 .
 <{PREFIX}>	ocgml:srsname "EPSG:27700" .
 }}
 ```
@@ -157,7 +157,7 @@ Example response:
 }
 
 ```
-The 3dWebMapClient can be set up to visualise data produced by the CEA Agent (instructions to run are [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#3dcitydb-web-map-client)). The City Information Agent (CIA) is used when a building on the 3dWebMapClient is selected, to query data stored in the KG on the building. If the parameter "context=energy" is included in the url, the query endpoint of CEA will be contacted for energy data. eg `http://localhost:8000/3dwebclient/index.html?city=kingslynn&context=energy` (NB. this currently requires running web map client and CitiesKG/agents from [develop branch](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents)
+The 3dWebMapClient can be set up to visualise data produced by the CEA Agent (instructions to run are [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#3dcitydb-web-map-client)). The City Information Agent (CIA) is used when a building on the 3dWebMapClient is selected, to query data stored in the KG on the building. If the parameter "context=energy" is included in the url, the query endpoint of CEA will be contacted for energy data. eg `http://localhost:8000/3dwebclient/index.html?city=kingslynn&context=energy` (NB. this currently requires running web map client and CitiesKG/agents from [develop branch](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents))
 
 ## Build Instructions
 
@@ -188,7 +188,7 @@ The username and password for the postgreSQL database need to be provided in sin
 
 ### Access Agent
 
-The agent also requires the [access agent](https://github.com/cambridge-cares/TheWorldAvatar/tree/main/JPS_ACCESS_AGENT) to be running. 
+The CEA agent also uses the [access agent](https://github.com/cambridge-cares/TheWorldAvatar/tree/main/JPS_ACCESS_AGENT). 
 Check that a mapping to a targetresourceid to pass to the access agent exists for the namespace being used. 
 Currently included are:
 
@@ -201,16 +201,19 @@ Currently included are:
 If not included, you will need to add a mapping to accessAgentRoutes in CEAAgent. 
 
 #### For developers
-In order to use a local Blazegraph, you will need to set your access agent up to run locally and add triples to a local ontokgrouter as is explained [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#install-and-build-local-accessagent-for-developers). 
+In order to use a local Blazegraph, you will need to run the access agent locally and set the acessagent.properties storerouter endpoint url to your local Blazegraph, as well as add triples for your namespace to a local ontokgrouter as is explained [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#install-and-build-local-accessagent-for-developers). 
 The route to be passed to the access agent then needs to be provided in uri.route.local in:
 ```
 ./cea-agent/src/main/resources
     CEAAgentConfig.properties
 ```
 The route should contain the port number your access agent is running on (eg. 48080) and the label set in your ontokgrouter (eg docker-kings-lynn). host.docker.internal is required to access localhost from a docker container.
+
 eg. `uri.route.local=http://host.docker.internal:48080/docker-kings-lynn`
 
 If you no longer want to use a local route, ensure you leave uri.route.local empty.
+
+Check [here](https://www.dropbox.com/s/z5dkdg5puqkfjtw/RunningCEAAgentLocallyGuide.pdf?dl=0) for a detailed guide on running CEA Agent locally.
 
 ### Running
 
