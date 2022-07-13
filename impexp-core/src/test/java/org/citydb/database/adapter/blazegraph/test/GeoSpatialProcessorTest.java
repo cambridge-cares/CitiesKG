@@ -1,4 +1,4 @@
-package org.citydb.database.adapter.blazegraph;
+package org.citydb.database.adapter.blazegraph.test;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+
+import org.citydb.config.geometry.GeometryObject;
+import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -171,6 +174,90 @@ public class GeoSpatialProcessorTest {
         LineString testlinestring = fac.createLineString(geospatial.str2coords(linestring).toArray(new Coordinate[0]));
         generated = testlinestring.toString();
         assertEquals(expected, generated);
+    }
+
+    // test static method with geomStr String and datatypeURI String as input
+    @Test
+    public void testCreateGeometry_geomStr_datatypeURI() {
+        // test case when dimOfRings.length >= 2
+        assertEquals("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0), (0.1 0.1, 0.2 0.2, 0.1 0.2, 0.1 0.1))", GeoSpatialProcessor.createGeometry("0.0#0.0#0.0#1.0#0.0#0.0#1.0#1.0#0.0#0.0#1.0#0.0#0.0#0.0#0.0#0.1#0.1#0.0#0.2#0.2#0.0#0.1#0.2#0.0#0.1#0.1#0.0", "POLYGON-3-15-12").toString());
+
+
+        // test case when dimofRings.length == 1
+        assertEquals("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))", GeoSpatialProcessor.createGeometry("0.0#0.0#1.0#0.0#1.0#1.0#0.0#1.0#0.0#0.0", "POLYGON-3-15").toString());
+    }
+
+    // test non-static method with coordlist String as input
+    @Test
+    public void testCreateGeometry_coordList() {
+        GeoSpatialProcessor processor = new GeoSpatialProcessor();
+        assertEquals("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))", processor.createGeometry("0.0#0.0#1.0#0.0#1.0#1.0#0.0#1.0#0.0#0.0").toString());
+    }
+
+    @Test
+    public void testGetReversedCoordinates() {
+        GeoSpatialProcessor processor = new GeoSpatialProcessor();
+        String coords = "0.0#0.0#0.0#1.0#0.0#0.0#1.0#1.0#0.0#0.0#1.0#0.0#0.0#0.0#0.0";
+        Polygon polygon = fac.createPolygon(geospatial.str2coords(coords).toArray(new Coordinate[0]));
+        Coordinate[] result = processor.getReversedCoordinates(polygon);
+        assertEquals("(0.0, 0.0, 0.0)", result[0].toString());
+        assertEquals("(0.0, 1.0, 0.0)", result[1].toString());
+        assertEquals("(1.0, 1.0, 0.0)", result[2].toString());
+        assertEquals("(1.0, 0.0, 0.0)", result[3].toString());
+        assertEquals("(0.0, 0.0, 0.0)", result[4].toString());
+    }
+
+    @Test
+    public void testReverseCoordinates() {
+        GeoSpatialProcessor processor = new GeoSpatialProcessor();
+        // test case when dim == 2
+        Coordinate[] coords1 = new Coordinate[1];
+        coords1[0] = new Coordinate(1.0, 2.0);
+        Coordinate[] result1 = processor.reverseCoordinates(coords1, 2);
+        assertEquals("(2.0, 1.0)", result1[0].toString());
+
+        // test case when dim not == 2
+        Coordinate[] coords2 = new Coordinate[1];
+        coords2[0] = new Coordinate(1.0, 2.0, 0.0);
+        Coordinate[] result2 = processor.reverseCoordinates(coords2, 3);
+        assertEquals("(2.0, 1.0, 0.0 m=0.0)", result2[0].toString());
+    }
+
+    @Test
+    public void testCreate3dPolygon() {
+        // test case when dimOfRings.length == 1
+        GeometryObject result1 = GeoSpatialProcessor.create3dPolygon("0.0#0.0#0.0#1.0#0.0#0.0#1.0#1.0#0.0#0.0#1.0#0.0#0.0#0.0#0.0", "POLYGON-3-15", 4326);
+        assertEquals("POLYGON", result1.getGeometryType().toString());
+        assertEquals(4326, result1.getSrid());
+        assertEquals(15, result1.getNumCoordinates());
+
+        // test case when dimOfRings.length not == 1
+        GeometryObject result2 = GeoSpatialProcessor.create3dPolygon("0.0#0.0#0.0#1.0#0.0#0.0#1.0#1.0#0.0#0.0#1.0#0.0#0.0#0.0#0.0#0.1#0.1#0.0#0.2#0.2#0.0#0.1#0.2#0.0#0.1#0.1#0.0", "POLYGON-3-15-12", 4326);
+        assertEquals("POLYGON", result2.getGeometryType().toString());
+        assertEquals(4326, result2.getSrid());
+        assertEquals(27, result2.getNumCoordinates());
+    }
+
+    @Test
+    public void testConvertTo3d() {
+        double[] coords2d = {0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0};
+        GeometryObject geom2d = GeometryObject.createPolygon(coords2d, 2, 4326);
+
+        // test case when originalGeomObj dim == 2
+        double[] origCoords2d = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        GeometryObject origGeom2d = GeometryObject.createPolygon(origCoords2d, 2, 25833);
+        GeometryObject result1 = GeoSpatialProcessor.convertTo3d(geom2d, origGeom2d);
+        assertEquals(geom2d, result1);
+        assertEquals(10, result1.getNumCoordinates());
+        assertEquals(4326, result1.getSrid());
+
+        // test case when originalGeomObj dim == 3
+        double[] origCoords3d = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        GeometryObject origGeom3d = GeometryObject.createPolygon(origCoords3d, 3, 25833);
+        GeometryObject result2 = GeoSpatialProcessor.convertTo3d(geom2d, origGeom3d);
+        assertEquals(origGeom3d, result2);
+        assertEquals(15, result2.getNumCoordinates());
+        assertEquals(4326, result2.getSrid());
     }
 
 }

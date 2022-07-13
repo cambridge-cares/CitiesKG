@@ -33,6 +33,8 @@ public class OptimizedSparqlQuery {
     IRI_GRAPH_BASE = "http://" + databaseAdapter.getConnectionDetails().getServer() +
         ":" + databaseAdapter.getConnectionDetails().getPort() +
         databaseAdapter.getConnectionDetails().getSid();
+    // check if IRI_GRAPH_BASE ends with /, else append /
+    IRI_GRAPH_BASE = (IRI_GRAPH_BASE.endsWith("/")) ? IRI_GRAPH_BASE : IRI_GRAPH_BASE + "/";
     IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
   }
 
