@@ -22,13 +22,13 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
  */
 public abstract class Model {
 
-  enum SpecialFieldInstruction {
+  public enum SpecialFieldInstruction {
     NEW,
     UNPULLED,
     FORCE_PUSH
   }
 
-  enum LifeCycle {
+  public enum LifeCycle {
     LIVE,
     TO_DELETE,
     TO_DELETE_ZEALOUS,
@@ -40,7 +40,7 @@ public abstract class Model {
   @Getter String iri;
   @Getter ModelContext context;
   final MetaModel metaModel;
-  LifeCycle state;
+  public LifeCycle state;
 
   // Minimised copies of field values at the last synchronisation with the database, indexed by FieldInterface.index.
   final Object[] cleanValues;
