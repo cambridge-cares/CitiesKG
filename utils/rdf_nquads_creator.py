@@ -12,14 +12,13 @@ hasZone_uri = tbox_uri + 'hasZone'
 plot_class_uri = tbox_uri + 'Plot'
 zone_class_uri = tbox_uri + 'Zone'
 
-g = ds.graph(URIRef('http://localhost/berlin/plot'))
-
 
 '''Read csv file with citygml plot URIs and LU_DESC values'''
 plots_df = pd.read_csv(cur_dir + '\\plots_mixed_use.csv')
 
 '''Create an empty dataset'''
 ds = Dataset()
+g = ds.graph(URIRef('http://localhost/berlin/plot'))
 
 '''Match citygml LU_DESC values with the zone names in the zoning ontology'''
 LUdesc_zones_dict = {'COMMERCIAL' : 'CommercialZone', 'WHITE': 'White',
@@ -27,12 +26,12 @@ LUdesc_zones_dict = {'COMMERCIAL' : 'CommercialZone', 'WHITE': 'White',
                     'HOTEL': 'HotelZone',
                      'COMMERCIAL & RESIDENTIAL' : 'CommercialAndResidential'}
 
-'''Add quads to the dataset saying each zoning type belongs to the class Zone'''
 for key, val in LUdesc_zones_dict.items():
     cur_uri = tbox_uri + val
     ds.add((URIRef(cur_uri), RDF.type, URIRef(zone_class_uri), g))
 
-'''Add quads stating zoning type of each plot in your data'''
+'''Fill dataset with 1) subject, 2) predicate, 3) object and 4) graph URIs for each item in your data'''
+
 for i in range(0,len(plots_df)):
     cur_uri = plots_df.at[i, 'CityObject'].strip("<>")
     cur_LU_DESC = plots_df.at[i, 'Zone'].strip("<>")

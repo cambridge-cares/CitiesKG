@@ -383,7 +383,6 @@
                 heading: 6,
                 altitude: 40
             }
-            that.citydbKmlDataSource._iriPrefix = json.iriprefix;
 
             if (isFirstLoad) {
                 if (!that._minLodPixels)

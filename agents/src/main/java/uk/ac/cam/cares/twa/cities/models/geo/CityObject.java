@@ -33,17 +33,17 @@ public class CityObject extends OntoCityGMLModel {
   @Getter @Setter @FieldAnnotation(SchemaManagerAdapter.ONTO_UPDATING_PERSON) protected String updatingPerson;
 
   @Getter @Setter @FieldAnnotation(
-          value = SchemaManagerAdapter.ONTO_CITY_OBJECT_ID,
-          graphName = SchemaManagerAdapter.GENERIC_ATTRIB_GARPH + "/",
-          innerType = GenericAttribute.class,
-          backward = true)
+      value = SchemaManagerAdapter.ONTO_CITY_OBJECT_ID,
+      graphName = SchemaManagerAdapter.GENERIC_ATTRIB_GARPH + "/",
+      innerType = GenericAttribute.class,
+      backward = true)
   private ArrayList<GenericAttribute> genericAttributes;
 
   @Getter @Setter @FieldAnnotation(
-          value = SchemaManagerAdapter.ONTO_CITY_OBJECT_ID,
-          graphName = SchemaManagerAdapter.EXTERNAL_REFERENCES_GRAPH + "/",
-          innerType = ExternalReference.class,
-          backward = true)
+      value = SchemaManagerAdapter.ONTO_CITY_OBJECT_ID,
+      graphName = SchemaManagerAdapter.EXTERNAL_REFERENCES_GRAPH + "/",
+      innerType = ExternalReference.class,
+      backward = true)
   private ArrayList<ExternalReference> externalReferences;
 
 }

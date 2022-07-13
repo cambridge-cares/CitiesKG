@@ -272,7 +272,7 @@
             }
         }
 
-        entity = entityCollection.add(new Entity({id: id, iriPrefix: entityCollection._owner._iriPrefix}));
+        entity = entityCollection.add(new Entity({id: id}));
         if (!defined(entity.kml)) {
             entity.addProperty('kml');
             entity.addProperty('layerId');
@@ -2405,7 +2405,6 @@
         };
         this._layerId = options.layerId;
         this._lookAt = null;
-        this._iriPrefix = options.iriPrefix;
 
         this._gltfVersion = options.gltfVersion;
     }

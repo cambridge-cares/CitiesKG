@@ -5,19 +5,5 @@
     "jsdoc": "3.3.0-alpha9",
     "request": "2.36.0",
     "yargs": "1.2.6"
-  },
-  "scripts": {
-    "start": "node server.js"
-  },
-  "name": "3dcitydb-web-map-1.9.0",
-  "description": "3DCityDB-Web-Map-Client ==================================",
-  "version": "1.0.0",
-  "main": "server.js",
-  "directories": {
-    "example": "examples"
-  },
-  "devDependencies": {},
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  }
 }

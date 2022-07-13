@@ -77,7 +77,7 @@ public class DistanceAgentTest {
             assertEquals("http://www.w3.org/2002/07/owl#", OWL_SCHEMA.get(distanceAgent));
             Field DISTANCE_GRAPH = distanceAgent.getClass().getDeclaredField("DISTANCE_GRAPH");
             DISTANCE_GRAPH.setAccessible(true);
-            assertEquals("distance/", DISTANCE_GRAPH.get(distanceAgent));
+            assertEquals("/distance/", DISTANCE_GRAPH.get(distanceAgent));
             assertEquals("EPSG:4326", distanceAgent.getClass().getDeclaredField("DEFAULT_SRS").get(distanceAgent));
             assertEquals("EPSG:24500", distanceAgent.getClass().getDeclaredField("DEFAULT_TARGET_SRS").get(distanceAgent));
 
@@ -158,7 +158,7 @@ public class DistanceAgentTest {
     @Test
     public void testNewDistanceAgentMethods() {
         DistanceAgent distanceAgent = new DistanceAgent();
-        assertEquals(12, distanceAgent.getClass().getDeclaredMethods().length);
+        assertEquals(13, distanceAgent.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -189,37 +189,10 @@ public class DistanceAgentTest {
             requestParams.remove("distances");
         }
 
-        // test case when route is not overridden
-        iris.put("http://www.theworldavatar.com:83/citieskg/namespace/example/sparql/cityobject/UUID_1/");
-        try {
-            Field route = distanceAgent.getClass().getDeclaredField("route");
-            route.setAccessible(true);
-            distanceAgent.processRequestParameters(requestParams);
-            assertEquals(ResourceBundle.getBundle("config").getString("uri.route"), route.get(distanceAgent));
-        } catch (Exception e) {
-            fail();
-        } finally {
-            requestParams.remove("distances");
-        }
-
-        // test case when route is overridden
-        iris.remove(0);
-        iris.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/cityobject/UUID_1/");
-        try {
-            Field route = distanceAgent.getClass().getDeclaredField("route");
-            route.setAccessible(true);
-            distanceAgent.processRequestParameters(requestParams);
-            assertEquals("singaporeEPSG24500", route.get(distanceAgent));
-        } catch (Exception e) {
-            fail();
-        } finally {
-            requestParams.remove("distances");
-        }
-
         // test case when iris contains two values, request params should have a distance array with size 1
-        iris.remove(0);
-        iris.put("http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/UUID_1/");
-        iris.put("http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/UUID_2/");
+        iris.put("http://localhost/berlin/cityobject/UUID_1/");
+        iris.put("http://localhost/berlin/cityobject/UUID_2/");
+        requestParams.put(DistanceAgent.KEY_IRIS, iris);
         JSONArray result = new JSONArray().put(new JSONObject().put("distance", "10.0"));
         try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = Mockito.mockStatic(AccessAgentCaller.class)) {
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
@@ -233,7 +206,8 @@ public class DistanceAgentTest {
         }
 
         // test case when iris contains 3 values, request params should have a distance array with size 3
-        iris.put("http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/UUID_3/");
+        iris.put("http://localhost/berlin/cityobject/UUID_3/");
+        requestParams.put(DistanceAgent.KEY_IRIS, iris);
         try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = Mockito.mockStatic(AccessAgentCaller.class)) {
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
                     .thenReturn(result);
@@ -324,6 +298,22 @@ public class DistanceAgentTest {
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             fail();
         }
+    }
+
+    @Test
+    public void testGetNamespace()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        DistanceAgent distanceAgent = new DistanceAgent();
+        Method getNamespace = distanceAgent.getClass().getDeclaredMethod("getNamespace", String.class);
+        getNamespace.setAccessible(true);
+
+        //test whether Uri is split  and assembled into a namespace correctly.
+        String uri = "http://localhost:9999/blazegraph/namespace/berlin/sparql/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3/";
+        assertEquals("http://localhost:9999/blazegraph/namespace/berlin/sparql", getNamespace.invoke(distanceAgent, uri));
+
+        //test whether Uri is split  and assembled into a namespace correctly.
+        String uri2 = "http://localhost:9999/blazegraph/namespace/berlin/sparql/cityobject/UUID_62130277-0dca-4c61-939d-c3c390d1efb3";
+        assertEquals("http://localhost:9999/blazegraph/namespace/berlin/sparql", getNamespace.invoke(distanceAgent, uri2));
     }
 
     @Test

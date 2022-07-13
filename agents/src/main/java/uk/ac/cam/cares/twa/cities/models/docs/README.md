@@ -8,7 +8,7 @@ in a knowledge graph. This document outlines how to use it, how it works, and ho
 There is a short, heavily annotated file `ModelDemo.java` in this folder which showcases the key features of the 
 Framework and walks through some typical design decisions and usage patterns that one may encounter. It and the 
 [Using the Model Framework](# Using the Model Framework) section of this README may be read in any order. Also see 
-the diagrammatic overview of the classes and methods on offer in `API.pdf`.
+the diagrammatic overview of the classes and methods on offer in `diagram.xml`.
 
 ## Defining a Model
 
@@ -68,7 +68,7 @@ corresponds to in its arguments:
 - `value`: the IRI of the predicate of the quad described. Qualified names will be looked up in the JPSBaseLib
   PrefixToUrlMap and also custom specifications in the config file. No default value.
 - `graphName`: the short name of the graph of the quad, which is appended to the application's target namespace to
-  obtain the actual graph IRI used. Defaults to the `defaultGraphName` of the declaring class' `ModelAnnotation`.
+  obtain the actual graph IRI used. Defaults to the `nativeGraphName` of the declaring class' `ModelAnnotation`.
 - `backward`: whether the declaring model class is the subject or the object of the quad. Default: `false`.
 - `innerType`: the class of the elements of the `ArrayList`, if the field is an `ArrayList`. This exists because Java's
   runtime type erasure means this information is not available at runtime even with reflection. Can be left unspecified
@@ -142,7 +142,7 @@ from the database. A `ModelContext` may be a triple context or a quad context, t
 
   Creates a quad context with optional specification of initial capacity. The `graphNamespace` is prepended to the
   graph name definitions in `Model` definitions to create graph IRIs. This enables the same `Model` class to be used
-  different namespaces with differently named graph IRIs. For example, fields in a `Building` model class of `graphName`
+  different namespaces with differently named graphs. For example, fields in a `Building` model class of `graphName`
   `building/` instantiated in a `ModelContext` of `graphNamespace` `http://[...]/namespace/berlin/sparql` will be
   interpreted as using named graph `http://[...]/namespace/berlin/sparql/building/`, while one instantiated in a
   `ModelContext` of `graphNamespace` `http://[...]/namespace/churchill/sparql` will be interpreted as using named
@@ -168,7 +168,7 @@ Once a `ModelContext` is created, `Model`s should be created through factory fun
 
 - `loadAll(Class<T> ofClass, String iri)`
 
-  `loadPartial(Class<T> ofClass, String iri, String... fieldNames)`
+  `loadPartialModel(Class<T> ofClass, String iri, String... fieldNames)`
 
   `recursiveLoadAll(Class<T> ofClass, String iri, int recursionRadius)`
 
@@ -538,7 +538,7 @@ A `FieldKey` is a hashable, comparable object encoding the quad characterisation
 has fields:
 
 - `predicate`: the full IRI of the predicate, copied or expanded from `FieldAnnotation.value`.
-- `graphName`: short name of the graph, from `FieldAnnotation.graphName` if specified, else
+- `graphName`: short name of the graph, from `FieldAnnotation.value` if specified, else
   `ModelAnnotation.defaultGraphName`.
 - `backward`: the same as `FieldAnnotation.backward`.
 

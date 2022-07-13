@@ -27,7 +27,29 @@
  */
 package org.citydb.modules.kml.controller;
 
-import net.opengis.kml._2.*;
+import net.opengis.kml._2.BalloonStyleType;
+import net.opengis.kml._2.BasicLinkType;
+import net.opengis.kml._2.DocumentType;
+import net.opengis.kml._2.FolderType;
+import net.opengis.kml._2.IconStyleType;
+import net.opengis.kml._2.KmlType;
+import net.opengis.kml._2.LabelStyleType;
+import net.opengis.kml._2.LatLonAltBoxType;
+import net.opengis.kml._2.LineStringType;
+import net.opengis.kml._2.LineStyleType;
+import net.opengis.kml._2.LinkType;
+import net.opengis.kml._2.LodType;
+import net.opengis.kml._2.LookAtType;
+import net.opengis.kml._2.NetworkLinkType;
+import net.opengis.kml._2.ObjectFactory;
+import net.opengis.kml._2.PairType;
+import net.opengis.kml._2.PlacemarkType;
+import net.opengis.kml._2.PolyStyleType;
+import net.opengis.kml._2.RegionType;
+import net.opengis.kml._2.StyleMapType;
+import net.opengis.kml._2.StyleStateEnumType;
+import net.opengis.kml._2.StyleType;
+import net.opengis.kml._2.ViewRefreshModeEnumType;
 import org.citydb.ade.ADEExtensionManager;
 import org.citydb.concurrent.PoolSizeAdaptationStrategy;
 import org.citydb.concurrent.SingleWorkerPool;
@@ -467,9 +489,6 @@ public class KmlExporter implements EventHandler {
 						document.setOpen(false);
 						kmlType.setAbstractFeatureGroup(kmlFactory.createDocument(document));
 
-						// add extended data with iri prefix to document
-						document.setExtendedData(setIriPrefixToExtendedData());
-
 						// write file header
 						Marshaller marshaller = null;
 						try {
@@ -685,27 +704,6 @@ public class KmlExporter implements EventHandler {
 			log.info("Total export time: " + Util.formatElapsedTime(System.currentTimeMillis() - start) + ".");
 
 		return shouldRun;
-	}
-
-	/**
-	 * Stores IRI prefix of exported city objects as a Data kml type, and child of ExtendedData kml type.
-	 * Example of IRI prefix value: http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/
-	 **/
-	private ExtendedDataType setIriPrefixToExtendedData() {
-		ArrayList<DataType> list = new ArrayList<>();
-		DataType dataType = new DataType();
-
-		String prefixString = "http://" + databaseAdapter.getConnectionDetails().getServer() + ":"
-				+ databaseAdapter.getConnectionDetails().getPort() + databaseAdapter.getConnectionDetails().getSid();
-		prefixString = (prefixString.endsWith("/") ? prefixString.concat("cityobject/") : prefixString.concat("/cityobject/"));
-
-		dataType.setName("prefix");
-		dataType.setValue(prefixString);
-		list.add(dataType);
-
-		ExtendedDataType extendedDataType = kmlFactory.createExtendedDataType();
-		extendedDataType.setData(list);
-		return extendedDataType;
 	}
 
 	private SAXWriter writeMasterFileHeader(String fileName, String path, Query query) throws JAXBException, IOException, SAXException {

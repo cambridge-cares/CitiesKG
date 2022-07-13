@@ -225,10 +225,6 @@ function initClient() {
     // display current infos of active layer in the main menu
     observeActiveLayer();
 
-    // set CIA context based on input in url
-    var cia_context = (new URL(window.location.href)).searchParams.get('context');
-    this.cia_context = cia_context ? cia_context : '';
-
     // load city based on input in url
     var city = (new URL(window.location.href)).searchParams.get('city');
     loadCity(city);
@@ -395,7 +391,7 @@ function getAndLoadLayers(folder) {
         layerClampToGround: false,
         gltfVersion: '2.0',
         thematicDataUrl: '',
-        thematicDataSource: 'KML',
+        thematicDataSource: 'GoogleSheets',
         tableType: 'Horizontal',
         cityobjectsJsonUrl: '',
         minLodPixels: '',
@@ -410,7 +406,7 @@ function getAndLoadLayers(folder) {
         // if data includes 'Tiles', only add MasterJSON as layer, else add all files
         if (data.includes("Tiles")) {
             for (let i = 0; i < data.length; i++) {
-                if (data[i].match(new RegExp("\\w*_\\w*_MasterJSON.json"))) {
+                if (data[i].match(new RegExp("\\w*_extruded_MasterJSON.json"))) {
                     filepathname = folderpath + data[i]
                     options.url = filepathname;
                     options.name = (new URL(window.location.href)).searchParams.get('city');
@@ -565,10 +561,7 @@ function listHighlightedObjects() {
     });
 }
 
-//---Extended Web-Map-Client part---//
-
 function computeDistance() {
-    var iriArr = [];
 	var highlightedObjects = webMap.getAllHighlighted3DObjects();
 	var centroids = [];
 	for (var i = 0; i < highlightedObjects.length; i++) {
@@ -578,20 +571,19 @@ function computeDistance() {
 		var center = Cesium.BoundingSphere.fromPoints(positions).center;
 		console.log(center);
 		centroids.push(center);
-        var iri = entity._iriPrefix + entity._name;
-        iri = iri.endsWith('/') ? iri : iri + '/';
-        iri = iri.replace(new RegExp('_(\\w*Surface)'), '');
-		iriArr.push(iri);
+		
 	};
-	console.log(centroids);
-
-    var redLine = cesiumViewer.entities.add({
+	console.log(centroids );
+	
+	// DRAWING LINE BETWEEN TWO OBJECTS.
+	
+	var redLine = cesiumViewer.entities.add({
 		name: "Distance line",
 		polyline: {
 			positions: centroids,
 			width: 2,
 			material: new Cesium.PolylineDashMaterialProperty({
-            color: Cesium.Color.WHITE,
+            color: Cesium.Color.GOLD,
 			dashLength: 15,
           }),
 			cmalpToGround: true,
@@ -610,14 +602,16 @@ function computeDistance() {
     pixelOffset : new Cesium.Cartesian2(0, 20),
     eyeOffset: new Cesium.Cartesian3(0,0,-50),
 	text: labelText,
-	fillColor : Cesium.Color.WHITE,
+	fillColor : Cesium.Color.GOLD,
 	}
     });
 
-    jQuery.ajax({
+// AJAX POST REQUEST.
+	
+	$.ajax({
 		url:"http://localhost:8080/agents/distance",
 		type: 'POST',
-		data: JSON.stringify({iris: iriArr}),
+		data: JSON.stringify({iris: webMap.getAllHighlightedObjects()}),
 		dataType: 'json',
 		contentType: 'application/json',
 		success: function(data, status_message, xhr){
@@ -641,8 +635,7 @@ function getMidpoint(point1, point2) {
     return Cesium.Cartesian3.fromRadians(midpointCartographic.longitude, midpointCartographic.latitude);
 	
 }
-
-	//---Extended Web-Map-Client part---//
+	
 
 function listHiddenObjects() {
     var hidddenListElement = document.getElementById("citydb_hiddenlist");
@@ -1269,7 +1262,6 @@ function createInfoTable(res, citydbLayer) {
 
     var thematicDataUrl = citydbLayer.thematicDataUrl;
     cesiumEntity.description = "Loading feature information...";
-    cesiumEntity._cia_context = this.cia_context;
 
     citydbLayer.dataSourceController.fetchData(gmlid, function (kvp) {
         if (!kvp) {

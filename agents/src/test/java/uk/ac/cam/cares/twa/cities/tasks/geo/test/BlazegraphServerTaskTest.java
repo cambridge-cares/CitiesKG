@@ -58,7 +58,7 @@ public class BlazegraphServerTaskTest {
       assertEquals(PROPERTY_FILE.get(task), "RWStore.properties");
       PROPERTY_FILE_PATH = task.getClass().getDeclaredField("PROPERTY_FILE_PATH");
       PROPERTY_FILE_PATH.setAccessible(true);
-      assertEquals(PROPERTY_FILE_PATH.get(task), "../../../../../../../../");
+      assertEquals(PROPERTY_FILE_PATH.get(task), "../../../../../../../");
       JETTY_CFG_PATH = task.getClass().getDeclaredField("JETTY_CFG_PATH");
       JETTY_CFG_PATH.setAccessible(true);
       assertEquals(JETTY_CFG_PATH.get(task), "jetty.xml");
