@@ -24,12 +24,8 @@ import gov.nasa.worldwind.ogc.kml.KMLPlacemark;
 import gov.nasa.worldwind.ogc.kml.KMLPoint;
 import gov.nasa.worldwind.ogc.kml.KMLPolygon;
 import gov.nasa.worldwind.ogc.kml.KMLRoot;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -62,7 +58,7 @@ import uk.ac.cam.cares.twa.cities.model.geo.Utilities;
 public class KMLTilingTask implements Runnable{
 
   // KMLTilingTask class variables
-  private static final int crsWGS48 = 4326; // global WGS 84 on cesium
+  private static final int crsWGS84 = 4326; // global WGS 84 on cesium
   private static final int initTileSize = 250; // in meter. The tilting of the extent should be done in meter
 
   private final int CRSinMeter;  // 23855 for berlin in meter in blazegraph
@@ -266,7 +262,7 @@ public class KMLTilingTask implements Runnable{
     if (geomEnvelope[2] <= this.extent_Ymin) { this.extent_Ymin = geomEnvelope[2]; }
     if (geomEnvelope[3] >= this.extent_Ymax) { this.extent_Ymax = geomEnvelope[3]; }
 
-    double[] Tenvelope = Transform.reprojectEnvelope(geomEnvelope, crsWGS48, CRSinMeter);
+    double[] Tenvelope = Transform.reprojectEnvelope(geomEnvelope, crsWGS84, CRSinMeter);
 
     if (Tenvelope[0] <= this.Textent_Xmin) { this.Textent_Xmin = Tenvelope[0]; }
     if (Tenvelope[1] >= this.Textent_Xmax) { this.Textent_Xmax = Tenvelope[1]; }
@@ -286,7 +282,7 @@ public class KMLTilingTask implements Runnable{
     if (origEnvelop[2] <= this.extent_Ymin) { this.extent_Ymin = origEnvelop[2]; }
     if (origEnvelop[3] >= this.extent_Ymax) { this.extent_Ymax = origEnvelop[3]; }
 
-    double[][] Tgeometry = Transform.reprojectGeometry(geometry, crsWGS48, CRSinMeter);
+    double[][] Tgeometry = Transform.reprojectGeometry(geometry, crsWGS84, CRSinMeter);
 
     double[] Tenvelop = Transform.getEnvelop(Tgeometry);
 
@@ -399,7 +395,7 @@ public class KMLTilingTask implements Runnable{
 
   /** KML Tiling: Compute the belonging tile of a cityobject based on the transformed Extent and centroid of the cityobject (based on meter) */
   private Integer[] assignTiles(String centroidStr) {
-    double[] transformedCentroid = reproject(centroidStr, Integer.valueOf(crsWGS48), Integer.valueOf(CRSinMeter));
+    double[] transformedCentroid = reproject(centroidStr, Integer.valueOf(crsWGS84), Integer.valueOf(CRSinMeter));
     Integer col = (int) (Math.floor(
         (transformedCentroid[0] - this.Textent_Ymin) / this.tileWidth));
     Integer row = (int) (Math.floor(
@@ -729,9 +725,9 @@ public class KMLTilingTask implements Runnable{
     this.buildingInTiles += list.size();
     Kml kml = new Kml();
     kml.createAndSetDocument().withName(name).withOpen(false).withFeature(list).withStyleSelector(styles);
-    try {
-      kml.marshal(file);
-    } catch (FileNotFoundException e) {
+    try (OutputStream out = new FileOutputStream(file)) {
+      kml.marshal(out);
+    } catch (IOException e) {
       e.printStackTrace();
     }
   }
