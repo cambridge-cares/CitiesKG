@@ -132,8 +132,8 @@ public class CityExportAgent extends JPSAgent {
                 String preparedGmlids = Paths.get(tmpDirsLocation, namespaceName).toString();
                 File gmlidDir = new File(preparedGmlids);
 
-                if (gmlidDir.isDirectory() && gmlidDir.list().length > 0) {
-                    System.out.println("Found the prepared GMLID list and number of files = " + gmlidDir.list().length);
+                if (gmlidDir.isDirectory() && Objects.requireNonNull(gmlidDir.list()).length > 0) {
+                    System.out.println("Found the prepared GMLID list and number of files = " + Objects.requireNonNull(gmlidDir.list()).length);
                     ArrayList<Path> fileList = new ArrayList<>();
                     try (Stream<Path> paths = Files.walk(Paths.get(preparedGmlids))) {
                         paths
@@ -143,41 +143,24 @@ public class CityExportAgent extends JPSAgent {
                         e.printStackTrace();
                     }
 
-                    for (int i = 0 ; i < fileList.size(); ++i){
+                    for (Path path : fileList) {
                         // Retrieve a list of gmlids from a file, and execute the export process
-                        String[] gmlidArray = getGmlidFromFile(fileList.get(i));
-                        String outputFileName = getOutputName(fileList.get(i));
+                        String[] gmlidArray = getGmlidFromFile(path);
+                        String outputFileName = getOutputName(path);
                         Params taskParams = new Params(namespaceIri, serverInfo, srid, outputDir, outputFileName, displayMode, lod, gmlidArray);
                         exportKml(taskParams);
                     }
-
                     System.out.println("After for loop, Thread Name: " + Thread.currentThread().getName());
                 } else {
-                    ArrayList<String> buildingIds = new ArrayList<>();
-                    for (Object id : gmlidParams) {
-                        buildingIds.add(id.toString());
-                    }
-                    String[] gmlidsArray = new String[buildingIds.size()];
-                    gmlidsArray = buildingIds.toArray(gmlidsArray);
-                    String outSingleFileName = getOutputName(null);
-                    Params taskParams = new Params(namespaceIri, serverInfo, srid, outputDir, outSingleFileName, displayMode, lod, gmlidsArray);
-                    exportKml(taskParams);
+                    // the gmlidParams in this case is * without pre-prepared gmlid list, tiling will be triggered.
+                    exportFromDefinedGmlids(gmlidParams, serverInfo, displayMode);
                 }
-
                 tilingKml();
-
             }else{
-                ArrayList<String> buildingIds = new ArrayList<>();
-                for (Object id : gmlidParams) {
-                    buildingIds.add(id.toString());
-                }
-                String[] gmlidsArray = new String[buildingIds.size()];
-                gmlidsArray = buildingIds.toArray(gmlidsArray);
-                String outSingleFileName = getOutputName(null);
-                Params taskParams = new Params(namespaceIri, serverInfo, srid, outputDir, outSingleFileName, displayMode, lod, gmlidsArray);
-                exportKml(taskParams);
+                // the gmlidParams in this case is a list of explicit gmlids, no tiling will be triggered.
+                exportFromDefinedGmlids(gmlidParams, serverInfo, displayMode);
             }
-            }
+        }
         // It will return the file path of the exported file
         System.out.println("This msg is coming from the end of CityExportAgent");
         System.out.println("Thread Name: " + Thread.currentThread().getName());
@@ -189,7 +172,6 @@ public class CityExportAgent extends JPSAgent {
     public boolean validateInput(JSONObject requestParams) throws BadRequestException {
 
         if (!requestParams.isEmpty() && requestParams.get(KEY_REQ_METHOD).equals(HttpMethod.POST)) {
-            Set<String> keys = requestParams.keySet();
             try {
                 // Check if namespace is empty or valid
                 if (!requestParams.getString(KEY_NAMESPACE).isEmpty()){
@@ -226,6 +208,12 @@ public class CityExportAgent extends JPSAgent {
         throw new BadRequestException();
     }
 
+    /**
+     * Retrieve the gmlids from the file containing pre-prepared gmlis
+     *
+     * @param gmlidFile - path to the pre-prepared gmlid file
+     * @return String[] - a string array containing the gmlids
+     */
     private String[] getGmlidFromFile(Path gmlidFile){
         List<String> gmlidsList =  new ArrayList<>();
         try {
@@ -243,7 +231,12 @@ public class CityExportAgent extends JPSAgent {
     }
 
     /** Using HTTP request to query the TWA and get the srsInfo
-     *  The postprocessing of the response is a bit complicated */
+     *  The postprocessing of the response is a bit complicated
+     *  create the output path of the generated kml file for indexed input files.
+     *
+     * @param namespaceIri - the namespace iri for querying the crs information
+     * @return int - srid
+     */
     private int getCrsInfo (String namespaceIri)  {
         String sparqlquery = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#> \n" +
             "SELECT ?s ?srid ?srsname { ?s ocgml:srid ?srid; ocgml:srsname ?srsname }";
@@ -262,7 +255,6 @@ public class CityExportAgent extends JPSAgent {
                 throw new HttpException(namespaceIri + " " + respStatus);
             } else {
                 responseBody = (String) response.getBody();
-                JSONObject json = XML.toJSONObject(responseBody);
                 JSONObject srsObject = (JSONObject) XML.toJSONObject(responseBody).getJSONObject("sparql").getJSONObject("results").getJSONObject("result").getJSONArray("binding").get(1);  // determined by the query
                 srid = srsObject.getJSONObject("literal").getInt("content");
             }
@@ -275,6 +267,7 @@ public class CityExportAgent extends JPSAgent {
 
     /**
      * create the output path of the generated kml file for indexed input files.
+     *
      * @param inputFile - indexed file
      * @return String - the output location of the kml file
      */
@@ -303,10 +296,9 @@ public class CityExportAgent extends JPSAgent {
     /**
      * retrieves the server information from the endpointUri -- host, port, namespace
      *
-     * @param  - endpointUri which is namespaceIri that contains
-     * @return - JSONObject with key/value: host, port, namespace
+     * @param endpointUri - endpointUri which is namespaceIri that contains
+     * @return JSONObject - JSONObject with key/value: host, port, namespace
      */
-
     private JSONObject getServerInfo (String endpointUri) {
 
         JSONObject serverInfo = new JSONObject();
@@ -327,7 +319,7 @@ public class CityExportAgent extends JPSAgent {
         namespaceName = subarray[2];
 
         assert server != null;
-        if (server.isEmpty() || port.isEmpty() || namespace.isEmpty()) {
+        if (server.isEmpty() || port.isEmpty()) {
             throw new IllegalArgumentException();
         }
         serverInfo.put ("host", server);
@@ -336,6 +328,11 @@ public class CityExportAgent extends JPSAgent {
         return serverInfo;
     }
 
+    /**
+     * Exporting the kml files
+     *
+     * @return ExporterTask - running task
+     */
     private ExporterTask exportKml (Params taskParams){
 
         ExporterTask exporterTask = new ExporterTask(taskParams);
@@ -344,14 +341,39 @@ public class CityExportAgent extends JPSAgent {
         return exporterTask;
     }
 
+    /**
+     * Codesnippet for preparing the gmlid list, e.g., * or particular gmlids
+     *
+     * @param gmlidParams - JsonArray from the agent arguments
+     * @param serverInfo - server information for the query
+     * @param displayMode - a string array contains true and false for the displayForm
+     */
+    private void exportFromDefinedGmlids(JSONArray gmlidParams, JSONObject serverInfo, String[] displayMode){
+        ArrayList<String> buildingIds = new ArrayList<>();
+        for (Object id : gmlidParams) {
+            buildingIds.add(id.toString());
+        }
+        String[] gmlidsArray = new String[buildingIds.size()];
+        gmlidsArray = buildingIds.toArray(gmlidsArray);
+        String outSingleFileName = getOutputName(null);
+        Params taskParams = new Params(namespaceIri, serverInfo, srid, outputDir, outSingleFileName, displayMode, lod, gmlidsArray);
+        exportKml(taskParams);
+    }
+
+    /**
+     * Re-organise the exported kml files according the pre-prepared list to geospatial tiles
+     * For the srid 4326, it requires a correspoding "srid in meter" for the tiling task
+     *
+     * @return KMLTilingTask - running task
+     */
     private KMLTilingTask tilingKml(){
         String path2unsortedKML = Paths.get(outputDir, "kmlFiles").toString() ;
         String path2sortedKML = Paths.get(outputDir).toString();
         //int databaseCRS = Integer.valueOf(srsName.split(":")[1]);
-        int databaseCRS = 0;
+        int databaseCRS;
         if (srid == 4326){
             ResourceBundle config = ResourceBundle.getBundle("config");
-            databaseCRS = Integer.valueOf(config.getString("crsInMeter.singapore"));
+            databaseCRS = Integer.parseInt(config.getString("crsInMeter.singapore"));
         } else {
             databaseCRS = srid;
         }
@@ -360,14 +382,15 @@ public class CityExportAgent extends JPSAgent {
         return kmlTilingTask;
     }
 
+    /*
     private KMLTilingTask tilingKml(String path2unsortedKML, String path2sortedKML){
         String displayForm = "extruded";
         int srid = 4326; // singapore
 
-        int databaseCRS = 0;
+        int databaseCRS;
         if (srid == 4326){
             ResourceBundle config = ResourceBundle.getBundle("config");
-            databaseCRS = Integer.valueOf(config.getString("crsInMeter.singapore"));
+            databaseCRS = Integer.parseInt(config.getString("crsInMeter.singapore"));
         } else {
             databaseCRS = srid;
         }
@@ -382,5 +405,5 @@ public class CityExportAgent extends JPSAgent {
         CityExportAgent exportAgent = new CityExportAgent();
         exportAgent.tilingKml(path2unsortedKML, path2sortedKML);
     }
-
+    */
 }

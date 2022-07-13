@@ -1,6 +1,5 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
-import com.github.jsonldjava.utils.Obj;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.opencsv.CSVParser;
@@ -153,7 +152,11 @@ public class KMLTilingTask implements Runnable{
       }
   }
 
-  /** KML parsing : parse the kml to java object and calculate the extent of the whole region */
+  /**
+   * KML parsing main:
+   * parse the kml to java object and calculate the extent of the whole region
+   *
+   */
   private void parseKML(){
 
     String[] inputFiles = Utilities.getInputFiles(unsortedKMLdir);
@@ -189,7 +192,13 @@ public class KMLTilingTask implements Runnable{
     System.out.println("The KMLParserTask took " + (end2 - start) + " ms");
   }
 
-  /** KML parsing : calculate the envelop and center from KMLAbstractFeature and add to datacontent */
+  /**
+   * Part of KML parsing:
+   * calculate the envelop and center from KMLAbstractFeature and add to datacontent
+   *
+   * @param feature -  KMLAbstractFeature that have been parsed from KML files
+   * @param currFile - the file from which the features are parsed
+   */
   private void getPlacemarks(KMLAbstractFeature feature, File currFile)
   {
     if (feature instanceof KMLAbstractContainer)
@@ -222,7 +231,13 @@ public class KMLTilingTask implements Runnable{
     }
   }
 
-  /** KML parsing : for the record in CSV, this method convert double[] to a string with x0#y0#z0#x1#y1#z1#x2#y2#z2 */
+  /**
+   * Part of KML parsing:
+   * for the record in CSV, this method convert double[] to a string with x0#y0#z0#x1#y1#z1#x2#y2#z2
+   *
+   * @param arr - coordinate array containing x, y, z
+   * @return String - coordinate string denoted with x#y#z
+   */
   private String arr2str (double[] arr){
     String output = "";
     String sep = "#";
@@ -235,7 +250,13 @@ public class KMLTilingTask implements Runnable{
     return output;
   }
 
-  /** KML parsing : Save java object "dataContent" to CSV file */
+  /**
+   * Part of KML parsing:
+   * Save java object "dataContent" to CSV file
+   *
+   * @param dataContent - list of string array
+   * @return Path - path the created csv file
+   */
   private Path createCSVFile(List<String[]> dataContent) {
 
     String[] header = {"gmlid", "envelope", "envelopeCentroid", "filename"};
@@ -256,9 +277,13 @@ public class KMLTilingTask implements Runnable{
     return outputCSV;
   }
 
-  /** KML Tiling: Update the boundary of the extent
-   *  This method will be called every time when a city object is read and its envelop is calculated
-   *  @param : geomEnvelope [xmin, xmax, ymin, ymax] */
+  /**
+   * Part of KML Tiling:
+   * Update the boundary of the extent
+   * This method will be called every time when a city object is read and its envelop is calculated
+   *
+   * @param : geomEnvelope [xmin, xmax, ymin, ymax]
+   * */
   private void updateExtent(double[] geomEnvelope) {
 
     if (geomEnvelope[0] <= this.extent_Xmin) { this.extent_Xmin = geomEnvelope[0]; }
