@@ -1184,13 +1184,7 @@
             polygon.outlineColor = defined(polyline.material) ? polyline.material.color : Color.WHITE;
             polygon.outlineWidth = polyline.width;
         }
-
         entity.polygon = polygon;
-
-        // definition of the properties for the extra polyline
-        //polyline.material.color = Color.BLACK;
-        //polyline.width = 1;
-        //entity.polyline = polyline; // Shiying, if comment out, not extra polyline is drawn
 
         if (canExtrude) {
             polygon.perPositionHeight = true;
@@ -1213,8 +1207,6 @@
                 }
             }
             polygon.hierarchy = hierarchy;
-
-            //polyline.positions = createPositionPropertyArrayFromAltitudeMode(coordinates, altitudeMode, gxAltitudeMode);   // Shiying: this help to draw the extra polylines
         }
 
         return true;

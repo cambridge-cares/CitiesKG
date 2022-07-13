@@ -252,15 +252,9 @@ A complete and comprehensive documentation on the 3DCityDB-Web-Map-Client is ava
 
 In order to use the extended 3DCityDB-Web-Map-Client for city agents make sure that:
 
-* your browser support WebGL (visit http://get.webgl.org/ for checking it).
-* open source JavaScript runtime environment Node.js is installed on your machine (visit https://nodejs.org/en/ to download the latest version). 
-* the extended web-map-client does not have node_modules folder. To install required dependencies run:
-
-```
-npm install
-```
-
-in ```../CitiesKG/3dcitydb-web-map-1.9.0/``` directory.
+* Your browser support WebGL (visit http://get.webgl.org/ for checking it).
+* Open source JavaScript runtime environment Node.js is installed on your machine (visit https://nodejs.org/en/ to download the latest version). 
+* The extended web-map-client does not have node_modules folder thus, download original web-map-client via the following GitHub link (https://github.com/3dcitydb/3dcitydb-web-map/releases) and copy node_modules folder in `/CitiesKG/3dcitydb-web-map-1.9.0/`.
 
 To run the web-map-client, in a shell environment navigate to the folder where *server.js* file is located `/CitiesKG/3dcitydb-web-map-1.9.0/` and simply run the following command to launch the server:
 

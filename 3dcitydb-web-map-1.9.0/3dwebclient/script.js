@@ -85,29 +85,6 @@ adjustIonFeatures();
 navigationInitialization('cesiumContainer', cesiumViewer);
 
 var cesiumCamera = cesiumViewer.scene.camera;
-
-//////////////////////////////////////////////////////////////////////////
-// Configuring the Scene
-//////////////////////////////////////////////////////////////////////////
-
-// Create an initial camera view
-var initialPosition = new Cesium.Cartesian3.fromDegrees(13.411141287558147, 52.517479728958044, 534.3099172977386);
-var initialOrientation = new Cesium.HeadingPitchRoll.fromDegrees(345.2992773976952, -44.26228062802528, 359.933888621294);
-var homeCameraView = {
-    destination : initialPosition,
-    orientation : {
-        heading : initialOrientation.heading,
-        pitch : initialOrientation.pitch,
-        roll : initialOrientation.roll
-    }
-};
-// Set the initial view
-cesiumCamera.setView(homeCameraView);
-
-
-///////////////////////////////////// end  //////////////////////////////// Added by Shiying
-
-
 var webMap = new WebMap3DCityDB(cesiumViewer);
 
 // set default input parameter value and bind the view and model
@@ -293,8 +270,6 @@ function loadCity(city) {
         loadBerlin();
     } else if (city == 'kingslynn') {
         loadKingsLynn();
-    } else if (city == 'ura') {
-        loadURA();
     }
 }
 
@@ -359,24 +334,7 @@ function loadKingsLynn() {
     getAndLoadLayers('exported_kingslynn');
 }
 
-function loadURA() {
-    // set title
-    document.title = 'URA';
 
-    // set camera view
-    var cameraPostion = {
-        latitude: 1.3110057376503,
-        longitude: 103.818749218958,
-        height: 534.3099172951087,
-        heading: 345.2992773976952,
-        pitch: -44.26228062802528,
-        roll: 359.933888621294
-    }
-    flyToCameraPosition(cameraPostion);
-
-    // find relevant files and load layers
-    getAndLoadLayers('exported_ura');
-}
 // send get request to server to discover files in specified folder, create and load layers
 function getAndLoadLayers(folder) {
     var url = this.location.origin;
@@ -1128,17 +1086,6 @@ function addNewLayer() {
         _layers.push(new Cesium3DTilesDataLayer(options));
     } else if (['kml', 'kmz', 'json', 'czml'].indexOf(CitydbUtil.get_suffix_from_filename(options.url)) > -1) {
         _layers.push(new CitydbKmlLayer(options));
-    } else if (options.url == '') {  // todo: figure a way to check the directory , alternative pass this to the server side if it is a folder
-        var folderpath = "http://localhost:8000/3dwebclient/exported_data/";
-        var filepathname = "";
-        for (let i = 0; i < 50; i++){
-            filepathname = folderpath + "test_" + i + "_extruded.kml";
-            //console.log(filepathname);
-            options.url = filepathname;
-            options.name = "test_" + i + "_extruded.kml";
-            _layers.push(new CitydbKmlLayer(options));
-        }
-        console.log ('Directory exists!')
     }
 
     loadLayerGroup(_layers);
