@@ -37,10 +37,10 @@ var KMLDataSource = /** @class */ (function (_super) {
             }
         }
     };
-	
-	//---Extended Web-Map-Client version---//
-	
-	
+
+    //---Extended Web-Map-Client version---//
+
+
     KMLDataSource.prototype.responseCesiumToKvp = function (response) {
         // response is a list of JSON elements
         var result = new Map();
@@ -86,7 +86,7 @@ var KMLDataSource = /** @class */ (function (_super) {
             }
         }
 
-		return result;
+        return result;
     };
 
     KMLDataSource.prototype.genAttrKeysManager = function (data, result) {
@@ -156,13 +156,13 @@ var KMLDataSource = /** @class */ (function (_super) {
             success: function (data, status_message, xhr) {
                 console.log(data);
                 callback(data);
-		}});		
+            }});
     };
-	
-	
-	//---Extended Web-Map-Client version---//
-	
-	
+
+
+    //---Extended Web-Map-Client version---//
+
+
     KMLDataSource.prototype.responseOwnToKvp = function (response) {
         // response is a list of XML DOM element
         var result = new Map();
@@ -181,7 +181,7 @@ var KMLDataSource = /** @class */ (function (_super) {
         }
         return result;
     };
-	
+
     KMLDataSource.prototype.countFromResult = function (res) {
         return res.getSize();
     };
@@ -205,7 +205,7 @@ var KMLDataSource = /** @class */ (function (_super) {
         // TODO
         return null;
     };
-	
+
     KMLDataSource.prototype.queryUsingIdCustom = function (id, callback, limit, clickedObject) {
         this._useOwnKmlParser = true;
         // read KML file

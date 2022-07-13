@@ -159,7 +159,6 @@ public class BlazegraphConfigBuilder {
     InputStream input = new FileInputStream(path);
     Properties prop = new Properties();
     prop.load(input);
-    input.close();
 
     return prop;
   }
