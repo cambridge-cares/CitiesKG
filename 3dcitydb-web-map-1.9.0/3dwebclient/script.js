@@ -329,12 +329,12 @@ function loadKingsLynn() {
 
     // set camera view
     var cameraPostion = {
-        latitude: 52.752673871745415,
-        longitude: 0.40209742318323693,
-        height: 534.3099172951087,
-        heading: 345.2992773976952,
+        latitude: 52.753,
+        longitude: 0.3851230367748717,
+        height: 300,
+        heading: 0,
         pitch: -44.26228062802528,
-        roll: 359.933888621294
+        roll: 0
     }
     flyToCameraPosition(cameraPostion);
 
