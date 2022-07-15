@@ -33,6 +33,8 @@ public class GraphInferenceAgent extends JPSAgent {
   public static final String ONINF_PREFIX = "oninf";
   public static final String ONINF_SCHEMA = "http://www.theworldavatar.com/ontologies/OntoInfer.owl#";
   public static final String ONTOINFER_GRAPH = "OntoInfer/";
+  public static final String ONTOZONE_GRAPH = "ontozone/";
+  public static final String ONTOZONING_GRAPH = "OntoZoning/";
 
   public static final String TASK_PR = "PageRankTask";
   public static final String URI_ACTION = "/inference/graph";
@@ -124,9 +126,11 @@ public class GraphInferenceAgent extends JPSAgent {
   private String getAllTargetData(IRI sparqlEndpoint) {
     String targetData = "";
     //retrieve data and replace empty string with it
-    String sparql =  "SELECT ?s ?p ?o"
-                      + "WHERE {?s ?p ?o}";
-    // |@todo: change that to query builder and execute with access agent
+    // limit to ontozone and OntoZoning graphs
+    SelectBuilder sb = new SelectBuilder();
+    sb.setBase(sparqlEndpoint.toString()).from(ONTOZONE_GRAPH).from(ONTOZONING_GRAPH)
+            .addVar("?s").addVar("?p").addVar("?o")
+            .addWhere("?s", "?p", "?o");
 
     return targetData;
   }
