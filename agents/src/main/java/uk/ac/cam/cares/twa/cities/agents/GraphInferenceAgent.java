@@ -3,6 +3,7 @@ package uk.ac.cam.cares.twa.cities.agents;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -13,10 +14,12 @@ import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.json.JSONArray;
 import org.semanticweb.owlapi.model.IRI;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.tasks.PageRankTask;
 import uk.ac.cam.cares.twa.cities.tasks.UninitialisedDataQueueTask;
 
@@ -36,6 +39,7 @@ public class GraphInferenceAgent extends JPSAgent {
   public static final String ONTOZONE_GRAPH = "ontozone/";
   public static final String ONTOZONING_GRAPH = "OntoZoning/";
 
+  public String route;
   public static final String TASK_PR = "PageRankTask";
   public static final String URI_ACTION = "/inference/graph";
   public static final String KEY_REQ_METHOD = "method";
@@ -53,6 +57,8 @@ public class GraphInferenceAgent extends JPSAgent {
     JSONObject responseParams = new JSONObject();
     if (validateInput(requestParams)) {
       try {
+        // setup route for AccessAgent and check if targetIri has the trailing /
+        route = ResourceBundle.getBundle("config").getString("uri.route");
         String targetIRI = requestParams.getString(KEY_TARGET_IRI).endsWith("/")
                 ? requestParams.getString(KEY_TARGET_IRI) :  requestParams.getString(KEY_TARGET_IRI).concat("/");
 
@@ -113,11 +119,11 @@ public class GraphInferenceAgent extends JPSAgent {
             .setBase(sparqlEndpoint.toString()).from(ONTOINFER_GRAPH)
             .addVar("?o")
             .addWhere("<" + algorithmIRI.toString() + ">", "oninf:appliedBy", "?o");
-    String sparqlResult = "http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankTask";
 
+    JSONArray sparqlResult = AccessAgentCaller.queryStore(route, sb.buildString());
 
     //Get task from map by IRI
-    IRI taskIri = IRI.create(sparqlResult);
+    IRI taskIri = IRI.create(sparqlResult.getJSONObject(0).get("o").toString());
     UninitialisedDataQueueTask task = (UninitialisedDataQueueTask) TASKS.get(taskIri);
     //some task configuration/initialisation code can go here.
     task.setStringMapQueue(dataQueue);
@@ -133,6 +139,9 @@ public class GraphInferenceAgent extends JPSAgent {
     sb.setBase(sparqlEndpoint.toString()).from(ONTOZONE_GRAPH).from(ONTOZONING_GRAPH)
             .addVar("?s").addVar("?p").addVar("?o")
             .addWhere("?s", "?p", "?o");
+
+    JSONArray sparqlResult = AccessAgentCaller.queryStore(route, sb.buildString());
+    // TODO: 15/7/2022 check how return data should be formatted
 
     return targetData;
   }
