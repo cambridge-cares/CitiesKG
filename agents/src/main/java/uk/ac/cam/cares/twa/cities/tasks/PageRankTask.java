@@ -12,7 +12,7 @@ import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
  * @author <a href="mailto:arkadiusz.chadzynski@cares.cam.ac.uk">Arkadiusz Chadzynski</a>
  */
 public class PageRankTask implements UninitialisedDataQueueTask {
-  private final IRI taskIri = IRI.create(GraphInferenceAgent.PREF_ONT_INFER + GraphInferenceAgent.TASK_PR);
+  private final IRI taskIri = IRI.create(GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.TASK_PR);
   private boolean stop = false;
   private BlockingQueue<Map<String, String>> dataQueue;
 

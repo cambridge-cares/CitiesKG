@@ -1,6 +1,5 @@
 package uk.ac.cam.cares.twa.cities.agents;
 
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
@@ -13,9 +12,7 @@ import java.util.stream.Stream;
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
-import kong.unirest.HttpResponse;
-import kong.unirest.Unirest;
-import org.apache.http.HttpException;
+import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.semanticweb.owlapi.model.IRI;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
@@ -33,7 +30,10 @@ import uk.ac.cam.cares.twa.cities.tasks.UninitialisedDataQueueTask;
         uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent.URI_ACTION
     })
 public class GraphInferenceAgent extends JPSAgent {
-  public static final String PREF_ONT_INFER = "http://www.theworldavatar.com/ontologies/OntoInfer.owl#";
+  public static final String ONINF_PREFIX = "oninf";
+  public static final String ONINF_SCHEMA = "http://www.theworldavatar.com/ontologies/OntoInfer.owl#";
+  public static final String ONTOINFER_GRAPH = "OntoInfer/";
+
   public static final String TASK_PR = "PageRankTask";
   public static final String URI_ACTION = "/inference/graph";
   public static final String KEY_REQ_METHOD = "method";
@@ -41,7 +41,7 @@ public class GraphInferenceAgent extends JPSAgent {
   public static final String KEY_TARGET_IRI = "targetIRI";
   public static final String KEY_ALGO_IRI = "algorithmIRI";
   private final Map<IRI, UninitialisedDataQueueTask> TASKS = Stream.of(new Object[][] {
-      {IRI.create(PREF_ONT_INFER + TASK_PR), new PageRankTask()},
+      {IRI.create(ONINF_SCHEMA + TASK_PR), new PageRankTask()},
   }).collect(Collectors.toMap(data -> (IRI) data[0], data -> (UninitialisedDataQueueTask) data[1]));
   public static LinkedBlockingDeque<Map<String, String>> dataQueue = new LinkedBlockingDeque<>();
   private static final ExecutorService taskExecutor = Executors.newFixedThreadPool(5);
@@ -61,7 +61,7 @@ public class GraphInferenceAgent extends JPSAgent {
         dataQueue.put(Collections.singletonMap(task.getTaskIri().toString(), targetData));
         taskExecutor.execute(task);
         //(4) add task information to the response
-        responseParams.put(PREF_ONT_INFER + task.getTaskIri().toString(), "started");
+        responseParams.put(ONINF_SCHEMA + task.getTaskIri().toString(), "started");
 
       } catch (Exception e) {
         throw new JPSRuntimeException(e);
@@ -104,12 +104,11 @@ public class GraphInferenceAgent extends JPSAgent {
   private UninitialisedDataQueueTask chooseTask(IRI algorithmIRI, IRI sparqlEndpoint) {
 
     //Retrieve task IRI by algorithm IRI from KG and assign to taskId
-    String sparql =  "PREFIX oninf: <" + PREF_ONT_INFER + ">" +
-    "BASE <" + sparqlEndpoint.toString() + ">" +
-    "SELECT ?o" +
-    "from <OntoInfer/>" +
-    "WHERE { <" + algorithmIRI.toString() + "> oninf:appliedBy ?o }";
-    // |@todo: change that to query builder and execute with access agent and it should return:
+    SelectBuilder sb = new SelectBuilder();
+    sb.addPrefix(ONINF_PREFIX, ONINF_SCHEMA)
+            .setBase(sparqlEndpoint.toString()).from(ONTOINFER_GRAPH)
+            .addVar("?o")
+            .addWhere("<" + algorithmIRI.toString() + ">", "oninf:appliedBy", "?o");
     String sparqlResult = "http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankTask";
 
 
