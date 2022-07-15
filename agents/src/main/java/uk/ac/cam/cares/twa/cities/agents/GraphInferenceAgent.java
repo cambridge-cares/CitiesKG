@@ -53,12 +53,14 @@ public class GraphInferenceAgent extends JPSAgent {
     JSONObject responseParams = new JSONObject();
     if (validateInput(requestParams)) {
       try {
+        String targetIRI = requestParams.getString(KEY_TARGET_IRI).endsWith("/")
+                ? requestParams.getString(KEY_TARGET_IRI) :  requestParams.getString(KEY_TARGET_IRI).concat("/");
 
         //(1) Choose task based on algorithm IRI
         UninitialisedDataQueueTask task = chooseTask(IRI.create(requestParams.getString(KEY_ALGO_IRI)),
-            IRI.create(requestParams.getString(KEY_TARGET_IRI)));
+            IRI.create(targetIRI));
         //(2) Retrieve data from target IRI
-        String targetData = getAllTargetData(IRI.create(requestParams.getString(KEY_TARGET_IRI)));
+        String targetData = getAllTargetData(IRI.create(targetIRI));
         //(3) Pass target data (2) to the task (1) and run the task
         dataQueue.put(Collections.singletonMap(task.getTaskIri().toString(), targetData));
         taskExecutor.execute(task);
