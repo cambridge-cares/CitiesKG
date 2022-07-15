@@ -94,7 +94,11 @@ public class GraphInferenceAgent extends JPSAgent {
       }
     }
 
-    return error;
+    if (error) {
+      throw new BadRequestException();
+    }
+
+    return true;
   }
 
   private UninitialisedDataQueueTask chooseTask(IRI algorithmIRI, IRI sparqlEndpoint) {
