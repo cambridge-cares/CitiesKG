@@ -20,6 +20,7 @@ import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
+import uk.ac.cam.cares.twa.cities.tasks.EdgeBetweennessTask;
 import uk.ac.cam.cares.twa.cities.tasks.PageRankTask;
 import uk.ac.cam.cares.twa.cities.tasks.UninitialisedDataQueueTask;
 
@@ -41,6 +42,7 @@ public class GraphInferenceAgent extends JPSAgent {
 
   public String route;
   public static final String TASK_PR = "PageRankTask";
+  public static final String TASK_EB = "EdgeBetweennessTask";
   public static final String URI_ACTION = "/inference/graph";
   public static final String KEY_REQ_METHOD = "method";
   public static final String KEY_REQ_URL = "requestUrl";
@@ -48,8 +50,9 @@ public class GraphInferenceAgent extends JPSAgent {
   public static final String KEY_ALGO_IRI = "algorithmIRI";
   private final Map<IRI, UninitialisedDataQueueTask> TASKS = Stream.of(new Object[][] {
       {IRI.create(ONINF_SCHEMA + TASK_PR), new PageRankTask()},
+          {IRI.create(ONINF_SCHEMA + TASK_EB), new EdgeBetweennessTask()}
   }).collect(Collectors.toMap(data -> (IRI) data[0], data -> (UninitialisedDataQueueTask) data[1]));
-  public static LinkedBlockingDeque<Map<String, String>> dataQueue = new LinkedBlockingDeque<>();
+  public static LinkedBlockingDeque<Map<String, JSONArray>> dataQueue = new LinkedBlockingDeque<>();
   private static final ExecutorService taskExecutor = Executors.newFixedThreadPool(5);
 
   @Override
@@ -66,7 +69,7 @@ public class GraphInferenceAgent extends JPSAgent {
         UninitialisedDataQueueTask task = chooseTask(IRI.create(requestParams.getString(KEY_ALGO_IRI)),
             IRI.create(targetIRI));
         //(2) Retrieve data from target IRI
-        String targetData = getAllTargetData(IRI.create(targetIRI));
+        JSONArray targetData = getAllTargetData(IRI.create(targetIRI));
         //(3) Pass target data (2) to the task (1) and run the task
         dataQueue.put(Collections.singletonMap(task.getTaskIri().toString(), targetData));
         taskExecutor.execute(task);
@@ -118,7 +121,7 @@ public class GraphInferenceAgent extends JPSAgent {
     sb.addPrefix(ONINF_PREFIX, ONINF_SCHEMA)
             .setBase(sparqlEndpoint.toString()).from(ONTOINFER_GRAPH)
             .addVar("?o")
-            .addWhere("<" + algorithmIRI.toString() + ">", "oninf:appliedBy", "?o");
+            .addWhere("<" + algorithmIRI.toString() + ">", ONINF_PREFIX + ":appliedBy", "?o");
 
     JSONArray sparqlResult = AccessAgentCaller.queryStore(route, sb.buildString());
 
@@ -131,8 +134,7 @@ public class GraphInferenceAgent extends JPSAgent {
     return task;
   }
 
-  private String getAllTargetData(IRI sparqlEndpoint) {
-    String targetData = "";
+  private JSONArray getAllTargetData(IRI sparqlEndpoint) {
     //retrieve data and replace empty string with it
     // limit to ontozone and OntoZoning graphs
     SelectBuilder sb = new SelectBuilder();
@@ -141,9 +143,8 @@ public class GraphInferenceAgent extends JPSAgent {
             .addWhere("?s", "?p", "?o");
 
     JSONArray sparqlResult = AccessAgentCaller.queryStore(route, sb.buildString());
-    // TODO: 15/7/2022 check how return data should be formatted
 
-    return targetData;
+    return sparqlResult;
   }
 
 

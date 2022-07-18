@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.tasks;
 
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import org.json.JSONArray;
 import org.semanticweb.owlapi.model.IRI;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
@@ -14,7 +15,7 @@ import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 public class PageRankTask implements UninitialisedDataQueueTask {
   private final IRI taskIri = IRI.create(GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.TASK_PR);
   private boolean stop = false;
-  private BlockingQueue<Map<String, String>> dataQueue;
+  private BlockingQueue<Map<String, JSONArray>> dataQueue;
 
   @Override
   public IRI getTaskIri() {
@@ -22,7 +23,7 @@ public class PageRankTask implements UninitialisedDataQueueTask {
   }
 
   @Override
-  public void setStringMapQueue(BlockingQueue<Map<String, String>> queue) {
+  public void setStringMapQueue(BlockingQueue<Map<String, JSONArray>> queue) {
     this.dataQueue = queue;
   }
 
