@@ -270,7 +270,7 @@ function loadCity(city) {
         loadBerlin();
     } else if (city == 'kingslynn') {
         loadKingsLynn();
-    } else if (city == 'singaporeEPSG4326') {
+    } else if (city == 'singapore') { // singaporeEPSG4326
         loadSingapore();
     }
 }
@@ -353,7 +353,8 @@ function loadSingapore() {
     flyToCameraPosition(cameraPostion);
 
     // find relevant files and load layers
-    getAndLoadLayers('exported_singapore');
+    //getAndLoadLayers('exported_singapore');
+    getAndLoadLayers('ura');
 }
 
 // send get request to server to discover files in specified folder, create and load layers
@@ -541,7 +542,7 @@ function listHighlightedObjects() {
 }
 
 //---Extended Web-Map-Client part---//
-
+// Ayda
 function computeDistance() {
 	var highlightedObjects = webMap.getAllHighlighted3DObjects();
 	var centroids = [];
@@ -613,7 +614,19 @@ function getMidpoint(point1, point2) {
 	
 }
 
-	//---Extended Web-Map-Client part---//
+//Shiying: highlight multiple cityobjects
+function highlightMultipleObjects(){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
+    var cityObjectsArray = ["UUID_4ab5c2de-6b50-44e7-9d8e-ce53528c883e", "UUID_f0c1dc19-938c-4b80-bbfe-025f61cc224a"];
+    var currentLayer = webMap.activeLayer;
+    var filteredObjects = {};
+    var highlightColor = currentLayer._highlightColor; // new Cesium.Color(16/255, 77/255, 151/255, 1.0);
+    filteredObjects[cityObjectsArray[0]] = highlightColor;
+    currentLayer.highlight(filteredObjects);
+
+}
+
+
+	//--- End of Extended Web-Map-Client part---//
 
 function listHiddenObjects() {
     var hidddenListElement = document.getElementById("citydb_hiddenlist");
