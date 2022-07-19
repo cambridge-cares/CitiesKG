@@ -506,7 +506,7 @@ def process_plots(queried_plots):
     plots = plots.loc[plots['site_area' ] >= 50]
     plots = plots.rename(columns = {'cityObjectId':'PlotId', 'ZoningType':'PlotType'})
     plots['GPR'] = pd.to_numeric(plots['GPR'], errors = 'coerce')
-    plots = plots[~plots['PlotType'].isin(['ROAD','WATERBODY', 'PARK', 'OPEN SPACE', 'CEMETERY', 'BEACH AREA'])]
+    plots = plots[~plots['PlotType'].isin(['ROAD','WATERBODY', 'PARK', 'OPEN SPACE', 'CEMETERY', 'BEACH AREA', 'TRANSPORT FACILITIES', 'MASS RAPID TRANSIT'])]
     plots['context_storeys'] = float('NaN')
 
     narrow_plots = []
