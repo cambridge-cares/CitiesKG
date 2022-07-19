@@ -37,7 +37,7 @@ class GFAOntoManager:
     HAS_BUILDABLE_SPACE = URIRef(PLANNING_CONCEPT_ONTO_PREFIX + "hasBuildableSpace")
     FOR_ZONING_CASE = URIRef(PLANNING_CONCEPT_ONTO_PREFIX + "forZoningCase")
     HAS_ALLOWED_GPR = URIRef(PLANNING_CONCEPT_ONTO_PREFIX + "hasAllowedGPR")
-    HAS_ALLOWED_GFA = URIRef(PLANNING_CONCEPT_ONTO_PREFIX + "hasAllowedGPR")
+    HAS_ALLOWED_GFA = URIRef(PLANNING_CONCEPT_ONTO_PREFIX + "hasAllowedGFA")
     APPLIES_TO = URIRef(PLANNING_CONCEPT_ONTO_PREFIX + "appliesTo")
     AT_ALLOWED_STOREY = URIRef(PLANNING_CONCEPT_ONTO_PREFIX + "atAllowedStorey")
     CONTAINS_ALLOWED_STOREY = URIRef(PLANNING_CONCEPT_ONTO_PREFIX + "containsAllowedStorey")
@@ -88,7 +88,7 @@ class GFAOntoManager:
     HAS_GEOMETRY = GEOSPARQL_URI_PREFIX + "hasGeometry"
     AS_WKT = GEOSPARQL_URI_PREFIX + "asWKT"
 
-    PREFIX_URI = "http://theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/"
+    PREFIX_URI = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/"
     BUILDABLE_SPACE_GRAPH = PREFIX_URI + "buildablespace" + "/"
     ONTO_ZONING_GRAPH = PREFIX_URI + "ontozone" + "/"
 
