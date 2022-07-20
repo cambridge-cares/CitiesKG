@@ -5,8 +5,8 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
-import uk.ac.cam.cares.twa.cities.models.ModelContext;
-import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
+import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.ogm.models.geo.GeometryType;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
