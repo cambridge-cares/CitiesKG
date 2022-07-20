@@ -620,7 +620,12 @@ function highlightMultipleObjects(){  // citydbKmlLayer object, list of files in
     var currentLayer = webMap.activeLayer;
     var filteredObjects = {};
     var highlightColor = currentLayer._highlightColor; // new Cesium.Color(16/255, 77/255, 151/255, 1.0);
-    filteredObjects[cityObjectsArray[0]] = highlightColor;
+    // unhighlight all objects first then highlight the filtered objects
+    currentLayer.unHighlightAllObjects();
+
+    for (let i = 0; i < cityObjectsArray.length; i++) {
+        filteredObjects[cityObjectsArray[i]] = highlightColor;
+    }
     currentLayer.highlight(filteredObjects);
 
 }
