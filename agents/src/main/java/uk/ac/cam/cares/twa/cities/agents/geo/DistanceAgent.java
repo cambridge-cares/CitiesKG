@@ -27,10 +27,10 @@ import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.AccessAgentMapping;
-import uk.ac.cam.cares.twa.cities.models.ModelContext;
-import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
-import uk.ac.cam.cares.twa.cities.models.geo.EnvelopeType;
-import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
+import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.ogm.models.geo.CityObject;
+import uk.ac.cam.cares.ogm.models.geo.EnvelopeType;
+import uk.ac.cam.cares.ogm.models.geo.GeometryType;
 
 /**
  * DistanceAgent class retrieves existing distance between the centroids of two objects envelopes
