@@ -270,7 +270,7 @@
         <dependency>
             <groupId>uk.ac.cam.cares.ogm</groupId>
             <artifactId>ogm</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
         </dependency>
     </dependencies>
 </project>
