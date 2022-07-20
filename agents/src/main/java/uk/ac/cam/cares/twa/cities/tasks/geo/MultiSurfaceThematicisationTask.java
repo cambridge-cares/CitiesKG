@@ -484,7 +484,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
    */
   private void touchesAndPush() {
     int size = this.buildings.size();
-
+    try{
     for(SurfaceGeometry root: roots) {
       String rootURI = root.getIri();
       String buildingtId = root.getCityObjectId().toString();
@@ -590,6 +590,9 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
         }else{
         context.members.clear();
       }
+    }
+    }catch (Exception e){
+      System.err.println(e);
     }
  }
 
