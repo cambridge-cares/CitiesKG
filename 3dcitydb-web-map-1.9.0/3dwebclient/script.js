@@ -270,7 +270,7 @@ function loadCity(city) {
         loadBerlin();
     } else if (city == 'kingslynn') {
         loadKingsLynn();
-    } else if (city == 'singapore') { // singaporeEPSG4326
+    } else if (city == 'singaporeEPSG4326') { // singaporeEPSG4326
         loadSingapore();
     }
 }
@@ -353,8 +353,7 @@ function loadSingapore() {
     flyToCameraPosition(cameraPostion);
 
     // find relevant files and load layers
-    //getAndLoadLayers('exported_singapore');
-    getAndLoadLayers('ura');
+    getAndLoadLayers('exported_singapore');
 }
 
 // send get request to server to discover files in specified folder, create and load layers
@@ -616,7 +615,7 @@ function getMidpoint(point1, point2) {
 
 //Shiying: highlight multiple cityobjects
 function highlightMultipleObjects(){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
-    var cityObjectsArray = ["UUID_4ab5c2de-6b50-44e7-9d8e-ce53528c883e", "UUID_f0c1dc19-938c-4b80-bbfe-025f61cc224a"];
+    var cityObjectsArray = ["UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d", "UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3"];
     var currentLayer = webMap.activeLayer;
     var filteredObjects = {};
     var highlightColor = currentLayer._highlightColor; // new Cesium.Color(16/255, 77/255, 151/255, 1.0);
@@ -926,7 +925,6 @@ function zoomToDefaultCameraPosition_expired() {
     } else {
         // default camera postion
         deferred.resolve("fly to the default camera position");
-        ;
     }
     return deferred;
 }
