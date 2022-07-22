@@ -70,6 +70,17 @@ public class StatementTransformer {
         return sparql;
     }
 
+    //query = WHERE\n { ?id ocgml:id ? .}";//StatementTransformer.getGenericCityObjectBasisData(currentLod);
+
+    /* CityFurniture */
+    public static String getCityFurnitureQuery(){
+        String sparql = "PREFIX  ocgml: <" + PREFIX_ONTOCITYGML + ">\n" +
+                "SELECT *\n" +
+                "FROM <" + IRI_GRAPH_BASE + "cityfurniture/" + ">\n" +
+                "WHERE\n { ?id ocgml:id ? .}";
+        return sparql;
+    }
+
     public static String getGenericCityObjectQuery(int lodToExportFrom, DisplayForm displayForm, boolean isImplicit, boolean exportAppearance){
         String query = null;
 

@@ -29,30 +29,31 @@ package org.citydb.modules.kml.database;
 
 import net.opengis.kml._2.PlacemarkType;
 import org.citydb.config.Config;
-import org.citydb.config.geometry.GeometryObject;
-import org.citydb.config.project.kmlExporter.Balloon;
-import org.citydb.config.project.kmlExporter.ColladaOptions;
-import org.citydb.config.project.kmlExporter.DisplayForm;
-import org.citydb.config.project.kmlExporter.KmlExporter;
+import org.citydb.config.project.kmlExporter.*;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.BlobExportAdapter;
+import org.citydb.database.adapter.blazegraph.OptimizedSparqlQuery;
+import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.event.EventDispatcher;
 import org.citydb.log.Logger;
 import org.citydb.modules.kml.util.AffineTransformer;
 import org.citydb.modules.kml.util.BalloonTemplateHandler;
 import org.citydb.modules.kml.util.ElevationServiceHandler;
 import org.citydb.query.Query;
-import org.citydb.util.Util;
-import org.citygml4j.geometry.Matrix;
-import org.citygml4j.geometry.Point;
 
 import javax.vecmath.Point3d;
 import javax.xml.bind.JAXBException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import static org.citydb.database.adapter.blazegraph.OptimizedSparqlQuery.executeQuery;
 
 public class CityFurniture extends KmlGenericObject{
 	private final Logger log = Logger.getInstance();
@@ -60,15 +61,15 @@ public class CityFurniture extends KmlGenericObject{
 	public static final String STYLE_BASIS_NAME = "Furniture";
 
 	public CityFurniture(Connection connection,
-			Query query,
-			KmlExporterManager kmlExporterManager,
-			net.opengis.kml._2.ObjectFactory kmlFactory,
-			AbstractDatabaseAdapter databaseAdapter,
-			BlobExportAdapter textureExportAdapter,
-			ElevationServiceHandler elevationServiceHandler,
-			BalloonTemplateHandler balloonTemplateHandler,
-			EventDispatcher eventDispatcher,
-			Config config) {
+						 Query query,
+						 KmlExporterManager kmlExporterManager,
+						 net.opengis.kml._2.ObjectFactory kmlFactory,
+						 AbstractDatabaseAdapter databaseAdapter,
+						 BlobExportAdapter textureExportAdapter,
+						 ElevationServiceHandler elevationServiceHandler,
+						 BalloonTemplateHandler balloonTemplateHandler,
+						 EventDispatcher eventDispatcher,
+						 Config config) {
 
 		super(connection,
 				query,
@@ -108,30 +109,50 @@ public class CityFurniture extends KmlGenericObject{
 			int minLod = lodToExportFrom == 5 ? 1: lodToExportFrom;
 
 			while (currentLod >= minLod) {
-				if (!work.getDisplayForm().isAchievableFromLoD(currentLod)) 
+				if (!work.getDisplayForm().isAchievableFromLoD(currentLod))
 					break;
 
 				try {
-					String query = queries.getCityFurnitureBasisData(currentLod);
-					psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-					for (int i = 1; i <= getParameterCount(query); i++)
-						psQuery.setLong(i, (long)work.getId());
+					String query = null;
+					if (isBlazegraph) {
+						query = StatementTransformer.getCityFurnitureQuery();
+						psQuery = connection.prepareStatement(query);
 
-					rs = psQuery.executeQuery();
-					if (rs.isBeforeFirst()) {
-						rs.next();
-						if (rs.getLong(4) != 0 || rs.getLong(1) != 0)
-							break; // result set not empty
+						String baseURL = StatementTransformer.getIriObjectBase() + "cityfurniture/";
+						URL url = null;
+						try {
+							url = new URL(baseURL + work.getGmlId() + "/");
+						} catch (MalformedURLException e) {
+							e.printStackTrace();
+						}
+
+						psQuery.setURL(1, url);
+						rs = psQuery.executeQuery();
+
+						if (rs.isBeforeFirst()) {
+							rs.next();
+							break;
+						}
+
+
+					} else {
+						query = queries.getCityFurnitureBasisData(currentLod);
+						psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+						for (int i = 1; i <= getParameterCount(query); i++)
+							psQuery.setLong(i, (long)work.getId());
+
+						rs = psQuery.executeQuery();
+						if (rs.isBeforeFirst()) {
+							rs.next();
+							if (rs.getLong(4) != 0 || rs.getLong(1) != 0)
+								break; // result set not empty
+						}
 					}
 
-					try { rs.close(); } catch (SQLException sqle) {} 
-					try { psQuery.close(); } catch (SQLException sqle) {}
-					rs = null;
 				} catch (Exception e) {
 					log.error("SQL error while querying the highest available LOD: " + e.getMessage());
-					try { if (rs != null) rs.close(); } catch (SQLException sqle) {} 
+					try { if (rs != null) rs.close(); } catch (SQLException sqle) {}
 					try { if (psQuery != null) psQuery.close(); } catch (SQLException sqle) {}
-					try { connection.commit(); } catch (SQLException sqle) {}
 					rs = null;
 				}
 
@@ -152,24 +173,46 @@ public class CityFurniture extends KmlGenericObject{
 			else { // result not empty
 				// decide whether explicit or implicit geometry
 				AffineTransformer transformer = null;
-				long sgRootId = rs.getLong(4);
-				if (sgRootId == 0) {
-					sgRootId = rs.getLong(1);
-					transformer = getAffineTransformer(rs, 2, 3);
+				String query = null;
+				if (isBlazegraph){
+					String cityObjectId = rs.getString(1);//work.getGmlId(); //rs.getString(4);
+					System.out.println("CityObjectID" + cityObjectId);
+
+					try { rs.close(); } catch (SQLException sqle) {}
+					try { psQuery.close(); } catch (SQLException sqle) {}
+
+					query = StatementTransformer.getSPARQLStatement_BuildingPartGeometry();
+					psQuery = connection.prepareStatement(query); //, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
+					URL url = null;
+					try {
+						url = new URL(cityObjectId);
+					} catch (MalformedURLException e) {
+						e.printStackTrace();
+					}
+					psQuery.setURL(1, url);  // set sgRootId
+
+				} else {
+					long sgRootId = rs.getLong(4);
+					if (sgRootId == 0) {
+						sgRootId = rs.getLong(1);
+						transformer = getAffineTransformer(rs, 2, 3);
+					}
+
+					try { rs.close(); } catch (SQLException sqle) {}
+					try { psQuery.close(); } catch (SQLException sqle) {}
+					rs = null;
+
+					query = queries.getCityFurnitureQuery(currentLod,
+							work.getDisplayForm(),
+							transformer != null,
+							work.getDisplayForm().getForm() == DisplayForm.COLLADA && !config.getProject().getKmlExporter().getAppearanceTheme().equals(KmlExporter.THEME_NONE));
+					psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+					psQuery.setLong(1, sgRootId);
 				}
-
-				try { rs.close(); } catch (SQLException sqle) {} 
-				try { psQuery.close(); } catch (SQLException sqle) {}
-				rs = null;
-
-				String query = queries.getCityFurnitureQuery(currentLod, 
-						work.getDisplayForm(),
-						transformer != null, 
-						work.getDisplayForm().getForm() == DisplayForm.COLLADA && !config.getProject().getKmlExporter().getAppearanceTheme().equals(KmlExporter.THEME_NONE));
-				psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-				psQuery.setLong(1, sgRootId);
 				rs = psQuery.executeQuery();
-				
+
+
 				kmlExporterManager.updateFeatureTracker(work);
 
 				// get the proper displayForm (for highlighting)
@@ -206,47 +249,56 @@ public class CityFurniture extends KmlGenericObject{
 						try { if (psQuery2 != null) psQuery2.close(); } catch (SQLException e) {}
 					}
 
-				case DisplayForm.GEOMETRY:
-					setGmlId(work.getGmlId());
-					setId(work.getId());
-					if (this.query.isSetTiling()) { // region
-						if (work.getDisplayForm().isHighlightingEnabled())
-							kmlExporterManager.print(createPlacemarksForHighlighting(rs, work, transformer, false), work, getBalloonSettings().isBalloonContentInSeparateFile());
+					case DisplayForm.GEOMETRY:
+						setGmlId(work.getGmlId());
+						setId(work.getId());
+						if (isBlazegraph) {
+							kmlExporterManager.print(createPlacemarksForGeometry_geospatial(rs, work), work, getBalloonSettings().isBalloonContentInSeparateFile());
+						} else {
 
-						kmlExporterManager.print(createPlacemarksForGeometry(rs, work, transformer, false), work, getBalloonSettings().isBalloonContentInSeparateFile());
-					} else { // reverse order for single objects
-						kmlExporterManager.print(createPlacemarksForGeometry(rs, work, transformer, false), work, getBalloonSettings().isBalloonContentInSeparateFile());
-						if (work.getDisplayForm().isHighlightingEnabled())
-							kmlExporterManager.print(createPlacemarksForHighlighting(rs, work, transformer, false), work, getBalloonSettings().isBalloonContentInSeparateFile());
-					}
-					break;
+							if (this.query.isSetTiling()) { // region
+								if (work.getDisplayForm().isHighlightingEnabled())
+									kmlExporterManager.print(createPlacemarksForHighlighting(rs, work, transformer, false), work, getBalloonSettings().isBalloonContentInSeparateFile());
 
-				case DisplayForm.COLLADA:
-					String currentgmlId = getGmlId();
-					setGmlId(work.getGmlId());
-					setId(work.getId());
-					fillGenericObjectForCollada(rs, config.getProject().getKmlExporter().getCityFurnitureColladaOptions().isGenerateTextureAtlases(),  transformer, false);
+								kmlExporterManager.print(createPlacemarksForGeometry(rs, work, transformer, false), work, getBalloonSettings().isBalloonContentInSeparateFile());
+							} else { // reverse order for single objects
+								kmlExporterManager.print(createPlacemarksForGeometry(rs, work, transformer, false), work, getBalloonSettings().isBalloonContentInSeparateFile());
+								if (work.getDisplayForm().isHighlightingEnabled())
+									kmlExporterManager.print(createPlacemarksForHighlighting(rs, work, transformer, false), work, getBalloonSettings().isBalloonContentInSeparateFile());
+							}
+							break;
+						}
+						break;
 
-					if (currentgmlId != null && !currentgmlId.equals(work.getGmlId()) && getGeometryAmount() > GEOMETRY_AMOUNT_WARNING)
-						log.info("Object " + work.getGmlId() + " has more than " + GEOMETRY_AMOUNT_WARNING + " geometries. This may take a while to process...");
+					case DisplayForm.COLLADA:
+						fillGenericObjectForCollada(rs, config.getProject().getKmlExporter().getCityFurnitureColladaOptions().isGenerateTextureAtlases(),  transformer, false);
+						String currentgmlId = getGmlId();
+						setGmlId(work.getGmlId());
+						setId(work.getId());
 
-					List<Point3d> anchorCandidates = getOrigins();
-					double zOffset = getZOffsetFromConfigOrDB((long)work.getId());
-					if (zOffset == Double.MAX_VALUE) {
-						zOffset = getZOffsetFromGEService((long)work.getId(), anchorCandidates);
-					}
-					setZOffset(zOffset);
+						System.out.println(work.getId());
+						//fillGenericObjectForCollada(rs, config.getProject().getKmlExporter().getCityFurnitureColladaOptions().isGenerateTextureAtlases(),  transformer, false);
 
-					ColladaOptions colladaOptions = getColladaOptions();
-					setIgnoreSurfaceOrientation(colladaOptions.isIgnoreSurfaceOrientation());
-					try {
-						if (work.getDisplayForm().isHighlightingEnabled()) 
-							kmlExporterManager.print(createPlacemarksForHighlighting(rs, work, transformer, false), work, getBalloonSettings().isBalloonContentInSeparateFile());
-					} catch (Exception ioe) {
-						log.logStackTrace(ioe);
-					}
+						if (currentgmlId != null && !currentgmlId.equals(work.getGmlId()) && getGeometryAmount() > GEOMETRY_AMOUNT_WARNING)
+							log.info("Object " + work.getGmlId() + " has more than " + GEOMETRY_AMOUNT_WARNING + " geometries. This may take a while to process...");
 
-					break;
+						List<Point3d> anchorCandidates = getOrigins();
+						double zOffset = getZOffsetFromConfigOrDB(Long.parseLong((String) work.getId()));
+						if (zOffset == Double.MAX_VALUE) {
+							zOffset = getZOffsetFromGEService(Long.parseLong((String) work.getId()), anchorCandidates);
+						}
+						setZOffset(zOffset);
+
+						ColladaOptions colladaOptions = getColladaOptions();
+						setIgnoreSurfaceOrientation(colladaOptions.isIgnoreSurfaceOrientation());
+						try {
+							if (work.getDisplayForm().isHighlightingEnabled())
+								kmlExporterManager.print(createPlacemarksForHighlighting(rs, work, transformer, false), work, getBalloonSettings().isBalloonContentInSeparateFile());
+						} catch (Exception ioe) {
+							log.logStackTrace(ioe);
+						}
+
+						break;
 				}
 			}
 		} catch (SQLException sqlEx) {
