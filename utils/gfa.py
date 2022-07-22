@@ -492,7 +492,7 @@ def getPlots(endpoint):
     results = sparql.query().convert()
     queryResults = pd.DataFrame(results['results']['bindings'])
     queryResults = queryResults.applymap(lambda cell:cell['value'])
-    geometries = gpd.GeoSeries(queryResults['Geometry'].map(lambda geo: envelopeStringToPolygon(geo, geodetic=True, flip=False)), crs='EPSG:4326')
+    geometries = gpd.GeoSeries(queryResults['Geometry'].map(lambda geo: envelopeStringToPolygon(geo, geodetic=True, flip=True)), crs='EPSG:4326')
     queried_plots = gpd.GeoDataFrame(queryResults, geometry=geometries).to_crs(epsg=3857).drop(columns = ['Geometry'])
 
     return queried_plots
@@ -506,7 +506,9 @@ def process_plots(queried_plots):
     plots = plots.loc[plots['site_area' ] >= 50]
     plots = plots.rename(columns = {'cityObjectId':'PlotId', 'ZoningType':'PlotType'})
     plots['GPR'] = pd.to_numeric(plots['GPR'], errors = 'coerce')
-    plots = plots[~plots['PlotType'].isin(['ROAD','WATERBODY', 'PARK', 'OPEN SPACE', 'CEMETERY', 'BEACH AREA', 'TRANSPORT FACILITIES', 'MASS RAPID TRANSIT'])]
+    plots = plots[~plots['PlotType'].isin(['ROAD','WATERBODY', 'PARK', 'OPEN SPACE',
+                                           'CEMETERY', 'BEACH AREA', 'TRANSPORT FACILITIES',
+                                           'MASS RAPID TRANSIT'])]
     plots['context_storeys'] = float('NaN')
 
     narrow_plots = []
@@ -572,6 +574,8 @@ def read_road_regulations(fn_roads, fn_road_plots):
 
 def run_estimate_gfa():
 
+    print("GFA estimation initiated.")
+
     # file paths
     endpoint = "http://theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql"
     root = "C:/Users/AydaGrisiute/Desktop/demonstrator/"
@@ -594,6 +598,7 @@ def run_estimate_gfa():
         Development Control Plans
     """
     plots = getPlots(endpoint)
+    print("1. ", plots.shape[0], "plots retrieved from TWA.")
     with ProcessPoolExecutor(max_workers=8) as executor:
         # plot task
         plots = executor.submit(process_plots, plots)
@@ -616,8 +621,9 @@ def run_estimate_gfa():
         dcp = dcp.result()
         road_plots = road_plots.result()
 
-    invalid_zones = ['RESERVE SITE', 'SPECIAL USE ZONE', 'UTILITY']
-    print('Plots & Regulations loaded')
+    invalid_zones = ['RESERVE SITE', 'SPECIAL USE ZONE', 'UTILITY', 'RESIDENTIAL',
+                     'WHITE', 'RESIDENTIAL WITH COMMERCIAL AT 1ST STOREY' 'COMMERCIAL & RESIDENTIAL'] # last 3 types are only temporary
+    print('2. Processed plots & regulations loaded.')
 
     """ 
     Intersect regulation areas dataset with plot dataset. Valid intersections if overlap > than 0.1 of site area. 
@@ -638,6 +644,7 @@ def run_estimate_gfa():
         gpd.GeoDataFrame(plots_for_setbacks, geometry=plots_for_setbacks.buffer(3)),
         udr.loc[~udr["Setbacks"].isna(), :], 0)
 
+    print("3. Plots with regulations intersected.")
     """
     Assign GPR for plots with EDUCATIONAL INSTITUTION, CIVIC & COMMUNITY INSTITUTION and PLACE OF WORSHIP zoning type.
     Assignment is based on the relation to landed housing boundaries or surrounding context, like GPR of neighboring plots.
@@ -648,6 +655,7 @@ def run_estimate_gfa():
     assign_gpr(plots, 'EDUCATIONAL INSTITUTION', lh, 400, 1, 1, 1.4, 3, 4)  # 37 plots
     assign_gpr(plots, 'CIVIC & COMMUNITY INSTITUTION', lh, 400, 1, 1, 1.4, 3, 4)  # 89 plots
     assign_gpr(plots, 'PLACE OF WORSHIP', lh, 400, 1, 1.4, 1.6, 4, 5)  # 46 plots
+    print("4. Missing GPR for educational, civic and place of worship set.")
 
     for plot_id in plots["PlotId"].unique():
         street_block = sb_int.loc[sb_int['PlotId'] == plot_id, :]
@@ -669,7 +677,7 @@ def run_estimate_gfa():
     plots_udr_unclear = set(plots_udr_unclear.index[plots_udr_unclear])
 
     unclear_plots = plots_hc_unclear.union(plots_udr_unclear.union(plots_in_con))
-    print('Regulations with plots intersected')
+    print('5. Plots with unclear regulations identified.')
 
     """
     Extract Partywall edges.
@@ -682,7 +690,7 @@ def run_estimate_gfa():
     plots_for_GFA = plots.loc[~plots["PlotId"].isin(unclear_plots), :].copy() 
     plots_for_GFA = plots_for_GFA[~plots_for_GFA['PlotType'].isin(invalid_zones)]
     plots_for_GFA = set_partywall_edges(plots_for_GFA, plots)
-    print('Partywalls set')
+    print('6. Partywalls set.')
 
     """
     Extracting number of storeys.
@@ -692,7 +700,7 @@ def run_estimate_gfa():
     plots_for_GFA["storeys"] = [[]] * plots_for_GFA.shape[0]
     plots_for_GFA["parts"] = [[]] * plots_for_GFA.shape[0]
     plots_for_GFA = retrieve_number_of_storeys(plots_for_GFA, hc_int, sb_int, udr_int)
-    print('Number of stories set')
+    print('7. Number of stories set.')
 
     """
     Extract road buffer edges.
@@ -704,7 +712,7 @@ def run_estimate_gfa():
                        'cat_3_5_edges': ['Local Access', 'Local Collector/Primary Access'],
                        'backlane_edges': ['no category']}
     plots_for_GFA = set_road_buffer_edges(plots_for_GFA, road_plots, road_categories)
-    print('Road buffer edges set')
+    print('8. Road buffer edges set.')
 
     """
     Extracting setbacks for every edge.
@@ -740,7 +748,7 @@ def run_estimate_gfa():
 
     plot_setbacks = retrieve_edge_setback(plots_for_GFA, plots, dcp, sb_int, udr,
                                               plots_in_control, plots_in_streetblocks, plots_in_urban_design_guidelines)
-    print('Setbacks set')
+    print('9. Setbacks set.')
 
     """
     Compute GFA.
@@ -750,11 +758,12 @@ def run_estimate_gfa():
     """
 
     gfas = compute_gfa(plots_for_GFA, plot_setbacks, dcp)
+    gfa_out_dir = 'C:/Users/AydaGrisiute/Desktop/estimate_GFA.json'
 
-    with open('C:/Users/AydaGrisiute/Desktop/estimate_GFA.json', 'w') as f:
+    with open(gfa_out_dir, 'w') as f:
         json.dump(gfas, f, indent=4)
-    print('GFAs computed')
 
+    print('10. Plot GFAs computed and written to: ', gfa_out_dir)
 
 if __name__ == "__main__":
     run_estimate_gfa()
