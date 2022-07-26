@@ -1,19 +1,22 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
 import com.hp.hpl.jena.rdf.model.*;
+import com.hp.hpl.jena.rdf.model.impl.ResourceImpl;
 import edu.uci.ics.jung.algorithms.cluster.EdgeBetweennessClusterer;
 import edu.uci.ics.jung.graph.Graph;
 import net.rootdev.jenajung.JenaJungGraph;
+import org.apache.jena.arq.querybuilder.UpdateBuilder;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.core.Quad;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.semanticweb.owlapi.model.IRI;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
 public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
@@ -55,9 +58,10 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
 
                     // execute algo
                     EdgeBetweennessClusterer<?, ?> clusterer = new EdgeBetweennessClusterer(0);
-                    Set<?> set = clusterer.apply(graph);
+                    Set<HashSet> set = clusterer.apply(graph);
 
                     // sparql update triples to endpoint
+                    update(set);
                 } catch (Exception e) {
                     throw new JPSRuntimeException(e);
                 } finally {
@@ -80,5 +84,23 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
 
         model.add(list);
         return new JenaJungGraph(model);
+    }
+
+    public void update(Set<HashSet> set) {
+        Collection<Quad> collection = new ArrayList<>();
+        Node g = NodeFactory.createURI("http://127.0.0.1:9999/blazegraph/namespace/singaporeEPSG4326/sparql/results/");
+        Node p = NodeFactory.createURI("http://www.theworldavatar.com/ontologies/OntoInfer.owl#cluster");
+        Iterator<HashSet> iterator = set.stream().iterator();
+        int cluster = 0;
+        while (iterator.hasNext()) {
+            cluster++;
+            HashSet<ResourceImpl> hs = iterator.next();
+            for (ResourceImpl resource : hs) {
+                collection.add(new Quad(g, NodeFactory.createURI(resource.getURI()), p, NodeFactory.createLiteral(String.valueOf(cluster))));
+            }
+        }
+        UpdateBuilder ub = new UpdateBuilder();
+        ub.addInsertQuads(collection);
+        AccessAgentCaller.updateStore("http://localhost:48080/singaporeEPSG4326", ub.build().toString());
     }
 }
