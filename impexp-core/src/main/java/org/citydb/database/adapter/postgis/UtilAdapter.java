@@ -385,6 +385,7 @@ public class UtilAdapter extends AbstractUtilAdapter {
             try (ResultSet rs = psQuery.executeQuery()) {
                 if (rs.next()) {
                     Object converted = rs.getObject(1);
+                    System.out.println("converted: " + converted.toString());
                     if (!rs.wasNull() && converted != null)
                         result = databaseAdapter.getGeometryConverter().getGeometry(converted);
                 }

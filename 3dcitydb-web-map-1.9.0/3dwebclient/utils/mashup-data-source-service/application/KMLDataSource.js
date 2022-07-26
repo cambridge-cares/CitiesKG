@@ -37,10 +37,10 @@ var KMLDataSource = /** @class */ (function (_super) {
             }
         }
     };
-	
-	//---Extended Web-Map-Client version---//
-	
-	
+
+    //---Extended Web-Map-Client version---//
+
+
     KMLDataSource.prototype.responseCesiumToKvp = function (response) {
         // response is a list of JSON elements
         var result = new Map();
@@ -86,7 +86,7 @@ var KMLDataSource = /** @class */ (function (_super) {
             }
         }
 
-		return result;
+        return result;
     };
 
     KMLDataSource.prototype.genAttrKeysManager = function (data, result) {
@@ -125,7 +125,8 @@ var KMLDataSource = /** @class */ (function (_super) {
     KMLDataSource.prototype.contextManager = function(context) {
         switch (context) {
             case 'energy':
-                return 'http://localhost:58085/agents/cea/query';
+                //return 'http://localhost:58085/agents/cea/query';
+                return 'http://theworldavatar.com:83/agents/cea/query';
                 break;
             default:
                 return '';
@@ -148,7 +149,8 @@ var KMLDataSource = /** @class */ (function (_super) {
         var cia_data = context_url ? {iris: [iri], context: context_obj} : {iris: [iri]};
 
         jQuery.ajax({
-            url: "http://localhost:8080/agents/cityobjectinformation",
+            //url: "http://localhost:8080/agents/cityobjectinformation",
+            url: "http://www.theworldavatar.com/agents/cityobjectinformation",
             type: 'POST',
             data: JSON.stringify(cia_data),
             dataType: 'json',
@@ -156,13 +158,13 @@ var KMLDataSource = /** @class */ (function (_super) {
             success: function (data, status_message, xhr) {
                 console.log(data);
                 callback(data);
-		}});		
+            }});
     };
-	
-	
-	//---Extended Web-Map-Client version---//
-	
-	
+
+
+    //---Extended Web-Map-Client version---//
+
+
     KMLDataSource.prototype.responseOwnToKvp = function (response) {
         // response is a list of XML DOM element
         var result = new Map();
@@ -181,7 +183,7 @@ var KMLDataSource = /** @class */ (function (_super) {
         }
         return result;
     };
-	
+
     KMLDataSource.prototype.countFromResult = function (res) {
         return res.getSize();
     };
@@ -205,7 +207,7 @@ var KMLDataSource = /** @class */ (function (_super) {
         // TODO
         return null;
     };
-	
+
     KMLDataSource.prototype.queryUsingIdCustom = function (id, callback, limit, clickedObject) {
         this._useOwnKmlParser = true;
         // read KML file

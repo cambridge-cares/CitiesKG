@@ -1,15 +1,13 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import uk.ac.cam.cares.twa.cities.SPARQLUtils;
+import uk.ac.cam.cares.ogm.models.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
-import uk.ac.cam.cares.twa.cities.models.ModelContext;
-import uk.ac.cam.cares.twa.cities.models.geo.Building;
-import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
-import uk.ac.cam.cares.twa.cities.models.geo.ThematicSurface;
+import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.ogm.models.geo.Building;
+import uk.ac.cam.cares.ogm.models.geo.ThematicSurface;
 
 import java.util.ArrayList;
 import java.util.List;
