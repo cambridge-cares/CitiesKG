@@ -274,7 +274,7 @@ function loadCity(city) {
         loadBerlin();
     } else if (city == 'kingslynn') {
         loadKingsLynn();
-    } else if (city == 'singapore') {
+    } else if (city == 'singaporeEPSG4326') {
         loadSingapore();
     } else if (city == 'jurongisland'){
         loadJurongIsland();
