@@ -202,11 +202,15 @@ function initClient() {
     // display current infos of active layer in the main menu
     observeActiveLayer();
 
+    // set CIA context based on input in url
+    var cia_context = (new URL(window.location.href)).searchParams.get('context');
+    this.cia_context = cia_context ? cia_context : '';
+
     // load city based on input in url
     var city = (new URL(window.location.href)).searchParams.get('city');
     loadCity(city);
 
-    // Zoom to desired camera position and load layers if encoded in the url...	
+    // Zoom to desired camera position and load layers if encoded in the url...
     zoomToDefaultCameraPosition().then(function (info) {
         var layers = urlController.getLayersFromUrl(window.location.href, CitydbUtil, CitydbKmlLayer, Cesium3DTilesDataLayer, Cesium);
         loadLayerGroup(layers);
@@ -219,7 +223,7 @@ function initClient() {
             }
             addWebMapServiceProvider();
         }
-        
+
         var cesiumWorldTerrainString = urlController.getUrlParaValue('cesiumWorldTerrain', window.location.href, CitydbUtil);
         var maptilerTerrainString = urlController.getUrlParaValue('maptiler', window.location.href, CitydbUtil);
         if(cesiumWorldTerrainString == "true") {
@@ -270,8 +274,10 @@ function loadCity(city) {
         loadBerlin();
     } else if (city == 'kingslynn') {
         loadKingsLynn();
-    } else if (city == 'singaporeEPSG4326') { // singaporeEPSG4326
+    } else if (city == 'singapore') {
         loadSingapore();
+    } else if (city == 'jurongisland'){
+        loadJurongIsland();
     }
 }
 
@@ -323,17 +329,57 @@ function loadKingsLynn() {
 
     // set camera view
     var cameraPostion = {
-        latitude: 52.752673871745415,
-        longitude: 0.40209742318323693,
-        height: 534.3099172951087,
-        heading: 345.2992773976952,
+        latitude: 52.753,
+        longitude: 0.3851230367748717,
+        height: 300,
+        heading: 0,
         pitch: -44.26228062802528,
-        roll: 359.933888621294
+        roll: 0
     }
     flyToCameraPosition(cameraPostion);
 
     // find relevant files and load layers
     getAndLoadLayers('exported_kingslynn');
+}
+
+function loadSingapore() {
+    // set title
+    document.title = 'Singapore';
+
+    // set camera view
+    var cameraPostion = {
+        latitude: 1.286014,
+        longitude: 103.836364,
+        height: 2000,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+
+    flyToCameraPosition(cameraPostion);
+
+    // find relevant files and load layers
+    getAndLoadLayers('exported_singapore');
+}
+
+function loadJurongIsland() {
+    // set title
+    document.title = 'Jurong Island';
+
+    // set camera view
+    var cameraPostion = {
+        latitude: 1.254414386242766,
+        longitude: 103.66773374157039,
+        height: 500,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+
+    flyToCameraPosition(cameraPostion);
+
+    // find relevant files and load layers
+    getAndLoadLayers('exported_jurong_island');
 }
 
 function loadSingapore() {
@@ -385,7 +431,7 @@ function getAndLoadLayers(folder) {
         // if data includes 'Tiles', only add MasterJSON as layer, else add all files
         if (data.includes("Tiles")) {
             for (let i = 0; i < data.length; i++) {
-                if (data[i].match(new RegExp("\\w*_extruded_MasterJSON.json"))) {
+                if (data[i].match(new RegExp("\\w*_\\w*_MasterJSON.json"))) {
                     filepathname = folderpath + data[i]
                     options.url = filepathname;
                     options.name = (new URL(window.location.href)).searchParams.get('city');
@@ -543,75 +589,83 @@ function listHighlightedObjects() {
 //---Extended Web-Map-Client part---//
 // Ayda
 function computeDistance() {
-	var highlightedObjects = webMap.getAllHighlighted3DObjects();
-	var centroids = [];
-	for (var i = 0; i < highlightedObjects.length; i++) {
-		var entity = highlightedObjects[i][0];
-		console.log(entity.polygon);
-		var positions = entity.polygon.hierarchy._value.positions;
-		var center = Cesium.BoundingSphere.fromPoints(positions).center;
-		console.log(center);
-		centroids.push(center);
-		
-	};
-	console.log(centroids );
-	
-	var redLine = cesiumViewer.entities.add({
-		name: "Distance line",
-		polyline: {
-			positions: centroids,
-			width: 2,
-			material: new Cesium.PolylineDashMaterialProperty({
-            color: Cesium.Color.GOLD,
-			dashLength: 15,
-          }),
-			cmalpToGround: true,
-		}
-	});
-	
+    var iriArr = [];
+    var highlightedObjects = webMap.getAllHighlighted3DObjects();
+    var centroids = [];
+    for (var i = 0; i < highlightedObjects.length; i++) {
+        var entity = highlightedObjects[i][0];
+        console.log(entity.polygon);
+        var positions = entity.polygon.hierarchy._value.positions;
+        var center = Cesium.BoundingSphere.fromPoints(positions).center;
+        console.log(center);
+        centroids.push(center);
+        var iri = entity._iriPrefix + entity._name;
+        iri = iri.endsWith('/') ? iri : iri + '/';
+        iri = iri.replace(new RegExp('_(\\w*Surface)'), '');
+        iriArr.push(iri);
+    };
+    console.log(centroids);
+
+    var redLine = cesiumViewer.entities.add({
+        name: "Distance line",
+        polyline: {
+            positions: centroids,
+            width: 2,
+            material: new Cesium.PolylineDashMaterialProperty({
+                color: Cesium.Color.WHITE,
+                dashLength: 15,
+            }),
+            clampToGround: true,
+        }
+    });
+
     var labelText = '';
     var label = cesiumViewer.entities.add({
         name: 'Distance label',
         position: getMidpoint(centroids[0], centroids[1]),
         label: {
-    font : 'bold 22px arial',
-    showBackground : false,
-    horizontalOrigin : Cesium.HorizontalOrigin.CENTER,
-    verticalOrigin : Cesium.VerticalOrigin.CENTER,
-    pixelOffset : new Cesium.Cartesian2(0, 20),
-    eyeOffset: new Cesium.Cartesian3(0,0,-50),
-	text: labelText,
-	fillColor : Cesium.Color.GOLD,
-	}
+            font : 'bold 22px arial',
+            showBackground : false,
+            heightReference :Cesium.HeightReference.CLAMP_TO_GROUND,
+            horizontalOrigin : Cesium.HorizontalOrigin.CENTER,
+            verticalOrigin : Cesium.VerticalOrigin.CENTER,
+            pixelOffset : new Cesium.Cartesian2(0, 20),
+            eyeOffset: new Cesium.Cartesian3(0,0,-50),
+            text: labelText,
+            fillColor : Cesium.Color.WHITE,
+            backgroundColor : new Cesium.Color(0.0, 0.0, 0.0, 0.7),
+            showBackground : true,
+        }
     });
-	
-	$.ajax({
-		url:"http://localhost:8080/agents/distance",
-		type: 'POST',
-		data: JSON.stringify({iris: webMap.getAllHighlightedObjects()}),
-		dataType: 'json',
-		contentType: 'application/json',
-		success: function(data, status_message, xhr){
-			console.log(data["distances"]);
-			var distance = Math.round(data["distances"][0]);
-			label.label.text = distance.toString() + " " + "m";
-		}
-    });	
+
+    jQuery.ajax({
+        url:"http://localhost:8080/agents/distance",
+        type: 'POST',
+        data: JSON.stringify({iris: iriArr}),
+        dataType: 'json',
+        contentType: 'application/json',
+        success: function(data, status_message, xhr){
+            console.log(data["distances"]);
+            var distance = Math.round(data["distances"][0]);
+            label.label.text = distance.toString() + " " + "m";
+        }
+    });
 
 }
 
 function getMidpoint(point1, point2) {
-	var geodesic = new Cesium.EllipsoidGeodesic();
+    var geodesic = new Cesium.EllipsoidGeodesic();
     var scratch = new Cesium.Cartographic();
-	
-	var point1cart = Cesium.Cartographic.fromCartesian(point1);
-	var point2cart = Cesium.Cartographic.fromCartesian(point2);
-	
+
+    var point1cart = Cesium.Cartographic.fromCartesian(point1);
+    var point2cart = Cesium.Cartographic.fromCartesian(point2);
+
     geodesic.setEndPoints(point1cart, point2cart);
     var midpointCartographic = geodesic.interpolateUsingFraction(0.5, scratch);
     return Cesium.Cartesian3.fromRadians(midpointCartographic.longitude, midpointCartographic.latitude);
-	
+
 }
+
 
 //Shiying: highlight multiple cityobjects
 function highlightMultipleObjects(){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
@@ -1115,7 +1169,7 @@ function addNewLayer() {
         maxSizeOfCachedTiles: addLayerViewModel.maxSizeOfCachedTiles,
         maxCountOfVisibleTiles: addLayerViewModel.maxCountOfVisibleTiles
     }
-    
+
     // since Cesium 3D Tiles also require name.json in the URL, it must be checked first
     var layerDataTypeDropdown = document.getElementById("layerDataTypeDropdown");
     if (layerDataTypeDropdown.options[layerDataTypeDropdown.selectedIndex].value === 'Cesium 3D Tiles') {
@@ -1196,9 +1250,9 @@ function createScreenshot() {
     var imageUri = cesiumViewer.canvas.toDataURL();
     var imageWin = window.open("");
     imageWin.document.write("<html><head>" +
-            "<title>" + imageUri + "</title></head><body>" +
-            '<img src="' + imageUri + '"width="100%">' +
-            "</body></html>");
+        "<title>" + imageUri + "</title></head><body>" +
+        '<img src="' + imageUri + '"width="100%">' +
+        "</body></html>");
     return imageWin;
 }
 
@@ -1224,9 +1278,9 @@ function toggleTerrainShadows() {
         cesiumViewer.terrainShadows = Cesium.ShadowMode.ENABLED;
         if (!cesiumViewer.shadows) {
             CitydbUtil.showAlertWindow("OK", "Switching on terrain shadows now", 'Please note that shadows for 3D models will also be switched on.',
-                    function () {
-                        toggleShadows();
-                    });
+                function () {
+                    toggleShadows();
+                });
         }
     }
 }
@@ -1245,6 +1299,7 @@ function createInfoTable(res, citydbLayer) {
 
     var thematicDataUrl = citydbLayer.thematicDataUrl;
     cesiumEntity.description = "Loading feature information...";
+    cesiumEntity._cia_context = this.cia_context;
 
     citydbLayer.dataSourceController.fetchData(gmlid, function (kvp) {
         if (!kvp) {

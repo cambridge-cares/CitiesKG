@@ -253,7 +253,4 @@ public class SQLAdapter extends AbstractSQLAdapter {
         return new Function("st_extent", envelope);
     }
 
-    public PreparedStatement transformStatement(SQLStatement statement, Connection connection) throws SQLException {
-        return null;
-    }
 }

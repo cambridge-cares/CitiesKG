@@ -5,8 +5,8 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
-import uk.ac.cam.cares.twa.cities.models.ModelContext;
-import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
+import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.ogm.models.geo.GeometryType;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
@@ -37,7 +37,7 @@ public class ThematicSurfaceDiscoveryAgentTest{
       assertEquals("http://example.org/test/", agent.getNamespaceIri());
       assertNull(agent.getBuildingIri());
       assertArrayEquals(new boolean[]{true, true, true, true}, agent.getTaskParams().lods);
-      assertEquals(15.0, agent.getTaskParams().threshold);
+      assertEquals(5.0, agent.getTaskParams().threshold);
       assertEquals(ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE, agent.getTaskParams().mode);
       assertEquals("http://example.org/test/", agent.getTaskParams().namespace);
     } catch (BadRequestException ignored) {
@@ -99,7 +99,7 @@ public class ThematicSurfaceDiscoveryAgentTest{
     try {
       ThematicSurfaceDiscoveryAgent agent = new ThematicSurfaceDiscoveryAgent();
       assertTrue(agent.validateInput(requestParams));
-      assertEquals(ThematicSurfaceDiscoveryAgent.Mode.FOOTPRINT, agent.getTaskParams().mode);
+      assertEquals(ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE, agent.getTaskParams().mode);
     } catch (BadRequestException ignored) {
       fail();
     }
