@@ -50,10 +50,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import static org.citydb.database.adapter.blazegraph.OptimizedSparqlQuery.executeQuery;
 
 public class CityFurniture extends KmlGenericObject{
 	private final Logger log = Logger.getInstance();
@@ -102,6 +100,9 @@ public class CityFurniture extends KmlGenericObject{
 	public void read(KmlSplittingResult work) {
 		PreparedStatement psQuery = null;
 		ResultSet rs = null;
+		boolean existGS = false;
+		ArrayList<ResultSet> sparqlGeom;
+		OptimizedSparqlQuery optquery = new OptimizedSparqlQuery(databaseAdapter);
 
 		try {
 			int lodToExportFrom = config.getProject().getKmlExporter().getLodToExportFrom();
@@ -175,14 +176,14 @@ public class CityFurniture extends KmlGenericObject{
 				AffineTransformer transformer = null;
 				String query = null;
 				if (isBlazegraph){
-					String cityObjectId = rs.getString(1);//work.getGmlId(); //rs.getString(4);
+					String cityObjectId = rs.getString(1);
 					System.out.println("CityObjectID" + cityObjectId);
 
 					try { rs.close(); } catch (SQLException sqle) {}
 					try { psQuery.close(); } catch (SQLException sqle) {}
 
 					query = StatementTransformer.getSPARQLStatement_BuildingPartGeometry();
-					psQuery = connection.prepareStatement(query); //, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+					psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
 					URL url = null;
 					try {
@@ -215,6 +216,12 @@ public class CityFurniture extends KmlGenericObject{
 
 				kmlExporterManager.updateFeatureTracker(work);
 
+				String cityFurnitureId = StatementTransformer.getIriObjectBase() + "cityfurniture/" +  work.getGmlId() + "/";
+				sparqlGeom = optquery.getSPARQLAggregateGeometriesForCityFurniture(connection, cityFurnitureId);
+
+				if (!sparqlGeom.isEmpty()){
+					existGS = false;
+				}
 				// get the proper displayForm (for highlighting)
 				int indexOfDf = getDisplayForms().indexOf(work.getDisplayForm());
 				if (indexOfDf != -1)
@@ -222,9 +229,14 @@ public class CityFurniture extends KmlGenericObject{
 
 				switch (work.getDisplayForm().getForm()) {
 				case DisplayForm.FOOTPRINT:
-					kmlExporterManager.print(createPlacemarksForFootprint(rs, work, transformer),
-							work,
-							getBalloonSettings().isBalloonContentInSeparateFile());
+					if (isBlazegraph){
+						kmlExporterManager.print(createPlacemarksForFootprint_geospatial(sparqlGeom, work, existGS, null),
+								work, getBalloonSettings().isBalloonContentInSeparateFile());
+					} else {
+						kmlExporterManager.print(createPlacemarksForFootprint(rs, work, transformer),
+								work,
+								getBalloonSettings().isBalloonContentInSeparateFile());
+					}
 					break;
 
 				case DisplayForm.EXTRUDED:
@@ -234,15 +246,33 @@ public class CityFurniture extends KmlGenericObject{
 					try {
 						query = queries.getExtrusionHeight();
 						psQuery2 = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-						for (int i = 1; i <= getParameterCount(query); i++)
-							psQuery2.setLong(i, (long)work.getId());
+						if (isBlazegraph){
+							URL url = null;
+							try {
+								url = new URL(StatementTransformer.getIriObjectBase() + "cityobject/" + work.getGmlId()+"/");
+							} catch (MalformedURLException e) {
+								e.printStackTrace();
+							}
+							psQuery2.setURL(1, url);
+						} else {
+							for (int i = 1; i <= getParameterCount(query); i++)
+								psQuery2.setLong(i, (long)work.getId());
+						}
 
 						rs2 = psQuery2.executeQuery();
 						rs2.next();
 
-						double measuredHeight = rs2.getDouble("envelope_measured_height");
-						kmlExporterManager.print(createPlacemarksForExtruded(rs, work, measuredHeight, false, transformer),
-								work, getBalloonSettings().isBalloonContentInSeparateFile());
+						double measuredHeight = 0;
+						boolean reversePointOrder = false;
+						if (isBlazegraph) {
+							String envelop = rs2.getString(1);
+							measuredHeight = Building.extractHeight(envelop);
+							kmlExporterManager.print(createPlacemarksForExtruded_geospatial(sparqlGeom, work, measuredHeight, reversePointOrder, existGS, null), work, getBalloonSettings().isBalloonContentInSeparateFile());
+						} else {
+							measuredHeight = rs2.getDouble("envelope_measured_height");
+							kmlExporterManager.print(createPlacemarksForExtruded(rs, work, measuredHeight, false, transformer),
+									work, getBalloonSettings().isBalloonContentInSeparateFile());
+						}
 						break;
 					} finally {
 						try { if (rs2 != null) rs2.close(); } catch (SQLException e) {}
@@ -276,7 +306,7 @@ public class CityFurniture extends KmlGenericObject{
 						setGmlId(work.getGmlId());
 						setId(work.getId());
 
-						System.out.println(work.getId());
+//						System.out.println(work.getId());
 						//fillGenericObjectForCollada(rs, config.getProject().getKmlExporter().getCityFurnitureColladaOptions().isGenerateTextureAtlases(),  transformer, false);
 
 						if (currentgmlId != null && !currentgmlId.equals(work.getGmlId()) && getGeometryAmount() > GEOMETRY_AMOUNT_WARNING)
