@@ -109,7 +109,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
       }else if (params.mode == ThematicSurfaceDiscoveryAgent.Mode.MERGE){
         spatialRelation();
       }else {
-        tryClassifyGeometries();
+        checkFootprint();
       }
       stage = true;
     } else {
@@ -138,6 +138,28 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
     bottomLevelThematicGeometries.set(Theme.GROUND.index, temp);
   }
 
+  private void checkFootprint(){
+    try{
+      for(SurfaceGeometry root: roots) {
+        context.pullPartialWhere(SurfaceGeometry.class, new WhereBuilder().addWhere(
+                        ModelContext.getModelVar(),
+                        NodeFactory.createURI(SPARQLUtils.expandQualifiedName(SchemaManagerAdapter.ONTO_ID)),
+                        NodeFactory.createURI(root.getIri())
+                ), "cityObjectId"
+        );
+        SelectBuilder footprintQuery = new SelectBuilder();
+        SPARQLUtils.addPrefix(SchemaManagerAdapter.ONTO_FOOTPRINT_ID, footprintQuery);
+        footprintQuery.addVar("footprint");
+        footprintQuery.addWhere(NodeFactory.createURI(root.getCityObjectId().toString()), SchemaManagerAdapter.ONTO_FOOTPRINT_ID, "?footprint");
+//        footprintQuery.append("SELECT ?footprint " +
+//                "WHERE { <" + root.getCityObjectId().toString() +"> " + SchemaManagerAdapter.ONTO_FOOTPRINT_ID +" ?footprint . }");
+        JSONArray buildingsResponse = context.query(footprintQuery.toString());
+        if (!buildingsResponse.isEmpty()) tryClassifyGeometries();
+      }
+    }catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
   /**
    * Recursively traverse the geometry tree and populate the collections <code>topLevelThematicGeometries</code>,
    * <code>bottomLevelThematicGeometries</code>, and <code>mixedGeometries</code>. These classifications are further
@@ -588,6 +610,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
         context.pushAllChanges();
 
         }else{
+        buildingCommentAndPush(buildingtId);
         context.members.clear();
       }
     }
