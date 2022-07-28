@@ -138,7 +138,7 @@ function getValidPlots(){
 			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
 		}
 	});
-	//highlightMultipleObjects();
+	highlightMultipleObjects();
 }
 
 function throwNotification() {
