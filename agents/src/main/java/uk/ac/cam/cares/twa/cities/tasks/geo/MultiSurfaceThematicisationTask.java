@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo;
 
+import org.apache.jena.arq.querybuilder.AskBuilder;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
@@ -151,10 +152,11 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
         SPARQLUtils.addPrefix(SchemaManagerAdapter.ONTO_FOOTPRINT_ID, footprintQuery);
         footprintQuery.addVar("footprint");
         footprintQuery.addWhere(NodeFactory.createURI(root.getCityObjectId().toString()), SchemaManagerAdapter.ONTO_FOOTPRINT_ID, "?footprint");
+        footprintQuery.addFilter("isIRI(?footprint)");
 //        footprintQuery.append("SELECT ?footprint " +
 //                "WHERE { <" + root.getCityObjectId().toString() +"> " + SchemaManagerAdapter.ONTO_FOOTPRINT_ID +" ?footprint . }");
         JSONArray buildingsResponse = context.query(footprintQuery.toString());
-        if (!buildingsResponse.isEmpty()) tryClassifyGeometries();
+        if (buildingsResponse.isEmpty()) tryClassifyGeometries();
       }
     }catch (Exception e) {
       e.printStackTrace();
