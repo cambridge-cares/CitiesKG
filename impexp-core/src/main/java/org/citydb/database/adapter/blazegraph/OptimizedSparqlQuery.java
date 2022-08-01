@@ -184,8 +184,7 @@ public class OptimizedSparqlQuery {
       rootIds.add(intermRs);
     }
 
-    // query stage 2 for extractig the aggregated geometries
-    //System.out.println("OptimizedSparqlQuery, size of the rootId: " + rootIds.size());
+    // query stage 2 for extracting the aggregated geometries
     // return a list of geometry with # separator
     ArrayList<ResultSet> geometries = new ArrayList<>();
     if (!rootIds.isEmpty()) {
@@ -214,6 +213,36 @@ public class OptimizedSparqlQuery {
         }
       }
     }
+    return geometries;
+  }
+
+  /* Execute SPARQL query to obtain the aggregated geometries of a given cityfurniture object */
+  public static ArrayList<ResultSet> getSPARQLAggregateGeometriesForCityFurniture(Connection connection, String cityFurnitureId)
+          throws SQLException {
+      StringBuilder sparqlStr = new StringBuilder();
+      ResultSet rs = null;
+
+    ArrayList<ResultSet> geometries = new ArrayList<>();
+
+    // Query for cityfurniture
+    sparqlStr.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
+            "SELECT ?geometry (datatype(?geometry) AS ?datatype)" +
+            "WHERE { " +
+            "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> {" +
+            " ?s ocgml:GeometryType ?geometry ;" +
+            "ocgml:cityObjectId " + QST_MARK + " .\n" +
+            "FILTER (!isBlank(?geometry)) }}");
+
+    rs = executeQuery(connection, sparqlStr.toString(), cityFurnitureId, "geometry");
+    try {
+      if (rs.next()) {
+        rs.beforeFirst();
+        geometries.add(rs);
+      }
+    } catch (SQLException e){
+      e.printStackTrace();
+    }
+
     return geometries;
   }
 

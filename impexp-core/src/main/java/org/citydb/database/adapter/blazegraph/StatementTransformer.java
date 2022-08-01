@@ -70,17 +70,6 @@ public class StatementTransformer {
         return sparql;
     }
 
-    //query = WHERE\n { ?id ocgml:id ? .}";//StatementTransformer.getGenericCityObjectBasisData(currentLod);
-
-    /* CityFurniture */
-    public static String getCityFurnitureQuery(){
-        String sparql = "PREFIX  ocgml: <" + PREFIX_ONTOCITYGML + ">\n" +
-                "SELECT *\n" +
-                "FROM <" + IRI_GRAPH_BASE + "cityfurniture/" + ">\n" +
-                "WHERE\n { ?id ocgml:id ? .}";
-        return sparql;
-    }
-
     public static String getGenericCityObjectQuery(int lodToExportFrom, DisplayForm displayForm, boolean isImplicit, boolean exportAppearance){
         String query = null;
 
@@ -492,7 +481,7 @@ public class StatementTransformer {
 
         for (int i = 0; i < extracted.size(); ++i){
             String geomStr = extracted.get(i);
-            System.out.println(geomStr);
+//            System.out.println(geomStr);
             Geometry geomobj = geospatial.createGeometry(geomStr);
             if (geospatial.IsValid(geomobj) && geospatial.CalculateArea(geospatial.Transform(geomobj, 4326, 4326)) > tolerance){ // this has no need to changed, this condition will not affect the output
                 geom2union.add(geomobj);
@@ -502,4 +491,12 @@ public class StatementTransformer {
         return union;
     }
 
+    /* CityFurniture */
+    public static String getCityFurnitureQuery(){
+        String sparql = "PREFIX  ocgml: <" + PREFIX_ONTOCITYGML + ">\n" +
+                "SELECT *\n" +
+                "FROM <" + IRI_GRAPH_BASE + "cityfurniture/" + ">\n" +
+                "WHERE\n { ?id ocgml:id ? .}";
+        return sparql;
+    }
 }
