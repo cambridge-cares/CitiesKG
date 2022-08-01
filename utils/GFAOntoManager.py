@@ -9,7 +9,7 @@ class GFAOntoManager:
 
     # Ontologies
     PLANNING_CONCEPT_ONTO_PREFIX = "http://www.theworldavatar.com/ontology/planningconceptonto/PlanningConceptOntology.owl#"
-    OM_URI_PREFIX = "http://ontology.eil.utoronto.ca/icity/OM.owl#"
+    OM_URI_PREFIX = "http://www.ontology-of-units-of-measure.org/resource/om-2/"
     GEOSPARQL_URI_PREFIX = "http://www.opengis.net/ont/geosparql#"
     ONTO_ZONING_URI_PREFIX = "http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#"
 
