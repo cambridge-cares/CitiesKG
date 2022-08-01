@@ -50,10 +50,16 @@ public class CityInformationAgent extends JPSAgent {
   private static final String ONTOZONING_PREFIX = "zo";
   private static final String CITY_OBJECT_ID = "cityObjectId";
 
+  private static final String ONTO_PLANCON_PREFIX = "pco";
+  private static final String OM_PREFIX = "om";
+
 
   @Getter private String route;
   private boolean lazyload;
   @Getter private String onto_zoning;
+  @Getter private String om;
+
+  @Getter private String onto_planning_concept;
 
 
   public CityInformationAgent() {
@@ -175,6 +181,9 @@ public class CityInformationAgent extends JPSAgent {
     lazyload = Boolean.getBoolean(config.getString("loading.status"));
     route = config.getString("uri.route");
     onto_zoning = config.getString("uri.ontology.ontozoning");
+    om = config.getString("uri.ontology.om");
+    onto_planning_concept =config.getString("uri.ontology.ontoplanningconcept");
+
   }
 
   private String getNamespace(String uriString) {
@@ -203,9 +212,30 @@ public class CityInformationAgent extends JPSAgent {
       }
     }
     wb.addWhere(QM + CITY_OBJECT_ID, ONTOZONING_PREFIX + ":" + HAS_ZONE_PREDICATE, QM +ZONE);
+
+    WhereBuilder w2b = new WhereBuilder()
+        .addPrefix(ONTO_PLANCON_PREFIX, onto_planning_concept)
+        .addPrefix(OM_PREFIX, om);
+
+    Path buildableSpace = PathFactory.pathLink(NodeFactory.createURI(onto_planning_concept + "hasBuildableSpace"));
+    Path allowedGFA = PathFactory.pathLink(NodeFactory.createURI(onto_planning_concept + "hasAllowedGFA"));
+    Path measure = PathFactory.pathLink(NodeFactory.createURI(om + "hasValue"));
+    Path numeric_value = PathFactory.pathLink(NodeFactory.createURI(om + "hasNumericValue"));
+    Path zoning_case = PathFactory.pathLink(NodeFactory.createURI(onto_planning_concept + "forZoningCase"));
+    Path fullPath_gfa = PathFactory.pathSeq(buildableSpace, allowedGFA);
+    Path fullPath_value = PathFactory.pathSeq(measure, numeric_value);
+    Path fullPath_optional = PathFactory.pathSeq(buildableSpace, zoning_case);
+
+    w2b.addWhere(QM+ CITY_OBJECT_ID, fullPath_gfa.toString(), QM + "allowed_GFA_Id");
+    w2b.addWhere( QM + "allowed_GFA_Id", fullPath_value.toString(), QM + "allowedGFA_value");
+
     SelectBuilder sb = new SelectBuilder()
         .addVar(QM + CITY_OBJECT_ID)
-        .addGraph(NodeFactory.createURI("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/"), wb);
+        .addVar(QM + "allowedGFA_value")
+        .addVar(QM + "ZoningCase")
+        .addGraph(NodeFactory.createURI("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/"), wb)
+        .addGraph(NodeFactory.createURI("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/buildablespace/"), w2b)
+        .addOptional(QM + CITY_OBJECT_ID, fullPath_optional.toString(), QM + "ZoningCase");
     return sb.build();
   }
 
@@ -221,7 +251,10 @@ public class CityInformationAgent extends JPSAgent {
   }
 
   private JSONArray filterGFA () {
-    JSONArray cityobjects = new JSONArray();
-    return cityobjects;
+    return new JSONArray();
+  }
+
+  private Query getGFAQuery(JSONArray citybjects) {
+    return new Query();
   }
 }
