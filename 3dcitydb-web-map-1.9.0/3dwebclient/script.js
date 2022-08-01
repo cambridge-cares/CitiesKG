@@ -421,8 +421,8 @@ function getAndLoadLayers(folder) {
         cityobjectsJsonUrl: '',
         minLodPixels: '',
         maxLodPixels: '',
-        maxSizeOfCachedTiles: 200,
-        maxCountOfVisibleTiles: 200
+        maxSizeOfCachedTiles: 1000,  //200
+        maxCountOfVisibleTiles: 1000 //200
     }
 
     var reqUrl = url + '/files/';
@@ -668,8 +668,11 @@ function getMidpoint(point1, point2) {
 
 
 //Shiying: highlight multiple cityobjects
-function highlightMultipleObjects(){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
-    var cityObjectsArray = ["UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d", "UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3"];
+function highlightMultipleObjects(filterObjectsArray){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
+    //var cityObjectsArray = ["UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d", "UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3"];
+    var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespac…object/UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d/"];
+    // UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d - inside
+    // UUID_b6f4d0de-cf5c-4917-aba0-c1a91fa4960b - outside of the scene
     var currentLayer = webMap.activeLayer;
     var filteredObjects = {};
     var highlightColor = currentLayer._highlightColor; // new Cesium.Color(16/255, 77/255, 151/255, 1.0);
@@ -677,8 +680,22 @@ function highlightMultipleObjects(){  // citydbKmlLayer object, list of files in
     currentLayer.unHighlightAllObjects();
 
     for (let i = 0; i < cityObjectsArray.length; i++) {
-        filteredObjects[cityObjectsArray[i]] = highlightColor;
+        var strArray = cityObjectsArray[i].split("/");
+        var gmlid = strArray[strArray.length-2];
+        filteredObjects[gmlid] = highlightColor;
     }
+    /**
+    var cameraPostion = {
+        latitude:  1.25648566126433,
+        longitude: 103.823907400709,
+        height: 2800,
+        heading: 360,
+        pitch: -60,
+        roll: 356,
+    }
+    flyToCameraPosition(cameraPostion); **/
+    //flyToMapLocation(1.264377, 103.837302);
+    //zoomToObjectById("UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d");
     currentLayer.highlight(filteredObjects);
 
 }
@@ -1076,7 +1093,7 @@ function zoomToObjectById(gmlId, callBackFunc, errorCallbackFunc) {
         } else {
             // TODO
             var thematicDataUrl = webMap.activeLayer.thematicDataUrl;
-            webmap._activeLayer.dataSourceController.fetchData(gmlId, function (result) {
+            webMap._activeLayer.dataSourceController.fetchData(gmlId, function (result) {
                 if (!result) {
                     if (Cesium.defined(errorCallbackFunc)) {
                         errorCallbackFunc.call(this);
