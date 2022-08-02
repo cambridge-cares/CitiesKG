@@ -1,5 +1,6 @@
 package org.citydb.database.adapter.blazegraph.test;
 
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.citydb.citygml.importer.database.content.DBObjectTestHelper;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.blazegraph.OptimizedSparqlQuery;
@@ -179,7 +180,7 @@ public class OptimizedSparqlQueryTest {
                     .thenReturn(rs);
             Mockito.when(rs.next()).thenReturn(true);
             assertEquals(rs, OptimizedSparqlQuery.getSPARQLAggregateGeometriesForCityFurniture(conn, "http://127.0.0.1:9999/test").get(0));
-        } catch (SQLException e) {
+        } catch (SQLException | ParseException e) {
             fail();
         }
     }

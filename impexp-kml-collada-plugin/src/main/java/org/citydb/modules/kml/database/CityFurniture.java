@@ -28,6 +28,7 @@
 package org.citydb.modules.kml.database;
 
 import net.opengis.kml._2.PlacemarkType;
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.citydb.config.Config;
 import org.citydb.config.project.kmlExporter.*;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
@@ -335,6 +336,8 @@ public class CityFurniture extends KmlGenericObject{
 			log.error("SQL error while querying city object " + work.getGmlId() + ": " + sqlEx.getMessage());
 		} catch (JAXBException jaxbEx) {
 			log.error("XML error while working on city object " + work.getGmlId() + ": " + jaxbEx.getMessage());
+		} catch (ParseException e) {
+			e.printStackTrace();
 		} finally {
 			if (rs != null)
 				try { rs.close(); } catch (SQLException e) {}

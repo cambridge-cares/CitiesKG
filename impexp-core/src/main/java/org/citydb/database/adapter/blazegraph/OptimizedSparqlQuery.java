@@ -9,7 +9,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import javax.xml.transform.Result;
 import oracle.jdbc.proxy.annotation.Pre;
+import org.apache.jena.arq.querybuilder.AbstractQueryBuilder;
+import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.arq.querybuilder.WhereBuilder;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
+import org.citydb.sqlbuilder.select.Select;
 import org.postgresql.jdbc2.ArrayAssistantRegistry;
 
 public class OptimizedSparqlQuery {
@@ -218,20 +224,18 @@ public class OptimizedSparqlQuery {
 
   /* Execute SPARQL query to obtain the aggregated geometries of a given cityfurniture object */
   public static ArrayList<ResultSet> getSPARQLAggregateGeometriesForCityFurniture(Connection connection, String cityFurnitureId)
-          throws SQLException {
-      StringBuilder sparqlStr = new StringBuilder();
+          throws SQLException, ParseException {
+      SelectBuilder sparqlStr = new SelectBuilder();
       ResultSet rs = null;
 
     ArrayList<ResultSet> geometries = new ArrayList<>();
 
-    // Query for cityfurniture
-    sparqlStr.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
-            "SELECT ?geometry (datatype(?geometry) AS ?datatype)" +
-            "WHERE { " +
-            "GRAPH <" + IRI_GRAPH_BASE + "surfacegeometry/> {" +
-            " ?s ocgml:GeometryType ?geometry ;" +
-            "ocgml:cityObjectId " + QST_MARK + " .\n" +
-            "FILTER (!isBlank(?geometry)) }}");
+    sparqlStr.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML)
+            .setBase(IRI_GRAPH_BASE + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH)
+            .addVar("?geometry (datatype(?geometry) AS ?datatype)")
+            .addWhere("?s", SchemaManagerAdapter.ONTO_GEOMETRY, "?geometry")
+            .addWhere("?s", SchemaManagerAdapter.ONTO_CITY_OBJECT_ID, QST_MARK)
+            .addFilter("!isBlank(?geometry)");
 
     rs = executeQuery(connection, sparqlStr.toString(), cityFurnitureId, "geometry");
     try {
