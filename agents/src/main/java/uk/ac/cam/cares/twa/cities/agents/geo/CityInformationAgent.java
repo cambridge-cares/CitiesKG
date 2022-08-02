@@ -63,6 +63,7 @@ public class CityInformationAgent extends JPSAgent {
   private static final String HAS_BUILDABLE_SPACE = "hasBuildableSpace";
   private static final String HAS_ALLOWED_GFA = "hasAllowedGFA";
   private static final String FOR_ZONING_CASE = "forZoningCase";
+  private static final String TOTAL_GFA =  "TotalGFA";
 
   @Getter private String route;
   private boolean lazyload;
@@ -120,15 +121,17 @@ public class CityInformationAgent extends JPSAgent {
         // if CIA is directly connecting to access agent but original request misses "targetresourceiri" key.
         if ((agentURL.contains(JPSConstants.ACCESS_AGENT_PATH)) && !(agentKeyValuePairs.keySet().contains(JPSConstants.TARGETIRI))){
           JSONObject filters = requestParams.getJSONObject(KEY_CONTEXT).getJSONObject(agentURL);
-          if (filters.keySet().size() > 1) {
-            String predicate = "";
-            if (filters.keySet().contains(ALLOWS_USE)) {
-              predicate = ALLOWS_USE;
-            } else {
-              predicate = ALLOWS_PROGRAMME;
-            }
+
+          String predicate = "";
+          if (filters.keySet().contains(ALLOWS_USE)) {
+            predicate = ALLOWS_USE;
+          } else if (filters.keySet().contains(ALLOWS_PROGRAMME)){
+            predicate = ALLOWS_PROGRAMME;
+          }
+
+          HashMap<String, Double> gfas = new HashMap<>();
+          if (!predicate.equals("")) {
             ArrayList<String> onto_elements = new ArrayList<>(filters.getJSONObject(predicate).keySet());
-            HashMap<String, Double> gfas = new HashMap<>();
             for (String onto_element: onto_elements) {
               try {
                 gfas.put(onto_element,
@@ -138,9 +141,18 @@ public class CityInformationAgent extends JPSAgent {
                 gfas.put(onto_element, 0.);
               }
             }
-            response.put("filtered", getFilteredObjects(predicate, gfas));
-            requestParams.put(agentURL, response);
           }
+          double total_gfa = 0.;
+          if (filters.keySet().contains(TOTAL_GFA)) {
+            try {
+              total_gfa = Double.parseDouble(filters.getString(TOTAL_GFA));
+            }
+            catch (NumberFormatException ignored) {
+            }
+          }
+          response.put("filtered", getFilteredObjects(predicate, gfas, total_gfa));
+          requestParams.put(agentURL, response);
+
         } else {
             for (String key : agentKeyValuePairs.keySet()) {
               requestBody.put(key, agentKeyValuePairs.get(key));
@@ -207,7 +219,7 @@ public class CityInformationAgent extends JPSAgent {
   private void readConfig() {
     ResourceBundle config = ResourceBundle.getBundle("config");
     lazyload = Boolean.getBoolean(config.getString("loading.status"));
-    //route = config.getString("uri.route");
+    route = config.getString("uri.route");
     onto_zoning = config.getString("uri.ontology.ontozoning");
     om = config.getString("uri.ontology.om");
     onto_planning_concept =config.getString("uri.ontology.ontoplanningconcept");
@@ -273,8 +285,8 @@ public class CityInformationAgent extends JPSAgent {
 
   }
 
-  private JSONArray getFilteredObjects (String predicate, HashMap<String, Double> gfas) {
-    boolean gfa_case = gfas.values().stream().mapToDouble(f -> f).sum() > 0;
+  private JSONArray getFilteredObjects (String predicate, HashMap<String, Double> gfas, double total_gfa) {
+    boolean gfa_case = !gfas.isEmpty() | total_gfa > 0;
 
     Query query = getFilterQuery(predicate, new ArrayList<>(gfas.keySet()), gfa_case);
     JSONArray filteredCityobjects = new JSONArray();
@@ -291,36 +303,46 @@ public class CityInformationAgent extends JPSAgent {
         if (row.keySet().contains(ZONING_CASE)) {
           zoning_case = row.getString(ZONING_CASE).split("#")[1];
         }
-         if (object_gfa_cases.containsKey(cityObjectId)) {
-           object_gfa_cases.get(cityObjectId).put(zoning_case, gfa);
-         }
-         else {
-           HashMap<String, Double> newObjectGfas = new HashMap<>();
-           newObjectGfas.put(zoning_case, gfa);
-           object_gfa_cases.put(cityObjectId, newObjectGfas);
-         }
+        if (object_gfa_cases.containsKey(cityObjectId)) {
+          object_gfa_cases.get(cityObjectId).put(zoning_case, gfa);
+        }
+        else {
+          HashMap<String, Double> newObjectGfas = new HashMap<>();
+          newObjectGfas.put(zoning_case, gfa);
+          object_gfa_cases.put(cityObjectId, newObjectGfas);
+        }
       }
 
       for (String cityobject: object_gfa_cases.keySet()){
         double chosen_gfa = gfas.values().stream().mapToDouble(Double::doubleValue).sum();
-
+        if (chosen_gfa == 0) {
+          chosen_gfa = total_gfa;
+        }
         HashMap<String, Double> current_gfas = object_gfa_cases.get(cityobject);
-        ArrayList<Double> relevant_zoning_case_gfas = new ArrayList<>();
-        for (String zoning_case: current_gfas.keySet()) {
-          if (gfas.containsKey(zoning_case)) {
-            relevant_zoning_case_gfas.add(current_gfas.get(zoning_case));
+        if (!gfas.isEmpty()){
+          ArrayList<Double> relevant_zoning_case_gfas = new ArrayList<>();
+          for (String zoning_case: current_gfas.keySet()) {
+            if (gfas.containsKey(zoning_case)) {
+              relevant_zoning_case_gfas.add(current_gfas.get(zoning_case));
+            }
+          }
+          if (relevant_zoning_case_gfas.isEmpty()){
+            if (current_gfas.get(DEFAULT_ZONING_CASE) >= chosen_gfa){
+              filteredCityobjects.put(cityobject);
+            }
+          }
+          else {
+            if (Collections.min(relevant_zoning_case_gfas) >= chosen_gfa) {
+              filteredCityobjects.put(cityobject);
+            }
           }
         }
-        if (relevant_zoning_case_gfas.isEmpty()){
+        else{
           if (current_gfas.get(DEFAULT_ZONING_CASE) >= chosen_gfa){
             filteredCityobjects.put(cityobject);
           }
         }
-        else {
-            if (Collections.min(relevant_zoning_case_gfas) >= chosen_gfa) {
-              filteredCityobjects.put(cityobject);
-            }
-        }
+
       }
     }
     else {
