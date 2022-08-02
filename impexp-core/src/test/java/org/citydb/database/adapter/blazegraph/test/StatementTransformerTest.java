@@ -69,7 +69,7 @@ public class StatementTransformerTest {
     @Test
     public void testNewStatementTransformerMethods() {
         StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
-        assertEquals(19, transformer.getClass().getDeclaredMethods().length);
+        assertEquals(20, transformer.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -417,5 +417,15 @@ public class StatementTransformerTest {
 
         // test case when fail if condition
         assertEquals("GEOMETRYCOLLECTION EMPTY", StatementTransformer.filterResult(extracted, 2.0).toString());
+    }
+
+    @Test
+    public void testGetCityFurnitureQuery() {
+        StatementTransformer transformer = new StatementTransformer(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
+        String expected = "PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl>\n" +
+                "SELECT *\n" +
+                "FROM <http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/cityfurniture/>\n" +
+                "WHERE\n { ?id ocgml:id ? .}";
+        assertEquals(expected, StatementTransformer.getCityFurnitureQuery());
     }
 }

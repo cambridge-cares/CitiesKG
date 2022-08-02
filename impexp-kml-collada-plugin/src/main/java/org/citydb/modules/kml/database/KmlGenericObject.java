@@ -1473,6 +1473,7 @@ public abstract class KmlGenericObject<T> {
 			GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
 			//GeometryObject unconvertedGeom = GeoSpatialProcessor.create3dPolygon(buildingGeometryObj.toString(), datatype);
 
+			unconvertedGeom.setSrid(databaseSrid);
 			GeometryObject groundSurface = convertToWGS84(unconvertedGeom);
 
 			int dim = groundSurface.getDimension();

@@ -1,8 +1,11 @@
 package org.citydb.database.adapter.blazegraph.test;
 
+import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.citydb.citygml.importer.database.content.DBObjectTestHelper;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.blazegraph.OptimizedSparqlQuery;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
@@ -70,7 +73,7 @@ public class OptimizedSparqlQueryTest {
     @Test
     public void testNewOptimizedSparqlQueryMethods() {
         OptimizedSparqlQuery osq = new OptimizedSparqlQuery(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
-        assertEquals(5, osq.getClass().getDeclaredMethods().length);
+        assertEquals(6, osq.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -159,6 +162,34 @@ public class OptimizedSparqlQueryTest {
             Mockito.when(finalRs.next()).thenReturn(true);
             assertEquals(finalRs, OptimizedSparqlQuery.getSPARQLAggregateGeometriesForLOD2OrHigher(conn, 2, "http://127.0.0.1:9999/test").get(0));
         } catch (SQLException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testGetSPARQLAggregateGeometriesForCityFurniture() {
+        OptimizedSparqlQuery osq = new OptimizedSparqlQuery(DBObjectTestHelper.createAbstractDatabaseAdapter("Blazegraph"));
+        Connection conn = Mockito.mock(Connection.class);
+        ResultSet rs = Mockito.mock(ResultSet.class);
+
+        SelectBuilder query = new SelectBuilder();
+        try {
+            query.addPrefix("ocgml", "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl")
+                    .setBase("http://127.0.0.1:9999/blazegraph/namespace/berlin/sparql/surfacegeometry")
+                    .addVar("?geometry (datatype(?geometry) AS ?datatype)")
+                    .addWhere("?s", "ocgml:GeometryType", "?geometry")
+                    .addWhere("?s", "ocgml:cityObjectId", "?")
+                    .addFilter("!isBlank(?geometry)");
+        } catch (ParseException e) {
+            fail();
+        }
+
+        try (MockedStatic<OptimizedSparqlQuery> mock = Mockito.mockStatic(OptimizedSparqlQuery.class, Mockito.CALLS_REAL_METHODS)) {
+            mock.when(() -> OptimizedSparqlQuery.executeQuery(ArgumentMatchers.any(), ArgumentMatchers.contains(query.toString()), ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
+                    .thenReturn(rs);
+            Mockito.when(rs.next()).thenReturn(true);
+            assertEquals(rs, OptimizedSparqlQuery.getSPARQLAggregateGeometriesForCityFurniture(conn, "http://127.0.0.1:9999/test").get(0));
+        } catch (SQLException | ParseException e) {
             fail();
         }
     }
