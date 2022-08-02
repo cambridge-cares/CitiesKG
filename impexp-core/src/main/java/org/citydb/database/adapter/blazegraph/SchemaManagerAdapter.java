@@ -177,6 +177,7 @@ public class SchemaManagerAdapter extends AbstractSchemaManagerAdapter {
     public static final String ROOM_GRAPH = "room";
     public static final String OPENING_GRAPH = "opening";
     public static final String OPENING_TO_THEM_SURFACE_GRAPH = "openingtothemsurface";
+    public static final String CITY_FURNITURE_GRAPH = "cityfurniture";
 
 
     //@TODO: NOT IN ONTOCITYGML - need to be added:

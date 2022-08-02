@@ -9,7 +9,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import javax.xml.transform.Result;
 import oracle.jdbc.proxy.annotation.Pre;
+import org.apache.jena.arq.querybuilder.AbstractQueryBuilder;
+import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.arq.querybuilder.WhereBuilder;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
+import org.citydb.sqlbuilder.select.Select;
 import org.postgresql.jdbc2.ArrayAssistantRegistry;
 
 public class OptimizedSparqlQuery {
@@ -184,8 +190,7 @@ public class OptimizedSparqlQuery {
       rootIds.add(intermRs);
     }
 
-    // query stage 2 for extractig the aggregated geometries
-    //System.out.println("OptimizedSparqlQuery, size of the rootId: " + rootIds.size());
+    // query stage 2 for extracting the aggregated geometries
     // return a list of geometry with # separator
     ArrayList<ResultSet> geometries = new ArrayList<>();
     if (!rootIds.isEmpty()) {
@@ -214,6 +219,34 @@ public class OptimizedSparqlQuery {
         }
       }
     }
+    return geometries;
+  }
+
+  /* Execute SPARQL query to obtain the aggregated geometries of a given cityfurniture object */
+  public static ArrayList<ResultSet> getSPARQLAggregateGeometriesForCityFurniture(Connection connection, String cityFurnitureId)
+          throws SQLException, ParseException {
+      SelectBuilder sparqlStr = new SelectBuilder();
+      ResultSet rs = null;
+
+    ArrayList<ResultSet> geometries = new ArrayList<>();
+
+    sparqlStr.addPrefix(SchemaManagerAdapter.ONTO_PREFIX_NAME_ONTOCITYGML, PREFIX_ONTOCITYGML)
+            .setBase(IRI_GRAPH_BASE + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH)
+            .addVar("?geometry (datatype(?geometry) AS ?datatype)")
+            .addWhere("?s", SchemaManagerAdapter.ONTO_GEOMETRY, "?geometry")
+            .addWhere("?s", SchemaManagerAdapter.ONTO_CITY_OBJECT_ID, QST_MARK)
+            .addFilter("!isBlank(?geometry)");
+
+    rs = executeQuery(connection, sparqlStr.toString(), cityFurnitureId, "geometry");
+    try {
+      if (rs.next()) {
+        rs.beforeFirst();
+        geometries.add(rs);
+      }
+    } catch (SQLException e){
+      e.printStackTrace();
+    }
+
     return geometries;
   }
 
