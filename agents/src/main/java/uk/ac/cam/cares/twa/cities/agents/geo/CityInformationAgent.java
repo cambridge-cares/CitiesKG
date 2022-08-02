@@ -3,8 +3,6 @@ package uk.ac.cam.cares.twa.cities.agents.geo;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.ResourceBundle;
@@ -64,7 +62,6 @@ public class CityInformationAgent extends JPSAgent {
   private static final String HAS_BUILDABLE_SPACE = "hasBuildableSpace";
   private static final String HAS_ALLOWED_GFA = "hasAllowedGFA";
   private static final String FOR_ZONING_CASE = "forZoningCase";
-
 
   @Getter private String route;
   private boolean lazyload;
@@ -217,7 +214,6 @@ public class CityInformationAgent extends JPSAgent {
     SelectBuilder sb = new SelectBuilder();
     String ontoZoneGraph = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/";
     String buildableSpaceGraph = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/buildablespace/";
-
     getOntoZoneFilterQuery(predicate, onto_class, sb, ontoZoneGraph);
     if (gfa_case) {
       getGFAFilterQuery(sb, buildableSpaceGraph);
@@ -327,9 +323,5 @@ public class CityInformationAgent extends JPSAgent {
       }
     }
     return filteredCityobjects;
-  }
-
-  private JSONArray filterGFA () {
-    return new JSONArray();
   }
 }
