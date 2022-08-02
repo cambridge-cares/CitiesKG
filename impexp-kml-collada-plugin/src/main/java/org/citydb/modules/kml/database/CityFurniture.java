@@ -217,12 +217,7 @@ public class CityFurniture extends KmlGenericObject{
 
 				kmlExporterManager.updateFeatureTracker(work);
 
-				String cityFurnitureId = StatementTransformer.getIriObjectBase() + "cityfurniture/" +  work.getGmlId() + "/";
-				sparqlGeom = optquery.getSPARQLAggregateGeometriesForCityFurniture(connection, cityFurnitureId);
-
-				if (!sparqlGeom.isEmpty()){
-					existGS = false;
-				}
+				String cityFurnitureId = null;
 				// get the proper displayForm (for highlighting)
 				int indexOfDf = getDisplayForms().indexOf(work.getDisplayForm());
 				if (indexOfDf != -1)
@@ -230,6 +225,12 @@ public class CityFurniture extends KmlGenericObject{
 
 				switch (work.getDisplayForm().getForm()) {
 				case DisplayForm.FOOTPRINT:
+					cityFurnitureId = StatementTransformer.getIriObjectBase() + "cityfurniture/" +  work.getGmlId() + "/";
+					sparqlGeom = optquery.getSPARQLAggregateGeometriesForCityFurniture(connection, cityFurnitureId);
+
+					if (!sparqlGeom.isEmpty()){
+						existGS = false;
+					}
 					if (isBlazegraph){
 						kmlExporterManager.print(createPlacemarksForFootprint_geospatial(sparqlGeom, work, existGS, null),
 								work, getBalloonSettings().isBalloonContentInSeparateFile());
@@ -241,6 +242,12 @@ public class CityFurniture extends KmlGenericObject{
 					break;
 
 				case DisplayForm.EXTRUDED:
+					cityFurnitureId = StatementTransformer.getIriObjectBase() + "cityfurniture/" +  work.getGmlId() + "/";
+					sparqlGeom = optquery.getSPARQLAggregateGeometriesForCityFurniture(connection, cityFurnitureId);
+
+					if (!sparqlGeom.isEmpty()){
+						existGS = false;
+					}
 					PreparedStatement psQuery2 = null;
 					ResultSet rs2 = null;
 
