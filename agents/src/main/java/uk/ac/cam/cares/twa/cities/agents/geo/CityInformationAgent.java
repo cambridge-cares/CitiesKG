@@ -59,6 +59,11 @@ public class CityInformationAgent extends JPSAgent {
   private static final String ZONING_CASE =  "ZoningCase";
   private static final String BUILDABLE_SPACE =  "BuildableSpace";
   private static final String DEFAULT_ZONING_CASE = "default";
+  private static final String HAS_VALUE = "hasValue";
+  private static final String HAS_NUMERIC_VALUE = "hasNumericValue";
+  private static final String HAS_BUILDABLE_SPACE = "hasBuildableSpace";
+  private static final String HAS_ALLOWED_GFA = "hasAllowedGFA";
+  private static final String FOR_ZONING_CASE = "forZoningCase";
 
 
   @Getter private String route;
@@ -200,7 +205,6 @@ public class CityInformationAgent extends JPSAgent {
     onto_zoning = config.getString("uri.ontology.ontozoning");
     om = config.getString("uri.ontology.om");
     onto_planning_concept =config.getString("uri.ontology.ontoplanningconcept");
-
   }
 
   private String getNamespace(String uriString) {
@@ -210,6 +214,18 @@ public class CityInformationAgent extends JPSAgent {
 
   private Query getFilterQuery(String predicate, ArrayList<String> onto_class, boolean gfa_case) {
 
+    SelectBuilder sb = new SelectBuilder();
+    String ontoZoneGraph = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/";
+    String buildableSpaceGraph = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/buildablespace/";
+
+    getOntoZoneFilterQuery(predicate, onto_class, sb, ontoZoneGraph);
+    if (gfa_case) {
+      getGFAFilterQuery(sb, buildableSpaceGraph);
+    }
+    return sb.build();
+  }
+
+  private SelectBuilder getOntoZoneFilterQuery(String predicate, ArrayList<String> onto_class, SelectBuilder sb, String graph) {
     WhereBuilder wb = new WhereBuilder()
         .addPrefix(ONTOZONING_PREFIX, onto_zoning);
     if (predicate.equals(ALLOWS_USE)) {
@@ -217,41 +233,41 @@ public class CityInformationAgent extends JPSAgent {
         Path allow = PathFactory.pathLink(NodeFactory.createURI(onto_zoning + ALLOWS_USE));
         Path mayAllow = PathFactory.pathLink(NodeFactory.createURI(onto_zoning + MAY_ALLOW_USE));
         Path fullPath = PathFactory.pathAlt(allow, mayAllow);
-        wb.addWhere(QM +ZONE, fullPath.toString(), ONTOZONING_PREFIX + ":" + use_class);
+        wb.addWhere(QM +ZONE, fullPath.toString(), onto_zoning + use_class);
       }
     } else if (predicate.equals(ALLOWS_PROGRAMME)) {
-      wb.addWhere(QM +ZONE, ONTOZONING_PREFIX + ":" + ALLOWS_USE, QM + USE);
+      wb.addWhere(QM +ZONE, NodeFactory.createURI(onto_zoning + ALLOWS_USE), QM + USE);
       for (String programme_class : onto_class) {
         Path allow = PathFactory.pathLink(NodeFactory.createURI(onto_zoning + ALLOWS_PROGRAMME));
         Path mayAllow = PathFactory.pathLink(NodeFactory.createURI(onto_zoning + MAY_ALLOW_PROGRAMME));
         Path fullPath = PathFactory.pathAlt(allow, mayAllow);
-        wb.addWhere(QM + USE, fullPath.toString(), ONTOZONING_PREFIX + ":" + programme_class);
+        wb.addWhere(QM + USE, fullPath.toString(), NodeFactory.createURI(onto_zoning + programme_class));
       }
     }
-    wb.addWhere(QM + CITY_OBJECT_ID, ONTOZONING_PREFIX + ":" + HAS_ZONE_PREDICATE, QM +ZONE);
+    wb.addWhere(QM + CITY_OBJECT_ID, NodeFactory.createURI(onto_zoning + HAS_ZONE_PREDICATE), QM +ZONE);
 
-    SelectBuilder sb = new SelectBuilder()
-        .addVar(QM + CITY_OBJECT_ID)
-        .addGraph(NodeFactory.createURI("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/"), wb);
+    sb.addVar(QM + CITY_OBJECT_ID)
+        .addGraph(NodeFactory.createURI(graph), wb);
+    return sb;
+  }
 
-    if (gfa_case) {
-      WhereBuilder w2b = new WhereBuilder()
-          .addPrefix(ONTO_PLANCON_PREFIX, onto_planning_concept)
-          .addPrefix(OM_PREFIX, om);
-      Path measure = PathFactory.pathLink(NodeFactory.createURI(om + "hasValue"));
-      Path numeric_value = PathFactory.pathLink(NodeFactory.createURI(om + "hasNumericValue"));
-      Path fullPath_value = PathFactory.pathSeq(measure, numeric_value);
-      w2b.addWhere(QM+ CITY_OBJECT_ID, PathFactory.pathLink(NodeFactory.createURI(onto_planning_concept + "hasBuildableSpace")), QM + BUILDABLE_SPACE);
-      w2b.addWhere(QM + BUILDABLE_SPACE, PathFactory.pathLink(NodeFactory.createURI(onto_planning_concept + "hasAllowedGFA")), QM + ALLOWED_GFA);
-      w2b.addWhere( QM + ALLOWED_GFA, fullPath_value.toString(), QM + GFA_VALUE);
-      w2b.addOptional(QM + BUILDABLE_SPACE, PathFactory.pathLink(NodeFactory.createURI(onto_planning_concept + "forZoningCase")), QM + ZONING_CASE);
+  private SelectBuilder getGFAFilterQuery(SelectBuilder sb, String graph) {
+    WhereBuilder w2b = new WhereBuilder()
+        .addPrefix(ONTO_PLANCON_PREFIX, onto_planning_concept)
+        .addPrefix(OM_PREFIX, om);
+    Path measure = PathFactory.pathLink(NodeFactory.createURI(om + HAS_VALUE));
+    Path numeric_value = PathFactory.pathLink(NodeFactory.createURI(om + HAS_NUMERIC_VALUE));
+    Path fullPath_value = PathFactory.pathSeq(measure, numeric_value);
+    w2b.addWhere(QM+ CITY_OBJECT_ID, PathFactory.pathLink(NodeFactory.createURI(onto_planning_concept + HAS_BUILDABLE_SPACE)), QM + BUILDABLE_SPACE);
+    w2b.addWhere(QM + BUILDABLE_SPACE, PathFactory.pathLink(NodeFactory.createURI(onto_planning_concept + HAS_ALLOWED_GFA)), QM + ALLOWED_GFA);
+    w2b.addWhere( QM + ALLOWED_GFA, fullPath_value.toString(), QM + GFA_VALUE);
+    w2b.addOptional(QM + BUILDABLE_SPACE, PathFactory.pathLink(NodeFactory.createURI(onto_planning_concept + FOR_ZONING_CASE)), QM + ZONING_CASE);
 
-      sb.addVar(QM + GFA_VALUE)
+    sb.addVar(QM + GFA_VALUE)
         .addVar(QM + ZONING_CASE)
-        .addGraph(NodeFactory.createURI("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/buildablespace/"), w2b);
-    }
+        .addGraph(NodeFactory.createURI(graph), w2b);
 
-    return sb.build();
+    return sb;
   }
 
   private JSONArray getFilteredObjects (String predicate, HashMap<String, Double> gfas) {
@@ -299,7 +315,6 @@ public class CityInformationAgent extends JPSAgent {
         }
         else {
             if (Collections.min(relevant_zoning_case_gfas) >= chosen_gfa) {
-              //filteredCityobjects.put(object_gfa_cases.get(CITY_OBJECT_ID));
               filteredCityobjects.put(cityobject);
             }
         }
