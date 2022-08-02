@@ -172,7 +172,8 @@ public class CEAAgent extends JPSAgent {
                         height = height.length() == 0 ? getValue(uri, "HeightGenAttr", route): height;
                         height = height.length() == 0 ? "10.0" : height;
                         // Get footprint from ground thematic surface or find from surface geometries depending on data
-                        String footprint = getValue(uri, "FootprintThematicSurface", route);
+                        String footprint = getValue(uri, "Lod0FootprintId", route);
+                        footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
                         testData.add(new CEAInputData(footprint, height));
                         if(i==0) crs = getValue(uri, "CRS", route); //just get crs once - assuming all iris in same namespace
@@ -643,6 +644,8 @@ public class CEAAgent extends JPSAgent {
      */
     private Query getQuery(String uriString, String value) {
         switch(value) {
+            case "Lod0FootprintId":
+                return getLod0FootprintIdQuery(uriString);
             case "FootprintSurfaceGeom":
                 return getGeometryQuerySurfaceGeom(uriString);
             case "FootprintThematicSurface":
@@ -782,6 +785,24 @@ public class CEAAgent extends JPSAgent {
                 .addVar("?CRS")
                 .addGraph(NodeFactory.createURI(getGraph(uriString,DATABASE_SRS)), wb);
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getNamespace(uriString)));
+        return sb.build();
+    }
+
+    /**
+     * builds a SPARQL query for a specific URI to retrieve ground surface geometry from lod0FootprintId
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getLod0FootprintIdQuery(String uriString) {
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ocgml", ocgmlUri)
+                .addWhere("?building", "ocgml:lod0FootprintId", "?footprintSurface")
+                .addWhere("?surface", "ocgml:parentId", "?footprintSurface")
+                .addWhere("?surface", "ocgml:GeometryType", "?geometry");
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?geometry")
+                .addWhere(wb);
+        sb.setVar( Var.alloc( "building" ), NodeFactory.createURI(getBuildingUri(uriString)));
         return sb.build();
     }
 
