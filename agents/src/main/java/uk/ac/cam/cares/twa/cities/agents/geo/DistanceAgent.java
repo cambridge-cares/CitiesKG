@@ -2,7 +2,6 @@ package uk.ac.cam.cares.twa.cities.agents.geo;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.UUID;
@@ -27,10 +26,11 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.twa.cities.models.ModelContext;
-import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
-import uk.ac.cam.cares.twa.cities.models.geo.EnvelopeType;
-import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
+import uk.ac.cam.cares.twa.cities.AccessAgentMapping;
+import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.ogm.models.geo.CityObject;
+import uk.ac.cam.cares.ogm.models.geo.EnvelopeType;
+import uk.ac.cam.cares.ogm.models.geo.GeometryType;
 
 /**
  * DistanceAgent class retrieves existing distance between the centroids of two objects envelopes
@@ -45,12 +45,10 @@ public class DistanceAgent extends JPSAgent {
   public static final String KEY_IRIS = "iris";
   public static final String KEY_DISTANCES = "distances";
 
-  public static final String KEY_QUERY_RESULT = "result";
-
   private static final String RDF_SCHEMA = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
   private static final String XML_SCHEMA = "http://www.w3.org/2001/XMLSchema#";
   private static final String OWL_SCHEMA = "http://www.w3.org/2002/07/owl#";
-  private static final String DISTANCE_GRAPH = "/distance/";
+  private static final String DISTANCE_GRAPH = "distance/";
   public static final String DEFAULT_SRS = "EPSG:4326";
   public static final String DEFAULT_TARGET_SRS = "EPSG:24500";
 
@@ -73,7 +71,6 @@ public class DistanceAgent extends JPSAgent {
   private static final String VALUE_PREDICATE = "hasValue";
   private static final String QST_MARK = "?";
   private static final String COLON = ":";
-  private static final String SLASH = "/";
 
   // Variables fetched from config.properties file.
   private static String ocgmlUri;
@@ -97,7 +94,13 @@ public class DistanceAgent extends JPSAgent {
       uris.add(iri.toString());
     }
 
-    if(uris.size() > 0) this.context = new ModelContext(route, getNamespace(uris.get(0)) + "/");
+    if(uris.size() > 0) {
+      String route = AccessAgentMapping.getTargetResourceID(uris.get(0));
+      if (route != null) {
+        this.route = route;
+      }
+      this.context = new ModelContext(this.route, AccessAgentMapping.getNamespaceEndpoint(uris.get(0)));
+    }
 
     ArrayList<Double> distances = new ArrayList<>();
 
@@ -181,19 +184,8 @@ public class DistanceAgent extends JPSAgent {
    * @return uri of the distance graph in the object's namespace as string.
    */
   private String getDistanceGraphUri(String uriString) {
-    String namespace = getNamespace(uriString);
+    String namespace = AccessAgentMapping.getNamespaceEndpoint(uriString);
     return namespace + DISTANCE_GRAPH;
-  }
-
-  /**
-   * retrieves namespace from city object Uri.
-   *
-   * @param uriString city object id
-   * @return Uri of the object's namespace as string.
-   */
-  private String getNamespace(String uriString) {
-    String[] splitUri = uriString.split("/");
-    return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 2));
   }
 
   /**
@@ -232,7 +224,7 @@ public class DistanceAgent extends JPSAgent {
             .addPrefix(OCGML_PREFIX, ocgmlUri)
             .addVar(QST_MARK + SRS_NAME_OBJECT)
             .addWhere(QST_MARK + "s" , predicate, QST_MARK + SRS_NAME_OBJECT);
-    sb.setVar(Var.alloc("s"), NodeFactory.createURI(getNamespace(uriString) + "/"));
+    sb.setVar(Var.alloc("s"), NodeFactory.createURI(AccessAgentMapping.getNamespaceEndpoint(uriString)));
 
     return sb.build();
   }

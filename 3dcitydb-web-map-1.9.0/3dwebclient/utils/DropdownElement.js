@@ -135,7 +135,8 @@ function getValidPlots(){
 		dataType: 'json',
 		contentType: 'application/json',
 		success: function (data, status_message, xhr) {
-			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]['filtered']);
+			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
+			highlightMultipleObjects(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
 		}
 	});
 }

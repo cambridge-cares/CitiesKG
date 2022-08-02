@@ -1,7 +1,7 @@
 # Semantic 3D City Agents
 
-The Semantic City Agents is an intelligent automation for Dynamic Geospatial Knowledge Graphs.
-It contains 3 agents: CityImportAgent, CityExportAgent and DistanceAgent. All 3 agents works with the semantic cities database - [Cities Knowledge Graphs](http://www.theworldavatar.com:83/citieskg/#query).
+The Semantic City Agents is an intelligent automation for Dynamic Geospatial Knowledge Graphs. 
+It contains 6 agents: CityImportAgent, CityExportAgent, DistanceAgent, CityInformationAgent, ThematicSurfaceDiscoveryAgent, and CEAAgent. All agents works with the semantic cities database - [Cities Knowledge Graphs](http://www.theworldavatar.com:83/citieskg/#query).
 
 ## System requirements
 
@@ -11,15 +11,15 @@ It contains 3 agents: CityImportAgent, CityExportAgent and DistanceAgent. All 3 
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
-These detailed instructions describes the setup on a windows machine, for Mac OS it is equivalent.
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system. 
+These detailed instructions describes the setup on a windows machine, for Mac OS it is equivalent.  
 
 
 ### Prerequisites
 
 * Java JRE or JDK >= 1.8
 * [Tomcat 9](https://www.liquidweb.com/kb/installing-tomcat-9-on-windows/)
-* [Maven](https://maven.apache.org/) - Dependency Management
+* [Maven](https://maven.apache.org/) - Dependency Management >= 3.8.4
 * Python 3
 
 JDK or JRE will need to be installed on the Windows Server before you can configure Tomcat 9 on the server.
@@ -54,14 +54,14 @@ OS name: "windows 10", version: "10.0", arch: "amd64", family: "windows"
 
 For [Tomcat 9]((https://www.liquidweb.com/kb/installing-tomcat-9-on-windows/)), check the link and learn how to deploy the artifact to tomcat server.
 
-After the tomcat installation, you can find the folder "C:\Program Files\Apache Software Foundation\Tomcat 9.0".
-This folder is by default not accessible, in order to make it executable, you need to click on the folder and open the folder to view once.
+After the tomcat installation, you can find the folder "C:\Program Files\Apache Software Foundation\Tomcat 9.0". 
+This folder is by default not accessible, in order to make it executable, you need to click on the folder and open the folder to view once.  
 
 
 
 ### Install and Build
 
-1. Additional dependencies used by agents are JPS_BASE_LIB and AsynchronousWatcherService, which provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository. You may skip this step if both dependencies have been set up before.
+1. Additional dependencies used by agents are JPS_BASE_LIB and AsynchronousWatcherService, which provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository. You may skip this step if both dependencies have been set up before. 
 
 Clone the TWA project from the [TWA repository](https://github.com/cambridge-cares/TheWorldAvatar) and checkout to 'main' branch.
 
@@ -92,24 +92,23 @@ mvn clean install
       <version>2.1.5</version>
       <scope>provided</scope>
     </dependency>
-
 ```
 
 This dependency can be either found in your .m2 repository or downloaded from this [website](https://search.maven.org/search?q=g:com.blazegraph%20AND%20a:blazegraph-jar&core=gav).
 Make sure that you download the correct version 2.1.5, otherwise the POM file of the agents need to be adjusted.
 
-After you get the correct artifact *blazegraph-jar-2.1.5.jar*, you can place it into the folder on your server in *C:\Program Files\Apache Software Foundation\Tomcat 9.0\lib*,
-this folder contains all the libraries provided by the server.
+After you get the correct artifact *blazegraph-jar-2.1.5.jar*, you can place it into the folder on your server in *C:\Program Files\Apache Software Foundation\Tomcat 9.0\lib*, 
+this folder contains all the libraries provided by the server. 
 
-If this step has not been done, you might get a `NoClassDefFoundError`.
+If this step has not been done, you might get a `NoClassDefFoundError`. 
 
 #### Install and build local AccessAgent (for developers)
 For development and testing purposes, the [AccessAgent](https://github.com/cambridge-cares/TheWorldAvatar/wiki/Access-Agent) can be deployed locally via Docker to access your local Blazegraph.
 1. Set up a Docker environment as described in the [TWA Wiki - Docker: Environment](https://github.com/cambridge-cares/TheWorldAvatar/wiki/Docker%3A-Environment) page.
 2. In the TWA repository clone, locate the properties file in _TheWorldAvatar/JPS_ACCESS_AGENT/access-agent/src/main/resources/accessagent.properties_, and replace `http://www.theworldavatar.com/blazegraph/namespace/ontokgrouter/sparql` with `http://host.docker.internal:9999/blazegraph/namespace/ontokgrouter/sparql`.
-   If using a different port for Blazegraph, replace `9999` with your port number.
+    If using a different port for Blazegraph, replace `9999` with your port number.
 3. In your local Blazegraph, create a new namespace called 'ontokgrouter'.
-4. For each endpoint to be accessed, 5 triples need to be added to the 'ontokgrouter' namespace. An example SPARQL update is shown, which inserts the triples required to access a namespace 'test' in a local Blazegraph on port 9999. Replace all occurrences of `test` with the name of the namespace and `9999` with your port number, and execute the SPARQL update.
+4. For each endpoint to be accessed, 5 triples need to be added to the 'ontokgrouter' namespace. An example SPARQL update is shown, which inserts the triples required to access a namespace 'test' in a local Blazegraph on port 9999. Replace all occurrences of `test` with the name of the namespace and `9999` with your port number, and execute the SPARQL update. 
 ```
 INSERT DATA {
 <http://host.docker.internal:9999/blazegraph/ontokgrouter/test>	<http://www.theworldavatar.com/ontology/ontokgrouter/OntoKGRouter.owl#hasQueryEndpoint>	"http://host.docker.internal:9999/blazegraph/namespace/test/sparql".
@@ -143,7 +142,7 @@ After starting the tomcat server, you can place the agent .war artifact into the
 
 Import the `agents` module as Maven project into IntelliJ IDE. Configure a Run/Debug Configuration on IntelliJ IDE with *tomcat local server* and choose the correct parameter.
 
-If Maven has been installed and recognized by IDE correctly, on the *Deployment* tab,
+If Maven has been installed and recognized by IDE correctly, on the *Deployment* tab, 
 you can add an artifact and choose *agents:war exploded* . Make sure the *Application context* is */agents*
 
 After that, you can start the tomcat server and deploy the artifact directly from the IDE.
@@ -173,12 +172,10 @@ Please note that splitting of large files into smaller chunks to improve perform
 
 ### Configuration
 
-In the `resources/config.properties` file, the property `uri.route` must be specified. This is the target resource
-ID which queries and updates will be addressed to. By default, this is an AccessAgent string, where e.g.
-`http://localhost:48080/churchill` is interpreted as "using an AccessAgent instance hosted at `http://localhost:48080`,
-access the knowledge graph `churchill` registered in ontokgrouter". Therefore, an AccessAgent instance is required to use this. However, a URI prefixed with `HARDCODE:` e.g.
-`HARDCODE:http://localhost:9999/blazegraph/namespace/churchill/sparql` will be interpreted as a literal endpoint to
-query directly, which does not require AccessAgent.
+In the `resources/config.properties` file, the property `uri.route` must be specified. This is the target resource 
+ID which queries and updates will be addressed to. By default, this is an AccessAgent string, where e.g. 
+`http://localhost:48080/churchill` is interpreted as "using an AccessAgent instance hosted at `http://localhost:48080`, 
+access the knowledge graph `churchill` registered in ontokgrouter". Therefore, an AccessAgent instance is required to use this.
 
 ### Request
 
@@ -199,7 +196,7 @@ Parameters:
 - `namespace`: target namespace, e.g. "http://localhost:9999/blazegraph/namespace/churchill/sparql/", which is used to prefix named graph IRIs and newly created object IRIs. Typically the same as configured `uri.route`, but not necessarily.
 - `mode`: "restructure", "validate" or "footprint". See sections below.
 - `lod1`, `lod2`, `lod3`, `lod4` (optional): optionally specify one or more levels of detail to target by providing `true`. All other LoDs are ignored. If no LoD is specified, all are targeted.
-- `cityObjectIRI` (optional): optionally specify a single building to target. If omitted, all buildings in the
+- `cityObjectIRI` (optional): optionally specify a single building to target. If omitted, all buildings in the 
   namespace are targeted. `namespace` is still necessary even with `cityObjectIRI` specified.
 - `threshold` (optional): the threshold angle in degrees; if the angle between a polygon's normal and the horizontal plane exceeds this, it is no longer considered a wall. Defaults to 15 if omitted.
 
@@ -252,9 +249,9 @@ A complete and comprehensive documentation on the 3DCityDB-Web-Map-Client is ava
 
 In order to use the extended 3DCityDB-Web-Map-Client for city agents make sure that:
 
-* your browser support WebGL (visit http://get.webgl.org/ for checking it).
-* open source JavaScript runtime environment Node.js is installed on your machine (visit https://nodejs.org/en/ to download the latest version).
-* the extended web-map-client does not have node_modules folder thus, download original web-map-client via the following GitHub link (https://github.com/3dcitydb/3dcitydb-web-map/releases) and copy node_modules folder in `/CitiesKG/3dcitydb-web-map-1.9.0/`.
+* Your browser support WebGL (visit http://get.webgl.org/ for checking it).
+* Open source JavaScript runtime environment Node.js is installed on your machine (visit https://nodejs.org/en/ to download the latest version). 
+* The extended web-map-client does not have node_modules folder thus, download original web-map-client via the following GitHub link (https://github.com/3dcitydb/3dcitydb-web-map/releases) and copy node_modules folder in `/CitiesKG/3dcitydb-web-map-1.9.0/`.
 
 To run the web-map-client, in a shell environment navigate to the folder where *server.js* file is located `/CitiesKG/3dcitydb-web-map-1.9.0/` and simply run the following command to launch the server:
 
@@ -265,7 +262,7 @@ To run the web-map-client, in a shell environment navigate to the folder where *
 The web-map-client is now available via the URL (http://localhost:8080/3dwebclient/index.html). Place the .kml file in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/` and add the web link of the .kml file in `URL(*)` input field of the web-map-client Toolbox widget. In the input field `Name(*)`, a proper layer name must be specified as well. After clicking AddLayer, the .kml file will be visualised in the web-map-client.
 
 Solutions to common issues:
-* DistanceAgent URL, used in POST request, is hardcoded in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/script.js`. If agents are deployed on another port than 8080, agent URL needs to be updated accordingly in *script.js*.
+* DistanceAgent and CityInformationAgent URL, used in POST request, is hardcoded in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/script.js` and `CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/utils/mashup-data-source-service/application/KMLDataSource.js` respectively. If agents are deployed on another port than 8080, agent URL needs to be updated accordingly in the respective files.
 * If *DistanceAgent* is used with .kml files that were generated not by *ExporterAgent*, .kml file should have `<name>` value exactly same way as it is stored in the KG.
 
 ## Contributing
