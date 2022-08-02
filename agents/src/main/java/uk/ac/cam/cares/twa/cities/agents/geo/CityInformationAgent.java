@@ -4,6 +4,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.ResourceBundle;
 import java.util.Set;
 import javax.servlet.annotation.WebServlet;
@@ -49,9 +52,11 @@ public class CityInformationAgent extends JPSAgent {
   private static final String USE =  "use";
   private static final String ONTOZONING_PREFIX = "zo";
   private static final String CITY_OBJECT_ID = "cityObjectId";
-
   private static final String ONTO_PLANCON_PREFIX = "pco";
   private static final String OM_PREFIX = "om";
+  private static final String GFA_VALUE = "GFAvalue";
+  private static final String ALLOWED_GFA = "allowedGFA";
+  private static final String ZONING_CASE =  "ZoningCase";
 
 
   @Getter private String route;
@@ -110,7 +115,17 @@ public class CityInformationAgent extends JPSAgent {
               predicate = ALLOWS_PROGRAMME;
             }
             ArrayList<String> onto_elements = new ArrayList<>(filters.getJSONObject(predicate).keySet());
-            response.put("filtered", getFilteredObjects(predicate, onto_elements));
+            HashMap<String, Double> gfas = new HashMap<>();
+            for (String onto_element: onto_elements) {
+              try {
+                gfas.put(onto_element,
+                    Double.parseDouble(filters.getJSONObject(predicate).getString(onto_element)));
+              }
+              catch (NumberFormatException exception) {
+                gfas.put(onto_element, 0.);
+              }
+            }
+            response.put("filtered", getFilteredObjects(predicate, gfas));
             requestParams.put(agentURL, response);
           }
         } else {
@@ -191,7 +206,7 @@ public class CityInformationAgent extends JPSAgent {
     return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 2));
   }
 
-  private Query getFilterQuery(String predicate, ArrayList<String> onto_class) {
+  private Query getFilterQuery(String predicate, ArrayList<String> onto_class, boolean gfa_case) {
 
     WhereBuilder wb = new WhereBuilder()
         .addPrefix(ONTOZONING_PREFIX, onto_zoning);
@@ -213,48 +228,91 @@ public class CityInformationAgent extends JPSAgent {
     }
     wb.addWhere(QM + CITY_OBJECT_ID, ONTOZONING_PREFIX + ":" + HAS_ZONE_PREDICATE, QM +ZONE);
 
-    WhereBuilder w2b = new WhereBuilder()
-        .addPrefix(ONTO_PLANCON_PREFIX, onto_planning_concept)
-        .addPrefix(OM_PREFIX, om);
-
-    Path buildableSpace = PathFactory.pathLink(NodeFactory.createURI(onto_planning_concept + "hasBuildableSpace"));
-    Path allowedGFA = PathFactory.pathLink(NodeFactory.createURI(onto_planning_concept + "hasAllowedGFA"));
-    Path measure = PathFactory.pathLink(NodeFactory.createURI(om + "hasValue"));
-    Path numeric_value = PathFactory.pathLink(NodeFactory.createURI(om + "hasNumericValue"));
-    Path zoning_case = PathFactory.pathLink(NodeFactory.createURI(onto_planning_concept + "forZoningCase"));
-    Path fullPath_gfa = PathFactory.pathSeq(buildableSpace, allowedGFA);
-    Path fullPath_value = PathFactory.pathSeq(measure, numeric_value);
-    Path fullPath_optional = PathFactory.pathSeq(buildableSpace, zoning_case);
-
-    w2b.addWhere(QM+ CITY_OBJECT_ID, fullPath_gfa.toString(), QM + "allowed_GFA_Id");
-    w2b.addWhere( QM + "allowed_GFA_Id", fullPath_value.toString(), QM + "allowedGFA_value");
-
     SelectBuilder sb = new SelectBuilder()
         .addVar(QM + CITY_OBJECT_ID)
-        .addVar(QM + "allowedGFA_value")
-        .addVar(QM + "ZoningCase")
-        .addGraph(NodeFactory.createURI("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/"), wb)
+        .addGraph(NodeFactory.createURI("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/"), wb);
+
+    if (gfa_case) {
+      WhereBuilder w2b = new WhereBuilder()
+          .addPrefix(ONTO_PLANCON_PREFIX, onto_planning_concept)
+          .addPrefix(OM_PREFIX, om);
+      Path buildableSpace = PathFactory.pathLink(NodeFactory.createURI(onto_planning_concept + "hasBuildableSpace"));
+      Path allowedGFA = PathFactory.pathLink(NodeFactory.createURI(onto_planning_concept + "hasAllowedGFA"));
+      Path measure = PathFactory.pathLink(NodeFactory.createURI(om + "hasValue"));
+      Path numeric_value = PathFactory.pathLink(NodeFactory.createURI(om + "hasNumericValue"));
+      Path zoning_case = PathFactory.pathLink(NodeFactory.createURI(onto_planning_concept + "forZoningCase"));
+      Path fullPath_gfa = PathFactory.pathSeq(buildableSpace, allowedGFA);
+      Path fullPath_value = PathFactory.pathSeq(measure, numeric_value);
+      Path fullPath_optional = PathFactory.pathSeq(buildableSpace, zoning_case);
+      w2b.addWhere(QM+ CITY_OBJECT_ID, fullPath_gfa.toString(), QM + ALLOWED_GFA);
+      w2b.addWhere( QM + ALLOWED_GFA, fullPath_value.toString(), QM + GFA_VALUE);
+
+      sb.addVar(QM + GFA_VALUE)
+        .addVar(QM + ZONING_CASE)
         .addGraph(NodeFactory.createURI("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/buildablespace/"), w2b)
-        .addOptional(QM + CITY_OBJECT_ID, fullPath_optional.toString(), QM + "ZoningCase");
+        .addOptional(QM + CITY_OBJECT_ID, fullPath_optional.toString(), QM + ZONING_CASE);
+    }
+
     return sb.build();
   }
 
-  private JSONArray getFilteredObjects (String predicate, ArrayList<String> onto_elements) {
-    Query query = getFilterQuery(predicate, onto_elements);
-    JSONArray cityobjects = new JSONArray();
+  private JSONArray getFilteredObjects (String predicate, HashMap<String, Double> gfas) {
+    boolean gfa_case = gfas.values().stream().mapToDouble(f -> f).sum() > 0;
+
+    Query query = getFilterQuery(predicate, new ArrayList<>(gfas.keySet()), gfa_case);
+    JSONArray filteredCityobjects = new JSONArray();
     JSONArray query_result = AccessAgentCaller.queryStore(route, query.toString());
-    for (int i = 0; i < query_result.length(); i++) {
-      JSONObject row = (JSONObject) query_result.get(i);
-      cityobjects.put(row.get(CITY_OBJECT_ID));
+
+    if (gfa_case) {
+      HashMap<String, HashMap<String, Double>> object_gfa_cases = new HashMap<>();
+
+      for (int i = 0; i < query_result.length(); i++) {
+        JSONObject row = (JSONObject) query_result.get(i);
+        String cityObjectId = row.getString(CITY_OBJECT_ID);
+        Double gfa = row.getDouble(GFA_VALUE);
+        String zoning_case = row.getString(ZONING_CASE);
+
+         if (object_gfa_cases.containsKey(cityObjectId)) {
+           object_gfa_cases.get(cityObjectId).put(zoning_case, gfa);
+         }
+         else {
+           HashMap<String, Double> newObjectGfas = new HashMap<>();
+           newObjectGfas.put(zoning_case, gfa);
+           object_gfa_cases.put(cityObjectId, newObjectGfas);
+         }
+      }
+
+      for (String cityobject: object_gfa_cases.keySet()){
+        double chosen_gfa = gfas.values().stream().mapToDouble(Double::doubleValue).sum();
+
+        HashMap<String, Double> current_gfas = object_gfa_cases.get(cityobject);
+        ArrayList<Double> relevant_zoning_case_gfas = new ArrayList<>();
+        for (String zoning_case: current_gfas.keySet()) {
+          if (gfas.containsKey(zoning_case)) {
+            relevant_zoning_case_gfas.add(current_gfas.get(zoning_case));
+          }
+        }
+        if (relevant_zoning_case_gfas.isEmpty()){
+          if (current_gfas.get("") >= chosen_gfa){
+            filteredCityobjects.put(object_gfa_cases.get(CITY_OBJECT_ID));
+          } else {
+            if (Collections.min(relevant_zoning_case_gfas) >= chosen_gfa) {
+              filteredCityobjects.put(object_gfa_cases.get(CITY_OBJECT_ID));
+            }
+          }
+        }
+      }
     }
-    return cityobjects;
+    else {
+      for (int i = 0; i < query_result.length(); i++) {
+        JSONObject row = (JSONObject) query_result.get(i);
+        filteredCityobjects.put(row.get(CITY_OBJECT_ID));
+      }
+    }
+    return filteredCityobjects;
   }
 
   private JSONArray filterGFA () {
     return new JSONArray();
-  }
-
-  private Query getGFAQuery(JSONArray citybjects) {
-    return new Query();
   }
 }
