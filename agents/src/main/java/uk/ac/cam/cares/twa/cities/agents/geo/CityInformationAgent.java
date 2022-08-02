@@ -26,6 +26,7 @@ import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.ogm.models.ModelContext;
 import uk.ac.cam.cares.ogm.models.geo.CityObject;
 import uk.ac.cam.cares.jps.base.http.Http;
+import uk.ac.cam.cares.twa.cities.AccessAgentMapping;
 
 
 /**
@@ -82,18 +83,26 @@ public class CityInformationAgent extends JPSAgent {
     validateInput(requestParams);
     ArrayList<String> uris = new ArrayList<>();
     JSONArray iris = requestParams.getJSONArray(KEY_IRIS);
+
     for (Object iri : iris) {
       uris.add(iri.toString());
     }
     JSONArray cityObjectInformation = new JSONArray();
+
     for (String cityObjectIri : uris) {
-      ModelContext context = new ModelContext(route, getNamespace(cityObjectIri)+ "/");
+      String route = AccessAgentMapping.getTargetResourceID(cityObjectIri);
+      if (route != null) {
+        this.route =  route;
+      }
+
+      ModelContext context = new ModelContext(this.route, AccessAgentMapping.getNamespaceEndpoint(cityObjectIri));
       CityObject cityObject = context.createHollowModel(CityObject.class, cityObjectIri);
       if (lazyload) {
         context.pullAll(cityObject);
       } else {
         context.recursivePullAll(cityObject, 1);
       }
+      cityObject.setEnvelopeType(null);
       ArrayList<CityObject> cityObjectList = new ArrayList<>();
       cityObjectList.add(cityObject);
       cityObjectInformation.put(cityObjectList);
@@ -198,7 +207,7 @@ public class CityInformationAgent extends JPSAgent {
   private void readConfig() {
     ResourceBundle config = ResourceBundle.getBundle("config");
     lazyload = Boolean.getBoolean(config.getString("loading.status"));
-    route = config.getString("uri.route");
+    //route = config.getString("uri.route");
     onto_zoning = config.getString("uri.ontology.ontozoning");
     om = config.getString("uri.ontology.om");
     onto_planning_concept =config.getString("uri.ontology.ontoplanningconcept");
@@ -221,7 +230,7 @@ public class CityInformationAgent extends JPSAgent {
     return sb.build();
   }
 
-  private SelectBuilder getOntoZoneFilterQuery(String predicate, ArrayList<String> onto_class, SelectBuilder sb, String graph) {
+  private void getOntoZoneFilterQuery(String predicate, ArrayList<String> onto_class, SelectBuilder sb, String graph) {
     WhereBuilder wb = new WhereBuilder()
         .addPrefix(ONTOZONING_PREFIX, onto_zoning);
     if (predicate.equals(ALLOWS_USE)) {
@@ -244,10 +253,9 @@ public class CityInformationAgent extends JPSAgent {
 
     sb.addVar(QM + CITY_OBJECT_ID)
         .addGraph(NodeFactory.createURI(graph), wb);
-    return sb;
   }
 
-  private SelectBuilder getGFAFilterQuery(SelectBuilder sb, String graph) {
+  private void getGFAFilterQuery(SelectBuilder sb, String graph) {
     WhereBuilder w2b = new WhereBuilder()
         .addPrefix(ONTO_PLANCON_PREFIX, onto_planning_concept)
         .addPrefix(OM_PREFIX, om);
@@ -263,7 +271,6 @@ public class CityInformationAgent extends JPSAgent {
         .addVar(QM + ZONING_CASE)
         .addGraph(NodeFactory.createURI(graph), w2b);
 
-    return sb;
   }
 
   private JSONArray getFilteredObjects (String predicate, HashMap<String, Double> gfas) {
