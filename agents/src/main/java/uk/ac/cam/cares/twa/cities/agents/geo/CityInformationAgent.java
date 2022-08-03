@@ -326,8 +326,15 @@ public class CityInformationAgent extends JPSAgent {
               relevant_zoning_case_gfas.add(current_gfas.get(zoning_case));
             }
           }
-          if (relevant_zoning_case_gfas.isEmpty()){
-            if (current_gfas.get(DEFAULT_ZONING_CASE) >= chosen_gfa){
+          if (relevant_zoning_case_gfas.isEmpty()) {
+            double plot_gfa;
+            if (current_gfas.containsKey(DEFAULT_ZONING_CASE)) {
+              plot_gfa = current_gfas.get(DEFAULT_ZONING_CASE);
+            }
+            else {
+              plot_gfa = Collections.min(current_gfas.values());
+            }
+            if (plot_gfa >= chosen_gfa) {
               filteredCityobjects.put(cityobject);
             }
           }
@@ -338,7 +345,14 @@ public class CityInformationAgent extends JPSAgent {
           }
         }
         else{
-          if (current_gfas.get(DEFAULT_ZONING_CASE) >= chosen_gfa){
+          double plot_gfa;
+          if (current_gfas.containsKey(DEFAULT_ZONING_CASE)) {
+            plot_gfa = current_gfas.get(DEFAULT_ZONING_CASE);
+          }
+          else {
+            plot_gfa = Collections.min(current_gfas.values());
+          }
+          if (plot_gfa >= chosen_gfa) {
             filteredCityobjects.put(cityobject);
           }
         }
