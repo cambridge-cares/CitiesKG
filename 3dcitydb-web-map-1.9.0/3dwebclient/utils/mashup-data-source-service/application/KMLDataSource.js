@@ -149,8 +149,8 @@ var KMLDataSource = /** @class */ (function (_super) {
         var cia_data = context_url ? {iris: [iri], context: context_obj} : {iris: [iri]};
 
         jQuery.ajax({
-            url: "http://localhost:8080/agents/cityobjectinformation",
-            //url: "http://www.theworldavatar.com/agents/cityobjectinformation",
+            //url: "http://localhost:8080/agents/cityobjectinformation",
+            url: "http://www.theworldavatar.com/agents/cityobjectinformation",
             type: 'POST',
             data: JSON.stringify(cia_data),
             dataType: 'json',
