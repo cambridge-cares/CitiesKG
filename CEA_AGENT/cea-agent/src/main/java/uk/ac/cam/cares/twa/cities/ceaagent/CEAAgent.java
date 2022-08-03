@@ -589,11 +589,18 @@ public class CEAAgent extends JPSAgent {
         JSONArray queryResultArray = this.queryStore(route, q.toString());
 
         if(!queryResultArray.isEmpty()){
-            if(value!="FootprintSurfaceGeom") {
+            if (value == "Lod0FootprintId" || value == "FootprintThematicSurface"){
+                for (int i = 0; i < queryResultArray.length(); i++){
+                    result = result + "#" + queryResultArray.getJSONObject(i).get("geometry").toString();
+                }
+                result = extractFootprint(result.substring(1, result.length()));
+
+            }
+            else if (value!="FootprintSurfaceGeom") {
                 result = queryResultArray.getJSONObject(0).get(value).toString();
             }
             else{
-                result=getFootprint(queryResultArray);
+                result=getGroundGeometry(queryResultArray);
             }
         }
         return result;
@@ -605,7 +612,7 @@ public class CEAAgent extends JPSAgent {
      * @param results array of building surfaces
      * @return footprint geometry as string
      */
-    private String getFootprint(JSONArray results){
+    private String getGroundGeometry(JSONArray results){
         String footprint="";
         ArrayList<String> z_values = new ArrayList<>();
         Double minimum=Double.MAX_VALUE;
@@ -663,7 +670,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve a footprint for building linked to surface geometries.
+     * builds a SPARQL query for a specific URI to retrieve all surface geometries to a building
      * @param uriString city object id
      * @return returns a query string
      */
@@ -687,7 +694,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve a footprint for building linked to thematic surfaces.
+     * builds a SPARQL query for a specific URI to retrieve ground surface geometries for building linked to thematic surfaces with ocgml:objectClassId 35
      * @param uriString city object id
      * @return returns a query string
      */
@@ -696,15 +703,15 @@ public class CEAAgent extends JPSAgent {
             WhereBuilder wb1 = new WhereBuilder()
                     .addPrefix("ocgml", ocgmlUri)
                     .addWhere("?surf", "ocgml:cityObjectId", "?s")
-                    .addWhere("?surf", "ocgml:GeometryType", "?FootprintThematicSurface")
-                    .addFilter("!isBlank(?FootprintThematicSurface)");
+                    .addWhere("?surf", "ocgml:GeometryType", "?geometry")
+                    .addFilter("!isBlank(?geometry)");
             WhereBuilder wb2 = new WhereBuilder()
                     .addPrefix("ocgml", ocgmlUri)
                     .addWhere("?s", "ocgml:buildingId", "?building")
                     .addWhere("?s", "ocgml:objectClassId", "?groundSurfId")
                     .addFilter("?groundSurfId = 35"); //Thematic Surface Ids are 33:roof, 34:wall and 35:ground
             SelectBuilder sb = new SelectBuilder()
-                    .addVar("?FootprintThematicSurface")
+                    .addVar("?geometry")
                     .addGraph(NodeFactory.createURI(getGraph(uriString,SURFACE_GEOMETRY)), wb1)
                     .addGraph(NodeFactory.createURI(getGraph(uriString,THEMATIC_SURFACE)), wb2);
             sb.setVar( Var.alloc( "building" ), NodeFactory.createURI(getBuildingUri(uriString)));
@@ -1322,6 +1329,53 @@ public class CEAAgent extends JPSAgent {
         annualValue = Math.round(annualValue*Math.pow(10,2))/Math.pow(10,2);
         return annualValue.toString();
 
+    }
+
+    /**
+     * Extract footprint from the given ground surface geometries
+     * @param geometry string containing all the ground surface geometries
+     * @return footprint as a geometry
+     */
+    public String extractFootprint(String geometry){
+        String [] split = geometry.split("#");
+        ArrayList<String> coordinate1 = new ArrayList<>();
+        ArrayList<String> coordinate2 = new ArrayList<>();
+        ArrayList<String> coordinate3 = new ArrayList<>();
+        ArrayList<Integer> indices = new ArrayList<Integer>();
+        String output = "";
+        int j;
+
+        for (int i = 0; i < split.length; i+=3){
+            coordinate1.add(split[i]);
+            coordinate2.add(split[i+1]);
+            coordinate3.add(split[i+2]);
+        }
+
+        for (int i = 0; i < coordinate1.size(); i++){
+            j = i + 1;
+
+            while (j < coordinate1.size()){
+
+                // if found duplicate points remove
+                if (coordinate1.get(i).equals(coordinate1.get(j))  && coordinate2.get(i).equals(coordinate2.get(j))  && coordinate3.get(i).equals(coordinate3.get(j)) ){
+                    coordinate1.remove(j);
+                    coordinate2.remove(j);
+                    coordinate3.remove(j);
+                }
+                else{
+                    j++;
+                }
+            }
+        }
+
+        for (int i = 0; i < coordinate1.size(); i++){
+            output = output + "#" + coordinate1.get(i) + "#" + coordinate2.get(i) + "#" + coordinate3.get(i);
+        }
+
+        // geometry string forms an enclosed polygon so the starting and end points have to be the same
+        output = output + "#" + coordinate1.get(0) + "#" + coordinate2.get(0) + "#" + coordinate3.get(0);
+
+        return output.substring(1, output.length());
     }
 
 }
