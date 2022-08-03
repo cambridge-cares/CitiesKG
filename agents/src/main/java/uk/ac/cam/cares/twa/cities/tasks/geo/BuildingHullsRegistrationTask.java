@@ -6,12 +6,11 @@ import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import uk.ac.cam.cares.ogm.models.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.ogm.models.ModelContext;
-import uk.ac.cam.cares.ogm.models.geo.Building;
-import uk.ac.cam.cares.ogm.models.geo.ThematicSurface;
+import uk.ac.cam.cares.twa.cities.model.geo.Building;
+import uk.ac.cam.cares.twa.cities.model.geo.ThematicSurface;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
