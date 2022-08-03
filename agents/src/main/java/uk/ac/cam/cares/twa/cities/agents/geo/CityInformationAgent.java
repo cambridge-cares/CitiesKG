@@ -25,6 +25,7 @@ import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.ogm.models.ModelContext;
 import uk.ac.cam.cares.ogm.models.geo.CityObject;
 import uk.ac.cam.cares.jps.base.http.Http;
+import uk.ac.cam.cares.twa.cities.AccessAgentMapping;
 
 
 /**
@@ -71,7 +72,13 @@ import uk.ac.cam.cares.jps.base.http.Http;
           uris.add(iri.toString());
         }
         JSONArray cityObjectInformation = new JSONArray();
+
         for (String cityObjectIri : uris) {
+          String route = AccessAgentMapping.getTargetResourceID(cityObjectIri);
+          if (route != null) {
+            this.route = route;
+          }
+
           ModelContext context = new ModelContext(route, getNamespace(cityObjectIri)+ "/");
           CityObject cityObject = context.createHollowModel(CityObject.class, cityObjectIri);
           if (lazyload) {
@@ -79,11 +86,19 @@ import uk.ac.cam.cares.jps.base.http.Http;
           } else {
             context.recursivePullAll(cityObject, 1);
           }
+          cityObject.setEnvelopeType(null);
           ArrayList<CityObject> cityObjectList = new ArrayList<>();
           cityObjectList.add(cityObject);
           cityObjectInformation.put(cityObjectList);
         }
         requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
+
+        /**
+         * {"iris": ["http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/BLDG_0003000000a50c90/"],
+         * "context": {"http://www.theworldavatar.com:83/citieskg/otheragentIRI": {"key1":"value1", "key2": value2"},
+         * "http://www.theworldavatar.com:83/citieskg/anotheragentIRI": {"key3":"value3", "key4": value4"},}
+         * }
+         **/
 
         if (requestParams.keySet().contains(KEY_CONTEXT)) {
           Set<String> agentURLs = requestParams.getJSONObject(KEY_CONTEXT).keySet();
