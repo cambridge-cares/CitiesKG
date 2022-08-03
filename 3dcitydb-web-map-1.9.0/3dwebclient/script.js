@@ -666,11 +666,12 @@ function getMidpoint(point1, point2) {
 
 }
 
-
 //Shiying: highlight multiple cityobjects
-function highlightMultipleObjects(filterObjectsArray){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
+function highlightMultipleObjects(cityObjectsArray){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
     //var cityObjectsArray = ["UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d", "UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3"];
-    var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespac…object/UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d/"];
+    //var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobjectUUID_b6f4d0de-cf5c-4917-aba0-c1a91fa4960b/"];
+
+
     // UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d - inside
     // UUID_b6f4d0de-cf5c-4917-aba0-c1a91fa4960b - outside of the scene
     var currentLayer = webMap.activeLayer;
