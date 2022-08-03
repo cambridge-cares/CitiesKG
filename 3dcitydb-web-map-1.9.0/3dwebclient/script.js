@@ -683,7 +683,7 @@ function highlightMultipleObjects(cityObjectsArray){  // citydbKmlLayer object, 
     for (let i = 0; i < cityObjectsArray.length; i++) {
         var strArray = cityObjectsArray[i].split("/");
         var gmlid = strArray[strArray.length-2];
-        filteredObjects[gmlid] = highlightColor;
+        filteredObjects[gmlid] = new Cesium.Color(65/255, 168/255, 255/255, 0.8);
     }
     /**
     var cameraPostion = {
