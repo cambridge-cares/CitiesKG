@@ -326,9 +326,11 @@ public class CityInformationAgent extends JPSAgent {
               relevant_zoning_case_gfas.add(current_gfas.get(zoning_case));
             }
           }
-          if (relevant_zoning_case_gfas.isEmpty()){
-            if (current_gfas.get(DEFAULT_ZONING_CASE) >= chosen_gfa){
-              filteredCityobjects.put(cityobject);
+          if (relevant_zoning_case_gfas.isEmpty()) {
+            if (current_gfas.containsKey(DEFAULT_ZONING_CASE)) {
+              if (current_gfas.get(DEFAULT_ZONING_CASE) >= chosen_gfa) {
+                filteredCityobjects.put(cityobject);
+              }
             }
           }
           else {
