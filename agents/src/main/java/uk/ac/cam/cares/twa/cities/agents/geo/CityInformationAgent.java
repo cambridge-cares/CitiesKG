@@ -14,8 +14,8 @@ import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.twa.cities.AccessAgentMapping;
 import uk.ac.cam.cares.ogm.models.ModelContext;
-import uk.ac.cam.cares.ogm.models.geo.CityObject;
 import uk.ac.cam.cares.jps.base.http.Http;
+import uk.ac.cam.cares.twa.cities.model.geo.CityObject;
 
 
 /**

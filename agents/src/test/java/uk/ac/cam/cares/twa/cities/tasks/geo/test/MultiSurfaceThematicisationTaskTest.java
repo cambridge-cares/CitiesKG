@@ -4,8 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.ogm.models.ModelContext;
-import uk.ac.cam.cares.ogm.models.geo.GeometryType;
-import uk.ac.cam.cares.ogm.models.geo.SurfaceGeometry;
+import uk.ac.cam.cares.twa.cities.model.geo.GeometryType;
+import uk.ac.cam.cares.twa.cities.model.geo.SurfaceGeometry;
 import uk.ac.cam.cares.twa.cities.tasks.geo.MultiSurfaceThematicisationTask;
 
 import java.lang.reflect.Field;
