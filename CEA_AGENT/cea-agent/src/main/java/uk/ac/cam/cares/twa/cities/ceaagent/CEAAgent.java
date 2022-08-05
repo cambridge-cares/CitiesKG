@@ -176,7 +176,11 @@ public class CEAAgent extends JPSAgent {
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
                         testData.add(new CEAInputData(footprint, height));
-                        if(i==0) crs = getValue(uri, "CRS", route); //just get crs once - assuming all iris in same namespace
+                        if (i==0) {
+                            crs = getValue(uri, "CRS", route);
+                            crs = crs == "" ? crs = getValue(uri, "DatabasesrsCRS", route) : crs;
+                            if (crs == ""){crs = getNamespace(uri).split("EPSG").length == 2 ? getNamespace(uri).split("EPSG")[1].split("/")[0] : "27700";}
+                        } //just get crs once - assuming all iris in same namespace
                     }
                     // Manually set thread number to 0 - multiple threads not working so needs investigating
                     // Potentially issue is CEA is already multi-threaded
@@ -593,7 +597,8 @@ public class CEAAgent extends JPSAgent {
                 for (int i = 0; i < queryResultArray.length(); i++){
                     result = result + "#" + queryResultArray.getJSONObject(i).get("geometry").toString();
                 }
-                result = extractFootprint(result.substring(1, result.length()));
+                result.substring(1, result.length());
+                // result = extractFootprint(result.substring(1, result.length()));
 
             }
             else if (value!="FootprintSurfaceGeom") {
@@ -663,6 +668,8 @@ public class CEAAgent extends JPSAgent {
                 return getHeightQueryMeasuredHeight(uriString);
             case "HeightGenAttr":
                 return getHeightQueryGenAttr(uriString);
+            case "DatabasesrsCRS":
+                return getDatabasesrsCrsQuery(uriString);
             case "CRS":
                 return getCrsQuery(uriString);
         }
@@ -730,16 +737,20 @@ public class CEAAgent extends JPSAgent {
      * @return returns a query string
      */
     private Query getHeightQueryMeasuredHeight(String uriString) {
-        WhereBuilder wb = new WhereBuilder();
-        SelectBuilder sb = new SelectBuilder();
-
-        wb.addPrefix("ocgml", ocgmlUri)
-                .addWhere("?s", "ocgml:measuredHeight", "?HeightMeasuredHeight");
-        sb.addVar("?HeightMeasuredHeight")
-                .addGraph(NodeFactory.createURI(getGraph(uriString,BUILDING)), wb);
-        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
-
-        return sb.build();
+        try {
+            WhereBuilder wb = new WhereBuilder()
+                    .addPrefix("ocgml", ocgmlUri)
+                    .addWhere("?s", "ocgml:measuredHeight", "?HeightMeasuredHeight")
+                    .addFilter("!isBlank(?HeightMeasuredHeight)");
+            SelectBuilder sb = new SelectBuilder()
+                    .addVar("?HeightMeasuredHeight")
+                    .addGraph(NodeFactory.createURI(getGraph(uriString,BUILDING)), wb);
+            sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
+            return sb.build();
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -748,15 +759,20 @@ public class CEAAgent extends JPSAgent {
      * @return returns a query string
      */
     private Query getHeightQueryMeasuredHeigh(String uriString) {
-        WhereBuilder wb = new WhereBuilder();
-        SelectBuilder sb = new SelectBuilder();
-        wb.addPrefix("ocgml", ocgmlUri)
-                .addWhere("?s", "ocgml:measuredHeigh", "?HeightMeasuredHeigh");
-        sb.addVar("?HeightMeasuredHeigh")
-                .addGraph(NodeFactory.createURI(getGraph(uriString,BUILDING)), wb);
-        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
-
-        return sb.build();
+        try {
+            WhereBuilder wb = new WhereBuilder()
+                    .addPrefix("ocgml", ocgmlUri)
+                    .addWhere("?s", "ocgml:measuredHeigh", "?HeightMeasuredHeigh")
+                    .addFilter("!isBlank(?HeightMeasuredHeigh)");
+            SelectBuilder sb = new SelectBuilder()
+                    .addVar("?HeightMeasuredHeigh")
+                    .addGraph(NodeFactory.createURI(getGraph(uriString, BUILDING)), wb);
+            sb.setVar(Var.alloc("s"), NodeFactory.createURI(getBuildingUri(uriString)));
+            return sb.build();
+        }catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -780,11 +796,11 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a CRS using namespace from uri
+     * builds a SPARQL query for a CRS in the DatabaseSRS graph using namespace from uri
      * @param uriString city object id
      * @return returns a query string
      */
-    private Query getCrsQuery(String uriString) {
+    private Query getDatabasesrsCrsQuery(String uriString) {
         WhereBuilder wb = new WhereBuilder()
                 .addPrefix("ocgml", ocgmlUri)
                 .addWhere("?s", "ocgml:srid", "?CRS");
@@ -810,6 +826,22 @@ public class CEAAgent extends JPSAgent {
                 .addVar("?geometry")
                 .addWhere(wb);
         sb.setVar( Var.alloc( "building" ), NodeFactory.createURI(getBuildingUri(uriString)));
+        return sb.build();
+    }
+
+    /**
+     * builds a SPARQL query for a CRS not in the DatabaseSRS graph using namespace from uri
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getCrsQuery(String uriString) {
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ocgml", ocgmlUri)
+                .addWhere("?s", "ocgml:srid", "?CRS");
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?CRS")
+                .addWhere(wb);
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getNamespace(uriString)));
         return sb.build();
     }
 
