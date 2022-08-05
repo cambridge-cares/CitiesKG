@@ -597,8 +597,7 @@ public class CEAAgent extends JPSAgent {
                 for (int i = 0; i < queryResultArray.length(); i++){
                     result = result + "#" + queryResultArray.getJSONObject(i).get("geometry").toString();
                 }
-                result.substring(1, result.length());
-                // result = extractFootprint(result.substring(1, result.length()));
+                result = extractFootprintVertices(result.substring(1, result.length()));
 
             }
             else if (value!="FootprintSurfaceGeom") {
@@ -1364,11 +1363,11 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Extract footprint from the given ground surface geometries
+     * Extract footprint vertices from the given ground surface geometries
      * @param geometry string containing all the ground surface geometries
-     * @return footprint as a geometry
+     * @return unique footprint vertices as a geometry
      */
-    public String extractFootprint(String geometry){
+    public String extractFootprintVertices(String geometry){
         String [] split = geometry.split("#");
         ArrayList<String> coordinate1 = new ArrayList<>();
         ArrayList<String> coordinate2 = new ArrayList<>();
@@ -1403,9 +1402,6 @@ public class CEAAgent extends JPSAgent {
         for (int i = 0; i < coordinate1.size(); i++){
             output = output + "#" + coordinate1.get(i) + "#" + coordinate2.get(i) + "#" + coordinate3.get(i);
         }
-
-        // geometry string forms an enclosed polygon so the starting and end points have to be the same
-        output = output + "#" + coordinate1.get(0) + "#" + coordinate2.get(0) + "#" + coordinate3.get(0);
 
         return output.substring(1, output.length());
     }
