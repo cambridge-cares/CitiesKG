@@ -81,79 +81,84 @@ public class CityInformationAgent extends JPSAgent {
   @Override
   public JSONObject processRequestParameters(JSONObject requestParams) {
 
-    validateInput(requestParams);
-    ArrayList<String> uris = new ArrayList<>();
-    JSONArray iris = requestParams.getJSONArray(KEY_IRIS);
+    if (validateInput(requestParams)){
 
-    for (Object iri : iris) {
-      uris.add(iri.toString());
-    }
-    JSONArray cityObjectInformation = new JSONArray();
+      ArrayList<String> uris = new ArrayList<>();
+      JSONArray iris = requestParams.getJSONArray(KEY_IRIS);
 
-    for (String cityObjectIri : uris) {
-      String route = AccessAgentMapping.getTargetResourceID(cityObjectIri);
-      if (route != null) {
-        this.route =  route;
+      for (Object iri : iris) {
+        uris.add(iri.toString());
       }
+      JSONArray cityObjectInformation = new JSONArray();
 
-      ModelContext context = new ModelContext(this.route, AccessAgentMapping.getNamespaceEndpoint(cityObjectIri));
-      CityObject cityObject = context.createHollowModel(CityObject.class, cityObjectIri);
-      if (lazyload) {
-        context.pullAll(cityObject);
-      } else {
-        context.recursivePullAll(cityObject, 1);
-      }
-      cityObject.setEnvelopeType(null);
-      ArrayList<CityObject> cityObjectList = new ArrayList<>();
-      cityObjectList.add(cityObject);
-      cityObjectInformation.put(cityObjectList);
-    }
-    requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
+      for (String cityObjectIri : uris) {
+        String route = AccessAgentMapping.getTargetResourceID(cityObjectIri);
+        if (route != null) {
+          this.route =  route;
+        }
 
-    if (requestParams.keySet().contains(KEY_CONTEXT)) {
-      Set<String> agentURLs = requestParams.getJSONObject(KEY_CONTEXT).keySet();
-      for (String agentURL : agentURLs) {
-        JSONObject requestBody =  new JSONObject();
-        requestBody.put(KEY_IRIS, requestParams.getJSONArray(KEY_IRIS));
-        JSONObject agentKeyValuePairs = requestParams.getJSONObject(KEY_CONTEXT).getJSONObject(agentURL);
-        JSONObject response = new JSONObject();
-
-        // if CIA is directly connecting to access agent but original request misses "targetresourceiri" key.
-        if ((agentURL.contains(JPSConstants.ACCESS_AGENT_PATH)) && !(agentKeyValuePairs.keySet().contains(JPSConstants.TARGETIRI))){
-          JSONObject filters = requestParams.getJSONObject(KEY_CONTEXT).getJSONObject(agentURL);
-
-          String predicate = "";
-          if (filters.keySet().contains(ALLOWS_USE)) {
-            predicate = ALLOWS_USE;
-          } else if (filters.keySet().contains(ALLOWS_PROGRAMME)){
-            predicate = ALLOWS_PROGRAMME;
-          }
-
-          HashMap<String, Double> gfas = new HashMap<>();
-          if (!predicate.equals("")) {
-            ArrayList<String> onto_elements = new ArrayList<>(filters.getJSONObject(predicate).keySet());
-            for (String onto_element: onto_elements) {
-              try {
-                gfas.put(onto_element,
-                    Double.parseDouble(filters.getJSONObject(predicate).getString(onto_element)));
-              }
-              catch (NumberFormatException exception) {
-                gfas.put(onto_element, 0.);
-              }
-            }
-          }
-          double total_gfa = 0.;
-          if (filters.keySet().contains(TOTAL_GFA)) {
-            try {
-              total_gfa = Double.parseDouble(filters.getString(TOTAL_GFA));
-            }
-            catch (NumberFormatException ignored) {
-            }
-          }
-          response.put("filtered", getFilteredObjects(predicate, gfas, total_gfa));
-          requestParams.put(agentURL, response);
-
+        ModelContext context = new ModelContext(this.route, AccessAgentMapping.getNamespaceEndpoint(cityObjectIri));
+        CityObject cityObject = context.createHollowModel(CityObject.class, cityObjectIri);
+        if (lazyload) {
+          context.pullAll(cityObject);
         } else {
+          context.recursivePullAll(cityObject, 1);
+        }
+        cityObject.setEnvelopeType(null);
+        ArrayList<CityObject> cityObjectList = new ArrayList<>();
+        cityObjectList.add(cityObject);
+        cityObjectInformation.put(cityObjectList);
+      }
+
+      requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
+
+      if (requestParams.keySet().contains(KEY_CONTEXT)) {
+        Set<String> agentURLs = requestParams.getJSONObject(KEY_CONTEXT).keySet();
+        for (String agentURL : agentURLs) {
+          JSONObject requestBody =  new JSONObject();
+          requestBody.put(KEY_IRIS, requestParams.getJSONArray(KEY_IRIS));
+          JSONObject agentKeyValuePairs = requestParams.getJSONObject(KEY_CONTEXT).getJSONObject(agentURL);
+          JSONObject response = new JSONObject();
+
+          // if CIA is directly connecting to access agent but original request misses "targetresourceiri" key.
+          if ((agentURL.contains(JPSConstants.ACCESS_AGENT_PATH)) && !(agentKeyValuePairs.keySet().contains(JPSConstants.TARGETIRI))){
+            JSONObject filters = requestParams.getJSONObject(KEY_CONTEXT).getJSONObject(agentURL);
+
+            String predicate = "";
+            if (filters.keySet().contains(ALLOWS_USE)) {
+              predicate = ALLOWS_USE;
+            } else if (filters.keySet().contains(ALLOWS_PROGRAMME)){
+              predicate = ALLOWS_PROGRAMME;
+            }
+
+            HashMap<String, Double> gfas = new HashMap<>();
+            if (!predicate.equals("")) {
+              ArrayList<String> onto_elements = new ArrayList<>(filters.getJSONObject(predicate).keySet());
+              for (String onto_element: onto_elements) {
+                try {
+                  gfas.put(onto_element,
+                          Double.parseDouble(filters.getJSONObject(predicate).getString(onto_element)));
+                }
+                catch (NumberFormatException exception) {
+                  gfas.put(onto_element, 0.);
+                }
+              }
+            }
+            double total_gfa = 0.;
+            if (filters.keySet().contains(TOTAL_GFA)) {
+              try {
+                total_gfa = Double.parseDouble(filters.getString(TOTAL_GFA));
+              }
+              catch (NumberFormatException ignored) {
+              }
+            }
+
+            JSONArray filtered_objs = getFilteredObjects(predicate, gfas, total_gfa);
+            response.put("filtered", filtered_objs);
+            response.put("filteredCounts", countFilteredObjects(filtered_objs));
+            requestParams.put(agentURL, response);
+
+          } else {
             for (String key : agentKeyValuePairs.keySet()) {
               requestBody.put(key, agentKeyValuePairs.get(key));
               String[] params = new String[0];
@@ -162,9 +167,9 @@ public class CityInformationAgent extends JPSAgent {
               requestParams.append(agentURL, response);
             }
           }
+        }
       }
     }
-
     return requestParams;
   }
 
@@ -355,4 +360,9 @@ public class CityInformationAgent extends JPSAgent {
     }
     return filteredCityobjects;
   }
+
+  private int countFilteredObjects(JSONArray filteredObjects){
+    return filteredObjects.length();
+  }
+
 }
