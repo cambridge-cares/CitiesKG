@@ -337,65 +337,69 @@
         <div id = "citydb_cachedTilesInspector" class="cesium-cesiumInspector" style="display: block; position: absolute; bottom: 5px; right: 5px; width: 130px" data-bind="html: dataSourcesText"></div>
         <div id = "citydb_showedTilesInspector" class="cesium-cesiumInspector" style="display: block; position: absolute; bottom: 5px; right: 170px; width: 130px" data-bind="html: dataSourcesText"></div>
         <img id = "citydb_loadingTilesInspector" src="../theme/img/ajax-loader.gif" style="display: none; position: absolute; bottom: 56px; right: 7px; width:30px;height:30px;">
+
 		
-		<div id="ProgrammaticPlotFinder">
+		    <div id="ProgrammaticPlotFinder">
             <div onclick="showProgrammeFinder()"> <!--Ayda: showProgrammeFinder() Shiyiing: highlightMultipleObjects()-->
                 <select class="cesium-button">
                     <option hidden="hidden">Programmatic Plot Finder</option>
                 </select>
                 <div class="citydb_overSelect"></div>
             </div>
-			  <div id="uiProgrammeFinder-content">
-          <div id="programmeFinder_toolbox" class="citydb_dynamic_box">
-					<table>
-						<tr style="color:#FFFFFF">
-						<th>Development Type</th>
-						<th>Uses</th>
-            <th>Programmes</th>
-						<th>Gross Floor Area (GFA)</th>
-						</tr>
-						<tr style="vertical-align:top">
-							<td>
-								<select id="developmentType" class="cesium-button">
-                  <option value="Choose Development Type" selected="selected">Choose Development Type</option>
-									<option value="NewDevelopment">New Development</option>
-								</select>
-							</td>
-              <td>
-                  <div>
-                      <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
-                          <div style="width:240px" class="cesium-button">Choose Use<div  id='use_arrow' class="arrow down"></div></div>
-                      </div>
-                      <div id="choose_uses" class="finder_dynamic_box" ></div>
-                  </div>
-              </td>
-              <td>
-                  <div>
-                      <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
-                          <div style="width:240px" class="cesium-button">Choose Programme<div id='programme_arrow' class="arrow down"></div></div>
-                      </div>
-                      <div id="choose_programmes" class="finder_dynamic_box" onblur="showChooseProgrammes()"></div>
-                  </div>
-              </td>
-              <td>
-                  <div>
-                      <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
-                          <div style="width:240px" class="cesium-button">Assign GFA(s)<div id='gfa_arrow' class="arrow down"></div></div>
-                      </div>
-                      <div id="assignGFA" class="finder_dynamic_box">
-                          <div>
-                            <div class='text_gfa'>Total Gross Floor Area (GFA)</div>
-                            <div class='text_input' style="width: 80px"><input type='text' maxlength="10" size="3" onblur='getInputParams()'/></div>
-                            <hr size="1">
-                          </div>
-                      </div>
-                  </div>
-              </td>
-					  	</tr>
-					  </table>
-			  	  </div>
-		    	</div>
-		    </div>
+			      <div id="uiProgrammeFinder-content">
+                <div id="programmeFinder_toolbox" class="citydb_dynamic_box">
+                    <table>
+                        <tr style="color:#FFFFFF">
+                            <th>Development Type</th>
+                            <th>Uses</th>
+                            <th>Programmes</th>
+                            <th>Gross Floor Area (GFA)</th>
+                        </tr>
+                        <tr style="vertical-align:top">
+                            <td>
+                                <select id="developmentType" class="cesium-button" onchange="showChooseDev()">
+                                    <option value="Choose Development Type" selected="selected">Choose Development Type</option>
+                                    <option value="NewDevelopment">New Development</option>
+                                    <option value="OntozoningUses">Ontozoning (Uses)</option>
+                                    <option value="OntozoingProgrammes">Ontozoning (Programmes)</option>
+                                    <option value="GfaUses">GFA (Uses)</option>
+                                    <option value="GfaProgrammes">GFA (Programmes)</option>
+                                </select>
+                            </td>
+                            <td>
+                                <div>
+                                    <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
+                                        <div style="width:240px" class="cesium-button">Choose Use<div  id='use_arrow' class="arrow down"></div></div>
+                                    </div>
+                                    <div id="choose_uses" class="finder_dynamic_box" ></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
+                                        <div style="width:240px" class="cesium-button">Choose Programme<div id='programme_arrow' class="arrow down"></div></div>
+                                    </div>
+                                    <div id="choose_programmes" class="finder_dynamic_box" onblur="showChooseProgrammes()"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
+                                        <div style="width:240px" class="cesium-button">Assign GFA(s)<div id='gfa_arrow' class="arrow down"></div></div>
+                                    </div>
+                                    <div id="assignGFA" class="finder_dynamic_box">
+                                        <div>
+                                            <div class='text_gfa'>Total Gross Floor Area (GFA)</div>
+                                            <div class='text_input' style="width: 80px"><input type='text' maxlength="10" size="3" onblur='getInputParams()'/></div>
+                                            <hr size="1">
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+            </div>
+        </div>
 
         <div id="uiMenu">
             <div onclick="showToolbox()">

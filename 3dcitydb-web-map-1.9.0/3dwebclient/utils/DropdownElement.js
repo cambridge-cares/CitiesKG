@@ -162,3 +162,15 @@ function throwNotification() {
 	setTimeout(function() {
 		$('.pop_up_box').hide() }, 6000);
 }
+
+function showChooseDev(){
+
+	var developmentType = document.getElementById("developmentType");
+	//console.log(event.target.id + "is clicked");
+	if (developmentType.value == "OntozoningUses"){
+		document.getElementById("programme_dropdown").style.display="None";
+	}
+	//document.getElementById("favourite").value = mylist.options[mylist.selectedIndex].text;
+}
+
+
