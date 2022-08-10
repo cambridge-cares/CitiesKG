@@ -163,14 +163,37 @@ function throwNotification() {
 		$('.pop_up_box').hide() }, 6000);
 }
 
-function showChooseDev(){
+function showChooseDevType(){
 
 	var developmentType = document.getElementById("developmentType");
 	//console.log(event.target.id + "is clicked");
-	if (developmentType.value == "OntozoningUses"){
-		document.getElementById("programme_dropdown").style.display="None";
+	switch (developmentType.value){
+		case "OntozoningUses":
+			document.getElementById("UsesBox").style.display="block";
+			document.getElementById("ProgrammesBox").style.display="None";
+			document.getElementById("GfaBox").style.display="None";
+			break;
+		case "OntozoingProgrammes":
+			document.getElementById("UsesBox").style.display="None";
+			document.getElementById("ProgrammesBox").style.display="block";
+			document.getElementById("GfaBox").style.display="None";
+			break;
+		case "GfaUses":
+			document.getElementById("UsesBox").style.display="block";
+			document.getElementById("ProgrammesBox").style.display="None";
+			document.getElementById("GfaBox").style.display="block";
+			break;
+		case "GfaProgrammes":
+			document.getElementById("UsesBox").style.display="None";
+			document.getElementById("ProgrammesBox").style.display="block";
+			document.getElementById("GfaBox").style.display="block";
+			break;
+		case "NewDevelopment":
+			document.getElementById("UsesBox").style.display="block";
+			document.getElementById("ProgrammesBox").style.display="block";
+			document.getElementById("GfaBox").style.display="block";
 	}
-	//document.getElementById("favourite").value = mylist.options[mylist.selectedIndex].text;
+
 }
 
 
