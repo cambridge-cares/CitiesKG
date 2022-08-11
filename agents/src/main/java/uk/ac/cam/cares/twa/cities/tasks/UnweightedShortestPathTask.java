@@ -22,8 +22,8 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 
-public class ShortestPathTask implements UninitialisedDataQueueTask {
-    private final IRI taskIri = IRI.create(GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.TASK_SP);
+public class UnweightedShortestPathTask implements UninitialisedDataQueueTask {
+    private final IRI taskIri = IRI.create(GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.TASK_USP);
     private boolean stop = false;
     private BlockingQueue<Map<String, JSONArray>> dataQueue;
 
@@ -135,7 +135,7 @@ public class ShortestPathTask implements UninitialisedDataQueueTask {
     // main method to run analysis on csv files
     public static void main(String[] args) {
         long start = System.currentTimeMillis();
-        ShortestPathTask task = new ShortestPathTask();
+        UnweightedShortestPathTask task = new UnweightedShortestPathTask();
         String dirPath = ""; // replace with path to dir
 
         // read csv
