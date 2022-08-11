@@ -669,8 +669,7 @@ function getMidpoint(point1, point2) {
 //Shiying: highlight multiple cityobjects
 function highlightMultipleObjects(cityObjectsArray){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
     //var cityObjectsArray = ["UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d", "UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3"];
-    //var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobjectUUID_b6f4d0de-cf5c-4917-aba0-c1a91fa4960b/"];
-
+    //var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_b6f4d0de-cf5c-4917-aba0-c1a91fa4960b/"];
 
     // UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d - inside
     // UUID_b6f4d0de-cf5c-4917-aba0-c1a91fa4960b - outside of the scene
@@ -698,8 +697,33 @@ function highlightMultipleObjects(cityObjectsArray){  // citydbKmlLayer object, 
     //flyToMapLocation(1.264377, 103.837302);
     //zoomToObjectById("UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d");
     currentLayer.highlight(filteredObjects);
+}
+
+function pinHighlightObjects(){
+    var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e05bfbcc-561e-4dc3-a355-8106f3e7fcf4/",
+        "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_654c80ac-b52f-4a24-9569-3ed727ae9d4e/",
+        "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_32fdd5cf-bf30-40f3-96a6-e84960fae084/",
+        "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_aca851c3-2b12-489c-9d83-4d7b1c553e50/"];
+
+    var gmlidArray = [];
+
+    for (let i = 0; i < cityObjectsArray.length; i++) {
+        var strArray = cityObjectsArray[i].split("/");
+        var gmlid = strArray[strArray.length-2];
+        gmlidArray.push(gmlid);
+    }
+
+    // lat#long
+    var centroidArray = ["1.3171695133731451#104.00344181680501", "1.232218731520345#103.769346005816", "1.3183791030454#103.6429693656075", "1.4531236632754299#103.81758389573551"];
+
+    //var lon = (obj.envelope[0] + obj.envelope[2]) / 2.0;
+    //var lat = (obj.envelope[1] + obj.envelope[3]) / 2.0;
+    // Draw point
+
+
 
 }
+
 
 
 	//--- End of Extended Web-Map-Client part---//
