@@ -22,6 +22,7 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.tasks.EdgeBetweennessTask;
 import uk.ac.cam.cares.twa.cities.tasks.PageRankTask;
+import uk.ac.cam.cares.twa.cities.tasks.ShortestPathTask;
 import uk.ac.cam.cares.twa.cities.tasks.UninitialisedDataQueueTask;
 
 /**
@@ -43,6 +44,7 @@ public class GraphInferenceAgent extends JPSAgent {
   public String route;
   public static final String TASK_PR = "PageRankTask";
   public static final String TASK_EB = "EdgeBetweennessTask";
+  public static final String TASK_SP = "ShortestPathTask";
   public static final String URI_ACTION = "/inference/graph";
   public static final String KEY_REQ_METHOD = "method";
   public static final String KEY_REQ_URL = "requestUrl";
@@ -50,7 +52,8 @@ public class GraphInferenceAgent extends JPSAgent {
   public static final String KEY_ALGO_IRI = "algorithmIRI";
   private final Map<IRI, UninitialisedDataQueueTask> TASKS = Stream.of(new Object[][] {
       {IRI.create(ONINF_SCHEMA + TASK_PR), new PageRankTask()},
-          {IRI.create(ONINF_SCHEMA + TASK_EB), new EdgeBetweennessTask()}
+          {IRI.create(ONINF_SCHEMA + TASK_EB), new EdgeBetweennessTask()},
+          {IRI.create(ONINF_SCHEMA + TASK_SP), new ShortestPathTask()}
   }).collect(Collectors.toMap(data -> (IRI) data[0], data -> (UninitialisedDataQueueTask) data[1]));
   public static LinkedBlockingDeque<Map<String, JSONArray>> dataQueue = new LinkedBlockingDeque<>();
   private static final ExecutorService taskExecutor = Executors.newFixedThreadPool(5);
