@@ -65,8 +65,18 @@ var KMLDataSource = /** @class */ (function (_super) {
                         else if (key === "externalReferences"){
                             this.extRefKeysManager(cityobjectdata[key], result);
                         }
+                        else if (key === "iri" && cityobjectdata[key].toString().includes("ontochemplant")){
+                            continue;
+                        }
                         else {
-                            result[key] = cityobjectdata[key];
+                            for (var i in cityobjectdata[key]) {
+                                if (jQuery.isArray(cityobjectdata[key]) && cityobjectdata[key].length > 0) {
+                                    this.additionalDataKeysManager(cityobjectdata[key], result);
+                                }
+                                else {
+                                    result[key] = cityobjectdata[key];
+                                }
+                            }
                         }
                     }
                 }
@@ -119,6 +129,33 @@ var KMLDataSource = /** @class */ (function (_super) {
             var name = object["infoSys"];
             var value = object["URI"];
             result[name] = value;
+        }
+    };
+
+    KMLDataSource.prototype.additionalDataKeysManager = function (data, result) {
+        for (var index in data){
+            for (var key in data[0]) {
+                if (jQuery.isArray(data[0][key]) && data[0][key].length > 0){
+                    var innerdata = data[0][key];
+                    for (var name in innerdata[0]){
+                        if (name == null || name == 'iri' || name == 'context') {
+                            continue;
+                        }
+                        var value = innerdata[0][name];
+                        if (value != null){
+                            result[name] = value;
+                        }
+                    }
+                }
+                else if (key == null ||  key == 'iri' || key == 'context' || data[0][key].length == 0) {
+                    continue;
+                }
+                else {
+                    var value = data[0][key];
+                    var name = key;
+                    result[name] = value;
+                }
+            }
         }
     };
 
