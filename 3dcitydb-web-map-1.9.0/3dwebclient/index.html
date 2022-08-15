@@ -328,6 +328,52 @@
                 font-size: 10pt;
             }
 
+            .ProgrammaticPlotFinder-resultBox{
+                display: block;
+                position: absolute;
+                top: 50px;
+                left: 15px;
+                background: rgba(38, 38, 38, 0.95);
+                color: #edffff;
+                border: 1px solid #444;
+                visibility: hidden;
+                opacity: 1;
+            }
+
+            .ProgrammaticPlotFinder-resultBox-title{
+                display: block;
+                height: 20px;
+                padding: 5px 30px 5px 25px;
+                background: rgba(84, 84, 84, 1);
+                border-top-left-radius: 7px;
+                text-align: center;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                overflow: hidden;
+                box-sizing: content-box;
+            }
+
+            .ProgrammaticPlotFinder-resultBox-iframe{
+                border: none;
+                width: 100%; /* Fallback */
+                width: calc(100% - 2px);
+            }
+
+            button.ProgrammaticPlotFinder-resultBox-close{
+                display: block;
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                height: 20px;
+                background: transparent;
+                border: none;
+                border-radius: 2px;
+                font-weight: bold;
+                font-size: 16px;
+                padding: 0 5px;
+                margin: 0;
+                color: #edffff;
+            }
         </style>
     </head>
 
@@ -339,7 +385,7 @@
         <img id = "citydb_loadingTilesInspector" src="../theme/img/ajax-loader.gif" style="display: none; position: absolute; bottom: 56px; right: 7px; width:30px;height:30px;">
 
 		    <div id="ProgrammaticPlotFinder">
-            <div onclick="showProgrammeFinder()"> <!--Ayda: showProgrammeFinder() Shiyiing: highlightMultipleObjects()-->
+            <div onclick="showResultWindow()"> <!--Ayda: showProgrammeFinder() Shiyiing: highlightMultipleObjects()-->
                 <select class="cesium-button">
                     <option hidden="hidden">Programmatic Plot Finder</option>
                 </select>
@@ -727,6 +773,13 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div id="uiProgrammeFinder-result" class="ProgrammaticPlotFinder-resultBox">
+            <div id="resultBox-title" class="ProgrammaticPlotFinder-resultBox-title">
+                <label>GFA Result</label>
+            </div>
+            <div id="resultBox-iframe" class="ProgrammaticPlotFinder-resultBox-iframe"></div>
         </div>
 
         <!-- GPS button -->

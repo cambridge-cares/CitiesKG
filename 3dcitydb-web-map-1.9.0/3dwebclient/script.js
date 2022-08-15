@@ -699,6 +699,26 @@ function highlightMultipleObjects(cityObjectsArray){  // citydbKmlLayer object, 
     currentLayer.highlight(filteredObjects);
 }
 
+function showResultWindow(){
+
+    var resultBoxTitle = document.getElementById("resultBox-title");
+    resultBoxTitle.style.visibility = "visible";
+    var resultBox = document.getElementById("resultBox-iframe");
+    resultBox.style.visibility = "visible";
+    var resultBoxContent = document.createElement("div");
+    resultBoxContent.style.display = "block";
+    var label = document.createElement("label");
+    label.appendChild(document.createTextNode("Valid Plots: 50"));
+
+    var closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className = "ProgrammaticPlotFinder-resultBox-close";
+
+    resultBoxContent.appendChild(label);
+    resultBoxContent.appendChild(closeButton);
+    resultBox.appendChild(resultBoxContent);
+}
+
 function pinHighlightObjects(){
     var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e05bfbcc-561e-4dc3-a355-8106f3e7fcf4/",
         "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_654c80ac-b52f-4a24-9569-3ed727ae9d4e/",
@@ -719,9 +739,6 @@ function pinHighlightObjects(){
     //var lon = (obj.envelope[0] + obj.envelope[2]) / 2.0;
     //var lat = (obj.envelope[1] + obj.envelope[3]) / 2.0;
     // Draw point
-
-
-
 }
 
 
