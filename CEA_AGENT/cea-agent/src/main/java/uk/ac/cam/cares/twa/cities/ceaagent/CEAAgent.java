@@ -597,8 +597,6 @@ public class CEAAgent extends JPSAgent {
                 for (int i = 0; i < queryResultArray.length(); i++){
                     result = result + "#" + queryResultArray.getJSONObject(i).get("geometry").toString();
                 }
-                result = extractFootprintVertices(result.substring(1, result.length()));
-
             }
             else if (value!="FootprintSurfaceGeom") {
                 result = queryResultArray.getJSONObject(0).get(value).toString();
@@ -1360,50 +1358,6 @@ public class CEAAgent extends JPSAgent {
         annualValue = Math.round(annualValue*Math.pow(10,2))/Math.pow(10,2);
         return annualValue.toString();
 
-    }
-
-    /**
-     * Extract footprint vertices from the given ground surface geometries
-     * @param geometry string containing all the ground surface geometries
-     * @return unique footprint vertices as a geometry
-     */
-    public String extractFootprintVertices(String geometry){
-        String [] split = geometry.split("#");
-        ArrayList<String> coordinate1 = new ArrayList<>();
-        ArrayList<String> coordinate2 = new ArrayList<>();
-        ArrayList<String> coordinate3 = new ArrayList<>();
-        ArrayList<Integer> indices = new ArrayList<Integer>();
-        String output = "";
-        int j;
-
-        for (int i = 0; i < split.length; i+=3){
-            coordinate1.add(split[i]);
-            coordinate2.add(split[i+1]);
-            coordinate3.add(split[i+2]);
-        }
-
-        for (int i = 0; i < coordinate1.size(); i++){
-            j = i + 1;
-
-            while (j < coordinate1.size()){
-
-                // if found duplicate points remove
-                if (coordinate1.get(i).equals(coordinate1.get(j))  && coordinate2.get(i).equals(coordinate2.get(j))  && coordinate3.get(i).equals(coordinate3.get(j)) ){
-                    coordinate1.remove(j);
-                    coordinate2.remove(j);
-                    coordinate3.remove(j);
-                }
-                else{
-                    j++;
-                }
-            }
-        }
-
-        for (int i = 0; i < coordinate1.size(); i++){
-            output = output + "#" + coordinate1.get(i) + "#" + coordinate2.get(i) + "#" + coordinate3.get(i);
-        }
-
-        return output.substring(1, output.length());
     }
 
 }
