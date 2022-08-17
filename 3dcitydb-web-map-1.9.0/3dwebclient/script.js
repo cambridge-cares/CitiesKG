@@ -699,7 +699,7 @@ function highlightMultipleObjects(cityObjectsArray){  // citydbKmlLayer object, 
     currentLayer.highlight(filteredObjects);
 }
 
-function showResultWindow(countFiltered){
+function showResultWindow(selectedDevType, resultJson){
 
     var resultBoxTitle = document.getElementById("resultBox-title");
     resultBoxTitle.style.visibility = "visible";
@@ -708,8 +708,8 @@ function showResultWindow(countFiltered){
     var resultBoxContent = document.createElement("div");
     resultBoxContent.style.display = "block";
     var listItem = document.createElement("li");
-    var summaryText = "Valid Plots: " + countFiltered;
-    listItem.appendChild(document.createTextNode(summaryText));
+
+    listItem.appendChild(processInfoContext(selectedDevType, resultJson));
 
     var closeButton = document.createElement("span");
     closeButton.className = "close";
@@ -729,6 +729,36 @@ function showResultWindow(countFiltered){
         });
     }
 }
+
+// create the summary text for infobox
+// resultjson is json object
+function processInfoContext(selectedDevType, resultjson){
+    var infoText = document.createElement("div");
+    var title = document.createElement("p");
+    title.textContent = selectedDevType;
+    infoText.appendChild(title);
+     //{"allowsProgramme":{"Cafe":"","StudentRunBusiness":""},"TotalGFA":""}
+    var filteredCount = resultjson["http://www.theworldavatar.com:83/access-agent/access"]["filteredCounts"];
+    var inputs = resultjson["context"]["http://www.theworldavatar.com:83/access-agent/access"];
+    var allowOption;
+    var allowsObjects = [];
+    if (Object.keys(inputs).includes("allowsProgramme")){
+        allowsObjects = Object.keys(inputs["allowsProgramme"]);
+        allowOption = "allowsProgramme";
+    } else if (Object.keys(inputs).includes("allowsUse")){
+        allowsObjects = Object.keys(inputs["allowsUse"]);
+        allowOption = "allowsUse";
+    }
+    var allowOptText = document.createElement("p");
+    allowOptText.textContent = allowOption + ": " + allowsObjects;
+    infoText.appendChild(allowOptText);
+
+    var objCount = document.createElement("p");
+    objCount.textContent = "Valid Plots: " + filteredCount;
+    infoText.appendChild(objCount);
+    return infoText;
+}
+
 
 function pinHighlightObjects(){
     var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e05bfbcc-561e-4dc3-a355-8106f3e7fcf4/",

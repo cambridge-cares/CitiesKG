@@ -2,6 +2,7 @@ var CONTEXT = "citieskg";
 var CITY = (new URL(window.location.href).searchParams.get('city'));
 var TOTAL_GFA_KEY = 'TotalGFA';
 var input_parameters;
+var selectedDevType;
 
 
 function buildQuery(predicate){
@@ -137,6 +138,7 @@ function getValidPlots(){
 		success: function (data, status_message, xhr) {
 			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
 			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filteredCounts"]);
+			showResultWindow(selectedDevType, data);
 			highlightMultipleObjects(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
 
 		}
@@ -167,6 +169,7 @@ function showChooseDevType(){
 
 	var developmentType = document.getElementById("developmentType");
 	//console.log(event.target.id + "is clicked");
+	selectedDevType = developmentType.value;
 	switch (developmentType.value){
 		case "OntozoningUses":
 			document.getElementById("UsesBox").style.display="block";
