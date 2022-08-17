@@ -1,6 +1,9 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
+import com.hp.hpl.jena.datatypes.RDFDatatype;
+import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFNode;
@@ -16,8 +19,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import net.rootdev.jenajung.JenaJungGraph;
+import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.semanticweb.owlapi.model.IRI;
@@ -82,23 +88,25 @@ public class PageRankTask implements UninitialisedDataQueueTask {
 
           //store results - @todo: save it to the KG
 
-          String eol = System.getProperty("line.separator");
+          UpdateBuilder ub = new UpdateBuilder();
 
-          try (Writer writer = new FileWriter(System.getProperty("java.io.tmpdir") + "/somefile.csv")) {
-            writer.append("Link")
-                .append(',')
-                .append("Score")
-                .append(eol);
-            for (Map.Entry<Node, Double> entry : result.entrySet()) {
-              writer.append("\"" + entry.getKey().toString() + "\"")
-                  .append(',')
-                  .append(new BigDecimal(entry.getValue().doubleValue()).setScale(20, RoundingMode.FLOOR).toString())
-                  .append(eol);
-            }
-            System.out.println(System.getProperty("java.io.tmpdir") + "/somefile.csv");
-          } catch (IOException ex) {
-            ex.printStackTrace(System.err);
+          ub.addPrefix(GraphInferenceAgent.ONINF_PREFIX, GraphInferenceAgent.ONINF_SCHEMA);
+
+          String inGraph = "http://127.0.0.1:9999/blazegraph/namespace/singaporeEPSG4326/sparql/OntoInfer/";
+          for (Entry<Node, Double> entry : result.entrySet()) {
+            String id = inGraph + UUID.randomUUID();
+            ub.addInsert(inGraph, id, GraphInferenceAgent.ONINF_PREFIX + ":hasInferenceObject",
+                entry.getKey().toString());
+            ub.addInsert(inGraph, id, GraphInferenceAgent.ONINF_PREFIX + ":hasInferenceAlgorithm",
+                GraphInferenceAgent.ONINF_SCHEMA + "PageRankAlgorithm");
+            ub.addInsert(inGraph, id, GraphInferenceAgent.ONINF_PREFIX + ":oninf:hasInferredValue",
+                String.valueOf(new BigDecimal(entry.getValue().doubleValue()).setScale(20, RoundingMode.FLOOR)));
+            System.out.println(ub.build().toString());
+
+            //@todo: insert to KG
           }
+
+
 
 
         } catch (Exception e) {

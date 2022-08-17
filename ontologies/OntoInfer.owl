@@ -40,6 +40,18 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#hasInferenceAlgorithm -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#hasInferenceAlgorithm"/>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#hasInferenceObject -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#hasInferenceObject"/>
+    
+
+
     <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#performedBy -->
 
     <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#performedBy">
@@ -47,6 +59,25 @@
         <rdfs:domain rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
         <rdfs:range rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Agent"/>
     </owl:ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#hasInferredValue -->
+
+    <owl:DatatypeProperty rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#hasInferredValue">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+    </owl:DatatypeProperty>
     
 
 
