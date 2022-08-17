@@ -220,7 +220,7 @@
                 z-index: 99980;
             }
 			
-			      #programmeFinder_toolbox {
+            #programmeFinder_toolbox {
                 width: 1080px;
                 height: 55px;
                 display: none;
@@ -359,21 +359,27 @@
                 width: calc(100% - 2px);
             }
 
-            button.ProgrammaticPlotFinder-resultBox-close{
+            li {
+                border: 1px solid #ddd;
+                margin-top: -1px; /* Prevent double borders */
+                background-color: #f6f6f6;
+                padding: 6px;
+                text-decoration: none;
+                font-size: 12px;
+                color: black;
                 display: block;
-                position: absolute;
-                top: 5px;
-                right: 5px;
-                height: 20px;
-                background: transparent;
-                border: none;
-                border-radius: 2px;
-                font-weight: bold;
-                font-size: 16px;
-                padding: 0 5px;
-                margin: 0;
-                color: #edffff;
+                position: relative;
             }
+            .close {
+                cursor: pointer;
+                position: absolute;
+                top: 50%;
+                right: 0%;
+                padding: 5px 10px;
+                transform: translate(0%, -50%);
+            }
+
+            .close:hover {background: #bbb;}
         </style>
     </head>
 
@@ -385,7 +391,7 @@
         <img id = "citydb_loadingTilesInspector" src="../theme/img/ajax-loader.gif" style="display: none; position: absolute; bottom: 56px; right: 7px; width:30px;height:30px;">
 
 		    <div id="ProgrammaticPlotFinder">
-            <div onclick="showResultWindow()"> <!--Ayda: showProgrammeFinder() Shiyiing: highlightMultipleObjects()-->
+            <div onclick="pinHighlightObjects()"> <!--Ayda: showProgrammeFinder() Shiyiing: highlightMultipleObjects(), showResultWindow()-->
                 <select class="cesium-button">
                     <option hidden="hidden">Programmatic Plot Finder</option>
                 </select>
@@ -777,7 +783,7 @@
 
         <div id="uiProgrammeFinder-result" class="ProgrammaticPlotFinder-resultBox">
             <div id="resultBox-title" class="ProgrammaticPlotFinder-resultBox-title">
-                <label>GFA Result</label>
+                <label>GFA Calculation Result</label>
             </div>
             <div id="resultBox-iframe" class="ProgrammaticPlotFinder-resultBox-iframe"></div>
         </div>

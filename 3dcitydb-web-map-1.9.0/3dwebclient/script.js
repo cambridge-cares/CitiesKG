@@ -699,7 +699,7 @@ function highlightMultipleObjects(cityObjectsArray){  // citydbKmlLayer object, 
     currentLayer.highlight(filteredObjects);
 }
 
-function showResultWindow(){
+function showResultWindow(countFiltered){
 
     var resultBoxTitle = document.getElementById("resultBox-title");
     resultBoxTitle.style.visibility = "visible";
@@ -707,16 +707,27 @@ function showResultWindow(){
     resultBox.style.visibility = "visible";
     var resultBoxContent = document.createElement("div");
     resultBoxContent.style.display = "block";
-    var label = document.createElement("label");
-    label.appendChild(document.createTextNode("Valid Plots: 50"));
+    var listItem = document.createElement("li");
+    var summaryText = "Valid Plots: " + countFiltered;
+    listItem.appendChild(document.createTextNode(summaryText));
 
-    var closeButton = document.createElement("button");
-    closeButton.type = "button";
-    closeButton.className = "ProgrammaticPlotFinder-resultBox-close";
+    var closeButton = document.createElement("span");
+    closeButton.className = "close";
+    closeButton.textContent = "x";
 
-    resultBoxContent.appendChild(label);
-    resultBoxContent.appendChild(closeButton);
+    listItem.appendChild(closeButton);
+    resultBoxContent.appendChild(listItem);
     resultBox.appendChild(resultBoxContent);
+
+    var closebtns = document.getElementsByClassName("close");
+    var i;
+
+    for (i = 0; i < closebtns.length; i++) {
+        closebtns[i].addEventListener("click", function() {
+            //this.parentElement.style.display = 'none';
+            this.parentNode.remove();
+        });
+    }
 }
 
 function pinHighlightObjects(){
@@ -726,6 +737,8 @@ function pinHighlightObjects(){
         "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_aca851c3-2b12-489c-9d83-4d7b1c553e50/"];
 
     var gmlidArray = [];
+
+    showResultWindow(cityObjectsArray.length);
 
     for (let i = 0; i < cityObjectsArray.length; i++) {
         var strArray = cityObjectsArray[i].split("/");
@@ -739,8 +752,37 @@ function pinHighlightObjects(){
     //var lon = (obj.envelope[0] + obj.envelope[2]) / 2.0;
     //var lat = (obj.envelope[1] + obj.envelope[3]) / 2.0;
     // Draw point
+    for (let i = 0; i < centroidArray.length; i++){
+        var res = centroidArray[i].split("#");
+        addPoint(parseFloat(res[0]), parseFloat(res[1]));
+    }
+
+    // set the camera to the view the centroid of sinagpore to view all results
+    // set camera view
+    //var cameraPostion = {
+    //    latitude: 0.023307207117772493,  //
+    //    longitude: 1.8121454529642347,
+    //    height: 66468.41306483748,
+    //    heading: 0.39630595415744363, //13.68838551977463,
+    //    pitch: -89.99396415604053,
+    //    roll: 0,
+    //}
+    //flyToCameraPosition(cameraPostion);
+    cesiumViewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromRadians(1.8121454529642347, 0.023307207117772493, 66468)
+    })
 }
 
+function addPoint(lat, long){
+
+    cesiumViewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(long, lat),
+        point: {
+            pixelSize: 10,
+            color: Cesium.Color.YELLOW,
+        },
+    });
+}
 
 
 	//--- End of Extended Web-Map-Client part---//
