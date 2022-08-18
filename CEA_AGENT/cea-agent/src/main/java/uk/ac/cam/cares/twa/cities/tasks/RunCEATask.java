@@ -327,20 +327,22 @@ public class RunCEATask implements Runnable {
                 String workflowPath = strTmp+FS+"workflow.yml";
 
                 if(OS.contains("win")){
-                    args.add("python");
-                    args.add(new File(
-                            Objects.requireNonNull(getClass().getClassLoader().getResource(SHAPEFILE_SCRIPT)).toURI()).getAbsolutePath());
-                    args.add(dataString.replace("\"", "\\\""));
-                    args.add(strTmp);
-                    args.add(crs);
+                    String f_path;
 
+                    args.add("cmd.exe");
+                    args.add("/C");
+                    f_path = new File(Objects.requireNonNull(getClass().getClassLoader().getResource(SHAPEFILE_SCRIPT)).toURI()).getAbsolutePath();
+                    args.add("conda activate cea && python " + f_path + " " + dataString.replace("\"", "\\\"")+ " " + strTmp + " " + crs);
+
+                    args2.add("cmd.exe");
+                    args2.add("/C");
+                    args2.add("conda activate cea && ");
                     args2.add("python");
                     args2.add(new File(
                             Objects.requireNonNull(getClass().getClassLoader().getResource(CREATE_WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
                     args2.add(new File(
                             Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
                     args2.add(strTmp);
-
 
                     args3.add("cmd.exe");
                     args3.add("/C");
