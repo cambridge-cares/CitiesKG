@@ -39,6 +39,10 @@ public class GraphInferenceAgent extends JPSAgent {
   public static final String ONTOINFER_GRAPH = "OntoInfer/";
   public static final String ONTOZONE_GRAPH = "ontozone/";
   public static final String ONTOZONING_GRAPH = "OntoZoning/";
+  public static final String ONINT_P_INOBJ = "hasInferenceObject";
+  public static final String ONINT_P_INALG = "hasInferenceAlgorithm";
+  public static final String ONINT_P_INVAL = "hasInferredValue";
+  public static final String ONINT_C_PRALG = "PageRankAlgorithm";
 
   public String route;
   public static final String TASK_PR = "PageRankTask";
@@ -140,7 +144,8 @@ public class GraphInferenceAgent extends JPSAgent {
     SelectBuilder sb = new SelectBuilder();
     sb.setBase(sparqlEndpoint.toString()).from(ONTOZONE_GRAPH).from(ONTOZONING_GRAPH)
             .addVar("?s").addVar("?p").addVar("?o")
-            .addWhere("?s", "?p", "?o");
+            .addWhere("?s", "?p", "?o")
+            /*.setLimit(100)*/;
 
     JSONArray sparqlResult = AccessAgentCaller.queryStore(route, sb.buildString());
 

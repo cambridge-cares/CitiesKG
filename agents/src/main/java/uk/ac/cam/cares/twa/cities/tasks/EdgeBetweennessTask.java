@@ -23,6 +23,7 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
     private final IRI taskIri = IRI.create(GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.TASK_EB);
     private boolean stop = false;
     private BlockingQueue<Map<String, JSONArray>> dataQueue;
+    private String targetGraph;
 
     @Override
     public IRI getTaskIri() {
@@ -32,6 +33,11 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
     @Override
     public void setStringMapQueue(BlockingQueue<Map<String, JSONArray>> queue) {
         this.dataQueue = queue;
+    }
+
+    @Override
+    public void setTargetGraph(String tg) {
+        targetGraph = tg;
     }
 
     @Override

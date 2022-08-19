@@ -4,6 +4,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.rdf.model.Statement;
 import edu.uci.ics.jung.algorithms.scoring.PageRank;
 import edu.uci.ics.jung.graph.Graph;
 import java.math.BigDecimal;
@@ -33,6 +34,7 @@ public class PageRankTask implements UninitialisedDataQueueTask {
   private final IRI taskIri = IRI.create(GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.TASK_PR);
   private boolean stop = false;
   private BlockingQueue<Map<String, JSONArray>> dataQueue;
+  private Node targetGraph;
 
   @Override
   public IRI getTaskIri() {
@@ -42,6 +44,10 @@ public class PageRankTask implements UninitialisedDataQueueTask {
   @Override
   public void setStringMapQueue(BlockingQueue<Map<String, JSONArray>> queue) {
     this.dataQueue = queue;
+  }
+
+  public void setTargetGraph(String endpointIRI) {
+    targetGraph = NodeFactory.createURI(endpointIRI + GraphInferenceAgent.ONTOINFER_GRAPH);
   }
 
   @Override
@@ -64,10 +70,10 @@ public class PageRankTask implements UninitialisedDataQueueTask {
           JSONArray data = map.get(this.taskIri.toString());
 
           // convert to jung graph
-          Graph graph = createGraph(data);
+          Graph<RDFNode, Statement> graph = createGraph(data);
 
           //run Page Rank
-          PageRank<RDFNode, Double> ranker = new PageRank<RDFNode, Double>(graph, 0.3);
+          PageRank<RDFNode, Statement> ranker = new PageRank<>(graph, 0.3);
           ranker.evaluate();
 
           //store results
@@ -82,6 +88,12 @@ public class PageRankTask implements UninitialisedDataQueueTask {
     }
   }
 
+  /**
+   * Converts JSON array of s-p-o statements to a Jena Jung Graph
+   *
+   * @param array initial s-p-o stmt array
+   * @return resulting graph
+   */
   private JenaJungGraph createGraph(JSONArray array) {
     Model model = ModelFactory.createDefaultModel();
 
@@ -95,39 +107,86 @@ public class PageRankTask implements UninitialisedDataQueueTask {
     return new JenaJungGraph(model);
   }
 
-  //@todo: remove hardcoding
-  private void storeResults(Graph graph, PageRank<RDFNode, Double>  ranker) {
+  /**
+   * Stores algorithm application results in the knowledge graph.
+   *
+   * @param graph - initial JenaJung graph
+   * @param ranker - graph with page rank scores applied
+   */
+  private void storeResults(Graph<RDFNode, Statement> graph, PageRank<RDFNode, Statement> ranker) {
 
-    Node inGraph = NodeFactory.createURI( "http://127.0.0.1:9999/blazegraph/namespace/singaporeEPSG4326/sparql/OntoInfer/");
+    UpdateBuilder ub = prepareUpdateBuilder();
 
-    UpdateBuilder ub = new UpdateBuilder();
-    ub.addPrefix(GraphInferenceAgent.ONINF_PREFIX, GraphInferenceAgent.ONINF_SCHEMA);
     int counter = 0;
 
-    for (Object v : graph.getVertices()) {
+    for (Object vert : graph.getVertices()) {
       //prepare inference update for a node
-      Node id = NodeFactory.createURI(inGraph.getURI() + UUID.randomUUID());
-      ub.addInsert(inGraph, id, GraphInferenceAgent.ONINF_PREFIX + ":hasInferenceObject",
-          NodeFactory.createURI(String.valueOf(v)));
-      ub.addInsert(inGraph, id, GraphInferenceAgent.ONINF_PREFIX + ":hasInferenceAlgorithm",
-          NodeFactory.createURI(GraphInferenceAgent.ONINF_SCHEMA + "PageRankAlgorithm"));
-      ub.addInsert(inGraph, id, GraphInferenceAgent.ONINF_PREFIX + ":hasInferredValue",
-          NodeFactory.createLiteral(String.valueOf(
-                  new BigDecimal(ranker.getVertexScore((RDFNode) v)).setScale(20, RoundingMode.FLOOR)),
-              XSDDatatype.XSDdouble));
+      prepareUpdate(ranker, ub, vert);
       counter++;
 
       //store data if counter of nodes is 100 and start over
       if (counter >= 100) {
-        System.out.println(ub.build().toString());
-        AccessAgentCaller.updateStore(ResourceBundle.getBundle("config").getString("uri.route"),
-            ub.build().toString());
-        ub = new UpdateBuilder();
-        ub.addPrefix(GraphInferenceAgent.ONINF_PREFIX, GraphInferenceAgent.ONINF_SCHEMA);
+        ub = persistUpdate(ub);
+
         counter = 0;
       }
     }
+    //store any remaining data
+    if (counter > 0)  {
+      persistUpdate(ub);
+    }
 
+  }
+
+  /**
+   * Prepares 3 insert s-p-o statements for each node:
+   * (1) id hasInferenceObject nodeIRI
+   * (2) id hasInferenceAlgorithm PageRankAlgorithm
+   * (3) id hasInferredValue nodePRScore
+   * Adds those statements to the UpdateBuilder.
+   *
+   * @param ranker - page rank algorithm implementation.
+   * @param ub - Update builder to add statements into
+   * @param vert - ranked graph node
+   */
+  private void prepareUpdate(PageRank<RDFNode, Statement> ranker, UpdateBuilder ub, Object vert) {
+    String pfix = GraphInferenceAgent.ONINF_PREFIX;
+    Node id = NodeFactory.createURI(targetGraph.getURI() + UUID.randomUUID());
+    ub.addInsert(targetGraph, id, pfix + ":" + GraphInferenceAgent.ONINT_P_INOBJ,
+        NodeFactory.createURI(String.valueOf(vert)));
+    ub.addInsert(targetGraph, id, pfix + ":" + GraphInferenceAgent.ONINT_P_INALG,
+        NodeFactory.createURI(GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.ONINT_C_PRALG));
+    ub.addInsert(targetGraph, id, pfix + ":" + GraphInferenceAgent.ONINT_P_INVAL,
+        NodeFactory.createLiteral(String.valueOf(
+                BigDecimal.valueOf(ranker.getVertexScore((RDFNode) vert)).setScale(20, RoundingMode.FLOOR)),
+            XSDDatatype.XSDdouble));
+  }
+
+  /**
+   * Creates UpdateBuilder and adds OntoInter prefix into it.
+   *
+   * @return update builder with prefix.
+   */
+  private UpdateBuilder prepareUpdateBuilder() {
+    UpdateBuilder ub = new UpdateBuilder();
+    ub.addPrefix(GraphInferenceAgent.ONINF_PREFIX, GraphInferenceAgent.ONINF_SCHEMA);
+
+    return ub;
+  }
+
+  /**
+   * Stores given UpdateBuilder contents in the knowledge graph via access agent and returns fresh
+   * builder with prefix after that.
+   *
+   * @param ub UpdateBuilder with statements to store in the knowledge graph
+   * @return fresh update builder.
+   */
+  private UpdateBuilder persistUpdate(UpdateBuilder ub) {
+    AccessAgentCaller.updateStore(ResourceBundle.getBundle("config").getString("uri.route"),
+        ub.build().toString());
+    ub = prepareUpdateBuilder();
+
+    return ub;
   }
 
 }
