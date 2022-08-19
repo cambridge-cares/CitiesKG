@@ -734,9 +734,12 @@ function showResultWindow(selectedDevType, resultJson){
 // resultjson is json object
 function processInfoContext(selectedDevType, resultjson){
     var infoText = document.createElement("div");
-    var title = document.createElement("p");
+    var title = document.createElement("span");
+
     title.textContent = selectedDevType;
     infoText.appendChild(title);
+    infoText.appendChild(document.createElement("br"));
+
      //{"allowsProgramme":{"Cafe":"","StudentRunBusiness":""},"TotalGFA":""}
     var filteredCount = resultjson["http://www.theworldavatar.com:83/access-agent/access"]["filteredCounts"];
     var inputs = resultjson["context"]["http://www.theworldavatar.com:83/access-agent/access"];
@@ -749,12 +752,13 @@ function processInfoContext(selectedDevType, resultjson){
         allowsObjects = Object.keys(inputs["allowsUse"]);
         allowOption = "allowsUse";
     }
-    var allowOptText = document.createElement("p");
+    var allowOptText = document.createElement("span");
     allowOptText.textContent = allowOption + ": " + allowsObjects;
     infoText.appendChild(allowOptText);
 
-    var objCount = document.createElement("p");
+    var objCount = document.createElement("span");
     objCount.textContent = "Valid Plots: " + filteredCount;
+    infoText.appendChild(document.createElement("br"));
     infoText.appendChild(objCount);
     return infoText;
 }
@@ -768,7 +772,7 @@ function pinHighlightObjects(){
 
     var gmlidArray = [];
 
-    showResultWindow(cityObjectsArray.length);
+    //showResultWindow(cityObjectsArray.length);
 
     for (let i = 0; i < cityObjectsArray.length; i++) {
         var strArray = cityObjectsArray[i].split("/");
@@ -808,7 +812,7 @@ function addPoint(lat, long){
     cesiumViewer.entities.add({
         position: Cesium.Cartesian3.fromDegrees(long, lat),
         point: {
-            pixelSize: 10,
+            pixelSize: 20,
             color: Cesium.Color.YELLOW,
         },
     });

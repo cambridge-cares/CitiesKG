@@ -195,6 +195,8 @@ function showChooseDevType(){
 			document.getElementById("UsesBox").style.display="block";
 			document.getElementById("ProgrammesBox").style.display="block";
 			document.getElementById("GfaBox").style.display="block";
+		case "ViewAll":
+			pinHighlightObjects();
 	}
 
 }
