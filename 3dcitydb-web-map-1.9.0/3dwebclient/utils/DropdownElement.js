@@ -38,7 +38,7 @@ function appendElement(line, predicate, element_type, dropdown_type){
 	var some_element =
 			"<div class='" + predicate + "'>" +
 			"<div id='" + line + "' class='checkbox'>" +
-			"<input type='checkbox' onchange='updateGfaRows()' onblur='getInputParams()'/></div>" +
+			"<input type='checkbox' onchange='updateGfaRows()'></div>" +
 			"<div class=" + element_type + ">" + line + "</div>" +
 			"</div>";
 	$(dropdown_type).append(some_element)
