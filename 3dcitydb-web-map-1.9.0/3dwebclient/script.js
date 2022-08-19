@@ -434,6 +434,7 @@ function getAndLoadLayers(folder) {
                 if (data[i].match(new RegExp("\\w*_\\w*_MasterJSON.json"))) {
                     filepathname = folderpath + data[i]
                     options.url = filepathname;
+                    options.cityobjectsJsonUrl = folderpath + "test_extruded.json"
                     options.name = (new URL(window.location.href)).searchParams.get('city');
                     _layers.push(new CitydbKmlLayer(options));
                     loadLayerGroup(_layers);
@@ -697,6 +698,7 @@ function highlightMultipleObjects(cityObjectsArray){  // citydbKmlLayer object, 
     //flyToMapLocation(1.264377, 103.837302);
     //zoomToObjectById("UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d");
     currentLayer.highlight(filteredObjects);
+    //pinHighlightObjects(cityObjectsArray);
 }
 
 function showResultWindow(selectedDevType, resultJson){
@@ -764,11 +766,11 @@ function processInfoContext(selectedDevType, resultjson){
 }
 
 
-function pinHighlightObjects(){
-    var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e05bfbcc-561e-4dc3-a355-8106f3e7fcf4/",
-        "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_654c80ac-b52f-4a24-9569-3ed727ae9d4e/",
-        "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_32fdd5cf-bf30-40f3-96a6-e84960fae084/",
-        "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_aca851c3-2b12-489c-9d83-4d7b1c553e50/"];
+function pinHighlightObjects(cityObjectsArray){
+    //var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e05bfbcc-561e-4dc3-a355-8106f3e7fcf4/",
+    //    "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_654c80ac-b52f-4a24-9569-3ed727ae9d4e/",
+    //    "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_32fdd5cf-bf30-40f3-96a6-e84960fae084/",
+    //    "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_aca851c3-2b12-489c-9d83-4d7b1c553e50/"];
 
     var gmlidArray = [];
 
@@ -780,16 +782,30 @@ function pinHighlightObjects(){
         gmlidArray.push(gmlid);
     }
 
-    // lat#long
-    var centroidArray = ["1.3171695133731451#104.00344181680501", "1.232218731520345#103.769346005816", "1.3183791030454#103.6429693656075", "1.4531236632754299#103.81758389573551"];
+    // get geolocation
+    var currentLayer = webMap._activeLayer;
+    var testcityobjectsJsonData;
+    if (Cesium.defined(currentLayer)) {
+        testcityobjectsJsonData = currentLayer.cityobjectsJsonData;
+    }
+    for (let i = 0; i < gmlidArray.length; i++){
+        var obj = testcityobjectsJsonData[gmlidArray[i]];
+        var lon = (obj.envelope[0] + obj.envelope[2]) / 2.0;
+        var lat = (obj.envelope[1] + obj.envelope[3]) / 2.0;
+        console.log(gmlidArray[i] + ": " + lon + ", " + lat);
 
+        addPoint(lat, lon);
+    }
+
+    // lat#long
+    //var centroidArray = ["1.3171695133731451#104.00344181680501", "1.232218731520345#103.769346005816", "1.3183791030454#103.6429693656075", "1.4531236632754299#103.81758389573551"];
     //var lon = (obj.envelope[0] + obj.envelope[2]) / 2.0;
     //var lat = (obj.envelope[1] + obj.envelope[3]) / 2.0;
     // Draw point
-    for (let i = 0; i < centroidArray.length; i++){
-        var res = centroidArray[i].split("#");
-        addPoint(parseFloat(res[0]), parseFloat(res[1]));
-    }
+    //for (let i = 0; i < centroidArray.length; i++){
+    //    var res = centroidArray[i].split("#");
+    //    addPoint(parseFloat(res[0]), parseFloat(res[1]));
+    //}
 
     // set the camera to the view the centroid of sinagpore to view all results
     // set camera view
@@ -812,7 +828,7 @@ function addPoint(lat, long){
     cesiumViewer.entities.add({
         position: Cesium.Cartesian3.fromDegrees(long, lat),
         point: {
-            pixelSize: 20,
+            pixelSize: 10,
             color: Cesium.Color.YELLOW,
         },
     });

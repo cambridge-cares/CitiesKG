@@ -140,6 +140,7 @@ function getValidPlots(){
 			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filteredCounts"]);
 			showResultWindow(selectedDevType, data);
 			highlightMultipleObjects(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
+      //pinHighlightObjects(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
 
 		}
 	});
