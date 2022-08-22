@@ -698,7 +698,7 @@ function highlightMultipleObjects(cityObjectsArray){  // citydbKmlLayer object, 
     //flyToMapLocation(1.264377, 103.837302);
     //zoomToObjectById("UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d");
     currentLayer.highlight(filteredObjects);
-    //pinHighlightObjects(cityObjectsArray);
+    pinHighlightObjects(cityObjectsArray);
 }
 
 function showResultWindow(selectedDevType, resultJson){
