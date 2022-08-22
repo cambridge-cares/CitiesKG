@@ -46,6 +46,7 @@ public class PageRankTask implements UninitialisedDataQueueTask {
     this.dataQueue = queue;
   }
 
+  @Override
   public void setTargetGraph(String endpointIRI) {
     targetGraph = NodeFactory.createURI(endpointIRI + GraphInferenceAgent.ONTOINFER_GRAPH);
   }
