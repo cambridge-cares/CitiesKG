@@ -11,6 +11,8 @@ public interface UninitialisedDataQueueTask extends Runnable {
 
   void setStringMapQueue(BlockingQueue<Map<String, JSONArray>> queue);
 
+  void setTargetGraph(String targetGraph);
+
   public abstract boolean isRunning();
 
   public  abstract void stop();
