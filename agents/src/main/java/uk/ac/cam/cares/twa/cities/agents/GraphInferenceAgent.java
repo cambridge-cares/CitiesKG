@@ -147,8 +147,7 @@ public class GraphInferenceAgent extends JPSAgent {
     SelectBuilder sb = new SelectBuilder();
     sb.setBase(sparqlEndpoint.toString()).from(ONTOZONE_GRAPH).from(ONTOZONING_GRAPH)
             .addVar("?s").addVar("?p").addVar("?o")
-            .addWhere("?s", "?p", "?o")
-            /*.setLimit(100)*/;
+            .addWhere("?s", "?p", "?o");
 
     JSONArray sparqlResult = AccessAgentCaller.queryStore(route, sb.buildString());
 
