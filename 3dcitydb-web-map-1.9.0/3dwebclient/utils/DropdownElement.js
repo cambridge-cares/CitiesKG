@@ -77,7 +77,7 @@ function updateGfaRows(){
 						"<div class='gfa'>" +
 						"<div class='text_gfa' style='width: 180px'>" + checkboxes.item(
 								i).id + "</div>" +
-						"<div class='text_input'><input type='text' maxLength='5' size='3' onblur='getInputParams()'/></div>" +
+						"<div class='text_input'><input type='text' maxLength='5' size='3'></div>" +
 						"<hr size='1'>" +
 					  "</div>" ;
 				$("#assignGFA").append(clicked_element)
@@ -169,6 +169,8 @@ function throwNotification() {
 function showChooseDevType(){
 
 	var developmentType = document.getElementById("developmentType");
+	// Shiying: Add a cleaning function, clean the gfa dropdown and unselect everything
+	resetAllInputs();
 	//console.log(event.target.id + "is clicked");
 	selectedDevType = developmentType.value;
 	switch (developmentType.value){
@@ -202,4 +204,16 @@ function showChooseDevType(){
 
 }
 
+function resetAllInputs(){
+	var checkboxes = document.getElementsByClassName('checkbox');
+	let checkedCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+	checkedCheckboxes.forEach((checkbox) => {
+		checkbox.checked = false;
+		updateGfaRows();
+	});
+
+	var totalGfaInput = document.getElementById("totalGFA");
+	//totalGfaInput.innerHTML = "";
+	totalGfaInput.value = '';
+}
 
