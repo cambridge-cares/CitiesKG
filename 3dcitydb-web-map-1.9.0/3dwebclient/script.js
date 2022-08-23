@@ -788,14 +788,20 @@ function pinHighlightObjects(cityObjectsArray){
     if (Cesium.defined(currentLayer)) {
         testcityobjectsJsonData = currentLayer.cityobjectsJsonData;
     }
+
+    var customDataSource = new Cesium.CustomDataSource("myPoints");
+
     for (let i = 0; i < gmlidArray.length; i++){
         var obj = testcityobjectsJsonData[gmlidArray[i]];
+        var id = gmlidArray[i];
         var lon = (obj.envelope[0] + obj.envelope[2]) / 2.0;
         var lat = (obj.envelope[1] + obj.envelope[3]) / 2.0;
         console.log(gmlidArray[i] + ": " + lon + ", " + lat);
 
-        addPoint(lat, lon);
+        addPoint(customDataSource, id, lat, lon);
     }
+
+    cesiumViewer.dataSources.add(customDataSource);
 
     // lat#long
     //var centroidArray = ["1.3171695133731451#104.00344181680501", "1.232218731520345#103.769346005816", "1.3183791030454#103.6429693656075", "1.4531236632754299#103.81758389573551"];
@@ -823,10 +829,11 @@ function pinHighlightObjects(cityObjectsArray){
     })
 }
 
-function addPoint(lat, long){
+function addPoint(customDataSource, pointId, lat, long){
 
-    cesiumViewer.entities.add({
+    customDataSource.entities.add({
         position: Cesium.Cartesian3.fromDegrees(long, lat),
+        id: pointId,
         point: {
             pixelSize: 10,
             color: Cesium.Color.YELLOW,
