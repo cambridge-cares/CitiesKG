@@ -7,8 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mockStatic;
 
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Statement;
@@ -17,6 +16,8 @@ import edu.uci.ics.jung.graph.Graph;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -24,13 +25,17 @@ import net.rootdev.jenajung.JenaJungGraph;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.graph.NodeFactory;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
 import org.semanticweb.owlapi.model.IRI;
 import org.apache.jena.graph.Node;
 import org.json.JSONArray;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 
+@RunWith(MockitoJUnitRunner.class)
 public class PageRankTaskTest {
 
   @Test
@@ -159,15 +164,43 @@ public class PageRankTaskTest {
 
   }
 
-  /**
-   * run()
-   *
-   * storeResults(Graph<RDFNode, Statement> graph, PageRank<RDFNode, Statement> ranker)
-   *
-   *
-   * persistUpdate(UpdateBuilder ub)
-   *
-   */
+  @Test
+  public void testNewPageRankRunMethod() {
+    PageRankTask task = new PageRankTask();
+
+    try {
+      Method run = task.getClass().getDeclaredMethod("run");
+      run.setAccessible(true);
+      Method isRunning = task.getClass().getDeclaredMethod("isRunning");
+      isRunning.setAccessible(true);
+      Method setTargetGraph = task.getClass().getDeclaredMethod("setTargetGraph", String.class);
+      setTargetGraph.setAccessible(true);
+      setTargetGraph.invoke(task, "http:/www.test.com/");
+      new LinkedBlockingDeque<>();
+      Method setStringMapQueue = task.getClass().getDeclaredMethod("setStringMapQueue", BlockingQueue.class);
+      setStringMapQueue.setAccessible(true);
+      setStringMapQueue.invoke(task, new LinkedBlockingDeque<>());
+      Field dataQueue = task.getClass().getDeclaredField("dataQueue");
+      dataQueue.setAccessible(true);
+
+      try (MockedStatic<AccessAgentCaller> aacMock = mockStatic(AccessAgentCaller.class)) {
+        //Do not execute any code with AccessAgentCaller - it is tested separately
+        aacMock.when(() -> AccessAgentCaller.updateStore(anyString(), anyString()))
+            .thenAnswer((Answer<Void>) invocation -> null);
+        Map<String, JSONArray> map = Collections.singletonMap("http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankTask",
+            new JSONArray("[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.test.com/2#p\", \"o\": \"http://www.test.com/3\"}]"));
+        ((LinkedBlockingDeque) dataQueue.get(task)).put(map);
+        //Call method that uses AccessAgentCaller inside
+        //Other methods from this class are tested separately
+        run.invoke(task);
+        assertFalse((Boolean) isRunning.invoke(task));
+      }
+
+    } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException | NoSuchFieldException | InterruptedException e) {
+      fail();
+    }
+
+  }
 
   @Test
   public void testNewPageRankTaskCreateGraphMethod() {
@@ -186,6 +219,36 @@ public class PageRankTaskTest {
 
   }
 
+  @Test
+  public void testNewPageRankTaskStoreResultsMethod() {
+    PageRankTask task = new PageRankTask();
+
+    try {
+      Method storeResults = task.getClass().getDeclaredMethod("storeResults", Graph.class, PageRank.class);
+      storeResults.setAccessible(true);
+      Method createGraph = task.getClass().getDeclaredMethod("createGraph", JSONArray.class);
+      createGraph.setAccessible(true);
+      Method setTargetGraph = task.getClass().getDeclaredMethod("setTargetGraph", String.class);
+      setTargetGraph.setAccessible(true);
+      setTargetGraph.invoke(task, "http:/www.test.com/");
+      JSONArray a = new JSONArray("[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.test.com/2#p\", \"o\": \"http://www.test.com/3\"}]");
+      JenaJungGraph g = (JenaJungGraph) createGraph.invoke(task, a);
+      PageRank<RDFNode, Statement> ranker = new PageRank<>(g, 0.3);
+      ranker.evaluate();
+      try (MockedStatic<AccessAgentCaller> aacMock = mockStatic(AccessAgentCaller.class)) {
+        //Do not execute any code with AccessAgentCaller - it is tested separately
+        aacMock.when(() -> AccessAgentCaller.updateStore(anyString(), anyString()))
+            .thenAnswer((Answer<Void>) invocation -> null);
+        //Call method that uses AccessAgentCaller inside
+        //Other methods from this class are tested separately
+        storeResults.invoke(task, g, ranker);
+      }
+
+    } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+      fail();
+    }
+  }
+  
   @Test
   public void testNewPageRankTaskPrepareUpdateMethod() {
     PageRankTask task = new PageRankTask();
@@ -243,7 +306,37 @@ public class PageRankTaskTest {
 
   }
 
+  @Test
+  public void testNewPageRankTaskPersistUpdateMethod() {
+    PageRankTask task = new PageRankTask();
+
+    try {
+      Method persistUpdate = task.getClass().getDeclaredMethod("persistUpdate", UpdateBuilder.class);
+      persistUpdate.setAccessible(true);
+      UpdateBuilder ub = new UpdateBuilder();
+      ub.addInsert("http://www.test.com/test/", NodeFactory.createURI("http://www.test.com/1"), "oninf:test",
+          NodeFactory.createURI("http://www.test.com/2"));
 
 
+      try (MockedStatic<AccessAgentCaller> aacMock = mockStatic(AccessAgentCaller.class)) {
+        //Do not execute any code with AccessAgentCaller - it is tested separately
+        aacMock.when(() -> AccessAgentCaller.updateStore(anyString(), anyString())).thenAnswer((Answer<Void>) invocation -> null);
+        //Call method that uses AccessAgentCaller inside
+        ub = (UpdateBuilder) persistUpdate.invoke(task, ub);
+
+        ub.addInsert("http://www.test.com/test/", NodeFactory.createURI("http://www.test.com/1"), "oninf:test",
+            NodeFactory.createURI("http://www.test.com/2"));
+        assertEquals(ub.build().toString(), "INSERT DATA {\n"
+            + "  GRAPH \"http://www.test.com/test/\" {\n"
+            + "    <http://www.test.com/1> <http://www.theworldavatar.com/ontologies/OntoInfer.owl#test> <http://www.test.com/2> .\n"
+            + "  }\n"
+            + "}\n");
+      }
+
+    } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+      fail();
+    }
+
+  }
 
 }
