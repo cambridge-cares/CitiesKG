@@ -739,6 +739,8 @@ function processInfoContext(selectedDevType, resultjson){
     var title = document.createElement("span");
 
     title.textContent = selectedDevType;
+    title.style.fontWeight = "bold";
+    title.style.fontSize = "14px";
     infoText.appendChild(title);
     infoText.appendChild(document.createElement("br"));
 
@@ -747,16 +749,37 @@ function processInfoContext(selectedDevType, resultjson){
     var inputs = resultjson["context"]["http://www.theworldavatar.com:83/access-agent/access"];
     var allowOption;
     var allowsObjects = [];
+    var allowsGFA = [];
     if (Object.keys(inputs).includes("allowsProgramme")){
         allowsObjects = Object.keys(inputs["allowsProgramme"]);
+        allowsGFA = Object.values(inputs["allowsProgramme"]);
         allowOption = "allowsProgramme";
     } else if (Object.keys(inputs).includes("allowsUse")){
         allowsObjects = Object.keys(inputs["allowsUse"]);
+        allowsGFA = Object.values(inputs["allowsUse"]);
         allowOption = "allowsUse";
     }
+    var allowOpts = document.createElement("span");
+    allowOpts.textContent = allowOption;
+    infoText.appendChild(allowOpts);
+    infoText.appendChild(document.createElement("br"));
+
     var allowOptText = document.createElement("span");
-    allowOptText.textContent = allowOption + ": " + allowsObjects;
+    var allowsContent = "";
+    for (i = 0; i < allowsObjects.length; ++i){
+        allowsContent += allowsObjects[i] + ":" + allowsGFA[i] + ",";
+    }
+    allowOptText.textContent = allowsContent;
     infoText.appendChild(allowOptText);
+    infoText.appendChild(document.createElement("br"));
+
+    if (Object.keys(inputs).includes("TotalGFA") && inputs["TotalGFA"] > 0){
+        var totalGFA = document.createElement("span");
+        var totalGFAValue = inputs["TotalGFA"];
+        totalGFA.textContent = "TotalGFA: " + totalGFAValue;
+        infoText.appendChild(totalGFA);
+        infoText.appendChild(document.createElement("br"));
+    }
 
     var objCount = document.createElement("span");
     objCount.textContent = "Valid Plots: " + filteredCount;
