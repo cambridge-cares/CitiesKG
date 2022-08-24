@@ -29,6 +29,10 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.json.JSONArray;
 
+import org.locationtech.jts.geom.*;
+import org.locationtech.jts.operation.buffer.BufferOp;
+import org.locationtech.jts.operation.buffer.BufferParameters;
+
 @WebServlet(
         urlPatterns = {
                 CEAAgent.URI_ACTION,
@@ -594,9 +598,7 @@ public class CEAAgent extends JPSAgent {
 
         if(!queryResultArray.isEmpty()){
             if (value == "Lod0FootprintId" || value == "FootprintThematicSurface"){
-                for (int i = 0; i < queryResultArray.length(); i++){
-                    result = result + "#" + queryResultArray.getJSONObject(i).get("geometry").toString();
-                }
+                result = extractFootprint(queryResultArray);
             }
             else if (value!="FootprintSurfaceGeom") {
                 result = queryResultArray.getJSONObject(0).get(value).toString();
@@ -1358,6 +1360,185 @@ public class CEAAgent extends JPSAgent {
         annualValue = Math.round(annualValue*Math.pow(10,2))/Math.pow(10,2);
         return annualValue.toString();
 
+    }
+
+    /**
+     * Extracts the footprint of the building from its ground surface geometries
+     * @param results JSONArray of the query results for ground surface geometries
+     * @return footprint as a string
+     */
+    private String extractFootprint(JSONArray results){
+        double distance = 0.00001;
+        double increment = 0.00001;
+
+        Polygon footprintPolygon;
+        Geometry footprintRing;
+        Coordinate[] footprintCoordinates;
+        ArrayList<Geometry> geometries = new ArrayList<>();
+        GeometryFactory geoFac = new GeometryFactory();
+        GeometryCollection geoCol;
+        Geometry merged;
+        String geoType;
+
+        if (results.length() == 1){
+            footprintPolygon = (Polygon) toPolygon(results.getJSONObject(0).get("geometry").toString());
+        }
+
+        else {
+            for (int i = 0; i < results.length(); i++) {
+                geometries.add(toPolygon(results.getJSONObject(i).get("geometry").toString()));
+            }
+
+            geoCol = (GeometryCollection) geoFac.buildGeometry(geometries);
+
+            merged = geoCol.union();
+
+            geoType = merged.getGeometryType();
+
+            while (geoType != "Polygon" || deflatePolygon(merged, distance).getGeometryType() != "Polygon"){
+                distance += increment;
+
+                for (int i = 0; i < geometries.size(); i++){
+                    geometries.set(i, inflatePolygon(geometries.get(i), distance));
+                }
+
+                geoCol = (GeometryCollection) geoFac.buildGeometry(geometries);
+                merged = geoCol.union();
+                geoType = merged.getGeometryType();
+            }
+
+            footprintPolygon = (Polygon) deflatePolygon(merged, distance);
+        }
+
+        footprintRing = footprintPolygon.getExteriorRing();
+
+        footprintCoordinates = footprintRing.getCoordinates();
+
+        return coordinatesToString(footprintCoordinates);
+    }
+    /**
+     * Create a polygon with the given points
+     * @param points points of the polygon as a string
+     * @return a polygon
+     */
+    private Geometry toPolygon(String points){
+        int ind = 0;
+        GeometryFactory gF = new GeometryFactory();
+
+        String[] arr = points.split("#");
+
+        Coordinate[] coordinates = new Coordinate[(arr.length) / 3];
+
+        for (int i = 0; i < arr.length; i += 3){
+            coordinates[ind] = new Coordinate(Double.valueOf(arr[i]), Double.valueOf(arr[i+1]), Double.valueOf(arr[i+2]));
+            ind++;
+        }
+
+        return gF.createPolygon(coordinates);
+    }
+
+    /**
+     * Converts an array of coordinates into a string
+     * @param coordinates array of footprint coordinates
+     * @return coordinates as a string
+     */
+    private String coordinatesToString(Coordinate[] coordinates){
+        String output = "";
+
+        for (int i = 0; i < coordinates.length; i++){
+            output = output + "#" + Double.toString(coordinates[i].getX()) + "#" + Double.toString(coordinates[i].getY()) + "#" + Double.toString(coordinates[i].getZ());
+        }
+
+        return output.substring(1, output.length());
+    }
+
+    /**
+     * Inflates a polygon
+     * @param geom polygon geometry
+     * @param distance buffer distance
+     * @return inflated polygon
+     */
+    private Geometry inflatePolygon(Geometry geom, double distance) {
+        ArrayList<Double> zCoordinate = getPolygonZ(geom);
+        BufferParameters bufferParameters = new BufferParameters();
+        bufferParameters.setEndCapStyle(BufferParameters.CAP_ROUND);
+        bufferParameters.setJoinStyle(BufferParameters.JOIN_MITRE);
+        Geometry buffered = BufferOp.bufferOp(geom, distance, bufferParameters);
+        buffered.setUserData(geom.getUserData());
+        setPolygonZ(buffered, zCoordinate);
+        return buffered;
+    }
+
+    /**
+     * Deflates a polygon
+     * @param geom polygon geometry
+     * @param distance buffer distance
+     * @return deflated polygon
+     */
+    private Geometry deflatePolygon(Geometry geom, double distance) {
+        ArrayList<Double> zCoordinate = getPolygonZ(geom);
+        BufferParameters bufferParameters = new BufferParameters();
+        bufferParameters.setEndCapStyle(BufferParameters.CAP_ROUND);
+        bufferParameters.setJoinStyle(BufferParameters.JOIN_MITRE);
+        Geometry buffered = BufferOp.bufferOp(geom, distance * -1, bufferParameters);
+        buffered.setUserData(geom.getUserData());
+        setPolygonZ(buffered, zCoordinate);
+        return buffered;
+    }
+
+    /**
+     * Extract the z coordinates of the polygon vertices
+     * @param geom polygon geometry
+     * @return the z coordinates of the polygon vertices
+     */
+    private static ArrayList<Double> getPolygonZ(Geometry geom){
+        Coordinate[] coordinates = geom.getCoordinates();
+        ArrayList<Double> output = new ArrayList<>();
+
+        for (int i = 0; i < coordinates.length; i++){
+            output.add(coordinates[i].getZ());
+        }
+
+        return output;
+    }
+
+    /**
+     * Sets a polygon's z coordinates to the values from zInput
+     * @param geom polygon geometry
+     * @param zInput ArrayList of values representing z coordinates
+     * @return geom with z coordinates from zInput
+     */
+    private void setPolygonZ(Geometry geom, ArrayList<Double> zInput){
+        Double newZ = Double.NaN;
+
+        for (int i = 0; i < zInput.size(); i++){
+            if (!zInput.get(i).isNaN()){
+                newZ = zInput.get(i);
+                break;
+            }
+        }
+
+        if(newZ.isNaN()){newZ = 10.0;}
+
+        while(geom.getNumPoints() != zInput.size()){
+            zInput.add(1, newZ);
+        }
+
+        Collections.replaceAll(zInput, Double.NaN, newZ);
+        geom.apply(new CoordinateSequenceFilter() {
+            @Override
+            public void filter(CoordinateSequence cSeq, int i) {
+                cSeq.getCoordinate(i).setZ(zInput.get(i));
+            }
+            @Override
+            public boolean isDone() {
+                return false;
+            }
+            @Override
+            public boolean isGeometryChanged() {
+                return false;
+            }
+        });
     }
 
 }
