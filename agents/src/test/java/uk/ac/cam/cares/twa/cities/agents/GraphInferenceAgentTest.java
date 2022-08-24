@@ -1,8 +1,13 @@
 package uk.ac.cam.cares.twa.cities.agents;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.semanticweb.owlapi.model.IRI;
+import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.tasks.EdgeBetweennessTask;
 import uk.ac.cam.cares.twa.cities.tasks.PageRankTask;
 import uk.ac.cam.cares.twa.cities.tasks.UninitialisedDataQueueTask;
@@ -11,8 +16,14 @@ import uk.ac.cam.cares.twa.cities.tasks.UnweightedShortestPathTask;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -76,7 +87,43 @@ class GraphInferenceAgentTest {
 
     @Test
     public void testProcessRequestParameters() {
+        JSONObject requestParams = new JSONObject();
+        requestParams.put("requestUrl", "http://localhost:8080/agents/inference/graph");
+        requestParams.put("targetIRI", "http://127.0.0.1:9999/blazegraph/namespace/test/sparql/");
+        requestParams.put("algorithmIRI", "http://www.theworldavatar.com/ontologies/OntoInfer.owl#EdgeBetweennessAlgorithm");
+        requestParams.put("method", HttpMethod.POST);
 
+        JSONArray chooseTaskResult = new JSONArray().put(new JSONObject().put("o", "http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankTask"));
+        JSONArray getAllTargetDataResult = new JSONArray().put(new JSONObject().put("result key", "result"));
+
+        ExecutorService spy = Mockito.spy(Executors.newFixedThreadPool(5));
+
+        try (MockedStatic<Executors> exMock = Mockito.mockStatic(Executors.class)) {
+            exMock.when(() -> Executors.newFixedThreadPool(ArgumentMatchers.anyInt())).thenReturn(spy);
+            Mockito.doNothing().when(spy).execute(ArgumentMatchers.any());
+            GraphInferenceAgent agent = new GraphInferenceAgent();
+
+        try (MockedStatic<AccessAgentCaller> aacMock = Mockito.mockStatic(AccessAgentCaller.class)) {
+            aacMock.when(() -> AccessAgentCaller.queryStore(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
+                    .thenReturn(chooseTaskResult)
+                    .thenReturn(getAllTargetDataResult);
+
+                // check value of responseParams
+                JSONObject response = agent.processRequestParameters(requestParams);
+                assertEquals("started", response.get("http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankTask"));
+
+                // check if route is set
+                Field route = agent.getClass().getDeclaredField("route");
+                assertEquals(ResourceBundle.getBundle("config").getString("uri.route"), route.get(agent));
+
+                // check if array is added to dataQueue
+                Field dataQueue = agent.getClass().getDeclaredField("dataQueue");
+                Map map = (Map) ((LinkedBlockingDeque) dataQueue.get(agent)).poll();
+                assertEquals(getAllTargetDataResult, map.get("http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankTask"));
+            }
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            fail();
+        }
     }
 
     @Test
@@ -132,12 +179,35 @@ class GraphInferenceAgentTest {
 
     @Test
     public void testChooseTask() {
-
+        GraphInferenceAgent agent = new GraphInferenceAgent();
+        JSONArray result = new JSONArray().put(new JSONObject().put("o", "http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankTask"));
+        try (MockedStatic<AccessAgentCaller> aacMock = Mockito.mockStatic(AccessAgentCaller.class)) {
+            aacMock.when(() -> AccessAgentCaller.queryStore(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
+                    .thenReturn(result);
+            agent.getClass().getDeclaredField("route").set(agent, "http://localhost:48080/test");
+            Method chooseTask = agent.getClass().getDeclaredMethod("chooseTask", IRI.class, IRI.class);
+            chooseTask.setAccessible(true);
+            assertEquals(PageRankTask.class, chooseTask.invoke(agent, IRI.create("http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankAlgorithm"),
+                    IRI.create("http://127.0.0.1:9999/blazegraph/namespace/test/sparql/")).getClass());
+        } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            fail();
+        }
     }
 
     @Test
     public void testGetAllTargetData() {
-
+        GraphInferenceAgent agent = new GraphInferenceAgent();
+        JSONArray result = new JSONArray();
+        try (MockedStatic<AccessAgentCaller> aacMock = Mockito.mockStatic(AccessAgentCaller.class)) {
+            aacMock.when(() -> AccessAgentCaller.queryStore(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
+                    .thenReturn(result);
+            agent.getClass().getDeclaredField("route").set(agent, "http://localhost:48080/test");
+            Method getAllTargetData = agent.getClass().getDeclaredMethod("getAllTargetData", IRI.class);
+            getAllTargetData.setAccessible(true);
+            assertEquals(result, getAllTargetData.invoke(agent, IRI.create("http://127.0.0.1:9999/blazegraph/namespace/test/sparql/")));
+        } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            fail();
+        }
     }
 
 }
