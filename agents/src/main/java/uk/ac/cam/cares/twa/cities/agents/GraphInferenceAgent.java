@@ -81,7 +81,7 @@ public class GraphInferenceAgent extends JPSAgent {
         dataQueue.put(Collections.singletonMap(task.getTaskIri().toString(), targetData));
         taskExecutor.execute(task);
         //(4) add task information to the response
-        responseParams.put(ONINF_SCHEMA + task.getTaskIri().toString(), "started");
+        responseParams.put(task.getTaskIri().toString(), "started");
 
       } catch (Exception e) {
         throw new JPSRuntimeException(e);
