@@ -87,7 +87,9 @@ def create_shapefile(geometries, heights, crs, shapefile):
 def main(argv):
     shapefile_file = "zone.shp"
     shapefile = argv.zone_file_location + os.sep + shapefile_file
-    data_dictionary = json.loads(argv.data)
+    with open(argv.data_file_location, "r") as f:
+        dataString = f.readlines()[0]
+    data_dictionary = json.loads(dataString)
     geometries = []
     heights = []
 
@@ -105,7 +107,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # add arguments to the parser
-    parser.add_argument("data")
+    parser.add_argument("data_file_location")
     parser.add_argument("zone_file_location")
     parser.add_argument("crs")
 

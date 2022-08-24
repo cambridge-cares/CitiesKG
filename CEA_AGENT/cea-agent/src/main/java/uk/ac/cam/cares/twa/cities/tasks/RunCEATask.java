@@ -33,6 +33,8 @@ public class RunCEATask implements Runnable {
     private static final String CREATE_WORKFLOW_SCRIPT = "create_cea_workflow.py";
     private static final String FS = System.getProperty("file.separator");
 
+    private static final String DATA_FILE = "datafile.txt";
+
     public RunCEATask(ArrayList<CEAInputData> buildingData, URI endpointUri, ArrayList<String> uris, int thread, String crs) {
         this.inputs = buildingData;
         this.endpointUri = endpointUri;
@@ -324,7 +326,16 @@ public class RunCEATask implements Runnable {
                 ArrayList<String> args = new ArrayList<>();
                 ArrayList<String> args2 = new ArrayList<>();
                 ArrayList<String> args3 = new ArrayList<>();
-                String workflowPath = strTmp+FS+"workflow.yml";
+                String workflowPath = strTmp + FS + "workflow.yml";
+                String data_path = strTmp + FS + DATA_FILE;
+
+                try {
+                    BufferedWriter f_writer = new BufferedWriter(new FileWriter(data_path));
+                    f_writer.write(dataString);
+                    f_writer.close();
+                } catch (IOException e) {
+                    throw new JPSRuntimeException(e);
+                }
 
                 if(OS.contains("win")){
                     String f_path;
@@ -332,7 +343,7 @@ public class RunCEATask implements Runnable {
                     args.add("cmd.exe");
                     args.add("/C");
                     f_path = new File(Objects.requireNonNull(getClass().getClassLoader().getResource(SHAPEFILE_SCRIPT)).toURI()).getAbsolutePath();
-                    args.add("conda activate cea && python " + f_path + " " + dataString.replace("\"", "\\\"")+ " " + strTmp + " " + crs);
+                    args.add("conda activate cea && python " + f_path + " " + data_path + " " + strTmp + " " + crs);
 
                     args2.add("cmd.exe");
                     args2.add("/C");
@@ -355,7 +366,7 @@ public class RunCEATask implements Runnable {
 
                     args.add("/bin/bash");
                     args.add("-c");
-                    args.add("export PROJ_LIB=/venv/share/lib && python " + shapefile +" '"+ dataString +"' " +strTmp+" "+crs);
+                    args.add("export PROJ_LIB=/venv/share/lib && python " + shapefile +" "+ data_path +" " +strTmp+" "+crs);
 
                     args2.add("/bin/bash");
                     args2.add("-c");
