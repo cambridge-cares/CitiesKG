@@ -573,7 +573,6 @@ def read_road_regulations(fn_roads, fn_road_plots):
 
 
 def run_estimate_gfa():
-
     print("GFA estimation initiated.")
 
     # file paths
