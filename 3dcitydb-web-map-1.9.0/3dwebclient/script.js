@@ -698,6 +698,7 @@ function highlightMultipleObjects(cityObjectsArray){  // citydbKmlLayer object, 
     //flyToMapLocation(1.264377, 103.837302);
     //zoomToObjectById("UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d");
     currentLayer.highlight(filteredObjects);
+
     pinHighlightObjects(cityObjectsArray);
 }
 
@@ -716,7 +717,7 @@ function showResultWindow(selectedDevType, resultJson){
     var closeButton = document.createElement("span");
     closeButton.className = "close";
     closeButton.textContent = "x";
-
+    closeButton.onclick = removeDataSource();
     listItem.appendChild(closeButton);
     resultBoxContent.appendChild(listItem);
     resultBox.appendChild(resultBoxContent);
@@ -788,8 +789,11 @@ function processInfoContext(selectedDevType, resultjson){
     return infoText;
 }
 
-
+function removeDataSource(){
+    cesiumViewer.dataSources.removeAll();
+}
 function pinHighlightObjects(cityObjectsArray){
+
     //var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e05bfbcc-561e-4dc3-a355-8106f3e7fcf4/",
     //    "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_654c80ac-b52f-4a24-9569-3ed727ae9d4e/",
     //    "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_32fdd5cf-bf30-40f3-96a6-e84960fae084/",
@@ -813,6 +817,7 @@ function pinHighlightObjects(cityObjectsArray){
     }
 
     var customDataSource = new Cesium.CustomDataSource("myPoints");
+
 
     for (let i = 0; i < gmlidArray.length; i++){
         var obj = testcityobjectsJsonData[gmlidArray[i]];
@@ -850,6 +855,7 @@ function pinHighlightObjects(cityObjectsArray){
     cesiumViewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromRadians(1.8121454529642347, 0.023307207117772493, 66468)
     })
+
 }
 
 function addPoint(customDataSource, pointId, lat, long){
