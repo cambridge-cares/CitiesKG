@@ -718,6 +718,7 @@ public class CEAAgent extends JPSAgent {
                     .addFilter("?groundSurfId = 35"); //Thematic Surface Ids are 33:roof, 34:wall and 35:ground
             SelectBuilder sb = new SelectBuilder()
                     .addVar("?geometry")
+                    .addVar("datatype(?geometry)", "?datatype")
                     .addGraph(NodeFactory.createURI(getGraph(uriString,SURFACE_GEOMETRY)), wb1)
                     .addGraph(NodeFactory.createURI(getGraph(uriString,THEMATIC_SURFACE)), wb2);
             sb.setVar( Var.alloc( "building" ), NodeFactory.createURI(getBuildingUri(uriString)));
@@ -1381,12 +1382,12 @@ public class CEAAgent extends JPSAgent {
         String geoType;
 
         if (results.length() == 1){
-            footprintPolygon = (Polygon) toPolygon(results.getJSONObject(0).get("geometry").toString());
+            footprintPolygon = (Polygon) toPolygon(ignoreHole(results.getJSONObject(0).get("geometry").toString(), results.getJSONObject(0).get("datatype").toString()));
         }
 
         else {
             for (int i = 0; i < results.length(); i++) {
-                geometries.add(toPolygon(results.getJSONObject(i).get("geometry").toString()));
+                geometries.add(toPolygon(ignoreHole(results.getJSONObject(i).get("geometry").toString(), results.getJSONObject(i).get("datatype").toString())));
             }
 
             geoCol = (GeometryCollection) geoFac.buildGeometry(geometries);
@@ -1541,4 +1542,29 @@ public class CEAAgent extends JPSAgent {
         });
     }
 
+    /**
+     * Returns the ground geometry's exterior ring
+     * @param geometry ground geometry
+     * @param polygonType polygon datatype, such as "<...\POLYGON-3-45-15>"
+     * @return ground geometry with no holes
+     */
+    private String ignoreHole(String geometry, String polygonType){
+        int num;
+        int ind;
+        int count = 1;
+
+        String[] split = polygonType.split("-");
+
+        if (split.length < 4){return geometry;}
+
+        num = Integer.parseInt(split[2]);
+
+        ind = geometry.indexOf("#");
+
+        while (count != num){
+            ind = geometry.indexOf("#", ind + 1);
+            count++;
+        }
+        return geometry.substring(0, ind);
+    }
 }
