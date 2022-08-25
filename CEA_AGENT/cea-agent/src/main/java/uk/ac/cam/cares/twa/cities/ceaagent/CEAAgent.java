@@ -817,16 +817,22 @@ public class CEAAgent extends JPSAgent {
      * @return returns a query string
      */
     private Query getLod0FootprintIdQuery(String uriString) {
-        WhereBuilder wb = new WhereBuilder()
-                .addPrefix("ocgml", ocgmlUri)
-                .addWhere("?building", "ocgml:lod0FootprintId", "?footprintSurface")
-                .addWhere("?surface", "ocgml:parentId", "?footprintSurface")
-                .addWhere("?surface", "ocgml:GeometryType", "?geometry");
-        SelectBuilder sb = new SelectBuilder()
-                .addVar("?geometry")
-                .addWhere(wb);
-        sb.setVar( Var.alloc( "building" ), NodeFactory.createURI(getBuildingUri(uriString)));
-        return sb.build();
+        try {
+            WhereBuilder wb = new WhereBuilder()
+                    .addPrefix("ocgml", ocgmlUri)
+                    .addWhere("?building", "ocgml:lod0FootprintId", "?footprintSurface")
+                    .addWhere("?surface", "ocgml:parentId", "?footprintSurface")
+                    .addWhere("?surface", "ocgml:GeometryType", "?geometry");
+            SelectBuilder sb = new SelectBuilder()
+                    .addVar("?geometry")
+                    .addVar("datatype(?geometry)", "?datatype")
+                    .addWhere(wb);
+            sb.setVar(Var.alloc("building"), NodeFactory.createURI(getBuildingUri(uriString)));
+            return sb.build();
+        }catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
