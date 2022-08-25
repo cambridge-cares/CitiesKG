@@ -347,7 +347,7 @@ public class CityInformationAgent extends JPSAgent {
           }
         }
         else{
-          if (current_gfas.get(DEFAULT_ZONING_CASE) >= chosen_gfa){
+          if (Collections.max(current_gfas.values()) > chosen_gfa){
             filteredCityobjects.put(cityobject);
           }
         }
