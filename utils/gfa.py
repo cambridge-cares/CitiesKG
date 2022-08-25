@@ -405,12 +405,10 @@ def compute_gfa(plots_for_GFA, plot_setbacks, dcp):
             # No minimum storeys
             if not plot_storeys:
                 plot_gfa = plot_row["GPR_GFA"]
-                #plot_gfa = float("NaN")
             # Minimum storeys apply
             else:
                 subtype_setbacks = setbacks[subtype]
-                # Getting the setback geometry for each storey.
-                # Note: will be a list with one element if the same setback applies to all storeys.
+                # Getting the setback geometry for each storey - will be a list with one element if the same setback applies to all storeys.
                 setback_area = []
                 # check if any edge has more than one setback value.
                 if np.any([type(edge_setbacks) == list for edge_setbacks in subtype_setbacks]):
@@ -425,8 +423,7 @@ def compute_gfa(plots_for_GFA, plot_setbacks, dcp):
                         cur_setbacks = [edge_setback[i] if type(edge_setback) == list else edge_setback for edge_setback in subtype_setbacks]
                         setback_area.append(create_setback_area(plot_row.loc['edges'], cur_setbacks))
                 else:
-                    # setback is the same across all storeys
-                    # create same size setback area for all storeys.
+                    # setback is the same across all storeys - create same size setback area for all storeys.
                     setback_area.append(create_setback_area(plot_row.loc['edges'], subtype_setbacks))
                 # Check site coverage
                 site_coverage = plot_control["site_coverage"].min()
@@ -716,7 +713,7 @@ def run_estimate_gfa():
     """
     Extracting setbacks for every edge.
     Split plots into ones that setbacks apply from street block plans, and setbacks from control plan. 
-    There is no need to try to identify  every edge type  if street blocks do not apply. 
+    There is no need to try to identify every edge type if street blocks do not apply. 
     """
 
     setback_names = ['Setback_Front', 'Setback_Side', 'Setback_Rear']

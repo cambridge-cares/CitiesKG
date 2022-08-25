@@ -7,7 +7,7 @@ from rdflib.namespace import XSD
 from requests.exceptions import HTTPError
 from GFAOntoManager import *
 
-json_dir = "C:/Users/AydaGrisiute/Dropbox/Cities Knowledge Graph - [all team members]/Research/WP6 - Use Cases/PlanningConceptOntology/estimate_GFA[AG].json"
+json_dir = "C:/Users/AydaGrisiute/Dropbox/Cities Knowledge Graph - [all team members]/Research/WP6 - Use Cases/PlanningConceptOntology/estimate_GFA[AG][HS]_2022_08_25.json"
 cur_dir = 'C://Users/AydaGrisiute/Desktop'
 endpoint = "http://192.168.0.144:9999/blazegraph/namespace/singaporeEPSG4326/sparql"
 
@@ -67,14 +67,15 @@ def instantiate_gfa():
     df = pd.read_json(json_dir, orient="index")
     df = df.reset_index()
     df = df.melt(id_vars=['index'], value_vars=list(df.columns[1:])).dropna()
+    print("JSON loaded")
 
     gfa_dataset = TripleDataset()
 
     for i in df.index:
         gfa_dataset.create_gfa_triples(df.loc[i, 'index'], df.loc[i, 'value'], df.loc[i, 'variable'])
-
+    print('Triples created')
     gfa_dataset.write_triples("gfa")
-
+    print("Nquads written")
     #add_nquads(gfa_dataset, endpoint)
 
 
