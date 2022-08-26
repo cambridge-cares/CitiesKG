@@ -176,7 +176,7 @@ public class CEAAgent extends JPSAgent {
                         height = height.length() == 0 ? getValue(uri, "HeightGenAttr", route): height;
                         height = height.length() == 0 ? "10.0" : height;
                         // Get footprint from ground thematic surface or find from surface geometries depending on data
-                        String footprint = getValue(uri, "Lod0FootprintId", route);
+                        String footprint = getValue(uri, "FootprintSurfaceGeom", route);
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
                         testData.add(new CEAInputData(footprint, height));
@@ -604,7 +604,7 @@ public class CEAAgent extends JPSAgent {
                 result = queryResultArray.getJSONObject(0).get(value).toString();
             }
             else{
-                result=getGroundGeometry(queryResultArray);
+                result = extractFootprint(getGroundGeometry(queryResultArray));
             }
         }
         return result;
@@ -616,35 +616,46 @@ public class CEAAgent extends JPSAgent {
      * @param results array of building surfaces
      * @return footprint geometry as string
      */
-    private String getGroundGeometry(JSONArray results){
-        String footprint="";
-        ArrayList<String> z_values = new ArrayList<>();
-        Double minimum=Double.MAX_VALUE;
+    private JSONArray getGroundGeometry(JSONArray results){
+        ArrayList<Integer> ind = new ArrayList<>();
+        ArrayList<Double> z = new ArrayList<>();
+        double eps = 0.5;
+        boolean flag;
+        String geom;
+        String[] split;
 
-        for(Integer i=0; i<results.length(); i++){
-            String geom = results.getJSONObject(i).get("FootprintSurfaceGeom").toString();
-            String[] split = geom.split("#");
-            // store z values of surface
-            for(Integer j=1; j<=split.length; j++) {
-                if(j%3==0){
-                    z_values.add(split[j-1]);
+        for (int i = 0; i < results.length(); i++){
+            geom = results.getJSONObject(i).get("geometry").toString();
+            split = geom.split("#");
+
+            z = new ArrayList<>();
+            z.add(Double.parseDouble(split[2]));
+
+            flag = true;
+
+            for (int j = 5; j < split.length; j += 3){
+                for (int ji = 0;  ji < z.size(); ji++){
+                    if (Math.abs(Double.parseDouble(split[j]) - z.get(ji)) > eps){
+                        flag = false;
+                        break;
+                    }
+                }
+
+                if (flag){
+                    z.add(Double.parseDouble(split[j]));
+                }
+                else{
+                    break;
                 }
             }
-            // find surfaces with constant z value
-            Boolean zIsConstant = true;
-            for(Integer k=1; k<z_values.size(); k++) {
-                if (!z_values.get(k).equals(z_values.get(k - 1))) {
-                    zIsConstant = false;
-                }
-            }
-            // store geometry with the minimum constant z as footprint
-            if (zIsConstant && Double.valueOf(z_values.get(0)) < minimum) {
-                minimum = Double.valueOf(z_values.get(0));
-                footprint=geom;
-            }
-            z_values.clear();
+
+            if (!flag){ind.add(i);}
         }
-        return footprint;
+
+        for (int i = ind.size() - 1; i >= 0; i--){
+            results.remove(ind.get(i));
+        }
+        return results;
     }
 
     /**
@@ -685,10 +696,11 @@ public class CEAAgent extends JPSAgent {
             WhereBuilder wb = new WhereBuilder()
                     .addPrefix("ocgml", ocgmlUri)
                     .addWhere("?surf", "ocgml:cityObjectId", "?s")
-                    .addWhere("?surf", "ocgml:GeometryType", "?FootprintSurfaceGeom")
-                    .addFilter("!isBlank(?FootprintSurfaceGeom)");
+                    .addWhere("?surf", "ocgml:GeometryType", "?geometry")
+                    .addFilter("!isBlank(?geometry)");
             SelectBuilder sb = new SelectBuilder()
-                    .addVar("?FootprintSurfaceGeom")
+                    .addVar("?geometry")
+                    .addVar("datatype(?geometry)", "?datatype")
                     .addGraph(NodeFactory.createURI(getGraph(uriString,SURFACE_GEOMETRY)), wb);
             sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
             return sb.build();
