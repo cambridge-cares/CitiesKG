@@ -1,26 +1,22 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
 import com.hp.hpl.jena.rdf.model.*;
-import com.hp.hpl.jena.rdf.model.impl.ResourceImpl;
 import edu.uci.ics.jung.algorithms.cluster.EdgeBetweennessClusterer;
+import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.Graph;
-import net.rootdev.jenajung.JenaJungGraph;
-import org.apache.jena.arq.querybuilder.UpdateBuilder;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.sparql.core.Quad;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.semanticweb.owlapi.model.IRI;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
 public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
-    private final IRI taskIri = IRI.create(GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.TASK_EB);
+
+    private final IRI taskIri = IRI.create(
+        GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.TASK_EB);
     private boolean stop = false;
     private BlockingQueue<Map<String, JSONArray>> dataQueue;
     private String targetGraph;
@@ -63,11 +59,13 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
                     Graph graph = createGraph(data);
 
                     // execute algo
-                    EdgeBetweennessClusterer<?, ?> clusterer = new EdgeBetweennessClusterer(0);
-                    Set<HashSet> set = clusterer.apply(graph);
+                    EdgeBetweennessClusterer clusterer = new EdgeBetweennessClusterer<>(3);
+                    Set<Set<RDFNode>> set = clusterer.apply(graph);
+
+                    int size = set.size();
 
                     // sparql update triples to endpoint
-                    update(set);
+                    //update(set);
                 } catch (Exception e) {
                     throw new JPSRuntimeException(e);
                 } finally {
@@ -77,21 +75,28 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
         }
     }
 
-    public Graph<RDFNode, Statement> createGraph(JSONArray array) {
-        Model model = ModelFactory.createDefaultModel();
-        List<Statement> list = new ArrayList<>();
+    public UndirectedSparseGraph createGraph(JSONArray array) {
+        /*
+        @todo: check ontology for duplicates:
+        java.lang.IllegalArgumentException: Nodes http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CemeteryUse and http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Cemetery are already connected by a different edge. To construct a graph that allows parallel edges, call allowsParallelEdges(true) on the Builder.
+         */
+        UndirectedSparseGraph graph = new UndirectedSparseGraph();
+
+
 
         for (Object data : array) {
             JSONObject obj = (JSONObject) data;
-            list.add(model.createStatement(ResourceFactory.createResource(obj.getString("s")),
-                    ResourceFactory.createProperty(obj.getString("p")),
-                    ResourceFactory.createResource(obj.getString("o"))));
+
+            Resource s = ResourceFactory.createResource(obj.getString("s"));
+            Property p = ResourceFactory.createProperty(obj.getString("p"));
+            Resource o = ResourceFactory.createResource(obj.getString("o"));
+            graph.addEdge(ResourceFactory.createStatement(s, p, o), s, o);
         }
 
-        model.add(list);
-        return new JenaJungGraph(model);
+        return graph;
     }
 
+    /*
     public void update(Set<HashSet> set) {
         Collection<Quad> collection = new ArrayList<>();
         Node g = NodeFactory.createURI("http://127.0.0.1:9999/blazegraph/namespace/singaporeEPSG4326/sparql/results/");
@@ -109,4 +114,6 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
         ub.addInsertQuads(collection);
         AccessAgentCaller.updateStore("http://localhost:48080/singaporeEPSG4326", ub.build().toString());
     }
+     */
+
 }
