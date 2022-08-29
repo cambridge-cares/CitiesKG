@@ -23,7 +23,7 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
     private final IRI taskIri = IRI.create(GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.TASK_EB);
     private boolean stop = false;
     private BlockingQueue<Map<String, JSONArray>> dataQueue;
-    private String targetGraph;
+    private Node targetGraph;
 
     @Override
     public IRI getTaskIri() {
@@ -36,8 +36,8 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
     }
 
     @Override
-    public void setTargetGraph(String tg) {
-        targetGraph = tg;
+    public void setTargetGraph(String endpointIRI) {
+        targetGraph = NodeFactory.createURI(endpointIRI + GraphInferenceAgent.ONTOINFER_GRAPH);
     }
 
     @Override
@@ -93,20 +93,30 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
     }
 
     public void update(Set<HashSet> set) {
-        Collection<Quad> collection = new ArrayList<>();
-        Node g = NodeFactory.createURI("http://127.0.0.1:9999/blazegraph/namespace/singaporeEPSG4326/sparql/results/");
-        Node p = NodeFactory.createURI("http://www.theworldavatar.com/ontologies/OntoInfer.owl#cluster");
+        UpdateBuilder ub = new UpdateBuilder();
+        ub.addPrefix(GraphInferenceAgent.ONINF_PREFIX, GraphInferenceAgent.ONINF_SCHEMA);
+
         Iterator<HashSet> iterator = set.stream().iterator();
         int cluster = 0;
         while (iterator.hasNext()) {
             cluster++;
             HashSet<ResourceImpl> hs = iterator.next();
             for (ResourceImpl resource : hs) {
-                collection.add(new Quad(g, NodeFactory.createURI(resource.getURI()), p, NodeFactory.createLiteral(String.valueOf(cluster))));
+                String pfix = GraphInferenceAgent.ONINF_PREFIX;
+                // UUID hasInferenceObject nodeIRI
+                Node id = NodeFactory.createURI(targetGraph.getURI() + UUID.randomUUID());
+                ub.addInsert(targetGraph, id, pfix + ":" + GraphInferenceAgent.ONINT_P_INOBJ,
+                        NodeFactory.createURI(String.valueOf(resource)));
+                // UUID hasInferenceAlgorithm EdgeBetweennessAlgorithm
+                ub.addInsert(targetGraph, id, pfix + ":" + GraphInferenceAgent.ONINT_P_INALG,
+                        NodeFactory.createURI(GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.ONINT_C_EBALG));
+                // UUID hasInferredValue clusterNumber
+                ub.addInsert(targetGraph, id, pfix + ":" + GraphInferenceAgent.ONINT_P_INVAL,
+                        NodeFactory.createLiteral(String.valueOf(cluster)));
             }
         }
-        UpdateBuilder ub = new UpdateBuilder();
-        ub.addInsertQuads(collection);
-        AccessAgentCaller.updateStore("http://localhost:48080/singaporeEPSG4326", ub.build().toString());
+
+        AccessAgentCaller.updateStore(ResourceBundle.getBundle("config").getString("uri.route"),
+                ub.build().toString());
     }
 }
