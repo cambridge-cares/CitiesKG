@@ -110,6 +110,7 @@ def assign_road_category(road_plots, rn_lta):
 
     road_plots = road_plots.merge(grouped_intersection, on='PlotId', how='left')
     road_plots.loc[road_plots["RD_TYP_CD"].isna(), "RD_TYP_CD"] = "no category"
+
     return road_plots
 
 def intersect_with_regulation(all_plots, regulation, valid_overlap):
@@ -118,7 +119,6 @@ def intersect_with_regulation(all_plots, regulation, valid_overlap):
     overlap_ratio = intersection['intersection_area'] / intersection['site_area']
     intersection = intersection.loc[overlap_ratio >= valid_overlap, :]
     return intersection
-
 
 def set_road_buffer_edges(plots_for_GFA, road_plots, road_categories):
     for road_category in road_categories.keys():
@@ -625,23 +625,23 @@ def plot_geo_regulation_check(plot_row, regulation_row):
         index_for_min_values = 2
     else:
         index_for_min_values = 0
-    print('index_for_min_values: ', index_for_min_values, regulation_row['min_area'][index_for_min_values], type(regulation_row['min_area'][index_for_min_values]))
+    #print('index_for_min_values: ', index_for_min_values, regulation_row['min_area'][index_for_min_values], type(regulation_row['min_area'][index_for_min_values]))
     cur_type_min_area = 0 if np.isnan(regulation_row['min_area'][index_for_min_values]) else regulation_row['min_area'][index_for_min_values]
-    print('cur_type_min_area: ', cur_type_min_area)
+    #print('cur_type_min_area: ', cur_type_min_area)
     cur_type_min_width =  0 if np.isnan(regulation_row['min_average_width'][index_for_min_values]) else regulation_row['min_average_width'][index_for_min_values]
 
     cur_type_min_depth = 0 if np.isnan(regulation_row['min_average_depth']) else regulation_row['min_average_depth']
 
-    print('cur type min area width depth:', cur_type_min_area, cur_type_min_width, cur_type_min_depth)
-    print('cur type min area width depth orig:', regulation_row['min_area'][index_for_min_values], regulation_row['min_average_width'][index_for_min_values], regulation_row['min_average_depth'])
-    print('cur plot area width depth: ', plot_row['geometry'].area, plot_row['average_width'], plot_row['average_depth'])
+    #print('cur type min area width depth:', cur_type_min_area, cur_type_min_width, cur_type_min_depth)
+    #print('cur type min area width depth orig:', regulation_row['min_area'][index_for_min_values], regulation_row['min_average_width'][index_for_min_values], regulation_row['min_average_depth'])
+    #print('cur plot area width depth: ', plot_row['geometry'].area, plot_row['average_width'], plot_row['average_depth'])
     if (plot_row['geometry'].area > cur_type_min_area and plot_row['average_width'] > cur_type_min_width and plot_row['average_depth'] > cur_type_min_depth): #or plot_row['average_depth'] < cur_type_min_depth):
         plot_geo_ok = True
-        print('plot_geo_ok', plot_geo_ok)
+        #print('plot_geo_ok', plot_geo_ok)
 
     return plot_geo_ok
 
-def find_allowed_residential_types(plots_df, residential_regs_df, lh_df, sbp_df):
+def find_allowed_residential_types(plots_df, roads_df, residential_regs_df, lh_df, sbp_df):
     all_plots_allowed_types = []
     for index, row_plot in plots_df.iterrows():
         allowed_resi_types = []
@@ -649,6 +649,9 @@ def find_allowed_residential_types(plots_df, residential_regs_df, lh_df, sbp_df)
         lh_info = lh_df.loc[lh_df['PlotId'] == cur_plot_id, :] if cur_plot_id in lh_df['PlotId'].values else None
         sbp_info = sbp_df.loc[sbp_df['PlotId'] == cur_plot_id, :] if cur_plot_id in sbp_df['PlotId'].values else None
         in_gcba = False
+        neighbour_ids = row_plot.neighbour_list
+        neighbour_roads = roads_df.loc[roads_df['PlotId'].isin(neighbour_ids), :]
+        print('neighbour_roads: ', neighbour_roads)
 
         for index_reg, row_reg in residential_regs_df.iterrows():
             cur_resi_type = row_reg['residential_type']
@@ -663,6 +666,7 @@ def find_allowed_residential_types(plots_df, residential_regs_df, lh_df, sbp_df)
             sb_ok = False
             geo_ok = False
             neighborhood_ok = False
+            road_neighbours_ok = False
             #print('lh_info', lh_info)
             print('cur type:', cur_resi_type)
             suitable_zoning_types = [x.strip() for x in row_reg['zoning_type'].split(';')]
@@ -670,8 +674,7 @@ def find_allowed_residential_types(plots_df, residential_regs_df, lh_df, sbp_df)
             if row_plot.PlotType in suitable_zoning_types: #set(row_plot.PlotType).intersection(set(row_reg['zoning_type'])): #in row_reg['zoning_type']: set(checklist).intersection(set(words))
                 zoning_type_ok = True
                 print('zoning_type ok')
-            print('lh_int.loc[lh_int[PlotId] == 1D46528C098DC14F, :]', lh_int.loc[lh_int['PlotId'] == '1D46528C098DC14F', :])
-            print('lh info: ', lh_info)
+
             if lh_info is None:
                 lh_ok = True
             else:
@@ -703,13 +706,21 @@ def find_allowed_residential_types(plots_df, residential_regs_df, lh_df, sbp_df)
                 neighborhood_ok = True
 
             geo_ok = plot_geo_regulation_check(row_plot, row_reg)
+            print('row_reg[required_road_cat]:', row_reg['required_road_cat'])
+            print('neighbour_roads.category_number.values:', neighbour_roads.category_number.values)
+            if len(row_reg['required_road_cat']) ==1 and row_reg['required_road_cat'][0] == 'nan':
+                road_neighbours_ok = True
+
+            elif len(neighbour_roads.category_number.values) > 0 and neighbour_roads.category_number.values[0] in (row_reg['required_road_cat']):
+                road_neighbours_ok = True
 
             rules = [zoning_type_ok == True,
                     lh_ok == True,
                     gcba_ok == True,
                     sb_ok == True,
                     geo_ok == True,
-                    neighborhood_ok == True]
+                    neighborhood_ok == True,
+                    road_neighbours_ok == True]
             if all(rules):
                 allowed_resi_types.append(cur_resi_type)
                 print('all_rules_passed')
@@ -743,8 +754,8 @@ def find_residential_gfa_row(plots_df, all_non_road_plots, residential_gfa_regs_
                 if type(reg_row['gpr_for_height']) != float and '>' in reg_row['gpr_for_height']:
                     reg_row['gpr_for_height'] = float(reg_row['gpr_for_height'].replace('>', ""))
                     greater_than_in_gpr == True
-                print('reg_row[gpr_for_height] after replace', reg_row['gpr_for_height'])
-                print('cur_gpr (plot)', cur_gpr)
+                #print('reg_row[gpr_for_height] after replace', reg_row['gpr_for_height'])
+                #print('cur_gpr (plot)', cur_gpr)
                 #print('greater_than_in_gpr ', greater_than_in_gpr)
                 #print('residential_gfa_regs_df: ',residential_gfa_regs_df)
                 prev_type_property = residential_gfa_regs_df.loc[reg_index - 1 if reg_index < 1 else reg_index, 'type_property']
@@ -755,52 +766,37 @@ def find_residential_gfa_row(plots_df, all_non_road_plots, residential_gfa_regs_
                 if(prev_type_property) == reg_row['type_property'] and reg_index > 1:
                     prev_gpr_val = float(str(residential_gfa_regs_df.loc[reg_index - 1, 'gpr_for_height']).replace('>', ""))
 
-                print('prev_gpr_val:', prev_gpr_val)
                 if pd.isnull(reg_row['gpr_for_height']):
                     rule1_gpr = True
-                    print('if: no gpr regulation')
+                    #print('if: no gpr regulation')
                 elif prev_gpr_val is None and cur_gpr <= float(reg_row['gpr_for_height']):
                     rule1_gpr = True
-                    print('if: no previous gpr val, plot gpr less than cur reg row')
+                    #print('if: no previous gpr val, plot gpr less than cur reg row')
                 elif prev_gpr_val != None and (cur_gpr <= float(reg_row['gpr_for_height']) and cur_gpr > prev_gpr_val):
                     rule1_gpr = True
-                    print('if: prev gpr val exists, plots gpr between previous and current reg row val')
+                    #print('if: prev gpr val exists, plots gpr between previous and current reg row val')
                 elif greater_than_in_gpr and (cur_gpr > float(reg_row['gpr_for_height'])):
                     rule1_gpr = True
-                    print('if: reg row contains >, and plot gpr greater than reg row val')
+                    #print('if: reg row contains >, and plot gpr greater than reg row val')
                 else:
                     rule1_gpr = False
-                    print('if: else')
+                    #print('if: else')
 
-                if rule1_gpr:
-                    print('rule1_gpr true')
+                #if rule1_gpr:
+                #print('rule1_gpr true')
                 rule2_zt = True if plot_row['PlotType'] == reg_row['zoning_type'] else False
                 #print('after rule2')
-                print('cur_hc_area', cur_hc_area)
-                print('reg_row[within_hc_boundary].values', reg_row['within_hc_boundary'], type(reg_row['within_hc_boundary']), str(reg_row['within_hc_boundary']))
+                #print('cur_hc_area', cur_hc_area)
+                #print('reg_row[within_hc_boundary].values', reg_row['within_hc_boundary'], type(reg_row['within_hc_boundary']), str(reg_row['within_hc_boundary']))
                 if cur_hc_area is not None:
                     rule3_hc = True if (cur_hc_area.values.any() == reg_row['within_hc_boundary']) else False
-                    print('rule3_hc true because cur_hc_area.values.any() =', cur_hc_area.values.any(), reg_row['within_hc_boundary'])
+                    #print('rule3_hc true because cur_hc_area.values.any() =', cur_hc_area.values.any(), reg_row['within_hc_boundary'])
                 else:
                     rule3_hc = True if str(reg_row['within_hc_boundary']) == 'nan' else False
-                    print("rule3_hc true because cur hcarea:", cur_hc_area, 'reg row hc:', reg_row['within_hc_boundary'])
+                    #print("rule3_hc true because cur hcarea:", cur_hc_area, 'reg row hc:', reg_row['within_hc_boundary'])
 
                 rule4_type_prop = True if reg_row['type_property'] == 'nan' or reg_row['type_property'] in cur_allowed_types else False
-
-                print('rule3_hc: ', rule3_hc)
-                #print('reg_row[within_pab]:', reg_row['within_pab'], 'cur_pab:', cur_pab)
-                print('reg_row[within_pab]: ', reg_row['within_pab'] )
-                print('reg_row[within_pab][0]: ', reg_row['within_pab'][0])
-                print('type(reg_row[within_pab][0]): ', type(reg_row['within_pab'][0]))
-                print('type(reg_row[within_pab][0]) == nan ', reg_row['within_pab'][0] == 'nan')
-
                 rule5_pab = True if (reg_row['within_pab'][0] == 'nan' or cur_pab.values.any() in reg_row['within_pab']) else False
-                #print('rule4_pab', rule4_pab)
-                #print('cur_allowed_types:', cur_allowed_types )
-                #print('reg_row[type_property]: ', reg_row['type_property'] )
-                #print('cur allowed types:', cur_allowed_types)
-
-                #print('reg_row[type_context]', reg_row['type_context'])
                 type_context_neighbour_found = False
                 #print('rule5_type_prop', rule5_type_prop)
                 for x in reg_row['type_context']:
@@ -809,15 +805,14 @@ def find_residential_gfa_row(plots_df, all_non_road_plots, residential_gfa_regs_
                 #print('reg_row[type_context]', reg_row['type_context'])
                 #print('type_context_neighbour_found:', type_context_neighbour_found)
                 rule6_neighbour = True if reg_row['type_context'][0] == 'nan' or type_context_neighbour_found == True else False
-                #print('after rule6')
                 all_rules = [rule1_gpr == True,
                              rule2_zt == True,
                              rule3_hc == True,
                              rule4_type_prop == True,
                              rule5_pab == True,
                              rule6_neighbour == True]
-                print('all rules:', all_rules)
-                print('cur_relevant_indices: ', cur_relevant_indices)
+                #print('all rules:', all_rules)
+                #print('cur_relevant_indices: ', cur_relevant_indices)
                 if all(all_rules):
                     cur_relevant_indices.append(reg_index)
 
@@ -842,24 +837,22 @@ def find_residential_gfa_row(plots_df, all_non_road_plots, residential_gfa_regs_
 
     return new_df
 
+#find biggest intersection between edge and a road plot
+# if none found, or road's category is unknown, return none
 def find_edge_road_type(edge_geo, plot_neighbours, roads_df):
-    road_cat_dict = {'Expressway': 'cat_1',
-                    'Major Arterials/Minor Arterials': 'cat_2_to_3',
-                    'Local Collector/Primary Access': 'cat_4',
-                    'Local Access': 'cat_5',
-                    'no category': 'backlane'}
     offset_edge = edge_geo.buffer(6, single_sided=False, cap_style=3)
-    cur_rd_cat = None
+    cur_edge_road_cat = None
     biggest_int = 0
     for neighbour_id in plot_neighbours:
         if neighbour_id in roads_df.PlotId.values:
             road_geo = roads_df.loc[roads_df['PlotId'] == neighbour_id, 'geometry'].values[0]
             if offset_edge.intersects(road_geo):
                 intersection_area = offset_edge.intersection(road_geo).area / offset_edge.area
-                cur_rd_type = roads_df.loc[roads_df['PlotId'] == neighbour_id, 'RD_TYP_CD'].values[0]
-                if intersection_area > biggest_int and cur_rd_type != 'no category':
-                    cur_rd_cat = road_cat_dict[cur_rd_type]
-    return cur_rd_cat
+                cur_road_cat = roads_df.loc[roads_df['PlotId'] == neighbour_id, 'category_number'].values
+                if intersection_area > biggest_int and cur_road_cat != 'unknown':
+                    cur_edge_road_cat = cur_road_cat
+    print('cur_edge_road_cat: ', cur_edge_road_cat)
+    return cur_edge_road_cat
 
 def check_neighbour_gcba(edge_geo, plot_neighbours, lh_plots):
     offset_edge = edge_geo.buffer(6, single_sided=False, cap_style=3)
@@ -871,39 +864,6 @@ def check_neighbour_gcba(edge_geo, plot_neighbours, lh_plots):
                 neighbour_geo = lh_plots.loc[lh_plots['PlotId'] == neighbour_id, 'geometry']
                 neighbour_gcba = True if neighbour_geo.intersects(offset_edge) else False
     return neighbour_gcba
-
-def find_edge_setbacks(edge_geo, cur_neighbours, edge_type, roads_df, lh_plots, sbp_info, gfa_regs_for_cur_plot, rd_cat_offset_index_dict):
-    edges_sbp_col_names_dict = {'front': 'Setback_Front', 'side':'Setback_Side', 'rear':'Setback_Rear'}
-    edges_res_reg_col_names_dict = {'front': None, 'side': 'setback_side', 'rear': 'setback_rear'}
-    side_setback_dict = {}
-    road_cat = find_edge_road_type(edge_geo, cur_neighbours, roads_df)
-    neighbour_gcba = check_neighbour_gcba(edge_geo, cur_neighbours, lh_plots)
-    neighbour_waterbody = False #placeholder
-    if not gfa_regs_for_cur_plot.empty:
-        for index, row_reg in gfa_regs_for_cur_plot.iterrows():
-            cur_type = row_reg['type_property']
-            cur_setback = None
-            if sbp_info is not None:
-                sbp_col_name = edges_sbp_col_names_dict[edge_type]
-                sbp_side_setback = sbp_info[sbp_col_name].values[0][0]
-                cur_setback = float(sbp_side_setback) if not pd.isnull(sbp_side_setback) else None
-
-            if cur_setback == None: # i.e. setback front not found in sbp, look for it in residential regs
-                res_reg_col_name = edges_res_reg_col_names_dict[edge_type]
-                if road_cat != None:
-                    road_offset_index = rd_cat_offset_index_dict[road_cat]
-                    cur_setback = float(row_reg['setback_road_general'][road_offset_index])
-
-                elif res_reg_col_name != None:
-                    if pd.notnull(row_reg[res_reg_col_name][0]): # edge col name can be side or rear setback
-                        offset_index = 1 if neighbour_gcba else 0
-                        cur_setback = float(row_reg[res_reg_col_name][offset_index])
-                elif pd.notnull(row_reg['setback_common'][0]):
-                    common_setback_offset_index = 1 if neighbour_gcba else 0
-                    cur_setback = float(row_reg['setback_common'][common_setback_offset_index])
-            side_setback_dict[cur_type] = cur_setback
-    print('setback_dict ', edge_type, ': ', side_setback_dict)
-    return side_setback_dict
 
 def find_edge_setbacks2(edge_geo,non_rd_neigh_dict, all_neighs_list, non_road_plots_df, cur_rd_neighs_df, lh_plots, sbp_info, gfa_regs_for_cur_plot, rd_cat_offset_index_dict):
     print('----------find_edge_setbacks2 start-------------------')
@@ -919,23 +879,22 @@ def find_edge_setbacks2(edge_geo,non_rd_neigh_dict, all_neighs_list, non_road_pl
                 print('neighbor type: ', neighbor_type)
                 edge_type = neighbor_type if neighbor_type != 'front' else 'side'
                 biggest_non_rd_int = neighbor_geo.intersection(edge_buffered).area
-                print('edge_type; biggest_non_rd_int', edge_type, biggest_non_rd_int)
                 biggest_int = biggest_non_rd_int
     for index, row in cur_rd_neighs_df.iterrows():
         cur_rd_geo = row['geometry']
         if cur_rd_geo.intersects(edge_buffered) and cur_rd_geo.intersection(edge_buffered).area > biggest_int:
             edge_type = 'front'
-            print('edge_type: biggest_ROAD_int', edge_type, biggest_int)
 
     if edge_type is None:
         edge_type = 'side'
-
+    print('gfa_regs_for_cur_plot:', gfa_regs_for_cur_plot)
     edges_sbp_col_names_dict = {'front': 'Setback_Front', 'side':'Setback_Side', 'rear':'Setback_Rear'}
     edges_res_reg_col_names_dict = {'front': None, 'side': 'setback_side', 'rear': 'setback_rear'}
     setback_dict = {}
 
     neighbour_gcba = check_neighbour_gcba(edge_geo, all_neighs_list, lh_plots)
     neighbour_waterbody = False #placeholder
+    print('gfa_regs_for_cur_plot:', gfa_regs_for_cur_plot)
     if not gfa_regs_for_cur_plot.empty:
         print('gfa regulations found')
         for index, row_reg in gfa_regs_for_cur_plot.iterrows():
@@ -943,7 +902,6 @@ def find_edge_setbacks2(edge_geo,non_rd_neigh_dict, all_neighs_list, non_road_pl
             cur_setback = None
 
             if sbp_info is not None:
-                print('sbp found')
                 sbp_col_name = edges_sbp_col_names_dict[edge_type]
                 sbp_setback = sbp_info[sbp_col_name].values[0][0]
                 cur_setback = float(sbp_setback) if not pd.isnull(sbp_setback) else None
@@ -952,10 +910,11 @@ def find_edge_setbacks2(edge_geo,non_rd_neigh_dict, all_neighs_list, non_road_pl
                 #print('cur edge type: ', edge_type)
                 res_reg_col_name = edges_res_reg_col_names_dict[edge_type]
                 if road_cat != None:
-                    print('road cat found')
+                    print('road cat found: ', road_cat, road_cat[0])
                     if edge_type == 'front': #change to beginning of loop
                         #print('road cat not none: ', road_cat)
-                        road_offset_index = rd_cat_offset_index_dict[road_cat]
+                        road_offset_index = rd_cat_offset_index_dict[road_cat[0]]
+                        print('road offset index: ', road_offset_index)
                         cur_setback = float(row_reg['setback_road_general'][road_offset_index])
                         print('road edge type found')
 
@@ -976,86 +935,14 @@ def find_edge_setbacks2(edge_geo,non_rd_neigh_dict, all_neighs_list, non_road_pl
 
 #def classify_original_edges(plot_geo, roads_df )
 
-def find_buildable_footprints(plots_df, residential_gfa_regs_df, lh_plots, roads_df, sbp_df):
-    road_cat_offset_index_dict = {'cat_1': 0,
-                            'cat_2_to_3' : 1,
-                            'cat_4' : 3,
-                            'cat_5' : 4}
-    buildable_min_rects = []
-    buildable_footprint_areas = []
-    for index, row_plot in plots_df.iterrows():
-        front_edge = row_plot['min_rect_front_edge']
-        cur_gfa_reg_indices = row_plot['GFA_reg_indices']
-        cur_gfa_regs = residential_gfa_regs_df.loc[cur_gfa_reg_indices]
-        print('cur gfa regs type: ', cur_gfa_regs.type_property)
-        buildable_geo_per_type_dict = {}
-        buildable_area_per_type_dict = {}
-        if front_edge == None or cur_gfa_regs.empty:
-            pass
-        else:
-            side1_edge = row_plot['min_rect_side_edge1']
-            side2_edge = row_plot['min_rect_side_edge2']
-            rear_edge = row_plot['min_rect_rear_edge']
-            cur_plot_id = row_plot['PlotId']
-            sbp_info = sbp_df.loc[sbp_df['PlotId'] == cur_plot_id, :] if cur_plot_id in sbp_df['PlotId'].values else None
-            cur_neighbours = row_plot['neighbour_list']
-            cur_site_coverage = None
-
-            print('------------------------')
-            print('cur_plot_id: ', cur_plot_id)
-
-            setbacks_side1 = find_edge_setbacks(side1_edge, cur_neighbours, 'side', roads_df, lh_plots, sbp_info, cur_gfa_regs, road_cat_offset_index_dict)
-            setbacks_side2 = find_edge_setbacks(side2_edge, cur_neighbours, 'side', roads_df, lh_plots, sbp_info, cur_gfa_regs, road_cat_offset_index_dict)
-            setbacks_front = find_edge_setbacks(front_edge, cur_neighbours, 'front', roads_df, lh_plots, sbp_info, cur_gfa_regs, road_cat_offset_index_dict)
-            setbacks_rear = find_edge_setbacks(rear_edge, cur_neighbours, 'rear', roads_df, lh_plots, sbp_info, cur_gfa_regs, road_cat_offset_index_dict)
-
-            for index, row_reg in cur_gfa_regs.iterrows():
-                cur_type = row_reg['type_property']
-                print('cur type: ', cur_type)
-                side1_setback = setbacks_side1[cur_type]
-                side2_setback = setbacks_side2[cur_type]
-                front_setback = setbacks_front[cur_type]
-                rear_setback = setbacks_rear[cur_type]
-                cur_site_coverage = float(row_reg['site_coverage'])
-                print('cur_site_coverage:', cur_site_coverage, type(cur_site_coverage))
-                all_setbacks = [side1_setback, side2_setback, front_setback, rear_setback]
-                print('all setbacks: ', all_setbacks)
-                if None in all_setbacks or any(pd.isnull(float(x)) for x in all_setbacks):
-                    print('setbacks missing: ', all_setbacks)
-                    buildable_area_per_type_dict[cur_type] = 0
-                else:
-                    front_offset_geo = front_edge.buffer(front_setback, single_sided=False, cap_style=3)
-                    side1_offset_geo = row_plot['min_rect_side_edge1'].buffer(side1_setback, single_sided=False, cap_style=3)
-                    side2_offset_geo = row_plot['min_rect_side_edge2'].buffer(side2_setback, single_sided=False, cap_style=3)
-                    rear_offset_geo = row_plot['min_rect_rear_edge'].buffer(rear_setback, single_sided=False, cap_style=3)
-
-                    buildable_min_rect = row_plot['min_rect'] - front_offset_geo - side1_offset_geo - side2_offset_geo - rear_offset_geo
-                    buildable_geo_per_type_dict[cur_type] = buildable_min_rect.wkt
-                    potential_buildable_area = row_plot['site_area'] * (buildable_min_rect.area / row_plot['min_rect'].area)
-                    print('potential_buildable_area: ', potential_buildable_area)
-                    if math.isnan(float(cur_site_coverage)):
-                        buildable_footprint = potential_buildable_area
-                    else:
-                        print('cur_site_coverage * row_plot[geometry].area', cur_site_coverage * row_plot['geometry'].area)
-                        buildable_footprint = min(cur_site_coverage * row_plot['geometry'].area,
-                                                  potential_buildable_area)
-                    print('buildable_footprint: ', buildable_footprint)
-
-                    buildable_area_per_type_dict[cur_type] = buildable_footprint
-
-        buildable_min_rects.append(buildable_geo_per_type_dict)
-        buildable_footprint_areas.append(buildable_area_per_type_dict)
-
-    print('buildable_min_rects:', buildable_min_rects)
-    plots_df['buildable_min_rect'] = buildable_min_rects
-    plots_df['buildable_footprint_areas'] = buildable_footprint_areas
-    return plots_df
-
 def find_buildable_footprints2(plots_df, residential_gfa_regs_df, lh_plots, non_road_plots_df, roads_df, sbp_df):
+    # This dict determines which road offset value is read from the Regulation Grouping 4 file, column 'setback_road_general'
+    # Note that cat 3 gets the cat 2 offset (more conservative), since cats 2-3 not differentiated in ura data
     road_cat_offset_index_dict = {'cat_1': 0,
                             'cat_2_to_3' : 1,
                             'cat_4' : 3,
                             'cat_5' : 4}
+
     buildable_geos = []
     buildable_footprint_areas = []
     edges_types_per_plot_dict = defaultdict(list)  # to be filled in so that it is {PlotId : [(edge1_geo, edge1_type), (edge2_geo, edge2_type)...]
@@ -1073,20 +960,20 @@ def find_buildable_footprints2(plots_df, residential_gfa_regs_df, lh_plots, non_
             edge_setbacks_per_type = []  # list of dicts for each edge
             plot_edges = get_edges(row_plot['geometry'])
             cur_plot_id = row_plot['PlotId']
-            print('cur plot id: ', cur_plot_id)
+            #print('cur plot id: ', cur_plot_id)
             sbp_info = sbp_df.loc[sbp_df['PlotId'] == cur_plot_id, :] if cur_plot_id in sbp_df['PlotId'].values else None
             cur_non_rd_neigh_dict = row_plot['non_road_neighbour_types']
             cur_all_neighbours = row_plot['neighbour_list']
             cur_rd_neighbours_df = roads_df.loc[roads_df['PlotId'].isin(cur_all_neighbours), :]
-            print('cur_rd_neighbours_df: ',cur_rd_neighbours_df, cur_rd_neighbours_df.columns )
+            #print('cur_rd_neighbours_df: ',cur_rd_neighbours_df, cur_rd_neighbours_df.columns )
             #print('cur_neighbours: ', cur_all_neighbours)
             cur_site_coverage = None
             buildable_geo = row_plot['geometry']
             for i in range (0, len(plot_edges)):
                 cur_edge = plot_edges[i]
                 cur_setbacks, edge_type = find_edge_setbacks2(cur_edge, cur_non_rd_neigh_dict, cur_all_neighbours, non_road_plots_df, cur_rd_neighbours_df, lh_plots, sbp_info, cur_gfa_regs, road_cat_offset_index_dict)
-                print('cur setbacks: ', cur_setbacks) # cur setbacks is e.g. {'Good_class_bungalow': 3.0}
-                print('edge_type: ', edge_type)
+                #print('cur setbacks: ', cur_setbacks) # cur setbacks is e.g. {'Good_class_bungalow': 3.0}
+                #print('edge_type: ', edge_type)
 
                 edges_types_per_plot_dict[cur_plot_id].append((cur_edge.wkt, edge_type))
                 edge_setbacks_per_type.append(cur_setbacks)
@@ -1094,16 +981,16 @@ def find_buildable_footprints2(plots_df, residential_gfa_regs_df, lh_plots, non_
             #print('cur gfa regs: ', cur_gfa_regs)
             for index, row_reg in cur_gfa_regs.iterrows():
                 cur_type = row_reg['type_property']
-                #print('cur type: ', cur_type)
+                print('cur type: ', cur_type)
                 buildable_geo = row_plot['geometry']
                 buildable_footprint_area = 0
                 for i in range(0, len(edge_setbacks_per_type)):
                     edge_dict = edge_setbacks_per_type[i]
                     offset_for_cur_type = edge_dict[cur_type]
-                    print('edge_dict:', edge_dict)
-                    print('cur type: ', cur_type)
-                    print('plot_edges[i]:', plot_edges[i])
-                    print('offset_for_cur_type: ', offset_for_cur_type)
+                    #print('edge_dict:', edge_dict)
+                    #print('cur type: ', cur_type)
+                    #print('plot_edges[i]:', plot_edges[i])
+                    #print('offset_for_cur_type: ', offset_for_cur_type)
                     if offset_for_cur_type is not None: #this might happen if the edge does not have any neighbor due to e.g. removal of narrow plots at beginning of script. hence the plot's type (inferred based on neighbour) can't be found
                         setback_geo = plot_edges[i].buffer(offset_for_cur_type, single_sided=False, cap_style=3)
                     else:
@@ -1189,7 +1076,7 @@ def find_allowed_gfa(plots_df, residential_gfa_regs_df, lh_plots, sbp_df):
     plots_df['max_gfa'] = gfa_list
     return plots_df
 
-def getPlots(endpoint):
+def get_plots(endpoint):
     sparql = SPARQLWrapper(endpoint)
     sparql.setQuery(
         """PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
@@ -1221,12 +1108,12 @@ def getPlots(endpoint):
     results = sparql.query().convert()
     queryResults = pd.DataFrame(results['results']['bindings'])
     queryResults = queryResults.applymap(lambda cell:cell['value'])
-    geometries = gpd.GeoSeries(queryResults['Geometry'].map(lambda geo: envelopeStringToPolygon(geo, geodetic=True, flip=True)), crs='EPSG:4326')
+    geometries = gpd.GeoSeries(queryResults['Geometry'].map(lambda geo: envelope_string_to_polygon(geo, geodetic=True, flip=True)), crs='EPSG:4326')
     queried_plots = gpd.GeoDataFrame(queryResults, geometry=geometries).to_crs(epsg=3857).drop(columns = ['Geometry'])
 
     return queried_plots
 
-def envelopeStringToPolygon(envelopeString, geodetic = False, flip=True):
+def envelope_string_to_polygon(envelopeString, geodetic = False, flip=True):
     pointsAsString = envelopeString.split('#')
     numOfPoints = int(len(pointsAsString)/3)
     points = []
@@ -1325,13 +1212,12 @@ def find_regulation_ints(plots_df, fn_con, fn_hc, fn_sb_boundary, fn_sb_reg, fn_
     return con_int1, hc_int1, sb_int1, udr_int1, lh_int1, pab_int1
 
 def process_residential_regs(fn_residential_requirements, fn_residential_gfa_parameters):
-    res_gfa_reg = pd.read_excel(fn_residential_gfa_parameters, usecols='A:T').drop(
-        0)  # Drop row 0 because this is an explanation row meant for humans
+    res_gfa_reg = pd.read_excel(fn_residential_gfa_parameters, usecols='A:T').drop(0)  # Drop row 0 because this is an explanation row meant for humans
     res_gfa_reg = to_list_str(res_gfa_reg, 'within_pab')
     res_gfa_reg = to_list_str(res_gfa_reg, 'type_context')
     res_gfa_reg = to_list(res_gfa_reg, 'setback_road_general')
     res_gfa_reg = to_list(res_gfa_reg, 'setback_road_first_floor_residential_with_commercial_at_1st_floor')
-    res_gfa_reg = to_list(res_gfa_reg, 'setback_front_irregular')
+    #res_gfa_reg = to_list(res_gfa_reg, 'setback_front_irregular')
     res_gfa_reg = to_list(res_gfa_reg, 'setback_side')
 
     res_gfa_reg = to_list(res_gfa_reg, 'setback_rear')
@@ -1340,7 +1226,7 @@ def process_residential_regs(fn_residential_requirements, fn_residential_gfa_par
     res_gfa_reg = to_list(res_gfa_reg, 'height_m')
     res_gfa_reg = to_list(res_gfa_reg, 'height_floor_to_floor')
 
-    res_req = pd.read_excel(fn_residential_requirements, usecols='A:J').drop(
+    res_req = pd.read_excel(fn_residential_requirements, usecols='A:K').drop(
         0)  # Drop row 0 because this is an explanation row meant for humans
     res_req = to_bool(res_req, 'allowed_in_landed_housing_area')
     res_req = to_bool(res_req, 'allowed_only_in_GCBA')
@@ -1348,6 +1234,7 @@ def process_residential_regs(fn_residential_requirements, fn_residential_gfa_par
     res_req = to_list_str(res_req, 'sbp_housing_type')
     res_req = to_list(res_req, 'min_area')
     res_req = to_list(res_req, 'min_average_width')
+    res_req = to_list_str(res_req, 'required_road_cat')
 
     return res_gfa_reg, res_req
 
@@ -1359,11 +1246,17 @@ def process_roads(fn_rd_net, fn_rd_plots):
     rn_lta = gpd.read_file(fn_rd_net).to_crs(epsg=3857)  # road network
     rn_lta = rn_lta[
         ~rn_lta['RD_TYP_CD'].isin(['Cross Junction', 'T-Junction', 'Expunged', 'Other Junction', 'Pedestrian Mall',
-                                   '2 T-Junction opposite each other', 'Unknown', 'Y-Junction', 'Imaginary Line',
-                                   'Slip Road'])]
+                                   '2 T-Junction opposite each other', 'Unknown', 'Y-Junction', 'Imaginary Line'])]
+    road_cat_dict = {'Expressway': 'cat_1',
+                    'Major Arterials/Minor Arterials': 'cat_2_to_3',
+                    'Local Collector/Primary Access': 'cat_4',
+                    'Local Access': 'cat_5',
+                    'Slip Road': 'cat_5',
+                    'no category': 'unknown'} #see chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://www.lta.gov.sg/content/dam/ltagov/industry_innovations/industry_matters/development_construction_resources/public_streets/pdf/RT-COP%20V2.0%20(3%20April%202019).pdf
     rd_plots = gpd.read_file(fn_rd_plots).to_crs(epsg=3857)
     rd_plots = rd_plots.rename(columns={'INC_CRC': 'PlotId', 'LU_DESC': 'PlotType'})
     rd_plots = assign_road_category(rd_plots, rn_lta)
+    rd_plots['category_number'] = [road_cat_dict[x] for x in road_plots["RD_TYP_CD"]]
     return rd_plots
 
 def assign_gprs(plots_df, sb_int_df): #if sbp has a gpr, replace plot's gpr with min(original gpr, sbp gpr)
@@ -1410,12 +1303,14 @@ fn_residential_requirements = root + "residential_type_requirements.xlsx"
 fn_planning_area_boundaries = root + "planning_area_boundaries/planning_boundary_area.shp"
 fn_residential_gfa_parameters = root + "residential_GFA\Regulation_grouping4.xlsx"
 
+
 #invalid_zones = ['RESERVE SITE', 'SPECIAL USE ZONE', 'UTILITY', 'RESIDENTIAL', 'WHITE',   'RESIDENTIAL WITH COMMERCIAL AT 1ST STOREY' 'COMMERCIAL & RESIDENTIAL']  # last 3 types are only temporary
 
 all_zt_local_plots = process_all_local_plots(fn_plots)
 
-twa_query_res = getPlots(endpoint)
+twa_query_res = get_plots(endpoint)
 all_zt_twa_plots = process_plots_TWA(twa_query_res)
+
 
 all_zt_plots = all_zt_twa_plots #all_zt_local_plots #Change this to TWA if it works
 plots_all_residential = all_zt_plots[all_zt_plots['PlotType'].isin(['RESIDENTIAL', 'COMMERCIAL & RESIDENTIAL', 'RESIDENTIAL WITH COMMERCIAL AT 1ST STOREY'])]
@@ -1423,15 +1318,16 @@ plots_all_residential = all_zt_plots[all_zt_plots['PlotType'].isin(['RESIDENTIAL
 #plots_for_GFA = filter_residential_plots(plots_all_residential) #i.e. remove narrow, small plots
 plots_for_GFA = plots_all_residential
 
+
+road_plots = process_roads(fn_roads, fn_road_plots) #Add road plots
+non_road_plots = gpd.overlay(all_zt_plots, road_plots, how='difference', keep_geom_type=True) #all non-road plots (all zoning types)
+
 all_reg_ints = find_regulation_ints(plots_for_GFA, fn_con, fn_hc, fn_sb_boundary, fn_sb_reg, fn_udr , fn_control_plans, fn_landed_housing, fn_planning_area_boundaries)
 con_int,hc_int, sb_int, udr_int, lh_int, pab_int = all_reg_ints
 print('2. Intersections between plots and regulations found')
 plots_for_GFA = remove_unclear_plots(plots_for_GFA, con_int, udr_int)
 plots_for_GFA = assign_gprs(plots_for_GFA, sb_int) #replace plots' GPR value with smaller value from SBP, if it exists
 
-
-road_plots = process_roads(fn_roads, fn_road_plots) #Add road plots
-non_road_plots = gpd.overlay(all_zt_plots, road_plots, how='difference', keep_geom_type=True) #all non-road plots (all zoning types)
 
 '''Read residential regulations'''
 all_resid_regs = process_residential_regs(fn_residential_requirements, fn_residential_gfa_parameters)
@@ -1488,7 +1384,7 @@ print('min depth and width of plots found')
 # Add column indicating if plot is a corner plot
 plots_for_GFA = check_if_corner_plot(plots_for_GFA, 0.3)
 
-plots_for_GFA = find_allowed_residential_types(plots_for_GFA, resid_type_requirs, lh_int, sb_int)
+plots_for_GFA = find_allowed_residential_types(plots_for_GFA, road_plots, resid_type_requirs, lh_int, sb_int)
 
 plots_for_GFA = find_residential_gfa_row(plots_for_GFA, non_road_plots, resid_gfa_params, hc_int, pab_int)
 
@@ -1502,8 +1398,6 @@ rear_edges = all_edges_df.loc[all_edges_df['edge_type'] == 'rear', :]
 front_edges.to_csv(root+'front_edges_qgis.csv', index=False, sep=';')
 side_edges.to_csv(root+'side_edges_qgis.csv', index=False, sep=';')
 rear_edges.to_csv(root+'rear_edges_qgis.csv', index=False, sep=';')
-
-
 
 buildable_geos = plots_for_GFA['buildable_geo'].apply(pd.Series)
 buildable_geos.Good_class_bungalow.to_csv(root+'buildable_gcb_qgis.csv', index=False, sep=';')
@@ -1534,7 +1428,7 @@ no_overlap = plots_for_GFA[~plots_for_GFA['PlotId'].isin(overlap_list)]
 
 residential_only = plots_for_GFA.loc[plots_for_GFA['PlotType'] == 'RESIDENTIAL', :]
 gfa_dict = residential_only.set_index('PlotId').to_dict()['max_gfa']
-with open('C:/Users/HeidiSilvennoinen/Desktop/demonstrator/estimate_residential_GFA6.json', 'w') as f:
+with open('C:/Users/HeidiSilvennoinen/Desktop/demonstrator/estimate_residential_GFA7.json', 'w') as f:
     json.dump(gfa_dict, f, indent=4)
 print('GFAs computed')
 
