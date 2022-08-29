@@ -38,7 +38,7 @@ class GraphInferenceAgentTest {
     @Test
     public void testNewGraphInferenceAgentFields() {
         GraphInferenceAgent agent = new GraphInferenceAgent();
-        assertEquals(21, agent.getClass().getDeclaredFields().length);
+        assertEquals(22, agent.getClass().getDeclaredFields().length);
 
         try {
             assertEquals("oninf", agent.getClass().getDeclaredField("ONINF_PREFIX").get(agent));
@@ -50,6 +50,7 @@ class GraphInferenceAgentTest {
             assertEquals("hasInferenceAlgorithm", agent.getClass().getDeclaredField("ONINT_P_INALG").get(agent));
             assertEquals("hasInferredValue", agent.getClass().getDeclaredField("ONINT_P_INVAL").get(agent));
             assertEquals("PageRankAlgorithm", agent.getClass().getDeclaredField("ONINT_C_PRALG").get(agent));
+            assertEquals("EdgeBetweennessAlgorithm", agent.getClass().getDeclaredField("ONINT_C_EBALG").get(agent));
 
             assertNull(agent.getClass().getDeclaredField("route").get(agent));
             assertEquals("PageRankTask", agent.getClass().getDeclaredField("TASK_PR").get(agent));
@@ -187,8 +188,18 @@ class GraphInferenceAgentTest {
             agent.getClass().getDeclaredField("route").set(agent, "http://localhost:48080/test");
             Method chooseTask = agent.getClass().getDeclaredMethod("chooseTask", IRI.class, IRI.class);
             chooseTask.setAccessible(true);
-            assertEquals(PageRankTask.class, chooseTask.invoke(agent, IRI.create("http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankAlgorithm"),
-                    IRI.create("http://127.0.0.1:9999/blazegraph/namespace/test/sparql/")).getClass());
+            UninitialisedDataQueueTask task = (UninitialisedDataQueueTask) chooseTask.invoke(agent, IRI.create("http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankAlgorithm"),
+                    IRI.create("http://127.0.0.1:9999/blazegraph/namespace/test/sparql/"));
+            assertEquals(PageRankTask.class, task.getClass());
+
+            Field agentDataQueueField = agent.getClass().getDeclaredField("dataQueue");
+            Field taskDataQueueField = task.getClass().getDeclaredField("dataQueue");
+            taskDataQueueField.setAccessible(true);
+            assertEquals(agentDataQueueField.get(agent), taskDataQueueField.get(task));
+
+            Field targetGraph = task.getClass().getDeclaredField("targetGraph");
+            targetGraph.setAccessible(true);
+            assertEquals("http://127.0.0.1:9999/blazegraph/namespace/test/sparql/OntoInfer/", targetGraph.get(task).toString());
         } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             fail();
         }

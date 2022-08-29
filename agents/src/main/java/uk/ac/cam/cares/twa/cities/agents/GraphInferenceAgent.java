@@ -44,6 +44,7 @@ public class GraphInferenceAgent extends JPSAgent {
   public static final String ONINT_P_INALG = "hasInferenceAlgorithm";
   public static final String ONINT_P_INVAL = "hasInferredValue";
   public static final String ONINT_C_PRALG = "PageRankAlgorithm";
+  public static final String ONINT_C_EBALG = "EdgeBetweennessAlgorithm";
 
   public String route;
   public static final String TASK_PR = "PageRankTask";
@@ -137,6 +138,7 @@ public class GraphInferenceAgent extends JPSAgent {
     UninitialisedDataQueueTask task = (UninitialisedDataQueueTask) TASKS.get(taskIri);
     //some task configuration/initialisation code can go here.
     task.setStringMapQueue(dataQueue);
+    task.setTargetGraph(sparqlEndpoint.toString());
 
     return task;
   }
