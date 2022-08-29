@@ -1,25 +1,21 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.ResourceBundle;
+import java.util.Set;
+import javax.servlet.annotation.WebServlet;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.HttpMethod;
 import lombok.Getter;
 import org.apache.http.client.methods.HttpPost;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
-import uk.ac.cam.cares.jps.base.http.Http;
-import uk.ac.cam.cares.ogm.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.AccessAgentMapping;
+import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.jps.base.http.Http;
 import uk.ac.cam.cares.twa.cities.model.geo.CityObject;
-import uk.ac.cam.cares.twa.cities.model.ontochemplant.Building;
-import uk.ac.cam.cares.twa.cities.model.ontochemplant.PlantItem;
-import uk.ac.cam.cares.twa.cities.model.ontochemplant.ocgml;
-
-import javax.servlet.annotation.WebServlet;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.HttpMethod;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.ResourceBundle;
-import java.util.Set;
 
 
 /**
@@ -62,61 +58,22 @@ public class CityInformationAgent extends JPSAgent {
         this.route = route;
       }
 
-      if (this.route == "jriEPSG24500") {
-
-        // Temporary model for cityobject to check if the object is building or cityfurniture
-        ModelContext city_object_context = new ModelContext(this.route, AccessAgentMapping.getNamespaceEndpoint(cityObjectIri));
-        CityObject cityObject = city_object_context.createHollowModel(CityObject.class, cityObjectIri);
-        city_object_context.pullPartial(cityObject, "objectClassId");
-
-        // New model context for jibusinessunits namespace
-        ModelContext context = new ModelContext("jibusinessunits");
-
-        // City furniture object ID = 21, Building object ID = 26
-        if (cityObject.getObjectClassId().intValue() == 21) {
-          String cityfurnitureIri = cityObjectIri.replace("cityobject", "cityfurniture");
-          ocgml x = context.createHollowModel(ocgml.class, cityfurnitureIri);
-          context.pullAll(x);
-
-          PlantItem plantitem = context.createHollowModel(PlantItem.class, x.getOntoCityGMLRepresentationOf().toString());
-          context.recursivePullAll(plantitem, 1);
-
-          ArrayList<PlantItem> PlantItemList = new ArrayList<>();
-          PlantItemList.add(plantitem);
-          cityObjectInformation.put(PlantItemList);
-
-        } else {
-          String buildingIri = cityObjectIri.replace("cityobject", "building");
-          ocgml x = context.createHollowModel(ocgml.class, buildingIri);
-          context.pullAll(x);
-
-          Building building = context.createHollowModel(Building.class, x.getOntoCityGMLRepresentationOf().toString());
-          context.recursivePullAll(building, 3);
-
-          ArrayList<Building> BuildingList = new ArrayList<>();
-          BuildingList.add(building);
-          cityObjectInformation.put(BuildingList);
-        }
-
-
-      } else {
-        ModelContext context = new ModelContext(this.route, AccessAgentMapping.getNamespaceEndpoint(cityObjectIri));
-        CityObject cityObject = context.createHollowModel(CityObject.class, cityObjectIri);
-        if (lazyload) {
-          context.pullAll(cityObject);
-        } else {
-          context.recursivePullAll(cityObject, 1);
-        }
-
-        cityObject.setEnvelopeType(null);
-        ArrayList<CityObject> cityObjectList = new ArrayList<>();
-        cityObjectList.add(cityObject);
-        cityObjectInformation.put(cityObjectList);
+      ModelContext context = new ModelContext(this.route, AccessAgentMapping.getNamespaceEndpoint(cityObjectIri));
+      CityObject cityObject = context.createHollowModel(CityObject.class, cityObjectIri);
+      if (lazyload) {
+        context.pullAll(cityObject);
       }
+      else {
+        context.recursivePullAll(cityObject, 1);
+      }
+
+      cityObject.setEnvelopeType(null);
+      ArrayList<CityObject> cityObjectList = new ArrayList<>();
+      cityObjectList.add(cityObject);
+      cityObjectInformation.put(cityObjectList);
     }
 
     requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
-
 
     /**
      * {"iris": ["http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/BLDG_0003000000a50c90/"],
