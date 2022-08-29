@@ -8,6 +8,8 @@ import edu.uci.ics.jung.algorithms.shortestpath.ShortestPathUtils;
 import edu.uci.ics.jung.algorithms.shortestpath.UnweightedShortestPath;
 import edu.uci.ics.jung.graph.Graph;
 import net.rootdev.jenajung.JenaJungGraph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.semanticweb.owlapi.model.IRI;
@@ -26,7 +28,7 @@ public class UnweightedShortestPathTask implements UninitialisedDataQueueTask {
     private final IRI taskIri = IRI.create(GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.TASK_USP);
     private boolean stop = false;
     private BlockingQueue<Map<String, JSONArray>> dataQueue;
-    private String targetGraph;
+    private Node targetGraph;
 
     @Override
     public IRI getTaskIri() {
@@ -39,8 +41,8 @@ public class UnweightedShortestPathTask implements UninitialisedDataQueueTask {
     }
 
     @Override
-    public void setTargetGraph(String tg) {
-        targetGraph = tg;
+    public void setTargetGraph(String endpointIRI) {
+        targetGraph = NodeFactory.createURI(endpointIRI + GraphInferenceAgent.ONTOINFER_GRAPH);
     }
 
     @Override
