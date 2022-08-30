@@ -134,7 +134,7 @@ public class CityInformationAgent extends JPSAgent {
                 try {
                   gfas.put(onto_element, Double.parseDouble(filters.getJSONObject(predicate).getString(onto_element)));
                 } catch (NumberFormatException exception) {
-                  gfas.put(onto_element, 0.); // covers Case 5
+                  gfas.put(onto_element, 0.);
                 }
               }
             } // Shiying: gfas is never empty
@@ -294,60 +294,68 @@ public class CityInformationAgent extends JPSAgent {
   /***
    * Method retrieves city objects that fits user input: programmes, uses and GFAs.
    * @param predicate defines weather uses or programmes to be queried
-   * @param inputGFAs defines what use or programme GFAs values have been input
-   * @param total_gfa defines what totalGFA value has been input by the user
+   * @param inputZoneCaseGFAValues defines what use or programme GFAs values have been input
+   * @param totalGFAValue defines what totalGFA value has been input by the user
    * @return list of city object ids that pass use, programme and GFA filters.
    */
-  private JSONArray getFilteredObjects (String predicate, HashMap<String, Double> inputGFAs, double total_gfa) {
-    double sumOfGFAs = inputGFAs.values().stream().mapToDouble(Double::doubleValue).sum();
-    boolean gfa_case = sumOfGFAs > 0 | total_gfa > 0;
-    Query query = getFilterQuery(predicate, new ArrayList<>(inputGFAs.keySet()), gfa_case);
+  private JSONArray getFilteredObjects (String predicate, HashMap<String, Double> inputZoneCaseGFAValues, double totalGFAValue) {
+    double sumOfinputZoneCaseGFAValues = inputZoneCaseGFAValues.values().stream().mapToDouble(Double::doubleValue).sum();
+    boolean gfa_case = sumOfinputZoneCaseGFAValues > 0 | totalGFAValue > 0;
+    Query query = getFilterQuery(predicate, new ArrayList<>(inputZoneCaseGFAValues.keySet()), gfa_case);
     JSONArray filteredCityObjects = new JSONArray();
     JSONArray query_result = AccessAgentCaller.queryStore(route, query.toString());
 
     if (gfa_case) {
-      HashMap<String, HashMap<String, Double>> allGFACases = orderGFAResults(query_result);
-      // Case 5: Programme OR Use WITH specific GFA for each zoning input, NO Total GFA input.
-      // Uses sum of inputGFAs for comparison.
-      double chosen_gfa = inputGFAs.values().stream().mapToDouble(Double::doubleValue).sum();
-      // in Case 3: ONLY TotalGFA input. inputGFAs is empty --> chosen GFA=0
-      // in Case 4: Programme OR Use AND TotalGFA input. inputGFAs is not empty, but sum will be 0.
-      if (chosen_gfa == 0) {
-        chosen_gfa = total_gfa;
-      }
-      for (String cityObject: allGFACases.keySet()){
-        HashMap<String, Double> currentCityObjectGFA = allGFACases.get(cityObject);
-        if (!inputGFAs.isEmpty()){
-          ArrayList<Double> relevantGFAs = returnRelevantGFAs(currentCityObjectGFA, inputGFAs);
-          if (relevantGFAs.isEmpty()) { // Case 4, 6 Sub-case 3.
-            if (currentCityObjectGFA.containsKey(DEFAULT_ZONING_CASE)) {
-              if (currentCityObjectGFA.get(DEFAULT_ZONING_CASE) >= chosen_gfa) {
+      HashMap<String, HashMap<String, Double>> plotGFAValues = orderGFAResults(query_result);
+      boolean totalGFA = totalGFAValue > 0;
+      boolean zoneCaseGFA = sumOfinputZoneCaseGFAValues > 0;
+      boolean programInput = !inputZoneCaseGFAValues.isEmpty();
+      for (String cityObject: plotGFAValues.keySet()){
+        HashMap<String, Double> currentCityObjectGFA = plotGFAValues.get(cityObject);
+        double plotDefaultGFAValue = 0.;
+        if (currentCityObjectGFA.containsKey(DEFAULT_ZONING_CASE)) {
+          plotDefaultGFAValue = currentCityObjectGFA.get(DEFAULT_ZONING_CASE);
+        }
+        if (programInput) {
+          ArrayList<Double> plotZoneCaseGFAValues = returnRelevantGFAs(currentCityObjectGFA, inputZoneCaseGFAValues);
+          boolean defaultGFA = plotZoneCaseGFAValues.isEmpty();
+          if (totalGFA){
+            if (defaultGFA) {
+              if (plotDefaultGFAValue > totalGFAValue) {
+                filteredCityObjects.put(cityObject);
+              }
+            } else {
+              if (zoneCaseGFA) {
+                if ((Collections.min(plotZoneCaseGFAValues) > sumOfinputZoneCaseGFAValues) &
+                    (totalGFAValue < Collections.max(plotZoneCaseGFAValues))){
+                  filteredCityObjects.put(cityObject);
+                }
+              } else {
+                if (plotZoneCaseGFAValues.stream().mapToDouble(Double::doubleValue).sum() > totalGFAValue) {
+                  filteredCityObjects.put(cityObject);
+                }
+              }
+            }
+          } else {
+            if (!defaultGFA) {
+              if (Collections.min(plotZoneCaseGFAValues) > sumOfinputZoneCaseGFAValues) {
+                filteredCityObjects.put(cityObject);
+              }
+            } else {
+              if (plotDefaultGFAValue > sumOfinputZoneCaseGFAValues) {
                 filteredCityObjects.put(cityObject);
               }
             }
           }
-          else {
-            if (chosen_gfa == total_gfa) { // Case 4: Programme OR Use AND TotalGFA input. Sub-case 1-2.
-              if (relevantGFAs.stream().mapToDouble(Double::doubleValue).sum() >= chosen_gfa) {
-                filteredCityObjects.put(cityObject);
-              }
-            }
-            else {
-              // Case 5: Programme OR Use WITH specific GFA for each zoning input, NO Total GFA input. Sub-case 1-2.
-              if (Collections.min(relevantGFAs) > chosen_gfa) {
-                filteredCityObjects.put(cityObject);
-              }
+        } else {
+          if (totalGFA) {
+            if (Collections.max(currentCityObjectGFA.values()) > totalGFAValue) {
+              filteredCityObjects.put(cityObject);
             }
           }
         }
-        else { // Case 3: ONLY TotalGFA input. chosen_gfa is input TotalGFA (see above).
-          if (Collections.max(currentCityObjectGFA.values()) > chosen_gfa){
-            filteredCityObjects.put(cityObject);
-          }
-        }
       }
-    }
-    else { //Case 1: Programme OR Use without GFA input.
+    } else { //Case 1: Programme OR Use without GFA input.
       for (int i = 0; i < query_result.length(); i++) {
         JSONObject row = (JSONObject) query_result.get(i);
         filteredCityObjects.put(row.get(CITY_OBJECT_ID));
