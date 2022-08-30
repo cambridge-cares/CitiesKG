@@ -50,7 +50,7 @@ public class RunCEATaskTest {
             String test_CRS = "27700";
             RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
 
-            assertEquals(11, task.getClass().getDeclaredFields().length);
+            assertEquals(12, task.getClass().getDeclaredFields().length);
 
             Field inputs;
             Field uris;
@@ -59,6 +59,7 @@ public class RunCEATaskTest {
             Field crs;
             Field CTYPE_JSON;
             Field stop;
+            Field DATA_FILE;
             Field SHAPEFILE_SCRIPT;
             Field WORKFLOW_SCRIPT;
             Field CREATE_WORKFLOW_SCRIPT;
@@ -84,6 +85,9 @@ public class RunCEATaskTest {
             stop = task.getClass().getDeclaredField("stop");
             stop.setAccessible(true);
             assertFalse((boolean) stop.get(task));
+            DATA_FILE = task.getClass().getDeclaredField("DATA_FILE");
+            DATA_FILE.setAccessible(true);
+            assertEquals(DATA_FILE.get(task), "datafile.txt");
             SHAPEFILE_SCRIPT = task.getClass().getDeclaredField("SHAPEFILE_SCRIPT");
             SHAPEFILE_SCRIPT.setAccessible(true);
             assertEquals(SHAPEFILE_SCRIPT.get(task), "create_shapefile.py");

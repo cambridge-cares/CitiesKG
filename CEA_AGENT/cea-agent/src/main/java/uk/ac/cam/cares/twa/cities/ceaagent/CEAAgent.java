@@ -1477,7 +1477,7 @@ public class CEAAgent extends JPSAgent {
      * @param distance buffer distance
      * @return inflated polygon
      */
-    private Geometry inflatePolygon(Geometry geom, double distance) {
+    private Geometry inflatePolygon(Geometry geom, Double distance) {
         ArrayList<Double> zCoordinate = getPolygonZ(geom);
         BufferParameters bufferParameters = new BufferParameters();
         bufferParameters.setEndCapStyle(BufferParameters.CAP_ROUND);
@@ -1494,7 +1494,7 @@ public class CEAAgent extends JPSAgent {
      * @param distance buffer distance
      * @return deflated polygon
      */
-    private Geometry deflatePolygon(Geometry geom, double distance) {
+    private Geometry deflatePolygon(Geometry geom, Double distance) {
         ArrayList<Double> zCoordinate = getPolygonZ(geom);
         BufferParameters bufferParameters = new BufferParameters();
         bufferParameters.setEndCapStyle(BufferParameters.CAP_ROUND);

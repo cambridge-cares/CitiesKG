@@ -28,12 +28,11 @@ public class RunCEATask implements Runnable {
     private final String crs;
     public static final String CTYPE_JSON = "application/json";
     private Boolean stop = false;
+    private static final String DATA_FILE = "datafile.txt";
     private static final String SHAPEFILE_SCRIPT = "create_shapefile.py";
     private static final String WORKFLOW_SCRIPT = "workflow.yml";
     private static final String CREATE_WORKFLOW_SCRIPT = "create_cea_workflow.py";
     private static final String FS = System.getProperty("file.separator");
-
-    private static final String DATA_FILE = "datafile.txt";
 
     public RunCEATask(ArrayList<CEAInputData> buildingData, URI endpointUri, ArrayList<String> uris, int thread, String crs) {
         this.inputs = buildingData;
