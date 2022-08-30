@@ -49,7 +49,7 @@ public class CityInformationAgent extends JPSAgent {
   private static final String ZONE = "zone";
   private static final String ONTOZONING_PREFIX = "zo";
   private static final String CITY_OBJECT_ID = "cityObjectId";
-  private static final String ONTO_BUILDABLE_SPACE_PREFIX = "pco";
+  private static final String ONTO_BUILDABLE_SPACE_PREFIX = "obs";
   private static final String OM_PREFIX = "om";
   private static final String GFA_VALUE = "GFAvalue";
   private static final String ALLOWED_GFA = "allowedGFA";
@@ -80,7 +80,7 @@ public class CityInformationAgent extends JPSAgent {
   public JSONObject processRequestParameters(JSONObject requestParams) {
 
     if (validateInput(requestParams)){
-      ArrayList<String> uris = new ArrayList<>();
+      /***ArrayList<String> uris = new ArrayList<>();
       JSONArray iris = requestParams.getJSONArray(KEY_IRIS);
       for (Object iri : iris) {
         uris.add(iri.toString());
@@ -104,7 +104,7 @@ public class CityInformationAgent extends JPSAgent {
         cityObjectInformation.put(cityObjectList);
       }
       requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
-
+      */
       if (requestParams.keySet().contains(KEY_CONTEXT)) {
         Set<String> agentURLs = requestParams.getJSONObject(KEY_CONTEXT).keySet();
         for (String agentURL : agentURLs) {
@@ -127,7 +127,7 @@ public class CityInformationAgent extends JPSAgent {
                 try {
                   gfas.put(onto_element, Double.parseDouble(filters.getJSONObject(predicate).getString(onto_element)));
                 } catch (NumberFormatException exception) {
-                  gfas.put(onto_element, 0.); // covers Case 5 and Case 9.
+                  gfas.put(onto_element, 0.); // covers Case 5
                 }
               }
             } // Shiying: gfas is never empty
@@ -295,12 +295,12 @@ public class CityInformationAgent extends JPSAgent {
     JSONArray query_result = AccessAgentCaller.queryStore(route, query.toString());
     if (gfa_case) {
       HashMap<String, HashMap<String, Double>> allGFACases = orderGFAResults(query_result);
-      // Case 6: Programme OR Use WITH specific GFA for each zoning input, NO Total GFA input.
+      // Case 5: Programme OR Use WITH specific GFA for each zoning input, NO Total GFA input.
       // Uses sum of inputGFAs for comparison.
       double chosen_gfa = inputGFAs.values().stream().mapToDouble(Double::doubleValue).sum();
-      // in Case 4: ONLY TotalGFA input. inputGFAs is empty --> chosen GFA=0
-      // in Case 5: Programme OR Use AND TotalGFA input. inputGFAs is not empty, but sum will be 0.
-      // in Case 7: chosen_gfa will be larger than 0, i.e. total_gfa is ignored.
+      // in Case 3: ONLY TotalGFA input. inputGFAs is empty --> chosen GFA=0
+      // in Case 4: Programme OR Use AND TotalGFA input. inputGFAs is not empty, but sum will be 0.
+      // in Case 6: chosen_gfa will be larger than 0, i.e. total_gfa is ignored.
       if (chosen_gfa == 0) {
         chosen_gfa = total_gfa;
       }
@@ -308,7 +308,7 @@ public class CityInformationAgent extends JPSAgent {
         HashMap<String, Double> currentCityObjectGFA = allGFACases.get(cityObject);
         if (!inputGFAs.isEmpty()){
           ArrayList<Double> relevantGFAs = returnRelevantGFAs(currentCityObjectGFA, inputGFAs);
-          if (relevantGFAs.isEmpty()) { // Case 5 and Case 6 Sub-case 3.
+          if (relevantGFAs.isEmpty()) { // Case 4, 6 Sub-case 3.
             if (currentCityObjectGFA.containsKey(DEFAULT_ZONING_CASE)) {
               if (currentCityObjectGFA.get(DEFAULT_ZONING_CASE) >= chosen_gfa) {
                 filteredCityObjects.put(cityObject);
@@ -316,19 +316,19 @@ public class CityInformationAgent extends JPSAgent {
             }
           }
           else {
-            if (chosen_gfa == total_gfa) { // Case 5: Programme OR Use AND TotalGFA input. Sub-case 1-2.
+            if (chosen_gfa == total_gfa) { // Case 4: Programme OR Use AND TotalGFA input. Sub-case 1-2.
               if (relevantGFAs.stream().mapToDouble(Double::doubleValue).sum() >= chosen_gfa) {
                 filteredCityObjects.put(cityObject);
               }
             }
-            else { // Case 6: Programme OR Use WITH specific GFA for each zoning input, NO Total GFA input. Sub-case 1-2.
+            else { // Case 5: Programme OR Use WITH specific GFA for each zoning input, NO Total GFA input. Sub-case 1-2.
               if (Collections.min(relevantGFAs) >= chosen_gfa) {
                 filteredCityObjects.put(cityObject);
               }
             }
           }
         }
-        else { // Case 4: ONLY TotalGFA input. chosen_gfa is input TotalGFA (see above).
+        else { // Case 3: ONLY TotalGFA input. chosen_gfa is input TotalGFA (see above).
           if (Collections.max(currentCityObjectGFA.values()) > chosen_gfa){
             filteredCityObjects.put(cityObject);
           }
