@@ -65,7 +65,6 @@ public class CityInformationAgent extends JPSAgent {
   private static final String FOR_ZONING_CASE = "forZoningCase";
   private static final String TOTAL_GFA =  "TotalGFA";
 
-
   @Getter private String route;
   private boolean lazyload;
   @Getter private String zo;
@@ -177,7 +176,6 @@ public class CityInformationAgent extends JPSAgent {
             for (Object iri : iris) {
               new URL((String) iri);
             }
-            //to check if agent iris are valid URL.
             if (keys.contains(KEY_CONTEXT)){
               Set<String> agentURLs = requestParams.getJSONObject(KEY_CONTEXT).keySet();
               for (String agentURL : agentURLs) {

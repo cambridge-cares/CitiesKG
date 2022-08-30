@@ -220,7 +220,7 @@
                 z-index: 99980;
             }
 			
-			      #programmeFinder_toolbox {
+            #programmeFinder_toolbox {
                 width: 1080px;
                 height: 55px;
                 display: none;
@@ -328,6 +328,68 @@
                 font-size: 10pt;
             }
 
+            .ProgrammaticPlotFinder-submitButton{
+                display: block;
+                background: #303336;
+                color: #edffff;
+                fill: #edffff;
+                cursor: pointer;
+                margin: 17px 0px 10px;
+                border: 1px solid #444;
+            }
+
+            .ProgrammaticPlotFinder-resultBox{
+                display: block;
+                position: absolute;
+                top: 50px;
+                left: 15px;
+                background: rgba(38, 38, 38, 0.95);
+                color: #edffff;
+                border: 1px solid #444;
+                visibility: hidden;
+                opacity: 1;
+            }
+
+            .ProgrammaticPlotFinder-resultBox-title{
+                display: block;
+                height: 20px;
+                padding: 5px 30px 5px 25px;
+                background: rgba(84, 84, 84, 1);
+                border-top-left-radius: 7px;
+                text-align: center;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                overflow: hidden;
+                box-sizing: content-box;
+            }
+
+            .ProgrammaticPlotFinder-resultBox-iframe{
+                border: none;
+                width: 100%; /* Fallback */
+                width: calc(100% - 2px);
+            }
+
+            li {
+                border: 1px solid #ddd;
+                margin-top: -1px; /* Prevent double borders */
+                background-color: #f6f6f6;
+                padding: 6px;
+                text-decoration: none;
+                font-size: 12px;
+                color: black;
+                display: block;
+                position: relative;
+            }
+            .close {
+                cursor: pointer;
+                position: absolute;
+                top: 50%;
+                right: 0%;
+                padding: 5px 10px;
+                transform: translate(0%, -50%);
+            }
+
+            .close:hover {background: #bbb;}
         </style>
     </head>
 
@@ -337,9 +399,9 @@
         <div id = "citydb_cachedTilesInspector" class="cesium-cesiumInspector" style="display: block; position: absolute; bottom: 5px; right: 5px; width: 130px" data-bind="html: dataSourcesText"></div>
         <div id = "citydb_showedTilesInspector" class="cesium-cesiumInspector" style="display: block; position: absolute; bottom: 5px; right: 170px; width: 130px" data-bind="html: dataSourcesText"></div>
         <img id = "citydb_loadingTilesInspector" src="../theme/img/ajax-loader.gif" style="display: none; position: absolute; bottom: 56px; right: 7px; width:30px;height:30px;">
-		
+
 		    <div id="ProgrammaticPlotFinder">
-            <div onclick="showProgrammeFinder()"> <!--Ayda: showProgrammeFinder() Shiyiing: highlightMultipleObjects()-->
+            <div onclick="showProgrammeFinder()"> <!--Ayda: showProgrammeFinder() Shiyiing: highlightMultipleObjects(), showResultWindow()-->
                 <select class="cesium-button">
                     <option hidden="hidden">Programmatic Plot Finder</option>
                 </select>
@@ -347,55 +409,56 @@
             </div>
 			      <div id="uiProgrammeFinder-content">
                 <div id="programmeFinder_toolbox" class="citydb_dynamic_box">
-					          <table>
-						            <tr style="color:#FFFFFF">
-						                <th>Development Type</th>
-						                <th>Uses</th>
-                            <th>Programmes</th>
-						                <th>Gross Floor Area (GFA)</th>
-						            </tr>
-						            <tr style="vertical-align:top">
-							              <td>
-								            <select id="developmentType" class="cesium-button">
-                                <option value="Choose Development Type" selected="selected">Choose Development Type</option>
-									              <option value="NewDevelopment">New Development</option>
-								            </select>
-							              </td>
-                            <td>
+                    <div id="developmentBox">
+                        <div><label>Query Type</label></div>
+                        <select id="developmentType" class="cesium-button" onchange="showChooseDevType()">
+                            <option value="Choose Development Type" selected="selected">Choose Query Type</option>
+                            <option value="NewDevelopment">New Development</option>
+                            <option value="OntozoningUses">Ontozoning (Uses)</option>
+                            <option value="OntozoingProgrammes">Ontozoning (Programmes)</option>
+                            <option value="GfaUses">GFA (Uses)</option>
+                            <option value="GfaProgrammes">GFA (Programmes)</option>
+                            <option value="ViewAll">View All</option>
+                        </select>
+                    </div>
+                    <div id="UsesBox">
+                        <div><label>Uses</label></div>
+                        <div>
+                            <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
+                                <div style="width:240px" class="cesium-button">Choose Use<div  id='use_arrow' class="arrow down"></div></div>
+                            </div>
+                            <div id="choose_uses" class="finder_dynamic_box" ></div>
+                        </div>
+                    </div>
+                    <div id="ProgrammesBox">
+                        <div><label>Programmes</label></div>
+                        <div>
+                            <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
+                                <div style="width:240px" class="cesium-button">Choose Programme<div id='programme_arrow' class="arrow down"></div></div>
+                            </div>
+                            <div id="choose_programmes" class="finder_dynamic_box" onblur="showChooseProgrammes()"></div>
+                        </div>
+                    </div>
+                    <div id="GfaBox">
+                        <div><label>Gross Floor Area (GFA)</label></div>
+                        <div>
+                            <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
+                                <div style="width:240px" class="cesium-button">Assign GFA(s)<div id='gfa_arrow' class="arrow down"></div></div>
+                            </div>
+                            <div id="assignGFA" class="finder_dynamic_box">
                                 <div>
-                                    <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
-                                        <div style="width:240px" class="cesium-button">Choose Use<div  id='use_arrow' class="arrow down"></div></div>
-                                    </div>
-                                    <div id="choose_uses" class="finder_dynamic_box" ></div>
+                                    <div class='text_gfa'>Total Gross Floor Area (GFA)</div>
+                                    <div class='text_input' style="width: 80px"><input id="totalGFA" type='text' maxlength="10" size="3"></div>
+                                    <hr size="1">
                                 </div>
-                            </td>
-                            <td>
-                                <div>
-                                    <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
-                                        <div style="width:240px" class="cesium-button">Choose Programme<div id='programme_arrow' class="arrow down"></div></div>
-                                    </div>
-                                    <div id="choose_programmes" class="finder_dynamic_box" onblur="showChooseProgrammes()"></div>
-                                </div>
-                            </td>
-                            <td>
-                                <div>
-                                    <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
-                                        <div style="width:240px" class="cesium-button">Assign GFA(s)<div id='gfa_arrow' class="arrow down"></div></div>
-                                    </div>
-                                    <div id="assignGFA" class="finder_dynamic_box">
-                                        <div>
-                                            <div class='text_gfa'>Total Gross Floor Area (GFA)</div>
-                                            <div class='text_input' style="width: 80px"><input type='text' maxlength="10" size="3" onblur='getInputParams()'/></div>
-                                            <hr size="1">
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-					  	          </tr>
-					          </table>
-			  	      </div>
-		    	  </div>
-		    </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getInputParams()">Submit</button>
+                    <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="removeDataSource()">Reset</button>
+                </div>
+            </div>
+        </div>
 
         <div id="uiMenu">
             <div onclick="showToolbox()">
@@ -731,6 +794,13 @@
             </div>
         </div>
 
+        <div id="uiProgrammeFinder-result" class="ProgrammaticPlotFinder-resultBox">
+            <div id="resultBox-title" class="ProgrammaticPlotFinder-resultBox-title">
+                <label>PPF search Result</label>
+            </div>
+            <div id="resultBox-iframe" class="ProgrammaticPlotFinder-resultBox-iframe"></div>
+        </div>
+
         <!-- GPS button -->
         <button id="gpsButton" type="button" class="cesium-button"></button>
 
@@ -810,7 +880,7 @@
             function showProgrammeFinder() {
                 var programmeFinder_toolbox = document.getElementById("programmeFinder_toolbox");
                 if (!expanded6) {
-                    programmeFinder_toolbox.style.display = "block";
+                    programmeFinder_toolbox.style.display = "flex";
                     expanded6 = true;
                 } else {
                     programmeFinder_toolbox.style.display = "none";

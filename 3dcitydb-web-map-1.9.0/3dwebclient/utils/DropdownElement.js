@@ -2,6 +2,7 @@ var CONTEXT = "citieskg";
 var CITY = (new URL(window.location.href).searchParams.get('city'));
 var TOTAL_GFA_KEY = 'TotalGFA';
 var input_parameters;
+var selectedDevType;
 
 
 function buildQuery(predicate){
@@ -37,7 +38,7 @@ function appendElement(line, predicate, element_type, dropdown_type){
 	var some_element =
 			"<div class='" + predicate + "'>" +
 			"<div id='" + line + "' class='checkbox'>" +
-			"<input type='checkbox' onchange='updateGfaRows()' onblur='getInputParams()'/></div>" +
+			"<input type='checkbox' onchange='updateGfaRows()'></div>" +
 			"<div class=" + element_type + ">" + line + "</div>" +
 			"</div>";
 	$(dropdown_type).append(some_element)
@@ -76,7 +77,7 @@ function updateGfaRows(){
 						"<div class='gfa'>" +
 						"<div class='text_gfa' style='width: 180px'>" + checkboxes.item(
 								i).id + "</div>" +
-						"<div class='text_input'><input type='text' maxLength='5' size='3' onblur='getInputParams()'/></div>" +
+						"<div class='text_input'><input type='text' maxLength='5' size='3'></div>" +
 						"<hr size='1'>" +
 					  "</div>" ;
 				$("#assignGFA").append(clicked_element)
@@ -137,7 +138,9 @@ function getValidPlots(){
 		success: function (data, status_message, xhr) {
 			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
 			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filteredCounts"]);
+			showResultWindow(selectedDevType, data);
 			highlightMultipleObjects(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
+      //pinHighlightObjects(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
 
 		}
 	});
@@ -162,3 +165,55 @@ function throwNotification() {
 	setTimeout(function() {
 		$('.pop_up_box').hide() }, 6000);
 }
+
+function showChooseDevType(){
+
+	var developmentType = document.getElementById("developmentType");
+	// Shiying: Add a cleaning function, clean the gfa dropdown and unselect everything
+	resetAllInputs();
+	//console.log(event.target.id + "is clicked");
+	selectedDevType = developmentType.value;
+	switch (developmentType.value){
+		case "OntozoningUses":
+			document.getElementById("UsesBox").style.display="block";
+			document.getElementById("ProgrammesBox").style.display="None";
+			document.getElementById("GfaBox").style.display="None";
+			break;
+		case "OntozoingProgrammes":
+			document.getElementById("UsesBox").style.display="None";
+			document.getElementById("ProgrammesBox").style.display="block";
+			document.getElementById("GfaBox").style.display="None";
+			break;
+		case "GfaUses":
+			document.getElementById("UsesBox").style.display="block";
+			document.getElementById("ProgrammesBox").style.display="None";
+			document.getElementById("GfaBox").style.display="block";
+			break;
+		case "GfaProgrammes":
+			document.getElementById("UsesBox").style.display="None";
+			document.getElementById("ProgrammesBox").style.display="block";
+			document.getElementById("GfaBox").style.display="block";
+			break;
+		case "NewDevelopment":
+			document.getElementById("UsesBox").style.display="block";
+			document.getElementById("ProgrammesBox").style.display="block";
+			document.getElementById("GfaBox").style.display="block";
+		case "ViewAll":
+			pinHighlightObjects();
+	}
+
+}
+
+function resetAllInputs(){
+	var checkboxes = document.getElementsByClassName('checkbox');
+	let checkedCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+	checkedCheckboxes.forEach((checkbox) => {
+		checkbox.checked = false;
+		updateGfaRows();
+	});
+
+	var totalGfaInput = document.getElementById("totalGFA");
+	//totalGfaInput.innerHTML = "";
+	totalGfaInput.value = '';
+}
+
