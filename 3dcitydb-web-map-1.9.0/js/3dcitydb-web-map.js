@@ -193,7 +193,9 @@
                     Math.abs(dirX - _dirX) > dirD ||
                     Math.abs(dirY - _dirY) > dirD ||
                     Math.abs(dirZ - _dirZ) > dirD) {
-                console.log('view changed');
+                //console.log('view changed');
+                console.log('view changed 1: ' + currentCamera.positionCartographic);
+                console.log('view changed 2: ' + currentCamera.direction);
                 posX = _posX;
                 posY = _posY;
                 posZ = _posZ;

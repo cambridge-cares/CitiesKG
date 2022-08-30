@@ -143,7 +143,7 @@ public class CityInformationAgent extends JPSAgent {
                   gfas.put(onto_element, 0.);
                 }
               }
-            }
+            } // Shiying: gfas is never empty
             double total_gfa = 0.;
             if (filters.keySet().contains(TOTAL_GFA)) {
               try {
@@ -291,7 +291,9 @@ public class CityInformationAgent extends JPSAgent {
   }
 
   private JSONArray getFilteredObjects (String predicate, HashMap<String, Double> gfas, double total_gfa) {
-    boolean gfa_case = !gfas.isEmpty() | total_gfa > 0;
+    double sumOfGfas = gfas.values().stream().mapToDouble(Double::doubleValue).sum();
+    //boolean gfa_case = !gfas.isEmpty() | total_gfa > 0;
+    boolean gfa_case = sumOfGfas > 0 | total_gfa > 0;
 
     Query query = getFilterQuery(predicate, new ArrayList<>(gfas.keySet()), gfa_case);
     JSONArray filteredCityobjects = new JSONArray();
