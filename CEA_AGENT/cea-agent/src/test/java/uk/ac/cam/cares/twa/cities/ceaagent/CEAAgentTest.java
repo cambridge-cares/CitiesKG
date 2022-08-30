@@ -906,11 +906,13 @@ public class CEAAgentTest {
         String geometry1 = "1.0#1.0#0.0#1.0#2.0#0.0#2.0#2.0#0.0#2.0#1.0#0.0#1.0#1.0#0.0";
         String geometry2 = "1.0#1.0#0.0#1.0#1.0#2.0#2.0#1.0#2.0#2.0#1.0#0.0#1.0#1.0#0.0";
         String geometry3 = "1.0#2.0#0.0#2.0#2.0#0.0#2.0#1.0#0.0#1.0#1.0#0.0#1.0#2.0#0.0";
+        String geometry4 = "1.0#2.0#1.0#2.0#2.0#1.0#2.0#1.0#0.0#1.0#1.0#1.0#1.0#2.0#1.0";
 
         JSONArray testArray = new JSONArray();
         testArray.put(new JSONObject().put("geometry", geometry1));
         testArray.put(new JSONObject().put("geometry", geometry2));
         testArray.put(new JSONObject().put("geometry", geometry3));
+        testArray.put(new JSONObject().put("geometry", geometry4));
 
         JSONArray expected = new JSONArray();
         expected.put(new JSONObject().put("geometry", geometry1));

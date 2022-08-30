@@ -618,7 +618,8 @@ public class CEAAgent extends JPSAgent {
      */
     private JSONArray getGroundGeometry(JSONArray results){
         ArrayList<Integer> ind = new ArrayList<>();
-        ArrayList<Double> z = new ArrayList<>();
+        ArrayList<Double> z;
+        Double minZ = Double.MAX_VALUE;
         double eps = 0.5;
         boolean flag;
         String geom;
@@ -649,12 +650,34 @@ public class CEAAgent extends JPSAgent {
                 }
             }
 
-            if (!flag){ind.add(i);}
+            if (!flag){
+                ind.add(i);
+            }
+            else{
+                if (z.get(0) < minZ){minZ = z.get(0);}
+            }
         }
 
+        // gets rid of geometry without constant z (up to eps tolerance)
         for (int i = ind.size() - 1; i >= 0; i--){
             results.remove(ind.get(i));
         }
+
+        int i = 0;
+
+        // gets rid of geometry without minimum z value (up to eps tolerance)
+        while (i < results.length()){
+            geom = results.getJSONObject(i).get("geometry").toString();
+            split = geom.split("#");
+
+            if (Double.parseDouble(split[2]) > minZ + eps){
+                results.remove(i);
+            }
+            else{
+                i++;
+            }
+        }
+
         return results;
     }
 
