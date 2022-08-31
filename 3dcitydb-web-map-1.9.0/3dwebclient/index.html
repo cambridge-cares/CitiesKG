@@ -412,13 +412,11 @@
                     <div id="developmentBox">
                         <div><label>Query Type</label></div>
                         <select id="developmentType" class="cesium-button" onchange="showChooseDevType()">
-                            <option value="Choose Development Type" selected="selected">Choose Query Type</option>
-                            <option value="NewDevelopment">New Development</option>
+                            <option value="" selected disabled hidden>Choose Query Type</option>
                             <option value="OntozoningUses">Ontozoning (Uses)</option>
                             <option value="OntozoingProgrammes">Ontozoning (Programmes)</option>
                             <option value="GfaUses">GFA (Uses)</option>
                             <option value="GfaProgrammes">GFA (Programmes)</option>
-                            <option value="ViewAll">View All</option>
                         </select>
                     </div>
                     <div id="UsesBox">
@@ -455,7 +453,6 @@
                         </div>
                     </div>
                     <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getInputParams()">Submit</button>
-                    <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="removeDataSource()">Reset</button>
                 </div>
             </div>
         </div>
