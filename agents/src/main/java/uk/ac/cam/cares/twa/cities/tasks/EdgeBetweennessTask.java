@@ -1,13 +1,18 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
-import com.hp.hpl.jena.rdf.model.*;
 import edu.uci.ics.jung.algorithms.cluster.EdgeBetweennessClusterer;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.Graph;
+import org.apache.commons.collections4.MapUtils;
+import org.apache.jena.arq.querybuilder.UpdateBuilder;
+import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.semanticweb.owlapi.model.IRI;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 
 import java.util.*;
@@ -19,7 +24,8 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
         GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.TASK_EB);
     private boolean stop = false;
     private BlockingQueue<Map<String, JSONArray>> dataQueue;
-    private String targetGraph;
+    private Node targetGraph;
+    private Map<String, Integer> urlToNum = new HashMap();
 
     @Override
     public IRI getTaskIri() {
@@ -32,8 +38,8 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
     }
 
     @Override
-    public void setTargetGraph(String tg) {
-        targetGraph = tg;
+    public void setTargetGraph(String endpointIRI) {
+        targetGraph = NodeFactory.createURI(endpointIRI + GraphInferenceAgent.ONTOINFER_GRAPH);
     }
 
     @Override
@@ -54,18 +60,17 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
                     // get data
                     Map<String, JSONArray> map = this.dataQueue.take();
                     JSONArray data = map.get(this.taskIri.toString());
-
+                    long startTime = System.currentTimeMillis();
                     // convert to jung graph
                     Graph graph = createGraph(data);
-
+                    System.out.println("Graph done in: " + String.valueOf(System.currentTimeMillis() - startTime));
                     // execute algo
                     EdgeBetweennessClusterer clusterer = new EdgeBetweennessClusterer<>(3);
-                    Set<Set<RDFNode>> set = clusterer.apply(graph);
-
-                    int size = set.size();
+                    HashSet<HashSet<String>> set = remapSet(clusterer.apply(graph));
+                    System.out.println("Clustered in: " + String.valueOf(System.currentTimeMillis() - startTime));
 
                     // sparql update triples to endpoint
-                    //update(set);
+                    storeResults(set);
                 } catch (Exception e) {
                     throw new JPSRuntimeException(e);
                 } finally {
@@ -83,37 +88,120 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
         UndirectedSparseGraph graph = new UndirectedSparseGraph();
 
 
+        int num = 1;
 
         for (Object data : array) {
             JSONObject obj = (JSONObject) data;
+            String s = obj.getString("s");
+            String p = obj.getString("p");
+            String o = obj.getString("o");
+            int sN = num++;
+            int pN = num++;
+            int oN = num++;
+            //map URLs to integers to reduce graph size
+            if (urlToNum.containsKey(s)) {
+                sN = urlToNum.get(s);
+            } else {
+                urlToNum.put(s, sN);
+            }
+            if (urlToNum.containsKey(p)) {
+                pN = urlToNum.get(p);
+            } else {
+                urlToNum.put(p, pN);
+            }
+            if (urlToNum.containsKey(o)) {
+                oN = urlToNum.get(o);
+            } else {
+                urlToNum.put(o, oN);
+            }
 
-            Resource s = ResourceFactory.createResource(obj.getString("s"));
-            Property p = ResourceFactory.createProperty(obj.getString("p"));
-            Resource o = ResourceFactory.createResource(obj.getString("o"));
-            graph.addEdge(ResourceFactory.createStatement(s, p, o), s, o);
+            graph.addEdge(new int[]{sN, pN, oN}, sN, oN);
         }
 
         return graph;
     }
 
-    /*
-    public void update(Set<HashSet> set) {
-        Collection<Quad> collection = new ArrayList<>();
-        Node g = NodeFactory.createURI("http://127.0.0.1:9999/blazegraph/namespace/singaporeEPSG4326/sparql/results/");
-        Node p = NodeFactory.createURI("http://www.theworldavatar.com/ontologies/OntoInfer.owl#cluster");
-        Iterator<HashSet> iterator = set.stream().iterator();
-        int cluster = 0;
-        while (iterator.hasNext()) {
-            cluster++;
-            HashSet<ResourceImpl> hs = iterator.next();
-            for (ResourceImpl resource : hs) {
-                collection.add(new Quad(g, NodeFactory.createURI(resource.getURI()), p, NodeFactory.createLiteral(String.valueOf(cluster))));
+    private HashSet<HashSet<String>> remapSet(Set set) {
+        Map<Integer, String> revUrlToNum = MapUtils.invertMap(urlToNum);
+
+        HashSet<HashSet<String>> remapped = new HashSet<>();
+
+        for (Object subset : set) {
+            HashSet<String> subsetS = new HashSet<>();
+            for (Object element : (HashSet) subset) {
+                subsetS.add(revUrlToNum.get(element));
             }
+            remapped.add(subsetS);
         }
-        UpdateBuilder ub = new UpdateBuilder();
-        ub.addInsertQuads(collection);
-        AccessAgentCaller.updateStore("http://localhost:48080/singaporeEPSG4326", ub.build().toString());
+
+        return remapped;
     }
+
+    private void storeResults(HashSet<HashSet<String>> clusters) {
+
+        UpdateBuilder ub = prepareUpdateBuilder();
+
+        int counter = 0;
+        int clusterNum = 0;
+        for (HashSet<String> cluster : clusters) {
+            clusterNum = clusterNum + 1;
+            //prepare inference update for a node
+            for (String element : cluster) {
+                prepareUpdate(clusterNum, ub, element);
+                counter++;
+
+                //store data if counter of nodes is 100 and start over
+                if (counter >= 100) {
+                    ub = persistUpdate(ub);
+
+                    counter = 0;
+                }
+            }
+
+        }
+        //store any remaining data
+        if (counter > 0)  {
+            persistUpdate(ub);
+        }
+
+    }
+
+    private void prepareUpdate(int clusterNum, UpdateBuilder ub, String vert) {
+        String pfix = GraphInferenceAgent.ONINF_PREFIX;
+        Node id = NodeFactory.createURI(targetGraph.getURI() + UUID.randomUUID());
+        ub.addInsert(targetGraph, id, pfix + ":" + GraphInferenceAgent.ONINT_P_INOBJ,
+            NodeFactory.createURI(vert));
+        ub.addInsert(targetGraph, id, pfix + ":" + GraphInferenceAgent.ONINT_P_INALG,
+            NodeFactory.createURI(GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.ONINT_C_EBALG));
+        ub.addInsert(targetGraph, id, pfix + ":" + GraphInferenceAgent.ONINT_P_INVAL,
+            NodeFactory.createLiteral(String.valueOf(clusterNum), XSDDatatype.XSDinteger));
+    }
+
+    /**
+     * Creates UpdateBuilder and adds OntoInter prefix into it.
+     *
+     * @return update builder with prefix.
      */
+    private UpdateBuilder prepareUpdateBuilder() {
+        UpdateBuilder ub = new UpdateBuilder();
+        ub.addPrefix(GraphInferenceAgent.ONINF_PREFIX, GraphInferenceAgent.ONINF_SCHEMA);
+
+        return ub;
+    }
+
+    /**
+     * Stores given UpdateBuilder contents in the knowledge graph via access agent and returns fresh
+     * builder with prefix after that.
+     *
+     * @param ub UpdateBuilder with statements to store in the knowledge graph
+     * @return fresh update builder.
+     */
+    private UpdateBuilder persistUpdate(UpdateBuilder ub) {
+        AccessAgentCaller.updateStore(ResourceBundle.getBundle("config").getString("uri.route"),
+            ub.build().toString());
+        ub = prepareUpdateBuilder();
+
+        return ub;
+    }
 
 }

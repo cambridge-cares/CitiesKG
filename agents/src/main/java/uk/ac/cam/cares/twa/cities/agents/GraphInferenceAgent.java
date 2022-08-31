@@ -14,6 +14,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.json.JSONArray;
 import org.semanticweb.owlapi.model.IRI;
 import org.json.JSONObject;
@@ -44,6 +45,7 @@ public class GraphInferenceAgent extends JPSAgent {
   public static final String ONINT_P_INALG = "hasInferenceAlgorithm";
   public static final String ONINT_P_INVAL = "hasInferredValue";
   public static final String ONINT_C_PRALG = "PageRankAlgorithm";
+  public static final String ONINT_C_EBALG = "EdgeBetweennessAlgorithm";
 
   public String route;
   public static final String TASK_PR = "PageRankTask";
@@ -137,19 +139,43 @@ public class GraphInferenceAgent extends JPSAgent {
     UninitialisedDataQueueTask task = (UninitialisedDataQueueTask) TASKS.get(taskIri);
     //some task configuration/initialisation code can go here.
     task.setStringMapQueue(dataQueue);
+    task.setTargetGraph(sparqlEndpoint.toString());
 
     return task;
   }
 
-  private JSONArray getAllTargetData(IRI sparqlEndpoint) {
+  private JSONArray getAllTargetData(IRI sparqlEndpoint) throws ParseException {
     //retrieve data and replace empty string with it
     // limit to ontozone and OntoZoning graphs
     SelectBuilder sb = new SelectBuilder();
-    sb.setBase(sparqlEndpoint.toString()).from(ONTOZONE_GRAPH).from(ONTOZONING_GRAPH)
+    sb.setBase(sparqlEndpoint.toString()).from(ONTOZONING_GRAPH)
             .addVar("?s").addVar("?p").addVar("?o")
-            .addWhere("?s", "?p", "?o");
+            .addWhere("?s", "?p", "?o")
+            .addFilter("?p != <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>")
+            .addFilter("?p != <http://ainf.aau.at/ontodebug#axiom>")
+            .addFilter("?p != <http://ainf.aau.at/ontodebug#type>")
+            .addFilter("?o != \"only\"")
+            .addFilter("?o != <http://ainf.aau.at/ontodebug#testCase>")
+            .addFilter("?o != <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>")
+            .addFilter("?o != <http://www.w3.org/2002/07/owl#Thing>")
+    ;
 
     JSONArray sparqlResult = AccessAgentCaller.queryStore(route, sb.buildString());
+
+
+    sb = new SelectBuilder();
+    sb.setBase(sparqlEndpoint.toString()).from(ONTOZONE_GRAPH)
+        .addVar("?s").addVar("?p").addVar("?o")
+        .addWhere("?s", "?p", "?o")
+        //.setLimit(1000)
+    ;
+
+    JSONArray sparqlResultTwo = AccessAgentCaller.queryStore(route, sb.buildString());
+
+    for (Object data : sparqlResultTwo) {
+      sparqlResult.put(data);
+    }
+
 
     return sparqlResult;
   }
