@@ -29,6 +29,10 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.json.JSONArray;
 
+import org.locationtech.jts.geom.*;
+import org.locationtech.jts.operation.buffer.BufferOp;
+import org.locationtech.jts.operation.buffer.BufferParameters;
+
 @WebServlet(
         urlPatterns = {
                 CEAAgent.URI_ACTION,
@@ -172,10 +176,15 @@ public class CEAAgent extends JPSAgent {
                         height = height.length() == 0 ? getValue(uri, "HeightGenAttr", route): height;
                         height = height.length() == 0 ? "10.0" : height;
                         // Get footprint from ground thematic surface or find from surface geometries depending on data
-                        String footprint = getValue(uri, "FootprintThematicSurface", route);
+                        String footprint = getValue(uri, "Lod0FootprintId", route);
+                        footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
                         testData.add(new CEAInputData(footprint, height));
-                        if(i==0) crs = getValue(uri, "CRS", route); //just get crs once - assuming all iris in same namespace
+                        if (i==0) {
+                            crs = getValue(uri, "CRS", route);
+                            crs = crs == "" ? crs = getValue(uri, "DatabasesrsCRS", route) : crs;
+                            if (crs == ""){crs = getNamespace(uri).split("EPSG").length == 2 ? getNamespace(uri).split("EPSG")[1].split("/")[0] : "27700";}
+                        } //just get crs once - assuming all iris in same namespace
                     }
                     // Manually set thread number to 0 - multiple threads not working so needs investigating
                     // Potentially issue is CEA is already multi-threaded
@@ -377,6 +386,7 @@ public class CEAAgent extends JPSAgent {
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/", config.getString("singaporeEPSG4326.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/", config.getString("kingslynnEPSG3857.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/", config.getString("kingslynnEPSG27700.targetresourceid"));
+        accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/", config.getString("pirmasensEPSG32633.targetresourceid"));
         localRoute = config.getString("uri.route.local");
     }
 
@@ -588,11 +598,14 @@ public class CEAAgent extends JPSAgent {
         JSONArray queryResultArray = this.queryStore(route, q.toString());
 
         if(!queryResultArray.isEmpty()){
-            if(value!="FootprintSurfaceGeom") {
+            if (value == "Lod0FootprintId" || value == "FootprintThematicSurface"){
+                result = extractFootprint(queryResultArray);
+            }
+            else if (value!="FootprintSurfaceGeom") {
                 result = queryResultArray.getJSONObject(0).get(value).toString();
             }
             else{
-                result=getFootprint(queryResultArray);
+                result = extractFootprint(getGroundGeometry(queryResultArray));
             }
         }
         return result;
@@ -604,35 +617,69 @@ public class CEAAgent extends JPSAgent {
      * @param results array of building surfaces
      * @return footprint geometry as string
      */
-    private String getFootprint(JSONArray results){
-        String footprint="";
-        ArrayList<String> z_values = new ArrayList<>();
-        Double minimum=Double.MAX_VALUE;
+    private JSONArray getGroundGeometry(JSONArray results){
+        ArrayList<Integer> ind = new ArrayList<>();
+        ArrayList<Double> z;
+        Double minZ = Double.MAX_VALUE;
+        double eps = 0.5;
+        boolean flag;
+        String geom;
+        String[] split;
 
-        for(Integer i=0; i<results.length(); i++){
-            String geom = results.getJSONObject(i).get("FootprintSurfaceGeom").toString();
-            String[] split = geom.split("#");
-            // store z values of surface
-            for(Integer j=1; j<=split.length; j++) {
-                if(j%3==0){
-                    z_values.add(split[j-1]);
+        for (int i = 0; i < results.length(); i++){
+            geom = results.getJSONObject(i).get("geometry").toString();
+            split = geom.split("#");
+
+            z = new ArrayList<>();
+            z.add(Double.parseDouble(split[2]));
+
+            flag = true;
+
+            for (int j = 5; j < split.length; j += 3){
+                for (int ji = 0;  ji < z.size(); ji++){
+                    if (Math.abs(Double.parseDouble(split[j]) - z.get(ji)) > eps){
+                        flag = false;
+                        break;
+                    }
+                }
+
+                if (flag){
+                    z.add(Double.parseDouble(split[j]));
+                }
+                else{
+                    break;
                 }
             }
-            // find surfaces with constant z value
-            Boolean zIsConstant = true;
-            for(Integer k=1; k<z_values.size(); k++) {
-                if (!z_values.get(k).equals(z_values.get(k - 1))) {
-                    zIsConstant = false;
-                }
+
+            if (!flag){
+                ind.add(i);
             }
-            // store geometry with the minimum constant z as footprint
-            if (zIsConstant && Double.valueOf(z_values.get(0)) < minimum) {
-                minimum = Double.valueOf(z_values.get(0));
-                footprint=geom;
+            else{
+                if (z.get(0) < minZ){minZ = z.get(0);}
             }
-            z_values.clear();
         }
-        return footprint;
+
+        // gets rid of geometry without constant z (up to eps tolerance)
+        for (int i = ind.size() - 1; i >= 0; i--){
+            results.remove(ind.get(i));
+        }
+
+        int i = 0;
+
+        // gets rid of geometry without minimum z value (up to eps tolerance)
+        while (i < results.length()){
+            geom = results.getJSONObject(i).get("geometry").toString();
+            split = geom.split("#");
+
+            if (Double.parseDouble(split[2]) > minZ + eps){
+                results.remove(i);
+            }
+            else{
+                i++;
+            }
+        }
+
+        return results;
     }
 
     /**
@@ -643,6 +690,8 @@ public class CEAAgent extends JPSAgent {
      */
     private Query getQuery(String uriString, String value) {
         switch(value) {
+            case "Lod0FootprintId":
+                return getLod0FootprintIdQuery(uriString);
             case "FootprintSurfaceGeom":
                 return getGeometryQuerySurfaceGeom(uriString);
             case "FootprintThematicSurface":
@@ -653,6 +702,8 @@ public class CEAAgent extends JPSAgent {
                 return getHeightQueryMeasuredHeight(uriString);
             case "HeightGenAttr":
                 return getHeightQueryGenAttr(uriString);
+            case "DatabasesrsCRS":
+                return getDatabasesrsCrsQuery(uriString);
             case "CRS":
                 return getCrsQuery(uriString);
         }
@@ -660,7 +711,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve a footprint for building linked to surface geometries.
+     * builds a SPARQL query for a specific URI to retrieve all surface geometries to a building
      * @param uriString city object id
      * @return returns a query string
      */
@@ -669,10 +720,11 @@ public class CEAAgent extends JPSAgent {
             WhereBuilder wb = new WhereBuilder()
                     .addPrefix("ocgml", ocgmlUri)
                     .addWhere("?surf", "ocgml:cityObjectId", "?s")
-                    .addWhere("?surf", "ocgml:GeometryType", "?FootprintSurfaceGeom")
-                    .addFilter("!isBlank(?FootprintSurfaceGeom)");
+                    .addWhere("?surf", "ocgml:GeometryType", "?geometry")
+                    .addFilter("!isBlank(?geometry)");
             SelectBuilder sb = new SelectBuilder()
-                    .addVar("?FootprintSurfaceGeom")
+                    .addVar("?geometry")
+                    .addVar("datatype(?geometry)", "?datatype")
                     .addGraph(NodeFactory.createURI(getGraph(uriString,SURFACE_GEOMETRY)), wb);
             sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
             return sb.build();
@@ -684,7 +736,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve a footprint for building linked to thematic surfaces.
+     * builds a SPARQL query for a specific URI to retrieve ground surface geometries for building linked to thematic surfaces with ocgml:objectClassId 35
      * @param uriString city object id
      * @return returns a query string
      */
@@ -693,15 +745,16 @@ public class CEAAgent extends JPSAgent {
             WhereBuilder wb1 = new WhereBuilder()
                     .addPrefix("ocgml", ocgmlUri)
                     .addWhere("?surf", "ocgml:cityObjectId", "?s")
-                    .addWhere("?surf", "ocgml:GeometryType", "?FootprintThematicSurface")
-                    .addFilter("!isBlank(?FootprintThematicSurface)");
+                    .addWhere("?surf", "ocgml:GeometryType", "?geometry")
+                    .addFilter("!isBlank(?geometry)");
             WhereBuilder wb2 = new WhereBuilder()
                     .addPrefix("ocgml", ocgmlUri)
                     .addWhere("?s", "ocgml:buildingId", "?building")
                     .addWhere("?s", "ocgml:objectClassId", "?groundSurfId")
                     .addFilter("?groundSurfId = 35"); //Thematic Surface Ids are 33:roof, 34:wall and 35:ground
             SelectBuilder sb = new SelectBuilder()
-                    .addVar("?FootprintThematicSurface")
+                    .addVar("?geometry")
+                    .addVar("datatype(?geometry)", "?datatype")
                     .addGraph(NodeFactory.createURI(getGraph(uriString,SURFACE_GEOMETRY)), wb1)
                     .addGraph(NodeFactory.createURI(getGraph(uriString,THEMATIC_SURFACE)), wb2);
             sb.setVar( Var.alloc( "building" ), NodeFactory.createURI(getBuildingUri(uriString)));
@@ -720,16 +773,20 @@ public class CEAAgent extends JPSAgent {
      * @return returns a query string
      */
     private Query getHeightQueryMeasuredHeight(String uriString) {
-        WhereBuilder wb = new WhereBuilder();
-        SelectBuilder sb = new SelectBuilder();
-
-        wb.addPrefix("ocgml", ocgmlUri)
-                .addWhere("?s", "ocgml:measuredHeight", "?HeightMeasuredHeight");
-        sb.addVar("?HeightMeasuredHeight")
-                .addGraph(NodeFactory.createURI(getGraph(uriString,BUILDING)), wb);
-        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
-
-        return sb.build();
+        try {
+            WhereBuilder wb = new WhereBuilder()
+                    .addPrefix("ocgml", ocgmlUri)
+                    .addWhere("?s", "ocgml:measuredHeight", "?HeightMeasuredHeight")
+                    .addFilter("!isBlank(?HeightMeasuredHeight)");
+            SelectBuilder sb = new SelectBuilder()
+                    .addVar("?HeightMeasuredHeight")
+                    .addGraph(NodeFactory.createURI(getGraph(uriString,BUILDING)), wb);
+            sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
+            return sb.build();
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -738,15 +795,20 @@ public class CEAAgent extends JPSAgent {
      * @return returns a query string
      */
     private Query getHeightQueryMeasuredHeigh(String uriString) {
-        WhereBuilder wb = new WhereBuilder();
-        SelectBuilder sb = new SelectBuilder();
-        wb.addPrefix("ocgml", ocgmlUri)
-                .addWhere("?s", "ocgml:measuredHeigh", "?HeightMeasuredHeigh");
-        sb.addVar("?HeightMeasuredHeigh")
-                .addGraph(NodeFactory.createURI(getGraph(uriString,BUILDING)), wb);
-        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
-
-        return sb.build();
+        try {
+            WhereBuilder wb = new WhereBuilder()
+                    .addPrefix("ocgml", ocgmlUri)
+                    .addWhere("?s", "ocgml:measuredHeigh", "?HeightMeasuredHeigh")
+                    .addFilter("!isBlank(?HeightMeasuredHeigh)");
+            SelectBuilder sb = new SelectBuilder()
+                    .addVar("?HeightMeasuredHeigh")
+                    .addGraph(NodeFactory.createURI(getGraph(uriString, BUILDING)), wb);
+            sb.setVar(Var.alloc("s"), NodeFactory.createURI(getBuildingUri(uriString)));
+            return sb.build();
+        }catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -770,7 +832,47 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a CRS using namespace from uri
+     * builds a SPARQL query for a CRS in the DatabaseSRS graph using namespace from uri
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getDatabasesrsCrsQuery(String uriString) {
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ocgml", ocgmlUri)
+                .addWhere("?s", "ocgml:srid", "?CRS");
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?CRS")
+                .addGraph(NodeFactory.createURI(getGraph(uriString,DATABASE_SRS)), wb);
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getNamespace(uriString)));
+        return sb.build();
+    }
+
+    /**
+     * builds a SPARQL query for a specific URI to retrieve ground surface geometry from lod0FootprintId
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getLod0FootprintIdQuery(String uriString) {
+        try {
+            WhereBuilder wb = new WhereBuilder()
+                    .addPrefix("ocgml", ocgmlUri)
+                    .addWhere("?building", "ocgml:lod0FootprintId", "?footprintSurface")
+                    .addWhere("?surface", "ocgml:parentId", "?footprintSurface")
+                    .addWhere("?surface", "ocgml:GeometryType", "?geometry");
+            SelectBuilder sb = new SelectBuilder()
+                    .addVar("?geometry")
+                    .addVar("datatype(?geometry)", "?datatype")
+                    .addWhere(wb);
+            sb.setVar(Var.alloc("building"), NodeFactory.createURI(getBuildingUri(uriString)));
+            return sb.build();
+        }catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * builds a SPARQL query for a CRS not in the DatabaseSRS graph using namespace from uri
      * @param uriString city object id
      * @return returns a query string
      */
@@ -780,7 +882,7 @@ public class CEAAgent extends JPSAgent {
                 .addWhere("?s", "ocgml:srid", "?CRS");
         SelectBuilder sb = new SelectBuilder()
                 .addVar("?CRS")
-                .addGraph(NodeFactory.createURI(getGraph(uriString,DATABASE_SRS)), wb);
+                .addWhere(wb);
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getNamespace(uriString)));
         return sb.build();
     }
@@ -1303,4 +1405,208 @@ public class CEAAgent extends JPSAgent {
 
     }
 
+    /**
+     * Extracts the footprint of the building from its ground surface geometries
+     * @param results JSONArray of the query results for ground surface geometries
+     * @return footprint as a string
+     */
+    private String extractFootprint(JSONArray results){
+        double distance = 0.00001;
+        double increment = 0.00001;
+
+        Polygon footprintPolygon;
+        Geometry footprintRing;
+        Coordinate[] footprintCoordinates;
+        ArrayList<Geometry> geometries = new ArrayList<>();
+        GeometryFactory geoFac = new GeometryFactory();
+        GeometryCollection geoCol;
+        Geometry merged;
+        String geoType;
+
+        if (results.length() == 1){
+            footprintPolygon = (Polygon) toPolygon(ignoreHole(results.getJSONObject(0).get("geometry").toString(), results.getJSONObject(0).get("datatype").toString()));
+        }
+
+        else {
+            for (int i = 0; i < results.length(); i++) {
+                geometries.add(toPolygon(ignoreHole(results.getJSONObject(i).get("geometry").toString(), results.getJSONObject(i).get("datatype").toString())));
+            }
+
+            geoCol = (GeometryCollection) geoFac.buildGeometry(geometries);
+
+            merged = geoCol.union();
+
+            geoType = merged.getGeometryType();
+
+            while (geoType != "Polygon" || deflatePolygon(merged, distance).getGeometryType() != "Polygon"){
+                distance += increment;
+
+                for (int i = 0; i < geometries.size(); i++){
+                    geometries.set(i, inflatePolygon(geometries.get(i), distance));
+                }
+
+                geoCol = (GeometryCollection) geoFac.buildGeometry(geometries);
+                merged = geoCol.union();
+                geoType = merged.getGeometryType();
+            }
+
+            footprintPolygon = (Polygon) deflatePolygon(merged, distance);
+        }
+
+        footprintRing = footprintPolygon.getExteriorRing();
+
+        footprintCoordinates = footprintRing.getCoordinates();
+
+        return coordinatesToString(footprintCoordinates);
+    }
+    /**
+     * Create a polygon with the given points
+     * @param points points of the polygon as a string
+     * @return a polygon
+     */
+    private Geometry toPolygon(String points){
+        int ind = 0;
+        GeometryFactory gF = new GeometryFactory();
+
+        String[] arr = points.split("#");
+
+        Coordinate[] coordinates = new Coordinate[(arr.length) / 3];
+
+        for (int i = 0; i < arr.length; i += 3){
+            coordinates[ind] = new Coordinate(Double.valueOf(arr[i]), Double.valueOf(arr[i+1]), Double.valueOf(arr[i+2]));
+            ind++;
+        }
+
+        return gF.createPolygon(coordinates);
+    }
+
+    /**
+     * Converts an array of coordinates into a string
+     * @param coordinates array of footprint coordinates
+     * @return coordinates as a string
+     */
+    private String coordinatesToString(Coordinate[] coordinates){
+        String output = "";
+
+        for (int i = 0; i < coordinates.length; i++){
+            output = output + "#" + Double.toString(coordinates[i].getX()) + "#" + Double.toString(coordinates[i].getY()) + "#" + Double.toString(coordinates[i].getZ());
+        }
+
+        return output.substring(1, output.length());
+    }
+
+    /**
+     * Inflates a polygon
+     * @param geom polygon geometry
+     * @param distance buffer distance
+     * @return inflated polygon
+     */
+    private Geometry inflatePolygon(Geometry geom, Double distance) {
+        ArrayList<Double> zCoordinate = getPolygonZ(geom);
+        BufferParameters bufferParameters = new BufferParameters();
+        bufferParameters.setEndCapStyle(BufferParameters.CAP_ROUND);
+        bufferParameters.setJoinStyle(BufferParameters.JOIN_MITRE);
+        Geometry buffered = BufferOp.bufferOp(geom, distance, bufferParameters);
+        buffered.setUserData(geom.getUserData());
+        setPolygonZ(buffered, zCoordinate);
+        return buffered;
+    }
+
+    /**
+     * Deflates a polygon
+     * @param geom polygon geometry
+     * @param distance buffer distance
+     * @return deflated polygon
+     */
+    private Geometry deflatePolygon(Geometry geom, Double distance) {
+        ArrayList<Double> zCoordinate = getPolygonZ(geom);
+        BufferParameters bufferParameters = new BufferParameters();
+        bufferParameters.setEndCapStyle(BufferParameters.CAP_ROUND);
+        bufferParameters.setJoinStyle(BufferParameters.JOIN_MITRE);
+        Geometry buffered = BufferOp.bufferOp(geom, distance * -1, bufferParameters);
+        buffered.setUserData(geom.getUserData());
+        setPolygonZ(buffered, zCoordinate);
+        return buffered;
+    }
+
+    /**
+     * Extract the z coordinates of the polygon vertices
+     * @param geom polygon geometry
+     * @return the z coordinates of the polygon vertices
+     */
+    private static ArrayList<Double> getPolygonZ(Geometry geom){
+        Coordinate[] coordinates = geom.getCoordinates();
+        ArrayList<Double> output = new ArrayList<>();
+
+        for (int i = 0; i < coordinates.length; i++){
+            output.add(coordinates[i].getZ());
+        }
+
+        return output;
+    }
+
+    /**
+     * Sets a polygon's z coordinates to the values from zInput
+     * @param geom polygon geometry
+     * @param zInput ArrayList of values representing z coordinates
+     * @return geom with z coordinates from zInput
+     */
+    private void setPolygonZ(Geometry geom, ArrayList<Double> zInput){
+        Double newZ = Double.NaN;
+
+        for (int i = 0; i < zInput.size(); i++){
+            if (!zInput.get(i).isNaN()){
+                newZ = zInput.get(i);
+                break;
+            }
+        }
+
+        if(newZ.isNaN()){newZ = 10.0;}
+
+        while(geom.getNumPoints() != zInput.size()){
+            zInput.add(1, newZ);
+        }
+
+        Collections.replaceAll(zInput, Double.NaN, newZ);
+        geom.apply(new CoordinateSequenceFilter() {
+            @Override
+            public void filter(CoordinateSequence cSeq, int i) {
+                cSeq.getCoordinate(i).setZ(zInput.get(i));
+            }
+            @Override
+            public boolean isDone() {
+                return false;
+            }
+            @Override
+            public boolean isGeometryChanged() {
+                return false;
+            }
+        });
+    }
+
+    /**
+     * Returns the ground geometry's exterior ring
+     * @param geometry ground geometry
+     * @param polygonType polygon datatype, such as "<...\POLYGON-3-45-15>"
+     * @return ground geometry with no holes
+     */
+    private String ignoreHole(String geometry, String polygonType){
+        int num;
+        int ind;
+        int count = 1;
+
+        String[] split = polygonType.split("-");
+
+        if (split.length < 4){return geometry;}
+
+        num = Integer.parseInt(split[2]);
+
+        ind = geometry.indexOf("#");
+
+        while (count != num){
+            ind = geometry.indexOf("#", ind + 1);
+            count++;
+        }
+        return geometry.substring(0, ind);
+    }
 }
