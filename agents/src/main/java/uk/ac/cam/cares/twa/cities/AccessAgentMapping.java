@@ -13,7 +13,8 @@ public class AccessAgentMapping {
         SINGAPORE_EPSG_4326("citieskg-singaporeEPSG4326"),
         KINGSLYNN_EPSG_3857("citieskg-kingslynnEPSG3857"),
         KINGSLYNN_EPSG_27700("citieskg-kingslynnEPSG27700"),
-        PIRMASENS_EPSG_32633("citieskg-pirmasensEPSG32633");
+        PIRMASENS_EPSG_32633("citieskg-pirmasensEPSG32633"),
+        JURONGISLAND_EPSG_24500("jriEPSG24500");
 
         private final String TARGET_RESOURCE_ID;
 
@@ -37,6 +38,7 @@ public class AccessAgentMapping {
             case "http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/": return AccessAgentMappingEnum.KINGSLYNN_EPSG_3857.TARGET_RESOURCE_ID;
             case "http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/": return AccessAgentMappingEnum.KINGSLYNN_EPSG_27700.TARGET_RESOURCE_ID;
             case "http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/": return AccessAgentMappingEnum.PIRMASENS_EPSG_32633.TARGET_RESOURCE_ID;
+            case "http://www.theworldavatar.com:83/citieskg/namespace/jriEPSG24500/sparql/": return AccessAgentMappingEnum.JURONGISLAND_EPSG_24500.TARGET_RESOURCE_ID;
             default: return null;
         }
     }

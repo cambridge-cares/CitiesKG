@@ -46,7 +46,7 @@ var KMLDataSource = /** @class */ (function (_super) {
         var result = new Map();
 
         var cityResponse = response["cityobjectinformation"];
-        var energyResponse = response["context"] ? response[Object.keys(response["context"])[0]] : null;
+        var contextResponse = response["context"] ? response[Object.keys(response["context"])[0]] : null;
 
         if (jQuery.isArray(cityResponse) && cityResponse.length > 0) {
             if (jQuery.isArray(cityResponse[0]) && cityResponse[0].length > 0) {
@@ -65,6 +65,9 @@ var KMLDataSource = /** @class */ (function (_super) {
                         else if (key === "externalReferences"){
                             this.extRefKeysManager(cityobjectdata[key], result);
                         }
+                        else if (key == 'updatingPerson'){
+                            continue;
+                        }
                         else {
                             result[key] = cityobjectdata[key];
                         }
@@ -73,14 +76,30 @@ var KMLDataSource = /** @class */ (function (_super) {
             }
         }
 
-        if (jQuery.isArray(energyResponse) && energyResponse.length > 0) {
-            if (jQuery.isArray(energyResponse[0]['energyprofile']) && energyResponse[0]['energyprofile'].length > 0) {
-                var energydata = energyResponse[0]['energyprofile'][0];
+        if (jQuery.isArray(contextResponse) && contextResponse.length > 0) {
+            if (jQuery.isArray(contextResponse[0]['energyprofile']) && contextResponse[0]['energyprofile'].length > 0) {
+                var energydata = contextResponse[0]['energyprofile'][0];
                 for (var key in energydata) {
                     if (key == null) {
                         continue;
                     } else {
                         result[key] = energydata[key];
+                    }
+                }
+            }
+            else if (jQuery.isArray(contextResponse[0]['chemplant']) && contextResponse[0]['chemplant'].length > 0){
+                var data = contextResponse[0]['chemplant'][0];
+                for (var key in data) {
+                    if (key == null || key == 'context'){
+                        continue;
+                    }
+                    for (var i in data[key]) {
+                        if (jQuery.isArray(data[key]) && data[key].length > 0) {
+                            this.additionalDataKeysManager(data[key], result);
+                        }
+                        else {
+                            result[key] = data[key];
+                        }
                     }
                 }
             }
@@ -122,11 +141,41 @@ var KMLDataSource = /** @class */ (function (_super) {
         }
     };
 
+    KMLDataSource.prototype.additionalDataKeysManager = function (data, result) {
+        for (var index in data){
+            for (var key in data[0]) {
+                if (jQuery.isArray(data[0][key]) && data[0][key].length > 0){
+                    var innerdata = data[0][key];
+                    for (var name in innerdata[0]){
+                        if (name == null || name == 'iri' || name == 'context') {
+                            continue;
+                        }
+                        var value = innerdata[0][name];
+                        if (value != null){
+                            result[name] = value;
+                        }
+                    }
+                }
+                else if (key == null ||  key == 'iri' || key == 'context' || data[0][key].length == 0) {
+                    continue;
+                }
+                else {
+                    var value = data[0][key];
+                    var name = key;
+                    result[name] = value;
+                }
+            }
+        }
+    };
+
     KMLDataSource.prototype.contextManager = function(context) {
         switch (context) {
             case 'energy':
                 //return 'http://localhost:58085/agents/cea/query';
                 return 'http://theworldavatar.com:83/agents/cea/query';
+                break;
+            case 'chemplant':
+                return 'http://localhost:1083/ontochemplant-agent/query';
                 break;
             default:
                 return '';
