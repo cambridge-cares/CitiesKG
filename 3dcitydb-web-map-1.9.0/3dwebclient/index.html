@@ -305,6 +305,19 @@
                 color: #fff;
             }
 
+            .querySentence {
+                position: absolute;
+                left: 220px;
+                width: max-content;
+                height: 15px;
+                margin: 4px;
+                padding: 4px 4px;
+                border: 2px rgb(255, 255, 255) solid;
+                background: rgb(255, 255, 255);
+                border-radius: 4px;
+                color: rgb(42, 42, 42);
+            }
+
             .mark{
                 display:inline-block;
                 padding: 5px;
@@ -401,6 +414,7 @@
         <img id = "citydb_loadingTilesInspector" src="../theme/img/ajax-loader.gif" style="display: none; position: absolute; bottom: 56px; right: 7px; width:30px;height:30px;">
 
 		    <div id="ProgrammaticPlotFinder">
+            <div class="querySentence" id="querySentence">Where can I build...</div> <!-- generated query sentence-->
             <div onclick="showProgrammeFinder()"> <!--Ayda: showProgrammeFinder() Shiyiing: highlightMultipleObjects(), showResultWindow()-->
                 <select class="cesium-button">
                     <option hidden="hidden">Programmatic Plot Finder</option>
@@ -445,7 +459,7 @@
                             <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
                                 <div style="width:240px" class="cesium-button">Assign GFA(s)<div id='gfa_arrow' class="arrow down"></div></div>
                             </div>
-                            <div id="assignGFA" class="finder_dynamic_box">
+                            <div id="assignGFA" class="finder_dynamic_box" onchange="getQuerySentence()">
                                 <div>
                                     <div class='text_gfa'>Total Gross Floor Area (GFA)</div>
                                     <div class='text_input' style="width: 80px"><input id="totalGFA" type='text' maxlength="10" size="3"></div>

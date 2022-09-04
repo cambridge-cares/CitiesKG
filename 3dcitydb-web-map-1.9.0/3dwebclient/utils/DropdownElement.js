@@ -45,6 +45,7 @@ function appendElement(line, predicate, element_type, dropdown_type){
 }
 
 function updateGfaRows(){
+	getQuerySentence()
 	var parent = document.getElementById("assignGFA");
 	var children = Array.from(parent.children);
 	for (var i = 0; i < children.length; i++) {
@@ -75,15 +76,16 @@ function updateGfaRows(){
 			if (!exists) {
 				var clicked_element =
 						"<div class='gfa'>" +
-						"<div class='text_gfa' style='width: 180px'>" + checkboxes.item(
-								i).id + "</div>" +
+						"<div class='text_gfa' style='width: 180px'>" + checkboxes.item(i).id + "</div>" +
 						"<div class='text_input'><input type='text' maxLength='5' size='3'></div>" +
 						"<hr size='1'>" +
 					  "</div>" ;
 				$("#assignGFA").append(clicked_element)
+
 			}
 		}
 	}
+	getQuerySentence();
 }
 
 function removePrefix(result){
@@ -92,6 +94,42 @@ function removePrefix(result){
 	return element
 }
 
+function getQuerySentence() {
+	var parameters = {};
+	var text_inputs = document.getElementsByClassName('text_gfa');
+	var onto_use = {};
+	var onto_programme = {};
+
+	for (let i = 0; i < text_inputs.length; i++) {
+		var text_item = text_inputs.item(i).firstChild;
+		var sibling = text_inputs.item(i).nextElementSibling.firstChild;
+		var checkbox = document.getElementById(text_inputs.item(i).firstChild.textContent);
+		if (checkbox !== null) {
+			var text_item_onto_class = text_item.textContent.replaceAll(" ", "");
+			if (checkbox.parentElement.className === USE_PREDICATE) {
+				onto_use[text_item_onto_class] = sibling.value;
+				document.getElementsByClassName('querySentence')[0].textContent = "Where can I build " + text_item.textContent + " use?";
+			} else {
+				onto_programme[text_item_onto_class] = sibling.value;
+				document.getElementsByClassName('querySentence')[0].textContent = "Where can I build " + text_item.textContent + " programme?";
+			}
+		} else {
+			parameters[TOTAL_GFA_KEY] = sibling.value;
+			document.getElementsByClassName('querySentence')[0].textContent = "Where can I build " + text_item.textContent + " sqm of something?";
+		}
+	}
+	if (Object.keys(onto_use).length > 0) {
+		parameters[USE_PREDICATE] = onto_use;
+	}
+	if (Object.keys(onto_programme).length > 0) {
+		parameters[PROGRAMME_PREDICATE] = onto_programme;
+	}
+	input_parameters = parameters;
+	if ((Object.keys(onto_use).length != 0) && (Object.keys(onto_programme).length != 0)) {
+		throwNotification();
+	}
+	console.log(input_parameters);
+}
 function getInputParams() {
 	var parameters = {};
 	var text_inputs = document.getElementsByClassName('text_gfa');
@@ -117,7 +155,7 @@ function getInputParams() {
 		parameters[USE_PREDICATE] = onto_use;
 	}
 	if (Object.keys(onto_programme).length > 0) {
-		parameters[PROGRAMME_PREDICATE] =  onto_programme;
+		parameters[PROGRAMME_PREDICATE] = onto_programme;
 	}
 	input_parameters = parameters;
 	 if ((Object.keys(onto_use).length != 0) && (Object.keys(onto_programme).length != 0)) {
