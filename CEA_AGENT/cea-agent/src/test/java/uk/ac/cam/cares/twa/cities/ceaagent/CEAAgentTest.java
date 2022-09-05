@@ -137,13 +137,13 @@ public class CEAAgentTest {
             THEMATIC_SURFACE = agent.getClass().getDeclaredField("THEMATIC_SURFACE");
             assertEquals(THEMATIC_SURFACE.get(agent), "thematicsurface");
             KEY_GRID_CONSUMPTION = agent.getClass().getDeclaredField("KEY_GRID_CONSUMPTION");
-            assertEquals(KEY_GRID_CONSUMPTION.get(agent), "GridConsumption");
+            assertEquals(KEY_GRID_CONSUMPTION.get(agent), "HourlyGridConsumption");
             KEY_ELECTRICITY_CONSUMPTION = agent.getClass().getDeclaredField("KEY_ELECTRICITY_CONSUMPTION");
-            assertEquals(KEY_ELECTRICITY_CONSUMPTION.get(agent), "ElectricityConsumption");
+            assertEquals(KEY_ELECTRICITY_CONSUMPTION.get(agent), "HourlyElectricityConsumption");
             KEY_HEATING_CONSUMPTION = agent.getClass().getDeclaredField("KEY_HEATING_CONSUMPTION");
-            assertEquals(KEY_HEATING_CONSUMPTION.get(agent), "HeatingConsumption");
+            assertEquals(KEY_HEATING_CONSUMPTION.get(agent), "HourlyHeatingConsumption");
             KEY_COOLING_CONSUMPTION = agent.getClass().getDeclaredField("KEY_COOLING_CONSUMPTION");
-            assertEquals(KEY_COOLING_CONSUMPTION.get(agent), "CoolingConsumption");
+            assertEquals(KEY_COOLING_CONSUMPTION.get(agent), "HourlyCoolingConsumption");
             KEY_PV_ROOF_AREA = agent.getClass().getDeclaredField("KEY_PV_ROOF_AREA");
             assertEquals(KEY_PV_ROOF_AREA.get(agent), "PVRoofArea");
             KEY_PV_WALL_NORTH_AREA = agent.getClass().getDeclaredField("KEY_PV_WALL_NORTH_AREA");
@@ -155,15 +155,15 @@ public class CEAAgentTest {
             KEY_PV_WALL_WEST_AREA = agent.getClass().getDeclaredField("KEY_PV_WALL_WEST_AREA");
             assertEquals(KEY_PV_WALL_WEST_AREA.get(agent), "PVWallWestArea");
             KEY_PV_ROOF_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_ROOF_SUPPLY");
-            assertEquals(KEY_PV_ROOF_SUPPLY.get(agent), "PVRoofSupply");
+            assertEquals(KEY_PV_ROOF_SUPPLY.get(agent), "HourlyPVRoofSupply");
             KEY_PV_WALL_NORTH_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_WALL_NORTH_SUPPLY");
-            assertEquals(KEY_PV_WALL_NORTH_SUPPLY.get(agent), "PVWallNorthSupply");
+            assertEquals(KEY_PV_WALL_NORTH_SUPPLY.get(agent), "HourlyPVWallNorthSupply");
             KEY_PV_WALL_SOUTH_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_WALL_SOUTH_SUPPLY");
-            assertEquals(KEY_PV_WALL_SOUTH_SUPPLY.get(agent), "PVWallSouthSupply");
+            assertEquals(KEY_PV_WALL_SOUTH_SUPPLY.get(agent), "HourlyPVWallSouthSupply");
             KEY_PV_WALL_EAST_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_WALL_EAST_SUPPLY");
-            assertEquals(KEY_PV_WALL_EAST_SUPPLY.get(agent), "PVWallEastSupply");
+            assertEquals(KEY_PV_WALL_EAST_SUPPLY.get(agent), "HourlyPVWallEastSupply");
             KEY_PV_WALL_WEST_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_WALL_WEST_SUPPLY");
-            assertEquals(KEY_PV_WALL_WEST_SUPPLY.get(agent), "PVWallWestSupply");
+            assertEquals(KEY_PV_WALL_WEST_SUPPLY.get(agent), "HourlyPVWallWestSupply");
             KEY_TIMES = agent.getClass().getDeclaredField("KEY_TIMES");
             assertEquals(KEY_TIMES.get(agent), "times");
             NUM_CEA_THREADS = agent.getClass().getDeclaredField("NUM_CEA_THREADS");
@@ -382,7 +382,7 @@ public class CEAAgentTest {
                 assertTrue(result.contains(expected));
             }
             for (String ts : time_series_strings) {
-                String expected = "\"Annual " + ts + "\"" + ":\"testAnnual testUnit\"";
+                String expected = "\"Annual " + ts.split("Hourly")[1] + "\"" + ":\"testAnnual testUnit\"";
                 assertTrue(result.contains(expected));
             }
         }
