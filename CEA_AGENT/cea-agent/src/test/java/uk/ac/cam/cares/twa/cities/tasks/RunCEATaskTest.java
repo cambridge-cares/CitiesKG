@@ -50,7 +50,7 @@ public class RunCEATaskTest {
             String test_CRS = "27700";
             RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
 
-            assertEquals(11, task.getClass().getDeclaredFields().length);
+            assertEquals(12, task.getClass().getDeclaredFields().length);
 
             Field inputs;
             Field uris;
@@ -59,6 +59,7 @@ public class RunCEATaskTest {
             Field crs;
             Field CTYPE_JSON;
             Field stop;
+            Field DATA_FILE;
             Field SHAPEFILE_SCRIPT;
             Field WORKFLOW_SCRIPT;
             Field CREATE_WORKFLOW_SCRIPT;
@@ -84,6 +85,9 @@ public class RunCEATaskTest {
             stop = task.getClass().getDeclaredField("stop");
             stop.setAccessible(true);
             assertFalse((boolean) stop.get(task));
+            DATA_FILE = task.getClass().getDeclaredField("DATA_FILE");
+            DATA_FILE.setAccessible(true);
+            assertEquals(DATA_FILE.get(task), "datafile.txt");
             SHAPEFILE_SCRIPT = task.getClass().getDeclaredField("SHAPEFILE_SCRIPT");
             SHAPEFILE_SCRIPT.setAccessible(true);
             assertEquals(SHAPEFILE_SCRIPT.get(task), "create_shapefile.py");
@@ -281,14 +285,14 @@ public class RunCEATaskTest {
                 Method extractTimeSeriesOutputs = task.getClass().getDeclaredMethod("extractTimeSeriesOutputs", String.class);
                 CEAOutputData result = (CEAOutputData) extractTimeSeriesOutputs.invoke(task, tmpDir);
 
-                assertTrue(result.GridConsumption.get(0).get(0).contains("10.0"));
-                assertTrue(result.GridConsumption.get(0).get(1).contains("11.0"));
-                assertTrue(result.ElectricityConsumption.get(0).get(0).contains("50.0"));
-                assertTrue(result.ElectricityConsumption.get(0).get(1).contains("51.0"));
-                assertTrue(result.HeatingConsumption.get(0).get(0).contains("20.0"));
-                assertTrue(result.HeatingConsumption.get(0).get(1).contains("21.0"));
-                assertTrue(result.CoolingConsumption.get(0).get(0).contains("30.0"));
-                assertTrue(result.CoolingConsumption.get(0).get(1).contains("31.0"));
+                assertTrue(result.HourlyGridConsumption.get(0).get(0).contains("10.0"));
+                assertTrue(result.HourlyGridConsumption.get(0).get(1).contains("11.0"));
+                assertTrue(result.HourlyElectricityConsumption.get(0).get(0).contains("50.0"));
+                assertTrue(result.HourlyElectricityConsumption.get(0).get(1).contains("51.0"));
+                assertTrue(result.HourlyHeatingConsumption.get(0).get(0).contains("20.0"));
+                assertTrue(result.HourlyHeatingConsumption.get(0).get(1).contains("21.0"));
+                assertTrue(result.HourlyCoolingConsumption.get(0).get(0).contains("30.0"));
+                assertTrue(result.HourlyCoolingConsumption.get(0).get(1).contains("31.0"));
             }
             try (MockedConstruction<BufferedReader> bReader = mockConstruction(BufferedReader.class,  (mock, context) -> {
                 when(mock.readLine()).thenReturn(PVTitleRow, PVValuesRow1, PVValuesRow2, null);
@@ -296,16 +300,16 @@ public class RunCEATaskTest {
                 Method extractTimeSeriesOutputs = task.getClass().getDeclaredMethod("extractTimeSeriesOutputs", String.class);
                 CEAOutputData result = (CEAOutputData) extractTimeSeriesOutputs.invoke(task, tmpDir);
 
-                assertTrue(result.PVRoofSupply.get(0).get(0).contains("20.0"));
-                assertTrue(result.PVRoofSupply.get(0).get(1).contains("21.0"));
-                assertTrue(result.PVWallSouthSupply.get(0).get(0).contains("30.0"));
-                assertTrue(result.PVWallSouthSupply.get(0).get(1).contains("31.0"));
-                assertTrue(result.PVWallNorthSupply.get(0).get(0).contains("50.0"));
-                assertTrue(result.PVWallNorthSupply.get(0).get(1).contains("51.0"));
-                assertTrue(result.PVWallEastSupply.get(0).get(0).contains("70.0"));
-                assertTrue(result.PVWallEastSupply.get(0).get(1).contains("71.0"));
-                assertTrue(result.PVWallWestSupply.get(0).get(0).contains("60.0"));
-                assertTrue(result.PVWallWestSupply.get(0).get(1).contains("61.0"));
+                assertTrue(result.HourlyPVRoofSupply.get(0).get(0).contains("20.0"));
+                assertTrue(result.HourlyPVRoofSupply.get(0).get(1).contains("21.0"));
+                assertTrue(result.HourlyPVWallSouthSupply.get(0).get(0).contains("30.0"));
+                assertTrue(result.HourlyPVWallSouthSupply.get(0).get(1).contains("31.0"));
+                assertTrue(result.HourlyPVWallNorthSupply.get(0).get(0).contains("50.0"));
+                assertTrue(result.HourlyPVWallNorthSupply.get(0).get(1).contains("51.0"));
+                assertTrue(result.HourlyPVWallEastSupply.get(0).get(0).contains("70.0"));
+                assertTrue(result.HourlyPVWallEastSupply.get(0).get(1).contains("71.0"));
+                assertTrue(result.HourlyPVWallWestSupply.get(0).get(0).contains("60.0"));
+                assertTrue(result.HourlyPVWallWestSupply.get(0).get(1).contains("61.0"));
 
                 String expectedTime = result.times.get(0);
                 String expectedTime2 = result.times.get(1);

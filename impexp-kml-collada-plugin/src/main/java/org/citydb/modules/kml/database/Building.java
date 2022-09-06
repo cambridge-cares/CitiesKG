@@ -558,7 +558,7 @@ public class Building extends KmlGenericObject{
 		return super.createPlacemarkForColladaModel();
 	}
 	// Created by Shiying for Blazegraph
-	public double extractHeight (String envelop){
+	public static double extractHeight (String envelop){
 		String[] arrOfStr = envelop.split("#");
 		//double[] heights = new double[5];
 

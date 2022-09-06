@@ -6,7 +6,7 @@
 
     <groupId>uk.ac.cam.cares.twa.cities</groupId>
     <artifactId>cea-agent</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.4</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -91,6 +91,11 @@
             <groupId>org.apache.tomcat.embed</groupId>
             <artifactId>tomcat-embed-jasper</artifactId>
             <version>${tomcat.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.locationtech.jts</groupId>
+            <artifactId>jts-core</artifactId>
+            <version>1.16.0</version>
         </dependency>
     </dependencies>
      <build>

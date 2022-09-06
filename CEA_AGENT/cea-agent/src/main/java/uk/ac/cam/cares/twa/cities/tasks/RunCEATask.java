@@ -28,6 +28,7 @@ public class RunCEATask implements Runnable {
     private final String crs;
     public static final String CTYPE_JSON = "application/json";
     private Boolean stop = false;
+    private static final String DATA_FILE = "datafile.txt";
     private static final String SHAPEFILE_SCRIPT = "create_shapefile.py";
     private static final String WORKFLOW_SCRIPT = "workflow.yml";
     private static final String CREATE_WORKFLOW_SCRIPT = "create_cea_workflow.py";
@@ -259,15 +260,15 @@ public class RunCEATask implements Runnable {
                 PV_file.close();
                 PV.close();
 
-                result.GridConsumption.add(grid_results);
-                result.ElectricityConsumption.add(electricity_results);
-                result.HeatingConsumption.add(heating_results);
-                result.CoolingConsumption.add(cooling_results);
-                result.PVRoofSupply.add(PV_roof_results);
-                result.PVWallSouthSupply.add(PV_wall_south_results);
-                result.PVWallNorthSupply.add(PV_wall_north_results);
-                result.PVWallEastSupply.add(PV_wall_east_results);
-                result.PVWallWestSupply.add(PV_wall_west_results);
+                result.HourlyGridConsumption.add(grid_results);
+                result.HourlyElectricityConsumption.add(electricity_results);
+                result.HourlyHeatingConsumption.add(heating_results);
+                result.HourlyCoolingConsumption.add(cooling_results);
+                result.HourlyPVRoofSupply.add(PV_roof_results);
+                result.HourlyPVWallSouthSupply.add(PV_wall_south_results);
+                result.HourlyPVWallNorthSupply.add(PV_wall_north_results);
+                result.HourlyPVWallEastSupply.add(PV_wall_east_results);
+                result.HourlyPVWallWestSupply.add(PV_wall_west_results);
 
                 if(i==0) result.times = timestamps; //only add times once
             }
@@ -324,23 +325,34 @@ public class RunCEATask implements Runnable {
                 ArrayList<String> args = new ArrayList<>();
                 ArrayList<String> args2 = new ArrayList<>();
                 ArrayList<String> args3 = new ArrayList<>();
-                String workflowPath = strTmp+FS+"workflow.yml";
+                String workflowPath = strTmp + FS + "workflow.yml";
+                String data_path = strTmp + FS + DATA_FILE;
+
+                try {
+                    BufferedWriter f_writer = new BufferedWriter(new FileWriter(data_path));
+                    f_writer.write(dataString);
+                    f_writer.close();
+                } catch (IOException e) {
+                    throw new JPSRuntimeException(e);
+                }
 
                 if(OS.contains("win")){
-                    args.add("python");
-                    args.add(new File(
-                            Objects.requireNonNull(getClass().getClassLoader().getResource(SHAPEFILE_SCRIPT)).toURI()).getAbsolutePath());
-                    args.add(dataString.replace("\"", "\\\""));
-                    args.add(strTmp);
-                    args.add(crs);
+                    String f_path;
 
+                    args.add("cmd.exe");
+                    args.add("/C");
+                    f_path = new File(Objects.requireNonNull(getClass().getClassLoader().getResource(SHAPEFILE_SCRIPT)).toURI()).getAbsolutePath();
+                    args.add("conda activate cea && python " + f_path + " " + data_path + " " + strTmp + " " + crs);
+
+                    args2.add("cmd.exe");
+                    args2.add("/C");
+                    args2.add("conda activate cea && ");
                     args2.add("python");
                     args2.add(new File(
                             Objects.requireNonNull(getClass().getClassLoader().getResource(CREATE_WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
                     args2.add(new File(
                             Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
                     args2.add(strTmp);
-
 
                     args3.add("cmd.exe");
                     args3.add("/C");
@@ -353,7 +365,7 @@ public class RunCEATask implements Runnable {
 
                     args.add("/bin/bash");
                     args.add("-c");
-                    args.add("export PROJ_LIB=/venv/share/lib && python " + shapefile +" '"+ dataString +"' " +strTmp+" "+crs);
+                    args.add("export PROJ_LIB=/venv/share/lib && python " + shapefile +" "+ data_path +" " +strTmp+" "+crs);
 
                     args2.add("/bin/bash");
                     args2.add("-c");

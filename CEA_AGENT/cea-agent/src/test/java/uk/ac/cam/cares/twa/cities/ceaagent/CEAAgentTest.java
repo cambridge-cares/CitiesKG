@@ -1,12 +1,16 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
+import com.bigdata.relation.accesspath.IBuffer;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.sparql.core.Var;
+import org.jooq.JSON;
 import org.jooq.exception.DataAccessException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.operation.buffer.BufferParameters;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
@@ -28,6 +32,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
+
+import org.locationtech.jts.geom.*;
+import org.locationtech.jts.operation.buffer.BufferOp;
 
 public class CEAAgentTest {
     @Test
@@ -130,13 +137,13 @@ public class CEAAgentTest {
             THEMATIC_SURFACE = agent.getClass().getDeclaredField("THEMATIC_SURFACE");
             assertEquals(THEMATIC_SURFACE.get(agent), "thematicsurface");
             KEY_GRID_CONSUMPTION = agent.getClass().getDeclaredField("KEY_GRID_CONSUMPTION");
-            assertEquals(KEY_GRID_CONSUMPTION.get(agent), "GridConsumption");
+            assertEquals(KEY_GRID_CONSUMPTION.get(agent), "HourlyGridConsumption");
             KEY_ELECTRICITY_CONSUMPTION = agent.getClass().getDeclaredField("KEY_ELECTRICITY_CONSUMPTION");
-            assertEquals(KEY_ELECTRICITY_CONSUMPTION.get(agent), "ElectricityConsumption");
+            assertEquals(KEY_ELECTRICITY_CONSUMPTION.get(agent), "HourlyElectricityConsumption");
             KEY_HEATING_CONSUMPTION = agent.getClass().getDeclaredField("KEY_HEATING_CONSUMPTION");
-            assertEquals(KEY_HEATING_CONSUMPTION.get(agent), "HeatingConsumption");
+            assertEquals(KEY_HEATING_CONSUMPTION.get(agent), "HourlyHeatingConsumption");
             KEY_COOLING_CONSUMPTION = agent.getClass().getDeclaredField("KEY_COOLING_CONSUMPTION");
-            assertEquals(KEY_COOLING_CONSUMPTION.get(agent), "CoolingConsumption");
+            assertEquals(KEY_COOLING_CONSUMPTION.get(agent), "HourlyCoolingConsumption");
             KEY_PV_ROOF_AREA = agent.getClass().getDeclaredField("KEY_PV_ROOF_AREA");
             assertEquals(KEY_PV_ROOF_AREA.get(agent), "PVRoofArea");
             KEY_PV_WALL_NORTH_AREA = agent.getClass().getDeclaredField("KEY_PV_WALL_NORTH_AREA");
@@ -148,15 +155,15 @@ public class CEAAgentTest {
             KEY_PV_WALL_WEST_AREA = agent.getClass().getDeclaredField("KEY_PV_WALL_WEST_AREA");
             assertEquals(KEY_PV_WALL_WEST_AREA.get(agent), "PVWallWestArea");
             KEY_PV_ROOF_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_ROOF_SUPPLY");
-            assertEquals(KEY_PV_ROOF_SUPPLY.get(agent), "PVRoofSupply");
+            assertEquals(KEY_PV_ROOF_SUPPLY.get(agent), "HourlyPVRoofSupply");
             KEY_PV_WALL_NORTH_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_WALL_NORTH_SUPPLY");
-            assertEquals(KEY_PV_WALL_NORTH_SUPPLY.get(agent), "PVWallNorthSupply");
+            assertEquals(KEY_PV_WALL_NORTH_SUPPLY.get(agent), "HourlyPVWallNorthSupply");
             KEY_PV_WALL_SOUTH_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_WALL_SOUTH_SUPPLY");
-            assertEquals(KEY_PV_WALL_SOUTH_SUPPLY.get(agent), "PVWallSouthSupply");
+            assertEquals(KEY_PV_WALL_SOUTH_SUPPLY.get(agent), "HourlyPVWallSouthSupply");
             KEY_PV_WALL_EAST_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_WALL_EAST_SUPPLY");
-            assertEquals(KEY_PV_WALL_EAST_SUPPLY.get(agent), "PVWallEastSupply");
+            assertEquals(KEY_PV_WALL_EAST_SUPPLY.get(agent), "HourlyPVWallEastSupply");
             KEY_PV_WALL_WEST_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_WALL_WEST_SUPPLY");
-            assertEquals(KEY_PV_WALL_WEST_SUPPLY.get(agent), "PVWallWestSupply");
+            assertEquals(KEY_PV_WALL_WEST_SUPPLY.get(agent), "HourlyPVWallWestSupply");
             KEY_TIMES = agent.getClass().getDeclaredField("KEY_TIMES");
             assertEquals(KEY_TIMES.get(agent), "times");
             NUM_CEA_THREADS = agent.getClass().getDeclaredField("NUM_CEA_THREADS");
@@ -233,7 +240,7 @@ public class CEAAgentTest {
     @Test
     public void testCEAAgentMethods() {
         CEAAgent agent = new CEAAgent();
-        assertEquals(45, agent.getClass().getDeclaredMethods().length);
+        assertEquals(55, agent.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -265,15 +272,17 @@ public class CEAAgentTest {
         String building = "test_building_uri";
         String measure_height = "HeightMeasuredHeigh";
         String test_height = "5.0";
-        String measure_footprint = "FootprintThematicSurface";
+        String measure_footprint = "geometry";
         String test_footprint = "559267.200000246#313892.7999989044#0.0#559280.5400002463#313892.7999989044#0.0#559280.5400002463#313908.7499989033#0.0#559267.200000246#313908.7499989033#0.0#559267.200000246#313892.7999989044#0.0";
+        String measure_datatype = "datatype";
+        String test_datatype = "<http://localhost/blazegraph/literals/POLYGON-3-15>";
         String measure_crs = "CRS";
         String test_crs = "test_crs";
         String testScalar = "testScalar";
 
         JSONArray expected_building = new JSONArray().put(new JSONObject().put(measure_building, building));
         JSONArray expected_height = new JSONArray().put(new JSONObject().put(measure_height, test_height));
-        JSONArray expected_footprint = new JSONArray().put(new JSONObject().put(measure_footprint, test_footprint));
+        JSONArray expected_footprint = new JSONArray().put(new JSONObject().put(measure_footprint, test_footprint).put(measure_datatype, test_datatype));
         JSONArray expected_crs = new JSONArray().put(new JSONObject().put(measure_crs, test_crs));
         JSONArray expected_iri = new JSONArray().put(new JSONObject().put("measure", test_measure).put("unit", test_unit));
         JSONArray expected_value = new JSONArray().put(new JSONObject().put("value", testScalar));
@@ -373,7 +382,7 @@ public class CEAAgentTest {
                 assertTrue(result.contains(expected));
             }
             for (String ts : time_series_strings) {
-                String expected = "\"Annual " + ts + "\"" + ":\"testAnnual testUnit\"";
+                String expected = "\"Annual " + ts.split("Hourly")[1] + "\"" + ":\"testAnnual testUnit\"";
                 assertTrue(result.contains(expected));
             }
         }
@@ -886,22 +895,36 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testGetFootprint()
+    public void getGroundGeometry()
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
-        String geom1 = "559267.200000246#313892.7999989044#1.7#559280.5400002463#313892.7999989044#1.7#559280.5400002463#313908.7499989033#6.7#559267.200000246#313908.7499989033#6.7#559267.200000246#313892.7999989044#1.7";
-        String geom2 = "559267.200000246#313892.7999989044#1.7#559280.5400002463#313892.7999989044#1.7#559280.5400002463#313908.7499989033#1.7#559267.200000246#313908.7499989033#1.7#559267.200000246#313892.7999989044#1.7";
-        String geom3 = "559267.200000246#313892.7999989044#0.0#559280.5400002463#313892.7999989044#0.0#559280.5400002463#313908.7499989033#0.0#559267.200000246#313908.7499989033#0.0#559267.200000246#313892.7999989044#0.0";
+        Method getGroundGeometry = agent.getClass().getDeclaredMethod("getGroundGeometry", JSONArray.class);
 
-        JSONArray results = new JSONArray("[{'FootprintSurfaceGeom': '"+geom1+"'}, {'FootprintSurfaceGeom': '"+geom2+"'},{'FootprintSurfaceGeom': '"+geom3+"'}]");
+        assertNotNull(getGroundGeometry);
+        getGroundGeometry.setAccessible(true);
 
-        Method getFootprint = agent.getClass().getDeclaredMethod("getFootprint", JSONArray.class);
-        assertNotNull(getFootprint);
-        getFootprint.setAccessible(true);
+        String geometry1 = "1.0#1.0#0.0#1.0#2.0#0.0#2.0#2.0#0.0#2.0#1.0#0.0#1.0#1.0#0.0";
+        String geometry2 = "1.0#1.0#0.0#1.0#1.0#2.0#2.0#1.0#2.0#2.0#1.0#0.0#1.0#1.0#0.0";
+        String geometry3 = "1.0#2.0#0.0#2.0#2.0#0.0#2.0#1.0#0.0#1.0#1.0#0.0#1.0#2.0#0.0";
+        String geometry4 = "1.0#2.0#1.0#2.0#2.0#1.0#2.0#1.0#0.0#1.0#1.0#1.0#1.0#2.0#1.0";
 
-        // Ensure Footprint geometry is correctly found
-        assertEquals(geom3, getFootprint.invoke(agent, results));
+        JSONArray testArray = new JSONArray();
+        testArray.put(new JSONObject().put("geometry", geometry1));
+        testArray.put(new JSONObject().put("geometry", geometry2));
+        testArray.put(new JSONObject().put("geometry", geometry3));
+        testArray.put(new JSONObject().put("geometry", geometry4));
 
+        JSONArray expected = new JSONArray();
+        expected.put(new JSONObject().put("geometry", geometry1));
+        expected.put(new JSONObject().put("geometry", geometry3));
+
+        JSONArray result = (JSONArray) getGroundGeometry.invoke(agent, testArray);
+
+        assertEquals(expected.length(), result.length());
+
+        for (int i = 0; i < expected.length(); i++){
+            assertEquals(expected.getJSONObject(i).get("geometry").toString(), result.getJSONObject(i).get("geometry").toString());
+        }
     }
 
     @Test
@@ -909,12 +932,14 @@ public class CEAAgentTest {
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         CEAAgent agent = new CEAAgent();
-        String case1 = "FootprintSurfaceGeom";
-        String case2 = "FootprintThematicSurface";
-        String case3 = "HeightMeasuredHeight";
-        String case4 = "HeightMeasuredHeigh";
-        String case5 = "HeightGenAttr";
-        String case6 = "CRS";
+        String case1 = "Lod0FootprintId";
+        String case2 = "FootprintSurfaceGeom";
+        String case3 = "FootprintThematicSurface";
+        String case4 = "HeightMeasuredHeight";
+        String case5 = "HeightMeasuredHeigh";
+        String case6 = "HeightGenAttr";
+        String case7 = "DatabasesrsCRS";
+        String case8 = "CRS";
         String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
         Method getQuery = agent.getClass().getDeclaredMethod("getQuery", String.class, String.class);
@@ -923,17 +948,21 @@ public class CEAAgentTest {
 
         // Ensure queries contains correct predicates depending on value sent
         Query q1 = (Query) getQuery.invoke(agent, uri, case1);
-        assertTrue(q1.toString().contains("ocgml:GeometryType"));
+        assertTrue(q1.toString().contains("lod0FootprintId"));
         Query q2 = (Query) getQuery.invoke(agent, uri, case2);
-        assertTrue(q2.toString().contains("ocgml:objectClassId"));
+        assertTrue(q2.toString().contains("ocgml:GeometryType"));
         Query q3 = (Query) getQuery.invoke(agent, uri, case3);
-        assertTrue(q3.toString().contains("ocgml:measuredHeight"));
+        assertTrue(q3.toString().contains("ocgml:objectClassId"));
         Query q4 = (Query) getQuery.invoke(agent, uri, case4);
-        assertTrue(q4.toString().contains("ocgml:measuredHeigh"));
+        assertTrue(q4.toString().contains("ocgml:measuredHeight"));
         Query q5 = (Query) getQuery.invoke(agent, uri, case5);
-        assertTrue(q5.toString().contains("ocgml:attrName"));
+        assertTrue(q5.toString().contains("ocgml:measuredHeigh"));
         Query q6 = (Query) getQuery.invoke(agent, uri, case6);
-        assertTrue(q6.toString().contains("ocgml:srid"));
+        assertTrue(q6.toString().contains("ocgml:attrName"));
+        Query q7 = (Query) getQuery.invoke(agent, uri, case7);
+        assertTrue(q7.toString().contains("ocgml:srid"));
+        Query q8 = (Query) getQuery.invoke(agent, uri, case8);
+        assertTrue(q8.toString().contains("srid"));
     }
 
     @Test
@@ -949,9 +978,10 @@ public class CEAAgentTest {
         // Ensure query contains correct predicate and object
         Query q = (Query) getGeometryQueryThematicSurface.invoke(agent, uri);
         assertTrue(q.toString().contains("ocgml:GeometryType"));
-        assertTrue(q.toString().contains("FootprintThematicSurface"));
+        assertTrue(q.toString().contains("geometry"));
         assertTrue(q.toString().contains("ocgml:objectClassId"));
         assertTrue(q.toString().contains("groundSurfId"));
+        assertTrue(q.toString().contains("datatype"));
     }
 
     @Test
@@ -967,7 +997,8 @@ public class CEAAgentTest {
         // Ensure query contains correct predicates and objects
         Query q = (Query) getGeometryQuerySurfaceGeom.invoke(agent, uri);
         assertTrue(q.toString().contains("ocgml:GeometryType"));
-        assertTrue(q.toString().contains("FootprintSurfaceGeom"));
+        assertTrue(q.toString().contains("geometry"));
+        assertTrue(q.toString().contains("datatype"));
     }
 
     @Test
@@ -1020,17 +1051,17 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testGetCrsQuery()
+    public void testGetDatabasesrsCrsQuery()
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
         String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
-        Method getCrsQuery = agent.getClass().getDeclaredMethod("getCrsQuery", String.class);
-        assertNotNull(getCrsQuery);
-        getCrsQuery.setAccessible(true);
+        Method getDatabasesrsCrsQuery = agent.getClass().getDeclaredMethod("getDatabasesrsCrsQuery", String.class);
+        assertNotNull(getDatabasesrsCrsQuery);
+        getDatabasesrsCrsQuery.setAccessible(true);
 
         // Ensure query contains correct predicate and object
-        Query q = (Query) getCrsQuery.invoke(agent, uri);
+        Query q = (Query) getDatabasesrsCrsQuery.invoke(agent, uri);
         assertTrue(q.toString().contains("ocgml:srid"));
         assertTrue(q.toString().contains("CRS"));
     }
@@ -1601,5 +1632,239 @@ public class CEAAgentTest {
         // Ensure values in time series are summed and rounded correctly
         assertEquals(calculateAnnual.invoke(agent, timeSeries, iri1), expected1.toString());
         assertEquals(calculateAnnual.invoke(agent, timeSeries, iri2), expected2.toString());
+    }
+
+    @Test
+    public void testExtractFootprint() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        Method extractFootprint = agent.getClass().getDeclaredMethod("extractFootprint", JSONArray.class);
+
+        assertNotNull(extractFootprint);
+        extractFootprint.setAccessible(true);
+
+        double tolerance = 0.001;
+
+        String geometry1 = "1.0#1.0#0.0#2.0#1.0#0.0#2.0#2.0#0.0#1.0#1.0#0.0";
+        String geometry2 = "1.0#1.0#0.0#1.0#2.0#0.0#2.0#2.0#0.0#1.0#1.0#0.0";
+        String polygonType = "<http://localhost/blazegraph/literals/POLYGON-3-12>";
+
+        // expected string with the vertices in different order in clockwise orientation
+        String expected1 = "1.0#1.0#0.0#1.0#2.0#0.0#2.0#2.0#0.0#2.0#1.0#0.0#1.0#1.0#0.0";
+        String expected2 = "1.0#2.0#0.0#2.0#2.0#0.0#2.0#1.0#0.0#1.0#1.0#0.0#1.0#2.0#0.0";
+        String expected3 = "2.0#2.0#0.0#2.0#1.0#0.0#1.0#1.0#0.0#1.0#2.0#0.0#2.0#2.0#0.0";
+        String expected4 = "2.0#1.0#0.0#1.0#1.0#0.0#1.0#2.0#0.0#2.0#2.0#0.0#2.0#1.0#0.0";
+
+        boolean flag1 = true;
+        boolean flag2 = true;
+        boolean flag3 = true;
+        boolean flag4 = true;
+
+        JSONArray testArray = new JSONArray();
+        testArray.put(new JSONObject().put("geometry", geometry1).put("datatype", polygonType));
+        testArray.put(new JSONObject().put("geometry", geometry2).put("datatype", polygonType));
+
+        String result = (String) extractFootprint.invoke(agent, testArray);
+
+        String[] rSplit = result.split("#");
+        String[] eSplit1 = result.split("#");
+        String[] eSplit2 = result.split("#");
+        String[] eSplit3 = result.split("#");
+        String[] eSplit4 = result.split("#");
+
+        assertTrue(rSplit.length == eSplit1.length);
+
+        for (int i = 0; i < rSplit.length; i++){
+            if (Math.abs(Double.valueOf(rSplit[i]) - Double.valueOf(eSplit1[i])) > tolerance){flag1 = false;}
+            if (Math.abs(Double.valueOf(rSplit[i]) - Double.valueOf(eSplit2[i])) > tolerance){flag2 = false;}
+            if (Math.abs(Double.valueOf(rSplit[i]) - Double.valueOf(eSplit3[i])) > tolerance){flag3 = false;}
+            if (Math.abs(Double.valueOf(rSplit[i]) - Double.valueOf(eSplit4[i])) > tolerance){flag4 = false;}
+        }
+
+        // checking if extractFootprint returns the expected geometry, which vertex the string starts from does not matter if the result and the expected string represents the same geometry
+        assertTrue(flag1 || flag2 || flag3 || flag4);
+    }
+
+    @Test
+    public void testToPolygon() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        Method toPolygon = agent.getClass().getDeclaredMethod("toPolygon", String.class);
+
+        assertNotNull(toPolygon);
+        toPolygon.setAccessible(true);
+
+        String points = "559267.200000246#313892.7999989044#0.0#559280.5400002463#313892.7999989044#0.0#559280.5400002463#313908.7499989033#0.0#559267.200000246#313908.7499989033#0.0#559267.200000246#313892.7999989044#0.0";
+
+        Polygon result = (Polygon) toPolygon.invoke(agent, points);
+
+        String expected = "POLYGON ((559267.200000246 313892.7999989044, 559280.5400002463 313892.7999989044, 559280.5400002463 313908.7499989033, 559267.200000246 313908.7499989033, 559267.200000246 313892.7999989044))";
+
+        assertEquals(expected, result.toString());
+
+    }
+
+    @Test
+    public void testCoordinatesToString() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        Method coordinatesToString = agent.getClass().getDeclaredMethod("coordinatesToString", Coordinate[].class);
+
+        assertNotNull(coordinatesToString);
+        coordinatesToString.setAccessible(true);
+
+        Coordinate[] coordinates = new Coordinate[2];
+
+        coordinates[0] = new Coordinate(1.0, 2.0, 3.0);
+        coordinates[1] = new Coordinate(4.0, 5.0, 6.0);
+
+        String expected = "1.0#2.0#3.0#4.0#5.0#6.0";
+
+        assertEquals(expected, coordinatesToString.invoke(agent, new Object[] {coordinates}));
+    }
+
+    @Test
+    public void testInflatePolygon() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        Method inflatePolygon = agent.getClass().getDeclaredMethod("inflatePolygon", Geometry.class, Double.class);
+
+        assertNotNull(inflatePolygon);
+        inflatePolygon.setAccessible(true);
+
+        GeometryFactory gF = new GeometryFactory();
+        Coordinate[] testC = new Coordinate[5];
+
+        testC[0] = new Coordinate(1.0, 1.0, 3.01);
+        testC[1] = new Coordinate(2.0, 1.0, 3.02);
+        testC[2] = new Coordinate(2.0, 2.0, 3.03);
+        testC[3] = new Coordinate(1.0, 2.0, 3.03);
+        testC[4] = new Coordinate(1.0, 1.0, 3.01);
+
+        Polygon testPolygon = gF.createPolygon(testC);
+
+        Coordinate[] expectedC = new Coordinate[5];
+
+        expectedC[0] = new Coordinate(0.9, 0.9, 3.01);
+        expectedC[1] = new Coordinate(2.1, 0.9, 3.02);
+        expectedC[2] = new Coordinate(2.1, 2.1, 3.03);
+        expectedC[3] = new Coordinate(0.9, 2.1, 3.03);
+        expectedC[4] = new Coordinate(0.9, 0.9, 3.01);
+
+        Polygon expectedPolygon = gF.createPolygon(expectedC);
+
+        Polygon resultPolygon = (Polygon) inflatePolygon.invoke(agent, testPolygon, 0.1);
+        assertTrue(expectedPolygon.equals(resultPolygon));
+    }
+
+    @Test
+    public void testDeflatePolygon() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        Method deflatePolygon = agent.getClass().getDeclaredMethod("deflatePolygon", Geometry.class, Double.class);
+
+        assertNotNull(deflatePolygon);
+        deflatePolygon.setAccessible(true);
+
+        GeometryFactory gF = new GeometryFactory();
+        Coordinate[] testC = new Coordinate[5];
+
+        testC[0] = new Coordinate(1.0, 1.0, 3.01);
+        testC[1] = new Coordinate(2.0, 1.0, 3.02);
+        testC[2] = new Coordinate(2.0, 2.0, 3.03);
+        testC[3] = new Coordinate(1.0, 2.0, 3.03);
+        testC[4] = new Coordinate(1.0, 1.0, 3.01);
+
+        Polygon testPolygon = gF.createPolygon(testC);
+
+        Coordinate[] expectedC = new Coordinate[5];
+
+        expectedC[0] = new Coordinate(1.1, 1.1, 3.01);
+        expectedC[1] = new Coordinate(1.9, 1.1, 3.02);
+        expectedC[2] = new Coordinate(1.9, 1.9, 3.03);
+        expectedC[3] = new Coordinate(1.1, 1.9, 3.03);
+        expectedC[4] = new Coordinate(1.1, 1.1, 3.01);
+
+        Polygon expectedPolygon = gF.createPolygon(expectedC);
+
+        Polygon resultPolygon = (Polygon) deflatePolygon.invoke(agent, testPolygon, 0.1);
+        assertTrue(expectedPolygon.equals(resultPolygon));
+    }
+
+    @Test
+    public void testGetPolygonZ() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        Method getPolygonZ = agent.getClass().getDeclaredMethod("getPolygonZ", Geometry.class);
+
+        assertNotNull(getPolygonZ);
+        getPolygonZ.setAccessible(true);
+
+        GeometryFactory gF = new GeometryFactory();
+        Coordinate[] coordinates = new Coordinate[4];
+
+        coordinates[0] = new Coordinate(1.0, 1.0, 3.01);
+        coordinates[1] = new Coordinate(2.0, 1.0, 3.02);
+        coordinates[2] = new Coordinate(2.0, 2.0, 3.03);
+        coordinates[3] = new Coordinate(1.0, 1.0, 3.01);
+
+        Polygon polygon = gF.createPolygon(coordinates);
+
+        ArrayList<Double> expected = new ArrayList<>();
+
+        expected.add(3.01);
+        expected.add(3.02);
+        expected.add(3.03);
+        expected.add(3.01);
+
+        assertEquals(expected, getPolygonZ.invoke(agent, polygon));
+    }
+
+    @Test
+    public void testSetPolygonZ() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        Method setPolygonZ = agent.getClass().getDeclaredMethod("setPolygonZ", Geometry.class, ArrayList.class);
+
+        assertNotNull(setPolygonZ);
+        setPolygonZ.setAccessible(true);
+
+        GeometryFactory gF = new GeometryFactory();
+        Coordinate[] coordinates = new Coordinate[4];
+
+        coordinates[0] = new Coordinate(1.0, 1.0, 3.01);
+        coordinates[1] = new Coordinate(2.0, 1.0, 3.02);
+        coordinates[2] = new Coordinate(2.0, 2.0, 3.03);
+        coordinates[3] = new Coordinate(1.0, 1.0, 3.01);
+
+        Polygon result = gF.createPolygon(coordinates);
+
+        coordinates[0] = new Coordinate(1.0, 1.0, 0.0);
+        coordinates[1] = new Coordinate(2.0, 1.0, 0.0);
+        coordinates[2] = new Coordinate(2.0, 2.0, 0.0);
+        coordinates[3] = new Coordinate(1.0, 1.0, 0.0);
+
+        Polygon expected = gF.createPolygon(coordinates);
+
+        ArrayList<Double> z = new ArrayList<>();
+
+        z.add(0.0);
+        z.add(0.0);
+        z.add(0.0);
+        z.add(0.0);
+
+        setPolygonZ.invoke(agent, result, z);
+
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void ignoreHole() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException{
+        CEAAgent agent = new CEAAgent();
+        Method ignoreHole = agent.getClass().getDeclaredMethod("ignoreHole", String.class, String.class);
+
+        assertNotNull(ignoreHole);
+        ignoreHole.setAccessible(true);
+
+        String geometry = "1.0#1.0#2.0#2.0#3.0#3.0#4.0#4.0#5.0#5.0#6.0#6.0";
+        String polygonType = "<http://localhost/blazegraph/literals/POLYGON-2-6-6>";
+        String expected = "1.0#1.0#2.0#2.0#3.0#3.0";
+
+        String result = (String) ignoreHole.invoke(agent, geometry, polygonType);
+
+        assertEquals(expected, result);
     }
 }
