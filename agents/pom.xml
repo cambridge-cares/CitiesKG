@@ -6,7 +6,7 @@
 
     <groupId>uk.ac.cam.cares.twa.cities.agents</groupId>
     <artifactId>agents</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.4</version>
     <packaging>war</packaging>
 
     <!-- Project properties -->
