@@ -142,6 +142,10 @@ Cesium.knockout.applyBindings(addSplashWindowModel, document.getElementById('cit
 var splashController = new SplashController(addSplashWindowModel);
 splashController.setCookie("ignoreSplashWindow", "true")
 
+
+// added by Shiying
+var filteredObjects = {};
+
 /*---------------------------------  Load Configurations and Layers  ----------------------------------------*/
 
 initClient();
@@ -570,6 +574,7 @@ function inspectTileStatus() {
         } else {
             loadingTilesInspector.style.display = 'none';
         }
+
     }, 200);
 }
 
@@ -668,22 +673,22 @@ function getMidpoint(point1, point2) {
 }
 
 //Shiying: highlight multiple cityobjects
-function highlightMultipleObjects(cityObjectsArray){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
+function processFilteredObjects(cityObjectsArray){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
     //var cityObjectsArray = ["UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d", "UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3"];
     //var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_b6f4d0de-cf5c-4917-aba0-c1a91fa4960b/"];
 
     // UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d - inside
     // UUID_b6f4d0de-cf5c-4917-aba0-c1a91fa4960b - outside of the scene
     var currentLayer = webMap.activeLayer;
-    var filteredObjects = {};
+    var filteredResult= {};
     var highlightColor = currentLayer._highlightColor; // new Cesium.Color(16/255, 77/255, 151/255, 1.0);
     // unhighlight all objects first then highlight the filtered objects
-    currentLayer.unHighlightAllObjects();
+    //currentLayer.unHighlightAllObjects();
 
     for (let i = 0; i < cityObjectsArray.length; i++) {
         var strArray = cityObjectsArray[i].split("/");
         var gmlid = strArray[strArray.length-2];
-        filteredObjects[gmlid] = new Cesium.Color(65/255, 168/255, 255/255, 0.8);
+        filteredResult[gmlid] = highlightColor; // new Cesium.Color(65/255, 168/255, 255/255, 0.8);
     }
     /**
     var cameraPostion = {
@@ -697,10 +702,21 @@ function highlightMultipleObjects(cityObjectsArray){  // citydbKmlLayer object, 
     flyToCameraPosition(cameraPostion); **/
     //flyToMapLocation(1.264377, 103.837302);
     //zoomToObjectById("UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d");
-    currentLayer.highlight(filteredObjects);
-
+    //currentLayer.highlight(filteredObjects);
+    filteredObjects = filteredResult;
     pinHighlightObjects(cityObjectsArray);
+    highlightFilteredObj(filteredObjects);
+    return filteredObjects;
 }
+
+function highlightFilteredObj(filteredObjects){
+    if (filteredObjects != undefined){
+        var currentLayer = webMap.activeLayer;
+        currentLayer.highlight(filteredObjects);
+    }
+}
+
+
 
 function showResultWindow(selectedDevType, resultJson){
 
@@ -824,7 +840,7 @@ function pinHighlightObjects(cityObjectsArray){
         var id = gmlidArray[i];
         var lon = (obj.envelope[0] + obj.envelope[2]) / 2.0;
         var lat = (obj.envelope[1] + obj.envelope[3]) / 2.0;
-        console.log(gmlidArray[i] + ": " + lon + ", " + lat);
+        //console.log(gmlidArray[i] + ": " + lon + ", " + lat);
 
         addPoint(customDataSource, id, lat, lon);
     }
@@ -851,10 +867,11 @@ function pinHighlightObjects(cityObjectsArray){
     //    pitch: -89.99396415604053,
     //    roll: 0,
     //}
+
     //flyToCameraPosition(cameraPostion);
-    cesiumViewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromRadians(1.8121454529642347, 0.023307207117772493, 66468)
-    })
+    //cesiumViewer.camera.flyTo({
+    //    destination: Cesium.Cartesian3.fromRadians(1.8121454529642347, 0.023307207117772493, 66468)
+    //})
 
 }
 
