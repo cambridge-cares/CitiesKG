@@ -39,7 +39,7 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
 
     @Override
     public void setTargetGraph(String endpointIRI) {
-        targetGraph = NodeFactory.createURI(endpointIRI + GraphInferenceAgent.ONTOINFER_GRAPH + "EBAbox");
+        targetGraph = NodeFactory.createURI(endpointIRI + GraphInferenceAgent.ONTOINFER_GRAPH);
     }
 
     @Override
@@ -60,9 +60,10 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
                     // get data
                     Map<String, JSONArray> map = this.dataQueue.take();
                     JSONArray data = map.get(this.taskIri.toString());
-                    long startTime = System.currentTimeMillis();
+
                     // convert to jung graph
                     Graph graph = createGraph(data);
+
                     // execute algo
                     EdgeBetweennessClusterer clusterer = new EdgeBetweennessClusterer<>(3);
                     HashSet<HashSet<String>> set = remapSet(clusterer.apply(graph));
