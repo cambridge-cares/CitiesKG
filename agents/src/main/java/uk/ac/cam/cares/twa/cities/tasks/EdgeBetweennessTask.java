@@ -39,7 +39,7 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
 
     @Override
     public void setTargetGraph(String endpointIRI) {
-        targetGraph = NodeFactory.createURI(endpointIRI + GraphInferenceAgent.ONTOINFER_GRAPH);
+        targetGraph = NodeFactory.createURI(endpointIRI + GraphInferenceAgent.ONTOINFER_GRAPH + "EBAbox");
     }
 
     @Override
@@ -63,11 +63,9 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
                     long startTime = System.currentTimeMillis();
                     // convert to jung graph
                     Graph graph = createGraph(data);
-                    System.out.println("Graph done in: " + String.valueOf(System.currentTimeMillis() - startTime));
                     // execute algo
                     EdgeBetweennessClusterer clusterer = new EdgeBetweennessClusterer<>(3);
                     HashSet<HashSet<String>> set = remapSet(clusterer.apply(graph));
-                    System.out.println("Clustered in: " + String.valueOf(System.currentTimeMillis() - startTime));
 
                     // sparql update triples to endpoint
                     storeResults(set);
@@ -80,13 +78,18 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
         }
     }
 
+    /**
+     * Creates compressed graph out of array containing S-P-O SPARQL query results.
+     * All the elements of the array are mapped to integers and each array of integers corresponding
+     * to each statement is added to the resulting graph as an edge betwee integers corresponding to
+     * S & P elements.
+     *
+     * @param array SPARQL results.
+     * @return Graph integers mapped to the input array elements.
+     */
     public UndirectedSparseGraph createGraph(JSONArray array) {
-        /*
-        @todo: check ontology for duplicates:
-        java.lang.IllegalArgumentException: Nodes http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CemeteryUse and http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Cemetery are already connected by a different edge. To construct a graph that allows parallel edges, call allowsParallelEdges(true) on the Builder.
-         */
-        UndirectedSparseGraph graph = new UndirectedSparseGraph();
 
+        UndirectedSparseGraph graph = new UndirectedSparseGraph();
 
         int num = 1;
 
@@ -121,6 +124,13 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
         return graph;
     }
 
+    /**
+     * Remaps every element of each subset of the input set to a corresponding URL from the urlToNum
+     * map.
+     *
+     * @param set of sets with integers
+     * @return set of sets of urls corresponding to the integers on the urlToNum map
+     */
     private HashSet<HashSet<String>> remapSet(Set set) {
         Map<Integer, String> revUrlToNum = MapUtils.invertMap(urlToNum);
 
@@ -137,6 +147,11 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
         return remapped;
     }
 
+    /**
+     * Stores algorithm application results in the knowledge graph.
+     *
+     * @param clusters - set of cluster-sets of IRIs
+     */
     private void storeResults(HashSet<HashSet<String>> clusters) {
 
         UpdateBuilder ub = prepareUpdateBuilder();
@@ -166,6 +181,17 @@ public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
 
     }
 
+    /**
+     * Prepares 3 insert s-p-o statements for each node:
+     * (1) id hasInferenceObject nodeIRI
+     * (2) id hasInferenceAlgorithm EdgeBetweennessAlgorithm
+     * (3) id hasInferredValue clusterNumber
+     * Adds those statements to the UpdateBuilder.
+     *
+     * @param clusterNum - cluster number.
+     * @param ub - Update builder to add statements into
+     * @param vert - a graph node belongint to the clusterNum
+     */
     private void prepareUpdate(int clusterNum, UpdateBuilder ub, String vert) {
         String pfix = GraphInferenceAgent.ONINF_PREFIX;
         Node id = NodeFactory.createURI(targetGraph.getURI() + UUID.randomUUID());
