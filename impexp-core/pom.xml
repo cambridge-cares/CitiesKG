@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.citydb</groupId>
   <artifactId>impexp-core</artifactId>
-  <version>4.2.3</version>
+  <version>4.3.0-java11-SNAPSHOT</version>
   <repositories>
     <repository>
       <id>jcenter</id>
@@ -21,7 +20,7 @@
       <name>scijava</name>
       <url>https://maven.scijava.org/content/repositories/public/</url>
     </repository>
-    </repositories>
+  </repositories>
   <build>
     <pluginManagement>
       <plugins>
@@ -36,6 +35,7 @@
           <configuration>
             <source>1.8</source>
             <target>1.8</target>
+            <release>8</release>
           </configuration>
         </plugin>
         <plugin>
@@ -43,7 +43,7 @@
           <artifactId>maven-install-plugin</artifactId>
           <version>2.5.2</version>
           <executions>
-           <execution>
+            <execution>
               <id>ojdbc8-19.3.0.0</id>
               <phase>initialize</phase>
               <goals>
@@ -57,187 +57,187 @@
                 <packaging>jar</packaging>
               </configuration>
             </execution>
-           <execution>
-               <id>sdoapi-19.3.0.0r</id>
-               <phase>initialize</phase>
-               <goals>
-                 <goal>install-file</goal>
-               </goals>
-               <configuration>
-               <file>${project.basedir}/lib/sdoapi-19.3.0.0.jar</file>
-                 <groupId>com.oracle.spatial</groupId>
-                 <artifactId>sdoapi</artifactId>
-                 <version>19.3.0.0</version>
-                 <packaging>jar</packaging>
-                 <generatePom>true</generatePom>
-               </configuration>
-             </execution>
-           </executions>
-         </plugin>
-       </plugins>
-     </pluginManagement>
-   </build>
-   <dependencies>
-     <dependency>
-       <groupId>org.citydb</groupId>
-       <artifactId>impexp-config</artifactId>
-       <version>4.2.3</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.citydb</groupId>
-       <artifactId>impexp-plugin-api</artifactId>
-       <version>4.2.3</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.citydb</groupId>
-       <artifactId>sqlbuilder</artifactId>
-       <version>2.2.1</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.citydb</groupId>
-       <artifactId>3dcitydb-ade-citygml4j</artifactId>
-       <version>1.1.1</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.citygml4j</groupId>
-       <artifactId>citygml4j</artifactId>
-       <version>2.10.5</version>
-     </dependency>
-     <dependency>
-       <groupId>org.locationtech.jts</groupId>
-       <artifactId>jts-core</artifactId>
-       <version>1.16.1</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.geotools</groupId>
-       <artifactId>gt-main</artifactId>
-       <version>20.1</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.geotools</groupId>
-       <artifactId>gt-epsg-extension</artifactId>
-       <version>20.1</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.geotools</groupId>
-       <artifactId>gt-epsg-hsql</artifactId>
-       <version>20.1</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.geotools</groupId>
-       <artifactId>gt-referencing</artifactId>
-       <version>20.1</version>
-       <scope>compile</scope>
-     </dependency>
-     <!-- https://mvnrepository.com/artifact/tec.uom/uom-se -->
-     <!--<dependency>
+            <execution>
+              <id>sdoapi-19.3.0.0r</id>
+              <phase>initialize</phase>
+              <goals>
+                <goal>install-file</goal>
+              </goals>
+              <configuration>
+                <file>${project.basedir}/lib/sdoapi-19.3.0.0.jar</file>
+                <groupId>com.oracle.spatial</groupId>
+                <artifactId>sdoapi</artifactId>
+                <version>19.3.0.0</version>
+                <packaging>jar</packaging>
+                <generatePom>true</generatePom>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>org.citydb</groupId>
+      <artifactId>impexp-config</artifactId>
+      <version>4.3.0-java11-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.citydb</groupId>
+      <artifactId>impexp-plugin-api</artifactId>
+      <version>4.3.0-java11-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.citydb</groupId>
+      <artifactId>sqlbuilder</artifactId>
+      <version>2.2.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.citydb</groupId>
+      <artifactId>3dcitydb-ade-citygml4j</artifactId>
+      <version>1.1.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.citygml4j</groupId>
+      <artifactId>citygml4j</artifactId>
+      <version>2.10.5</version>
+    </dependency>
+    <dependency>
+      <groupId>org.locationtech.jts</groupId>
+      <artifactId>jts-core</artifactId>
+      <version>1.16.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-main</artifactId>
+      <version>20.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-epsg-extension</artifactId>
+      <version>20.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-epsg-hsql</artifactId>
+      <version>20.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-referencing</artifactId>
+      <version>20.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/tec.uom/uom-se -->
+    <!--<dependency>
        <groupId>tec.uom</groupId>
        <artifactId>uom-se</artifactId>
        <version>1.0.10</version>
      </dependency>-->
-     <!-- https://mvnrepository.com/artifact/org.gdal/gdal -->
-     <dependency>
-       <groupId>org.gdal</groupId>
-       <artifactId>gdal</artifactId>
-       <version>3.4.0</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>com.h2database</groupId>
-       <artifactId>h2</artifactId>
-       <version>1.4.200</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.postgresql</groupId>
-       <artifactId>postgresql</artifactId>
-       <version>42.2.10</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>net.postgis</groupId>
-       <artifactId>postgis-jdbc</artifactId>
-       <version>2.3.0</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.apache.tomcat</groupId>
-       <artifactId>tomcat-jdbc</artifactId>
-       <version>9.0.30</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.apache.tomcat</groupId>
-       <artifactId>tomcat-juli</artifactId>
-       <version>9.0.30</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.apache.tika</groupId>
-       <artifactId>tika-core</artifactId>
-       <version>1.23</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.apache.commons</groupId>
-       <artifactId>commons-compress</artifactId>
-       <version>1.20</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.apache.jena</groupId>
-       <artifactId>jena-jdbc-driver-remote</artifactId>
-       <version>3.16.0</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.apache.jena</groupId>
-       <artifactId>jena-querybuilder</artifactId>
-       <version>3.16.0</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.json</groupId>
-       <artifactId>json</artifactId>
-       <version>20201115</version>
-       <scope>compile</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.junit.jupiter</groupId>
-       <artifactId>junit-jupiter</artifactId>
-       <version>5.4.2</version>
-       <scope>test</scope>
-     </dependency>
-     <dependency>
-       <groupId>com.oracle.database.jdbc</groupId>
-       <artifactId>ojdbc8</artifactId>
-       <version>19.3.0.0</version>
-     </dependency>
-     <dependency>
-        <groupId>com.oracle.spatial</groupId>
-        <artifactId>sdoapi</artifactId>
-        <version>19.3.0.0</version>
-      </dependency>
-     <dependency>
-       <groupId>org.mockito</groupId>
-       <artifactId>mockito-core</artifactId>
-       <version>3.11.2</version>
-       <scope>test</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.mockito</groupId>
-       <artifactId>mockito-inline</artifactId>
-       <version>3.11.2</version>
-       <scope>test</scope>
-     </dependency>
-   </dependencies>
+    <!-- https://mvnrepository.com/artifact/org.gdal/gdal -->
+    <dependency>
+      <groupId>org.gdal</groupId>
+      <artifactId>gdal</artifactId>
+      <version>3.4.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>1.4.200</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>42.2.10</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.postgis</groupId>
+      <artifactId>postgis-jdbc</artifactId>
+      <version>2.3.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tomcat</groupId>
+      <artifactId>tomcat-jdbc</artifactId>
+      <version>9.0.30</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tomcat</groupId>
+      <artifactId>tomcat-juli</artifactId>
+      <version>9.0.30</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tika</groupId>
+      <artifactId>tika-core</artifactId>
+      <version>1.23</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+      <version>1.20</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jena</groupId>
+      <artifactId>jena-jdbc-driver-remote</artifactId>
+      <version>3.16.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jena</groupId>
+      <artifactId>jena-querybuilder</artifactId>
+      <version>3.16.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20201115</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.4.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.oracle.database.jdbc</groupId>
+      <artifactId>ojdbc8</artifactId>
+      <version>19.3.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.oracle.spatial</groupId>
+      <artifactId>sdoapi</artifactId>
+      <version>19.3.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>3.11.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-inline</artifactId>
+      <version>3.11.2</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
- </project>
+</project>

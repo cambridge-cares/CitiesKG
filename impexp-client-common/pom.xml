@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.citydb</groupId>
   <artifactId>impexp-client-common</artifactId>
-  <version>4.2.3</version>
+  <version>4.3.0-java11-SNAPSHOT</version>
   <build>
     <pluginManagement>
       <plugins>
@@ -14,6 +13,7 @@
           <configuration>
             <source>1.8</source>
             <target>1.8</target>
+            <release>8</release>
           </configuration>
         </plugin>
       </plugins>
