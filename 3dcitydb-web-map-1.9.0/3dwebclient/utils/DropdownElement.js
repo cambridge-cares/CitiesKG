@@ -44,8 +44,105 @@ function appendElement(line, predicate, element_type, dropdown_type){
 	$(dropdown_type).append(some_element)
 }
 
+function editSentenceEnding(zone, sentence, final_sentence, zoning_case){
+	if(Object.entries(zone).length > 1) {
+		final_sentence = sentence.slice(0, -4) + zoning_case +"s?";
+	} else {
+		final_sentence = sentence.slice(0, -4) + zoning_case + "?";
+	}
+	return final_sentence;
+}
+
+function processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm, sentence, programmes, uses, final_sentence) {
+	if(programme_bool) {
+		for (const [programme, programmeGFAvalue] of Object.entries(programmes)) {
+			if (programmeGFA_bool) {
+				sentence += programmeGFAvalue + sqm + " of " + "<b>" + programme + "</b>" + " and ";
+			} else {
+				sentence +=  "<b>" + programme + "</b>" + " and ";
+			}
+		}
+		final_sentence = editSentenceEnding(programmes, sentence, final_sentence, " programme");
+	} else if (use_bool) {
+		for (const [use, useGFAvalue] of Object.entries(uses)) {
+			if (useGFA_bool) {
+				sentence += useGFAvalue + sqm + " of " + "<b>" + use + "</b>"+ " and ";
+			} else {
+				sentence += "<b>" + use + "</b>"+ " and ";
+			}
+		}
+		final_sentence = editSentenceEnding(uses, sentence, final_sentence, " use");
+	} else {
+		final_sentence = "where can I build...";
+	}
+	return final_sentence;
+}
+
+function getQuerySentence(){
+	var sentence = "Where can I build...";
+	var sentence_atleast = "Where can I build at least ";
+	var sentence_noGFA = "Where can I build " ;
+	var sqm = " (m" + "<sup>2</sup>" + ")";
+	var final_sentence = 'Where can I build...';
+	document.getElementsByClassName('querySentence')[0].textContent = final_sentence;
+
+	var inputs = document.getElementsByClassName('text_gfa');
+	var uses = {};
+	var programmes = {};
+	var totalGFA_input;
+	var programmeGFA_bool = false;
+	var useGFA_bool = false;
+
+	for (let i = 0; i < inputs.length; i++) {
+		var inputs_item = inputs.item(i).firstChild;
+		var sibling = inputs.item(i).nextElementSibling.firstChild;
+		var checkbox = document.getElementById(inputs.item(i).firstChild.textContent);
+		if (checkbox !== null) {
+			var inputs_item_onto_class = inputs_item.textContent;
+			if (checkbox.parentElement.className === USE_PREDICATE) {
+				uses[inputs_item_onto_class] = sibling.value;
+				if (!useGFA_bool && !(sibling.value === "")) {
+					useGFA_bool = true;
+				}
+			} else {
+				programmes[inputs_item_onto_class] = sibling.value;
+				if (!programmeGFA_bool && !(sibling.value === "")) {
+					programmeGFA_bool =  true;
+				}
+			}
+		} else {
+			totalGFA_input = sibling.value;
+		}
+	}
+	var programme_bool = Object.keys(programmes).length > 0;
+	var use_bool = Object.keys(uses).length > 0;
+
+	if (!(totalGFA_input === '')) {
+		if (programme_bool || use_bool) {
+			if(programmeGFA_bool || useGFA_bool) {
+				sentence = sentence_noGFA + totalGFA_input + sqm + " development with at least ";
+				final_sentence = processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm, sentence, programmes, uses, final_sentence);
+			}
+			else {
+				sentence = sentence_noGFA + totalGFA_input + sqm + " development with ";
+				final_sentence = processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm, sentence, programmes, uses, final_sentence);
+			}
+		} else {
+			final_sentence = sentence_atleast + totalGFA_input + sqm + " of something?";
+		}
+	} else {
+		if(programmeGFA_bool || useGFA_bool){
+			sentence = sentence_atleast;
+			final_sentence = processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm,sentence, programmes, uses, final_sentence);
+		} else {
+			sentence = sentence_noGFA;
+			final_sentence = final_sentence = processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm, sentence, programmes, uses, final_sentence);
+		}
+	}
+	document.getElementsByClassName('querySentence')[0].innerHTML = final_sentence;
+}
+
 function updateGfaRows(){
-	getQuerySentence()
 	var parent = document.getElementById("assignGFA");
 	var children = Array.from(parent.children);
 	for (var i = 0; i < children.length; i++) {
@@ -92,43 +189,6 @@ function removePrefix(result){
 	var element = result.split("#")[1]
 	element = element.match(/[A-Z][a-z]+|[0-9]+/g).join(" ")
 	return element
-}
-
-function getQuerySentence() {
-	var parameters = {};
-	var text_inputs = document.getElementsByClassName('text_gfa');
-	var onto_use = {};
-	var onto_programme = {};
-
-	for (let i = 0; i < text_inputs.length; i++) {
-		var text_item = text_inputs.item(i).firstChild;
-		var sibling = text_inputs.item(i).nextElementSibling.firstChild;
-		var checkbox = document.getElementById(text_inputs.item(i).firstChild.textContent);
-		if (checkbox !== null) {
-			var text_item_onto_class = text_item.textContent.replaceAll(" ", "");
-			if (checkbox.parentElement.className === USE_PREDICATE) {
-				onto_use[text_item_onto_class] = sibling.value;
-				document.getElementsByClassName('querySentence')[0].textContent = "Where can I build " + text_item.textContent + " use?";
-			} else {
-				onto_programme[text_item_onto_class] = sibling.value;
-				document.getElementsByClassName('querySentence')[0].textContent = "Where can I build " + text_item.textContent + " programme?";
-			}
-		} else {
-			parameters[TOTAL_GFA_KEY] = sibling.value;
-			document.getElementsByClassName('querySentence')[0].textContent = "Where can I build " + text_item.textContent + " sqm of something?";
-		}
-	}
-	if (Object.keys(onto_use).length > 0) {
-		parameters[USE_PREDICATE] = onto_use;
-	}
-	if (Object.keys(onto_programme).length > 0) {
-		parameters[PROGRAMME_PREDICATE] = onto_programme;
-	}
-	input_parameters = parameters;
-	if ((Object.keys(onto_use).length != 0) && (Object.keys(onto_programme).length != 0)) {
-		throwNotification();
-	}
-	console.log(input_parameters);
 }
 function getInputParams() {
 	var parameters = {};
