@@ -46,9 +46,9 @@ function appendElement(line, predicate, element_type, dropdown_type){
 
 function editSentenceEnding(zone, sentence, final_sentence, zoning_case){
 	if(Object.entries(zone).length > 1) {
-		final_sentence = sentence.slice(0, -4) + zoning_case +"s?";
+		final_sentence = sentence.slice(0, -6) + zoning_case +"s?";
 	} else {
-		final_sentence = sentence.slice(0, -4) + zoning_case + "?";
+		final_sentence = sentence.slice(0, -6) + zoning_case + "?";
 	}
 	return final_sentence;
 }
@@ -57,33 +57,33 @@ function processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGF
 	if(programme_bool) {
 		for (const [programme, programmeGFAvalue] of Object.entries(programmes)) {
 			if (programmeGFA_bool) {
-				sentence += programmeGFAvalue + sqm + " of " + "<b>" + programme + "</b>" + " and ";
+				sentence += programmeGFAvalue + sqm + " or more of " + "<b>" + programme + "</b>" + ", and ";
 			} else {
-				sentence +=  "<b>" + programme + "</b>" + " and ";
+				sentence +=  "<b>" + programme + "</b>" + ", and ";
 			}
 		}
 		final_sentence = editSentenceEnding(programmes, sentence, final_sentence, " programme");
 	} else if (use_bool) {
 		for (const [use, useGFAvalue] of Object.entries(uses)) {
 			if (useGFA_bool) {
-				sentence += useGFAvalue + sqm + " of " + "<b>" + use + "</b>"+ " and ";
+				sentence += useGFAvalue + sqm + " or more of " + "<b>" + use + "</b>"+ ", and ";
 			} else {
-				sentence += "<b>" + use + "</b>"+ " and ";
+				sentence += "<b>" + use + "</b>"+ ", and ";
 			}
 		}
 		final_sentence = editSentenceEnding(uses, sentence, final_sentence, " use");
 	} else {
-		final_sentence = "where can I build...";
+		final_sentence = "Where could I build...";
 	}
 	return final_sentence;
 }
 
 function getQuerySentence(){
-	var sentence = "Where can I build...";
-	var sentence_atleast = "Where can I build at least ";
-	var sentence_noGFA = "Where can I build " ;
-	var sqm = " (m" + "<sup>2</sup>" + ")";
-	var final_sentence = 'Where can I build...';
+	var sentence = "Where could I build...";
+	var sentence_ormore = "Where could I build ";
+	var sentence_noGFA = "Where could I build " ;
+	var sqm = "sqm";
+	var final_sentence = 'Where could I build...';
 	document.getElementsByClassName('querySentence')[0].textContent = final_sentence;
 
 	var inputs = document.getElementsByClassName('text_gfa');
@@ -120,7 +120,7 @@ function getQuerySentence(){
 	if (!(totalGFA_input === '')) {
 		if (programme_bool || use_bool) {
 			if(programmeGFA_bool || useGFA_bool) {
-				sentence = sentence_noGFA + totalGFA_input + sqm + " development with at least ";
+				sentence = sentence_noGFA + totalGFA_input + sqm + " development with ";
 				final_sentence = processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm, sentence, programmes, uses, final_sentence);
 			}
 			else {
@@ -128,11 +128,11 @@ function getQuerySentence(){
 				final_sentence = processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm, sentence, programmes, uses, final_sentence);
 			}
 		} else {
-			final_sentence = sentence_atleast + totalGFA_input + sqm + " of something?";
+			final_sentence = sentence_ormore + totalGFA_input + sqm + " or more of something?";
 		}
 	} else {
 		if(programmeGFA_bool || useGFA_bool){
-			sentence = sentence_atleast;
+			sentence = sentence_ormore;
 			final_sentence = processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm,sentence, programmes, uses, final_sentence);
 		} else {
 			sentence = sentence_noGFA;
