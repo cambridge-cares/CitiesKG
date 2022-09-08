@@ -9,22 +9,17 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
 
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Statement;
-import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
-import net.rootdev.jenajung.JenaJungGraph;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -171,7 +166,7 @@ public class EdgeBetweennessTaskTest {
 
   }
 
-  @Test //@todo: fix this test
+  @Test
   public void testNewEdgeBetweennessRunMethod() {
     EdgeBetweennessTask task = new EdgeBetweennessTask();
 
@@ -195,7 +190,9 @@ public class EdgeBetweennessTaskTest {
         aacMock.when(() -> AccessAgentCaller.updateStore(anyString(), anyString()))
             .thenAnswer((Answer<Void>) invocation -> null);
         Map<String, JSONArray> map = Collections.singletonMap("http://www.theworldavatar.com/ontologies/OntoInfer.owl#EdgeBetweennessTask",
-            new JSONArray("[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.test.com/2#p\", \"o\": \"http://www.test.com/3\"}]"));
+            new JSONArray("[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.test.com/2#p\", \"o\": \"http://www.test.com/3\"},"
+                + "{\"s\": \"http://www.test.com/4\", \"p\": \"http://www.test.com/5#p\", \"o\": \"http://www.test.com/6\"},"
+                + "{\"s\": \"http://www.test.com/7\", \"p\": \"http://www.test.com/8#p\", \"o\": \"http://www.test.com/9\"}]"));
         ((LinkedBlockingDeque) dataQueue.get(task)).put(map);
         //Call method that uses AccessAgentCaller inside
         //Other methods from this class are tested separately
@@ -261,70 +258,69 @@ public class EdgeBetweennessTaskTest {
 
   }
 
-  @Test //@todo: fix this test
+  @Test
   public void testNewEdgeBetweennessTaskStoreResultsMethod() {
     EdgeBetweennessTask task = new EdgeBetweennessTask();
-/*
+
     try {
-      Method storeResults = task.getClass().getDeclaredMethod("storeResults", Graph.class, EdgeBetweenness.class);
+      Method storeResults = task.getClass().getDeclaredMethod("storeResults", HashSet.class);
       storeResults.setAccessible(true);
       Method createGraph = task.getClass().getDeclaredMethod("createGraph", JSONArray.class);
       createGraph.setAccessible(true);
       Method setTargetGraph = task.getClass().getDeclaredMethod("setTargetGraph", String.class);
       setTargetGraph.setAccessible(true);
       setTargetGraph.invoke(task, "http:/www.test.com/");
-      JSONArray a = new JSONArray("[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.test.com/2#p\", \"o\": \"http://www.test.com/3\"}]");
-      JenaJungGraph g = (JenaJungGraph) createGraph.invoke(task, a);
-      EdgeBetweenness<RDFNode, Statement> ranker = new EdgeBetweenness<>(g, 0.3);
-      ranker.evaluate();
+      HashSet<HashSet<String>> clusters = new HashSet<>();
+      HashSet<String> cluserA = new HashSet<>();
+      HashSet<String> cluserB = new HashSet<>();
+      cluserA.add("http://www.test.com/2");
+      cluserB.add("http://www.test.com/1");
+      cluserB.add("http://www.test.com/3");
+      clusters.add(cluserA);
+      clusters.add(cluserB);
       try (MockedStatic<AccessAgentCaller> aacMock = mockStatic(AccessAgentCaller.class)) {
         //Do not execute any code with AccessAgentCaller - it is tested separately
         aacMock.when(() -> AccessAgentCaller.updateStore(anyString(), anyString()))
             .thenAnswer((Answer<Void>) invocation -> null);
         //Call method that uses AccessAgentCaller inside
         //Other methods from this class are tested separately
-        storeResults.invoke(task, g, ranker);
+        storeResults.invoke(task, clusters);
       }
 
     } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       fail();
     }
- */
+
   }
   
-  @Test //@todo: fix this test
+  @Test
   public void testNewEdgeBetweennessTaskPrepareUpdateMethod() {
     EdgeBetweennessTask task = new EdgeBetweennessTask();
-/*
+
     try {
-      Method prepareUpdate = task.getClass().getDeclaredMethod("prepareUpdate", EdgeBetweenness.class, UpdateBuilder.class, Object.class);
+      Method prepareUpdate = task.getClass().getDeclaredMethod("prepareUpdate", int.class, UpdateBuilder.class, String.class);
       prepareUpdate.setAccessible(true);
-      Method createGraph = task.getClass().getDeclaredMethod("createGraph", JSONArray.class);
-      createGraph.setAccessible(true);
       Method setTargetGraph = task.getClass().getDeclaredMethod("setTargetGraph", String.class);
       setTargetGraph.setAccessible(true);
       setTargetGraph.invoke(task, "http:/www.test.com/");
-      JSONArray a = new JSONArray("[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.test.com/2#p\", \"o\": \"http://www.test.com/3\"}]");
-      Graph<RDFNode, Statement> g = (JenaJungGraph) createGraph.invoke(task, a);
-      EdgeBetweenness<RDFNode, Statement> ranker = new EdgeBetweenness<>(g, 0.3);
-      ranker.evaluate();
       UpdateBuilder ub = new UpdateBuilder();
       ub.addPrefix(GraphInferenceAgent.ONINF_PREFIX, GraphInferenceAgent.ONINF_SCHEMA);
-      Object vert = g.getVertices().toArray()[0];
-      prepareUpdate.invoke(task, ranker, ub, vert);
+      int clusterNum = 2;
+      String vert = "http://www.test.com/1";
+      prepareUpdate.invoke(task, clusterNum, ub, vert);
       String upds =  ub.build().toString();
       assertTrue(upds.contains("INSERT DATA {\n"));
       assertTrue(upds.contains("  GRAPH <http:/www.test.com/OntoInfer/> {\n"));
       assertTrue(upds.contains("    <http:/www.test.com/OntoInfer/"));
       assertTrue(upds.contains(" <http://www.theworldavatar.com/ontologies/OntoInfer.owl#hasInferenceObject> <http://www.test.com/1> .\n"));
       assertTrue(upds.contains(" <http://www.theworldavatar.com/ontologies/OntoInfer.owl#hasInferenceAlgorithm> <http://www.theworldavatar.com/ontologies/OntoInfer.owl#EdgeBetweennessAlgorithm> .\n"));
-      assertTrue(upds.contains(" <http://www.theworldavatar.com/ontologies/OntoInfer.owl#hasInferredValue> \"0.37037037037037035000\"^^<http://www.w3.org/2001/XMLSchema#double> .\n"));
+      assertTrue(upds.contains(" <http://www.theworldavatar.com/ontologies/OntoInfer.owl#hasInferredValue> 2 .\n"));
       assertTrue(upds.contains("  }\n"));
       assertTrue(upds.contains("}"));
     } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       fail();
     }
-*/
+
   }
 
   @Test
