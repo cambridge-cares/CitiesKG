@@ -74,6 +74,9 @@ public class UnweightedShortestPathTask implements UninitialisedDataAndResultQue
                     //get shortest path score
                     UnweightedShortestPath<Integer, int[]> shortestPath = new UnweightedShortestPath<>(graph);
                     Number distance = shortestPath.getDistance(urlToNum.get(srcIri), urlToNum.get(dstIri));
+                    if (distance == null) {
+                        distance = -1;
+                    }
 
                     //put data result back on the queue for the agent to pick up
                     Map<String, JSONArray> result = new HashMap<>();
@@ -138,22 +141,31 @@ public class UnweightedShortestPathTask implements UninitialisedDataAndResultQue
     }
 
     /**
-     * Prepares 4 insert s-p-o statements:
-     * (1) id hasInferenceObject srcIri
-     * (2) id hasInferenceAlgorithm UnweightedShortestPathAlgorithm
-     * (3) id hasInferredValue distance
-     * (4) id hasInferredValue dstIri
      *
-     * Stores result in the knowledge graph using AccessAgent
+     * Stores inferred result in the knowledge graph using AccessAgent
      *
      * @param srcIri object of the sp algorithm inference
      * @param dstIri target of the sp algorithm inference
      * @param distance value of the sp algorithm inference
      */
     private void storeResults(String srcIri, String dstIri, int distance) {
-        UpdateBuilder ub = new UpdateBuilder();
-        ub.addPrefix(GraphInferenceAgent.ONINF_PREFIX, GraphInferenceAgent.ONINF_SCHEMA);
+        UpdateBuilder ub = prepareUpdateBuilder();
+        prepareUpdate(ub, srcIri, dstIri, distance);
+        persistUpdate(ub);
+    }
 
+    /**
+     * Prepares 4 insert s-p-o statements:
+     * (1) id hasInferenceObject srcIri
+     * (2) id hasInferenceAlgorithm UnweightedShortestPathAlgorithm
+     * (3) id hasInferredValue distance
+     * (4) id hasInferredValue dstIri
+     *
+     * @param srcIri object of the sp algorithm inference
+     * @param dstIri target of the sp algorithm inference
+     * @param distance value of the sp algorithm inference
+     */
+    private void prepareUpdate(UpdateBuilder ub, String srcIri, String dstIri, int distance) {
         String pfix = GraphInferenceAgent.ONINF_PREFIX;
         Node id = NodeFactory.createURI(targetGraph.getURI() + UUID.randomUUID());
         ub.addInsert(targetGraph, id, pfix + ":" + GraphInferenceAgent.ONINT_P_INOBJ,
@@ -164,10 +176,33 @@ public class UnweightedShortestPathTask implements UninitialisedDataAndResultQue
             NodeFactory.createLiteral(String.valueOf(distance), XSDDatatype.XSDinteger));
         ub.addInsert(targetGraph, id, pfix + ":" + GraphInferenceAgent.ONINT_P_INVAL,
             NodeFactory.createURI(dstIri));
-
-        AccessAgentCaller.updateStore(ResourceBundle.getBundle("config").getString("uri.route"),
-            ub.build().toString());
     }
 
+    /**
+     * Creates UpdateBuilder and adds OntoInter prefix into it.
+     *
+     * @return update builder with prefix.
+     */
+    private UpdateBuilder prepareUpdateBuilder() {
+        UpdateBuilder ub = new UpdateBuilder();
+        ub.addPrefix(GraphInferenceAgent.ONINF_PREFIX, GraphInferenceAgent.ONINF_SCHEMA);
+
+        return ub;
+    }
+
+    /**
+     * Stores given UpdateBuilder contents in the knowledge graph via access agent and returns fresh
+     * builder with prefix after that.
+     *
+     * @param ub UpdateBuilder with statements to store in the knowledge graph
+     * @return fresh update builder.
+     */
+    private UpdateBuilder persistUpdate(UpdateBuilder ub) {
+        AccessAgentCaller.updateStore(ResourceBundle.getBundle("config").getString("uri.route"),
+            ub.build().toString());
+        ub = prepareUpdateBuilder();
+
+        return ub;
+    }
 
 }
