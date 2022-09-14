@@ -164,6 +164,14 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#Evaluation -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Evaluation">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyBased"/>
+    </owl:Class>
+    
+
+
     <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#Graph -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Graph">
@@ -318,6 +326,24 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ConsistencyCheckingAlgorithm -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ConsistencyCheckingAlgorithm">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Evaluation"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ConsistencyCheckingTask"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ConsistencyCheckingTask -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ConsistencyCheckingTask">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#EdgeBetweennessAlgorithm -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#EdgeBetweennessAlgorithm">
@@ -339,6 +365,14 @@
     <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphInferenceAgent -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphInferenceAgent">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Agent"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Agent"/>
     </owl:NamedIndividual>
     
