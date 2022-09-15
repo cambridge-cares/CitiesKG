@@ -43,6 +43,7 @@ public class OntologyInferenceAgent extends InferenceAgent {
         route = ResourceBundle.getBundle("config").getString("uri.route");
         String targetIRI = requestParams.getString(KEY_TARGET_IRI).endsWith("/")
             ? requestParams.getString(KEY_TARGET_IRI) :  requestParams.getString(KEY_TARGET_IRI).concat("/");
+        String tBoxGraph = requestParams.getString(KEY_ONTO_IRI).replace(targetIRI, "");
 
         //(1) Choose task based on algorithm IRI
         UninitialisedDataQueueTask task = chooseTask(IRI.create(requestParams.getString(KEY_ALGO_IRI)),
@@ -50,7 +51,7 @@ public class OntologyInferenceAgent extends InferenceAgent {
 
         String taskIRI = task.getTaskIri().toString();
         //(2) Retrieve data from target IRI
-        JSONArray targetData = getAllTargetData(IRI.create(targetIRI), ONTOZONING_GRAPH);
+        JSONArray targetData = getAllTargetData(IRI.create(targetIRI), tBoxGraph);
         //(3) Pass target data (2) to the task (1) and run the task
         Map<String,JSONArray> taskData = new HashMap<>();
         taskData.put(taskIRI, targetData);
