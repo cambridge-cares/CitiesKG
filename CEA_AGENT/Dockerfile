@@ -6,7 +6,7 @@ FROM cityenergyanalyst/cea:latest as cea
 #==================================================================================================
 # Second stage: build jar file
 #==================================================================================================
-FROM maven:3.6-openjdk-8-slim as builder
+FROM maven:3.6-openjdk-11-slim as builder
 
 # Copy all files into root's home, including the source, pom file, ./m2 directory and credentials
 ADD . /root
@@ -49,5 +49,5 @@ ENV PATH "/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH"
 SHELL ["/bin/bash", "-c"]
 
 # Start the Tomcat server
-ENTRYPOINT ["java", "-cp", "target/cea-agent-0.1.0-jar-with-dependencies.jar" , "uk.ac.cam.cares.twa.cities.ceaagent.Main"]
+ENTRYPOINT ["java", "-cp", "target/cea-agent-0.2.0-java11-SNAPSHOT-jar-with-dependencies.jar" , "uk.ac.cam.cares.twa.cities.ceaagent.Main"]
 #==================================================================================================
