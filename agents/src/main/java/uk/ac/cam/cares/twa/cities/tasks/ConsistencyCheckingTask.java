@@ -2,9 +2,7 @@ package uk.ac.cam.cares.twa.cities.tasks;
 
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,8 +12,11 @@ import org.apache.jena.graph.NodeFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.semanticweb.HermiT.Reasoner;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.io.StringDocumentSource;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
@@ -26,7 +27,7 @@ public class ConsistencyCheckingTask implements UninitialisedDataAndResultQueueT
   private boolean stop = false;
   private BlockingQueue<Map<String, JSONArray>> dataQueue;
   private BlockingQueue<Map<String, JSONArray>> resultQueue;
-  private Node targetGraph;
+  Node targetGraph;
 
   @Override
   public IRI getTaskIri() {
@@ -66,13 +67,21 @@ public class ConsistencyCheckingTask implements UninitialisedDataAndResultQueueT
           // get data
           Map<String, JSONArray> map = this.dataQueue.take();
           JSONArray data = map.get(this.taskIri.toString());
+
+          //create model
           Model model = createModel(data);
-          //todo: check and finish implementation
           OutputStream out = new ByteArrayOutputStream();
-          model.write(out);
-          ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(out.toString().getBytes()));
-          OWLOntologyManager manager= OWLManager.createOWLOntologyManager();
-          manager.loadOntologyFromOntologyDocument(ois);
+          model.write(out, "N-TRIPLES");
+
+          //evaluate
+          OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+          OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new StringDocumentSource(out.toString()));
+          Reasoner reasoner=new Reasoner(ontology);
+
+          //put data result back on the queue for the agent to pick up
+          Map<String, JSONArray> result = new HashMap<>();
+          result.put(this.taskIri.toString(), new JSONArray().put(reasoner.isConsistent()));
+          resultQueue.put(result);
 
         } catch (Exception e) {
           throw new JPSRuntimeException(e);

@@ -275,7 +275,7 @@
       <dependency>
         <groupId>net.sourceforge.owlapi</groupId>
         <artifactId>owlapi-api</artifactId>
-        <version>5.1.14</version>
+        <version>3.4.10</version>
         <scope>compile</scope>
       </dependency>
         <dependency>

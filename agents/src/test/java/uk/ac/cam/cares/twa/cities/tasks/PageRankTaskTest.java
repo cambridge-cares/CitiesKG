@@ -92,7 +92,7 @@ public class PageRankTaskTest {
     try {
       Method getTaskIri = task.getClass().getDeclaredMethod("getTaskIri");
       getTaskIri.setAccessible(true);
-      assertEquals(((IRI) getTaskIri.invoke(task)).getIRIString(), "http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankTask");
+      assertEquals(((IRI) getTaskIri.invoke(task)).toString(), "http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankTask");
     } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       fail();
     }

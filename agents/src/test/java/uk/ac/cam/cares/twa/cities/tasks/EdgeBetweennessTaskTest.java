@@ -94,7 +94,7 @@ public class EdgeBetweennessTaskTest {
     try {
       Method getTaskIri = task.getClass().getDeclaredMethod("getTaskIri");
       getTaskIri.setAccessible(true);
-      assertEquals(((IRI) getTaskIri.invoke(task)).getIRIString(), "http://www.theworldavatar.com/ontologies/OntoInfer.owl#EdgeBetweennessTask");
+      assertEquals(((IRI) getTaskIri.invoke(task)).toString(), "http://www.theworldavatar.com/ontologies/OntoInfer.owl#EdgeBetweennessTask");
     } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       fail();
     }
