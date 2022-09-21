@@ -429,6 +429,7 @@
                     <div id="developmentBox">
                         <div><label>Query Type</label></div>
                         <select id="developmentType" class="cesium-button" onchange="showChooseDevType()">
+                            <option value="ViewAll">Search plots by...</option>
                             <option value="TotalGFA">by allowable GFA</option>
                             <option value="OntozoningUses">by allowable land uses</option>
                             <option value="OntozoingProgrammes">by allowable programmes</option>
@@ -441,7 +442,7 @@
                         <div><label>Uses</label></div>
                         <div>
                             <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
-                                <div style="width:240px" class="cesium-button" title="This is land use">Choose Use<div id='use_arrow' class="arrow down"></div></div>
+                                <div style="width:240px" class="cesium-button" title ="Land use is a high-level term for the set of activities and developments that are allowed in a certain zoning type">Choose Use<div id='use_arrow' class="arrow down"></div></div>
                             </div>
                             <div id="choose_uses" class="finder_dynamic_box" ></div>
                         </div>
@@ -450,7 +451,7 @@
                         <div><label>Programmes</label></div>
                         <div>
                             <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
-                                <div style="width:240px" class="cesium-button" title="This is a programme">Choose Programme<div id='programme_arrow' class="arrow down"></div></div>
+                                <div style="width:240px" class="cesium-button" title="Programme is a term for specific activities and developments that may be allowed across many zoning types">Choose Programme<div id='programme_arrow' class="arrow down"></div></div>
                             </div>
                             <div id="choose_programmes" class="finder_dynamic_box" onblur="showChooseProgrammes()"></div>
                         </div>
@@ -459,7 +460,7 @@
                         <div><label>Gross Floor Area (GFA)</label></div>
                         <div>
                             <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
-                                <div style="width:240px" class="cesium-button" title="Gross Floor Area is the total floor area contained within a building’s outer edges that excludes empty spaces">Assign GFA(s)<div id='gfa_arrow' class="arrow down"></div></div>
+                                <div style="width:240px" class="cesium-button" title="Gross Floor Area is a term defining the total floor area contained within a building’s outer edges that excludes empty spaces">Assign GFA(s)<div id='gfa_arrow' class="arrow down"></div></div>
                             </div>
                             <div id="assignGFA" class="finder_dynamic_box" onchange="getQuerySentence()">
                                 <div>
@@ -475,7 +476,6 @@
                 </div>
             </div>
         </div>
-
         <div id="uiMenu">
             <div onclick="showToolbox()">
                 <select class="cesium-button">
@@ -827,7 +827,7 @@
         </div>
         <div id="splashwindow_iframe" class="splash-wrapper">
             <div class="splash-iframe-container">
-                <iframe id="splashwindow_iframe_content" src="" frameborder="0"></iframe>
+                <iframe id="splashwindow_iframe_content" src=""></iframe>
             </div>
         </div>
 
@@ -969,20 +969,6 @@
                 if (!expanded10) {
                     document.getElementById('gfa_arrow').style.transform = "rotate(225deg)";
                     gfa_window.style.display = "block";
-                    expanded10 = true;
-
-                } else {
-                    document.getElementById('gfa_arrow').style.transform = "rotate(45deg)";
-                    gfa_window.style.display = "none";
-                    expanded10 = false;
-                }
-            }
-            var expanded11 =  false
-            function showQueryExamples() {
-                var queryExample_window = document.getElementById("choose_queryExample");
-                if (!expanded11) {
-                    document.getElementById('gfa_arrow').style.transform = "rotate(225deg)";
-                    queryExample_window.style.display = "block";
                     expanded10 = true;
 
                 } else {
