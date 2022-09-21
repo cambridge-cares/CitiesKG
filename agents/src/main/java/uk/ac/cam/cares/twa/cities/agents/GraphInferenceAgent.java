@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.agents;
 
 import java.net.URL;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -23,6 +24,7 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.tasks.EdgeBetweennessTask;
 import uk.ac.cam.cares.twa.cities.tasks.PageRankTask;
+import uk.ac.cam.cares.twa.cities.tasks.UninitialisedDataAndResultQueueTask;
 import uk.ac.cam.cares.twa.cities.tasks.UnweightedShortestPathTask;
 import uk.ac.cam.cares.twa.cities.tasks.UninitialisedDataQueueTask;
 
@@ -46,7 +48,7 @@ public class GraphInferenceAgent extends JPSAgent {
   public static final String ONINT_P_INVAL = "hasInferredValue";
   public static final String ONINT_C_PRALG = "PageRankAlgorithm";
   public static final String ONINT_C_EBALG = "EdgeBetweennessAlgorithm";
-
+  public static final String ONINT_C_USPALG = "UnweightedShortestPathAlgorithm";
   public String route;
   public static final String TASK_PR = "PageRankTask";
   public static final String TASK_EB = "EdgeBetweennessTask";
@@ -56,12 +58,15 @@ public class GraphInferenceAgent extends JPSAgent {
   public static final String KEY_REQ_URL = "requestUrl";
   public static final String KEY_TARGET_IRI = "targetIRI";
   public static final String KEY_ALGO_IRI = "algorithmIRI";
+  public static final String KEY_SRC_IRI = "sourceIRI";
+  public static final String KEY_DST_IRI = "destinationIRI";
   private final Map<IRI, UninitialisedDataQueueTask> TASKS = Stream.of(new Object[][] {
       {IRI.create(ONINF_SCHEMA + TASK_PR), new PageRankTask()},
           {IRI.create(ONINF_SCHEMA + TASK_EB), new EdgeBetweennessTask()},
           {IRI.create(ONINF_SCHEMA + TASK_USP), new UnweightedShortestPathTask()}
   }).collect(Collectors.toMap(data -> (IRI) data[0], data -> (UninitialisedDataQueueTask) data[1]));
   public static LinkedBlockingDeque<Map<String, JSONArray>> dataQueue = new LinkedBlockingDeque<>();
+  public static LinkedBlockingDeque<Map<String, JSONArray>> resultQueue = new LinkedBlockingDeque<>();
   private static final ExecutorService taskExecutor = Executors.newFixedThreadPool(5);
 
   @Override
@@ -77,13 +82,33 @@ public class GraphInferenceAgent extends JPSAgent {
         //(1) Choose task based on algorithm IRI
         UninitialisedDataQueueTask task = chooseTask(IRI.create(requestParams.getString(KEY_ALGO_IRI)),
             IRI.create(targetIRI));
+        String taskIRI = task.getTaskIri().toString();
         //(2) Retrieve data from target IRI
         JSONArray targetData = getAllTargetData(IRI.create(targetIRI));
         //(3) Pass target data (2) to the task (1) and run the task
-        dataQueue.put(Collections.singletonMap(task.getTaskIri().toString(), targetData));
+        Map<String,JSONArray> taskData = new HashMap<>();
+        taskData.put(taskIRI, targetData);
+        if (requestParams.keySet().contains(KEY_SRC_IRI)) {
+          JSONArray srcIriArr = new JSONArray().put(requestParams.get(KEY_SRC_IRI));
+          taskData.put(KEY_SRC_IRI, srcIriArr);
+        }
+        if (requestParams.keySet().contains(KEY_DST_IRI)) {
+          JSONArray srcIriArr = new JSONArray().put(requestParams.get(KEY_DST_IRI));
+          taskData.put(KEY_DST_IRI, srcIriArr);
+        }
+        dataQueue.put(taskData);
         taskExecutor.execute(task);
         //(4) add task information to the response
-        responseParams.put(task.getTaskIri().toString(), "started");
+        if (task instanceof UninitialisedDataAndResultQueueTask) {
+          while (resultQueue.isEmpty()) {
+            if (!task.isRunning()) {
+              return responseParams.put(taskIRI, "failed");
+            }
+          }
+          responseParams.put(taskIRI, resultQueue.take().get(taskIRI));
+        } else {
+          responseParams.put(taskIRI, "started");
+        }
 
       } catch (Exception e) {
         throw new JPSRuntimeException(e);
@@ -107,6 +132,12 @@ public class GraphInferenceAgent extends JPSAgent {
             if (reqUrl.getPath().contains(URI_ACTION)) {
               IRI.create(requestParams.getString(KEY_TARGET_IRI));
               IRI.create(requestParams.getString(KEY_ALGO_IRI));
+              if (keys.contains(KEY_SRC_IRI)) {
+                IRI.create(requestParams.getString(KEY_SRC_IRI));
+              }
+              if (keys.contains(KEY_DST_IRI)) {
+                IRI.create(requestParams.getString(KEY_SRC_IRI));
+              }
               error = false;
             }
           } catch (Exception e) {
@@ -140,6 +171,9 @@ public class GraphInferenceAgent extends JPSAgent {
     //some task configuration/initialisation code can go here.
     task.setStringMapQueue(dataQueue);
     task.setTargetGraph(sparqlEndpoint.toString());
+    if (task instanceof UninitialisedDataAndResultQueueTask) {
+      ((UninitialisedDataAndResultQueueTask) task).setResultQueue(resultQueue);
+    }
 
     return task;
   }

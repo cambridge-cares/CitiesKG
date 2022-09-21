@@ -1,34 +1,31 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
-import com.hp.hpl.jena.rdf.model.*;
-import com.opencsv.CSVReader;
-import com.opencsv.CSVWriter;
-import com.opencsv.exceptions.CsvException;
-import edu.uci.ics.jung.algorithms.shortestpath.ShortestPathUtils;
 import edu.uci.ics.jung.algorithms.shortestpath.UnweightedShortestPath;
 import edu.uci.ics.jung.graph.Graph;
-import net.rootdev.jenajung.JenaJungGraph;
+import edu.uci.ics.jung.graph.UndirectedSparseGraph;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.UUID;
+import org.apache.jena.arq.querybuilder.UpdateBuilder;
+import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.semanticweb.owlapi.model.IRI;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.*;
 import java.util.concurrent.BlockingQueue;
-import java.util.stream.Collectors;
 
-public class UnweightedShortestPathTask implements UninitialisedDataQueueTask {
+public class UnweightedShortestPathTask implements UninitialisedDataAndResultQueueTask {
     private final IRI taskIri = IRI.create(GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.TASK_USP);
     private boolean stop = false;
     private BlockingQueue<Map<String, JSONArray>> dataQueue;
+    private BlockingQueue<Map<String, JSONArray>> resultQueue;
     private Node targetGraph;
+    private Map<String, Integer> urlToNum = new HashMap();
 
     @Override
     public IRI getTaskIri() {
@@ -38,6 +35,11 @@ public class UnweightedShortestPathTask implements UninitialisedDataQueueTask {
     @Override
     public void setStringMapQueue(BlockingQueue<Map<String, JSONArray>> queue) {
         this.dataQueue = queue;
+    }
+
+    @Override
+    public void setResultQueue(BlockingQueue<Map<String, JSONArray>> queue) {
+        this.resultQueue = queue;
     }
 
     @Override
@@ -63,34 +65,26 @@ public class UnweightedShortestPathTask implements UninitialisedDataQueueTask {
                     // get data
                     Map<String, JSONArray> map = this.dataQueue.take();
                     JSONArray data = map.get(this.taskIri.toString());
+                    String srcIri = (String) map.get(GraphInferenceAgent.KEY_SRC_IRI).get(0);
+                    String dstIri = (String) map.get(GraphInferenceAgent.KEY_DST_IRI).get(0);
 
                     // convert to jung graph
                     Graph graph = createGraph(data);
 
-                    // execute algo
-                    ArrayList<RDFNode> vertices = (ArrayList<RDFNode>) graph.getVertices().stream().collect(Collectors.toList());
-                    int total = vertices.size();
-                    int count = 1;
-                    int fileNum = 0;
-
-                    UnweightedShortestPath<RDFNode, Statement> shortestPath = new UnweightedShortestPath<>(graph);
-
-                    List<String[]> dataContent = new ArrayList<>();
-                    String[] header = {"source", "target", "shortest path", "edge1", "edge2", "edge3", "edge4"}; //@TODO: max length of shortest path hardcoded as 4
-                    dataContent.add(header);
-                    for (RDFNode source : vertices) {
-                        System.out.println("Computing shortest path for node " + source.toString() + ", " + count + "/" + total);
-                        computeShortestPath(graph, shortestPath, source, dataContent);
-                        if (count % 500 == 0 || count == total) {
-                            String path = "" + fileNum + ".csv";
-                            if (writeCsv(new File(path), dataContent)) {
-                                dataContent.clear();
-                                dataContent.add(header);
-                                fileNum++;
-                            }
-                        }
-                        count++;
+                    //get shortest path score
+                    UnweightedShortestPath<Integer, int[]> shortestPath = new UnweightedShortestPath<>(graph);
+                    Number distance = shortestPath.getDistance(urlToNum.get(srcIri), urlToNum.get(dstIri));
+                    if (distance == null) {
+                        distance = -1;
                     }
+
+                    //put data result back on the queue for the agent to pick up
+                    Map<String, JSONArray> result = new HashMap<>();
+                    result.put(this.taskIri.toString(), new JSONArray().put(srcIri).put(dstIri).put(distance));
+                    resultQueue.put(result);
+
+                    //save result into KG
+                    storeResults(srcIri, dstIri, (Integer) distance);
                 } catch (Exception e) {
                     throw new JPSRuntimeException(e);
                 } finally {
@@ -100,162 +94,115 @@ public class UnweightedShortestPathTask implements UninitialisedDataQueueTask {
         }
     }
 
-    public Boolean writeCsv(File outputCSV, List<String[]> dataContent) {
-        try (CSVWriter writer = new CSVWriter(new FileWriter(outputCSV.toString()))) {
-            System.out.println("Writing csv to " + outputCSV.getAbsolutePath());
-            writer.writeAll(dataContent);
-        } catch (IOException e) {
-            throw new JPSRuntimeException("Writing csv failed");
-        }
-        return true;
-    }
+    /**
+     * Creates compressed graph out of array containing S-P-O SPARQL query results.
+     * All the elements of the array are mapped to integers and each array of integers corresponding
+     * to each statement is added to the resulting graph as an edge betwee integers corresponding to
+     * S & P elements.
+     *
+     * @param array SPARQL results.
+     * @return Graph integers mapped to the input array elements.
+     */
+    public UndirectedSparseGraph createGraph(JSONArray array) {
 
-    public void computeShortestPath(Graph graph, UnweightedShortestPath<RDFNode, Statement> shortestPath, RDFNode source, List<String[]> dataContent) {
-        Map<RDFNode, Number> distMap = shortestPath.getDistanceMap(source);
-        for (RDFNode target : distMap.keySet()) {
-            List<Statement> list = ShortestPathUtils.getPath(graph, shortestPath, source, target);
-            String[] row = new String[7]; //@TODO: max length of shortest path hardcoded as 4
-            row[0] = source.toString();
-            row[1] = target.toString();
-            row[2] = distMap.get(target).toString();
-            for (int i = 0; i < list.size(); i++) {
-                row[i + 3] = list.get(i).toString();
-            }
-            dataContent.add(row);
-        }
-    }
+        UndirectedSparseGraph graph = new UndirectedSparseGraph();
 
-    public Graph<RDFNode, Statement> createGraph(JSONArray array) {
-        Model model = ModelFactory.createDefaultModel();
-        List<Statement> list = new ArrayList<>();
+        int num = 1;
 
         for (Object data : array) {
             JSONObject obj = (JSONObject) data;
-            list.add(model.createStatement(ResourceFactory.createResource(obj.getString("s")),
-                    ResourceFactory.createProperty(obj.getString("p")),
-                    ResourceFactory.createResource(obj.getString("o"))));
-        }
-
-        model.add(list);
-        return new JenaJungGraph(model);
-    }
-
-    // main method to run analysis on csv files
-    public static void main(String[] args) {
-        long start = System.currentTimeMillis();
-        UnweightedShortestPathTask task = new UnweightedShortestPathTask();
-        String dirPath = ""; // replace with path to dir
-
-        // read csv
-        File dir = new File(dirPath);
-        File[] files = dir.listFiles();
-
-        // count the distribution of shortest path lengths
-        HashMap<Integer, Integer> lengthCount = new HashMap<>(); // key -> length of shortest path, value -> occurrence
-        // count the distribution of edges
-        HashMap<String, Integer> edgeDistributionCount = new HashMap<>(); // key -> statement string, value -> occurrence
-        // count the distribution of target vertices
-        HashMap<String, HashMap<Integer, Integer>> targetDistributionCount = new HashMap<>(); // key -> target vertex string, value -> map of shortest path length, occurrence
-        // count the distribution of source vertices
-        HashMap<String, HashMap<Integer, Integer>> sourceDistributionCount = new HashMap<>(); // key -> source vertex string, value -> map of shortest path length, occurrence
-
-        // loop through
-        for (File file : files) {
-            if (file.isDirectory()) continue;
-            try (CSVReader reader = new CSVReader(new FileReader(file.getAbsolutePath()))) {
-                System.out.println("process: " + file.getAbsolutePath());
-                String[] csvHeader = reader.readNext();
-                List<String[]> fileData = reader.readAll();
-                for (int i = 0; i < fileData.size(); i++) {
-                    String[] row = fileData.get(i);
-
-                    // get length count
-                    int newLengthCount = lengthCount.getOrDefault(Integer.valueOf(row[2]), 0) + 1;
-                    lengthCount.put(Integer.valueOf(row[2]), newLengthCount);
-
-                    if (Integer.valueOf(row[2]) == 0) {
-                        continue;
-                    }
-
-                    // get edge count
-                    for (int j = 3; j <= 6; j++) {
-                        if (row[j].isEmpty()) continue;
-                        int newEdgeCount = edgeDistributionCount.getOrDefault(row[j], 0) + 1;
-                        edgeDistributionCount.put(row[j], newEdgeCount);
-                    }
-
-                    // get target count
-                    String target = row[1];
-                    String length = row[2];
-                    if (targetDistributionCount.containsKey(target)) {
-                        HashMap<Integer, Integer> map = targetDistributionCount.get(target);
-                        int newTargetCount = map.getOrDefault(Integer.valueOf(length), 0) + 1;
-                        map.put(Integer.valueOf(length), newTargetCount);
-                    } else {
-                        HashMap<Integer, Integer> map = new HashMap<>();
-                        map.put(Integer.valueOf(length), 1);
-                        targetDistributionCount.put(target, map);
-                    }
-
-                    // get source count
-                    String source = row[0];
-                    if (sourceDistributionCount.containsKey(source)) {
-                        HashMap<Integer, Integer> map = sourceDistributionCount.get(source);
-                        int newSourceCount = map.getOrDefault(Integer.valueOf(length), 0) + 1;
-                        map.put(Integer.valueOf(length), newSourceCount);
-                    } else {
-                        HashMap<Integer, Integer> map = new HashMap<>();
-                        map.put(Integer.valueOf(length), 1);
-                        sourceDistributionCount.put(source, map);
-                    }
-                }
-            } catch (IOException | CsvException e) {
-                e.printStackTrace();
+            String s = obj.getString("s");
+            String p = obj.getString("p");
+            String o = obj.getString("o");
+            int sN = num++;
+            int pN = num++;
+            int oN = num++;
+            //map URLs to integers to reduce graph size
+            if (urlToNum.containsKey(s)) {
+                sN = urlToNum.get(s);
+            } else {
+                urlToNum.put(s, sN);
             }
+            if (urlToNum.containsKey(p)) {
+                pN = urlToNum.get(p);
+            } else {
+                urlToNum.put(p, pN);
+            }
+            if (urlToNum.containsKey(o)) {
+                oN = urlToNum.get(o);
+            } else {
+                urlToNum.put(o, oN);
+            }
+
+            graph.addEdge(new int[]{sN, pN, oN}, sN, oN);
         }
 
-        for (int len : lengthCount.keySet()) {
-            System.out.println(len + ": " + lengthCount.get(len));
-        }
-
-        ArrayList<String[]> edgeData = new ArrayList<>();
-        String[] header = {"edge", "count"};
-        edgeData.add(header);
-        for (String key : edgeDistributionCount.keySet()) {
-            String[] row = {key, edgeDistributionCount.get(key).toString()};
-            edgeData.add(row);
-        }
-        task.writeCsv(new File(dirPath + "\\number of times each edge appears on a shortest path.csv"), edgeData);
-
-        ArrayList<String[]> targetData = new ArrayList<>();
-        String[] targetHeader = {"target", "0", "1", "2", "3", "4"}; //@TODO: max length of shortest path hardcoded as 4
-        targetData.add(targetHeader);
-        for (String key : targetDistributionCount.keySet()) {
-            HashMap<Integer, Integer> map = targetDistributionCount.get(key);
-            String[] row = {key, map.getOrDefault(0, 0).toString(),
-                    map.getOrDefault(1, 0).toString(),
-                    map.getOrDefault(2, 0).toString(),
-                    map.getOrDefault(3, 0).toString(),
-                    map.getOrDefault(4, 0).toString()};
-            targetData.add(row);
-        }
-        task.writeCsv(new File(dirPath + "\\shortest path length to each target.csv"), targetData);
-
-        ArrayList<String[]> sourceData = new ArrayList<>();
-        String[] sourceHeader = {"source", "0", "1", "2", "3", "4"}; //@TODO: max length of shortest path hardcoded as 4
-        sourceData.add(sourceHeader);
-        for (String key : sourceDistributionCount.keySet()) {
-            HashMap<Integer, Integer> map = sourceDistributionCount.get(key);
-            String[] row = {key, map.getOrDefault(0, 0).toString(),
-                    map.getOrDefault(1, 0).toString(),
-                    map.getOrDefault(2, 0).toString(),
-                    map.getOrDefault(3, 0).toString(),
-                    map.getOrDefault(4, 0).toString()};
-            sourceData.add(row);
-        }
-        task.writeCsv(new File(dirPath + "\\shortest path length from each source.csv"), sourceData);
-
-        long end = System.currentTimeMillis();
-        System.out.println("Analysis took " + (end - start) / 1000 + " s");
+        return graph;
     }
+
+    /**
+     *
+     * Stores inferred result in the knowledge graph using AccessAgent
+     *
+     * @param srcIri object of the sp algorithm inference
+     * @param dstIri target of the sp algorithm inference
+     * @param distance value of the sp algorithm inference
+     */
+    private void storeResults(String srcIri, String dstIri, int distance) {
+        UpdateBuilder ub = prepareUpdateBuilder();
+        prepareUpdate(ub, srcIri, dstIri, distance);
+        persistUpdate(ub);
+    }
+
+    /**
+     * Prepares 4 insert s-p-o statements:
+     * (1) id hasInferenceObject srcIri
+     * (2) id hasInferenceAlgorithm UnweightedShortestPathAlgorithm
+     * (3) id hasInferredValue distance
+     * (4) id hasInferredValue dstIri
+     *
+     * @param srcIri object of the sp algorithm inference
+     * @param dstIri target of the sp algorithm inference
+     * @param distance value of the sp algorithm inference
+     */
+    private void prepareUpdate(UpdateBuilder ub, String srcIri, String dstIri, int distance) {
+        String pfix = GraphInferenceAgent.ONINF_PREFIX;
+        Node id = NodeFactory.createURI(targetGraph.getURI() + UUID.randomUUID());
+        ub.addInsert(targetGraph, id, pfix + ":" + GraphInferenceAgent.ONINT_P_INOBJ,
+            NodeFactory.createURI(srcIri));
+        ub.addInsert(targetGraph, id, pfix + ":" + GraphInferenceAgent.ONINT_P_INALG,
+            NodeFactory.createURI(GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.ONINT_C_USPALG));
+        ub.addInsert(targetGraph, id, pfix + ":" + GraphInferenceAgent.ONINT_P_INVAL,
+            NodeFactory.createLiteral(String.valueOf(distance), XSDDatatype.XSDinteger));
+        ub.addInsert(targetGraph, id, pfix + ":" + GraphInferenceAgent.ONINT_P_INVAL,
+            NodeFactory.createURI(dstIri));
+    }
+
+    /**
+     * Creates UpdateBuilder and adds OntoInter prefix into it.
+     *
+     * @return update builder with prefix.
+     */
+    private UpdateBuilder prepareUpdateBuilder() {
+        UpdateBuilder ub = new UpdateBuilder();
+        ub.addPrefix(GraphInferenceAgent.ONINF_PREFIX, GraphInferenceAgent.ONINF_SCHEMA);
+
+        return ub;
+    }
+
+    /**
+     * Stores given UpdateBuilder contents in the knowledge graph via access agent and returns fresh
+     * builder with prefix after that.
+     *
+     * @param ub UpdateBuilder with statements to store in the knowledge graph
+     * @return fresh update builder.
+     */
+    private UpdateBuilder persistUpdate(UpdateBuilder ub) {
+        AccessAgentCaller.updateStore(ResourceBundle.getBundle("config").getString("uri.route"),
+            ub.build().toString());
+        ub = prepareUpdateBuilder();
+
+        return ub;
+    }
+
 }
