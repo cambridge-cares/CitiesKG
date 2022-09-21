@@ -46,9 +46,9 @@ function appendElement(line, predicate, element_type, dropdown_type){
 
 function editSentenceEnding(zone, sentence, final_sentence, zoning_case){
 	if(Object.entries(zone).length > 1) {
-		final_sentence = sentence.slice(0, -6) + zoning_case +"s?";
+		final_sentence = sentence.slice(0, -5) + zoning_case +"s?";
 	} else {
-		final_sentence = sentence.slice(0, -6) + zoning_case + "?";
+		final_sentence = sentence.slice(0, -5) + zoning_case + "?";
 	}
 	return final_sentence;
 }
@@ -57,33 +57,32 @@ function processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGF
 	if(programme_bool) {
 		for (const [programme, programmeGFAvalue] of Object.entries(programmes)) {
 			if (programmeGFA_bool) {
-				sentence += programmeGFAvalue + sqm + " or more of " + "<b>" + programme + "</b>" + ", and ";
+				sentence += programmeGFAvalue + sqm + " or more of " + "<b>" + programme + "</b>" + " and ";
 			} else {
-				sentence +=  "<b>" + programme + "</b>" + ", and ";
+				sentence +=  "<b>" + programme + "</b>" + " and ";
 			}
 		}
 		final_sentence = editSentenceEnding(programmes, sentence, final_sentence, " programme");
 	} else if (use_bool) {
 		for (const [use, useGFAvalue] of Object.entries(uses)) {
 			if (useGFA_bool) {
-				sentence += useGFAvalue + sqm + " or more of " + "<b>" + use + "</b>"+ ", and ";
+				sentence += useGFAvalue + sqm + " or more of " + "<b>" + use + "</b>"+ " and ";
 			} else {
-				sentence += "<b>" + use + "</b>"+ ", and ";
+				sentence += "<b>" + use + "</b>"+ " and ";
 			}
 		}
 		final_sentence = editSentenceEnding(uses, sentence, final_sentence, " use");
 	} else {
-		final_sentence = "Where could I build...";
+		final_sentence = "Show me plots that could allow...";
 	}
 	return final_sentence;
 }
 
 function getQuerySentence(){
-	var sentence = "Where could I build...";
-	var sentence_ormore = "Where could I build ";
-	var sentence_noGFA = "Where could I build " ;
+	var sentence = "Show me plots that could allow...";
+	var final_sentence = 'Show me plots that could allow...';
+	var sentence_ormore = "Show me plots that could allow ";
 	var sqm = "sqm";
-	var final_sentence = 'Where could I build...';
 	document.getElementsByClassName('querySentence')[0].textContent = final_sentence;
 
 	var inputs = document.getElementsByClassName('text_gfa');
@@ -120,22 +119,21 @@ function getQuerySentence(){
 	if (!(totalGFA_input === '')) {
 		if (programme_bool || use_bool) {
 			if(programmeGFA_bool || useGFA_bool) {
-				sentence = sentence_noGFA + totalGFA_input + sqm + " development with ";
+				sentence = sentence_ormore + totalGFA_input + sqm + " development, combining ";
 				final_sentence = processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm, sentence, programmes, uses, final_sentence);
 			}
 			else {
-				sentence = sentence_noGFA + totalGFA_input + sqm + " development with ";
+				sentence = sentence_ormore + totalGFA_input + sqm + " development, combining ";
 				final_sentence = processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm, sentence, programmes, uses, final_sentence);
 			}
 		} else {
 			final_sentence = sentence_ormore + totalGFA_input + sqm + " or more of something?";
 		}
 	} else {
+		sentence = sentence_ormore;
 		if(programmeGFA_bool || useGFA_bool){
-			sentence = sentence_ormore;
 			final_sentence = processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm,sentence, programmes, uses, final_sentence);
 		} else {
-			sentence = sentence_noGFA;
 			final_sentence = final_sentence = processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm, sentence, programmes, uses, final_sentence);
 		}
 	}
@@ -272,6 +270,11 @@ function showChooseDevType(){
 	//console.log(event.target.id + "is clicked");
 	selectedDevType = developmentType.value;
 	switch (developmentType.value){
+		case "TotalGFA":
+			document.getElementById("UsesBox").style.display="None";
+			document.getElementById("ProgrammesBox").style.display="None";
+			document.getElementById("GfaBox").style.display="block";
+			break;
 		case "OntozoningUses":
 			document.getElementById("UsesBox").style.display="block";
 			document.getElementById("ProgrammesBox").style.display="None";
@@ -292,11 +295,11 @@ function showChooseDevType(){
 			document.getElementById("ProgrammesBox").style.display="block";
 			document.getElementById("GfaBox").style.display="block";
 			break;
-		case "NewDevelopment":
+		case "ViewAll":
 			document.getElementById("UsesBox").style.display="block";
 			document.getElementById("ProgrammesBox").style.display="block";
 			document.getElementById("GfaBox").style.display="block";
-		case "ViewAll":
+			break;
 			pinHighlightObjects();
 	}
 
