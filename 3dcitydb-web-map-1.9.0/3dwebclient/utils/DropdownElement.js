@@ -193,6 +193,9 @@ function getInputParams() {
 	var text_inputs = document.getElementsByClassName('text_gfa');
 	var onto_use = {};
 	var onto_programme = {};
+	var max_cap = document.getElementById('max_cap');
+	var min_cap =  document.getElementById('min_cap');
+
 
 	for (let i = 0; i < text_inputs.length; i++) {
 		var text_item = text_inputs.item(i).firstChild;
@@ -215,8 +218,11 @@ function getInputParams() {
 	if (Object.keys(onto_programme).length > 0) {
 		parameters[PROGRAMME_PREDICATE] = onto_programme;
 	}
+	parameters['min_cap'] = min_cap.checked;
+	parameters['max_cap'] = max_cap.checked;
+
 	input_parameters = parameters;
-	 if ((Object.keys(onto_use).length != 0) && (Object.keys(onto_programme).length != 0)) {
+	 if ((Object.keys(onto_use).length !== 0) && (Object.keys(onto_programme).length !== 0)) {
 		 throwNotification();
 	 }
 	console.log(input_parameters);

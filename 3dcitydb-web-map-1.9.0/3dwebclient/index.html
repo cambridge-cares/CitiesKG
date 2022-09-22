@@ -221,7 +221,7 @@
             }
 			
             #programmeFinder_toolbox {
-                width: 1080px;
+                width: 1300px;
                 height: 55px;
                 display: none;
                 background: rgba(42, 42, 42, 0.5);
@@ -241,6 +241,15 @@
 
             .checkbox{
                 display:inline-block;
+                cursor: pointer;
+                line-height: 14px;
+                width: 20px;
+                vertical-align: top;
+            }
+
+            .cap_checkbox{
+                display:inline-block;
+                cursor: pointer;
                 line-height: 14px;
                 width: 20px;
                 vertical-align: top;
@@ -250,6 +259,12 @@
                 display:inline-block;
                 line-height: 14px;
                 width: 200px;
+                vertical-align: top;
+            }
+            .cap_gfa{
+                display:inline-block;
+                line-height: 14px;
+                width: 120px;
                 vertical-align: top;
             }
 
@@ -429,7 +444,7 @@
                     <div id="developmentBox">
                         <div><label>Query Type</label></div>
                         <select id="developmentType" class="cesium-button" onchange="showChooseDevType()">
-                            <option value="ViewAll">Search plots by...</option>
+                            <option value="ViewAll">Search plots...</option>
                             <option value="TotalGFA">by allowable GFA</option>
                             <option value="OntozoningUses">by allowable land uses</option>
                             <option value="OntozoingProgrammes">by allowable programmes</option>
@@ -442,7 +457,7 @@
                         <div><label>Uses</label></div>
                         <div>
                             <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
-                                <div style="width:240px" class="cesium-button" title ="Land use is a high-level term for the set of activities and developments that are allowed in a certain zoning type">Choose Use<div id='use_arrow' class="arrow down"></div></div>
+                                <div style="width:240px" class="cesium-button" title ="Land use is a high-level term for the set of activities &#010;and developments that are allowed in a certain zoning type">Choose Use<div id='use_arrow' class="arrow down"></div></div>
                             </div>
                             <div id="choose_uses" class="finder_dynamic_box" ></div>
                         </div>
@@ -451,7 +466,7 @@
                         <div><label>Programmes</label></div>
                         <div>
                             <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
-                                <div style="width:240px" class="cesium-button" title="Programme is a term for specific activities and developments that may be allowed across many zoning types">Choose Programme<div id='programme_arrow' class="arrow down"></div></div>
+                                <div style="width:240px" class="cesium-button" title="Programme is a term for specific activities and developments &#010;that may be allowed across many zoning types">Choose Programme<div id='programme_arrow' class="arrow down"></div></div>
                             </div>
                             <div id="choose_programmes" class="finder_dynamic_box" onblur="showChooseProgrammes()"></div>
                         </div>
@@ -460,7 +475,7 @@
                         <div><label>Gross Floor Area (GFA)</label></div>
                         <div>
                             <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
-                                <div style="width:240px" class="cesium-button" title="Gross Floor Area is a term defining the total floor area contained within a building’s outer edges that excludes empty spaces">Assign GFA(s)<div id='gfa_arrow' class="arrow down"></div></div>
+                                <div style="width:240px" class="cesium-button" title="Gross Floor Area is a term defining the total floor area contained within &#010; a building’s outer edges that excludes empty spaces">Assign GFA(s)<div id='gfa_arrow' class="arrow down"></div></div>
                             </div>
                             <div id="assignGFA" class="finder_dynamic_box" onchange="getQuerySentence()">
                                 <div>
@@ -470,6 +485,13 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    <div id='CapBox' style="margin-left: 20px">
+                        <div class='cap_gfa' style='width: 120px'>Cap GFA results to:</div>
+                        <div class='cap_gfa' style='width: 80px'> 10 largest</div>
+                        <div class='cap_checkbox'><input type='checkbox' id="max_cap"></div>
+                        <div class='cap_gfa' style='width: 80px'>10 smallest</div>
+                        <div class='cap_checkbox'><input type='checkbox' id="min_cap"></div>
                     </div>
                     <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getInputParams()">Submit</button>
                     <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="removeDataSource()">Reset</button>
