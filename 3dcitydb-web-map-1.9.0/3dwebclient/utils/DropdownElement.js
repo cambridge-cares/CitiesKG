@@ -190,11 +190,36 @@ function removePrefix(result){
 	element = element.match(/[A-Z][a-z]+|[0-9]+/g).join(" ")
 	return element
 }
+
+function getExampleParams(example_query) {
+	var query_1 = {};
+	var query_2 = {};
+	var query_3 = {};
+	var input_parameters;
+
+	switch (example_query) {
+		case "query_1":
+			input_parameters = query_1;
+			break;
+		case "query_2":
+			input_parameters = query_2;
+			break;
+		case "query_3":
+			input_parameters = query_3;
+			break;
+	}
+	getValidPlots();
+}
+
 function getInputParams() {
+
 	var parameters = {};
 	var text_inputs = document.getElementsByClassName('text_gfa');
 	var onto_use = {};
 	var onto_programme = {};
+	var max_cap = document.getElementById('max_cap');
+	var min_cap =  document.getElementById('min_cap');
+
 
 	for (let i = 0; i < text_inputs.length; i++) {
 		var text_item = text_inputs.item(i).firstChild;
@@ -217,8 +242,11 @@ function getInputParams() {
 	if (Object.keys(onto_programme).length > 0) {
 		parameters[PROGRAMME_PREDICATE] = onto_programme;
 	}
+	parameters['min_cap'] = min_cap.checked;
+	parameters['max_cap'] = max_cap.checked;
+
 	input_parameters = parameters;
-	 if ((Object.keys(onto_use).length != 0) && (Object.keys(onto_programme).length != 0)) {
+	 if ((Object.keys(onto_use).length !== 0) && (Object.keys(onto_programme).length !== 0)) {
 		 throwNotification();
 	 }
 	console.log(input_parameters);
