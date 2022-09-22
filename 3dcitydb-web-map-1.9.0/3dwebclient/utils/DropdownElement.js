@@ -15,8 +15,10 @@ function buildQuery(predicate){
 function getDropdownElements(predicate, element_type, dropdown_type) {
 	$.ajax({
 		url:"http://www.theworldavatar.com:83/access-agent/access",
+		//url:"http://localhost:48888/access-agent/access",
 		type: 'POST',
 		data: JSON.stringify({targetresourceiri:CONTEXT + "-" + CITY , sparqlquery: buildQuery(predicate)}),
+		//data: JSON.stringify({targetresourceiri:"http://localhost:48888/test" , sparqlquery: buildQuery(predicate)}),
 		dataType: 'json',
 		contentType: 'application/json',
 		success: function(data, status_message, xhr){
