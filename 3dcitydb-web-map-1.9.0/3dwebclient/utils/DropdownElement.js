@@ -188,7 +188,29 @@ function removePrefix(result){
 	element = element.match(/[A-Z][a-z]+|[0-9]+/g).join(" ")
 	return element
 }
+
+function getExampleParams(example_query) {
+	var query_1 = {};
+	var query_2 = {};
+	var query_3 = {};
+	var input_parameters;
+
+	switch (example_query) {
+		case "query_1":
+			input_parameters = query_1;
+			break;
+		case "query_2":
+			input_parameters = query_2;
+			break;
+		case "query_3":
+			input_parameters = query_3;
+			break;
+	}
+	getValidPlots();
+}
+
 function getInputParams() {
+
 	var parameters = {};
 	var text_inputs = document.getElementsByClassName('text_gfa');
 	var onto_use = {};
