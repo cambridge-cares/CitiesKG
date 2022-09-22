@@ -55,6 +55,7 @@ public class OntologyInferenceAgent extends InferenceAgent {
         //(3) Pass target data (2) to the task (1) and run the task
         Map<String,JSONArray> taskData = new HashMap<>();
         taskData.put(taskIRI, targetData);
+        taskData.put(KEY_ONTO_IRI, new JSONArray().put(tBoxGraph));
 
         dataQueue.put(taskData);
         taskExecutor.execute(task);
