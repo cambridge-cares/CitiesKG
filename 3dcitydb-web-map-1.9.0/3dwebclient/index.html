@@ -305,6 +305,22 @@
                 color: #fff;
             }
 
+            .querySentence {
+                position: absolute;
+                line-height: 20px;
+                vertical-align: center;
+                height:20px;
+                left: 220px;
+                font-size: small;
+                width: max-content;
+                margin: 2px;
+                padding: 3px 3px;
+                border: 2px rgb(255, 255, 255) solid;
+                background: rgb(255, 255, 255);
+                border-radius: 4px;
+                color: rgb(42, 42, 42);
+            }
+
             .mark{
                 display:inline-block;
                 padding: 5px;
@@ -388,8 +404,8 @@
                 padding: 5px 10px;
                 transform: translate(0%, -50%);
             }
-
             .close:hover {background: #bbb;}
+
         </style>
     </head>
 
@@ -401,6 +417,7 @@
         <img id = "citydb_loadingTilesInspector" src="../theme/img/ajax-loader.gif" style="display: none; position: absolute; bottom: 56px; right: 7px; width:30px;height:30px;">
 
 		    <div id="ProgrammaticPlotFinder">
+            <div class="querySentence" id="querySentence">Show me plots that could allow...</div> <!-- generated query sentence-->
             <div onclick="showProgrammeFinder()"> <!--Ayda: showProgrammeFinder() Shiyiing: highlightMultipleObjects(), showResultWindow()-->
                 <select class="cesium-button">
                     <option hidden="hidden">Programmatic Plot Finder</option>
@@ -412,19 +429,20 @@
                     <div id="developmentBox">
                         <div><label>Query Type</label></div>
                         <select id="developmentType" class="cesium-button" onchange="showChooseDevType()">
-                            <option value="" selected disabled hidden>Choose Query Type</option>
-                            <option value="OntozoningUses">Ontozoning (Uses)</option>
-                            <option value="OntozoingProgrammes">Ontozoning (Programmes)</option>
-                            <option value="GfaUses">GFA (Uses)</option>
-                            <option value="GfaProgrammes">GFA (Programmes)</option>
-                            <option value="">and more</option>
+                            <option value="ViewAll">Search plots by...</option>
+                            <option value="TotalGFA">by allowable GFA</option>
+                            <option value="OntozoningUses">by allowable land uses</option>
+                            <option value="OntozoingProgrammes">by allowable programmes</option>
+                            <option value="GfaUses">by allowable GFA (per land use)</option>
+                            <option value="GfaProgrammes">by allowable GFA (per programme)</option>
+                            <option value="ViewAll">enable all search types (*)</option>
                         </select>
                     </div>
                     <div id="UsesBox">
                         <div><label>Uses</label></div>
                         <div>
                             <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
-                                <div style="width:240px" class="cesium-button">Choose Use<div  id='use_arrow' class="arrow down"></div></div>
+                                <div style="width:240px" class="cesium-button" title ="Land use is a high-level term for the set of activities and developments that are allowed in a certain zoning type">Choose Use<div id='use_arrow' class="arrow down"></div></div>
                             </div>
                             <div id="choose_uses" class="finder_dynamic_box" ></div>
                         </div>
@@ -433,7 +451,7 @@
                         <div><label>Programmes</label></div>
                         <div>
                             <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
-                                <div style="width:240px" class="cesium-button">Choose Programme<div id='programme_arrow' class="arrow down"></div></div>
+                                <div style="width:240px" class="cesium-button" title="Programme is a term for specific activities and developments that may be allowed across many zoning types">Choose Programme<div id='programme_arrow' class="arrow down"></div></div>
                             </div>
                             <div id="choose_programmes" class="finder_dynamic_box" onblur="showChooseProgrammes()"></div>
                         </div>
@@ -442,9 +460,9 @@
                         <div><label>Gross Floor Area (GFA)</label></div>
                         <div>
                             <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
-                                <div style="width:240px" class="cesium-button">Assign GFA(s)<div id='gfa_arrow' class="arrow down"></div></div>
+                                <div style="width:240px" class="cesium-button" title="Gross Floor Area is a term defining the total floor area contained within a building’s outer edges that excludes empty spaces">Assign GFA(s)<div id='gfa_arrow' class="arrow down"></div></div>
                             </div>
-                            <div id="assignGFA" class="finder_dynamic_box">
+                            <div id="assignGFA" class="finder_dynamic_box" onchange="getQuerySentence()">
                                 <div>
                                     <div class='text_gfa'>Total Gross Floor Area (GFA)</div>
                                     <div class='text_input' style="width: 80px"><input id="totalGFA" type='text' maxlength="10" size="3"></div>
@@ -457,7 +475,6 @@
                 </div>
             </div>
         </div>
-
         <div id="uiMenu">
             <div onclick="showToolbox()">
                 <select class="cesium-button">
@@ -809,7 +826,7 @@
         </div>
         <div id="splashwindow_iframe" class="splash-wrapper">
             <div class="splash-iframe-container">
-                <iframe id="splashwindow_iframe_content" src="" frameborder="0"></iframe>
+                <iframe id="splashwindow_iframe_content" src=""></iframe>
             </div>
         </div>
 
