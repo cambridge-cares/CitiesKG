@@ -247,6 +247,18 @@
                 vertical-align: top;
             }
 
+            .cap_box{
+                width: 120px;
+                height: 28px;
+                position: relative;
+                margin-left: 10px;
+                margin-top: 2px;
+                margin-right: 10px;
+                color: #fff;
+                font-family: sans-serif;
+                font-size: 9pt;
+                vertical-align: top;
+            }
             .cap_checkbox{
                 display:inline-block;
                 cursor: pointer;
@@ -487,14 +499,19 @@
                             </div>
                         </div>
                     </div>
-                    <div id='CapBox' style="margin-left: 20px">
-                        <div class='cap_gfa' style='width: 120px'>Cap GFA results to:</div>
-                        <div class='cap_gfa' style='width: 80px'> 10 largest</div>
-                        <div class='cap_checkbox'><input type='checkbox' id="max_cap"></div>
-                        <div class='cap_gfa' style='width: 80px'>10 smallest</div>
-                        <div class='cap_checkbox'><input type='checkbox' id="min_cap"></div>
+                    <div id='CapBox'>
+                        <div style="margin-left: 10px"><label>Cap GFA results to:</label></div>
+                        <div class="cap_box">
+                            <div class='cap_gfa' style='width: 80px'> 10 largest</div>
+                            <div class='cap_checkbox'><input type='checkbox' id="max_cap"></div>
+                            <div class='cap_gfa' style='width: 80px'>10 smallest</div>
+                            <div class='cap_checkbox'><input type='checkbox' id="min_cap"></div>
+                        </div>
                     </div>
                     <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getInputParams()">Submit</button>
+                    <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams('query_1')">query_1</button>
+                    <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams('query_2')">query_2</button>
+                    <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams('query_3')">query_3</button>
                 </div>
             </div>
         </div>

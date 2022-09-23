@@ -192,9 +192,9 @@ function removePrefix(result){
 }
 
 function getExampleParams(example_query) {
-	var query_1 = {};
-	var query_2 = {};
-	var query_3 = {};
+	var query_1 = {TotalGFA:'', allowsProgramme: {Clinic: '', Flat: ''}, min_cap: false, max_cap: false} // query example by programmes or uses
+	var query_2 = {TotalGFA:'', allowsProgramme: {Clinic: '300', Flat: '2000'}, min_cap: false, max_cap: false}; // query example by allowed GFA for programmes or uses
+	var query_3 = {TotalGFA:'10000', allowsProgramme: {Library: ''}, min_cap: false, max_cap: true}; // query example with total allowed area (10 largest)
 	var input_parameters;
 
 	switch (example_query) {
@@ -208,6 +208,7 @@ function getExampleParams(example_query) {
 			input_parameters = query_3;
 			break;
 	}
+	console.log(input_parameters);
 	getValidPlots();
 }
 
@@ -293,7 +294,6 @@ function throwNotification() {
 }
 
 function showChooseDevType(){
-
 	var developmentType = document.getElementById("developmentType");
 	// Shiying: Add a cleaning function, clean the gfa dropdown and unselect everything
 	resetAllInputs();
@@ -304,31 +304,37 @@ function showChooseDevType(){
 			document.getElementById("UsesBox").style.display="None";
 			document.getElementById("ProgrammesBox").style.display="None";
 			document.getElementById("GfaBox").style.display="block";
+			document.getElementById('CapBox').style.display='block';
 			break;
 		case "OntozoningUses":
 			document.getElementById("UsesBox").style.display="block";
 			document.getElementById("ProgrammesBox").style.display="None";
 			document.getElementById("GfaBox").style.display="None";
+			document.getElementById('CapBox').style.display='None';
 			break;
 		case "OntozoingProgrammes":
 			document.getElementById("UsesBox").style.display="None";
 			document.getElementById("ProgrammesBox").style.display="block";
 			document.getElementById("GfaBox").style.display="None";
+			document.getElementById('CapBox').style.display='None';
 			break;
 		case "GfaUses":
 			document.getElementById("UsesBox").style.display="block";
 			document.getElementById("ProgrammesBox").style.display="None";
 			document.getElementById("GfaBox").style.display="block";
+			document.getElementById('CapBox').style.display='block';
 			break;
 		case "GfaProgrammes":
 			document.getElementById("UsesBox").style.display="None";
 			document.getElementById("ProgrammesBox").style.display="block";
 			document.getElementById("GfaBox").style.display="block";
+			document.getElementById('CapBox').style.display='block';
 			break;
 		case "ViewAll":
 			document.getElementById("UsesBox").style.display="block";
 			document.getElementById("ProgrammesBox").style.display="block";
 			document.getElementById("GfaBox").style.display="block";
+			document.getElementById('CapBox').style.display='block';
 			break;
 			pinHighlightObjects();
 	}
