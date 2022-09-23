@@ -6,12 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mockStatic;
-
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.rdf.model.Statement;
-import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -20,16 +14,13 @@ import java.util.Map;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
-import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.jena.graph.Node;
 import org.json.JSONArray;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
-import org.mockito.MockedStatic;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 import org.semanticweb.owlapi.model.IRI;
-import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
+import org.semanticweb.owlapi.model.OWLOntology;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ConsistencyCheckingTaskTest {
@@ -186,6 +177,8 @@ public class ConsistencyCheckingTaskTest {
     try {
       Method run = task.getClass().getDeclaredMethod("run");
       run.setAccessible(true);
+      Field stop = task.getClass().getDeclaredField("stop");
+      stop.setAccessible(true);
       Method isRunning = task.getClass().getDeclaredMethod("isRunning");
       isRunning.setAccessible(true);
       Method setTargetGraph = task.getClass().getDeclaredMethod("setTargetGraph", String.class);
@@ -204,10 +197,14 @@ public class ConsistencyCheckingTaskTest {
       resultQueue.setAccessible(true);
 
       Map<String, JSONArray> map = new HashMap<>();
+      //consistent ontology check
       map.put("http://www.theworldavatar.com/ontologies/OntoInfer.owl#ConsistencyCheckingTask",
-          new JSONArray("[{\"s\": \"http://www.test.com/1\", \"p\": \"rdfs:subClassOf\", \"o\": \"http://www.test.com/2\"},"
-              + "{\"s\": \"http://www.test.com/3\", \"p\": \"rdfs:subClassOf\", \"o\": \"http://www.test.com/4\"},"
-              + "{\"s\": \"http://www.test.com/1\", \"p\": \"rdfs:subClassOf\", \"o\": \"http://www.test.com/3\"}]"));
+          new JSONArray("[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/2\"},"
+              + "{\"s\": \"http://www.test.com/3\", \"p\": \"http://www.w3.org/2002/07/owl#disjointWith\", \"o\": \"http://www.test.com/2\"},"
+              + "{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/3\"}]"));
       map.put("ontologyIRI", new JSONArray("[\"http://www.test.com/onto\"]"));
       ((LinkedBlockingDeque) dataQueue.get(task)).put(map);
 
@@ -215,8 +212,30 @@ public class ConsistencyCheckingTaskTest {
       assertEquals(((Map) ((BlockingQueue) resultQueue.get(task)).take())
           .get("http://www.theworldavatar.com/ontologies/OntoInfer.owl#ConsistencyCheckingTask").toString(),
           "[\"http://www.test.com/onto : true\"]");
-      assertFalse((Boolean) isRunning.invoke(task));
 
+      assertFalse((Boolean) isRunning.invoke(task));
+      stop.set(task, false);
+
+      map = new HashMap<>();
+      //inconsistent ontology check
+      map.put("http://www.theworldavatar.com/ontologies/OntoInfer.owl#ConsistencyCheckingTask",
+          new JSONArray("[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/a\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#NamedIndividual\"},"
+              + "{\"s\": \"http://www.test.com/a\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.test.com/1\"},"
+              + "{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/2\"},"
+              + "{\"s\": \"http://www.test.com/3\", \"p\": \"http://www.w3.org/2002/07/owl#disjointWith\", \"o\": \"http://www.test.com/2\"},"
+              + "{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/3\"}]"));
+      map.put("ontologyIRI", new JSONArray("[\"http://www.test.com/onto\"]"));
+      ((LinkedBlockingDeque) dataQueue.get(task)).put(map);
+
+      run.invoke(task);
+      assertEquals(((Map) ((BlockingQueue) resultQueue.get(task)).take())
+              .get("http://www.theworldavatar.com/ontologies/OntoInfer.owl#ConsistencyCheckingTask").toString(),
+          "[\"http://www.test.com/onto : false\"]");
+
+      assertFalse((Boolean) isRunning.invoke(task));
 
     } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException | NoSuchFieldException | InterruptedException e) {
       fail();
@@ -232,12 +251,11 @@ public class ConsistencyCheckingTaskTest {
       Method createModel = task.getClass().getDeclaredMethod("createModel", JSONArray.class);
       createModel.setAccessible(true);
       JSONArray a = new JSONArray("[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.test.com/2#p\", \"o\": \"http://www.test.com/3\"}]");
-      Model m = (Model) createModel.invoke(task, a);
-      Statement s = m.createStatement(ResourceFactory.createResource("http://www.test.com/1"),
-          ResourceFactory.createProperty("http://www.test.com/2#p"),
-          ResourceFactory.createResource("http://www.test.com/3"));
-      assertEquals(m.size(), 1);
-      assertTrue(m.contains(s));
+      OWLOntology o = (OWLOntology) createModel.invoke(task, a);
+      assertEquals(o.getAxiomCount(), 1);
+      assertEquals(o.getAxioms().toArray()[0].toString(),
+          "AnnotationAssertion(<http://www.test.com/2#p> <http://www.test.com/1> <http://www.test.com/3>)");
+
     } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       fail();
     }

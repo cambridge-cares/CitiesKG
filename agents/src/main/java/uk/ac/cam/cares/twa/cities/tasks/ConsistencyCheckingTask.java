@@ -1,23 +1,23 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
-import com.hp.hpl.jena.rdf.model.Model;
+import org.coode.owlapi.rdfxml.parser.AnonymousNodeChecker;
+import org.coode.owlapi.rdfxml.parser.OWLRDFConsumer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.semanticweb.HermiT.Reasoner;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.io.StringDocumentSource;
+import org.semanticweb.owlapi.io.DefaultOntologyFormat;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.xml.sax.SAXException;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 import uk.ac.cam.cares.twa.cities.agents.InferenceAgent;
@@ -28,6 +28,22 @@ public class ConsistencyCheckingTask implements UninitialisedDataAndResultQueueT
   private BlockingQueue<Map<String, JSONArray>> dataQueue;
   private BlockingQueue<Map<String, JSONArray>> resultQueue;
   Node targetGraph;
+  AnonymousNodeChecker anonymousNodeChecker = new AnonymousNodeChecker() {
+    @Override
+    public boolean isAnonymousNode(IRI iri) {
+      return false;
+    }
+
+    @Override
+    public boolean isAnonymousNode(String s) {
+      return false;
+    }
+
+    @Override
+    public boolean isAnonymousSharedNode(String s) {
+      return false;
+    }
+  };
 
   @Override
   public IRI getTaskIri() {
@@ -70,14 +86,8 @@ public class ConsistencyCheckingTask implements UninitialisedDataAndResultQueueT
           String ontoIri = (String) map.get(InferenceAgent.KEY_ONTO_IRI).get(0);
 
           //create model
-          Model model = createModel(data);
-          OutputStream out = new ByteArrayOutputStream();
-          model.write(out, "N-TRIPLES");
-
-          //evaluate
-          OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-          OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new StringDocumentSource(out.toString()));
-          Reasoner reasoner=new Reasoner(ontology);
+          OWLOntology ontology = createModel(data);
+          Reasoner reasoner = new Reasoner(ontology);
 
           //put data result back on the queue for the agent to pick up
           Map<String, JSONArray> result = new HashMap<>();
@@ -93,17 +103,21 @@ public class ConsistencyCheckingTask implements UninitialisedDataAndResultQueueT
     }
   }
 
-  private Model createModel(JSONArray data) {
-    Model model = ModelFactory.createDefaultModel();
+  private OWLOntology createModel(JSONArray data) throws OWLOntologyCreationException, SAXException {
+    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    OWLOntology ontology = manager.createOntology();
+    OWLRDFConsumer consumer = new OWLRDFConsumer(ontology, anonymousNodeChecker , new OWLOntologyLoaderConfiguration());
+    consumer.setOntologyFormat(new DefaultOntologyFormat());
 
     for (Object triple : data) {
       JSONObject obj = (JSONObject) triple;
-      model.add(model.createStatement(ResourceFactory.createResource(obj.getString("s")),
-          ResourceFactory.createProperty(obj.getString("p")),
-          ResourceFactory.createResource(obj.getString("o"))));
+      consumer.statementWithResourceValue(obj.getString("s"),
+          obj.getString("p"), obj.getString("o"));
     }
 
-    return model;
+    consumer.endModel();
+
+    return ontology;
   }
 
 }
