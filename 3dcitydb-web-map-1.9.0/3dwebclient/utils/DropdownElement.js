@@ -192,10 +192,9 @@ function removePrefix(result){
 }
 
 function getExampleParams(example_query) {
-	var query_1 = {TotalGFA:'', allowsProgramme: {Clinic: '', Flat: ''}, min_cap: false, max_cap: false} // query example by programmes or uses
-	var query_2 = {TotalGFA:'', allowsProgramme: {Clinic: '300', Flat: '2000'}, min_cap: false, max_cap: false}; // query example by allowed GFA for programmes or uses
-	var query_3 = {TotalGFA:'10000', allowsProgramme: {Library: ''}, min_cap: false, max_cap: true}; // query example with total allowed area (10 largest)
-	var input_parameters;
+	var query_1 = {TotalGFA:'', allowsProgramme: {Clinic: '', Flat: ''}, min_cap: 'false', max_cap: 'false'}; // query example by programmes or uses
+	var query_2 = {TotalGFA:'', allowsProgramme: {Clinic: '300', Flat: '2000'}, min_cap: 'false', max_cap: 'false'}; // query example by allowed GFA for programmes or uses
+	var query_3 = {TotalGFA:'10000', allowsProgramme: {Library: ''}, min_cap: 'false', max_cap: 'true'}; // query example with total allowed area (10 largest)
 
 	switch (example_query) {
 		case "query_1":
@@ -213,7 +212,6 @@ function getExampleParams(example_query) {
 }
 
 function getInputParams() {
-
 	var parameters = {};
 	var text_inputs = document.getElementsByClassName('text_gfa');
 	var onto_use = {};
@@ -243,8 +241,8 @@ function getInputParams() {
 	if (Object.keys(onto_programme).length > 0) {
 		parameters[PROGRAMME_PREDICATE] = onto_programme;
 	}
-	parameters['min_cap'] = min_cap.checked;
-	parameters['max_cap'] = max_cap.checked;
+	parameters['min_cap'] = min_cap.checked.toString();
+	parameters['max_cap'] = max_cap.checked.toString();
 
 	input_parameters = parameters;
 	 if ((Object.keys(onto_use).length !== 0) && (Object.keys(onto_programme).length !== 0)) {

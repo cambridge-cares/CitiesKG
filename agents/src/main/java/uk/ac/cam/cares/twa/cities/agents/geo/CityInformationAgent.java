@@ -1,10 +1,17 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
+import static java.lang.Boolean.parseBoolean;
+
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.ResourceBundle;
 import java.util.Set;
 import javax.servlet.annotation.WebServlet;
@@ -12,6 +19,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import lombok.Getter;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.jena.arq.querybuilder.Order;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
@@ -64,6 +72,8 @@ public class CityInformationAgent extends JPSAgent {
   private static final String HAS_ALLOWED_GFA = "hasAllowedGFA";
   private static final String FOR_ZONING_CASE = "forZoningCase";
   private static final String TOTAL_GFA =  "TotalGFA";
+  private static final String MAX_CAP = "max_cap";
+  private static final String MIN_CAP = "min_cap";
 
   @Getter private String route;
   private boolean lazyload;
@@ -127,6 +137,9 @@ public class CityInformationAgent extends JPSAgent {
             } else if (filters.keySet().contains(ALLOWS_PROGRAMME)){
               predicate = ALLOWS_PROGRAMME;
             }
+            boolean max_cap = parseBoolean(filters.get(MAX_CAP).toString());
+            boolean min_cap = parseBoolean(filters.get(MIN_CAP).toString());
+
             HashMap<String, Double> gfas = new HashMap<>();
             if (!predicate.equals("")) {
               ArrayList<String> onto_elements = new ArrayList<>(filters.getJSONObject(predicate).keySet());
@@ -145,7 +158,7 @@ public class CityInformationAgent extends JPSAgent {
               } catch (NumberFormatException ignored) {
               }
             }
-            JSONArray filtered_objs = getFilteredObjects(predicate, gfas, total_gfa);
+            JSONArray filtered_objs = getFilteredObjects(predicate, gfas, total_gfa, min_cap, max_cap);
             response.put("filtered", filtered_objs);
             response.put("filteredCounts", countFilteredObjects(filtered_objs));
             requestParams.put(agentURL, response);
@@ -298,11 +311,12 @@ public class CityInformationAgent extends JPSAgent {
    * @param totalGFAValue defines what totalGFA value has been input by the user
    * @return list of city object ids that pass use, programme and GFA filters.
    */
-  private JSONArray getFilteredObjects (String predicate, HashMap<String, Double> inputZoneCaseGFAValues, double totalGFAValue) {
+  private JSONArray getFilteredObjects (String predicate, HashMap<String, Double> inputZoneCaseGFAValues, double totalGFAValue, boolean min_cap, boolean max_cap) {
     double sumOfinputZoneCaseGFAValues = inputZoneCaseGFAValues.values().stream().mapToDouble(Double::doubleValue).sum();
     boolean gfa_case = sumOfinputZoneCaseGFAValues > 0 | totalGFAValue > 0;
     Query query = getFilterQuery(predicate, new ArrayList<>(inputZoneCaseGFAValues.keySet()), gfa_case);
-    JSONArray filteredCityObjects = new JSONArray();
+    HashMap<String, Double> filteredCityObjects = new HashMap<>();
+    JSONArray returnedCityObjects =  new JSONArray();
     JSONArray query_result = AccessAgentCaller.queryStore(route, query.toString());
 
     if (gfa_case) {
@@ -322,46 +336,65 @@ public class CityInformationAgent extends JPSAgent {
           if (totalGFA){
             if (defaultGFA) {
               if (plotDefaultGFAValue > totalGFAValue) {
-                filteredCityObjects.put(cityObject);
+                filteredCityObjects.put(cityObject, plotDefaultGFAValue);
               }
             } else {
               if (zoneCaseGFA) {
                 if ((Collections.min(plotZoneCaseGFAValues) > sumOfinputZoneCaseGFAValues) &
                     (totalGFAValue < Collections.max(plotZoneCaseGFAValues))){
-                  filteredCityObjects.put(cityObject);
+                  filteredCityObjects.put(cityObject, Collections.max(plotZoneCaseGFAValues));
                 }
               } else {
                 if (plotZoneCaseGFAValues.stream().mapToDouble(Double::doubleValue).sum() > totalGFAValue) {
-                  filteredCityObjects.put(cityObject);
+                  filteredCityObjects.put(cityObject, plotZoneCaseGFAValues.stream().mapToDouble(Double::doubleValue).sum());
                 }
               }
             }
           } else {
             if (!defaultGFA) {
               if (Collections.min(plotZoneCaseGFAValues) > sumOfinputZoneCaseGFAValues) {
-                filteredCityObjects.put(cityObject);
+                filteredCityObjects.put(cityObject, Collections.min(plotZoneCaseGFAValues));
               }
             } else {
               if (plotDefaultGFAValue > sumOfinputZoneCaseGFAValues) {
-                filteredCityObjects.put(cityObject);
+                filteredCityObjects.put(cityObject, plotDefaultGFAValue);
               }
             }
           }
         } else {
           if (totalGFA) {
             if (Collections.max(currentCityObjectGFA.values()) > totalGFAValue) {
-              filteredCityObjects.put(cityObject);
+              filteredCityObjects.put(cityObject, Collections.max(currentCityObjectGFA.values()));
             }
           }
         }
       }
+     if (max_cap || min_cap){
+       List<Entry<String, Double>> filteredCityObjectsList = new LinkedList<>(filteredCityObjects.entrySet());
+       filteredCityObjectsList.sort((o1, o2) -> {
+         if (min_cap) {
+           return o1.getValue().compareTo(o2.getValue());
+         }
+         else {
+           return o2.getValue().compareTo(o1.getValue());
+         }
+       });
+       for (int i = 0; i < filteredCityObjectsList.size() && i < 10; i++) {
+         returnedCityObjects.put(filteredCityObjectsList.get(i).getKey());
+       }
+     }
+     else{
+       for (String filteredCityObject: filteredCityObjects.keySet()) {
+         returnedCityObjects.put(filteredCityObject);
+       }
+     }
     } else { //Case 1: Programme OR Use without GFA input.
       for (int i = 0; i < query_result.length(); i++) {
         JSONObject row = (JSONObject) query_result.get(i);
-        filteredCityObjects.put(row.get(CITY_OBJECT_ID));
+        returnedCityObjects.put(row.get(CITY_OBJECT_ID));
       }
     }
-    return filteredCityObjects;
+    return returnedCityObjects;
   }
 
   /*** Method selects the relevant GFAs for further comparison based on zoning cases.
