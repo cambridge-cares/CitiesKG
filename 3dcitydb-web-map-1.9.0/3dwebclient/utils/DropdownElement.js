@@ -264,9 +264,9 @@ function getValidPlots(){
 		success: function (data, status_message, xhr) {
 			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
 			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filteredCounts"]);
-			//showResultWindow(selectedDevType, data);
+			showResultWindow(data);
 			processFilteredObjects(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
-      //pinHighlightObjects(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
+      		//pinHighlightObjects(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
 
 		}
 	});
@@ -298,7 +298,7 @@ function showChooseDevType(){
 	// Shiying: Add a cleaning function, clean the gfa dropdown and unselect everything
 	resetAllInputs();
 	//console.log(event.target.id + "is clicked");
-	selectedDevType = developmentType.value;
+
 	switch (developmentType.value){
 		case "TotalGFA":
 			document.getElementById("UsesBox").style.display="None";
