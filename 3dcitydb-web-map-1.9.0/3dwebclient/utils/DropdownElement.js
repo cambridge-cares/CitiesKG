@@ -208,25 +208,21 @@ function getExampleParams() {
 	switch (click_counter){
 		case 0:
 			input_parameters = query_example[0];
-			console.log(query_example[0]);
 			document.getElementsByClassName('querySentence')[0].innerHTML =
 					"Find me plots that could allow " + "<b>" + "Clinic" + "</b>" + " and " + "<b>" + "Flat" + "</b>" + ".";
 			break;
 		case 1:
 			input_parameters = query_example[1];
-			console.log(query_example[1]);
 			document.getElementsByClassName('querySentence')[0].innerHTML =
 					"Find me plots that could allow " + "300 sqm of "+ "<b>" + "Clinic" + "</b>" + " (or more) and  2000 sqm " + "<b>" + "Flat" + "</b>" + " (or more).";
 			break;
 		case 2:
 			input_parameters = query_example[2];
-			console.log(query_example[2]);
 			document.getElementsByClassName('querySentence')[0].innerHTML =
 					"Find me the 10 smallest plots (by GFA) that could allow " + "10000 sqm development containing "+ "<b>" + "Library" + "</b>" + ".";
 			break;
 	}
 	click_counter += 1;
-	console.log(click_counter);
 	console.log(input_parameters);
 	getValidPlots();
 }
