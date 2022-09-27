@@ -54,7 +54,7 @@ public class OntologyInferenceAgent extends InferenceAgent {
         JSONArray targetData = getAllTargetData(IRI.create(targetIRI), tBoxGraph);
         //add aBox data if needed
         if (requestParams.keySet().contains(KEY_ASRT_IRI)) {
-          String aBoxGraph = requestParams.getString(KEY_ONTO_IRI).replace(targetIRI, "");
+          String aBoxGraph = requestParams.getString(KEY_ASRT_IRI).replace(targetIRI, "");
           targetData = getAllTargetData(IRI.create(targetIRI), aBoxGraph, targetData);
         }
         //(3) Pass target data (2) to the task (1) and run the task
@@ -116,7 +116,6 @@ public class OntologyInferenceAgent extends InferenceAgent {
 
   private JSONArray getAllTargetData(IRI sparqlEndpoint, String tBoxGraph) throws ParseException {
     //retrieve data and replace empty string with it
-    // limit to ontozone and OntoZoning graphs
     SelectBuilder sb = new SelectBuilder();
     sb.setBase(sparqlEndpoint.toString()).from(tBoxGraph)
         .addVar("?s").addVar("?p").addVar("?o")
@@ -135,8 +134,18 @@ public class OntologyInferenceAgent extends InferenceAgent {
     return sparqlResult;
   }
 
-  private JSONArray getAllTargetData(IRI sparqlEndpoint, String aBoxGraph, JSONArray targetData) throws ParseException {
+  private JSONArray getAllTargetData(IRI sparqlEndpoint, String aBoxGraph, JSONArray targetData) {
     //@todo: implementation
+    SelectBuilder sb = new SelectBuilder();
+    sb.setBase(sparqlEndpoint.toString()).from(aBoxGraph)
+        .addVar("?s").addVar("?p").addVar("?o")
+        .addWhere("?s", "?p", "?o");
+    JSONArray sparqlResult = AccessAgentCaller.queryStore(route, sb.buildString());
+
+    for (Object triple : sparqlResult) {
+      targetData.put(triple);
+    }
+
     return targetData;
   }
 

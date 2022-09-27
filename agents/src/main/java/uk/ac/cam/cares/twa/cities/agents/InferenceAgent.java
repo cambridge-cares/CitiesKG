@@ -9,6 +9,7 @@ import org.json.JSONArray;
 import org.semanticweb.owlapi.model.IRI;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
+import uk.ac.cam.cares.twa.cities.tasks.ClassMembershipCheckingTask;
 import uk.ac.cam.cares.twa.cities.tasks.ConsistencyCheckingTask;
 import uk.ac.cam.cares.twa.cities.tasks.EdgeBetweennessTask;
 import uk.ac.cam.cares.twa.cities.tasks.PageRankTask;
@@ -23,7 +24,7 @@ public abstract class InferenceAgent extends JPSAgent {
   public static final String KEY_TARGET_IRI = "targetIRI";
   public static final String KEY_ALGO_IRI = "algorithmIRI";
   public static final String KEY_ONTO_IRI = "ontologyIRI";
-  public static final String KEY_ASRT_IRI = "asertionsIRI";
+  public static final String KEY_ASRT_IRI = "assertionsIRI";
   public static final String ONINF_PREFIX = "oninf";
   public static final String ONINF_SCHEMA = "http://www.theworldavatar.com/ontologies/OntoInfer.owl#";
   public static final String ONTOINFER_GRAPH = "OntoInfer/";
@@ -44,7 +45,8 @@ public abstract class InferenceAgent extends JPSAgent {
       {IRI.create(ONINF_SCHEMA + TASK_PR), new PageRankTask()},
       {IRI.create(ONINF_SCHEMA + TASK_EB), new EdgeBetweennessTask()},
       {IRI.create(ONINF_SCHEMA + TASK_USP), new UnweightedShortestPathTask()},
-      {IRI.create(ONINF_SCHEMA + TASK_CC), new ConsistencyCheckingTask()}
+      {IRI.create(ONINF_SCHEMA + TASK_CC), new ConsistencyCheckingTask()},
+      {IRI.create(ONINF_SCHEMA + TASK_CMC), new ClassMembershipCheckingTask()}
   }).collect(Collectors.toMap(data -> (IRI) data[0], data -> (UninitialisedDataQueueTask) data[1]));
   protected static LinkedBlockingDeque<Map<String, JSONArray>> dataQueue = new LinkedBlockingDeque<>();
   protected static LinkedBlockingDeque<Map<String, JSONArray>> resultQueue = new LinkedBlockingDeque<>();

@@ -22,8 +22,8 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 import uk.ac.cam.cares.twa.cities.agents.InferenceAgent;
 
-public class ConsistencyCheckingTask implements UninitialisedDataAndResultQueueTask {
-  private final IRI taskIri = IRI.create(InferenceAgent.ONINF_SCHEMA + InferenceAgent.TASK_CC);
+public class ClassMembershipCheckingTask implements UninitialisedDataAndResultQueueTask {
+  private final IRI taskIri = IRI.create(InferenceAgent.ONINF_SCHEMA + InferenceAgent.TASK_CMC);
   private boolean stop = false;
   private BlockingQueue<Map<String, JSONArray>> dataQueue;
   private BlockingQueue<Map<String, JSONArray>> resultQueue;
@@ -91,7 +91,9 @@ public class ConsistencyCheckingTask implements UninitialisedDataAndResultQueueT
 
           //put data result back on the queue for the agent to pick up
           Map<String, JSONArray> result = new HashMap<>();
-          result.put(this.taskIri.toString(), new JSONArray().put(ontoIri + " : " + reasoner.isConsistent()));
+
+          //@todo: use reasoner to detect class membership
+
           resultQueue.put(result);
 
         } catch (Exception e) {
@@ -103,6 +105,7 @@ public class ConsistencyCheckingTask implements UninitialisedDataAndResultQueueT
     }
   }
 
+  
   private OWLOntology createModel(JSONArray data) throws OWLOntologyCreationException, SAXException {
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     OWLOntology ontology = manager.createOntology();
