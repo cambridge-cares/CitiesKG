@@ -5,6 +5,7 @@ var MAX_CAP = 'max_cap';
 var MIN_CAP = 'min_cap';
 var input_parameters;
 var selectedDevType;
+var click_counter = 0;
 
 function buildQuery(predicate){
 	query = "PREFIX zo:<http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#> "
@@ -195,27 +196,37 @@ function removePrefix(result){
 	return element
 }
 
-function getExampleParams(example_query) {
-	var query_1 = {TotalGFA:'', allowsProgramme: {Clinic: '', Flat: ''}, min_cap: 'false', max_cap: 'false'};
-	var query_2 = {TotalGFA:'', allowsProgramme: {Clinic: '300', Flat: '2000'}, min_cap: 'false', max_cap: 'false'};
-	var query_3 = {TotalGFA:'10000', allowsProgramme: {Library: ''}, min_cap: 'false', max_cap: 'true'};
-	switch (example_query) {
-		case "query_1":
-			input_parameters = query_1;
+function getExampleParams() {
+
+	if(click_counter === 3) {
+		click_counter = 0;
+	}
+	var query_example = [
+			{TotalGFA:'', allowsProgramme: {Clinic: '', Flat: ''}, min_cap: 'false', max_cap: 'false'},
+		{TotalGFA:'', allowsProgramme: {Clinic: '300', Flat: '2000'}, min_cap: 'false', max_cap: 'false'},
+		{TotalGFA:'10000', allowsProgramme: {Library: ''}, min_cap: 'false', max_cap: 'true'}];
+	switch (click_counter){
+		case 0:
+			input_parameters = query_example[0];
+			console.log(query_example[0]);
 			document.getElementsByClassName('querySentence')[0].innerHTML =
 					"Find me plots that could allow " + "<b>" + "Clinic" + "</b>" + " and " + "<b>" + "Flat" + "</b>" + ".";
 			break;
-		case "query_2":
-			input_parameters = query_2;
+		case 1:
+			input_parameters = query_example[1];
+			console.log(query_example[1]);
 			document.getElementsByClassName('querySentence')[0].innerHTML =
 					"Find me plots that could allow " + "300 sqm of "+ "<b>" + "Clinic" + "</b>" + " (or more) and  2000 sqm " + "<b>" + "Flat" + "</b>" + " (or more).";
 			break;
-		case "query_3":
-			input_parameters = query_3;
+		case 2:
+			input_parameters = query_example[2];
+			console.log(query_example[2]);
 			document.getElementsByClassName('querySentence')[0].innerHTML =
 					"Find me the 10 smallest plots (by GFA) that could allow " + "10000 sqm development containing "+ "<b>" + "Library" + "</b>" + ".";
 			break;
 	}
+	click_counter += 1;
+	console.log(click_counter);
 	console.log(input_parameters);
 	getValidPlots();
 }
