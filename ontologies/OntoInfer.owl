@@ -326,6 +326,24 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingAlgorithm -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingAlgorithm">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembership"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingAlgorithm"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingTask -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingTask">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ConsistencyCheckingAlgorithm -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ConsistencyCheckingAlgorithm">

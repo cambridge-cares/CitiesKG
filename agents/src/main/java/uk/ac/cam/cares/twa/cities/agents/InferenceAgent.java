@@ -23,6 +23,7 @@ public abstract class InferenceAgent extends JPSAgent {
   public static final String KEY_TARGET_IRI = "targetIRI";
   public static final String KEY_ALGO_IRI = "algorithmIRI";
   public static final String KEY_ONTO_IRI = "ontologyIRI";
+  public static final String KEY_ASRT_IRI = "asertionsIRI";
   public static final String ONINF_PREFIX = "oninf";
   public static final String ONINF_SCHEMA = "http://www.theworldavatar.com/ontologies/OntoInfer.owl#";
   public static final String ONTOINFER_GRAPH = "OntoInfer/";
@@ -34,11 +35,11 @@ public abstract class InferenceAgent extends JPSAgent {
   public static final String ONINT_C_PRALG = "PageRankAlgorithm";
   public static final String ONINT_C_EBALG = "EdgeBetweennessAlgorithm";
   public static final String ONINT_C_USPALG = "UnweightedShortestPathAlgorithm";
-  public static final String ONINT_C_CCALG = "ConsistencyCheckingAlgorithm";
   public static final String TASK_PR = "PageRankTask";
   public static final String TASK_EB = "EdgeBetweennessTask";
   public static final String TASK_USP = "UnweightedShortestPathTask";
   public static final String TASK_CC = "ConsistencyCheckingTask";
+  public static final String TASK_CMC = "ClassMembershipCheckingTask";
   protected final Map<IRI, UninitialisedDataQueueTask> TASKS = Stream.of(new Object[][] {
       {IRI.create(ONINF_SCHEMA + TASK_PR), new PageRankTask()},
       {IRI.create(ONINF_SCHEMA + TASK_EB), new EdgeBetweennessTask()},

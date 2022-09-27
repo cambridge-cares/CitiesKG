@@ -52,6 +52,11 @@ public class OntologyInferenceAgent extends InferenceAgent {
         String taskIRI = task.getTaskIri().toString();
         //(2) Retrieve data from target IRI
         JSONArray targetData = getAllTargetData(IRI.create(targetIRI), tBoxGraph);
+        //add aBox data if needed
+        if (requestParams.keySet().contains(KEY_ASRT_IRI)) {
+          String aBoxGraph = requestParams.getString(KEY_ONTO_IRI).replace(targetIRI, "");
+          targetData = getAllTargetData(IRI.create(targetIRI), aBoxGraph, targetData);
+        }
         //(3) Pass target data (2) to the task (1) and run the task
         Map<String,JSONArray> taskData = new HashMap<>();
         taskData.put(taskIRI, targetData);
@@ -128,6 +133,11 @@ public class OntologyInferenceAgent extends InferenceAgent {
     JSONArray sparqlResult = AccessAgentCaller.queryStore(route, sb.buildString());
 
     return sparqlResult;
+  }
+
+  private JSONArray getAllTargetData(IRI sparqlEndpoint, String aBoxGraph, JSONArray targetData) throws ParseException {
+    //@todo: implementation
+    return targetData;
   }
 
 }
