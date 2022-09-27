@@ -106,7 +106,8 @@
                 border-radius: 5px;
                 padding: 5px;
                 position: absolute;
-                left: 5px;
+                bottom: 50px;
+                right: 160px;
                 font-family: "Arial";
                 z-index: 99980;
             }
@@ -138,23 +139,19 @@
                 background-repeat: no-repeat;
                 background-position: center;
             }
-
             .citydb_overSelect {
                 position: absolute;
                 left: 0; right: 0; top: 0; bottom: 0;
             }
-
             .citydb_short_container {
                 display: inline-block;
                 position: relative;
                 width: 48.5%;
             }
-
             .citydb_long_container {
                 margin-left: 0px;
                 margin-right: 2%;
             }
-
             .citydb_dynamic_box {
                 display: none;
                 margin: 3px;
@@ -167,43 +164,35 @@
                 font-family: sans-serif;
                 font-size: 9pt;
             }
-
             .citydb_dynamic_box input {
                 vertical-align: middle;
                 padding-top: 1px;
                 padding-bottom: 1px;
             }
-
             .citydb_inputtable {
                 width: 100%;
             }
-
             .citydb_inputtable th, td {
                 padding: 5px;
             }
-
             .citydb_inputtable select {
                 width: 100%;
                 padding: 3px;
                 margin: 1px;
             }
-
             .citydb_inputtable input {
                 width: 100%;
                 padding: 0px;
                 margin: 0px;
             }
-
             #citydb_layerlistpanel {
                 width: 97.5%;
                 background: rgba(42, 42, 42, 0.8);
                 text-align: left;
             }
-
             #citydb_layerlistpanel label:hover {
                 background-color: #1e90ff;
             }
-
             #citydb_toolbox {
                 width: 400px;
                 display: none;
@@ -215,19 +204,20 @@
                 border-radius: 5px;
                 padding: 5px;
                 position: absolute;
-                left: 200px;
                 font-family: "Arial";
                 z-index: 99980;
             }
 			
-            #programmeFinder_toolbox {
-                width: 1300px;
-                height: 55px;
-                display: none;
+            .programmeFinder_toolbox {
+                width: max-content;
+                height: 68px;
+                position: absolute;
+                left:220px;
+                top:5px;
                 background: rgba(42, 42, 42, 0.5);
-                border: 3px #505050 solid;
+                border: 2px #505050 solid;
+                border-radius: 5px;
                 text-align: left;
-                font-family: "Arial";
                 font-size: 9pt;
             }
 
@@ -247,36 +237,10 @@
                 vertical-align: top;
             }
 
-            .cap_box{
-                width: 120px;
-                height: 28px;
-                position: relative;
-                margin-left: 10px;
-                margin-top: 2px;
-                margin-right: 10px;
-                color: #fff;
-                font-family: sans-serif;
-                font-size: 9pt;
-                vertical-align: top;
-            }
-            .cap_checkbox{
-                display:inline-block;
-                cursor: pointer;
-                line-height: 14px;
-                width: 20px;
-                vertical-align: top;
-            }
-
             .text_gfa{
                 display:inline-block;
                 line-height: 14px;
                 width: 200px;
-                vertical-align: top;
-            }
-            .cap_gfa{
-                display:inline-block;
-                line-height: 14px;
-                width: 120px;
                 vertical-align: top;
             }
 
@@ -295,7 +259,6 @@
                 margin: 2px;
                 padding: 2px 2px;
                 position: relative;
-                margin-top: 10px;
                 border: 2px #505050 solid;
                 background: rgba(42, 42, 42, 0.6);
                 border-radius: 4px;
@@ -323,7 +286,6 @@
                 width: 400px;
                 margin: 5px;
                 height: 40px;
-                margin: 4px;
                 padding: 4px 4px;
                 position: absolute;
                 border: 2px #505050 solid;
@@ -333,16 +295,14 @@
             }
 
             .querySentence {
-                position: absolute;
-                line-height: 20px;
-                vertical-align: center;
+                position: relative;
                 height:20px;
-                left: 220px;
-                font-size: small;
+                line-height: 25px;
+                font-size: 14px;
                 width: max-content;
-                margin: 2px;
-                padding: 3px 3px;
-                border: 2px rgb(255, 255, 255) solid;
+                margin: 5px;
+                padding: 3px;
+                vertical-align: middle;
                 background: rgb(255, 255, 255);
                 border-radius: 4px;
                 color: rgb(42, 42, 42);
@@ -373,13 +333,16 @@
 
             .ProgrammaticPlotFinder-submitButton{
                 display: block;
+                float: left;
+                height: 26px;
                 background: #303336;
                 color: #edffff;
                 fill: #edffff;
                 cursor: pointer;
-                margin: 17px 0px 10px;
-                padding: 1px 12px;
-                border: 1px solid #444;
+                margin: 2px;
+                border: 2px solid #333333;
+                border-radius: 5px;
+                white-space: nowrap;
             }
 
             .ProgrammaticPlotFinder-resultBox{
@@ -434,6 +397,10 @@
             }
             .close:hover {background: #bbb;}
 
+            .test {
+                height: 30px;
+            }
+
         </style>
     </head>
 
@@ -445,20 +412,19 @@
         <img id = "citydb_loadingTilesInspector" src="../theme/img/ajax-loader.gif" style="display: none; position: absolute; bottom: 56px; right: 7px; width:30px;height:30px;">
 
 		    <div id="ProgrammaticPlotFinder">
-            <div class="querySentence" id="querySentence">Show me plots that could allow...</div> <!-- generated query sentence-->
-            <div onclick="showProgrammeFinder()"> <!--Ayda: showProgrammeFinder() Shiyiing: highlightMultipleObjects(), showResultWindow()-->
-                <select class="cesium-button">
-                    <option hidden="hidden">Programmatic Plot Finder</option>
-                </select>
-                <div class="citydb_overSelect"></div>
-            </div>
-			      <div id="uiProgrammeFinder-content">
-                <div id="programmeFinder_toolbox" class="citydb_dynamic_box">
-                    <div id="developmentBox">
-                        <div><label>Query Type</label></div>
-                        <select id="developmentType" class="cesium-button" onchange="showChooseDevType()">
+            <select id="demo_type" class="cesium-button" onchange="chooseDemoType()">
+                <option value="PPF">Programmatic Plot Finder</option>
+                <option value="demo2" style="color:grey">Demo 2</option>
+                <option value="demo3" style="color:grey">Demo 3</option>
+            </select>
+			      <div id="demo" class="programmeFinder_toolbox">
+                <div style="height: max-content">
+                    <div id="querySentence" class="querySentence">Find me plots that could allow...</div>
+                </div>
+                <div style="height: max-content">
+                    <div id="QueryBox" style="float: left">
+                        <select id="DevelopmentType" class="cesium-button" onchange="showChooseDevType()" style="height:26px; padding: 3px" title="chooses the types of query scenario to explore"> Search plots ...
                             <option value="ViewAll">Search plots...</option>
-                            <option value="TotalGFA">by allowable GFA</option>
                             <option value="OntozoningUses">by allowable land uses</option>
                             <option value="OntozoingProgrammes">by allowable programmes</option>
                             <option value="GfaUses">by allowable GFA (per land use)</option>
@@ -466,29 +432,26 @@
                             <option value="ViewAll">enable all search types (*)</option>
                         </select>
                     </div>
-                    <div id="UsesBox">
-                        <div><label>Uses</label></div>
+                    <div id="UsesBox"style="float: left">
                         <div>
                             <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
-                                <div style="width:240px" class="cesium-button" title ="Land use is a high-level term for the set of activities &#010;and developments that are allowed in a certain zoning type">Choose Use<div id='use_arrow' class="arrow down"></div></div>
+                                <div style="width:240px" class="cesium-button" title ="Land use is a high-level term for the set of activities &#010;and developments that are allowed in a certain zoning type">Choose Use ...<div id='use_arrow' class="arrow down"></div></div>
                             </div>
                             <div id="choose_uses" class="finder_dynamic_box" ></div>
                         </div>
                     </div>
-                    <div id="ProgrammesBox">
-                        <div><label>Programmes</label></div>
+                    <div id="ProgrammesBox" style="float: left">
                         <div>
                             <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
-                                <div style="width:240px" class="cesium-button" title="Programme is a term for specific activities and developments &#010;that may be allowed across many zoning types">Choose Programme<div id='programme_arrow' class="arrow down"></div></div>
+                                <div style="width:240px" class="cesium-button" title="Programme is a term for specific activities and developments &#010;that may be allowed across many zoning types">Choose Programme ...<div id='programme_arrow' class="arrow down"></div></div>
                             </div>
                             <div id="choose_programmes" class="finder_dynamic_box" onblur="showChooseProgrammes()"></div>
                         </div>
                     </div>
-                    <div id="GfaBox">
-                        <div><label>Gross Floor Area (GFA)</label></div>
+                    <div id="GfaBox" style="float: left">
                         <div>
                             <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
-                                <div style="width:240px" class="cesium-button" title="Gross Floor Area is a term defining the total floor area contained within &#010; a building’s outer edges that excludes empty spaces">Assign GFA(s)<div id='gfa_arrow' class="arrow down"></div></div>
+                                <div style="width:240px" class="cesium-button" title="Gross Floor Area is a term defining the total floor area contained within &#010; a building’s outer edges that excludes empty spaces">Assign Gross Floor Area (GFA) ...<div id='gfa_arrow' class="arrow down"></div></div>
                             </div>
                             <div id="assignGFA" class="finder_dynamic_box" onchange="getQuerySentence()">
                                 <div>
@@ -499,16 +462,15 @@
                             </div>
                         </div>
                     </div>
-                    <div id='CapBox'>
-                        <div style="margin-left: 10px"><label>Cap GFA results to:</label></div>
-                        <div class="cap_box">
-                            <div class='cap_gfa' style='width: 80px'> 10 largest</div>
-                            <div class='cap_checkbox'><input type='checkbox' id="max_cap"></div>
-                            <div class='cap_gfa' style='width: 80px'>10 smallest</div>
-                            <div class='cap_checkbox'><input type='checkbox' id="min_cap"></div>
-                        </div>
+                    <div id='CapBox'style="float: left">
+                        <select id="CapType" class="cesium-button" onchange="getQuerySentence()" style="height: 26px; padding: 3px" title="chooses the amount of results to return">Show results ...
+                            <option value="results">Show me ...</option>
+                            <option value="max_cap">only the 10 largest plots (by GFA)</option>
+                            <option value="min_cap">only the 10 largest plots (by GFA)</option>
+                            <option value="no_cap">all results (*)</option>
+                        </select>
                     </div>
-                    <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getInputParams()">Submit</button>
+                    <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getInputParams()" style="border-color: gold">Search Now</button>
                     <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams('query_1')">query_1</button>
                     <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams('query_2')">query_2</button>
                     <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams('query_3')">query_3</button>
@@ -518,7 +480,7 @@
         <div id="uiMenu">
             <div onclick="showToolbox()">
                 <select class="cesium-button">
-                    <option>Show / Hide Toolbox</option>
+                    <option>Expert Settings</option>
                 </select>
                 <div class="citydb_overSelect"></div>
             </div>
@@ -928,18 +890,6 @@
                 } else {
                     citydb_addsplashwindow.style.display = "none";
                     expanded5 = false;
-                }
-            }
-			
-			      var expanded6 = false;
-            function showProgrammeFinder() {
-                var programmeFinder_toolbox = document.getElementById("programmeFinder_toolbox");
-                if (!expanded6) {
-                    programmeFinder_toolbox.style.display = "flex";
-                    expanded6 = true;
-                } else {
-                    programmeFinder_toolbox.style.display = "none";
-                    expanded6 = false;
                 }
             }
 

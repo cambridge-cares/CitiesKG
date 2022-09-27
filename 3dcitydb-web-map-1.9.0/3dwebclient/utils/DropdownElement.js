@@ -1,9 +1,10 @@
 var CONTEXT = "citieskg";
 var CITY = (new URL(window.location.href).searchParams.get('city'));
 var TOTAL_GFA_KEY = 'TotalGFA';
+var MAX_CAP = 'max_cap';
+var MIN_CAP = 'min_cap';
 var input_parameters;
 var selectedDevType;
-
 
 function buildQuery(predicate){
 	query = "PREFIX zo:<http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#> "
@@ -46,45 +47,41 @@ function appendElement(line, predicate, element_type, dropdown_type){
 	$(dropdown_type).append(some_element)
 }
 
-function editSentenceEnding(zone, sentence, final_sentence, zoning_case){
-	if(Object.entries(zone).length > 1) {
-		final_sentence = sentence.slice(0, -5) + zoning_case +"s?";
-	} else {
-		final_sentence = sentence.slice(0, -5) + zoning_case + "?";
-	}
-	return final_sentence;
-}
-
 function processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm, sentence, programmes, uses, final_sentence) {
 	if(programme_bool) {
 		for (const [programme, programmeGFAvalue] of Object.entries(programmes)) {
 			if (programmeGFA_bool) {
-				sentence += programmeGFAvalue + sqm + " or more of " + "<b>" + programme + "</b>" + " and ";
-			} else {
+				sentence += programmeGFAvalue + sqm + " of " + "<b>" + programme + "</b>" + " (or more) and ";
+			}
+			else {
 				sentence +=  "<b>" + programme + "</b>" + " and ";
 			}
 		}
-		final_sentence = editSentenceEnding(programmes, sentence, final_sentence, " programme");
-	} else if (use_bool) {
+		final_sentence = sentence.slice(0, -5) + ".";
+
+	}
+	else if (use_bool) {
 		for (const [use, useGFAvalue] of Object.entries(uses)) {
 			if (useGFA_bool) {
-				sentence += useGFAvalue + sqm + " or more of " + "<b>" + use + "</b>"+ " and ";
-			} else {
+				sentence += useGFAvalue + sqm + " of " + "<b>" + use + "</b>"+ " (or more) and ";
+			}
+			else {
 				sentence += "<b>" + use + "</b>"+ " and ";
 			}
 		}
-		final_sentence = editSentenceEnding(uses, sentence, final_sentence, " use");
-	} else {
-		final_sentence = "Show me plots that could allow...";
+		final_sentence = sentence.slice(0, -5) + ".";
+	}
+	else {
+		final_sentence = "Find me plots that could allow...";
 	}
 	return final_sentence;
 }
 
 function getQuerySentence(){
-	var sentence = "Show me plots that could allow...";
-	var final_sentence = 'Show me plots that could allow...';
-	var sentence_ormore = "Show me plots that could allow ";
-	var sqm = "sqm";
+	var sentence = "Find me plots that could allow...";
+	var final_sentence = 'Find me plots that could allow...';
+	var sentence_ormore = "Find me plots that could allow ";
+	var sqm = " sqm";
 	document.getElementsByClassName('querySentence')[0].textContent = final_sentence;
 
 	var inputs = document.getElementsByClassName('text_gfa');
@@ -129,7 +126,7 @@ function getQuerySentence(){
 				final_sentence = processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm, sentence, programmes, uses, final_sentence);
 			}
 		} else {
-			final_sentence = sentence_ormore + totalGFA_input + sqm + " or more of something?";
+			final_sentence = sentence_ormore + totalGFA_input + sqm + " (or more) of something?";
 		}
 	} else {
 		sentence = sentence_ormore;
@@ -138,6 +135,13 @@ function getQuerySentence(){
 		} else {
 			final_sentence = final_sentence = processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm, sentence, programmes, uses, final_sentence);
 		}
+	}
+
+	if (document.getElementById('CapType').value == 'max_cap') {
+		final_sentence = final_sentence.slice(0,8) + "the 10 smallest plots (by GFA) " + final_sentence.slice(14);
+	}
+	if (document.getElementById('CapType').value == 'min_cap') {
+		final_sentence = final_sentence.slice(0,8) + "the 10 smallest plots (by GFA) " + final_sentence.slice(14);
 	}
 	document.getElementsByClassName('querySentence')[0].innerHTML = final_sentence;
 }
@@ -192,23 +196,47 @@ function removePrefix(result){
 }
 
 function getExampleParams(example_query) {
-	var query_1 = {TotalGFA:'', allowsProgramme: {Clinic: '', Flat: ''}, min_cap: 'false', max_cap: 'false'}; // query example by programmes or uses
-	var query_2 = {TotalGFA:'', allowsProgramme: {Clinic: '300', Flat: '2000'}, min_cap: 'false', max_cap: 'false'}; // query example by allowed GFA for programmes or uses
-	var query_3 = {TotalGFA:'10000', allowsProgramme: {Library: ''}, min_cap: 'false', max_cap: 'true'}; // query example with total allowed area (10 largest)
-
+	var query_1 = {TotalGFA:'', allowsProgramme: {Clinic: '', Flat: ''}, min_cap: 'false', max_cap: 'false'};
+	var query_2 = {TotalGFA:'', allowsProgramme: {Clinic: '300', Flat: '2000'}, min_cap: 'false', max_cap: 'false'};
+	var query_3 = {TotalGFA:'10000', allowsProgramme: {Library: ''}, min_cap: 'false', max_cap: 'true'};
 	switch (example_query) {
 		case "query_1":
 			input_parameters = query_1;
+			document.getElementsByClassName('querySentence')[0].innerHTML =
+					"Find me plots that could allow " + "<b>" + "Clinic" + "</b>" + " and " + "<b>" + "Flat" + "</b>" + ".";
 			break;
 		case "query_2":
 			input_parameters = query_2;
+			document.getElementsByClassName('querySentence')[0].innerHTML =
+					"Find me plots that could allow " + "300 sqm of "+ "<b>" + "Clinic" + "</b>" + " (or more) and  2000 sqm " + "<b>" + "Flat" + "</b>" + " (or more).";
 			break;
 		case "query_3":
 			input_parameters = query_3;
+			document.getElementsByClassName('querySentence')[0].innerHTML =
+					"Find me the 10 smallest plots (by GFA) that could allow " + "10000 sqm development containing "+ "<b>" + "Library" + "</b>" + ".";
 			break;
 	}
 	console.log(input_parameters);
 	getValidPlots();
+}
+
+function addFiltering(input_parameters){
+	var  filteringType = document.getElementById("CapType").value;
+	console.log(filteringType);
+	switch (filteringType) {
+		case "max_cap":
+			input_parameters[MAX_CAP] = 'true';
+			input_parameters[MIN_CAP] = 'false';
+			break;
+		case "min_cap":
+			input_parameters[MAX_CAP] = 'false';
+			input_parameters[MIN_CAP] = 'true';
+			break;
+		case "no_cap":
+			input_parameters[MAX_CAP] = 'false';
+			input_parameters[MIN_CAP] = 'false';
+			break;
+	}
 }
 
 function getInputParams() {
@@ -216,9 +244,6 @@ function getInputParams() {
 	var text_inputs = document.getElementsByClassName('text_gfa');
 	var onto_use = {};
 	var onto_programme = {};
-	var max_cap = document.getElementById('max_cap');
-	var min_cap =  document.getElementById('min_cap');
-
 
 	for (let i = 0; i < text_inputs.length; i++) {
 		var text_item = text_inputs.item(i).firstChild;
@@ -241,13 +266,11 @@ function getInputParams() {
 	if (Object.keys(onto_programme).length > 0) {
 		parameters[PROGRAMME_PREDICATE] = onto_programme;
 	}
-	parameters['min_cap'] = min_cap.checked.toString();
-	parameters['max_cap'] = max_cap.checked.toString();
-
 	input_parameters = parameters;
-	 if ((Object.keys(onto_use).length !== 0) && (Object.keys(onto_programme).length !== 0)) {
-		 throwNotification();
-	 }
+	if ((Object.keys(onto_use).length !== 0) && (Object.keys(onto_programme).length !== 0)) {
+		throwNotification();
+	}
+	addFiltering(input_parameters);
 	console.log(input_parameters);
 	getValidPlots();
 }
@@ -292,18 +315,12 @@ function throwNotification() {
 }
 
 function showChooseDevType(){
-	var developmentType = document.getElementById("developmentType");
+	var developmentType = document.getElementById("DevelopmentType");
 	// Shiying: Add a cleaning function, clean the gfa dropdown and unselect everything
 	resetAllInputs();
 	//console.log(event.target.id + "is clicked");
 	selectedDevType = developmentType.value;
 	switch (developmentType.value){
-		case "TotalGFA":
-			document.getElementById("UsesBox").style.display="None";
-			document.getElementById("ProgrammesBox").style.display="None";
-			document.getElementById("GfaBox").style.display="block";
-			document.getElementById('CapBox').style.display='block';
-			break;
 		case "OntozoningUses":
 			document.getElementById("UsesBox").style.display="block";
 			document.getElementById("ProgrammesBox").style.display="None";
@@ -336,7 +353,24 @@ function showChooseDevType(){
 			break;
 			pinHighlightObjects();
 	}
+}
 
+function chooseDemoType() {
+	var demo_type =  document.getElementById("demo_type")
+	switch (demo_type.value) {
+		case "PPF":
+			document.getElementById("demo").style.display = "inline-block";
+			console.log(demo_type);
+			break;
+		case "demo2":
+			document.getElementById("demo").style.display = "None";
+			console.log(demo_type);
+			break;
+		case "demo3":
+			document.getElementById("demo").style.display = "None";
+			console.log(demo_type);
+			break;
+	}
 }
 
 function resetAllInputs(){
