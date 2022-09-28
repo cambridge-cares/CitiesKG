@@ -340,9 +340,12 @@
                 fill: #edffff;
                 cursor: pointer;
                 margin: 2px;
-                border: 2px solid #333333;
+                border: 2px solid #1E90FFFF;
                 border-radius: 5px;
                 white-space: nowrap;
+            }
+            .ProgrammaticPlotFinder-submitButton:hover {
+                background: #1E90FFFF;
             }
 
             .ProgrammaticPlotFinder-resultBox{
@@ -466,11 +469,11 @@
                         <select id="CapType" class="cesium-button" onchange="getQuerySentence()" style="height: 26px; padding: 3px" title="chooses the amount of results to return">Show results ...
                             <option value="results">Show me ...</option>
                             <option value="max_cap">only the 10 largest plots (by GFA)</option>
-                            <option value="min_cap">only the 10 largest plots (by GFA)</option>
+                            <option value="min_cap">only the 10 smallest plots (by GFA)</option>
                             <option value="no_cap">all results (*)</option>
                         </select>
                     </div>
-                    <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getInputParams()" style="border-color: gold">Search Now</button>
+                    <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getInputParams()" >Search Now</button>
                     <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams()">Try Example Query</button>
                 </div>
             </div>

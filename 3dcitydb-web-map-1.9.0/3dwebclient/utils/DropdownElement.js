@@ -198,11 +198,14 @@ function removePrefix(result){
 
 function getExampleParams() {
 
+	document.getElementById('choose_programmes').style.display="None";
+	document.getElementById('choose_uses').style.display="None";
+	document.getElementById('assignGFA').style.display="None";
+
 	if(click_counter === 3) {
 		click_counter = 0;
 	}
-	var query_example = [
-			{TotalGFA:'', allowsProgramme: {Clinic: '', Flat: ''}, min_cap: 'false', max_cap: 'false'},
+	var query_example = [{TotalGFA:'', allowsProgramme: {Clinic: '', Flat: ''}, min_cap: 'false', max_cap: 'false'},
 		{TotalGFA:'', allowsProgramme: {Clinic: '300', Flat: '2000'}, min_cap: 'false', max_cap: 'false'},
 		{TotalGFA:'10000', allowsProgramme: {Library: ''}, min_cap: 'false', max_cap: 'true'}];
 	switch (click_counter){
