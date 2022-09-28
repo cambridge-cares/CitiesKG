@@ -718,7 +718,7 @@ function highlightFilteredObj(filteredObjects){
 
 
 
-function showResultWindow(selectedDevType, resultJson){
+function showResultWindow(resultJson){
 
     var resultBoxTitle = document.getElementById("resultBox-title");
     resultBoxTitle.style.visibility = "visible";
@@ -728,7 +728,7 @@ function showResultWindow(selectedDevType, resultJson){
     resultBoxContent.style.display = "block";
     var listItem = document.createElement("li");
 
-    listItem.appendChild(processInfoContext(selectedDevType, resultJson));
+    listItem.appendChild(processInfoContext(resultJson));
 
     var closeButton = document.createElement("span");
     closeButton.className = "close";
@@ -749,15 +749,18 @@ function showResultWindow(selectedDevType, resultJson){
     }
 }
 
-// create the summary text for infobox
+// create the summary text for PPF result box
 // resultjson is json object
-function processInfoContext(selectedDevType, resultjson){
+function processInfoContext(resultjson){
+    let ifGFA = false;
     var infoText = document.createElement("div");
     var title = document.createElement("span");
 
-    title.textContent = selectedDevType;
+    var developmentType = document.getElementById("developmentType");
+    title.innerHTML = "Search " + developmentType.options[developmentType.selectedIndex].text;
+
     title.style.fontWeight = "bold";
-    title.style.fontSize = "14px";
+    title.style.fontSize = "12px";
     infoText.appendChild(title);
     infoText.appendChild(document.createElement("br"));
 
@@ -784,13 +787,20 @@ function processInfoContext(selectedDevType, resultjson){
     var allowOptText = document.createElement("span");
     var allowsContent = "";
     for (i = 0; i < allowsObjects.length; ++i){
-        allowsContent += allowsObjects[i] + ":" + allowsGFA[i] + ",";
+        if (allowsGFA[i] != ""){
+            ifGFA = true;
+            allowsContent += allowsObjects[i] + ":" + allowsGFA[i] + "<br />";
+        }else{
+            allowsContent += allowsObjects[i] + "<br />";
+        }
+
     }
-    allowOptText.textContent = allowsContent;
+    allowOptText.innerHTML = allowsContent;
     infoText.appendChild(allowOptText);
     infoText.appendChild(document.createElement("br"));
 
     if (Object.keys(inputs).includes("TotalGFA") && inputs["TotalGFA"] > 0){
+        ifGFA = true;
         var totalGFA = document.createElement("span");
         var totalGFAValue = inputs["TotalGFA"];
         totalGFA.textContent = "TotalGFA: " + totalGFAValue;
@@ -798,8 +808,18 @@ function processInfoContext(selectedDevType, resultjson){
         infoText.appendChild(document.createElement("br"));
     }
 
+    // static part: measure the impact of the demo
+    var docCount = document.createElement("span");
+    if (ifGFA){
+        docCount.innerHTML = "# regulatory documents <br /> automatically checked: 38 ";
+    }else {
+        docCount.innerHTML = "# regulatory documents <br /> automatically checked: 17 ";
+    }
+    infoText.appendChild(document.createElement("br"));
+    infoText.appendChild(docCount);
+
     var objCount = document.createElement("span");
-    objCount.textContent = "Valid Plots: " + filteredCount;
+    objCount.textContent = "# search results: " + filteredCount + " plots";
     infoText.appendChild(document.createElement("br"));
     infoText.appendChild(objCount);
     return infoText;
