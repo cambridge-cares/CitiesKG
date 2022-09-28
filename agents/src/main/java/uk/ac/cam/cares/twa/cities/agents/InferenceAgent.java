@@ -10,6 +10,7 @@ import org.semanticweb.owlapi.model.IRI;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.tasks.ClassMembershipCheckingTask;
+import uk.ac.cam.cares.twa.cities.tasks.ClassSpecialisationCheckingTask;
 import uk.ac.cam.cares.twa.cities.tasks.ConsistencyCheckingTask;
 import uk.ac.cam.cares.twa.cities.tasks.EdgeBetweennessTask;
 import uk.ac.cam.cares.twa.cities.tasks.PageRankTask;
@@ -22,6 +23,8 @@ public abstract class InferenceAgent extends JPSAgent {
   public static final String KEY_REQ_METHOD = "method";
   public static final String KEY_REQ_URL = "requestUrl";
   public static final String KEY_TARGET_IRI = "targetIRI";
+  public static final String KEY_SRC_IRI = "sourceIRI";
+  public static final String KEY_DST_IRI = "destinationIRI";
   public static final String KEY_ALGO_IRI = "algorithmIRI";
   public static final String KEY_ONTO_IRI = "ontologyIRI";
   public static final String KEY_ASRT_IRI = "assertionsIRI";
@@ -41,12 +44,14 @@ public abstract class InferenceAgent extends JPSAgent {
   public static final String TASK_USP = "UnweightedShortestPathTask";
   public static final String TASK_CC = "ConsistencyCheckingTask";
   public static final String TASK_CMC = "ClassMembershipCheckingTask";
+  public static final String TASK_CSC = "ClassSpecialisationCheckingTask";
   protected final Map<IRI, UninitialisedDataQueueTask> TASKS = Stream.of(new Object[][] {
       {IRI.create(ONINF_SCHEMA + TASK_PR), new PageRankTask()},
       {IRI.create(ONINF_SCHEMA + TASK_EB), new EdgeBetweennessTask()},
       {IRI.create(ONINF_SCHEMA + TASK_USP), new UnweightedShortestPathTask()},
       {IRI.create(ONINF_SCHEMA + TASK_CC), new ConsistencyCheckingTask()},
-      {IRI.create(ONINF_SCHEMA + TASK_CMC), new ClassMembershipCheckingTask()}
+      {IRI.create(ONINF_SCHEMA + TASK_CMC), new ClassMembershipCheckingTask()},
+      {IRI.create(ONINF_SCHEMA + TASK_CSC), new ClassSpecialisationCheckingTask()}
   }).collect(Collectors.toMap(data -> (IRI) data[0], data -> (UninitialisedDataQueueTask) data[1]));
   protected static LinkedBlockingDeque<Map<String, JSONArray>> dataQueue = new LinkedBlockingDeque<>();
   protected static LinkedBlockingDeque<Map<String, JSONArray>> resultQueue = new LinkedBlockingDeque<>();

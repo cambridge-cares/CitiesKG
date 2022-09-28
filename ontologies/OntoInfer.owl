@@ -330,7 +330,7 @@
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingAlgorithm">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembership"/>
-        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingAlgorithm"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingTask"/>
     </owl:NamedIndividual>
     
 
@@ -338,6 +338,24 @@
     <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingTask -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingTask">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassSpecialisationCheckingAlgorithm -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassSpecialisationCheckingAlgorithm">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassSpecialization"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassSpecialisationCheckingTask"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassSpecialisationCheckingTask -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassSpecialisationCheckingTask">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
         <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent"/>
     </owl:NamedIndividual>

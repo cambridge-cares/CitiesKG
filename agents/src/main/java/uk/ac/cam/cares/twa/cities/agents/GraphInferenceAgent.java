@@ -37,8 +37,6 @@ import uk.ac.cam.cares.twa.cities.tasks.UninitialisedDataQueueTask;
     })
 public class GraphInferenceAgent extends InferenceAgent {
   public static final String URI_ACTION = "/inference/graph";
-  public static final String KEY_SRC_IRI = "sourceIRI";
-  public static final String KEY_DST_IRI = "destinationIRI";
 
   private static final ExecutorService taskExecutor = Executors.newFixedThreadPool(5);
 

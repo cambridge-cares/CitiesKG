@@ -50,21 +50,12 @@ public class OntologyInferenceAgent extends InferenceAgent {
             IRI.create(targetIRI));
 
         String taskIRI = task.getTaskIri().toString();
-        //(2) Retrieve data from target IRI
-        JSONArray targetData = getAllTargetData(IRI.create(targetIRI), tBoxGraph);
-        //add aBox data if needed
-        if (requestParams.keySet().contains(KEY_ASRT_IRI)) {
-          String aBoxGraph = requestParams.getString(KEY_ASRT_IRI).replace(targetIRI, "");
-          targetData = getAllTargetData(IRI.create(targetIRI), aBoxGraph, targetData);
-        }
-        //(3) Pass target data (2) to the task (1) and run the task
-        Map<String,JSONArray> taskData = new HashMap<>();
-        taskData.put(taskIRI, targetData);
-        taskData.put(KEY_ONTO_IRI, new JSONArray().put(tBoxGraph));
 
-        dataQueue.put(taskData);
+        //(2) Add data to the queue and execute task
+        dataQueue.put(prepareTaskData(targetIRI, tBoxGraph, taskIRI, requestParams));
         taskExecutor.execute(task);
-        //(4) add task information to the response
+
+        //(3) add task information to the response
         if (task instanceof UninitialisedDataAndResultQueueTask) {
           while (resultQueue.isEmpty()) {
             if (!task.isRunning()) {
@@ -114,6 +105,36 @@ public class OntologyInferenceAgent extends InferenceAgent {
     return true;
   }
 
+  private Map<String,JSONArray> prepareTaskData(String targetIRI, String tBoxGraph, String taskIRI, JSONObject requestParams)
+      throws ParseException {
+    Map<String,JSONArray> taskData = new HashMap<>();
+
+    //(1) Retrieve data from KG based on target IRI
+    JSONArray targetData = getAllTargetData(IRI.create(targetIRI), tBoxGraph);
+    //add aBox data if needed
+    if (requestParams.keySet().contains(KEY_ASRT_IRI)) {
+      String aBoxGraph = requestParams.getString(KEY_ASRT_IRI).replace(targetIRI, "");
+      targetData = getAllTargetData(IRI.create(targetIRI), aBoxGraph, targetData);
+    }
+
+    taskData.put(taskIRI, targetData);
+
+    //(2) Add data from request parameters
+    taskData.put(KEY_ONTO_IRI, new JSONArray().put(tBoxGraph));
+
+    if (requestParams.keySet().contains(KEY_SRC_IRI)) {
+      JSONArray srcIriArr = new JSONArray().put(requestParams.get(KEY_SRC_IRI));
+      taskData.put(KEY_SRC_IRI, srcIriArr);
+    }
+
+    if (requestParams.keySet().contains(KEY_DST_IRI)) {
+      JSONArray srcIriArr = new JSONArray().put(requestParams.get(KEY_DST_IRI));
+      taskData.put(KEY_DST_IRI, srcIriArr);
+    }
+
+    return taskData;
+  }
+
   private JSONArray getAllTargetData(IRI sparqlEndpoint, String tBoxGraph) throws ParseException {
     //retrieve data and replace empty string with it
     SelectBuilder sb = new SelectBuilder();
@@ -135,7 +156,7 @@ public class OntologyInferenceAgent extends InferenceAgent {
   }
 
   private JSONArray getAllTargetData(IRI sparqlEndpoint, String aBoxGraph, JSONArray targetData) {
-    //@todo: implementation
+
     SelectBuilder sb = new SelectBuilder();
     sb.setBase(sparqlEndpoint.toString()).from(aBoxGraph)
         .addVar("?s").addVar("?p").addVar("?o")
