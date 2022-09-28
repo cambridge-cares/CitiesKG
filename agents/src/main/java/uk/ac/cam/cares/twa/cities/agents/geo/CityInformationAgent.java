@@ -238,6 +238,7 @@ public class CityInformationAgent extends JPSAgent {
     String[] splitUri = uriString.split("/");
     return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 2));
   }
+
   /*** Method combines both query blocks depending on the user input.
    * @param predicate efines weather uses or programmes to be queried
    * @param onto_class types of programmes or uses
@@ -313,7 +314,7 @@ public class CityInformationAgent extends JPSAgent {
    */
   private JSONArray getFilteredObjects (String predicate, HashMap<String, Double> inputZoneCaseGFAValues, double totalGFAValue, boolean min_cap, boolean max_cap) {
     double sumOfinputZoneCaseGFAValues = inputZoneCaseGFAValues.values().stream().mapToDouble(Double::doubleValue).sum();
-    boolean gfa_case = sumOfinputZoneCaseGFAValues > 0 | totalGFAValue > 0;
+    boolean gfa_case = sumOfinputZoneCaseGFAValues > 0 | totalGFAValue > 0 | min_cap | max_cap;
     Query query = getFilterQuery(predicate, new ArrayList<>(inputZoneCaseGFAValues.keySet()), gfa_case);
     HashMap<String, Double> filteredCityObjects = new HashMap<>();
     JSONArray returnedCityObjects =  new JSONArray();
@@ -383,12 +384,13 @@ public class CityInformationAgent extends JPSAgent {
          returnedCityObjects.put(filteredCityObjectsList.get(i).getKey());
        }
      }
-     else{
+     else {
        for (String filteredCityObject: filteredCityObjects.keySet()) {
          returnedCityObjects.put(filteredCityObject);
        }
      }
-    } else { //Case 1: Programme OR Use without GFA input.
+    }
+    else {
       for (int i = 0; i < query_result.length(); i++) {
         JSONObject row = (JSONObject) query_result.get(i);
         returnedCityObjects.put(row.get(CITY_OBJECT_ID));
