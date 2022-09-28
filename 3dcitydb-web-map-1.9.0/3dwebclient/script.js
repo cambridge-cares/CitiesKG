@@ -756,7 +756,7 @@ function processInfoContext(resultjson){
     var infoText = document.createElement("div");
     var title = document.createElement("span");
 
-    var developmentType = document.getElementById("developmentType");
+    var developmentType = document.getElementById("DevelopmentType");
     title.innerHTML = "Search " + developmentType.options[developmentType.selectedIndex].text;
 
     title.style.fontWeight = "bold";

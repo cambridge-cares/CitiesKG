@@ -92,7 +92,6 @@ public class CityInformationAgent extends JPSAgent {
   public JSONObject processRequestParameters(JSONObject requestParams) {
 
     if (validateInput(requestParams)){
-      /***
       ArrayList<String> uris = new ArrayList<>();
       JSONArray iris = requestParams.getJSONArray(KEY_IRIS);
 
@@ -121,7 +120,7 @@ public class CityInformationAgent extends JPSAgent {
       }
 
       requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
-      */
+
       if (requestParams.keySet().contains(KEY_CONTEXT)) {
         Set<String> agentURLs = requestParams.getJSONObject(KEY_CONTEXT).keySet();
         for (String agentURL : agentURLs) {
