@@ -397,6 +397,30 @@ public class CityInformationAgent extends JPSAgent {
     return returnedCityObjects;
   }
 
+  private JSONArray applyFiltersGfaWithProgram(HashMap plotGFAValues, HashMap filteredCityObjects) {
+    JSONArray returnedCityObjects = new JSONArray();
+
+    return returnedCityObjects;
+  }
+
+  private JSONArray applyFiltersGfaWithProgramAndTotalGfa(HashMap plotGFAValues, HashMap filteredCityObjects) {
+    JSONArray returnedCityObjects = new JSONArray();
+
+    return returnedCityObjects;
+  }
+
+  private JSONArray applyFiltersGfaWithProgramTotalGfaAndDefaultGfa(HashMap plotGFAValues, HashMap filteredCityObjects, boolean zoneCase) {
+    JSONArray returnedCityObjects = new JSONArray();
+
+    return returnedCityObjects;
+  }
+
+  private JSONArray applyFiltersGfaWithoutProgram(HashMap plotGFAValues, HashMap filteredCityObjects) {
+    JSONArray returnedCityObjects = new JSONArray();
+
+    return returnedCityObjects;
+  }
+
   /*** Method selects the relevant GFAs for further comparison based on zoning cases.
    * @param cityObjectGFAs GFAs linked to a partocular cityObject.
    * @param inputGFAs GFAs provided by the user.
