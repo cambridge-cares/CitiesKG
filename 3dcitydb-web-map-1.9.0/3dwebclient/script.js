@@ -811,9 +811,9 @@ function processInfoContext(resultjson){
     // static part: measure the impact of the demo
     var docCount = document.createElement("span");
     if (ifGFA){
-        docCount.innerHTML = "# regulatory documents <br /> automatically checked: 38 ";
+        docCount.innerHTML = "This search replaces manually checking 38 regulatory documents";
     }else {
-        docCount.innerHTML = "# regulatory documents <br /> automatically checked: 17 ";
+        docCount.innerHTML = "This search replaces manually checking 17 regulatory documents";
     }
     infoText.appendChild(document.createElement("br"));
     infoText.appendChild(docCount);
