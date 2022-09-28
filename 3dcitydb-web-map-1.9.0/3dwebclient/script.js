@@ -267,7 +267,8 @@ function initClient() {
     // If the web client has a layer, add an onclick event to the home button to fly to this layer
     var cesiumHomeButton = document.getElementsByClassName("cesium-button cesium-toolbar-button cesium-home-button")[0];
     cesiumHomeButton.onclick = function () {
-        zoomToDefaultCameraPosition();
+        //zoomToDefaultCameraPosition();
+        zoomToCREATE();
     }
 }
 
@@ -1128,6 +1129,22 @@ function addEventListeners(layer) {
         auxClickEventListener(object);
     });
 }
+
+
+// home button zoom in to CREATE Tower
+function zoomToCREATE(){
+    var cameraPosition = {
+        latitude: 1.295,
+        longitude: 103.776,
+        height: 1000,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+
+    return flyToCameraPosition(cameraPosition);
+}
+
 
 function zoomToDefaultCameraPosition() {
     var deferred = Cesium.when.defer();
