@@ -9,6 +9,7 @@ import org.json.JSONArray;
 import org.semanticweb.owlapi.model.IRI;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
+import uk.ac.cam.cares.twa.cities.tasks.ClassDisjointnessCheckingTask;
 import uk.ac.cam.cares.twa.cities.tasks.ClassMembershipCheckingTask;
 import uk.ac.cam.cares.twa.cities.tasks.ClassSpecialisationCheckingTask;
 import uk.ac.cam.cares.twa.cities.tasks.ConsistencyCheckingTask;
@@ -45,13 +46,15 @@ public abstract class InferenceAgent extends JPSAgent {
   public static final String TASK_CC = "ConsistencyCheckingTask";
   public static final String TASK_CMC = "ClassMembershipCheckingTask";
   public static final String TASK_CSC = "ClassSpecialisationCheckingTask";
+  public static final String TASK_CDC = "ClassDisjointnessCheckingTask";
   protected final Map<IRI, UninitialisedDataQueueTask> TASKS = Stream.of(new Object[][] {
       {IRI.create(ONINF_SCHEMA + TASK_PR), new PageRankTask()},
       {IRI.create(ONINF_SCHEMA + TASK_EB), new EdgeBetweennessTask()},
       {IRI.create(ONINF_SCHEMA + TASK_USP), new UnweightedShortestPathTask()},
       {IRI.create(ONINF_SCHEMA + TASK_CC), new ConsistencyCheckingTask()},
       {IRI.create(ONINF_SCHEMA + TASK_CMC), new ClassMembershipCheckingTask()},
-      {IRI.create(ONINF_SCHEMA + TASK_CSC), new ClassSpecialisationCheckingTask()}
+      {IRI.create(ONINF_SCHEMA + TASK_CSC), new ClassSpecialisationCheckingTask()},
+      {IRI.create(ONINF_SCHEMA + TASK_CDC), new ClassDisjointnessCheckingTask()}
   }).collect(Collectors.toMap(data -> (IRI) data[0], data -> (UninitialisedDataQueueTask) data[1]));
   protected static LinkedBlockingDeque<Map<String, JSONArray>> dataQueue = new LinkedBlockingDeque<>();
   protected static LinkedBlockingDeque<Map<String, JSONArray>> resultQueue = new LinkedBlockingDeque<>();
