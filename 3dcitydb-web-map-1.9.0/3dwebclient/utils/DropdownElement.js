@@ -6,6 +6,7 @@ var MIN_CAP = 'min_cap';
 var input_parameters;
 var selectedDevType;
 var click_counter = 0;
+var area_counter = 0;
 
 function buildQuery(predicate){
 	query = "PREFIX zo:<http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#> "
@@ -198,27 +199,47 @@ function removePrefix(result){
 
 function getExampleParams() {
 	resetAllInputs();
-	if(click_counter === 3) {
+	if(click_counter === 6) {
 		click_counter = 0;
 	}
-	var query_example = [{TotalGFA:'', allowsProgramme: {Clinic: '', Flat: ''}, min_cap: 'false', max_cap: 'false'},
-		{TotalGFA:'', allowsProgramme: {Clinic: '300', Flat: '2000'}, min_cap: 'false', max_cap: 'false'},
-		{TotalGFA:'10000', allowsProgramme: {Library: ''}, min_cap: 'false', max_cap: 'true'}];
+	var query_example = [{TotalGFA:'', allowsUse: {ParkUse: ''}, min_cap: 'false', max_cap: 'false'},
+		{TotalGFA:'', allowsProgramme: {Flat: '', Clinic:''}, min_cap: 'false', max_cap: 'false'},
+		{TotalGFA:'', allowsProgramme: {PrintingPress: '', Gym:'', FoodLaboratory:''}, min_cap: 'false', max_cap: 'false'},
+		{TotalGFA:'', allowsProgramme: {Condominium: ''}, min_cap: 'false', max_cap: 'true'},
+		{TotalGFA:'', allowsProgramme: {Clinic: '100', Flat:'2000', Mall:'1000'}, min_cap: 'true', max_cap: 'false'},
+		{TotalGFA:'', allowsProgramme: {Bank: '50000', Bar:'50000', BookStore:'50000'}, min_cap: 'false', max_cap: 'true'}];
+
 	switch (click_counter){
 		case 0:
 			input_parameters = query_example[0];
 			document.getElementsByClassName('querySentence')[0].innerHTML =
-					"Find plots that could allow " + "<b>" + "Clinic" + "</b>" + " and " + "<b>" + "Flat" + "</b>" + ".";
+					"Find plots that could allow " + "<b>" + "ParkUse" + "</b>" + ".";
 			break;
 		case 1:
 			input_parameters = query_example[1];
 			document.getElementsByClassName('querySentence')[0].innerHTML =
-					"Find plots that could allow " + "300 sqm of "+ "<b>" + "Clinic" + "</b>" + " (or more) and  2000 sqm " + "<b>" + "Flat" + "</b>" + " (or more).";
+					"Find plots that could allow " + "<b>" + "Flat" + "</b>" + " and " + "<b>" + "Clinic" + "</b>"+ ".";
 			break;
 		case 2:
 			input_parameters = query_example[2];
 			document.getElementsByClassName('querySentence')[0].innerHTML =
-					"Find the 10 smallest plots (by GFA) that could allow " + "10000 sqm development containing "+ "<b>" + "Library" + "</b>" + ".";
+					"Find plots that could allow " + "<b>" + "PrintingPress" + "</b>" + " and " + "<b>" + "Gym" + "</b>" + " and " + "<b>" + "FoodLaboratory" + "</b>" + ".";
+			break;
+		case 3:
+			input_parameters = query_example[3];
+			document.getElementsByClassName('querySentence')[0].innerHTML =
+					"Find plots that could allow " + "3000 sqm of "+ "<b>" + "Flat" + "</b>" + " (or more) and  100 sqm of " + "<b>" + "GroceryStore" + "</b>" + " (or more).";
+			break;
+		case 4:
+			input_parameters = query_example[4];
+			document.getElementsByClassName('querySentence')[0].innerHTML =
+					"Find plots that could allow " + "100 sqm of "+ "<b>" + "Clinic" + "</b>" + " (or more) and  2000 sqm of " + "<b>" + "Flat" + "</b>" + " (or more) and  1000 sqm of " + "<b>" + "Mall" + "</b>" + " (or more).";
+			break;
+		case 5:
+			input_parameters = query_example[5];
+			document.getElementsByClassName('querySentence')[0].innerHTML =
+					"Find the 10 smallest plots (by GFA) that could allow " + "50000 sqm of "+ "<b>" + "Bank" + "</b>" + " (or more) and 50000 sqm of " + "<b>" + "Bar" + "</b>" + " (or more) and  50000 sqm of " + "<b>" + "BookStore" + "</b>" + " (or more).";
+
 			break;
 	}
 	click_counter += 1;
@@ -393,6 +414,12 @@ function resetAllInputs(){
 	//totalGfaInput.innerHTML = "";
 	totalGfaInput.value = '';
 
+	var capInput = document.getElementById('CapType');
+	capInput.value = 'no_cap';
+
+	var query_sentence = document.getElementById('querySentence');
+	query_sentence.innerText = 'Find plots that could allow...';
+
 	document.getElementById('choose_programmes').style.display="None";
 	document.getElementById('choose_uses').style.display="None";
 	document.getElementById('assignGFA').style.display="None";
@@ -438,6 +465,51 @@ function addDisclaimerButton(){
 
 	instructionContainer.appendChild(mouseButton);
 	instructionContainer.appendChild(touchButton);
+
+}
+
+function zoomToKeyGrowthAreas() {
+	resetAllInputs();
+	if(area_counter === 3) {
+		area_counter = 0;
+	}
+
+	switch (area_counter){
+		case 0:
+			document.getElementById('keyGrowthAreas').innerText = 'Singapore River Valley';
+			var cameraPostion = {
+				latitude:  1.279,
+				longitude: 103.84,
+				height: 2800,
+				heading: 360,
+				pitch: -60,
+				roll: 356,
+			}
+			flyToCameraPosition(cameraPostion);
+			break;
+			document.getElementById('keyGrowthAreas').innerText = 'Punggol Digital District';
+			var cameraPostion = {
+				latitude:  1.408600,
+				longitude: 103.911385,
+				height: 2800,
+				heading: 360,
+				pitch: -60,
+				roll: 356,
+			}
+			flyToCameraPosition(cameraPostion);
+		case 2:
+			document.getElementById('keyGrowthAreas').innerText = 'Paya Lebar Military Base'
+			var cameraPostion = {
+				latitude:  1.279,
+				longitude: 103.84,
+				height: 2800,
+				heading: 360,
+				pitch: -60,
+				roll: 356,
+			}
+			flyToCameraPosition(cameraPostion);
+	}
+	area_counter += 1;
 
 }
 

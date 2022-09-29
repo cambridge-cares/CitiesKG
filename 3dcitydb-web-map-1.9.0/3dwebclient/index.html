@@ -110,7 +110,6 @@
                 font-family: "Arial";
                 z-index: 99980;
             }
-
             .loadingIndicator {
                 display: block;
                 position: absolute;
@@ -124,7 +123,6 @@
                 background-repeat: no-repeat;
                 background-image: url(../theme/img/ajax-loader.gif);
             }
-
             #loadingScreen {
                 display: block;
                 position: absolute;
@@ -198,7 +196,6 @@
                 background: rgba(42, 42, 42, 0.5);
                 border: 3px #505050 solid;
             }
-
             #ProgrammaticPlotFinder {
                 border-radius: 5px;
                 padding: 5px;
@@ -206,20 +203,16 @@
                 font-family: "Arial";
                 z-index: 99980;
             }
-			
             .programmeFinder_toolbox {
                 width: max-content;
-                height: 68px;
+                height: 70px;
                 position: absolute;
-                left:220px;
+                left:250px;
                 top:5px;
                 background: rgba(42, 42, 42, 0.5);
                 border: 2px #505050 solid;
                 border-radius: 5px;
-                text-align: left;
-                font-size: 9pt;
             }
-
             .use_element, .programme_element{
                 display:inline-block;
                 padding-top: 2px;
@@ -227,7 +220,6 @@
                 width: 220px;
                 vertical-align: top;
             }
-
             .checkbox{
                 display:inline-block;
                 cursor: pointer;
@@ -235,14 +227,12 @@
                 width: 20px;
                 vertical-align: top;
             }
-
             .text_gfa{
                 display:inline-block;
                 line-height: 14px;
                 width: 200px;
                 vertical-align: top;
             }
-
             .text_input{
                 display:inline-block;
                 line-height: 14px;
@@ -250,7 +240,6 @@
                 vertical-align: top;
                 alignment: right;
             }
-
             .finder_dynamic_box {
                 display: none;
                 width: 260px;
@@ -268,7 +257,6 @@
                 vertical-align: top;
                 scrollbar-gutter: stable;
             }
-
             .arrow {
                 float: right;
                 border: solid white;
@@ -278,7 +266,6 @@
                 transform: rotate(45deg);
                 transform-origin:70% 70%;
             }
-
             .pop_up_box {
                 top: 42%;
                 left: 42%;
@@ -292,21 +279,19 @@
                 border-radius: 4px;
                 color: #fff;
             }
-
             .querySentence {
-                position: relative;
-                height:20px;
-                line-height: 25px;
-                font-size: 14px;
+                float: left;
+                height:26px;
+                line-height: 28px;
+                font-size: 16px;
                 width: max-content;
-                margin: 5px;
-                padding: 3px;
+                margin: 2px;
+                padding: 2px;
                 vertical-align: middle;
                 background: rgb(255, 255, 255);
                 border-radius: 4px;
                 color: rgb(42, 42, 42);
             }
-
             .mark{
                 display:inline-block;
                 padding: 5px;
@@ -318,7 +303,6 @@
                 font-weight: bold;
                 font-size: 24pt;
             }
-
             .alert{
                 display:inline-block;
                 padding: 5px;
@@ -329,15 +313,14 @@
                 font-family: sans-serif;;
                 font-size: 10pt;
             }
-
             .demo_elements {
                 float: left;
             }
 
             .ProgrammaticPlotFinder-submitButton{
-                display: block;
+
                 float: left;
-                height: 26px;
+                height: 30px;
                 background: #303336;
                 color: #edffff;
                 fill: #edffff;
@@ -346,42 +329,40 @@
                 border: 2px solid #1E90FFFF;
                 border-radius: 5px;
                 white-space: nowrap;
+                font-size: 16px;
             }
             .ProgrammaticPlotFinder-submitButton:hover {
                 background: #1E90FFFF;
             }
-
             .ProgrammaticPlotFinder-resultBox{
                 display: block;
                 position: absolute;
-                top: 50px;
-                left: 15px;
+                top: 80px;
+                left: 5px;
                 background: rgba(38, 38, 38, 0.95);
                 color: #edffff;
                 border: 1px solid #444;
                 visibility: hidden;
                 opacity: 1;
             }
-
             .ProgrammaticPlotFinder-resultBox-title{
                 display: block;
                 height: 20px;
                 padding: 5px 30px 5px 25px;
                 background: rgba(84, 84, 84, 1);
-                border-top-left-radius: 7px;
+                border-top-left-radius: 5px;
+                border-top-right-radius: 5px;
                 text-align: center;
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 overflow: hidden;
                 box-sizing: content-box;
             }
-
             .ProgrammaticPlotFinder-resultBox-iframe{
                 border: none;
                 width: 100%; /* Fallback */
                 width: calc(100% - 2px);
             }
-
             li {
                 border: 1px solid #ddd;
                 margin-top: -1px; /* Prevent double borders */
@@ -420,18 +401,19 @@
         <img id = "citydb_loadingTilesInspector" src="../theme/img/ajax-loader.gif" style="display: none; position: absolute; bottom: 56px; right: 7px; width:30px;height:30px;">
 
 		    <div id="ProgrammaticPlotFinder">
-            <select id="demo_type" class="cesium-button" onchange="chooseDemoType()">
+            <select id="demo_type" class="cesium-button" onchange="chooseDemoType()" style="font-size: 16px">
                 <option value="PPF">Programmatic Plot Finder</option>
                 <option value="demo2" style="color:grey">Demo 2</option>
                 <option value="demo3" style="color:grey">Demo 3</option>
             </select>
 			      <div id="demo" class="programmeFinder_toolbox">
-                <div style="height: max-content">
+                <div style="height: 35px">
+                    <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams()">Try Example Query</button>
                     <div id="querySentence" class="querySentence">Find plots that could allow...</div>
                 </div>
-                <div style="height: max-content">
+                <div style="height: 35px">
                     <div id="QueryBox" style="float: left">
-                        <select id="DevelopmentType" class="cesium-button" onchange="showChooseDevType()" style="height:26px; padding: 3px" title="chooses the types of query scenario to explore"> Search plots ...
+                        <select id="DevelopmentType" class="cesium-button" onchange="showChooseDevType()" style="height:30px;font-size: 16px; padding:3px" title="chooses the types of query scenario to explore"> Search plots ...
                             <option value="ViewAll">Search plots...</option>
                             <option value="OntozoningUses">by allowable land uses</option>
                             <option value="OntozoingProgrammes">by allowable programmes</option>
@@ -440,15 +422,15 @@
                             <option value="ViewAll">enable all search types (*)</option>
                         </select>
                     </div>
-                    <div id="UsesBox" class="demo_elements">
+                    <div id="UsesBox" style="float: left">
                         <div>
                             <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
-                                <div style="width:240px" class="cesium-button" title ="Land use is a high-level term for the set of activities &#010;and developments that are allowed in a certain zoning type">Choose Use ...<div id='use_arrow' class="arrow down"></div></div>
+                                <div style="width:240px" class="cesium-button" title ="Land use is a high-level term for the set of activities &#010;and developments that are allowed in a certain zoning type">Choose Land Use ...<div id='use_arrow' class="arrow down"></div></div>
                             </div>
                             <div id="choose_uses" class="finder_dynamic_box" ></div>
                         </div>
                     </div>
-                    <div id="ProgrammesBox" class="demo_elements">
+                    <div id="ProgrammesBox" style="float: left">
                         <div>
                             <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
                                 <div style="width:240px" class="cesium-button" title="Programme is a term for specific activities and developments &#010;that may be allowed across many zoning types">Choose Programme ...<div id='programme_arrow' class="arrow down"></div></div>
@@ -456,7 +438,7 @@
                             <div id="choose_programmes" class="finder_dynamic_box" onblur="showChooseProgrammes()"></div>
                         </div>
                     </div>
-                    <div id="GfaBox" class="demo_elements">
+                    <div id="GfaBox" style="float: left">
                         <div>
                             <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
                                 <div style="width:240px" class="cesium-button" title="Gross Floor Area is a term defining the total floor area contained within &#010; a building’s outer edges that excludes empty spaces">Assign Gross Floor Area (GFA) ...<div id='gfa_arrow' class="arrow down"></div></div>
@@ -470,8 +452,8 @@
                             </div>
                         </div>
                     </div>
-                    <div id='CapBox' class="demo_elements">
-                        <select id="CapType" class="cesium-button" onchange="getQuerySentence()" style="height: 26px; padding: 3px" title="chooses the amount of plots to show">Show ...
+                    <div id='CapBox' style="float: left">
+                        <select id="CapType" class="cesium-button" onchange="getQuerySentence()" style="height: 30px; font-size: 16px; padding: 3px" title="chooses the amount of plots to show">Show ...
                             <option value="no_cap">Show ...</option>
                             <option value="max_cap">only the 10 largest plots (by GFA)</option>
                             <option value="min_cap">only the 10 smallest plots (by GFA)</option>
@@ -479,7 +461,6 @@
                         </select>
                     </div>
                     <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getInputParams()" >Search Now</button>
-                    <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams()">Try Example Query</button>
                 </div>
             </div>
         </div>
