@@ -525,8 +525,8 @@ function adjustIonFeatures() {
                 }
             }
 
-            // Set default imagery to ESRI World Imagery
-            cesiumViewer.baseLayerPicker.viewModel.selectedImagery = imageryProviders[3];
+            // Ayda: Set default imagery to ESRI World Imagery --> imageryProviders[3]
+            cesiumViewer.baseLayerPicker.viewModel.selectedImagery = imageryProviders[8];
 
             // Disable auto-complete of OSM Geocoder due to OSM usage limitations
             // see https://operations.osmfoundation.org/policies/nominatim/#unacceptable-use
@@ -566,8 +566,8 @@ function inspectTileStatus() {
                 }
             }
         }
-        showedTilesInspector.innerHTML = 'Number of showed Tiles: ' + numberOfshowedTiles;
-        cachedTilesInspector.innerHTML = 'Number of cached Tiles: ' + numberOfCachedTiles;
+        //showedTilesInspector.innerHTML = 'Number of showed Tiles: ' + numberOfshowedTiles;
+        //cachedTilesInspector.innerHTML = 'Number of cached Tiles: ' + numberOfCachedTiles;
 
         var loadingTilesInspector = document.getElementById('citydb_loadingTilesInspector');
         if (numberOfTasks > 0 || !tilesLoaded) {
@@ -903,7 +903,10 @@ function addPoint(customDataSource, pointId, lat, long){
         id: pointId,
         point: {
             pixelSize: 10,
-            color: Cesium.Color.YELLOW,
+            //color: Cesium.Color.YELLOW,
+            color: Cesium.Color.GOLD,
+            outlineColor: Cesium.Color.BLACK,
+            outlineWidth:1,
         },
     });
 }
