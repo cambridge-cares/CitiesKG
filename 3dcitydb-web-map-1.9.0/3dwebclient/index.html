@@ -104,9 +104,8 @@
 
             #uiMenu {
                 border-radius: 5px;
-                padding: 5px;
                 position: absolute;
-                bottom: 50px;
+                bottom: 5px;
                 right: 160px;
                 font-family: "Arial";
                 z-index: 99980;
@@ -331,6 +330,10 @@
                 font-size: 10pt;
             }
 
+            .demo_elements {
+                float: left;
+            }
+
             .ProgrammaticPlotFinder-submitButton{
                 display: block;
                 float: left;
@@ -410,8 +413,10 @@
     <body>
         <div id="cesiumContainer"></div>
         <div id="loadingIndicator" class="loadingIndicator"></div>
+        <!-- Ayda: disabled for PPF demo
         <div id = "citydb_cachedTilesInspector" class="cesium-cesiumInspector" style="display: block; position: absolute; bottom: 5px; right: 5px; width: 130px" data-bind="html: dataSourcesText"></div>
         <div id = "citydb_showedTilesInspector" class="cesium-cesiumInspector" style="display: block; position: absolute; bottom: 5px; right: 170px; width: 130px" data-bind="html: dataSourcesText"></div>
+        -->
         <img id = "citydb_loadingTilesInspector" src="../theme/img/ajax-loader.gif" style="display: none; position: absolute; bottom: 56px; right: 7px; width:30px;height:30px;">
 
 		    <div id="ProgrammaticPlotFinder">
@@ -435,7 +440,7 @@
                             <option value="ViewAll">enable all search types (*)</option>
                         </select>
                     </div>
-                    <div id="UsesBox"style="float: left">
+                    <div id="UsesBox" class="demo_elements">
                         <div>
                             <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
                                 <div style="width:240px" class="cesium-button" title ="Land use is a high-level term for the set of activities &#010;and developments that are allowed in a certain zoning type">Choose Use ...<div id='use_arrow' class="arrow down"></div></div>
@@ -443,7 +448,7 @@
                             <div id="choose_uses" class="finder_dynamic_box" ></div>
                         </div>
                     </div>
-                    <div id="ProgrammesBox" style="float: left">
+                    <div id="ProgrammesBox" class="demo_elements">
                         <div>
                             <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
                                 <div style="width:240px" class="cesium-button" title="Programme is a term for specific activities and developments &#010;that may be allowed across many zoning types">Choose Programme ...<div id='programme_arrow' class="arrow down"></div></div>
@@ -451,7 +456,7 @@
                             <div id="choose_programmes" class="finder_dynamic_box" onblur="showChooseProgrammes()"></div>
                         </div>
                     </div>
-                    <div id="GfaBox" style="float: left">
+                    <div id="GfaBox" class="demo_elements">
                         <div>
                             <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
                                 <div style="width:240px" class="cesium-button" title="Gross Floor Area is a term defining the total floor area contained within &#010; a building’s outer edges that excludes empty spaces">Assign Gross Floor Area (GFA) ...<div id='gfa_arrow' class="arrow down"></div></div>
@@ -465,7 +470,7 @@
                             </div>
                         </div>
                     </div>
-                    <div id='CapBox'style="float: left">
+                    <div id='CapBox' class="demo_elements">
                         <select id="CapType" class="cesium-button" onchange="getQuerySentence()" style="height: 26px; padding: 3px" title="chooses the amount of plots to show">Show results ...
                             <option value="no_cap">Show me ...</option>
                             <option value="max_cap">only the 10 largest plots (by GFA)</option>

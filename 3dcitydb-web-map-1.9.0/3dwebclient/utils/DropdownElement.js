@@ -139,7 +139,7 @@ function getQuerySentence(){
 	}
 
 	if (document.getElementById('CapType').value == 'max_cap') {
-		final_sentence = final_sentence.slice(0,8) + "the 10 smallest plots (by GFA) " + final_sentence.slice(14);
+		final_sentence = final_sentence.slice(0,8) + "the 10 largest plots (by GFA) " + final_sentence.slice(14);
 	}
 	if (document.getElementById('CapType').value == 'min_cap') {
 		final_sentence = final_sentence.slice(0,8) + "the 10 smallest plots (by GFA) " + final_sentence.slice(14);
@@ -197,11 +197,9 @@ function removePrefix(result){
 }
 
 function getExampleParams() {
-
 	document.getElementById('choose_programmes').style.display="None";
 	document.getElementById('choose_uses').style.display="None";
 	document.getElementById('assignGFA').style.display="None";
-
 	if(click_counter === 3) {
 		click_counter = 0;
 	}

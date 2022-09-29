@@ -1131,7 +1131,7 @@ function addEventListeners(layer) {
 }
 
 
-// home button zoom in to CREATE Tower
+// Ayda: home button zoom in to CREATE Tower
 function zoomToCREATE(){
     var cameraPosition = {
         latitude: 1.295,
