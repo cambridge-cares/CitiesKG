@@ -119,7 +119,7 @@ public class ClassSpecialisationCheckingTask implements UninitialisedDataAndResu
     if (!srcIri.equals("*") && !dstIri.equals("*")) {
       boolean member = reasoner.getSubClasses(df.getOWLClass(IRI.create(dstIri)), false)
           .containsEntity(df.getOWLClass(IRI.create(srcIri)));
-      output.put(new JSONArray().put(ontoIri + " : " + member));
+      output.put(new JSONObject().put(ontoIri, member));
     } else if (srcIri.equals("*")) {
       //return all subclasses of the class with dstIRI
       for (Object node : reasoner.getSubClasses(df.getOWLClass(IRI.create(dstIri)), false).getNodes().toArray()) {
