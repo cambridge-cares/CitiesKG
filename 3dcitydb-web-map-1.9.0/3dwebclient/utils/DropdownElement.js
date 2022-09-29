@@ -73,15 +73,15 @@ function processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGF
 		final_sentence = sentence.slice(0, -5) + ".";
 	}
 	else {
-		final_sentence = "Find me plots that could allow...";
+		final_sentence = "Find plots that could allow...";
 	}
 	return final_sentence;
 }
 
 function getQuerySentence(){
-	var sentence = "Find me plots that could allow...";
-	var final_sentence = 'Find me plots that could allow...';
-	var sentence_ormore = "Find me plots that could allow ";
+	var sentence = "Find plots that could allow...";
+	var final_sentence = 'Find plots that could allow...';
+	var sentence_ormore = "Find plots that could allow ";
 	var sqm = " sqm";
 	document.getElementsByClassName('querySentence')[0].textContent = final_sentence;
 
@@ -139,10 +139,10 @@ function getQuerySentence(){
 	}
 
 	if (document.getElementById('CapType').value == 'max_cap') {
-		final_sentence = final_sentence.slice(0,8) + "the 10 largest plots (by GFA) " + final_sentence.slice(14);
+		final_sentence = final_sentence.slice(0,5) + "the 10 largest plots (by GFA) " + final_sentence.slice(11);
 	}
 	if (document.getElementById('CapType').value == 'min_cap') {
-		final_sentence = final_sentence.slice(0,8) + "the 10 smallest plots (by GFA) " + final_sentence.slice(14);
+		final_sentence = final_sentence.slice(0,5) + "the 10 smallest plots (by GFA) " + final_sentence.slice(11);
 	}
 	document.getElementsByClassName('querySentence')[0].innerHTML = final_sentence;
 }
@@ -197,9 +197,7 @@ function removePrefix(result){
 }
 
 function getExampleParams() {
-	document.getElementById('choose_programmes').style.display="None";
-	document.getElementById('choose_uses').style.display="None";
-	document.getElementById('assignGFA').style.display="None";
+	resetAllInputs();
 	if(click_counter === 3) {
 		click_counter = 0;
 	}
@@ -210,17 +208,17 @@ function getExampleParams() {
 		case 0:
 			input_parameters = query_example[0];
 			document.getElementsByClassName('querySentence')[0].innerHTML =
-					"Find me plots that could allow " + "<b>" + "Clinic" + "</b>" + " and " + "<b>" + "Flat" + "</b>" + ".";
+					"Find plots that could allow " + "<b>" + "Clinic" + "</b>" + " and " + "<b>" + "Flat" + "</b>" + ".";
 			break;
 		case 1:
 			input_parameters = query_example[1];
 			document.getElementsByClassName('querySentence')[0].innerHTML =
-					"Find me plots that could allow " + "300 sqm of "+ "<b>" + "Clinic" + "</b>" + " (or more) and  2000 sqm " + "<b>" + "Flat" + "</b>" + " (or more).";
+					"Find plots that could allow " + "300 sqm of "+ "<b>" + "Clinic" + "</b>" + " (or more) and  2000 sqm " + "<b>" + "Flat" + "</b>" + " (or more).";
 			break;
 		case 2:
 			input_parameters = query_example[2];
 			document.getElementsByClassName('querySentence')[0].innerHTML =
-					"Find me the 10 smallest plots (by GFA) that could allow " + "10000 sqm development containing "+ "<b>" + "Library" + "</b>" + ".";
+					"Find the 10 smallest plots (by GFA) that could allow " + "10000 sqm development containing "+ "<b>" + "Library" + "</b>" + ".";
 			break;
 	}
 	click_counter += 1;
@@ -313,7 +311,9 @@ function throwNotification() {
 
 	var explanation =  document.createElement('div');
 	explanation.className = 'alert';
-	explanation.innerHTML = "Choose uses or programmes but not both! In the future, programmes will be filtered based on chosen uses.";
+	explanation.innerText = "Some of the inputs are wrong. Suggestions how to fix: "
+			+ "\n 1) choose uses or programmes but not both.\n "
+			+ "2) use only digits for GFA inputs. \n";
 
 	popup.appendChild(mark);
 	popup.appendChild(explanation);
@@ -392,6 +392,10 @@ function resetAllInputs(){
 	var totalGfaInput = document.getElementById("totalGFA");
 	//totalGfaInput.innerHTML = "";
 	totalGfaInput.value = '';
+
+	document.getElementById('choose_programmes').style.display="None";
+	document.getElementById('choose_uses').style.display="None";
+	document.getElementById('assignGFA').style.display="None";
 }
 
 function addDisclaimerButton(){
