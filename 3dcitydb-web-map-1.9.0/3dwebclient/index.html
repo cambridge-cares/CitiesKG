@@ -337,9 +337,10 @@
             .ProgrammaticPlotFinder-resultBox{
                 display: block;
                 position: absolute;
+                min-width: 230px;
                 top: 80px;
                 left: 5px;
-                background: rgba(38, 38, 38, 0.95);
+                background: #303336;
                 color: #edffff;
                 border: 1px solid #444;
                 visibility: hidden;
@@ -349,7 +350,7 @@
                 display: block;
                 height: 20px;
                 padding: 5px 30px 5px 25px;
-                background: rgba(84, 84, 84, 1);
+                background: #303336;
                 border-top-left-radius: 5px;
                 border-top-right-radius: 5px;
                 text-align: center;
@@ -408,7 +409,7 @@
             </select>
 			      <div id="demo" class="programmeFinder_toolbox">
                 <div style="height: 35px">
-                    <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams()">Try Example Query</button>
+                    <button id="exampleQuery" class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams()">Try Example Query</button>
                     <div id="querySentence" class="querySentence">Find plots that could allow...</div>
                 </div>
                 <div style="height: 35px">
@@ -419,7 +420,7 @@
                             <option value="OntozoingProgrammes">by allowable programmes</option>
                             <option value="GfaUses">by allowable GFA (per land use)</option>
                             <option value="GfaProgrammes">by allowable GFA (per programme)</option>
-                            <option value="ViewAll">enable all search types (*)</option>
+                            <option value="ViewAll">all search types (*)</option>
                         </select>
                     </div>
                     <div id="UsesBox" style="float: left">
@@ -460,7 +461,7 @@
                             <option value="no_cap">all results (*)</option>
                         </select>
                     </div>
-                    <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getInputParams()" >Search Now</button>
+                    <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getInputParams()">Search Now</button>
                 </div>
             </div>
         </div>
@@ -800,7 +801,7 @@
 
         <div id="uiProgrammeFinder-result" class="ProgrammaticPlotFinder-resultBox">
             <div id="resultBox-title" class="ProgrammaticPlotFinder-resultBox-title">
-                <label>PPF Search Result</label>
+                <label>Search History</label>
             </div>
             <div id="resultBox-iframe" class="ProgrammaticPlotFinder-resultBox-iframe"></div>
         </div>

@@ -566,6 +566,7 @@ function inspectTileStatus() {
                 }
             }
         }
+        // Ayda currently user does not need to know about the tiling.
         //showedTilesInspector.innerHTML = 'Number of showed Tiles: ' + numberOfshowedTiles;
         //cachedTilesInspector.innerHTML = 'Number of cached Tiles: ' + numberOfCachedTiles;
 
@@ -752,6 +753,7 @@ function showResultWindow(resultJson){
 
 // create the summary text for PPF result box
 // resultjson is json object
+
 function processInfoContext(resultjson){
     let ifGFA = false;
     var infoText = document.createElement("div");
@@ -759,6 +761,9 @@ function processInfoContext(resultjson){
 
     var developmentType = document.getElementById("DevelopmentType");
     title.innerHTML = "Search " + developmentType.options[developmentType.selectedIndex].text;
+    if (title.innerHTML === "Search Search plots...") {
+        title.innerHTML = "Search example query"
+    }
 
     title.style.fontWeight = "bold";
     title.style.fontSize = "12px";
@@ -774,11 +779,11 @@ function processInfoContext(resultjson){
     if (Object.keys(inputs).includes("allowsProgramme")){
         allowsObjects = Object.keys(inputs["allowsProgramme"]);
         allowsGFA = Object.values(inputs["allowsProgramme"]);
-        allowOption = "allowsProgramme";
+        allowOption = "allowsProgramme:";
     } else if (Object.keys(inputs).includes("allowsUse")){
         allowsObjects = Object.keys(inputs["allowsUse"]);
         allowsGFA = Object.values(inputs["allowsUse"]);
-        allowOption = "allowsUse";
+        allowOption = "allowsUse:";
     }
     var allowOpts = document.createElement("span");
     allowOpts.textContent = allowOption;
@@ -790,39 +795,40 @@ function processInfoContext(resultjson){
     for (i = 0; i < allowsObjects.length; ++i){
         if (allowsGFA[i] != ""){
             ifGFA = true;
-            allowsContent += allowsObjects[i] + ":" + allowsGFA[i] + "<br />";
+            allowsContent += allowsObjects[i] + ": " + allowsGFA[i] + " sqm" + "<br />";
         }else{
-            allowsContent += allowsObjects[i] + "<br />";
+            allowsContent += allowsObjects[i] + "<br/>";
         }
 
     }
     allowOptText.innerHTML = allowsContent;
     infoText.appendChild(allowOptText);
-    infoText.appendChild(document.createElement("br"));
+    //infoText.appendChild(document.createElement("br"));
 
     if (Object.keys(inputs).includes("TotalGFA") && inputs["TotalGFA"] > 0){
         ifGFA = true;
         var totalGFA = document.createElement("span");
         var totalGFAValue = inputs["TotalGFA"];
-        totalGFA.textContent = "TotalGFA: " + totalGFAValue;
+        totalGFA.textContent = "Total GFA: " + totalGFAValue + " sqm";
         infoText.appendChild(totalGFA);
         infoText.appendChild(document.createElement("br"));
     }
-
-    // static part: measure the impact of the demo
-    var docCount = document.createElement("span");
-    if (ifGFA){
-        docCount.innerHTML = "# regulatory documents <br /> automatically checked: 38 ";
-    }else {
-        docCount.innerHTML = "# regulatory documents <br /> automatically checked: 17 ";
-    }
-    infoText.appendChild(document.createElement("br"));
-    infoText.appendChild(docCount);
 
     var objCount = document.createElement("span");
     objCount.textContent = "# search results: " + filteredCount + " plots";
     infoText.appendChild(document.createElement("br"));
     infoText.appendChild(objCount);
+    infoText.appendChild(document.createElement("br")); // Ayda: swapped white line positions according Pieter's instructions.
+
+    // static part: measure the impact of the demo
+    var docCount = document.createElement("span");
+    if (ifGFA){
+        docCount.innerHTML = "The search replaces manually checking <br /> 38 regulatory documents";
+    }else {
+        docCount.innerHTML = "The search replaces manually checking <br /> 17 regulatory documents ";
+    }
+    infoText.appendChild(document.createElement("br"));
+    infoText.appendChild(docCount);
     return infoText;
 }
 
