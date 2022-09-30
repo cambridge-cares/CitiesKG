@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
+import com.sun.javaws.exceptions.InvalidArgumentException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -26,7 +27,7 @@ import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 import uk.ac.cam.cares.twa.cities.agents.InferenceAgent;
 
 public class ClassDisjointnessCheckingTask implements UninitialisedDataAndResultQueueTask {
-  private final IRI taskIri = IRI.create(InferenceAgent.ONINF_SCHEMA + InferenceAgent.TASK_CSC);
+  private final IRI taskIri = IRI.create(InferenceAgent.ONINF_SCHEMA + InferenceAgent.TASK_CDC);
   private boolean stop = false;
   private BlockingQueue<Map<String, JSONArray>> dataQueue;
   private BlockingQueue<Map<String, JSONArray>> resultQueue;
@@ -86,9 +87,10 @@ public class ClassDisjointnessCheckingTask implements UninitialisedDataAndResult
           // get data
           Map<String, JSONArray> map = this.dataQueue.take();
           JSONArray data = map.get(this.taskIri.toString());
-          String srcIri = (String) map.get(GraphInferenceAgent.KEY_SRC_IRI).get(0);
-          String dstIri = (String) map.get(GraphInferenceAgent.KEY_DST_IRI).get(0);
+          IRI srcIri = IRI.create((String) map.get(GraphInferenceAgent.KEY_SRC_IRI).get(0));
+          IRI dstIri = IRI.create((String) map.get(GraphInferenceAgent.KEY_DST_IRI).get(0));
           String ontoIri = (String) map.get(InferenceAgent.KEY_ONTO_IRI).get(0);
+
 
           //create model
           OWLOntology ontology = createModel(data);
@@ -112,12 +114,12 @@ public class ClassDisjointnessCheckingTask implements UninitialisedDataAndResult
     }
   }
 
-  private JSONArray getReasonerOutput(Reasoner reasoner, String ontoIri, String srcIri, String dstIri) {
+  private JSONArray getReasonerOutput(Reasoner reasoner, String ontoIri, IRI srcIri, IRI dstIri) {
     JSONArray output = new JSONArray();
     OWLDataFactory df = OWLManager.getOWLDataFactory();
 
-    boolean member = reasoner.getDisjointClasses(df.getOWLClass(IRI.create(srcIri)))
-        .containsEntity(df.getOWLClass(IRI.create(dstIri)));
+    boolean member = reasoner.getDisjointClasses(df.getOWLClass(srcIri))
+        .containsEntity(df.getOWLClass(dstIri));
     output.put(new JSONObject().put(ontoIri, member));
 
     return output;
