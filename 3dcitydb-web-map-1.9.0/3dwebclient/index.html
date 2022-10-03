@@ -316,7 +316,6 @@
             .demo_elements {
                 float: left;
             }
-
             .keyGrowthAreas{
                 width: 300px;
                 height: max-content;
@@ -331,11 +330,11 @@
                 justify-content: center;
                 align-items: center;
             }
-            .area{
+            .area-name{
                 height:30px;
                 font-size: 18px;
                 color:white;
-                line-height:28px;
+                line-height:30px;
                 width:200px;
                 margin:2px;
                 padding:2px;
@@ -850,7 +849,7 @@
 
         <div class="keyGrowthAreas">
             <div style="float: left" class="arrow_kga left" onclick="zoomToKeyGrowthAreas('backward')"></div>
-            <div id="area" class="area" onclick="zoomToKeyGrowthAreas('same')">Singapore River Valley</div>
+            <div id="area" class="area-name" onclick="zoomToKeyGrowthAreas('same')">Singapore River Valley</div>
             <div style="float: right" class="arrow_kga right" onclick="zoomToKeyGrowthAreas('forward')"></div>
         </div>
 
@@ -1011,10 +1010,12 @@
             }
 
             var USE_PREDICATE = 'allowsUse';
+            var USE_PREDICATE_MAY = 'mayAllowUse';
             var PROGRAMME_PREDICATE = 'allowsProgramme';
+            var PROGRAMME_PREDICATE_MAY = 'mayAllowProgramm'
 
-            getDropdownElements(USE_PREDICATE, 'use_element', '#choose_uses');
-            getDropdownElements(PROGRAMME_PREDICATE, 'programme_element', '#choose_programmes');
+            getDropdownElements(USE_PREDICATE, USE_PREDICATE_MAY, 'use_element', '#choose_uses');
+            getDropdownElements(PROGRAMME_PREDICATE, PROGRAMME_PREDICATE_MAY, 'programme_element', '#choose_programmes');
 
         </script>
         <script src="script.js"></script>

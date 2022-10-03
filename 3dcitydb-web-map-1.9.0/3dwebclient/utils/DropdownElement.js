@@ -7,26 +7,26 @@ var input_parameters;
 var selectedDevType;
 var click_counter = 0;
 var area_counter = 0;
+var current_zoom_area = 'Singapore River Valley';
 var cameraPositions = {
 	'Singapore River Valley': {latitude:  1.275, longitude: 103.84, height: 3000, heading: 360, pitch: -60, roll: 356 },
 	'Punggol Digital District' : {latitude: 1.400, longitude: 103.911385, height: 3000, heading: 360, pitch: -60, roll: 356},
 	'Paya Lebar Air Base': {latitude: 1.325, longitude: 103.906240, height: 3000, heading: 360, pitch: -60, roll: 356},
 	'Woodlands Centre': {latitude:  1.425, longitude: 103.789, height: 3000, heading: 360, pitch: -60, roll: 356 }}
-var current_zoom_area = 'Singapore River Valley';
 
-function buildQuery(predicate){
+function buildQuery(predicate, may_predicate){
 	query = "PREFIX zo:<http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#> "
 			+ "SELECT DISTINCT ?g WHERE { GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/> "
-			+ "{ ?zone zo:" + predicate + " ?g . } }"
+			+ "{ ?zone zo:" + predicate + " | zo:" + may_predicate+ " ?g . } }"
 	return query
 }
 
-function getDropdownElements(predicate, element_type, dropdown_type) {
+function getDropdownElements(predicate, may_predicate, element_type, dropdown_type) {
 	$.ajax({
 		url:"http://www.theworldavatar.com:83/access-agent/access",
 		//url:"http://localhost:48888/access-agent/access",
 		type: 'POST',
-		data: JSON.stringify({targetresourceiri:CONTEXT + "-" + CITY , sparqlquery: buildQuery(predicate)}),
+		data: JSON.stringify({targetresourceiri:CONTEXT + "-" + CITY , sparqlquery: buildQuery(predicate, may_predicate)}),
 		//data: JSON.stringify({targetresourceiri:"http://localhost:48888/test" , sparqlquery: buildQuery(predicate)}),
 		dataType: 'json',
 		contentType: 'application/json',
@@ -37,7 +37,7 @@ function getDropdownElements(predicate, element_type, dropdown_type) {
 				var checkbox_line = removePrefix(results[index]["g"]);
 				checkbox_lines.push(checkbox_line);
 			}
-			checkbox_lines.sort()
+			checkbox_lines.sort();
 			for (let index in checkbox_lines) {
 				appendElement(checkbox_lines[index], predicate, element_type, dropdown_type)
 			}
@@ -506,17 +506,14 @@ function zoomToKeyGrowthAreas(direction) {
 			zoomed_area.innerHTML = Object.keys(cameraPositions)[0];
 			flyToCameraPosition(cameraPositions[Object.keys(cameraPositions)[0]]);
 			break;
-
 		case 1:
 			zoomed_area.innerHTML = Object.keys(cameraPositions)[1];
 			flyToCameraPosition(cameraPositions[Object.keys(cameraPositions)[1]]);
 			break;
-
 		case 2:
 			zoomed_area.innerHTML = Object.keys(cameraPositions)[2];
 			flyToCameraPosition(cameraPositions[Object.keys(cameraPositions)[2]]);
 			break;
-
 		case 3:
 			zoomed_area.innerHTML = Object.keys(cameraPositions)[3];
 			flyToCameraPosition(cameraPositions[Object.keys(cameraPositions)[3]]);
