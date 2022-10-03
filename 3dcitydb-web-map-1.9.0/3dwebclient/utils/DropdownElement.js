@@ -7,6 +7,12 @@ var input_parameters;
 var selectedDevType;
 var click_counter = 0;
 var area_counter = 0;
+var cameraPositions = {
+	'Singapore River Valley': {latitude:  1.275, longitude: 103.84, height: 3000, heading: 360, pitch: -60, roll: 356 },
+	'Punggol Digital District' : {latitude: 1.400, longitude: 103.911385, height: 3000, heading: 360, pitch: -60, roll: 356},
+	'Paya Lebar Air Base': {latitude: 1.325, longitude: 103.906240, height: 3000, heading: 360, pitch: -60, roll: 356},
+	'Woodlands Centre': {latitude:  1.425, longitude: 103.789, height: 3000, heading: 360, pitch: -60, roll: 356 }}
+var current_zoom_area = 'Singapore River Valley';
 
 function buildQuery(predicate){
 	query = "PREFIX zo:<http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#> "
@@ -468,48 +474,53 @@ function addDisclaimerButton(){
 
 }
 
-function zoomToKeyGrowthAreas() {
-	resetAllInputs();
-	if(area_counter === 3) {
-		area_counter = 0;
+function setAreaCounter(direction){
+	switch (direction) {
+		case "backward":
+			area_counter += -1;
+			if (area_counter === -1) {
+				area_counter = 3;
+			}
+			current_zoom_area = Object.keys(cameraPositions)[area_counter];
+			break;
+		case "forward":
+			area_counter += 1;
+			if (area_counter === 4) {
+				area_counter = 0;
+			}
+			current_zoom_area = Object.keys(cameraPositions)[area_counter];
+			break;
+		default:
+			current_zoom_area = Object.keys(cameraPositions)[0];
+			break;
 	}
+	console.log(current_zoom_area);
+}
 
+function zoomToKeyGrowthAreas(direction) {
+	resetAllInputs();
+	setAreaCounter(direction);
+	var zoomed_area = document.getElementById('area');
 	switch (area_counter){
 		case 0:
-			document.getElementById('keyGrowthAreas').innerText = 'Singapore River Valley';
-			var cameraPostion = {
-				latitude:  1.279,
-				longitude: 103.84,
-				height: 2800,
-				heading: 360,
-				pitch: -60,
-				roll: 356,
-			}
-			flyToCameraPosition(cameraPostion);
+			zoomed_area.innerHTML = Object.keys(cameraPositions)[0];
+			flyToCameraPosition(cameraPositions[Object.keys(cameraPositions)[0]]);
 			break;
-			document.getElementById('keyGrowthAreas').innerText = 'Punggol Digital District';
-			var cameraPostion = {
-				latitude:  1.408600,
-				longitude: 103.911385,
-				height: 2800,
-				heading: 360,
-				pitch: -60,
-				roll: 356,
-			}
-			flyToCameraPosition(cameraPostion);
-		case 2:
-			document.getElementById('keyGrowthAreas').innerText = 'Paya Lebar Military Base'
-			var cameraPostion = {
-				latitude:  1.279,
-				longitude: 103.84,
-				height: 2800,
-				heading: 360,
-				pitch: -60,
-				roll: 356,
-			}
-			flyToCameraPosition(cameraPostion);
-	}
-	area_counter += 1;
 
+		case 1:
+			zoomed_area.innerHTML = Object.keys(cameraPositions)[1];
+			flyToCameraPosition(cameraPositions[Object.keys(cameraPositions)[1]]);
+			break;
+
+		case 2:
+			zoomed_area.innerHTML = Object.keys(cameraPositions)[2];
+			flyToCameraPosition(cameraPositions[Object.keys(cameraPositions)[2]]);
+			break;
+
+		case 3:
+			zoomed_area.innerHTML = Object.keys(cameraPositions)[3];
+			flyToCameraPosition(cameraPositions[Object.keys(cameraPositions)[3]]);
+			break;
+	}
 }
 
