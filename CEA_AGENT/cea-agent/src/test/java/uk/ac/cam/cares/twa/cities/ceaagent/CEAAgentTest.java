@@ -1852,7 +1852,7 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void ignoreHole() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException{
+    public void testIgnoreHole() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException{
         CEAAgent agent = new CEAAgent();
         Method ignoreHole = agent.getClass().getDeclaredMethod("ignoreHole", String.class, String.class);
 
