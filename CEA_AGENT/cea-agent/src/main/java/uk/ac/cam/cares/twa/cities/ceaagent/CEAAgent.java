@@ -165,6 +165,8 @@ public class CEAAgent extends JPSAgent {
 
                     for (int i = 0; i < uriArray.length(); i++) {
                         String uri = uriArray.getString(i);
+                        setTimeSeriesProps(uri);
+
                         // Only set route once - assuming all iris passed in same namespace
                         // Will not be necessary if namespace is passed in request params
                         if(i==0) route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
@@ -194,6 +196,8 @@ public class CEAAgent extends JPSAgent {
                 String route = new String();
                 for (int i = 0; i < uriArray.length(); i++) {
                     String uri = uriArray.getString(i);
+                    setTimeSeriesProps(uri);
+
                     // Only set route once - assuming all iris passed in same namespace
                     if(i==0) {
                         route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
@@ -1608,5 +1612,48 @@ public class CEAAgent extends JPSAgent {
             count++;
         }
         return geometry.substring(0, ind);
+    }
+
+    /**
+     * Sets the SPARQL update and query endpoint in in the timeseries property file, according to the namespace information in uriString
+     * @param uriString
+     */
+    public void setTimeSeriesProps(String uriString){
+        try {
+            String queryEndpoint;
+            String updateEndpoint;
+            String timeseries_props;
+
+            if(System.getProperty("os.name").toLowerCase().contains("win")){
+                timeseries_props = new File(
+                        Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
+            }
+            else{
+                timeseries_props = FS+"target"+FS+"classes"+FS+TIME_SERIES_CLIENT_PROPS;
+            }
+
+            FileInputStream in = new FileInputStream(timeseries_props);
+            Properties props = new Properties();
+            props.load(in);
+            in.close();
+
+            queryEndpoint = props.getProperty("sparql.query.endpoint").split("namespace")[0];
+            if (!queryEndpoint.endsWith("/")) {queryEndpoint = queryEndpoint + "/";}
+
+            updateEndpoint = props.getProperty("sparql.update.endpoint").split("namespace")[0];
+            if (!updateEndpoint.endsWith("/")) {updateEndpoint = updateEndpoint + "/";}
+
+            FileOutputStream out = new FileOutputStream(timeseries_props);
+            String namespace = getNamespace(uriString).split("namespace/")[1].split("/")[0];
+            props.setProperty("sparql.query.endpoint", queryEndpoint + "namespace" + "/" + namespace + "/" + "sparql");
+            props.setProperty("sparql.update.endpoint", updateEndpoint + "namespace" + "/" + namespace + "/" + "sparql");
+
+            props.store(out, null);
+            out.close();
+        }
+        catch (Exception e)
+        {
+            throw new JPSRuntimeException(e);
+        }
     }
 }
