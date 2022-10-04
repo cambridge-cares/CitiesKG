@@ -1615,8 +1615,8 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Sets the SPARQL update and query endpoint in in the timeseries property file, according to the namespace information in uriString
-     * @param uriString
+     * Sets the SPARQL update and query endpoint in the timeseries property file, according to the namespace information in uriString
+     * @param uriString input city object id
      */
     public void setTimeSeriesProps(String uriString){
         try {
