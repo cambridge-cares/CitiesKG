@@ -501,23 +501,21 @@ function zoomToKeyGrowthAreas(direction) {
 	resetAllInputs();
 	setAreaCounter(direction);
 	var zoomed_area = document.getElementById('area');
-	switch (area_counter){
-		case 0:
-			zoomed_area.innerHTML = Object.keys(cameraPositions)[0];
-			flyToCameraPosition(cameraPositions[Object.keys(cameraPositions)[0]]);
-			break;
-		case 1:
-			zoomed_area.innerHTML = Object.keys(cameraPositions)[1];
-			flyToCameraPosition(cameraPositions[Object.keys(cameraPositions)[1]]);
-			break;
-		case 2:
-			zoomed_area.innerHTML = Object.keys(cameraPositions)[2];
-			flyToCameraPosition(cameraPositions[Object.keys(cameraPositions)[2]]);
-			break;
-		case 3:
-			zoomed_area.innerHTML = Object.keys(cameraPositions)[3];
-			flyToCameraPosition(cameraPositions[Object.keys(cameraPositions)[3]]);
-			break;
+	var zoomed_area_name = Object.keys(cameraPositions)[area_counter];
+	var zoomed_camera_position = cameraPositions[zoomed_area_name]
+	var current_url = new URL(window.location.href);
+
+	for (const coord of ['longitude', 'latitude']) {
+		if (current_url.searchParams.has(coord)) {
+			current_url.searchParams.set(coord, zoomed_camera_position[coord]);
+		}
+		else {
+			current_url.searchParams.append(coord, zoomed_camera_position[coord]);
+		}
 	}
+
+	history.replaceState({}, '', current_url.href.toString())
+	zoomed_area.innerHTML = zoomed_area_name;
+	flyToCameraPosition(zoomed_camera_position);
 }
 

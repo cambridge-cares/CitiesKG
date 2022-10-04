@@ -347,26 +347,6 @@ function loadKingsLynn() {
     getAndLoadLayers('exported_kingslynn');
 }
 
-function loadSingapore() {
-    // set title
-    document.title = 'Singapore';
-
-    // set camera view
-    var cameraPostion = {
-        latitude: 1.286014,
-        longitude: 103.836364,
-        height: 2000,
-        heading: 345.2992773976952,
-        pitch: -44.26228062802528,
-        roll: 359.933888621294
-    }
-
-    flyToCameraPosition(cameraPostion);
-
-    // find relevant files and load layers
-    getAndLoadLayers('exported_singapore');
-}
-
 function loadJurongIsland() {
     // set title
     document.title = 'Jurong Island';
@@ -390,8 +370,6 @@ function loadJurongIsland() {
 function loadSingapore() {
     // set title
     document.title = 'Singapore';
-
-
     // set camera view
     var cameraPostion = {
         latitude:  1.279,
@@ -566,7 +544,7 @@ function inspectTileStatus() {
                 }
             }
         }
-        // Ayda currently user does not need to know about the tiling.
+        //Ayda: currently user does not need to know about the tiling.
         //showedTilesInspector.innerHTML = 'Number of showed Tiles: ' + numberOfshowedTiles;
         //cachedTilesInspector.innerHTML = 'Number of cached Tiles: ' + numberOfCachedTiles;
 
@@ -1139,7 +1117,6 @@ function addEventListeners(layer) {
     });
 }
 
-
 // Ayda: home button zoom in to CREATE Tower
 function zoomToCREATE(){
     var cameraPosition = {
@@ -1153,7 +1130,6 @@ function zoomToCREATE(){
 
     return flyToCameraPosition(cameraPosition);
 }
-
 
 function zoomToDefaultCameraPosition() {
     var deferred = Cesium.when.defer();
