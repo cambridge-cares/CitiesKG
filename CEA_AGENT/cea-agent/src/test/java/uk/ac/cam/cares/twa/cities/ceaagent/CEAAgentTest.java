@@ -1,16 +1,13 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
-import com.bigdata.relation.accesspath.IBuffer;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.sparql.core.Var;
-import org.jooq.JSON;
 import org.jooq.exception.DataAccessException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
-import org.locationtech.jts.operation.buffer.BufferParameters;
-import org.mockito.ArgumentCaptor;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
@@ -22,9 +19,14 @@ import uk.ac.cam.cares.twa.cities.tasks.RunCEATask;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -34,7 +36,6 @@ import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.locationtech.jts.geom.*;
-import org.locationtech.jts.operation.buffer.BufferOp;
 
 public class CEAAgentTest {
     @Test
@@ -240,7 +241,7 @@ public class CEAAgentTest {
     @Test
     public void testCEAAgentMethods() {
         CEAAgent agent = new CEAAgent();
-        assertEquals(55, agent.getClass().getDeclaredMethods().length);
+        assertEquals(57, agent.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -1852,7 +1853,7 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testIgnoreHole() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException{
+    public void testIgnoreHole() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
         Method ignoreHole = agent.getClass().getDeclaredMethod("ignoreHole", String.class, String.class);
 
@@ -1866,5 +1867,54 @@ public class CEAAgentTest {
         String result = (String) ignoreHole.invoke(agent, geometry, polygonType);
 
         assertEquals(expected, result);
+    }
+
+
+    @Test
+    public void testSetTimeSeriesProps(@TempDir Path tempDir) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException {
+        CEAAgent agent = new CEAAgent();
+        Method setTimeSeriesProps = agent.getClass().getDeclaredMethod("setTimeSeriesProps", String.class, String.class);
+
+        assertNotNull(setTimeSeriesProps);
+        setTimeSeriesProps.setAccessible(true);
+
+        String testFile = "test.properties";
+        String testEndpoint = "testEndpint";
+        String testUri = "test/namespace/testNamespace/sparql/cityobject/testUUID/";
+        Path testPath = Files.createFile(tempDir.resolve(testFile));
+        Properties testProp = new Properties();
+
+        testProp.setProperty("sparql.query.endpoint", testEndpoint);
+        testProp.setProperty("sparql.update.endpoint", testEndpoint);
+
+        FileOutputStream testOut = new FileOutputStream(testPath.toString());
+        testProp.store(testOut, null);
+        testOut.close();
+
+        setTimeSeriesProps.invoke(agent, testUri, testPath.toString());
+
+        FileInputStream testIn = new FileInputStream(testPath.toString());
+        testProp.load(testIn);
+        testIn.close();
+
+        assertEquals(testProp.getProperty("sparql.query.endpoint"), "testEndpoint/namespace/testNamespace/sparql");
+        assertEquals(testProp.getProperty("sparql.update.endpoint"), "testEndpoint/namespace/testNamespace/sparql");
+    }
+
+
+    @Test
+    public void testGetTimeSeriesPropsPath() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
+        CEAAgent agent = new CEAAgent();
+        Method getTimeSeriesPropsPath = agent.getClass().getDeclaredMethod("getTimeSeriesPropsPath");
+
+        assertNotNull(getTimeSeriesPropsPath);
+        getTimeSeriesPropsPath.setAccessible(true);
+
+        String result = (String) getTimeSeriesPropsPath.invoke(agent);
+
+        Field time_series_client_props = agent.getClass().getDeclaredField("TIME_SERIES_CLIENT_PROPS");
+        time_series_client_props.setAccessible(true);
+
+        assertTrue(result.contains((String) time_series_client_props.get(agent)));
     }
 }
