@@ -23,8 +23,8 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 import uk.ac.cam.cares.twa.cities.agents.InferenceAgent;
 
-public class InheritanceCheckingTask implements UninitialisedDataAndResultQueueTask {
-  private final IRI taskIri = IRI.create(InferenceAgent.ONINF_SCHEMA + InferenceAgent.TASK_IC);
+public class PropertyCheckingTask implements UninitialisedDataAndResultQueueTask {
+  private final IRI taskIri = IRI.create(InferenceAgent.ONINF_SCHEMA + InferenceAgent.TASK_PC);
   private boolean stop = false;
   private BlockingQueue<Map<String, JSONArray>> dataQueue;
   private BlockingQueue<Map<String, JSONArray>> resultQueue;

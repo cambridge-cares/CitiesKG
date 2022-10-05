@@ -27,14 +27,14 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 @RunWith(MockitoJUnitRunner.class)
-public class InheritanceCheckingTaskTest {
+public class PropertyCheckingTaskTest {
 
   @Test
-  public void testNewInheritanceCheckingTask() {
-    InheritanceCheckingTask task;
+  public void testNewPropertyCheckingTask() {
+    PropertyCheckingTask task;
 
     try {
-      task = new InheritanceCheckingTask();
+      task = new PropertyCheckingTask();
       assertNotNull(task);
     } catch (Exception e) {
       fail();
@@ -43,8 +43,8 @@ public class InheritanceCheckingTaskTest {
   }
 
   @Test
-  public void testNewInheritanceCheckingTaskFields() {
-    InheritanceCheckingTask task = new InheritanceCheckingTask();
+  public void testNewPropertyCheckingTaskFields() {
+    PropertyCheckingTask task = new PropertyCheckingTask();
     assertEquals(6, task.getClass().getDeclaredFields().length);
 
     Field taskIri;
@@ -57,7 +57,7 @@ public class InheritanceCheckingTaskTest {
     try {
       taskIri = task.getClass().getDeclaredField("taskIri");
       taskIri.setAccessible(true);
-      assertEquals(taskIri.get(task), IRI.create("http://www.theworldavatar.com/ontologies/OntoInfer.owl#InheritanceCheckingTask"));
+      assertEquals(taskIri.get(task), IRI.create("http://www.theworldavatar.com/ontologies/OntoInfer.owl#PropertyCheckingTask"));
       stop = task.getClass().getDeclaredField("stop");
       stop.setAccessible(true);
       assertFalse((Boolean) stop.get(task));
@@ -80,26 +80,26 @@ public class InheritanceCheckingTaskTest {
   }
 
   @Test
-  public void testNewInheritanceCheckingTaskMethods() {
-    InheritanceCheckingTask task = new InheritanceCheckingTask();
+  public void testNewPropertyCheckingTaskMethods() {
+    PropertyCheckingTask task = new PropertyCheckingTask();
     assertEquals(9, task.getClass().getDeclaredMethods().length);
   }
 
   @Test
-  public void testNewInheritanceCheckingTaskGetTaskIriMethod() {
-    InheritanceCheckingTask task = new InheritanceCheckingTask();
+  public void testNewPropertyCheckingTaskGetTaskIriMethod() {
+    PropertyCheckingTask task = new PropertyCheckingTask();
     try {
       Method getTaskIri = task.getClass().getDeclaredMethod("getTaskIri");
       getTaskIri.setAccessible(true);
-      assertEquals(((IRI) getTaskIri.invoke(task)).toString(), "http://www.theworldavatar.com/ontologies/OntoInfer.owl#InheritanceCheckingTask");
+      assertEquals(((IRI) getTaskIri.invoke(task)).toString(), "http://www.theworldavatar.com/ontologies/OntoInfer.owl#PropertyCheckingTask");
     } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       fail();
     }
   }
 
   @Test
-  public void testNewInheritanceCheckingTaskSetStringMapQueueMethod() {
-    InheritanceCheckingTask task = new InheritanceCheckingTask();
+  public void testNewPropertyCheckingTaskSetStringMapQueueMethod() {
+    PropertyCheckingTask task = new PropertyCheckingTask();
     try {
       Method setStringMapQueue = task.getClass().getDeclaredMethod("setStringMapQueue", BlockingQueue.class);
       setStringMapQueue.setAccessible(true);
@@ -113,8 +113,8 @@ public class InheritanceCheckingTaskTest {
   }
 
   @Test
-  public void testNewInheritanceCheckingTaskSetResultMapQueueMethod() {
-    InheritanceCheckingTask task = new InheritanceCheckingTask();
+  public void testNewPropertyCheckingTaskSetResultMapQueueMethod() {
+    PropertyCheckingTask task = new PropertyCheckingTask();
     try {
       Method setStringMapQueue = task.getClass().getDeclaredMethod("setResultQueue", BlockingQueue.class);
       setStringMapQueue.setAccessible(true);
@@ -128,8 +128,8 @@ public class InheritanceCheckingTaskTest {
   }
 
   @Test
-  public void testNewInheritanceCheckingTaskSetTargetGraphMethod() {
-    InheritanceCheckingTask task = new InheritanceCheckingTask();
+  public void testNewPropertyCheckingTaskSetTargetGraphMethod() {
+    PropertyCheckingTask task = new PropertyCheckingTask();
     try {
       Method setTargetGraph = task.getClass().getDeclaredMethod("setTargetGraph", String.class);
       setTargetGraph.setAccessible(true);
@@ -143,8 +143,8 @@ public class InheritanceCheckingTaskTest {
   }
 
   @Test
-  public void testNewInheritanceCheckingTaskIsRunningMethod() {
-    InheritanceCheckingTask task = new InheritanceCheckingTask();
+  public void testNewPropertyCheckingTaskIsRunningMethod() {
+    PropertyCheckingTask task = new PropertyCheckingTask();
     try {
       Method isRunning = task.getClass().getDeclaredMethod("isRunning");
       isRunning.setAccessible(true);
@@ -161,8 +161,8 @@ public class InheritanceCheckingTaskTest {
   }
 
   @Test
-  public void testNewInheritanceCheckingTaskStopMethod() {
-    InheritanceCheckingTask task = new InheritanceCheckingTask();
+  public void testNewPropertyCheckingTaskStopMethod() {
+    PropertyCheckingTask task = new PropertyCheckingTask();
 
     try {
       Field stopF = task.getClass().getDeclaredField("stop");
@@ -179,8 +179,8 @@ public class InheritanceCheckingTaskTest {
   }
 
   @Test
-  public void testNewInheritanceCheckingRunMethod() {
-    InheritanceCheckingTask task = new InheritanceCheckingTask();
+  public void testNewPropertyCheckingRunMethod() {
+    PropertyCheckingTask task = new PropertyCheckingTask();
 
     try {
       Method run = task.getClass().getDeclaredMethod("run");
@@ -203,8 +203,98 @@ public class InheritanceCheckingTaskTest {
       setResultQueue.invoke(task, new LinkedBlockingDeque<>());
       Field resultQueue = task.getClass().getDeclaredField("resultQueue");
       resultQueue.setAccessible(true);
-      String taskIRI = "http://www.theworldavatar.com/ontologies/OntoInfer.owl#InheritanceCheckingTask";
-      //@todo: implement
+      String taskIRI = "http://www.theworldavatar.com/ontologies/OntoInfer.owl#PropertyCheckingTask";
+      JSONArray testOnto = new JSONArray(
+          "[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
+              + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#domain\", \"o\": \"http://www.test.com/1\"},"
+              + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#range\", \"o\": \"http://www.test.com/2\"},"
+              + "{\"s\": \"http://www.test.com/a\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#NamedIndividual\"},"
+              + "{\"s\": \"http://www.test.com/a\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.test.com/1\"},"
+              + "{\"s\": \"http://www.test.com/b\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#NamedIndividual\"},"
+              + "{\"s\": \"http://www.test.com/b\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.test.com/2\"},"
+              + "{\"s\": \"http://www.test.com/a\", \"p\": \"http://www.test.com/h1\", \"o\": \"http://www.test.com/b\"}]");
+
+      String ontoIri = "http://www.test.com/onto";
+      String srcIri = "http://www.test.com/a";
+      String dstIri = "http://www.test.com/b";
+      String propIri  = "http://www.test.com/h1";
+
+      Map<String, JSONArray> map = new HashMap<>();
+      map.put(taskIRI, testOnto);
+      map.put("ontologyIRI", new JSONArray().put(ontoIri));
+      map.put("sourceIRI", new JSONArray().put(srcIri));
+      map.put("destinationIRI", new JSONArray().put(dstIri));
+      map.put("propertyIRI", new JSONArray().put(propIri));
+
+      ((LinkedBlockingDeque) dataQueue.get(task)).put(map);
+
+      run.invoke(task);
+      assertTrue(((Map) ((BlockingQueue) resultQueue.get(task)).take()).get(taskIRI).toString()
+          .equals(new JSONArray().put(new JSONObject().put(ontoIri, true)).toString()));
+
+      assertFalse((Boolean) isRunning.invoke(task));
+      stop.set(task, false);
+
+      map = new HashMap<>();
+      map.put(taskIRI, testOnto);
+      map.put("ontologyIRI", new JSONArray().put(ontoIri));
+      map.put("sourceIRI", new JSONArray().put(dstIri));
+      map.put("destinationIRI", new JSONArray().put(srcIri));
+      map.put("propertyIRI", new JSONArray().put(propIri));
+
+      ((LinkedBlockingDeque) dataQueue.get(task)).put(map);
+
+      run.invoke(task);
+      assertTrue(((Map) ((BlockingQueue) resultQueue.get(task)).take()).get(taskIRI).toString()
+          .equals(new JSONArray().put(new JSONObject().put(ontoIri, false)).toString()));
+      stop.set(task, false);
+
+      map = new HashMap<>();
+      map.put(taskIRI, testOnto);
+      map.put("ontologyIRI", new JSONArray().put(ontoIri));
+      map.put("sourceIRI", new JSONArray().put("http:/invalidIRI"));
+      map.put("destinationIRI", new JSONArray().put(dstIri));
+      map.put("propertyIRI", new JSONArray().put(propIri));
+
+      ((LinkedBlockingDeque) dataQueue.get(task)).put(map);
+
+      run.invoke(task);
+
+      assertTrue(((Map) ((BlockingQueue) resultQueue.get(task)).take()).get(taskIRI).toString()
+          .equals(new JSONArray().put(new JSONObject().put(ontoIri, false)).toString()));
+      stop.set(task, false);
+
+      map = new HashMap<>();
+      map.put(taskIRI, testOnto);
+      map.put("ontologyIRI", new JSONArray().put(ontoIri));
+      map.put("sourceIRI", new JSONArray().put(srcIri));
+      map.put("destinationIRI", new JSONArray().put("http:/invalidIRI2"));
+      map.put("propertyIRI", new JSONArray().put(propIri));
+
+      ((LinkedBlockingDeque) dataQueue.get(task)).put(map);
+
+      run.invoke(task);
+
+      assertTrue(((Map) ((BlockingQueue) resultQueue.get(task)).take()).get(taskIRI).toString()
+          .equals(new JSONArray().put(new JSONObject().put(ontoIri, false)).toString()));
+
+      stop.set(task, false);
+
+      map = new HashMap<>();
+      map.put(taskIRI, testOnto);
+      map.put("ontologyIRI", new JSONArray().put(ontoIri));
+      map.put("sourceIRI", new JSONArray().put("http:/invalidIRI"));
+      map.put("destinationIRI", new JSONArray().put("http:/invalidIRI2"));
+      map.put("propertyIRI", new JSONArray().put(propIri));
+
+      ((LinkedBlockingDeque) dataQueue.get(task)).put(map);
+
+      run.invoke(task);
+
+      assertTrue(((Map) ((BlockingQueue) resultQueue.get(task)).take()).get(taskIRI).toString()
+          .equals(new JSONArray().put(new JSONObject().put(ontoIri, false)).toString()));
 
       assertFalse((Boolean) isRunning.invoke(task));
 
@@ -215,8 +305,8 @@ public class InheritanceCheckingTaskTest {
   }
 
   @Test
-  public void testNewInheritanceCheckingTaskGetReasonerOutputMethod() {
-    InheritanceCheckingTask task = new InheritanceCheckingTask();
+  public void testNewPropertyCheckingTaskGetReasonerOutputMethod() {
+    PropertyCheckingTask task = new PropertyCheckingTask();
 
     try {
       Method getReasonerOutput = task.getClass().getDeclaredMethod("getReasonerOutput",
@@ -226,25 +316,21 @@ public class InheritanceCheckingTaskTest {
       createModel.setAccessible(true);
       String ontoIri = "http://www.test.com/onto";
       IRI srcIri = IRI.create("http://www.test.com/a");
-      IRI dstIri = IRI.create("http://www.test.com/brown");
-      IRI propIri = IRI.create("http://www.test.com/hasHairColour");
+      IRI dstIri = IRI.create("http://www.test.com/b");
+      IRI propIri = IRI.create("http://www.test.com/h1");
 
       JSONArray output;
       JSONArray input = new JSONArray(
-          "[{\"s\": \"http://www.test.com/BrownHairedPerson\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
-          + "{\"s\": \"http://www.test.com/BrownHaired\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
-          + "{\"s\": \"http://www.test.com/WithHair\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
-          + "{\"s\": \"http://www.test.com/Person\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
-          + "{\"s\": \"http://www.test.com/hasHairColour\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Cowl:ObjectProperty\"},"
-          + "{\"s\": \"http://www.test.com/hasHairColour\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#domain\", \"o\": \"http://www.test.com/Person\"},"
-          + "{\"s\": \"http://www.test.com/hasHairColour\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#range\", \"o\": \"http://www.test.com/WithHair\"},"
+          "[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+          + "{\"s\": \"http://www.test.com/2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+          + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
+          + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#domain\", \"o\": \"http://www.test.com/1\"},"
+          + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#range\", \"o\": \"http://www.test.com/2\"},"
           + "{\"s\": \"http://www.test.com/a\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#NamedIndividual\"},"
-          + "{\"s\": \"http://www.test.com/a\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.test.com/BrownHairedPerson\"},"
-          + "{\"s\": \"http://www.test.com/brown\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#NamedIndividual\"},"
-          + "{\"s\": \"http://www.test.com/brown\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.test.com/BrownHaired\"},"
-          + "{\"s\": \"http://www.test.com/BrownHairedPerson\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/BrownHaired\"},"
-          + "{\"s\": \"http://www.test.com/BrownHairedPerson\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/Person\"},"
-          + "{\"s\": \"http://www.test.com/BrownHaired\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/WithHair\"}]");
+          + "{\"s\": \"http://www.test.com/a\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.test.com/1\"},"
+          + "{\"s\": \"http://www.test.com/b\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#NamedIndividual\"},"
+          + "{\"s\": \"http://www.test.com/b\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.test.com/2\"},"
+          + "{\"s\": \"http://www.test.com/a\", \"p\": \"http://www.test.com/h1\", \"o\": \"http://www.test.com/b\"}]");
       OWLOntology ontology = (OWLOntology) createModel.invoke(task, input);
       Reasoner reasoner = new Reasoner(ontology);
 
@@ -262,8 +348,8 @@ public class InheritanceCheckingTaskTest {
   }
 
   @Test
-  public void testNewInheritanceCheckingTaskCreateModelMethod() {
-    InheritanceCheckingTask task = new InheritanceCheckingTask();
+  public void testNewPropertyCheckingTaskCreateModelMethod() {
+    PropertyCheckingTask task = new PropertyCheckingTask();
 
     try {
       Method createModel = task.getClass().getDeclaredMethod("createModel", JSONArray.class);

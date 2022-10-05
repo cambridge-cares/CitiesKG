@@ -14,7 +14,7 @@ import uk.ac.cam.cares.twa.cities.tasks.ClassMembershipCheckingTask;
 import uk.ac.cam.cares.twa.cities.tasks.ClassSpecialisationCheckingTask;
 import uk.ac.cam.cares.twa.cities.tasks.ConsistencyCheckingTask;
 import uk.ac.cam.cares.twa.cities.tasks.EdgeBetweennessTask;
-import uk.ac.cam.cares.twa.cities.tasks.InheritanceCheckingTask;
+import uk.ac.cam.cares.twa.cities.tasks.PropertyCheckingTask;
 import uk.ac.cam.cares.twa.cities.tasks.PageRankTask;
 import uk.ac.cam.cares.twa.cities.tasks.UninitialisedDataAndResultQueueTask;
 import uk.ac.cam.cares.twa.cities.tasks.UninitialisedDataQueueTask;
@@ -49,7 +49,7 @@ public abstract class InferenceAgent extends JPSAgent {
   public static final String TASK_CMC = "ClassMembershipCheckingTask";
   public static final String TASK_CSC = "ClassSpecialisationCheckingTask";
   public static final String TASK_CDC = "ClassDisjointnessCheckingTask";
-  public static final String TASK_IC = "InheritanceCheckingTask";
+  public static final String TASK_PC = "PropertyCheckingTask";
   protected final Map<IRI, UninitialisedDataQueueTask> TASKS = Stream.of(new Object[][] {
       {IRI.create(ONINF_SCHEMA + TASK_PR), new PageRankTask()},
       {IRI.create(ONINF_SCHEMA + TASK_EB), new EdgeBetweennessTask()},
@@ -58,7 +58,7 @@ public abstract class InferenceAgent extends JPSAgent {
       {IRI.create(ONINF_SCHEMA + TASK_CMC), new ClassMembershipCheckingTask()},
       {IRI.create(ONINF_SCHEMA + TASK_CSC), new ClassSpecialisationCheckingTask()},
       {IRI.create(ONINF_SCHEMA + TASK_CDC), new ClassDisjointnessCheckingTask()},
-      {IRI.create(ONINF_SCHEMA + TASK_IC), new InheritanceCheckingTask()}
+      {IRI.create(ONINF_SCHEMA + TASK_PC), new PropertyCheckingTask()}
   }).collect(Collectors.toMap(data -> (IRI) data[0], data -> (UninitialisedDataQueueTask) data[1]));
   protected static LinkedBlockingDeque<Map<String, JSONArray>> dataQueue = new LinkedBlockingDeque<>();
   protected static LinkedBlockingDeque<Map<String, JSONArray>> resultQueue = new LinkedBlockingDeque<>();
