@@ -424,20 +424,12 @@
     
 
 
-    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#InheritanceCheckingAlgorithm -->
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#InheritanceChckingAlgorithm -->
 
-    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#InheritanceCheckingAlgorithm">
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#InheritanceChckingAlgorithm">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Inheritance"/>
-        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#InheritanceCheckingTask"/>
-    </owl:NamedIndividual>
-    
-
-
-    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#InheritanceCheckingTask -->
-
-    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#InheritanceCheckingTask">
-        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
-        <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingTask"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#PropertyCheckingTask"/>
     </owl:NamedIndividual>
     
 
@@ -469,6 +461,24 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#PropertyCheckingAlgorithm -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#PropertyCheckingAlgorithm">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#TaxonomicReasoning"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#PropertyCheckingTask"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#PropertyCheckingTask -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#PropertyCheckingTask">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#UnweightedShortestPathAlgorithm -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#UnweightedShortestPathAlgorithm">
@@ -483,6 +493,24 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#UnweightedShortestPathTask">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
         <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphInferenceAgent"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestrictionCheckingAlgorithm -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestrictionCheckingAlgorithm">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestriction"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestrictionCheckingTask"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestrictionCheckingTask -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestrictionCheckingTask">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent"/>
     </owl:NamedIndividual>
     
 
