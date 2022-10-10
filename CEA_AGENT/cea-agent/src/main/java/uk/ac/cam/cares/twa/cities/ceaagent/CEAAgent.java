@@ -139,6 +139,8 @@ public class CEAAgent extends JPSAgent {
                         LinkedHashMap<String,String> scalarIris = new LinkedHashMap<>();
 
                         String uri = uriArray.getString(i);
+                        setTimeSeriesProps(uri, getTimeSeriesPropsPath());
+
                         // Only set routes once - assuming all iris passed have same namespace
                         // Will not be necessary if namespace is passed in request params
                         if(i==0) {
@@ -1601,7 +1603,7 @@ public class CEAAgent extends JPSAgent {
      * @param uriString input city object id
      * @param path timeseriesclient.properties path as string
      */
-    private void setTimeSeriesProps(String uriString, String path){
+    protected void setTimeSeriesProps(String uriString, String path){
         try {
             String queryEndpoint;
             String updateEndpoint;
