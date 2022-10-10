@@ -379,8 +379,26 @@ function loadSingapore() {
         pitch: -60,
         roll: 356,
     }
-    flyToCameraPosition(cameraPostion);
+    // need decoder to make sure there is a string on which .replace() can be called. Replace is needed to format spaces.
+    var regionStr = urlController.getUrlParaValue('region', window.location.href, CitydbUtil);
+    var latitudeStr = urlController.getUrlParaValue('latitude', window.location.href, CitydbUtil);
+    var longitudeStr = urlController.getUrlParaValue('longitude', window.location.href, CitydbUtil);
 
+    if (latitudeStr && longitudeStr) {
+        cameraPostion['latitude'] = parseFloat(latitudeStr);
+        cameraPostion['longitude'] = parseFloat(longitudeStr);
+    }
+    var zoomed_area = document.getElementById('area');
+    if (regionStr in cameraPositions){
+        cameraPostion = cameraPositions[regionStr];
+        area_counter = Object.keys(cameraPositions).findIndex(p => p === regionStr);
+        zoomed_area.innerHTML = regionStr.replaceAll('_', ' ');
+    }
+    else {
+        zoomed_area.innerHTML = 'Singapore River Valley';
+    }
+
+    flyToCameraPosition(cameraPostion);
     // find relevant files and load layers
     getAndLoadLayers('exported_singapore');
 }

@@ -7,12 +7,12 @@ var input_parameters;
 var selectedDevType;
 var click_counter = 0;
 var area_counter = 0;
-var current_zoom_area = 'Singapore River Valley';
+var current_zoom_area;
 var cameraPositions = {
-	'Singapore River Valley': {latitude:  1.275, longitude: 103.84, height: 3000, heading: 360, pitch: -60, roll: 356 },
-	'Punggol Digital District' : {latitude: 1.400, longitude: 103.911385, height: 3000, heading: 360, pitch: -60, roll: 356},
-	'Paya Lebar Air Base': {latitude: 1.325, longitude: 103.906240, height: 3000, heading: 360, pitch: -60, roll: 356},
-	'Woodlands Centre': {latitude:  1.425, longitude: 103.789, height: 3000, heading: 360, pitch: -60, roll: 356 }}
+	'Singapore_River_Valley': {latitude:  1.275, longitude: 103.84, height: 3000, heading: 360, pitch: -60, roll: 356 },
+	'Punggol_Digital_District' : {latitude: 1.400, longitude: 103.911385, height: 3000, heading: 360, pitch: -60, roll: 356},
+	'Paya_Lebar_Air_Base': {latitude: 1.325, longitude: 103.906240, height: 3000, heading: 360, pitch: -60, roll: 356},
+	'Woodlands_Centre': {latitude:  1.425, longitude: 103.789, height: 3000, heading: 360, pitch: -60, roll: 356 }}
 
 function buildQuery(predicate, may_predicate){
 	query = "PREFIX zo:<http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#> "
@@ -514,8 +514,15 @@ function zoomToKeyGrowthAreas(direction) {
 		}
 	}
 
+	if (current_url.searchParams.has('region')) {
+		current_url.searchParams.set('region', zoomed_area_name);
+	}
+	else {
+		current_url.searchParams.append('region', zoomed_area_name);
+	}
+
 	history.replaceState({}, '', current_url.href.toString())
-	zoomed_area.innerHTML = zoomed_area_name;
+	zoomed_area.innerHTML = zoomed_area_name.replaceAll('_',' ');
 	flyToCameraPosition(zoomed_camera_position);
 }
 
