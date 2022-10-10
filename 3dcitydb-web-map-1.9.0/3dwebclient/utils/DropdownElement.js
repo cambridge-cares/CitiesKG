@@ -348,8 +348,14 @@ function resetAllInputs(){
 	totalGfaInput.value = '';
 }
 
+/** Shiying: Added disclaimerbutton to the cesium-viewer-toolbar*/
+
 function addDisclaimerButton(){
 	var toolbar = document.getElementsByClassName('cesium-viewer-toolbar');  // HTMLCollection; has to use item(0) to add an additional icon
+
+	var wrapper = document.createElement('span');
+	wrapper.className = 'cesium-navigationHelpButton-wrapper';
+	toolbar.item(0).appendChild(wrapper);
 
 	var qMarkSymbol = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 	qMarkSymbol.setAttribute("class", "cesium-svgPath-svg");
@@ -359,35 +365,108 @@ function addDisclaimerButton(){
 	qMarkSymbol.setAttribute("style", "none");
 	qMarkSymbol.innerHTML = "<path d=" + "M16,1.466C7.973,1.466,1.466,7.973,1.466,16c0,8.027,6.507,14.534,14.534,14.534c8.027,0,14.534-6.507,14.534-14.534C30.534,7.973,24.027,1.466,16,1.466z" + "M17.328,24.371h-2.707v-2.596h2.707V24.371zM17.328,19.003v0.858h-2.707v-1.057c0-3.19,3.63-3.696,3.63-5.963c0-1.034-0.924-1.826-2.134-1.826c-1.254,0-2.354,0.924-2.354,0.924l-1.541-1.915c0,0,1.519-1.584,4.137-1.584c2.487,0,4.796,1.54,4.796,4.136C21.156,16.208,17.328,16.627,17.328,19.003z>";
 
+	//var instructionIcon = document.createElement('img');
+	//instructionIcon.src = '../utils/image-source/instructionIcon.png';
+
 	var disclaimerButton = document.createElement('button');
 	disclaimerButton.type = 'button';
 	disclaimerButton.className = 'cesium-button cesium-toolbar-button cesium-navigation-help-button';
 	disclaimerButton.setAttribute('data-bind', 'attr: { title: tooltip }');
 	disclaimerButton.appendChild(qMarkSymbol);
-	
-	
-	toolbar.item(0).appendChild(disclaimerButton);
 
-	var instructionContainer = document.createElement('div');
-	instructionContainer.id = "instructionContainer";
-	instructionContainer.className = 'cesium-navigation-help';
-	instructionContainer.setAttribute('data-bind', 'css: { "cesium-navigation-help-visible" : showInstructions}');
-	toolbar.item(0).appendChild(instructionContainer);
+	wrapper.appendChild(disclaimerButton);
 
-	var mouseButton = document.createElement('button');
-	mouseButton.type = 'button';
-	mouseButton.className = 'cesium-navigation-button cesium-navigation-button-left';
-	mouseButton.setAttribute('data-bind', 'click: showClick, css: {"cesium-navigation-button-selected": !_touch, "cesium-navigation-button-unselected": _touch}');
-	mouseButton.appendChild(document.createTextNode('Mouse'));
+	var instructionContainer = createTapMenu();
+	wrapper.appendChild(instructionContainer);
 
-	var touchButton = document.createElement('button');
-	touchButton.type = 'button';
-	touchButton.className = 'cesium-navigation-button cesium-navigation-button-right';
-	touchButton.setAttribute('data-bind', 'click: showTouch, css: {"cesium-navigation-button-selected": _touch, "cesium-navigation-button-unselected": !_touch}');
-	touchButton.appendChild(document.createTextNode('Touch'));
-
-	instructionContainer.appendChild(mouseButton);
-	instructionContainer.appendChild(touchButton);
+	disclaimerButton.onclick = function(){
+		//instructionContainer.classList.add('cesium-navigation-help-visible');
+		if (instructionContainer.style.display !== "none"){
+			instructionContainer.style.display = "none";
+		}else{
+			instructionContainer.style.display = "block";
+		}
+	};
 
 }
 
+function createTapMenu(){
+	// Define the instruction DIV
+	var instructionContainer = document.createElement('div');
+	instructionContainer.id = "instructionContainer";
+	instructionContainer.className = 'cesium-navigation-help cesium-navigation-help-visible';
+	instructionContainer.setAttribute('data-bind', 'css: { "cesium-navigation-help-visible" : showInstructions}');
+	instructionContainer.style = "width: 270px; height: 270px; filter:none; zIndex:99999; display: none";
+	//instructionContainer.style.backgroundColor = "white";
+
+	var disclaimerTap = createTapButton("Disclaimer");
+	disclaimerTap.onclick = "activeTap(event, 'Disclaimer')";
+
+	var tutorialTap = createTapButton("Tutorial");
+	tutorialTap.onclick = "activeTap(event, 'Tutorial')";
+
+	//var tutorialTap = document.createElement('button');
+	//tutorialTap.type = 'button';
+	//tutorialTap.className = 'cesium-navigation-button cesium-navigation-button-right';
+	//tutorialTap.setAttribute('data-bind', 'click: showTouch, css: {"cesium-navigation-button-selected": _touch, "cesium-navigation-button-unselected": !_touch}');
+	//tutorialTap.appendChild(document.createTextNode('Tutorial of Demo'));
+
+	instructionContainer.appendChild(disclaimerTap);
+	instructionContainer.appendChild(tutorialTap);
+
+	//disclaimerTap.onclick = openTap(evt, 'Disclaimer');
+	//touchTap.onclick = openTap(evt, 'Touch');
+
+	// add Disclaimer content
+	var disclaimerContent = document.createElement("div");
+	disclaimerContent.className = 'cesium-navigation-help-instructions tabcontent';
+	disclaimerContent.style.display = "block";
+	disclaimerContent.innerHTML = '\
+            <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Disclaimer</div>\
+            <hr width="50%" style="margin-top: -10px; border-color: grey;">\
+            <div class="cesium-navigation-help-details" style="padding: 5px; text-align: center">Plot search by allowable programmes and uses is based on the Master Plan 2019 written statement and does not integrate other regulations that may affect allowable uses or programmes.</div>\
+            <div class="cesium-navigation-help-details" style="padding: 5px 5px 5px 5px; text-align: center">Allowable GFA values were calculated without modelling rules for mixed-use zoning types, such as Education or Institution, Commercial & Residential, White or plots in strata landed housing.</div>\
+  					<div class="cesium-navigation-help-details" style="padding: 5px; text-align: center"> Our modelled GFAs represent buildable space up to Level of Detail (LoD) 1.  For more accurate allowable GFA values, we are integrating regulatory data that affect buildable space at a higher LoD.</div>\
+	';
+	instructionContainer.appendChild(disclaimerContent);
+
+	// add Tutorial content
+	var disclaimerContent = document.createElement("div");
+	disclaimerContent.className = 'cesium-navigation-help-instructions tabcontent';
+	disclaimerContent.style.display = "none";
+	disclaimerContent.innerHTML = '\
+            <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Tutorial of the Demo</div>\
+            <hr width="50%" style="margin-top: -10px; border-color: grey;">\
+            <div class="cesium-navigation-help-details" style="padding: 5px; text-align: center">blahblah</div>\
+            <div class="cesium-navigation-help-details" style="padding: 5px 5px 5px 5px; text-align: center">blahblah</div>\
+  					<div class="cesium-navigation-help-details" style="padding: 5px; text-align: center">blahblah</div>\
+	';
+	instructionContainer.appendChild(disclaimerContent);
+
+	return instructionContainer;
+}
+
+function createTapButton(buttonName){
+	var menuTapButton = document.createElement('button');
+	menuTapButton.id = buttonName;
+	menuTapButton.type = 'button';
+	menuTapButton.className = 'cesium-navigation-button tablinks';
+	menuTapButton.setAttribute('data-bind', 'click: showClick, css: {"cesium-navigation-button-selected": !_touch, "cesium-navigation-button-unselected": _touch}');
+	menuTapButton.appendChild(document.createTextNode(buttonName));
+	return menuTapButton;
+}
+
+//
+function activeTap(evt, tapName) {
+	var i, tabcontent, tablinks;
+	tabcontent = document.getElementsByClassName("tabcontent");
+	for (i = 0; i < tabcontent.length; i++) {
+		tabcontent[i].style.display = "none";
+	}
+	tablinks = document.getElementsByClassName("tablinks");
+	for (i = 0; i < tablinks.length; i++) {
+		tablinks[i].className = tablinks[i].className.replace(" active", "");
+	}
+	document.getElementById(tapName).style.display = "block";
+	evt.currentTarget.className += " active";
+}
