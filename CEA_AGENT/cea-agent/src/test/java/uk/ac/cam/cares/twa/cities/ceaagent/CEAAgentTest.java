@@ -257,6 +257,8 @@ public class CEAAgentTest {
         localRoute.setAccessible(true);
         localRoute.set(agent, "test_route");
 
+        doNothing().when(agent).setTimeSeriesProps(anyString(), anyString());
+
         // Test empty request params
         try {
             processRequestParameters.invoke(agent, requestParams);
