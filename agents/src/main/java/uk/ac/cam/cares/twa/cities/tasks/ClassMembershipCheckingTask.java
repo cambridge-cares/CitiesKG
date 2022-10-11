@@ -13,6 +13,7 @@ import org.semanticweb.HermiT.Reasoner;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.DefaultOntologyFormat;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
@@ -83,6 +84,8 @@ public class ClassMembershipCheckingTask implements UninitialisedDataAndResultQu
           // get data
           Map<String, JSONArray> map = this.dataQueue.take();
           JSONArray data = map.get(this.taskIri.toString());
+          IRI srcIri = IRI.create((String) map.get(GraphInferenceAgent.KEY_SRC_IRI).get(0));
+          IRI dstIri = IRI.create((String) map.get(GraphInferenceAgent.KEY_DST_IRI).get(0));
           String ontoIri = (String) map.get(InferenceAgent.KEY_ONTO_IRI).get(0);
 
           //create model
@@ -92,7 +95,9 @@ public class ClassMembershipCheckingTask implements UninitialisedDataAndResultQu
           //put data result back on the queue for the agent to pick up
           Map<String, JSONArray> result = new HashMap<>();
 
-          //@todo: use reasoner to detect class membership
+          JSONArray output = getReasonerOutput(reasoner, ontoIri, srcIri, dstIri);
+
+          result.put(this.taskIri.toString(), output);
 
           resultQueue.put(result);
 
@@ -105,6 +110,17 @@ public class ClassMembershipCheckingTask implements UninitialisedDataAndResultQu
     }
   }
 
+  private JSONArray getReasonerOutput(Reasoner reasoner, String ontoIri, IRI srcIri, IRI dstIri) {
+    JSONArray output = new JSONArray();
+    OWLDataFactory df = OWLManager.getOWLDataFactory();
+
+    boolean member = reasoner.getInstances(df.getOWLClass(srcIri), false).containsEntity(
+        df.getOWLNamedIndividual(dstIri));
+
+    output.put(new JSONObject().put(ontoIri, member));
+
+    return output;
+  }
   
   private OWLOntology createModel(JSONArray data) throws OWLOntologyCreationException, SAXException {
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
