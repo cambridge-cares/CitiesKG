@@ -54,20 +54,20 @@ public class CEAAgent extends JPSAgent {
     public static final String THEMATIC_SURFACE = "thematicsurface";
     public static final String ENERGY_PROFILE = "energyprofile";
     public static final String DATABASE_SRS = "databasesrs";
-    public static final String KEY_GRID_CONSUMPTION = "HourlyGridConsumption";
-    public static final String KEY_ELECTRICITY_CONSUMPTION = "HourlyElectricityConsumption";
-    public static final String KEY_HEATING_CONSUMPTION = "HourlyHeatingConsumption";
-    public static final String KEY_COOLING_CONSUMPTION = "HourlyCoolingConsumption";
+    public static final String KEY_GRID_CONSUMPTION = "GridConsumption";
+    public static final String KEY_ELECTRICITY_CONSUMPTION = "ElectricityConsumption";
+    public static final String KEY_HEATING_CONSUMPTION = "HeatingConsumption";
+    public static final String KEY_COOLING_CONSUMPTION = "CoolingConsumption";
     public static final String KEY_PV_ROOF_AREA = "PVRoofArea";
     public static final String KEY_PV_WALL_NORTH_AREA = "PVWallNorthArea";
     public static final String KEY_PV_WALL_SOUTH_AREA = "PVWallSouthArea";
     public static final String KEY_PV_WALL_EAST_AREA = "PVWallEastArea";
     public static final String KEY_PV_WALL_WEST_AREA = "PVWallWestArea";
-    public static final String KEY_PV_ROOF_SUPPLY= "HourlyPVRoofSupply";
-    public static final String KEY_PV_WALL_NORTH_SUPPLY= "HourlyPVWallNorthSupply";
-    public static final String KEY_PV_WALL_SOUTH_SUPPLY= "HourlyPVWallSouthSupply";
-    public static final String KEY_PV_WALL_EAST_SUPPLY= "HourlyPVWallEastSupply";
-    public static final String KEY_PV_WALL_WEST_SUPPLY= "HourlyPVWallWestSupply";
+    public static final String KEY_PV_ROOF_SUPPLY= "PVRoofSupply";
+    public static final String KEY_PV_WALL_NORTH_SUPPLY= "PVWallNorthSupply";
+    public static final String KEY_PV_WALL_SOUTH_SUPPLY= "PVWallSouthSupply";
+    public static final String KEY_PV_WALL_EAST_SUPPLY= "PVWallEastSupply";
+    public static final String KEY_PV_WALL_WEST_SUPPLY= "PVWallWestSupply";
     public static final String KEY_TIMES= "times";
 
     public List<String> TIME_SERIES = Arrays.asList(KEY_GRID_CONSUMPTION,KEY_ELECTRICITY_CONSUMPTION,KEY_HEATING_CONSUMPTION,KEY_COOLING_CONSUMPTION, KEY_PV_ROOF_SUPPLY,KEY_PV_WALL_SOUTH_SUPPLY, KEY_PV_WALL_NORTH_SUPPLY,KEY_PV_WALL_EAST_SUPPLY, KEY_PV_WALL_WEST_SUPPLY);
@@ -217,7 +217,7 @@ public class CEAAgent extends JPSAgent {
                             String value;
                             if (TIME_SERIES.contains(measurement)) {
                                 value = calculateAnnual(retrieveData(result.get(0)), result.get(0));
-                                measurement = "Annual "+ measurement.split("Hourly")[1];
+                                measurement = "Annual "+ measurement;
                             } else {
                                 value = getNumericalValue(uri, result.get(0), route);
                             }
@@ -902,7 +902,7 @@ public class CEAAgent extends JPSAgent {
         builder.addWhere("?building", "ontoubemmp:hasDevice", "?device")
                 .addWhere("?device", "rdf:type", system)
                 .addWhere("?device", "purlEnaeq:consumesEnergy", "?energy")
-                .addWhere("?energy", "rdf:type", "ontoubemmp:HourlyThermalConsumption")
+                .addWhere("?energy", "rdf:type", "ontoubemmp:ThermalConsumption")
                 .addWhere("?energy", "om:hasValue", "?measure")
                 .addWhere("?measure", "om:hasUnit", "?unit");
     }
@@ -916,7 +916,7 @@ public class CEAAgent extends JPSAgent {
         builder.addWhere("?building", "ontoubemmp:hasDevice", "?PVPanels")
                 .addWhere("?PVPanels", "rdf:type", panelType)
                 .addWhere("?PVPanels", "thinkhome:producesEnergy", "?supply")
-                .addWhere("?supply", "rdf:type", "ontoubemmp:HourlyElectricitySupply")
+                .addWhere("?supply", "rdf:type", "ontoubemmp:ElectricitySupply")
                 .addWhere("?supply", "om:hasValue", "?measure")
                 .addWhere("?measure", "om:hasUnit", "?unit");
     }
@@ -963,10 +963,10 @@ public class CEAAgent extends JPSAgent {
 
         switch(value) {
             case KEY_GRID_CONSUMPTION:
-                addBuildingConsumptionWhere(wb,"ontoubemmp:HourlyGridConsumption");
+                addBuildingConsumptionWhere(wb,"ontoubemmp:GridConsumption");
                 break;
             case KEY_ELECTRICITY_CONSUMPTION:
-                addBuildingConsumptionWhere(wb,"ontoubemmp:HourlyElectricityConsumption");
+                addBuildingConsumptionWhere(wb,"ontoubemmp:ElectricityConsumption");
                 break;
             case KEY_HEATING_CONSUMPTION:
                 addConsumptionDeviceWhere(wb, "purlEnaeq:HeatingSystem");
@@ -1181,7 +1181,7 @@ public class CEAAgent extends JPSAgent {
      */
     public void createPVPanelSupplyUpdate(UpdateBuilder builder, String PVPanels, String quantity, String measure){
         builder.addInsert("?graph", NodeFactory.createURI(PVPanels), "thinkhome:producesEnergy", NodeFactory.createURI(quantity))
-                .addInsert("?graph", NodeFactory.createURI(quantity), "rdf:type", "ontoubemmp:HourlyElectricitySupply")
+                .addInsert("?graph", NodeFactory.createURI(quantity), "rdf:type", "ontoubemmp:ElectricitySupply")
                 .addInsert("?graph", NodeFactory.createURI(quantity), "rdf:type", "owl:NamedIndividual")
                 .addInsert("?graph", NodeFactory.createURI(quantity), "om:hasDimension", "om:energy-Dimension")
                 .addInsert("?graph", NodeFactory.createURI(quantity), "om:hasValue", NodeFactory.createURI(measure))
@@ -1279,10 +1279,10 @@ public class CEAAgent extends JPSAgent {
                 createConsumptionUpdate(ub, buildingUri, "ontoubemmp:" + measurement, quantity, tsIris.get(measurement));
             }
             else if (measurement.equals(KEY_COOLING_CONSUMPTION)) {
-                createDeviceConsumptionUpdate(ub, buildingUri, coolingUri, "ontoubemmp:CoolingSystem","ontoubemmp:HourlyThermalConsumption" , quantity, tsIris.get(measurement));
+                createDeviceConsumptionUpdate(ub, buildingUri, coolingUri, "ontoubemmp:CoolingSystem","ontoubemmp:ThermalConsumption" , quantity, tsIris.get(measurement));
             }
             else if (measurement.equals(KEY_HEATING_CONSUMPTION)) {
-                createDeviceConsumptionUpdate(ub, buildingUri, heatingUri,"purlEnaeq:HeatingSystem","ontoubemmp:HourlyThermalConsumption" , quantity, tsIris.get(measurement));
+                createDeviceConsumptionUpdate(ub, buildingUri, heatingUri,"purlEnaeq:HeatingSystem","ontoubemmp:ThermalConsumption" , quantity, tsIris.get(measurement));
             }
             else if (measurement.equals(KEY_PV_ROOF_SUPPLY)){
                 createPVPanelSupplyUpdate(ub, pvRoofPanelsUri, quantity, tsIris.get(measurement));
