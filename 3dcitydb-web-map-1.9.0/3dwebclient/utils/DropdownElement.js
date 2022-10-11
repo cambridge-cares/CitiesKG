@@ -396,14 +396,18 @@ function createTapMenu(){
 	instructionContainer.id = "instructionContainer";
 	instructionContainer.className = 'cesium-navigation-help cesium-navigation-help-visible';
 	instructionContainer.setAttribute('data-bind', 'css: { "cesium-navigation-help-visible" : showInstructions}');
-	instructionContainer.style = "width: 270px; height: 270px; filter:none; zIndex:99999; display: none";
+	instructionContainer.style = "width: 270px; height: 270px; filter:none; z-index:99999; display: none";
 	//instructionContainer.style.backgroundColor = "white";
 
 	var disclaimerTap = createTapButton("Disclaimer");
-	disclaimerTap.onclick = "activeTap(event, 'Disclaimer')";
+	disclaimerTap.onclick = function(event){
+		activeTap(event, 'Disclaimer');
+	};
 
 	var tutorialTap = createTapButton("Tutorial");
-	tutorialTap.onclick = "activeTap(event, 'Tutorial')";
+	tutorialTap.onclick = function(event){
+		activeTap(event, 'Tutorial');
+	};
 
 	//var tutorialTap = document.createElement('button');
 	//tutorialTap.type = 'button';
@@ -414,11 +418,9 @@ function createTapMenu(){
 	instructionContainer.appendChild(disclaimerTap);
 	instructionContainer.appendChild(tutorialTap);
 
-	//disclaimerTap.onclick = openTap(evt, 'Disclaimer');
-	//touchTap.onclick = openTap(evt, 'Touch');
-
 	// add Disclaimer content
 	var disclaimerContent = document.createElement("div");
+	disclaimerContent.id = "Disclaimer";
 	disclaimerContent.className = 'cesium-navigation-help-instructions tabcontent';
 	disclaimerContent.style.display = "block";
 	disclaimerContent.innerHTML = '\
@@ -431,27 +433,28 @@ function createTapMenu(){
 	instructionContainer.appendChild(disclaimerContent);
 
 	// add Tutorial content
-	var disclaimerContent = document.createElement("div");
-	disclaimerContent.className = 'cesium-navigation-help-instructions tabcontent';
-	disclaimerContent.style.display = "none";
-	disclaimerContent.innerHTML = '\
+	var tutorialContent = document.createElement("div");
+	tutorialContent.id = "Tutorial";
+	tutorialContent.className = 'cesium-navigation-help-instructions tabcontent';
+	tutorialContent.style.display = "none";
+	tutorialContent.innerHTML = '\
             <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Tutorial of the Demo</div>\
             <hr width="50%" style="margin-top: -10px; border-color: grey;">\
             <div class="cesium-navigation-help-details" style="padding: 5px; text-align: center">blahblah</div>\
             <div class="cesium-navigation-help-details" style="padding: 5px 5px 5px 5px; text-align: center">blahblah</div>\
   					<div class="cesium-navigation-help-details" style="padding: 5px; text-align: center">blahblah</div>\
 	';
-	instructionContainer.appendChild(disclaimerContent);
+	instructionContainer.appendChild(tutorialContent);
 
 	return instructionContainer;
 }
 
 function createTapButton(buttonName){
 	var menuTapButton = document.createElement('button');
-	menuTapButton.id = buttonName;
+	//menuTapButton.id = buttonName;
 	menuTapButton.type = 'button';
-	menuTapButton.className = 'cesium-navigation-button tablinks';
-	menuTapButton.setAttribute('data-bind', 'click: showClick, css: {"cesium-navigation-button-selected": !_touch, "cesium-navigation-button-unselected": _touch}');
+	menuTapButton.className = 'cesium-navigation-button cesium-navigation-button-unselected tablinks';
+	//menuTapButton.setAttribute('data-bind', 'click: showClick, css: {"cesium-navigation-button-selected": !_touch, "cesium-navigation-button-unselected": _touch}');
 	menuTapButton.appendChild(document.createTextNode(buttonName));
 	return menuTapButton;
 }
@@ -469,4 +472,6 @@ function activeTap(evt, tapName) {
 	}
 	document.getElementById(tapName).style.display = "block";
 	evt.currentTarget.className += " active";
+	evt.currentTarget.className.replace("cesium-navigation-button-unselected", "cesium-navigation-button-selected");
+
 }
