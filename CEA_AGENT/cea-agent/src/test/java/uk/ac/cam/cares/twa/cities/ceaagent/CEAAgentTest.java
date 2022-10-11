@@ -1412,7 +1412,7 @@ public class CEAAgentTest {
         createConsumptionUpdate.invoke(agent,  ub, consumer, type, quantity, measure );
         ub.setVar(Var.alloc("graph"), graph);
 
-        String result = ub.build().toString();
+        String result = ub.buildRequest().toString();
         //test string contains expected insert data
         String expected_insert = "INSERT DATA";
         String expected_graph = "GRAPH \""+graph+"\"";
@@ -1445,7 +1445,7 @@ public class CEAAgentTest {
         createDeviceConsumptionUpdate.invoke(agent,  ub, building, device, deviceType, consumptionType, quantity, measure );
         ub.setVar(Var.alloc("graph"), graph);
 
-        String result = ub.build().toString();
+        String result = ub.buildRequest().toString();
         //test string contains expected insert data
         String expected_insert = "INSERT DATA";
         String expected_graph = "GRAPH \""+graph+"\"";
@@ -1479,7 +1479,7 @@ public class CEAAgentTest {
         createPVPanelSupplyUpdate.invoke(agent,  ub, PVPanels, quantity, measure );
         ub.setVar(Var.alloc("graph"), graph);
 
-        String result = ub.build().toString();
+        String result = ub.buildRequest().toString();
         //test string contains expected insert data
         String expected_insert = "INSERT DATA";
         String expected_graph = "GRAPH \""+graph+"\"";
@@ -1510,7 +1510,7 @@ public class CEAAgentTest {
         createPVPanelAreaUpdate.invoke(agent,  ub, building, PVPanels, panelType, quantity, measure, value );
         ub.setVar(Var.alloc("graph"), graph);
 
-        String result = ub.build().toString();
+        String result = ub.buildRequest().toString();
         //test string contains expected insert data
         String expected_insert = "INSERT DATA";
         String expected_graph = "GRAPH \""+graph+"\"";
