@@ -139,6 +139,8 @@ public class CEAAgent extends JPSAgent {
                         LinkedHashMap<String,String> scalarIris = new LinkedHashMap<>();
 
                         String uri = uriArray.getString(i);
+                        setTimeSeriesProps(uri, getTimeSeriesPropsPath());
+
                         // Only set routes once - assuming all iris passed have same namespace
                         // Will not be necessary if namespace is passed in request params
                         if(i==0) {
@@ -165,6 +167,8 @@ public class CEAAgent extends JPSAgent {
 
                     for (int i = 0; i < uriArray.length(); i++) {
                         String uri = uriArray.getString(i);
+                        setTimeSeriesProps(uri, getTimeSeriesPropsPath());
+
                         // Only set route once - assuming all iris passed in same namespace
                         // Will not be necessary if namespace is passed in request params
                         if(i==0) route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
@@ -194,6 +198,8 @@ public class CEAAgent extends JPSAgent {
                 String route = new String();
                 for (int i = 0; i < uriArray.length(); i++) {
                     String uri = uriArray.getString(i);
+                    setTimeSeriesProps(uri, getTimeSeriesPropsPath());
+
                     // Only set route once - assuming all iris passed in same namespace
                     if(i==0) {
                         route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
@@ -415,14 +421,8 @@ public class CEAAgent extends JPSAgent {
      */
     private void createTimeSeries(String uriString, LinkedHashMap<String,String> fixedIris ) {
         try{
-            String timeseries_props;
-            if(System.getProperty("os.name").toLowerCase().contains("win")){
-                timeseries_props = new File(
-                        Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
-            }
-            else{
-                timeseries_props = FS+"target"+FS+"classes"+FS+TIME_SERIES_CLIENT_PROPS;
-            }
+            String timeseries_props = getTimeSeriesPropsPath();
+
             tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, timeseries_props);
 
             // Create a iri for each measurement
@@ -446,7 +446,7 @@ public class CEAAgent extends JPSAgent {
             }
 
 
-        } catch (URISyntaxException | IOException e)
+        } catch (IOException e)
         {
             e.printStackTrace();
             throw new JPSRuntimeException(e);
@@ -469,16 +469,10 @@ public class CEAAgent extends JPSAgent {
         // If CreateTimeSeries has not been run, get time series client
         if(tsClient==null){
             try{
-                String timeseries_props;
-                if(System.getProperty("os.name").toLowerCase().contains("win")){
-                    timeseries_props = new File(
-                            Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
-                }
-                else{
-                    timeseries_props = FS+"target"+FS+"classes"+FS+TIME_SERIES_CLIENT_PROPS;
-                }
+                String timeseries_props = getTimeSeriesPropsPath();
+
                 tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, timeseries_props);
-            } catch (URISyntaxException | IOException e)
+            } catch (IOException e)
             {
                 e.printStackTrace();
                 throw new JPSRuntimeException(e);
@@ -1368,21 +1362,15 @@ public class CEAAgent extends JPSAgent {
      */
     public TimeSeries<OffsetDateTime> retrieveData(String dataIri){
         try {
-            String timeseries_props;
-            if(System.getProperty("os.name").toLowerCase().contains("win")){
-                timeseries_props = new File(
-                        Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
-            }
-            else{
-                timeseries_props = FS+"target"+FS+"classes"+FS+TIME_SERIES_CLIENT_PROPS;
-            }
+            String timeseries_props = getTimeSeriesPropsPath();
+
             tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, timeseries_props);
             List<String> iris = new ArrayList<>();
             iris.add(dataIri);
             TimeSeries<OffsetDateTime> data = tsClient.getTimeSeries(iris);
             return data;
 
-        } catch(URISyntaxException | IOException e){
+        } catch(IOException e){
             e.printStackTrace();
             throw new JPSRuntimeException(e);
         }
@@ -1608,5 +1596,59 @@ public class CEAAgent extends JPSAgent {
             count++;
         }
         return geometry.substring(0, ind);
+    }
+
+    /**
+     * Sets the SPARQL update and query endpoint in the time series property file, according to the namespace information in uriString
+     * @param uriString input city object id
+     * @param path timeseriesclient.properties path as string
+     */
+    protected void setTimeSeriesProps(String uriString, String path){
+        try {
+            String queryEndpoint;
+            String updateEndpoint;
+
+            FileInputStream in = new FileInputStream(path);
+            Properties props = new Properties();
+            props.load(in);
+            in.close();
+
+            queryEndpoint = props.getProperty("sparql.query.endpoint").split("namespace")[0];
+            if (!queryEndpoint.endsWith("/")) {queryEndpoint = queryEndpoint + "/";}
+
+            updateEndpoint = props.getProperty("sparql.update.endpoint").split("namespace")[0];
+            if (!updateEndpoint.endsWith("/")) {updateEndpoint = updateEndpoint + "/";}
+
+            FileOutputStream out = new FileOutputStream(path);
+            String namespace = getNamespace(uriString).split("namespace/")[1].split("/")[0];
+            props.setProperty("sparql.query.endpoint", queryEndpoint + "namespace" + "/" + namespace + "/" + "sparql");
+            props.setProperty("sparql.update.endpoint", updateEndpoint + "namespace" + "/" + namespace + "/" + "sparql");
+
+            props.store(out, null);
+            out.close();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            throw new JPSRuntimeException(e);
+        }
+    }
+
+    /**
+     * Returns timeseriesclient.properties path as string
+     * @return timeseriesclient.properties path as string
+     */
+    private String getTimeSeriesPropsPath(){
+        try {
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                return new File(
+                        Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
+            } else {
+                return FS + "target" + FS + "classes" + FS + TIME_SERIES_CLIENT_PROPS;
+            }
+        }
+        catch (URISyntaxException e) {
+            e.printStackTrace();
+            throw new JPSRuntimeException(e);
+        }
     }
 }
