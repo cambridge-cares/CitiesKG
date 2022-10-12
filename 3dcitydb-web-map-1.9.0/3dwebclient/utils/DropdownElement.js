@@ -445,8 +445,8 @@ function createTapMenu(){
             <div class="cesium-navigation-help-details" style="padding: 5px; text-align: center">The Programmatic Plot Finder demonstrator enables querying for plots that allow particular combinations of programmes or uses, particular amount of buildable space or a combination of both, i.e. particular amounts of buildable spaces for particular combinations of uses or programmes. </div>\
             <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Example GFA Values</div>\
             <hr width="50%" style="margin-top: -10px; border-color: grey;">\
-            <table style="width: 100%; text-align: center; color: #ffffff;">\
-            <tr><th>Name</th><th>GFA (sqm)</th></tr>\
+            <table style="color: #ffffff;">\
+            <tr><th style="width:50%">Name</th><th style="width:50%">GFA (sqm)</th></tr>\
             <tr><td>Takashimaya</td><td>164,600</td></tr>\
 						<tr><td>Singapore National Gallery</td><td>64,000</td></tr>\
 						<tr><td>Vivocity</td><td>136,200</td></tr>\
