@@ -411,14 +411,14 @@ function createTapMenu(){
 		activeTap(event, 'Tutorial');
 	};
 
-	//var tutorialTap = document.createElement('button');
-	//tutorialTap.type = 'button';
-	//tutorialTap.className = 'cesium-navigation-button cesium-navigation-button-right';
-	//tutorialTap.setAttribute('data-bind', 'click: showTouch, css: {"cesium-navigation-button-selected": _touch, "cesium-navigation-button-unselected": !_touch}');
-	//tutorialTap.appendChild(document.createTextNode('Tutorial of Demo'));
+	var descriptionTap = createTapButton("Description");
+	descriptionTap.onclick = function (event) {
+		activeTap(event, 'Description');
+	}
 
 	instructionContainer.appendChild(disclaimerTap);
 	instructionContainer.appendChild(tutorialTap);
+	instructionContainer.appendChild(descriptionTap);
 
 	// add Disclaimer content
 	var disclaimerContent = document.createElement("div");
@@ -434,6 +434,18 @@ function createTapMenu(){
 	';
 	instructionContainer.appendChild(disclaimerContent);
 
+	// add Description content
+	var descriptionContent = document.createElement("div");
+	descriptionContent.id = "Description";
+	descriptionContent.className = 'cesium-navigation-help-instructions tabcontent';
+	descriptionContent.style.display = "none";
+	descriptionContent.innerHTML = '\
+            <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Description of the Demo</div>\
+            <hr width="50%" style="margin-top: -10px; border-color: grey;">\
+            <div class="cesium-navigation-help-details" style="padding: 5px; text-align: center">The Programmatic Plot Finder demonstrator enables querying for plots that allow particular combinations of programmes or uses, particular amount of buildable space or a combination of both, i.e. particular amounts of buildable spaces for particular combinations of uses or programmes. </div>\
+	';
+	instructionContainer.appendChild(descriptionContent);
+
 	// add Tutorial content
 	var tutorialContent = document.createElement("div");
 	tutorialContent.id = "Tutorial";
@@ -448,6 +460,11 @@ function createTapMenu(){
 	';
 	instructionContainer.appendChild(tutorialContent);
 
+	//
+
+
+
+
 	return instructionContainer;
 }
 
@@ -456,7 +473,7 @@ function createTapButton(buttonName){
 	//menuTapButton.id = buttonName;
 	menuTapButton.type = 'button';
 	menuTapButton.className = 'cesium-navigation-button cesium-navigation-button-unselected tablinks';
-	menuTapButton.style = "height: 38px";
+	menuTapButton.style = "height: 38px; width: 33.33%;";
 	//menuTapButton.setAttribute('data-bind', 'click: showClick, css: {"cesium-navigation-button-selected": !_touch, "cesium-navigation-button-unselected": _touch}');
 	menuTapButton.appendChild(document.createTextNode(buttonName));
 	return menuTapButton;
