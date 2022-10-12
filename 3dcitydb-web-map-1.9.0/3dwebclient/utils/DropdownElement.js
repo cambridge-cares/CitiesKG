@@ -406,19 +406,19 @@ function createTapMenu(){
 	// By default: disclaimerTap is selected
 	disclaimerTap.className = disclaimerTap.className.replace("cesium-navigation-button-unselected", "cesium-navigation-button-selected");
 
-	var tutorialTap = createTapButton("Tutorial");
-	tutorialTap.onclick = function(event){
-		activeTap(event, 'Tutorial');
-	};
-
 	var descriptionTap = createTapButton("Description");
 	descriptionTap.onclick = function (event) {
 		activeTap(event, 'Description');
 	}
 
+	var terminologyTap = createTapButton("Terminology");
+	terminologyTap.onclick = function(event){
+		activeTap(event, 'Terminology');
+	};
+
 	instructionContainer.appendChild(disclaimerTap);
-	instructionContainer.appendChild(tutorialTap);
 	instructionContainer.appendChild(descriptionTap);
+	instructionContainer.appendChild(terminologyTap);
 
 	// add Disclaimer content
 	var disclaimerContent = document.createElement("div");
@@ -446,24 +446,19 @@ function createTapMenu(){
 	';
 	instructionContainer.appendChild(descriptionContent);
 
-	// add Tutorial content
-	var tutorialContent = document.createElement("div");
-	tutorialContent.id = "Tutorial";
-	tutorialContent.className = 'cesium-navigation-help-instructions tabcontent';
-	tutorialContent.style.display = "none";
-	tutorialContent.innerHTML = '\
-            <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Tutorial of the Demo</div>\
+	// add Terminology content
+	var terminologyContent = document.createElement("div");
+	terminologyContent.id = "Terminology";
+	terminologyContent.className = 'cesium-navigation-help-instructions tabcontent';
+	terminologyContent.style.display = "none";
+	terminologyContent.innerHTML = '\
+            <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Terminology</div>\
             <hr width="50%" style="margin-top: -10px; border-color: grey;">\
-            <div class="cesium-navigation-help-details" style="padding: 5px; text-align: center">blahblah</div>\
+            <div class="cesium-navigation-help-details" style="padding: 5px; text-align: center">Gross Floor Area (GFA): In Singapore, authorities define GFA as ‘the total area of covered floor space measured between the centre line of party walls, including the thickness of external walls but excluding voids’. </div>\
             <div class="cesium-navigation-help-details" style="padding: 5px 5px 5px 5px; text-align: center">blahblah</div>\
   					<div class="cesium-navigation-help-details" style="padding: 5px; text-align: center">blahblah</div>\
 	';
-	instructionContainer.appendChild(tutorialContent);
-
-	//
-
-
-
+	instructionContainer.appendChild(terminologyContent);
 
 	return instructionContainer;
 }
