@@ -403,6 +403,8 @@ function createTapMenu(){
 	disclaimerTap.onclick = function(event){
 		activeTap(event, 'Disclaimer');
 	};
+	// By default: disclaimerTap is selected
+	disclaimerTap.className = disclaimerTap.className.replace("cesium-navigation-button-unselected", "cesium-navigation-button-selected");
 
 	var tutorialTap = createTapButton("Tutorial");
 	tutorialTap.onclick = function(event){
@@ -454,6 +456,7 @@ function createTapButton(buttonName){
 	//menuTapButton.id = buttonName;
 	menuTapButton.type = 'button';
 	menuTapButton.className = 'cesium-navigation-button cesium-navigation-button-unselected tablinks';
+	menuTapButton.style = "height: 38px";
 	//menuTapButton.setAttribute('data-bind', 'click: showClick, css: {"cesium-navigation-button-selected": !_touch, "cesium-navigation-button-unselected": _touch}');
 	menuTapButton.appendChild(document.createTextNode(buttonName));
 	return menuTapButton;
@@ -469,9 +472,10 @@ function activeTap(evt, tapName) {
 	tablinks = document.getElementsByClassName("tablinks");
 	for (i = 0; i < tablinks.length; i++) {
 		tablinks[i].className = tablinks[i].className.replace(" active", "");
+		tablinks[i].className = tablinks[i].className.replace("cesium-navigation-button-selected", "cesium-navigation-button-unselected");
 	}
 	document.getElementById(tapName).style.display = "block";
 	evt.currentTarget.className += " active";
-	evt.currentTarget.className.replace("cesium-navigation-button-unselected", "cesium-navigation-button-selected");
+	evt.currentTarget.className = evt.currentTarget.className.replace("cesium-navigation-button-unselected", "cesium-navigation-button-selected");
 
 }
