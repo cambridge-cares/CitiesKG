@@ -367,7 +367,7 @@ function addDisclaimerButton(){
 
 	var instructionIcon = document.createElement('img');
 	instructionIcon.src = '../3dwebclient/utils/image-source/infoIcon.png';
-	instructionIcon.style = "width:32px; height:32px;";
+	instructionIcon.style = "width:29px; height:29px;";
 
 	var disclaimerButton = document.createElement('button');
 	disclaimerButton.type = 'button';
@@ -397,56 +397,41 @@ function createTapMenu(){
 	instructionContainer.id = "instructionContainer";
 	instructionContainer.className = 'cesium-navigation-help cesium-navigation-help-visible';
 	instructionContainer.setAttribute('data-bind', 'css: { "cesium-navigation-help-visible" : showInstructions}');
-	instructionContainer.style = "width: 270px; height: 270px; filter:none; z-index:99999; display: none";
-	//instructionContainer.style.backgroundColor = "white";
+	instructionContainer.style = "width: 300px; height: 270px; filter:none; z-index:99999; display: none";
 
-	var disclaimerTap = createTapButton("Disclaimer");
-	disclaimerTap.onclick = function(event){
-		activeTap(event, 'Disclaimer');
-	};
-	// By default: disclaimerTap is selected
-	disclaimerTap.className = disclaimerTap.className.replace("cesium-navigation-button-unselected", "cesium-navigation-button-selected");
-
+	// By default: descriptionTap is selected
 	var descriptionTap = createTapButton("Description");
 	descriptionTap.onclick = function (event) {
 		activeTap(event, 'Description');
 	}
+	descriptionTap.className = descriptionTap.className.replace("cesium-navigation-button-unselected", "cesium-navigation-button-selected");
 
 	var terminologyTap = createTapButton("Terminology");
 	terminologyTap.onclick = function(event){
 		activeTap(event, 'Terminology');
 	};
 
-	instructionContainer.appendChild(disclaimerTap);
+	var disclaimerTap = createTapButton("Disclaimer");
+	disclaimerTap.onclick = function(event){
+		activeTap(event, 'Disclaimer');
+	};
+
 	instructionContainer.appendChild(descriptionTap);
 	instructionContainer.appendChild(terminologyTap);
-
-	// add Disclaimer content
-	var disclaimerContent = document.createElement("div");
-	disclaimerContent.id = "Disclaimer";
-	disclaimerContent.className = 'cesium-navigation-help-instructions tabcontent';
-	disclaimerContent.style.display = "block";
-	disclaimerContent.innerHTML = '\
-            <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Disclaimer</div>\
-            <hr width="50%" style="margin-top: -10px; border-color: grey;">\
-            <div class="cesium-navigation-help-details" style="padding: 5px; text-align: center">Plot search by allowable programmes and uses is based on the Master Plan 2019 written statement and does not integrate other regulations that may affect allowable uses or programmes.</div>\
-            <div class="cesium-navigation-help-details" style="padding: 5px 5px 5px 5px; text-align: center">Allowable GFA values were calculated without modelling rules for mixed-use zoning types, such as Education or Institution, Commercial & Residential, White or plots in strata landed housing.</div>\
-  					<div class="cesium-navigation-help-details" style="padding: 5px; text-align: center">Our modelled GFAs represent buildable space up to Level of Detail (LoD) 1.  For more accurate allowable GFA values, we are integrating regulatory data that affect buildable space at a higher LoD.</div>\
-	';
-	instructionContainer.appendChild(disclaimerContent);
+	instructionContainer.appendChild(disclaimerTap);
 
 	// add Description content
 	var descriptionContent = document.createElement("div");
 	descriptionContent.id = "Description";
 	descriptionContent.className = 'cesium-navigation-help-instructions tabcontent';
-	descriptionContent.style.display = "none";
+	descriptionContent.style.display = "block";
 	descriptionContent.innerHTML = '\
-            <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Description of the Demo</div>\
-            <hr width="50%" style="margin-top: -10px; border-color: grey;">\
-            <div class="cesium-navigation-help-details" style="padding: 5px; text-align: center">The Programmatic Plot Finder demonstrator enables querying for plots that allow particular combinations of programmes or uses, particular amount of buildable space or a combination of both, i.e. particular amounts of buildable spaces for particular combinations of uses or programmes. </div>\
+            <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Programmatic Plot Finder</div>\
+            <hr width=50% style="margin-top: -10px; border-color: grey;">\
+            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">The Programmatic Plot Finder demonstrator enables querying for plots that allow particular combinations of programmes or uses, particular amount of buildable space or a combination of both, i.e. particular amounts of buildable spaces for particular combinations of uses or programmes. </div>\
             <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Example GFA Values</div>\
-            <hr width="50%" style="margin-top: -10px; border-color: grey;">\
-            <table style="color: #ffffff;">\
+            <hr width=50% style="margin-top: -10px; border-color: grey;">\
+            <table id=exampleGFA style="margin:10px; color: #ffffff;">\
             <tr><th style="width:50%">Name</th><th style="width:50%">GFA (sqm)</th></tr>\
             <tr><td>Takashimaya</td><td>164,600</td></tr>\
 						<tr><td>Singapore National Gallery</td><td>64,000</td></tr>\
@@ -463,11 +448,25 @@ function createTapMenu(){
 	terminologyContent.innerHTML = '\
             <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Terminology</div>\
             <hr width="50%" style="margin-top: -10px; border-color: grey;">\
-            <div class="cesium-navigation-help-details" style="padding: 5px; text-align: center">Gross Floor Area (GFA): In Singapore, authorities define GFA as ‘the total area of covered floor space measured between the centre line of party walls, including the thickness of external walls but excluding voids’. </div>\
-            <div class="cesium-navigation-help-details" style="padding: 5px 5px 5px 5px; text-align: center">blahblah</div>\
-  					<div class="cesium-navigation-help-details" style="padding: 5px; text-align: center">blahblah</div>\
+            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">Gross Floor Area (GFA): In Singapore, authorities define GFA as ‘the total area of covered floor space measured between the centre line of party walls, including the thickness of external walls but excluding voids’. </div>\
+            <div class="cesium-navigation-help-details" style="padding: 10px 5px 5px 5px; text-align: left">blahblah</div>\
+  					<div class="cesium-navigation-help-details" style="padding: 10px; text-align: center">blahblah</div>\
 	';
 	instructionContainer.appendChild(terminologyContent);
+
+	// add Disclaimer content
+	var disclaimerContent = document.createElement("div");
+	disclaimerContent.id = "Disclaimer";
+	disclaimerContent.className = 'cesium-navigation-help-instructions tabcontent';
+	disclaimerContent.style.display = "none";
+	disclaimerContent.innerHTML = '\
+            <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Disclaimer</div>\
+            <hr width="50%" style="margin-top: -10px; border-color: grey;">\
+            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">Plot search by allowable programmes and uses is based on the Master Plan 2019 written statement and does not integrate other regulations that may affect allowable uses or programmes.</div>\
+            <div class="cesium-navigation-help-details" style="padding: 10px 5px 5px 5px; text-align: left">Allowable GFA values were calculated without modelling rules for mixed-use zoning types, such as Education or Institution, Commercial & Residential, White or plots in strata landed housing.</div>\
+  			<div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">Our modelled GFAs represent buildable space up to Level of Detail (LoD) 1.  For more accurate allowable GFA values, we are integrating regulatory data that affect buildable space at a higher LoD.</div>\
+	';
+	instructionContainer.appendChild(disclaimerContent);
 
 	return instructionContainer;
 }
