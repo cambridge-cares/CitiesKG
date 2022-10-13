@@ -547,7 +547,7 @@ function createTapMenu(){
             <hr width="50%" style="margin-top: -10px; border-color: grey;">\
             <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">Plot search by allowable programmes and uses is based on the Master Plan 2019 written statement and does not integrate other regulations that may affect allowable uses or programmes.</div>\
             <div class="cesium-navigation-help-details" style="padding: 10px 5px 5px 5px; text-align: left">Allowable GFA values were calculated without modelling rules for mixed-use zoning types, such as Education or Institution, Commercial & Residential, White or plots in strata landed housing.</div>\
-  			<div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">Our modelled GFAs represent buildable space up to Level of Detail (LoD) 1.  For more accurate allowable GFA values, we are integrating regulatory data that affect buildable space at a higher LoD.</div>\
+  			<div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">The current GFA model represents buildable space up to Level of Detail (LoD) 1. The integration of higher LoD regulatory data will improve the accuracy of buildable space and the allowable GFA values.</div>\
 	';
 	instructionContainer.appendChild(disclaimerContent);
 
