@@ -397,7 +397,7 @@ function createTapMenu(){
 	instructionContainer.id = "instructionContainer";
 	instructionContainer.className = 'cesium-navigation-help cesium-navigation-help-visible';
 	instructionContainer.setAttribute('data-bind', 'css: { "cesium-navigation-help-visible" : showInstructions}');
-	instructionContainer.style = "width: 300px; height: 270px; filter:none; z-index:99999; display: none";
+	instructionContainer.style = "width: 300px; height: 270px; filter:none; z-index:99999; display: block";
 
 	// By default: descriptionTap is selected
 	var descriptionTap = createTapButton("Description");
