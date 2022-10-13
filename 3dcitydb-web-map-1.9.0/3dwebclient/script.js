@@ -267,7 +267,8 @@ function initClient() {
     // If the web client has a layer, add an onclick event to the home button to fly to this layer
     var cesiumHomeButton = document.getElementsByClassName("cesium-button cesium-toolbar-button cesium-home-button")[0];
     cesiumHomeButton.onclick = function () {
-        zoomToDefaultCameraPosition();
+        //zoomToDefaultCameraPosition();
+        zoomToCREATE();
     }
 }
 
@@ -346,26 +347,6 @@ function loadKingsLynn() {
     getAndLoadLayers('exported_kingslynn');
 }
 
-function loadSingapore() {
-    // set title
-    document.title = 'Singapore';
-
-    // set camera view
-    var cameraPostion = {
-        latitude: 1.286014,
-        longitude: 103.836364,
-        height: 2000,
-        heading: 345.2992773976952,
-        pitch: -44.26228062802528,
-        roll: 359.933888621294
-    }
-
-    flyToCameraPosition(cameraPostion);
-
-    // find relevant files and load layers
-    getAndLoadLayers('exported_singapore');
-}
-
 function loadJurongIsland() {
     // set title
     document.title = 'Jurong Island';
@@ -389,8 +370,6 @@ function loadJurongIsland() {
 function loadSingapore() {
     // set title
     document.title = 'Singapore';
-
-
     // set camera view
     var cameraPostion = {
         latitude:  1.279,
@@ -400,8 +379,26 @@ function loadSingapore() {
         pitch: -60,
         roll: 356,
     }
-    flyToCameraPosition(cameraPostion);
+    // need decoder to make sure there is a string on which .replace() can be called. Replace is needed to format spaces.
+    var regionStr = urlController.getUrlParaValue('region', window.location.href, CitydbUtil);
+    var latitudeStr = urlController.getUrlParaValue('latitude', window.location.href, CitydbUtil);
+    var longitudeStr = urlController.getUrlParaValue('longitude', window.location.href, CitydbUtil);
 
+    if (latitudeStr && longitudeStr) {
+        cameraPostion['latitude'] = parseFloat(latitudeStr);
+        cameraPostion['longitude'] = parseFloat(longitudeStr);
+    }
+    var zoomed_area = document.getElementById('area');
+    if (regionStr in cameraPositions){
+        cameraPostion = cameraPositions[regionStr];
+        area_counter = Object.keys(cameraPositions).findIndex(p => p === regionStr);
+        zoomed_area.innerHTML = regionStr.replaceAll('_', ' ');
+    }
+    else {
+        zoomed_area.innerHTML = 'Singapore River Valley';
+    }
+
+    flyToCameraPosition(cameraPostion);
     // find relevant files and load layers
     getAndLoadLayers('exported_singapore');
 }
@@ -524,8 +521,8 @@ function adjustIonFeatures() {
                 }
             }
 
-            // Set default imagery to ESRI World Imagery
-            cesiumViewer.baseLayerPicker.viewModel.selectedImagery = imageryProviders[3];
+            // Ayda: Set default imagery to ESRI World Imagery --> imageryProviders[3]
+            cesiumViewer.baseLayerPicker.viewModel.selectedImagery = imageryProviders[8];
 
             // Disable auto-complete of OSM Geocoder due to OSM usage limitations
             // see https://operations.osmfoundation.org/policies/nominatim/#unacceptable-use
@@ -565,8 +562,9 @@ function inspectTileStatus() {
                 }
             }
         }
-        showedTilesInspector.innerHTML = 'Number of showed Tiles: ' + numberOfshowedTiles;
-        cachedTilesInspector.innerHTML = 'Number of cached Tiles: ' + numberOfCachedTiles;
+        //Ayda: currently user does not need to know about the tiling.
+        //showedTilesInspector.innerHTML = 'Number of showed Tiles: ' + numberOfshowedTiles;
+        //cachedTilesInspector.innerHTML = 'Number of cached Tiles: ' + numberOfCachedTiles;
 
         var loadingTilesInspector = document.getElementById('citydb_loadingTilesInspector');
         if (numberOfTasks > 0 || !tilesLoaded) {
@@ -751,13 +749,17 @@ function showResultWindow(resultJson){
 
 // create the summary text for PPF result box
 // resultjson is json object
+
 function processInfoContext(resultjson){
     let ifGFA = false;
     var infoText = document.createElement("div");
     var title = document.createElement("span");
 
-    var developmentType = document.getElementById("developmentType");
+    var developmentType = document.getElementById("DevelopmentType");
     title.innerHTML = "Search " + developmentType.options[developmentType.selectedIndex].text;
+    if (title.innerHTML === "Search Search plots...") {
+        title.innerHTML = "Search example query"
+    }
 
     title.style.fontWeight = "bold";
     title.style.fontSize = "12px";
@@ -773,11 +775,11 @@ function processInfoContext(resultjson){
     if (Object.keys(inputs).includes("allowsProgramme")){
         allowsObjects = Object.keys(inputs["allowsProgramme"]);
         allowsGFA = Object.values(inputs["allowsProgramme"]);
-        allowOption = "allowsProgramme";
+        allowOption = "allowsProgramme:";
     } else if (Object.keys(inputs).includes("allowsUse")){
         allowsObjects = Object.keys(inputs["allowsUse"]);
         allowsGFA = Object.values(inputs["allowsUse"]);
-        allowOption = "allowsUse";
+        allowOption = "allowsUse:";
     }
     var allowOpts = document.createElement("span");
     allowOpts.textContent = allowOption;
@@ -789,39 +791,40 @@ function processInfoContext(resultjson){
     for (i = 0; i < allowsObjects.length; ++i){
         if (allowsGFA[i] != ""){
             ifGFA = true;
-            allowsContent += allowsObjects[i] + ":" + allowsGFA[i] + "<br />";
+            allowsContent += allowsObjects[i] + ": " + allowsGFA[i] + " sqm" + "<br />";
         }else{
-            allowsContent += allowsObjects[i] + "<br />";
+            allowsContent += allowsObjects[i] + "<br/>";
         }
 
     }
     allowOptText.innerHTML = allowsContent;
     infoText.appendChild(allowOptText);
-    infoText.appendChild(document.createElement("br"));
+    //infoText.appendChild(document.createElement("br"));
 
     if (Object.keys(inputs).includes("TotalGFA") && inputs["TotalGFA"] > 0){
         ifGFA = true;
         var totalGFA = document.createElement("span");
         var totalGFAValue = inputs["TotalGFA"];
-        totalGFA.textContent = "TotalGFA: " + totalGFAValue;
+        totalGFA.textContent = "Total GFA: " + totalGFAValue + " sqm";
         infoText.appendChild(totalGFA);
         infoText.appendChild(document.createElement("br"));
     }
-
-    // static part: measure the impact of the demo
-    var docCount = document.createElement("span");
-    if (ifGFA){
-        docCount.innerHTML = "This search replaces manually checking 38 regulatory documents";
-    }else {
-        docCount.innerHTML = "This search replaces manually checking 17 regulatory documents";
-    }
-    infoText.appendChild(document.createElement("br"));
-    infoText.appendChild(docCount);
 
     var objCount = document.createElement("span");
     objCount.textContent = "# search results: " + filteredCount + " plots";
     infoText.appendChild(document.createElement("br"));
     infoText.appendChild(objCount);
+    infoText.appendChild(document.createElement("br")); // Ayda: swapped white line positions according Pieter's instructions.
+
+    // static part: measure the impact of the demo
+    var docCount = document.createElement("span");
+    if (ifGFA){
+        docCount.innerHTML = "The search replaces manually checking <br /> 38 regulatory documents";
+    }else {
+        docCount.innerHTML = "The search replaces manually checking <br /> 17 regulatory documents ";
+    }
+    infoText.appendChild(document.createElement("br"));
+    infoText.appendChild(docCount);
     return infoText;
 }
 
@@ -902,7 +905,10 @@ function addPoint(customDataSource, pointId, lat, long){
         id: pointId,
         point: {
             pixelSize: 10,
-            color: Cesium.Color.YELLOW,
+            //color: Cesium.Color.YELLOW,
+            color: Cesium.Color.GOLD,
+            outlineColor: Cesium.Color.BLACK,
+            outlineWidth:1,
         },
     });
 }
@@ -1127,6 +1133,20 @@ function addEventListeners(layer) {
     layer.registerEventHandler("CTRLCLICK", function (object) {
         auxClickEventListener(object);
     });
+}
+
+// Ayda: home button zoom in to CREATE Tower
+function zoomToCREATE(){
+    var cameraPosition = {
+        latitude: 1.295,
+        longitude: 103.776,
+        height: 1000,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+
+    return flyToCameraPosition(cameraPosition);
 }
 
 function zoomToDefaultCameraPosition() {
