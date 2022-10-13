@@ -448,7 +448,7 @@ function createTapMenu(){
 	terminologyContent.innerHTML = '\
             <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Terminology</div>\
             <hr width="50%" style="margin-top: -10px; border-color: grey;">\
-            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">Gross Floor Area (GFA): In Singapore, authorities define GFA as ‘the total area of covered floor space measured between the centre line of party walls, including the thickness of external walls but excluding voids’. </div>\
+            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left"><span style="font-weight:bold; font-style: italic;">Gross Floor Area (GFA)</span>: In Singapore, authorities define GFA as ‘the total area of covered floor space measured between the centre line of party walls, including the thickness of external walls but excluding voids’. </div>\
             <div class="cesium-navigation-help-details" style="padding: 10px 5px 5px 5px; text-align: left">blahblah</div>\
   					<div class="cesium-navigation-help-details" style="padding: 10px; text-align: center">blahblah</div>\
 	';
