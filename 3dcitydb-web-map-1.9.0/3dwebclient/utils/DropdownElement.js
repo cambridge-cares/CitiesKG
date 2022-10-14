@@ -31,6 +31,7 @@ function getDropdownElements(predicate, may_predicate, element_type, dropdown_ty
 		dataType: 'json',
 		contentType: 'application/json',
 		success: function(data, status_message, xhr){
+			console.log(data["result"])
 			var results = JSON.parse(data["result"]);
 			var checkbox_lines = [];
 			for (let index in results) {
@@ -199,7 +200,7 @@ function updateGfaRows(){
 
 function removePrefix(result){
 	var element = result.split("#")[1]
-	element = element.match(/[A-Z][a-z]+|[0-9]+/g).join(" ")
+	element = element.replace(/([A-Z])/g, " $1").trim();
 	return element
 }
 
@@ -211,8 +212,8 @@ function getExampleParams() {
 	var query_example = [{TotalGFA:'', allowsUse: {ParkUse: ''}, min_cap: 'false', max_cap: 'false'},
 		{TotalGFA:'', allowsProgramme: {Flat: '', Clinic:''}, min_cap: 'false', max_cap: 'false'},
 		{TotalGFA:'', allowsProgramme: {PrintingPress: '', Gym:'', FoodLaboratory:''}, min_cap: 'false', max_cap: 'false'},
-		{TotalGFA:'', allowsProgramme: {Condominium: ''}, min_cap: 'false', max_cap: 'true'},
-		{TotalGFA:'', allowsProgramme: {Clinic: '100', Flat:'2000', Mall:'1000'}, min_cap: 'true', max_cap: 'false'},
+		{TotalGFA:'', allowsProgramme: {Condominium: ''}, min_cap: 'true', max_cap: 'false'},
+		{TotalGFA:'', allowsProgramme: {Clinic: '100', Flat:'2000', Mall:'1000'}, min_cap: 'false', max_cap: 'false'},
 		{TotalGFA:'', allowsProgramme: {Bank: '50000', Bar:'50000', BookStore:'50000'}, min_cap: 'false', max_cap: 'true'}];
 
 	switch (click_counter){
@@ -234,7 +235,7 @@ function getExampleParams() {
 		case 3:
 			input_parameters = query_example[3];
 			document.getElementsByClassName('querySentence')[0].innerHTML =
-					"Find plots that could allow " + "3000 sqm of "+ "<b>" + "Flat" + "</b>" + " (or more) and  100 sqm of " + "<b>" + "GroceryStore" + "</b>" + " (or more).";
+					"Find the 10 smallest plots (by GFA) that could allow " + "<b>" + "Condominium" + "</b>" + ".";
 			break;
 		case 4:
 			input_parameters = query_example[4];
@@ -244,7 +245,7 @@ function getExampleParams() {
 		case 5:
 			input_parameters = query_example[5];
 			document.getElementsByClassName('querySentence')[0].innerHTML =
-					"Find the 10 smallest plots (by GFA) that could allow " + "50000 sqm of "+ "<b>" + "Bank" + "</b>" + " (or more) and 50000 sqm of " + "<b>" + "Bar" + "</b>" + " (or more) and  50000 sqm of " + "<b>" + "BookStore" + "</b>" + " (or more).";
+					"Find the 10 largest plots (by GFA) that could allow " + "50000 sqm of "+ "<b>" + "Bank" + "</b>" + " (or more) and 50000 sqm of " + "<b>" + "Bar" + "</b>" + " (or more) and  50000 sqm of " + "<b>" + "BookStore" + "</b>" + " (or more).";
 
 			break;
 	}
