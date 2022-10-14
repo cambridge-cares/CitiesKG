@@ -2,12 +2,9 @@ package uk.ac.cam.cares.twa.cities.agents.geo;
 
 import static java.lang.Boolean.parseBoolean;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,7 +16,6 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import lombok.Getter;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.jena.arq.querybuilder.Order;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
@@ -94,18 +90,15 @@ public class CityInformationAgent extends JPSAgent {
     if (validateInput(requestParams)){
       ArrayList<String> uris = new ArrayList<>();
       JSONArray iris = requestParams.getJSONArray(KEY_IRIS);
-
       for (Object iri : iris) {
         uris.add(iri.toString());
       }
       JSONArray cityObjectInformation = new JSONArray();
-
       for (String cityObjectIri : uris) {
         String route = AccessAgentMapping.getTargetResourceID(cityObjectIri);
         if (route != null) {
           this.route =  route;
         }
-
         ModelContext context = new ModelContext(this.route, AccessAgentMapping.getNamespaceEndpoint(cityObjectIri));
         CityObject cityObject = context.createHollowModel(CityObject.class, cityObjectIri);
         if (lazyload) {
@@ -118,7 +111,6 @@ public class CityInformationAgent extends JPSAgent {
         cityObjectList.add(cityObject);
         cityObjectInformation.put(cityObjectList);
       }
-
       requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
 
       if (requestParams.keySet().contains(KEY_CONTEXT)) {
@@ -128,6 +120,8 @@ public class CityInformationAgent extends JPSAgent {
           requestBody.put(KEY_IRIS, requestParams.getJSONArray(KEY_IRIS));
           JSONObject agentKeyValuePairs = requestParams.getJSONObject(KEY_CONTEXT).getJSONObject(agentURL);
           JSONObject response = new JSONObject();
+
+
           if ((agentURL.contains(JPSConstants.ACCESS_AGENT_PATH)) && !(agentKeyValuePairs.keySet().contains(JPSConstants.TARGETIRI))){
             JSONObject filters = requestParams.getJSONObject(KEY_CONTEXT).getJSONObject(agentURL);
             String predicate = "";
@@ -233,11 +227,6 @@ public class CityInformationAgent extends JPSAgent {
     obs =config.getString("uri.ontology.ontobuildablespace");
   }
 
-  private String getNamespace(String uriString) {
-    String[] splitUri = uriString.split("/");
-    return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 2));
-  }
-
   /*** Method combines both query blocks depending on the user input.
    * @param predicate efines weather uses or programmes to be queried
    * @param onto_class types of programmes or uses
@@ -247,8 +236,9 @@ public class CityInformationAgent extends JPSAgent {
   private Query getFilterQuery(String predicate, ArrayList<String> onto_class, boolean gfa_case) {
     SelectBuilder sb = new SelectBuilder();
     sb.addVar(QM + CITY_OBJECT_ID);
-    String ontoZoneGraph = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/";
-    String buildableSpaceGraph = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/buildablespace/";
+    String namespaceURl = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql";
+    String ontoZoneGraph = namespaceURl + "/ontozone/";
+    String buildableSpaceGraph = namespaceURl + "/buildablespace/";
     getOntoZoneFilterQuery(predicate, onto_class, sb, ontoZoneGraph);
     if (gfa_case) {
       getGFAFilterQuery(sb, buildableSpaceGraph);
@@ -308,121 +298,188 @@ public class CityInformationAgent extends JPSAgent {
    * Method retrieves city objects that fits user input: programmes, uses and GFAs.
    * @param predicate defines weather uses or programmes to be queried
    * @param inputZoneCaseGFAValues defines what use or programme GFAs values have been input
-   * @param totalGFAValue defines what totalGFA value has been input by the user
+   * @param totalGFAInputValue defines what totalGFA value has been input by the user
+   * @param minCap boolean input determining if cityObjects with 10 smallest applicable GFA values should be returned.
+   * @param maxCap boolean input determining if cityObjects with 10 largest applicable GFA values should be returned.
    * @return list of city object ids that pass use, programme and GFA filters.
    */
-  private JSONArray getFilteredObjects (String predicate, HashMap<String, Double> inputZoneCaseGFAValues, double totalGFAValue, boolean min_cap, boolean max_cap) {
-    double sumOfinputZoneCaseGFAValues = inputZoneCaseGFAValues.values().stream().mapToDouble(Double::doubleValue).sum();
-    boolean gfa_case = sumOfinputZoneCaseGFAValues > 0 | totalGFAValue > 0 | min_cap | max_cap;
-    Query query = getFilterQuery(predicate, new ArrayList<>(inputZoneCaseGFAValues.keySet()), gfa_case);
-    HashMap<String, Double> filteredCityObjects = new HashMap<>();
+  private JSONArray getFilteredObjects (String predicate, HashMap<String, Double> inputZoneCaseGFAValues, double totalGFAInputValue, boolean minCap, boolean maxCap) {
+    boolean gfaCase = inputZoneCaseGFAValues.values().stream().mapToDouble(Double::doubleValue).sum() > 0 | totalGFAInputValue > 0 | minCap | maxCap;
+    Query query = getFilterQuery(predicate, new ArrayList<>(inputZoneCaseGFAValues.keySet()), gfaCase);
     JSONArray returnedCityObjects =  new JSONArray();
-    JSONArray query_result = AccessAgentCaller.queryStore(route, query.toString());
-
-    if (gfa_case) {
-      HashMap<String, HashMap<String, Double>> plotGFAValues = orderGFAResults(query_result);
-      boolean totalGFA = totalGFAValue > 0;
-      boolean zoneCaseGFA = sumOfinputZoneCaseGFAValues > 0;
-      boolean programInput = !inputZoneCaseGFAValues.isEmpty();
-      for (String cityObject: plotGFAValues.keySet()){
-        HashMap<String, Double> currentCityObjectGFA = plotGFAValues.get(cityObject);
-        double plotDefaultGFAValue = 0.;
-        if (currentCityObjectGFA.containsKey(DEFAULT_ZONING_CASE)) {
-          plotDefaultGFAValue = currentCityObjectGFA.get(DEFAULT_ZONING_CASE);
-        }
-        if (programInput) {
-          ArrayList<Double> plotZoneCaseGFAValues = returnRelevantGFAs(currentCityObjectGFA, inputZoneCaseGFAValues);
-          boolean defaultGFA = plotZoneCaseGFAValues.isEmpty();
-          if (totalGFA){
-            if (defaultGFA) {
-              if (plotDefaultGFAValue > totalGFAValue) {
-                filteredCityObjects.put(cityObject, plotDefaultGFAValue);
-              }
-            } else {
-              if (zoneCaseGFA) {
-                if ((Collections.min(plotZoneCaseGFAValues) > sumOfinputZoneCaseGFAValues) &
-                    (totalGFAValue < Collections.max(plotZoneCaseGFAValues))){
-                  filteredCityObjects.put(cityObject, Collections.max(plotZoneCaseGFAValues));
-                }
-              } else {
-                if (plotZoneCaseGFAValues.stream().mapToDouble(Double::doubleValue).sum() > totalGFAValue) {
-                  filteredCityObjects.put(cityObject, plotZoneCaseGFAValues.stream().mapToDouble(Double::doubleValue).sum());
-                }
-              }
-            }
-          } else {
-            if (!defaultGFA) {
-              if (Collections.min(plotZoneCaseGFAValues) > sumOfinputZoneCaseGFAValues) {
-                filteredCityObjects.put(cityObject, Collections.min(plotZoneCaseGFAValues));
-              }
-            } else {
-              if (plotDefaultGFAValue > sumOfinputZoneCaseGFAValues) {
-                filteredCityObjects.put(cityObject, plotDefaultGFAValue);
-              }
-            }
-          }
-        } else {
-          if (totalGFA) {
-            if (Collections.max(currentCityObjectGFA.values()) > totalGFAValue) {
-              filteredCityObjects.put(cityObject, Collections.max(currentCityObjectGFA.values()));
-            }
-          }
-        }
-      }
-     if (max_cap || min_cap){
-       List<Entry<String, Double>> filteredCityObjectsList = new LinkedList<>(filteredCityObjects.entrySet());
-       filteredCityObjectsList.sort((o1, o2) -> {
-         if (min_cap) {
-           return o1.getValue().compareTo(o2.getValue());
-         }
-         else {
-           return o2.getValue().compareTo(o1.getValue());
-         }
-       });
-       for (int i = 0; i < filteredCityObjectsList.size() && i < 10; i++) {
-         returnedCityObjects.put(filteredCityObjectsList.get(i).getKey());
-       }
-     }
-     else {
-       for (String filteredCityObject: filteredCityObjects.keySet()) {
-         returnedCityObjects.put(filteredCityObject);
-       }
-     }
+    JSONArray queryResult = AccessAgentCaller.queryStore(route, query.toString());
+    if (gfaCase) {
+      applyFiltersGFA(queryResult, totalGFAInputValue, inputZoneCaseGFAValues, returnedCityObjects, minCap, maxCap);
     }
     else {
-      for (int i = 0; i < query_result.length(); i++) {
-        JSONObject row = (JSONObject) query_result.get(i);
-        returnedCityObjects.put(row.get(CITY_OBJECT_ID));
-      }
+      applyFiltersOnlyZoneCase(queryResult, returnedCityObjects);
     }
     return returnedCityObjects;
   }
 
-  private JSONArray applyFiltersGfaWithProgram(HashMap plotGFAValues, HashMap filteredCityObjects) {
-    JSONArray returnedCityObjects = new JSONArray();
-
-    return returnedCityObjects;
+  /***
+   * method applies GFA filters on query results if GFA input has been provided to the CIA.
+   * @param queryResult returns information from the knowledge graph with city objects that allow combinations of uses/programmes and their related GFAs (if applicable).
+   * @param totalGFAInputValue user input value for "Total GFA" UI element.
+   * @param inputZoneCaseGFAValues a hashmap containing programme/use names and respective user GFA inputs.
+   * @param returnedCityObjects JSONArray of city objects that passed all filters and are returned by the CIA.
+   */
+  private void applyFiltersGFA(JSONArray queryResult, double totalGFAInputValue, HashMap<String, Double> inputZoneCaseGFAValues, JSONArray returnedCityObjects, boolean minCap, boolean maxCap){
+    HashMap<String, Double> filteredCityObjects = new HashMap<>();
+    HashMap<String, HashMap<String, Double>> cityObjectsGFAValues = orderGFAResults(queryResult);
+    boolean totalGFA = totalGFAInputValue > 0;
+    boolean zoneCaseGFA = !inputZoneCaseGFAValues.isEmpty();
+    for (String cityObject: cityObjectsGFAValues.keySet()){
+      HashMap<String, Double> currentCityObjectGFAValues = cityObjectsGFAValues.get(cityObject);
+      if (zoneCaseGFA) {
+        applyFiltersGFAWithZoneCase(cityObject, totalGFA, totalGFAInputValue, currentCityObjectGFAValues, inputZoneCaseGFAValues, filteredCityObjects);
+      }
+      else {
+        if (totalGFA) {
+          applyFiltersOnlyTotalGFA(cityObject, currentCityObjectGFAValues, totalGFAInputValue, filteredCityObjects);
+        }
+      }
+    }
+    applyCapToFilteredResults(filteredCityObjects, returnedCityObjects, minCap, maxCap);
   }
 
-  private JSONArray applyFiltersGfaWithProgramAndTotalGfa(HashMap plotGFAValues, HashMap filteredCityObjects) {
-    JSONArray returnedCityObjects = new JSONArray();
-
-    return returnedCityObjects;
+  /***
+   * Method filters city objects based on "TotalGFA" input, individual programe/use-specific GFAs or default cityObject GFA.
+   * @param cityObject object whose id is appended to returnedCityObject if all filtered passed.
+   * @param totalGFA boolean determining if totalGFa input has been provided.
+   * @param inputTotalGFAValue provided input value determining the total amount of GFA to filter by.
+   * @param currentCityObjectGFA a hashmap storing programme/use-specific and default GFA values linked to the cityObject.
+   * @param inputZoneCaseGFAValues a hashmap containing programme/use names and respective user GFA inputs.
+   * @param filteredCityObjects hashmap of filtered city object IDs and allowed GFA values. Hashmap is needed if capping results to min or max 10 is applicable.
+   */
+  private void applyFiltersGFAWithZoneCase(String cityObject, boolean totalGFA, double inputTotalGFAValue, HashMap<String, Double> currentCityObjectGFA, HashMap<String, Double> inputZoneCaseGFAValues, HashMap<String, Double>  filteredCityObjects) {
+    ArrayList<Double> cityObjectZoneCaseGFAValues = returnRelevantGFAs(currentCityObjectGFA, inputZoneCaseGFAValues);
+    boolean defaultGFA = cityObjectZoneCaseGFAValues.isEmpty();
+    double sumOfInputZoneCaseGFAValues = inputZoneCaseGFAValues.values().stream().mapToDouble(Double::doubleValue).sum();
+    double cityObjectDefaultGFAValue = 0.;
+    if (currentCityObjectGFA.containsKey(DEFAULT_ZONING_CASE)) {
+      cityObjectDefaultGFAValue = currentCityObjectGFA.get(DEFAULT_ZONING_CASE);
+    }
+    if (totalGFA){
+      applyFiltersGFAWithZoneCaseWithTotalGFA(cityObject, defaultGFA, inputTotalGFAValue, cityObjectZoneCaseGFAValues,
+          sumOfInputZoneCaseGFAValues, cityObjectDefaultGFAValue, filteredCityObjects);
+    }
+    else {
+      applyFiltersGFAWithZoneCaseWithoutTotalGFA(cityObject, defaultGFA, cityObjectZoneCaseGFAValues,
+          sumOfInputZoneCaseGFAValues, cityObjectDefaultGFAValue, filteredCityObjects);
+    }
   }
 
-  private JSONArray applyFiltersGfaWithProgramTotalGfaAndDefaultGfa(HashMap plotGFAValues, HashMap filteredCityObjects, boolean zoneCase) {
-    JSONArray returnedCityObjects = new JSONArray();
-
-    return returnedCityObjects;
+  /***
+   * Method filters city objects when  input for programmes/uses with specific GFAs and totalGFa is provided.
+   * @param cityObject object whose id is appended to returnedCityObject if all filtered passed.
+   * @param defaultGFA boolean determining if city object has only one GFA values or programme/use-specific exceptions.
+   * @param totalGFAValue provided input value determining the total amount of GFA to filter by.
+   * @param cityObjectZoneCaseGFAValues cityObject GFA values for specific programmes/uses (exceptions).
+   * @param sumOfInputZoneCaseGFAValues sum of user GFA inputs for chosen use/programme combinations.
+   * @param cityObjectDefaultGFAValue GFA value linked to the cityObject when input programme/use is not a GFA exception.
+   * @param filteredCityObjects hashmap of filtered city object IDs and allowed GFA values. Hashmap is needed if capping results to min or max 10 is applicable.
+   */
+  private void applyFiltersGFAWithZoneCaseWithTotalGFA(String cityObject, boolean defaultGFA, double totalGFAValue, ArrayList<Double> cityObjectZoneCaseGFAValues, double sumOfInputZoneCaseGFAValues, double cityObjectDefaultGFAValue, HashMap<String, Double> filteredCityObjects) {
+    boolean zoneCaseGFA = sumOfInputZoneCaseGFAValues > 0;
+    if (defaultGFA) {
+      if (cityObjectDefaultGFAValue > totalGFAValue) {
+        filteredCityObjects.put(cityObject, cityObjectDefaultGFAValue);
+      }
+    }
+    else {
+      if (zoneCaseGFA) {
+        if ((Collections.min(cityObjectZoneCaseGFAValues) > sumOfInputZoneCaseGFAValues) &
+            (totalGFAValue < Collections.max(cityObjectZoneCaseGFAValues))){
+          filteredCityObjects.put(cityObject, Collections.max(cityObjectZoneCaseGFAValues));
+        }
+      }
+      else {
+        if (cityObjectZoneCaseGFAValues.stream().mapToDouble(Double::doubleValue).sum() > totalGFAValue) {
+          filteredCityObjects.put(cityObject, cityObjectZoneCaseGFAValues.stream().mapToDouble(Double::doubleValue).sum());
+        }
+      }
+    }
   }
 
-  private JSONArray applyFiltersGfaWithoutProgram(HashMap plotGFAValues, HashMap filteredCityObjects) {
-    JSONArray returnedCityObjects = new JSONArray();
-
-    return returnedCityObjects;
+  /***
+   * Method filters city objects when user inputted programmes/uses have specific GFAs.
+   * @param cityObject object whose id is appended to returnedCityObject if all filtered passed.
+   * @param defaultGFA boolean determining if city object has only one GFA values or programme/use-specific exceptions.
+   * @param cityObjectZoneCaseGFAValues cityObject GFA values for specific programmes/uses (exceptions).
+   * @param sumOfInputZoneCaseGFAValues sum of user GFA inputs for chosen use/programme combinations.
+   * @param cityObjectDefaultGFAValue GFA value linked to the cityObject when input programme/use is not a GFA exception.
+   * @param filteredCityObjects hashmap of filtered city object IDs and allowed GFA values. Hashmap is needed if capping results to min or max 10 is applicable.
+   */
+  private void applyFiltersGFAWithZoneCaseWithoutTotalGFA(String cityObject, boolean defaultGFA, ArrayList<Double> cityObjectZoneCaseGFAValues, double sumOfInputZoneCaseGFAValues, double cityObjectDefaultGFAValue, HashMap<String, Double> filteredCityObjects) {
+    if (!defaultGFA) {
+      if (Collections.min(cityObjectZoneCaseGFAValues) > sumOfInputZoneCaseGFAValues) {
+        filteredCityObjects.put(cityObject, Collections.min(cityObjectZoneCaseGFAValues));
+      }
+    }
+    else {
+      if (cityObjectDefaultGFAValue > sumOfInputZoneCaseGFAValues) {
+        filteredCityObjects.put(cityObject, cityObjectDefaultGFAValue);
+      }
+    }
   }
 
-  /*** Method selects the relevant GFAs for further comparison based on zoning cases.
+  /***
+   * Method called when provided input only contains totalGFA value without specifying particular programmes.
+   * @param cityObject object whose id is appended to returnedCityObject if all filtered passed.
+   * @param currentCityObjectGFA a hashmap storing programme/use-specific and default GFA values linked to the cityObject.
+   * @param totalGFAValue totalGFAValue provided input value determining the total amount of GFA to filter by.
+   * @param filteredCityObjects hashmap of filtered city object IDs and allowed GFA values. Hashmap is needed if capping results to min or max 10 is applicable.
+   */
+  private void applyFiltersOnlyTotalGFA(String cityObject, HashMap<String, Double> currentCityObjectGFA,
+      double totalGFAValue, HashMap<String, Double> filteredCityObjects) {
+    if (Collections.max(currentCityObjectGFA.values()) > totalGFAValue) {
+      filteredCityObjects.put(cityObject, Collections.max(currentCityObjectGFA.values()));
+    }
+  }
+
+  /***
+   * Method is called when input for min_cap or max_cap is true. It filters cityObjects based on applicable GFA value (10 largest or smallest).
+   * @param filteredCityObjects hashmap of filtered city object IDs and allowed GFA values. Hashmap is needed if capping results to min or max 10 is applicable.
+   * @param returnedCityObjects list of cityObjects that passed all filters.
+   * @param max_cap boolean input determining if cityObjects with 10 largest applicable GFA values should be returned.
+   * @param min_cap boolean input determining if cityObjects with 10 smallest applicable GFA values should be returned.
+   */
+  private void applyCapToFilteredResults(HashMap<String, Double> filteredCityObjects, JSONArray returnedCityObjects, boolean min_cap, boolean max_cap) {
+    if (max_cap || min_cap){
+      List<Entry<String, Double>> filteredCityObjectsList = new LinkedList<>(filteredCityObjects.entrySet());
+      filteredCityObjectsList.sort((o1, o2) -> {
+        if (min_cap) {
+          return o1.getValue().compareTo(o2.getValue());
+        }
+        else {
+          return o2.getValue().compareTo(o1.getValue());
+        }
+      });
+      for (int i = 0; i < filteredCityObjectsList.size() && i < 10; i++) {
+        returnedCityObjects.put(filteredCityObjectsList.get(i).getKey());
+      }
+    }
+    else {
+      for (Object filteredCityObject: filteredCityObjects.keySet()) {
+        returnedCityObjects.put(filteredCityObject);
+      }
+    }
+  }
+
+  /***
+   * Method is called when only programme/use input is passed to CIA. Does not apply GFA filtering.
+   * @param query_result returns information from the knowledge graph with city objects that allow combinations of uses/programmes and their related GFAs (if applicable).
+   * @param returnedCityObjects list of cityObjects that passed all filters.
+   */
+  private void applyFiltersOnlyZoneCase(JSONArray query_result, JSONArray returnedCityObjects) {
+    for (int i = 0; i < query_result.length(); i++) {
+      JSONObject row = (JSONObject) query_result.get(i);
+      returnedCityObjects.put(row.get(CITY_OBJECT_ID));
+    }
+  }
+
+  /*** Method preselects the relevant GFAs for further comparison based on zoning cases.
    * @param cityObjectGFAs GFAs linked to a partocular cityObject.
    * @param inputGFAs GFAs provided by the user.
    * @return selection of relevant GFAs for the partcular city object.
@@ -438,25 +495,25 @@ public class CityInformationAgent extends JPSAgent {
   }
 
   /*** Method extracts from query results gfa values and constructs a hashmap with city object and all gfas linked to it.
-   * @param gfa_query_result returned results with gfa values.
+   * @param gfaQueryResult returned results with gfa values.
    * @return a hashmap with structured query results.
    */
-  private HashMap<String, HashMap<String, Double>> orderGFAResults(JSONArray gfa_query_result){
+  private HashMap<String, HashMap<String, Double>> orderGFAResults(JSONArray gfaQueryResult){
     HashMap<String, HashMap<String, Double>> orderedGFACases = new HashMap<>();
-    for (int i = 0; i < gfa_query_result.length(); i++) {
-      JSONObject row = (JSONObject) gfa_query_result.get(i);
+    for (int i = 0; i < gfaQueryResult.length(); i++) {
+      JSONObject row = (JSONObject) gfaQueryResult.get(i);
       String cityObjectId = row.getString(CITY_OBJECT_ID);
       Double gfa = row.getDouble(GFA_VALUE);
-      String zoning_case = DEFAULT_ZONING_CASE;
+      String zoneCase = DEFAULT_ZONING_CASE;
       if (row.keySet().contains(ZONING_CASE)) {
-        zoning_case = row.getString(ZONING_CASE).split("#")[1];
+        zoneCase = row.getString(ZONING_CASE).split("#")[1];
       }
       if (orderedGFACases.containsKey(cityObjectId)) {
-        orderedGFACases.get(cityObjectId).put(zoning_case, gfa);
+        orderedGFACases.get(cityObjectId).put(zoneCase, gfa);
       }
       else {
         HashMap<String, Double> newObjectGfa = new HashMap<>();
-        newObjectGfa .put(zoning_case, gfa);
+        newObjectGfa .put(zoneCase, gfa);
         orderedGFACases.put(cityObjectId, newObjectGfa );
       }
     }
