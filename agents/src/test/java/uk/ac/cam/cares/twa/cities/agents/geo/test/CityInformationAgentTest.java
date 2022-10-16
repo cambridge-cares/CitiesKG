@@ -1,5 +1,7 @@
 package uk.ac.cam.cares.twa.cities.agents.geo.test;
 
+import com.google.gson.JsonArray;
+import it.unimi.dsi.fastutil.Hash;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -513,23 +515,124 @@ public class CityInformationAgentTest {
         assertEquals(0, filteredCityObjects.size());
     }
 
-    @Test void testApplyFiltersGFAWithZoneCase() throws NoSuchMethodException {
-        CityInformationAgent agent =  new CityInformationAgent();
+    @Test void testApplyFiltersGFAWithZoneCase()
+        throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
-        assertNotNull(agent.getClass().getDeclaredMethod("applyFiltersGFAWithZoneCase", String.class , boolean.class, double.class, HashMap.class, double.class, HashMap.class, HashMap.class));
-        Method applyFiltersGFAWithZoneCase = agent.getClass().getDeclaredMethod("applyFiltersGFAWithZoneCase",  String.class , boolean.class, double.class, HashMap.class, double.class, HashMap.class, HashMap.class);
+        CityInformationAgent agent = new CityInformationAgent();
+
+        assertNotNull(agent.getClass().getDeclaredMethod("applyFiltersGFAWithZoneCase", String.class, boolean.class, double.class, HashMap.class, HashMap.class, HashMap.class));
+        Method applyFiltersGFAWithZoneCase = agent.getClass().getDeclaredMethod("applyFiltersGFAWithZoneCase",  String.class, boolean.class, double.class, HashMap.class, HashMap.class, HashMap.class);
         applyFiltersGFAWithZoneCase.setAccessible(true);
+
+        //KG values for user inputs.
+        String cityObject = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_65c912d7-8cfa-415e-94d4-3a6ba81194ba/";
+        HashMap<String, Double> currentCityObjectGFA = new HashMap<>();
+        currentCityObjectGFA.put("default", 2000.);
+
+        //user inputs.
+        HashMap<String, Double> inputZoneCaseGFAValues =  new HashMap<>();
+        inputZoneCaseGFAValues.put("Flat", 500.);
+        inputZoneCaseGFAValues.put("Clinic", 500.);
+        HashMap<String, Double> filteredCityObjects =  new HashMap<>();
+
+        // test when total GFA true-> default gfa true -> plot does not have zonecase gfas -> defautl gfa > total gfa input.
+        applyFiltersGFAWithZoneCase.invoke(agent, cityObject, true, 1500., currentCityObjectGFA, inputZoneCaseGFAValues, filteredCityObjects);
+        assertEquals(1, filteredCityObjects.size());
+        assertTrue(filteredCityObjects.containsValue(2000.));
+
+        // test when total GFA false -> default gfa true -> plot has all zone case gfas -> both are > input sum of zonecase gfas.
+        filteredCityObjects.clear();
+        currentCityObjectGFA.put("Flat",1500.);
+        currentCityObjectGFA.put("Clinic", 3000.);
+        applyFiltersGFAWithZoneCase.invoke(agent, cityObject, false, 0., currentCityObjectGFA, inputZoneCaseGFAValues, filteredCityObjects);
+        assertEquals(1, filteredCityObjects.size());
+        assertTrue(filteredCityObjects.containsValue(1500.));
     }
 
-    @Test void testApplyFiltersGFA() throws NoSuchMethodException {
+    @Test void testApplyFiltersGFA()
+        throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CityInformationAgent agent =  new CityInformationAgent();
 
         assertNotNull(agent.getClass().getDeclaredMethod("applyFiltersGFA", JSONArray.class, double.class, HashMap.class, JSONArray.class, boolean.class, boolean.class));
         Method applyFiltersGFA = agent.getClass().getDeclaredMethod("applyFiltersGFA", JSONArray.class, double.class, HashMap.class, JSONArray.class, boolean.class, boolean.class);
         applyFiltersGFA.setAccessible(true);
+
+        String cityObject = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_65c912d7-8cfa-415e-94d4-3a6ba81194ba/";
+        JSONObject default_gfa = new JSONObject();
+        default_gfa.put("GFAvalue", 2000.);
+        default_gfa.put("cityObjectId", cityObject);
+
+        HashMap<String, Double> inputZoneCaseGFAValues =  new HashMap<>();
+        inputZoneCaseGFAValues.put("Flat", 500.);
+        inputZoneCaseGFAValues.put("Clinic", 500.);
+
+        JSONArray query_result_Array = new JSONArray();
+        query_result_Array.put(default_gfa);
+        JSONArray returnCityObjects = new JSONArray();
+        applyFiltersGFA.invoke(agent, query_result_Array, 1500., inputZoneCaseGFAValues, returnCityObjects, false, false);
+        assertFalse(returnCityObjects.isEmpty());
+        assertEquals(cityObject, returnCityObjects.get(0));
+
+        returnCityObjects = new JSONArray();
+        applyFiltersGFA.invoke(agent, query_result_Array, 1500., new HashMap<>(), returnCityObjects, false, false);
+        assertFalse(returnCityObjects.isEmpty());
+        assertEquals(cityObject, returnCityObjects.get(0));
     }
 
-    @Test void testGetFilteredObjects(){
+    @Test void testGetFilteredObjects() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CityInformationAgent agent = new CityInformationAgent();
+
+        assertNotNull(agent.getClass()
+            .getDeclaredMethod("getFilteredObjects", String.class, HashMap.class, double.class,
+                boolean.class, boolean.class));
+        Method getFilteredObjects = agent.getClass()
+            .getDeclaredMethod("getFilteredObjects", String.class, HashMap.class, double.class,
+                boolean.class, boolean.class);
+        getFilteredObjects.setAccessible(true);
+
+        String cityObject = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_65c912d7-8cfa-415e-94d4-3a6ba81194ba/";
+        JSONObject default_gfa = new JSONObject();
+        default_gfa.put("GFAvalue", 2000.);
+        default_gfa.put("cityObjectId", cityObject);
+        JSONArray query_result = new JSONArray();
+        query_result.put(default_gfa);
+
+
+        JSONObject query_result_obj = new JSONObject();
+        query_result_obj.put("cityObjectId", cityObject);
+        JSONObject query_result_obj2 = new JSONObject();
+        query_result_obj2.put("cityObjectId", "ID2");
+        JSONArray query_result_noGFA = new JSONArray();
+        query_result_noGFA.put(query_result_obj);
+        query_result_noGFA.put(query_result_obj2);
+
+        HashMap<String, Double> inputZoneCaseGFAValues =  new HashMap<>();
+        inputZoneCaseGFAValues.put("Flat", 500.);
+        inputZoneCaseGFAValues.put("Clinic", 500.);
+
+        try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = Mockito.mockStatic(
+            AccessAgentCaller.class)) {
+            //test with mocked AccessAgentCaller when gfaCase true.
+            accessAgentCallerMock.when(
+                    () -> AccessAgentCaller.queryStore(ArgumentMatchers.anyString(),
+                        ArgumentMatchers.anyString()))
+                .thenReturn(query_result);
+
+            JSONArray returnCityObjects = (JSONArray) getFilteredObjects.invoke(agent, "predicate", inputZoneCaseGFAValues, 1500., false, false);
+            assertFalse(returnCityObjects.isEmpty());
+            assertEquals(cityObject, returnCityObjects.get(0));
+
+            //test with mocked AccessAgentCaller when gfaCase false.
+            accessAgentCallerMock.when(
+                    () -> AccessAgentCaller.queryStore(ArgumentMatchers.anyString(),
+                        ArgumentMatchers.anyString()))
+                .thenReturn(query_result_noGFA);
+
+            returnCityObjects = (JSONArray) getFilteredObjects.invoke(agent, "predicate", new HashMap<>(), 0., false, false);
+            assertEquals(2, returnCityObjects.length());
+            assertTrue(returnCityObjects.toString().contains("ID2"));
+
+        }
     }
 
     @Test void testGetGFAFilterQuery()
