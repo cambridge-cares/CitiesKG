@@ -124,6 +124,21 @@ function processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGF
 	return final_sentence;
 }
 
+function validateGFAInputs(){
+	var inputs = document.getElementsByClassName('text_input');
+
+	for (let index in inputs){
+		let inputNumber = Number(inputs[index].firstChild.value);  // if letters, the conversion will return NaN
+		if (Number.isNaN(inputNumber) || inputNumber < 0){
+			throwNotification();
+			return false;
+		}
+	}
+	return true;
+}
+
+
+
 function getQuerySentence(){
 	var sentence = "Find plots that could allow...";
 	var final_sentence = 'Find plots that could allow...';
@@ -132,6 +147,7 @@ function getQuerySentence(){
 	document.getElementsByClassName('querySentence')[0].textContent = final_sentence;
 
 	var inputs = document.getElementsByClassName('text_gfa');
+
 	var uses = {};
 	var programmes = {};
 	var totalGFA_input;
@@ -225,7 +241,7 @@ function updateGfaRows(){
 				var clicked_element =
 						"<div class='gfa'>" +
 						"<div class='text_gfa' style='width: 180px'>" + checkboxes.item(i).id + "</div>" +
-						"<div class='text_input'><input type='text' maxLength='5' size='3'></div>" +
+						"<div class='text_input' onchange='validateGFAInputs()'><input type='text' maxLength='5' size='3'></div>" +
 						"<hr size='1'>" +
 					  "</div>" ;
 				$("#assignGFA").append(clicked_element)
