@@ -1,8 +1,8 @@
-var CONTEXT = "citieskg";
-var CITY = (new URL(window.location.href).searchParams.get('city'));
-var TOTAL_GFA_KEY = 'TotalGFA';
-var MAX_CAP = 'max_cap';
-var MIN_CAP = 'min_cap';
+const CONTEXT = "citieskg";
+const CITY = (new URL(window.location.href).searchParams.get('city'));
+const TOTAL_GFA_KEY = 'TotalGFA';
+const MAX_CAP = 'max_cap';
+const MIN_CAP = 'min_cap';
 var input_parameters;
 var selectedDevType;
 var click_counter = 0;
@@ -65,7 +65,8 @@ function getDropdownElements(predicate, may_predicate, element_type, dropdown_ty
 		//data: JSON.stringify({targetresourceiri:"http://localhost:48888/test" , sparqlquery: buildQuery(predicate)}),
 		dataType: 'json',
 		contentType: 'application/json',
-		success: function(data, status_message, xhr){
+		success: function(data){  //function(data, status_message, xhr)
+			console.log(data["result"])
 			var results = JSON.parse(data["result"]);
 			var checkbox_lines = [];
 			for (let index in results) {
@@ -183,10 +184,10 @@ function getQuerySentence(){
 		}
 	}
 
-	if (document.getElementById('CapType').value == 'max_cap') {
+	if (document.getElementById('CapType').value === 'max_cap') {
 		final_sentence = final_sentence.slice(0,5) + "the 10 largest plots (by GFA) " + final_sentence.slice(11);
 	}
-	if (document.getElementById('CapType').value == 'min_cap') {
+	if (document.getElementById('CapType').value === 'min_cap') {
 		final_sentence = final_sentence.slice(0,5) + "the 10 smallest plots (by GFA) " + final_sentence.slice(11);
 	}
 	document.getElementsByClassName('querySentence')[0].innerHTML = final_sentence;
@@ -237,7 +238,7 @@ function updateGfaRows(){
 
 function removePrefix(result){
 	var element = result.split("#")[1]
-	element = element.match(/[A-Z][a-z]+|[0-9]+/g).join(" ")
+	element = element.replace(/([A-Z])/g, " $1").trim();
 	return element
 }
 
@@ -249,8 +250,8 @@ function getExampleParams() {
 	var query_example = [{TotalGFA:'', allowsUse: {ParkUse: ''}, min_cap: 'false', max_cap: 'false'},
 		{TotalGFA:'', allowsProgramme: {Flat: '', Clinic:''}, min_cap: 'false', max_cap: 'false'},
 		{TotalGFA:'', allowsProgramme: {PrintingPress: '', Gym:'', FoodLaboratory:''}, min_cap: 'false', max_cap: 'false'},
-		{TotalGFA:'', allowsProgramme: {Condominium: ''}, min_cap: 'false', max_cap: 'true'},
-		{TotalGFA:'', allowsProgramme: {Clinic: '100', Flat:'2000', Mall:'1000'}, min_cap: 'true', max_cap: 'false'},
+		{TotalGFA:'', allowsProgramme: {Condominium: ''}, min_cap: 'true', max_cap: 'false'},
+		{TotalGFA:'', allowsProgramme: {Clinic: '100', Flat:'2000', Mall:'1000'}, min_cap: 'false', max_cap: 'false'},
 		{TotalGFA:'', allowsProgramme: {Bank: '50000', Bar:'50000', BookStore:'50000'}, min_cap: 'false', max_cap: 'true'}];
 
 	switch (click_counter){
@@ -272,7 +273,7 @@ function getExampleParams() {
 		case 3:
 			input_parameters = query_example[3];
 			document.getElementsByClassName('querySentence')[0].innerHTML =
-					"Find plots that could allow " + "3000 sqm of "+ "<b>" + "Flat" + "</b>" + " (or more) and  100 sqm of " + "<b>" + "GroceryStore" + "</b>" + " (or more).";
+					"Find the 10 smallest plots (by GFA) that could allow " + "<b>" + "Condominium" + "</b>" + ".";
 			break;
 		case 4:
 			input_parameters = query_example[4];
@@ -356,7 +357,7 @@ function getValidPlots(){
 		data: JSON.stringify({'iris': [iri], 'context': {"http://www.theworldavatar.com:83/access-agent/access": input_parameters}}),
 		dataType: 'json',
 		contentType: 'application/json',
-		success: function (data, status_message, xhr) {
+		success: function (data) { //function (data, status_message, xhr)
 			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
 			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filteredCounts"]);
 			showResultWindow(data);
@@ -426,7 +427,6 @@ function showChooseDevType(){
 			document.getElementById("GfaBox").style.display="block";
 			document.getElementById('CapBox').style.display='block';
 			break;
-			pinHighlightObjects();
 	}
 }
 

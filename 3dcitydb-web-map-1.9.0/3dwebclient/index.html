@@ -91,8 +91,8 @@
             @import url(css/SplashWindow.css);
 
             html, body, #cesiumContainer {
-                top: 0px;
-                left: 0px;
+                top: 0;
+                left: 0;
                 position: absolute;
                 width: 100%;
                 height: 100%;
@@ -146,7 +146,7 @@
                 width: 48.5%;
             }
             .citydb_long_container {
-                margin-left: 0px;
+                margin-left: 0;
                 margin-right: 2%;
             }
             .citydb_dynamic_box {
@@ -1023,7 +1023,7 @@
             var USE_PREDICATE = 'allowsUse';
             var USE_PREDICATE_MAY = 'mayAllowUse';
             var PROGRAMME_PREDICATE = 'allowsProgramme';
-            var PROGRAMME_PREDICATE_MAY = 'mayAllowProgramme';
+            var PROGRAMME_PREDICATE_MAY = 'mayAllowProgramme'
 
             getDropdownElementsLocal(USE_PREDICATE, USE_PREDICATE_MAY, 'use_element', '#choose_uses');
             getDropdownElementsLocal(PROGRAMME_PREDICATE, PROGRAMME_PREDICATE_MAY, 'programme_element', '#choose_programmes');
