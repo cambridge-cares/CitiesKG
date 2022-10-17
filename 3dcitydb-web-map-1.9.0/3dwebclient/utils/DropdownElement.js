@@ -28,7 +28,8 @@ function getDropdownElementsLocal(predicate, may_predicate, element_type, dropdo
 			return res.text();
 		})
 		.then(function (data){
-				console.log("Programme: " + data);
+			processDropdownElementsLocal(data, predicate, element_type, dropdown_type);
+			//console.log("Programme: " + data);
 		})}
 	else if(predicate.includes("Use")){
 		let url = "../3dwebclient/exported_singapore/dropdownMenu/uses.txt";
@@ -36,15 +37,17 @@ function getDropdownElementsLocal(predicate, may_predicate, element_type, dropdo
 		.then(res => {
 			return res.text();
 		}).then(function (data){
-			console.log("Uses: "+ data);
+			processDropdownElementsLocal(data, predicate, element_type, dropdown_type);
+			//console.log("Uses: "+ data);
 		})}
 }
 
-function processDropdownElementsLocal(data){
+function processDropdownElementsLocal(data, predicate, element_type, dropdown_type){
 
 	var checkbox_lines = [];
+	var results = data.split('\r');
 	for (let index in results) {
-		var checkbox_line = removePrefix(results[index]["g"]);
+		var checkbox_line = removePrefix(results[index]);
 		checkbox_lines.push(checkbox_line);
 	}
 	checkbox_lines.sort();
@@ -274,12 +277,14 @@ function getExampleParams() {
 		case 4:
 			input_parameters = query_example[4];
 			document.getElementsByClassName('querySentence')[0].innerHTML =
-					"Find plots that could allow " + "100 sqm of "+ "<b>" + "Clinic" + "</b>" + " (or more) and  2000 sqm of " + "<b>" + "Flat" + "</b>" + " (or more) and  1000 sqm of " + "<b>" + "Mall" + "</b>" + " (or more).";
+					"Find plots that could allow " + "100 sqm of "+ "<b>" + "Clinic" + "</b>" + " (or more) and  2000 sqm of " + "<b>" + "Flat" + "</b>" +
+					" (or more) and  1000 sqm of " + "<b>" + "Mall" + "</b>" + " (or more).";
 			break;
 		case 5:
 			input_parameters = query_example[5];
 			document.getElementsByClassName('querySentence')[0].innerHTML =
-					"Find the 10 smallest plots (by GFA) that could allow " + "50000 sqm of "+ "<b>" + "Bank" + "</b>" + " (or more) and 50000 sqm of " + "<b>" + "Bar" + "</b>" + " (or more) and  50000 sqm of " + "<b>" + "BookStore" + "</b>" + " (or more).";
+					"Find the 10 smallest plots (by GFA) that could allow " + "50000 sqm of "+ "<b>" + "Bank" + "</b>" + " (or more) and 50000 sqm of " +
+					"<b>" + "Bar" + "</b>" + " (or more) and  50000 sqm of " + "<b>" + "BookStore" + "</b>" + " (or more).";
 
 			break;
 	}
@@ -475,14 +480,6 @@ function addDisclaimerButton(){
 	wrapper.className = 'cesium-navigationHelpButton-wrapper';
 	toolbar.item(0).appendChild(wrapper);
 
-	var qMarkSymbol = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-	qMarkSymbol.setAttribute("class", "cesium-svgPath-svg");
-	qMarkSymbol.setAttribute("width", "32");
-	qMarkSymbol.setAttribute("height", "32");
-	qMarkSymbol.setAttribute("viewBox", "0 0 32 32");
-	qMarkSymbol.setAttribute("style", "none");
-	//qMarkSymbol.innerHTML = "<path d=M16,1.466C7.973,1.466,1.466,7.973,1.466,16c0,8.027,6.507,14.534,14.534,14.534c8.027,0,14.534-6.507,14.534-14.534C30.534,7.973,24.027,1.466,16,1.466z" + "M17.328,24.371h-2.707v-2.596h2.707V24.371zM17.328,19.003v0.858h-2.707v-1.057c0-3.19,3.63-3.696,3.63-5.963c0-1.034-0.924-1.826-2.134-1.826c-1.254,0-2.354,0.924-2.354,0.924l-1.541-1.915c0,0,1.519-1.584,4.137-1.584c2.487,0,4.796,1.54,4.796,4.136C21.156,16.208,17.328,16.627,17.328,19.003z>";
-
 	var instructionIcon = document.createElement('img');
 	instructionIcon.src = '../3dwebclient/utils/image-source/infoIcon.png';
 	instructionIcon.style = "width:29px; height:29px;";
@@ -546,9 +543,12 @@ function createTapMenu(){
 	descriptionContent.innerHTML = '\
             <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Programmatic Plot Finder</div>\
             <hr width=50% style="margin-top: -10px; border-color: grey;">\
-            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">The Programmatic Plot Finder is the first demonstrator of the Cities Knowledge Graph project. It enables searching for plots that allow: </div>\
-            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">1. particular combinations of land uses or programmes (essentially more specific land uses)</div>\
-            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">2. particular amounts, or gross floor areas (GFAs) of these combinations. The unit of GFA is square meters (sqm), see following table for more details.</div>\
+            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">The Programmatic Plot Finder is the first demonstrator of the Cities Knowledge \
+            Graph project. It enables searching for plots that allow: </div>\
+            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">1. particular combinations of land uses or programmes (essentially more specific \
+            land uses)</div>\
+            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">2. particular amounts, or gross floor areas (GFAs) of these combinations. \
+            The unit of GFA is square meters (sqm), see following table for more details.</div>\
             <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Example GFA Values</div>\
             <hr width=50% style="margin-top: -10px; border-color: grey;">\
             <table id=exampleGFA style="color: #ffffff;">\
@@ -568,9 +568,20 @@ function createTapMenu(){
 	terminologyContent.innerHTML = '\
             <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Terminology</div>\
             <hr width="50%" style="margin-top: -10px; border-color: grey;">\
-            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left"><span style="font-weight:bold; font-style: italic; color: ">Gross Floor Area (GFA)</span>: In Singapore, authorities define GFA as ‘the total area of covered floor space measured between the centre line of party walls, including the thickness of external walls but excluding voids’. </div>\
-            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left"><span style="font-weight:bold; font-style: italic;">Land Uses</span>: Broad land use categories that are allowed in a specific zoning type. Land uses may have further regulations attached, e.g. maximum use quantums. For example, a land use might be ‘Commercial or Hotel Use in Commercial Zone’. This land use is broad in the sense that a commercial use encompasses more specific uses like ‘restaurant’, ‘bar’ and ‘bookstore.’ This land use is necessary to describe at this level of detail because in Singapore, a minimum use quantum of 60% applies to it, meaning that at least 60% of the GFA of a plot zoned as Commercial must be devoted to a mix of different commercial or hotel uses.</div>\
-  					<div class="cesium-navigation-help-details" style="padding: 10px; text-align: left"><span style="font-weight:bold; font-style: italic;">Programmes</span>: More specific land uses that are allowed in one or more broader land use categories. For example, ‘restaurant’, ‘bar’ and ‘bookstore’ are programmes. No use quantums are attached to programmes.</div>\
+            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">\
+            <span style="font-weight:bold; font-style: italic; color: ">Gross Floor Area (GFA)</span>\
+						<p>In Singapore, authorities define GFA as ‘the total area of covered floor space measured between the centre line of party walls, including the thickness of external \
+						walls but excluding voids’. </p></div>\
+            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">\
+            <span style="font-weight:bold; font-style: italic;">Land Uses</span>\
+            <p>Broad land use categories that are allowed in a specific zoning type. Land uses may have further regulations attached, e.g. maximum use quantums. For example, \
+            a land use might be ‘Commercial or Hotel Use in Commercial Zone’. This land use is broad in the sense that a commercial use encompasses more specific uses like ‘restaurant’, \
+            ‘bar’ and ‘bookstore.’ This land use is necessary to describe at this level of detail because in Singapore, a minimum use quantum of 60% applies to it, meaning that \
+            at least 60% of the GFA of a plot zoned as Commercial must be devoted to a mix of different commercial or hotel uses.</p></div>\
+  					<div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">\
+  					<span style="font-weight:bold; font-style: italic;">Programmes</span>\
+  					<p>More specific land uses that are allowed in one or more broader land use categories. For example, ‘restaurant’, ‘bar’ and ‘bookstore’ are programmes. No use quantums \
+  					are attached to programmes.</p></div>\
 						<div style="padding: 10px 5px 5px 5px;"><img src="../3dwebclient/utils/image-source/class_diagram.png" style="width: 100%;"/></div>\
 						';
 	instructionContainer.appendChild(terminologyContent);
@@ -583,9 +594,12 @@ function createTapMenu(){
 	disclaimerContent.innerHTML = '\
             <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Disclaimer</div>\
             <hr width="50%" style="margin-top: -10px; border-color: grey;">\
-            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">Plot search by allowable programmes and uses is based on the Master Plan 2019 written statement and does not integrate other regulations that may affect allowable uses or programmes.</div>\
-            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">Allowable GFA values were calculated without modelling rules for mixed-use zoning types, such as Education or Institution, Commercial & Residential, White or plots in strata landed housing.</div>\
-  					<div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">The current GFA model represents buildable space up to Level of Detail (LoD) 1. The integration of higher LoD regulatory data will improve the accuracy of buildable space and the allowable GFA values.</div>\
+            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">Plot search by allowable programmes and uses is based on the Master Plan 2019 written \
+            statement and does not integrate other regulations that may affect allowable uses or programmes.</div>\
+            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">Allowable GFA values were calculated without modelling rules for mixed-use zoning types, \
+            such as Education or Institution, Commercial & Residential, White or plots in strata landed housing.</div>\
+  					<div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">The current GFA model represents buildable space up to Level of Detail (LoD) \
+  					1. The integration of higher LoD regulatory data will improve the accuracy of buildable space and the allowable GFA values.</div>\
 	';
 	instructionContainer.appendChild(disclaimerContent);
 
