@@ -91,8 +91,8 @@
             @import url(css/SplashWindow.css);
 
             html, body, #cesiumContainer {
-                top: 0px;
-                left: 0px;
+                top: 0;
+                left: 0;
                 position: absolute;
                 width: 100%;
                 height: 100%;
@@ -146,7 +146,7 @@
                 width: 48.5%;
             }
             .citydb_long_container {
-                margin-left: 0px;
+                margin-left: 0;
                 margin-right: 2%;
             }
             .citydb_dynamic_box {
@@ -435,7 +435,7 @@
             #exampleGFA {
                 font-family: arial, sans-serif;
                 border-collapse: collapse;
-                margin: 5px 5px 5px 5px;
+                margin: auto;
             }
 
             #exampleGFA td, #exampleGFA th {
@@ -505,7 +505,7 @@
                             <div id="assignGFA" class="finder_dynamic_box" onchange="getQuerySentence()">
                                 <div>
                                     <div class='text_gfa'>Total Gross Floor Area (GFA)</div>
-                                    <div class='text_input' style="width: 80px"><input id="totalGFA" type='text' maxlength="10" size="3"></div>
+                                    <div class='text_input' style="width: 80px" onchange="validateGFAInputs()"><input id="totalGFA" type='text' maxlength="10" size="3"></div>
                                     <hr size="1">
                                 </div>
                             </div>
@@ -1023,10 +1023,13 @@
             var USE_PREDICATE = 'allowsUse';
             var USE_PREDICATE_MAY = 'mayAllowUse';
             var PROGRAMME_PREDICATE = 'allowsProgramme';
-            var PROGRAMME_PREDICATE_MAY = 'mayAllowProgramme';
+            var PROGRAMME_PREDICATE_MAY = 'mayAllowProgramme'
 
-            getDropdownElements(USE_PREDICATE, USE_PREDICATE_MAY, 'use_element', '#choose_uses');
-            getDropdownElements(PROGRAMME_PREDICATE, PROGRAMME_PREDICATE_MAY, 'programme_element', '#choose_programmes');
+            getDropdownElementsLocal(USE_PREDICATE, USE_PREDICATE_MAY, 'use_element', '#choose_uses');
+            getDropdownElementsLocal(PROGRAMME_PREDICATE, PROGRAMME_PREDICATE_MAY, 'programme_element', '#choose_programmes');
+            //getDropdownElements(USE_PREDICATE, USE_PREDICATE_MAY, 'use_element', '#choose_uses');
+            //getDropdownElements(PROGRAMME_PREDICATE, PROGRAMME_PREDICATE_MAY, 'programme_element', '#choose_programmes');
+
 
         </script>
         <script src="script.js"></script>

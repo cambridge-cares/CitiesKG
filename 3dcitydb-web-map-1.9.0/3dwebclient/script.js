@@ -61,7 +61,7 @@ var cesiumViewerOptions = {
     timeline: false,
     animation: false,
     fullscreenButton: false,
-    shadows: (shadows == "true"),
+    shadows: (shadows === "true"),
     terrainShadows: parseInt(terrainShadows),
     clockViewModel: new Cesium.ClockViewModel(clock),
     terrainProvider: maptiler
@@ -230,7 +230,7 @@ function initClient() {
 
         var cesiumWorldTerrainString = urlController.getUrlParaValue('cesiumWorldTerrain', window.location.href, CitydbUtil);
         var maptilerTerrainString = urlController.getUrlParaValue('maptiler', window.location.href, CitydbUtil);
-        if(cesiumWorldTerrainString == "true") {
+        if(cesiumWorldTerrainString === "true") {
             // if the Cesium World Terrain is given in the URL --> activate, else other terrains
             cesiumViewer.terrainProvider = Cesium.createWorldTerrain();
             var baseLayerPickerViewModel = cesiumViewer.baseLayerPicker.viewModel;
@@ -273,15 +273,15 @@ function initClient() {
 }
 
 function loadCity(city) {
-    if (city == 'pirmasens') {
+    if (city === 'pirmasens') {
         loadPirmasens();
-    } else if (city == 'berlin') {
+    } else if (city === 'berlin') {
         loadBerlin();
-    } else if (city == 'kingslynn') {
+    } else if (city === 'kingslynn') {
         loadKingsLynn();
-    } else if (city == 'singaporeEPSG4326') {
+    } else if (city === 'singaporeEPSG4326') {
         loadSingapore();
-    } else if (city == 'jurongisland'){
+    } else if (city === 'jurongisland'){
         loadJurongIsland();
     }
 }
