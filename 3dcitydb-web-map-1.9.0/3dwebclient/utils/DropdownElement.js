@@ -446,18 +446,18 @@ function showChooseDevType(){
 	}
 }
 
-function chooseDemoType() {
-	var demo_type =  document.getElementById("demo_type")
-	switch (demo_type.value) {
-		case "PPF":
+function chooseDemoType(demotype) {
+	//var demo_type =  document.getElementById("demo_type")
+	switch (demotype) {
+		case 1:
 			document.getElementById("demo").style.display = "inline-block";
 			console.log(demo_type);
 			break;
-		case "demo2":
+		case 2:
 			document.getElementById("demo").style.display = "None";
 			console.log(demo_type);
 			break;
-		case "demo3":
+		case 3:
 			document.getElementById("demo").style.display = "None";
 			console.log(demo_type);
 			break;
@@ -703,3 +703,12 @@ function zoomToKeyGrowthAreas(direction) {
 	flyToCameraPosition(zoomed_camera_position);
 }
 
+function openSidebar() {
+	document.getElementById("mySidebar").style.width = "250px";
+	document.getElementById("demo").style.marginLeft = "250px";
+}
+
+function closeSidebar() {
+	document.getElementById("mySidebar").style.width = "0";
+	document.getElementById("demo").style.marginLeft= "0";
+}
