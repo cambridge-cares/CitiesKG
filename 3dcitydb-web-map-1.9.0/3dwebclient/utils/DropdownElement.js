@@ -451,15 +451,15 @@ function chooseDemoType(demotype) {
 	switch (demotype) {
 		case 1:
 			document.getElementById("demo").style.display = "inline-block";
-			console.log(demo_type);
+			document.getElementById("demoTitle").innerText = "Programmatic Plot Finder";
 			break;
 		case 2:
 			document.getElementById("demo").style.display = "None";
-			console.log(demo_type);
+			document.getElementById("demoTitle").innerText = "Demostration 2";
 			break;
 		case 3:
 			document.getElementById("demo").style.display = "None";
-			console.log(demo_type);
+			document.getElementById("demoTitle").innerText = "Demostration 3";
 			break;
 	}
 }
@@ -704,11 +704,16 @@ function zoomToKeyGrowthAreas(direction) {
 }
 
 function openSidebar() {
-	document.getElementById("mySidebar").style.width = "250px";
-	document.getElementById("demo").style.marginLeft = "250px";
+	if (document.getElementById("mySidebar").style.width == "150px"){
+		document.getElementById("mySidebar").style.width = "0";
+		document.getElementById("ProgrammaticPlotFinder").style.marginLeft= "0";
+	}else{
+		document.getElementById("mySidebar").style.width = "150px";
+		document.getElementById("ProgrammaticPlotFinder").style.marginLeft = "150px";
+	}
 }
 
 function closeSidebar() {
 	document.getElementById("mySidebar").style.width = "0";
-	document.getElementById("demo").style.marginLeft= "0";
+	document.getElementById("ProgrammaticPlotFinder").style.marginLeft= "0";
 }

@@ -202,13 +202,14 @@
                 position: absolute;
                 font-family: "Arial";
                 z-index: 99980;
+                transition: 1s ease;
             }
             .programmeFinder_toolbox {
                 width: max-content;
                 height: 70px;
                 position: absolute;
-                left:0px;
-                top:5px;
+                left:7px;
+                top:40px;
                 background: rgba(42, 42, 42, 0.5);
                 border: 2px #505050 solid;
                 border-radius: 5px;
@@ -464,7 +465,7 @@
             .sidebar a {
                 padding: 8px;
                 text-decoration: none;
-                font-size: 20px;
+                font-size: 18px;
                 color: #818181;
                 display: block;
                 transition: 0.3s;
@@ -478,7 +479,7 @@
                 position: absolute;
                 top: 0;
                 right: 25px;
-                font-size: 36px;
+                font-size: 30px;
                 margin-left: 50px;
             }
 
@@ -511,19 +512,19 @@
         <div id="mySidebar" class="sidebar">
             <a href="javascript:void(0)" class="closebtn" onclick="closeSidebar()">×</a>
             <a href="#" onclick="chooseDemoType(1)">Programmatic Plot Finder</a>
-            <a href="#" onclick="chooseDemoType(2)">demo 2</a>
-            <a href="#" onclick="chooseDemoType(3)">demo 3</a>
+            <a href="#" onclick="chooseDemoType(2)">Demostration 2</a>
+            <a href="#" onclick="chooseDemoType(3)">Demostration 3</a>
         </div>
+
 		<div id="ProgrammaticPlotFinder">
             <!--<select id="demo_type" class="cesium-button" onchange="chooseDemoType()" style="font-size: 16px">
                 <option value="PPF">Programmatic Plot Finder</option>
                 <option value="demo2" style="color:grey">Demo 2</option>
                 <option value="demo3" style="color:grey">Demo 3</option>
             </select>-->
-
+            <button class="ProgrammaticPlotFinder-submitButton" onclick="openSidebar()">☰ <span id="demoTitle">Programmatic Plot Finder</span></button>
             <div id="demo" class="programmeFinder_toolbox">
                 <div id="programmeFinder_toolbox_upper" style="height: 35px">
-                    <button class="ProgrammaticPlotFinder-submitButton" onclick="openSidebar()">☰ <span id="demoTitle">Programmatic Plot Finder</span></button>
                     <button id="exampleQuery" class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams()">Try Example Query</button>
                     <div id="querySentence" class="querySentence">Find plots that could allow...</div>
                 </div>
