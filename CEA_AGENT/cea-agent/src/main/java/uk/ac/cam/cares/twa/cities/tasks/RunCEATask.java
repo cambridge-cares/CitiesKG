@@ -260,15 +260,15 @@ public class RunCEATask implements Runnable {
                 PV_file.close();
                 PV.close();
 
-                result.HourlyGridConsumption.add(grid_results);
-                result.HourlyElectricityConsumption.add(electricity_results);
-                result.HourlyHeatingConsumption.add(heating_results);
-                result.HourlyCoolingConsumption.add(cooling_results);
-                result.HourlyPVRoofSupply.add(PV_roof_results);
-                result.HourlyPVWallSouthSupply.add(PV_wall_south_results);
-                result.HourlyPVWallNorthSupply.add(PV_wall_north_results);
-                result.HourlyPVWallEastSupply.add(PV_wall_east_results);
-                result.HourlyPVWallWestSupply.add(PV_wall_west_results);
+                result.GridConsumption.add(grid_results);
+                result.ElectricityConsumption.add(electricity_results);
+                result.HeatingConsumption.add(heating_results);
+                result.CoolingConsumption.add(cooling_results);
+                result.PVRoofSupply.add(PV_roof_results);
+                result.PVWallSouthSupply.add(PV_wall_south_results);
+                result.PVWallNorthSupply.add(PV_wall_north_results);
+                result.PVWallEastSupply.add(PV_wall_east_results);
+                result.PVWallWestSupply.add(PV_wall_west_results);
 
                 if(i==0) result.times = timestamps; //only add times once
             }
