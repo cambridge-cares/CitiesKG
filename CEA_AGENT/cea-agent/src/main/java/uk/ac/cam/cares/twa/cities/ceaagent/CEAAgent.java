@@ -427,38 +427,27 @@ public class CEAAgent extends JPSAgent {
      * @param fixedIris map containing time series iris mapped to measurement type
      */
     private void createTimeSeries(String uriString, LinkedHashMap<String,String> fixedIris ) {
-        try{
-            String timeseries_props = getTimeSeriesPropsPath();
+        tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
 
-            tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, timeseries_props);
-
-            // Create a iri for each measurement
-            List<String> iris = new ArrayList<>();
-            for(String measurement: TIME_SERIES){
-                String iri = getGraph(uriString,ENERGY_PROFILE)+measurement+"_"+UUID.randomUUID()+ "/";
-                iris.add(iri);
-                fixedIris.put(measurement, iri);
-            }
-
-            // Check whether IRIs have a time series linked and if not initialize the corresponding time series
-            if(!timeSeriesExist(iris)) {
-                // All values are doubles
-                List<Class<?>> classes =  new ArrayList<>();
-                for(int i=0; i<iris.size(); i++){
-                    classes.add(Double.class);
-                }
-                // Initialize the time series
-                tsClient.initTimeSeries(iris, classes, timeUnit);
-                //LOGGER.info(String.format("Initialized time series with the following IRIs: %s", String.join(", ", iris)));
-            }
-
-
-        } catch (IOException e)
-        {
-            e.printStackTrace();
-            throw new JPSRuntimeException(e);
+        // Create a iri for each measurement
+        List<String> iris = new ArrayList<>();
+        for(String measurement: TIME_SERIES){
+            String iri = getGraph(uriString,ENERGY_PROFILE)+measurement+"_"+UUID.randomUUID()+ "/";
+            iris.add(iri);
+            fixedIris.put(measurement, iri);
         }
 
+        // Check whether IRIs have a time series linked and if not initialize the corresponding time series
+        if(!timeSeriesExist(iris)) {
+            // All values are doubles
+            List<Class<?>> classes =  new ArrayList<>();
+            for(int i=0; i<iris.size(); i++){
+                classes.add(Double.class);
+            }
+            // Initialize the time series
+            tsClient.initTimeSeries(iris, classes, timeUnit);
+            //LOGGER.info(String.format("Initialized time series with the following IRIs: %s", String.join(", ", iris)));
+        }
     }
 
     /**
@@ -475,15 +464,7 @@ public class CEAAgent extends JPSAgent {
         }
         // If CreateTimeSeries has not been run, get time series client
         if(tsClient==null){
-            try{
-                String timeseries_props = getTimeSeriesPropsPath();
-
-                tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, timeseries_props);
-            } catch (IOException e)
-            {
-                e.printStackTrace();
-                throw new JPSRuntimeException(e);
-            }
+            tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
         }
         TimeSeries<OffsetDateTime> currentTimeSeries = new TimeSeries<>(times, iris, values);
         OffsetDateTime endDataTime = tsClient.getMaxTime(currentTimeSeries.getDataIRIs().get(0));
@@ -1368,19 +1349,11 @@ public class CEAAgent extends JPSAgent {
      * @return time series data
      */
     public TimeSeries<OffsetDateTime> retrieveData(String dataIri){
-        try {
-            String timeseries_props = getTimeSeriesPropsPath();
-
-            tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, timeseries_props);
-            List<String> iris = new ArrayList<>();
-            iris.add(dataIri);
-            TimeSeries<OffsetDateTime> data = tsClient.getTimeSeries(iris);
-            return data;
-
-        } catch(IOException e){
-            e.printStackTrace();
-            throw new JPSRuntimeException(e);
-        }
+        tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
+        List<String> iris = new ArrayList<>();
+        iris.add(dataIri);
+        TimeSeries<OffsetDateTime> data = tsClient.getTimeSeries(iris);
+        return data;
     }
 
     /**
