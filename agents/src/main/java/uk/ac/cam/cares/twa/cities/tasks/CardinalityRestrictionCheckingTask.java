@@ -24,6 +24,7 @@ import org.semanticweb.owlapi.model.OWLClassAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLObjectCardinalityRestriction;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
@@ -130,9 +131,11 @@ public class CardinalityRestrictionCheckingTask implements UninitialisedDataAndR
       for(OWLClassExpression nce: ax.getNestedClassExpressions())
         if((nce instanceof OWLObjectCardinalityRestriction)) {
           OWLClassExpression filler = ((OWLObjectCardinalityRestriction) nce).getFiller();
+          OWLObjectProperty prop = ((OWLObjectCardinalityRestriction) nce).getProperty().asOWLObjectProperty();
           if (filler.getClassExpressionType() == ClassExpressionType.OWL_CLASS) {
-            if (((OWLClass) filler).getIRI().toString().equals(dstIri.toString())) {
-              outputMsg = new JSONObject().put(ontoIri, new JSONObject().put(nce.getClassExpressionType().getName(), ((OWLObjectCardinalityRestriction) nce).getCardinality()));
+            if (((OWLClass) filler).getIRI().toString().equals(dstIri.toString()) && prop.getIRI().toString().equals(propIri.toString())) {
+              outputMsg = new JSONObject().put(ontoIri, new JSONObject().put(nce.getClassExpressionType().getName(),
+                  ((OWLObjectCardinalityRestriction) nce).getCardinality()));
             }
           }
         }

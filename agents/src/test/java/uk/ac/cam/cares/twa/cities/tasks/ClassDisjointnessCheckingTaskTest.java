@@ -16,15 +16,16 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import org.apache.jena.graph.Node;
-import org.coode.owlapi.rdfxml.parser.AnonymousNodeChecker;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.semanticweb.HermiT.Configuration;
 import org.semanticweb.HermiT.Reasoner;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.util.AnonymousNodeChecker;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ClassDisjointnessCheckingTaskTest {
@@ -316,7 +317,7 @@ public class ClassDisjointnessCheckingTaskTest {
           + "{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/2\"},"
           + "{\"s\": \"http://www.test.com/2\", \"p\": \"http://www.w3.org/2002/07/owl#disjointWith\", \"o\": \"http://www.test.com/3\"}]");
       OWLOntology ontology = (OWLOntology) createModel.invoke(task, input);
-      Reasoner reasoner = new Reasoner(ontology);
+      Reasoner reasoner = new Reasoner(new Configuration(), ontology);
 
       //IRI & IRI case
       output = (JSONArray) getReasonerOutput.invoke(task, reasoner, ontoIri, srcIri, dstIri);

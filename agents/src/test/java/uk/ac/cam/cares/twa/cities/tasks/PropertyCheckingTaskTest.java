@@ -16,7 +16,8 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import org.apache.jena.graph.Node;
-import org.coode.owlapi.rdfxml.parser.AnonymousNodeChecker;
+import org.semanticweb.HermiT.Configuration;
+import org.semanticweb.owlapi.util.AnonymousNodeChecker;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
@@ -332,7 +333,7 @@ public class PropertyCheckingTaskTest {
           + "{\"s\": \"http://www.test.com/b\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.test.com/2\"},"
           + "{\"s\": \"http://www.test.com/a\", \"p\": \"http://www.test.com/h1\", \"o\": \"http://www.test.com/b\"}]");
       OWLOntology ontology = (OWLOntology) createModel.invoke(task, input);
-      Reasoner reasoner = new Reasoner(ontology);
+      Reasoner reasoner = new Reasoner(new Configuration(), ontology);
 
       //IRI & IRI case
       output = (JSONArray) getReasonerOutput.invoke(task, reasoner, ontoIri, srcIri, dstIri, propIri);

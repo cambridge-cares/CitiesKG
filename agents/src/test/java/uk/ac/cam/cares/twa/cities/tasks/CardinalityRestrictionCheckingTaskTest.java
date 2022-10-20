@@ -16,28 +16,26 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import org.apache.jena.graph.Node;
-import org.coode.owlapi.rdfxml.parser.AnonymousNodeChecker;
-import org.hsqldb.lib.StringInputStream;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.semanticweb.HermiT.Configuration;
 import org.semanticweb.HermiT.Reasoner;
-import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.util.AnonymousNodeChecker;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ValueRestrictionCheckingTaskTest {
+public class CardinalityRestrictionCheckingTaskTest {
 
   @Test
-  public void testNewValueRestrictionCheckingTask() {
-    ValueRestrictionCheckingTask task;
+  public void testNewCardinalityRestrictionCheckingTask() {
+    CardinalityRestrictionCheckingTask task;
 
     try {
-      task = new ValueRestrictionCheckingTask();
+      task = new CardinalityRestrictionCheckingTask();
       assertNotNull(task);
     } catch (Exception e) {
       fail();
@@ -46,8 +44,8 @@ public class ValueRestrictionCheckingTaskTest {
   }
 
   @Test
-  public void testNewValueRestrictionCheckingTaskFields() {
-    ValueRestrictionCheckingTask task = new ValueRestrictionCheckingTask();
+  public void testNewCardinalityRestrictionCheckingTaskFields() {
+    CardinalityRestrictionCheckingTask task = new CardinalityRestrictionCheckingTask();
     assertEquals(6, task.getClass().getDeclaredFields().length);
 
     Field taskIri;
@@ -60,7 +58,7 @@ public class ValueRestrictionCheckingTaskTest {
     try {
       taskIri = task.getClass().getDeclaredField("taskIri");
       taskIri.setAccessible(true);
-      assertEquals(taskIri.get(task), IRI.create("http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestrictionCheckingTask"));
+      assertEquals(taskIri.get(task), IRI.create("http://www.theworldavatar.com/ontologies/OntoInfer.owl#CardinalityRestrictionCheckingTask"));
       stop = task.getClass().getDeclaredField("stop");
       stop.setAccessible(true);
       assertFalse((Boolean) stop.get(task));
@@ -83,26 +81,26 @@ public class ValueRestrictionCheckingTaskTest {
   }
 
   @Test
-  public void testNewValueRestrictionCheckingTaskMethods() {
-    ValueRestrictionCheckingTask task = new ValueRestrictionCheckingTask();
-    assertEquals(9, task.getClass().getDeclaredMethods().length);
+  public void testNewCardinalityRestrictionCheckingTaskMethods() {
+    CardinalityRestrictionCheckingTask task = new CardinalityRestrictionCheckingTask();
+    assertEquals(10, task.getClass().getDeclaredMethods().length);
   }
 
   @Test
-  public void testNewValueRestrictionCheckingTaskGetTaskIriMethod() {
-    ValueRestrictionCheckingTask task = new ValueRestrictionCheckingTask();
+  public void testNewCardinalityRestrictionCheckingTaskGetTaskIriMethod() {
+    CardinalityRestrictionCheckingTask task = new CardinalityRestrictionCheckingTask();
     try {
       Method getTaskIri = task.getClass().getDeclaredMethod("getTaskIri");
       getTaskIri.setAccessible(true);
-      assertEquals(((IRI) getTaskIri.invoke(task)).toString(), "http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestrictionCheckingTask");
+      assertEquals(((IRI) getTaskIri.invoke(task)).toString(), "http://www.theworldavatar.com/ontologies/OntoInfer.owl#CardinalityRestrictionCheckingTask");
     } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       fail();
     }
   }
 
   @Test
-  public void testNewValueRestrictionCheckingTaskSetStringMapQueueMethod() {
-    ValueRestrictionCheckingTask task = new ValueRestrictionCheckingTask();
+  public void testNewCardinalityRestrictionCheckingTaskSetStringMapQueueMethod() {
+    CardinalityRestrictionCheckingTask task = new CardinalityRestrictionCheckingTask();
     try {
       Method setStringMapQueue = task.getClass().getDeclaredMethod("setStringMapQueue", BlockingQueue.class);
       setStringMapQueue.setAccessible(true);
@@ -116,8 +114,8 @@ public class ValueRestrictionCheckingTaskTest {
   }
 
   @Test
-  public void testNewValueRestrictionCheckingTaskSetResultMapQueueMethod() {
-    ValueRestrictionCheckingTask task = new ValueRestrictionCheckingTask();
+  public void testNewCardinalityRestrictionCheckingTaskSetResultMapQueueMethod() {
+    CardinalityRestrictionCheckingTask task = new CardinalityRestrictionCheckingTask();
     try {
       Method setStringMapQueue = task.getClass().getDeclaredMethod("setResultQueue", BlockingQueue.class);
       setStringMapQueue.setAccessible(true);
@@ -131,8 +129,8 @@ public class ValueRestrictionCheckingTaskTest {
   }
 
   @Test
-  public void testNewValueRestrictionCheckingTaskSetTargetGraphMethod() {
-    ValueRestrictionCheckingTask task = new ValueRestrictionCheckingTask();
+  public void testNewCardinalityRestrictionCheckingTaskSetTargetGraphMethod() {
+    CardinalityRestrictionCheckingTask task = new CardinalityRestrictionCheckingTask();
     try {
       Method setTargetGraph = task.getClass().getDeclaredMethod("setTargetGraph", String.class);
       setTargetGraph.setAccessible(true);
@@ -146,8 +144,8 @@ public class ValueRestrictionCheckingTaskTest {
   }
 
   @Test
-  public void testNewValueRestrictionCheckingTaskIsRunningMethod() {
-    ValueRestrictionCheckingTask task = new ValueRestrictionCheckingTask();
+  public void testNewCardinalityRestrictionCheckingTaskIsRunningMethod() {
+    CardinalityRestrictionCheckingTask task = new CardinalityRestrictionCheckingTask();
     try {
       Method isRunning = task.getClass().getDeclaredMethod("isRunning");
       isRunning.setAccessible(true);
@@ -164,8 +162,8 @@ public class ValueRestrictionCheckingTaskTest {
   }
 
   @Test
-  public void testNewValueRestrictionCheckingTaskStopMethod() {
-    ValueRestrictionCheckingTask task = new ValueRestrictionCheckingTask();
+  public void testNewCardinalityRestrictionCheckingTaskStopMethod() {
+    CardinalityRestrictionCheckingTask task = new CardinalityRestrictionCheckingTask();
 
     try {
       Field stopF = task.getClass().getDeclaredField("stop");
@@ -182,8 +180,8 @@ public class ValueRestrictionCheckingTaskTest {
   }
 
   @Test
-  public void testNewValueRestrictionCheckingRunMethod() {
-    ValueRestrictionCheckingTask task = new ValueRestrictionCheckingTask();
+  public void testNewCardinalityRestrictionCheckingRunMethod() {
+    CardinalityRestrictionCheckingTask task = new CardinalityRestrictionCheckingTask();
 
     try {
       Method run = task.getClass().getDeclaredMethod("run");
@@ -206,22 +204,33 @@ public class ValueRestrictionCheckingTaskTest {
       setResultQueue.invoke(task, new LinkedBlockingDeque<>());
       Field resultQueue = task.getClass().getDeclaredField("resultQueue");
       resultQueue.setAccessible(true);
-      String taskIRI = "http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestrictionCheckingTask";
-      JSONArray testOnto = new JSONArray(
-          "[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
-              + "{\"s\": \"http://www.test.com/2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+      String taskIRI = "http://www.theworldavatar.com/ontologies/OntoInfer.owl#CardinalityRestrictionCheckingTask";
+      JSONArray testOnto =  new JSONArray(
+          "[{\"s\": \"http://www.test.com/c1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/c2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/c3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
               + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
               + "{\"s\": \"http://www.test.com/h2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
               + "{\"s\": \"http://www.test.com/h3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
-              + "{\"s\": \"http://www.test.com/h4\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
-              + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#domain\", \"o\": \"http://www.test.com/1\"},"
-              + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#range\", \"o\": \"http://www.test.com/2\"},"
-              + "{\"s\": \"http://www.test.com/h2\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#range\", \"o\": \"http://www.test.com/1\"},"
-              + "{\"s\": \"http://www.test.com/h3\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#domain\", \"o\": \"http://www.test.com/2\"}]");
+              + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Restriction\"},"
+              + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Restriction\"},"
+              + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Restriction\"},"
+              + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/2002/07/owl#onProperty\", \"o\": \"http://www.test.com/h1\"},"
+              + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/2002/07/owl#onProperty\", \"o\": \"http://www.test.com/h2\"},"
+              + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/2002/07/owl#onProperty\", \"o\": \"http://www.test.com/h3\"},"
+              + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/2002/07/owl#qualifiedCardinality\", \"o\": '\"3\"^^http://www.w3.org/2001/XMLSchema#nonNegativeInteger'},"
+              + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/2002/07/owl#minQualifiedCardinality\", \"o\": '\"1\"^^http://www.w3.org/2001/XMLSchema#nonNegativeInteger'},"
+              + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/2002/07/owl#maxQualifiedCardinality\", \"o\": '\"2\"^^http://www.w3.org/2001/XMLSchema#nonNegativeInteger'},"
+              + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/2002/07/owl#onClass\", \"o\": \"http://www.test.com/c2\"},"
+              + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/2002/07/owl#onClass\", \"o\": \"http://www.test.com/c1\"},"
+              + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/2002/07/owl#onClass\", \"o\": \"http://www.test.com/c2\"},"
+              + "{\"s\": \"http://www.test.com/c1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/r1\"},"
+              + "{\"s\": \"http://www.test.com/c2\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/r2\"},"
+              + "{\"s\": \"http://www.test.com/c2\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/r3\"}]");
 
       String ontoIri = "http://www.test.com/onto";
-      String srcIri = "http://www.test.com/1";
-      String dstIri = "http://www.test.com/2";
+      String srcIri = "http://www.test.com/c1";
+      String dstIri = "http://www.test.com/c2";
       String propIri  = "http://www.test.com/h1";
 
       Map<String, JSONArray> map = new HashMap<>();
@@ -235,9 +244,37 @@ public class ValueRestrictionCheckingTaskTest {
 
       run.invoke(task);
       assertTrue(((Map) ((BlockingQueue) resultQueue.get(task)).take()).get(taskIRI).toString()
-          .equals(new JSONArray().put(new JSONObject().put(ontoIri, true)).toString()));
+          .equals(new JSONArray().put(new JSONObject().put(ontoIri, new JSONObject().put("ObjectExactCardinality", 3))).toString()));
 
       assertFalse((Boolean) isRunning.invoke(task));
+      stop.set(task, false);
+
+      map = new HashMap<>();
+      map.put(taskIRI, testOnto);
+      map.put("ontologyIRI", new JSONArray().put(ontoIri));
+      map.put("sourceIRI", new JSONArray().put(dstIri));
+      map.put("destinationIRI", new JSONArray().put(srcIri));
+      map.put("propertyIRI", new JSONArray().put("http://www.test.com/h2"));
+
+      ((LinkedBlockingDeque) dataQueue.get(task)).put(map);
+
+      run.invoke(task);
+      assertTrue(((Map) ((BlockingQueue) resultQueue.get(task)).take()).get(taskIRI).toString()
+          .equals(new JSONArray().put(new JSONObject().put(ontoIri, new JSONObject().put("ObjectMinCardinality", 1))).toString()));
+      stop.set(task, false);
+
+      map = new HashMap<>();
+      map.put(taskIRI, testOnto);
+      map.put("ontologyIRI", new JSONArray().put(ontoIri));
+      map.put("sourceIRI", new JSONArray().put(dstIri));
+      map.put("destinationIRI", new JSONArray().put(dstIri));
+      map.put("propertyIRI", new JSONArray().put("http://www.test.com/h3"));
+
+      ((LinkedBlockingDeque) dataQueue.get(task)).put(map);
+
+      run.invoke(task);
+      assertTrue(((Map) ((BlockingQueue) resultQueue.get(task)).take()).get(taskIRI).toString()
+          .equals(new JSONArray().put(new JSONObject().put(ontoIri, new JSONObject().put("ObjectMaxCardinality", 2))).toString()));
       stop.set(task, false);
 
       map = new HashMap<>();
@@ -305,7 +342,7 @@ public class ValueRestrictionCheckingTaskTest {
       map.put(taskIRI, testOnto);
       map.put("ontologyIRI", new JSONArray().put(ontoIri));
       map.put("sourceIRI", new JSONArray().put("http://www.w3.org/2002/07/owl#Thing"));
-      map.put("destinationIRI", new JSONArray().put("http://www.test.com/1"));
+      map.put("destinationIRI", new JSONArray().put("http://www.test.com/c1"));
       map.put("propertyIRI", new JSONArray().put("http://www.test.com/h2"));
 
       ((LinkedBlockingDeque) dataQueue.get(task)).put(map);
@@ -313,14 +350,14 @@ public class ValueRestrictionCheckingTaskTest {
       run.invoke(task);
 
       assertTrue(((Map) ((BlockingQueue) resultQueue.get(task)).take()).get(taskIRI).toString()
-          .equals(new JSONArray().put(new JSONObject().put(ontoIri, true)).toString()));
+          .equals(new JSONArray().put(new JSONObject().put(ontoIri, false)).toString()));
 
       stop.set(task, false);
 
       map = new HashMap<>();
       map.put(taskIRI, testOnto);
       map.put("ontologyIRI", new JSONArray().put(ontoIri));
-      map.put("sourceIRI", new JSONArray().put("http://www.test.com/2"));
+      map.put("sourceIRI", new JSONArray().put("http://www.test.com/c2"));
       map.put("destinationIRI", new JSONArray().put("http://www.w3.org/2002/07/owl#Thing"));
       map.put("propertyIRI", new JSONArray().put("http://www.test.com/h3"));
 
@@ -329,7 +366,7 @@ public class ValueRestrictionCheckingTaskTest {
       run.invoke(task);
 
       assertTrue(((Map) ((BlockingQueue) resultQueue.get(task)).take()).get(taskIRI).toString()
-          .equals(new JSONArray().put(new JSONObject().put(ontoIri, true)).toString()));
+          .equals(new JSONArray().put(new JSONObject().put(ontoIri, false)).toString()));
 
       stop.set(task, false);
 
@@ -338,14 +375,14 @@ public class ValueRestrictionCheckingTaskTest {
       map.put("ontologyIRI", new JSONArray().put(ontoIri));
       map.put("sourceIRI", new JSONArray().put("http://www.w3.org/2002/07/owl#Thing"));
       map.put("destinationIRI", new JSONArray().put("http://www.w3.org/2002/07/owl#Thing"));
-      map.put("propertyIRI", new JSONArray().put("http://www.test.com/h4"));
+      map.put("propertyIRI", new JSONArray().put("http://www.test.com/h3"));
 
       ((LinkedBlockingDeque) dataQueue.get(task)).put(map);
 
       run.invoke(task);
 
       assertTrue(((Map) ((BlockingQueue) resultQueue.get(task)).take()).get(taskIRI).toString()
-          .equals(new JSONArray().put(new JSONObject().put(ontoIri, true)).toString()));
+          .equals(new JSONArray().put(new JSONObject().put(ontoIri, false)).toString()));
 
       assertFalse((Boolean) isRunning.invoke(task));
 
@@ -356,8 +393,8 @@ public class ValueRestrictionCheckingTaskTest {
   }
 
   @Test
-  public void testNewValueRestrictionCheckingTaskGetReasonerOutputMethod() {
-    ValueRestrictionCheckingTask task = new ValueRestrictionCheckingTask();
+  public void testNewCardinalityRestrictionCheckingTaskGetReasonerOutputMethod() {
+    CardinalityRestrictionCheckingTask task = new CardinalityRestrictionCheckingTask();
 
     try {
       Method getReasonerOutput = task.getClass().getDeclaredMethod("getReasonerOutput",
@@ -366,22 +403,19 @@ public class ValueRestrictionCheckingTaskTest {
       Method createModel = task.getClass().getDeclaredMethod("createModel", JSONArray.class);
       createModel.setAccessible(true);
       String ontoIri = "http://www.test.com/onto";
-      IRI srcIri = IRI.create("http://www.test.com/1");
-      IRI dstIri = IRI.create("http://www.test.com/2");
+      IRI srcIri = IRI.create("http://www.test.com/c1");
+      IRI dstIri = IRI.create("http://www.test.com/c2");
       IRI propIri = IRI.create("http://www.test.com/h1");
 
       JSONArray output;
-      JSONArray input = new JSONArray(
-          "[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
-          + "{\"s\": \"http://www.test.com/2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
-          + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
-          + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#domain\", \"o\": \"http://www.test.com/1\"},"
-          + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#range\", \"o\": \"http://www.test.com/2\"}]");
 
-      input = new JSONArray(
+      JSONArray input = new JSONArray(
           "[{\"s\": \"http://www.test.com/c1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
               + "{\"s\": \"http://www.test.com/c2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
               + "{\"s\": \"http://www.test.com/c3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
+              + "{\"s\": \"http://www.test.com/h2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
+              + "{\"s\": \"http://www.test.com/h3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
               + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Restriction\"},"
               + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Restriction\"},"
               + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Restriction\"},"
@@ -396,134 +430,27 @@ public class ValueRestrictionCheckingTaskTest {
               + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/2002/07/owl#onClass\", \"o\": \"http://www.test.com/c2\"},"
               + "{\"s\": \"http://www.test.com/c1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/r1\"},"
               + "{\"s\": \"http://www.test.com/c2\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/r2\"},"
-              + "{\"s\": \"http://www.test.com/c2\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/r3\"},"
-              + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
-              + "{\"s\": \"http://www.test.com/h2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
-              + "{\"s\": \"http://www.test.com/h3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"}]");
+              + "{\"s\": \"http://www.test.com/c2\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/r3\"}]");
 
-      //OWLOntology ontology = (OWLOntology) createModel.invoke(task, input);
-      //Reasoner reasoner = new Reasoner(ontology);
+      OWLOntology ontology = (OWLOntology) createModel.invoke(task, input);
 
-      String ontoS = "<?xml version=\"1.0\"?>\n"
-          + "<rdf:RDF xmlns=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#\"\n"
-          + "     xml:base=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52\"\n"
-          + "     xmlns:owl=\"http://www.w3.org/2002/07/owl#\"\n"
-          + "     xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n"
-          + "     xmlns:xml=\"http://www.w3.org/XML/1998/namespace\"\n"
-          + "     xmlns:xsd=\"http://www.w3.org/2001/XMLSchema#\"\n"
-          + "     xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\">\n"
-          + "    <owl:Ontology rdf:about=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52\"/>\n"
-          + "    \n"
-          + "\n"
-          + "\n"
-          + "    <!-- \n"
-          + "    ///////////////////////////////////////////////////////////////////////////////////////\n"
-          + "    //\n"
-          + "    // Object Properties\n"
-          + "    //\n"
-          + "    ///////////////////////////////////////////////////////////////////////////////////////\n"
-          + "     -->\n"
-          + "\n"
-          + "    \n"
-          + "\n"
-          + "\n"
-          + "    <!-- http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h1 -->\n"
-          + "\n"
-          + "    <owl:ObjectProperty rdf:about=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h1\"/>\n"
-          + "    \n"
-          + "\n"
-          + "\n"
-          + "    <!-- http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h2 -->\n"
-          + "\n"
-          + "    <owl:ObjectProperty rdf:about=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h2\"/>\n"
-          + "    \n"
-          + "\n"
-          + "\n"
-          + "    <!-- http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h3 -->\n"
-          + "\n"
-          + "    <owl:ObjectProperty rdf:about=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h3\"/>\n"
-          + "    \n"
-          + "\n"
-          + "\n"
-          + "    <!-- \n"
-          + "    ///////////////////////////////////////////////////////////////////////////////////////\n"
-          + "    //\n"
-          + "    // Classes\n"
-          + "    //\n"
-          + "    ///////////////////////////////////////////////////////////////////////////////////////\n"
-          + "     -->\n"
-          + "\n"
-          + "    \n"
-          + "\n"
-          + "\n"
-          + "    <!-- http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#1 -->\n"
-          + "\n"
-          + "    <owl:Class rdf:about=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#1\">\n"
-          + "        <rdfs:subClassOf>\n"
-          + "            <owl:Restriction>\n"
-          + "                <owl:onProperty rdf:resource=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h1\"/>\n"
-          + "                <owl:qualifiedCardinality rdf:datatype=\"http://www.w3.org/2001/XMLSchema#nonNegativeInteger\">3</owl:qualifiedCardinality>\n"
-          + "                <owl:onClass rdf:resource=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#2\"/>\n"
-          + "            </owl:Restriction>\n"
-          + "        </rdfs:subClassOf>\n"
-          + "    </owl:Class>\n"
-          + "    \n"
-          + "\n"
-          + "\n"
-          + "    <!-- http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#2 -->\n"
-          + "\n"
-          + "    <owl:Class rdf:about=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#2\">\n"
-          + "        <rdfs:subClassOf>\n"
-          + "            <owl:Restriction>\n"
-          + "                <owl:onProperty rdf:resource=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h2\"/>\n"
-          + "                <owl:minQualifiedCardinality rdf:datatype=\"http://www.w3.org/2001/XMLSchema#nonNegativeInteger\">1</owl:minQualifiedCardinality>\n"
-          + "                <owl:onClass rdf:resource=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#1\"/>\n"
-          + "            </owl:Restriction>\n"
-          + "        </rdfs:subClassOf>\n"
-          + "    </owl:Class>\n"
-          + "    \n"
-          + "\n"
-          + "\n"
-          + "    <!-- http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#3 -->\n"
-          + "\n"
-          + "    <owl:Class rdf:about=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#3\">\n"
-          + "        <rdfs:subClassOf>\n"
-          + "            <owl:Restriction>\n"
-          + "                <owl:onProperty rdf:resource=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h3\"/>\n"
-          + "                <owl:maxQualifiedCardinality rdf:datatype=\"http://www.w3.org/2001/XMLSchema#nonNegativeInteger\">2</owl:maxQualifiedCardinality>\n"
-          + "                <owl:onClass rdf:resource=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#2\"/>\n"
-          + "            </owl:Restriction>\n"
-          + "        </rdfs:subClassOf>\n"
-          + "    </owl:Class>\n"
-          + "</rdf:RDF>\n"
-          + "\n"
-          + "\n"
-          + "\n"
-          + "<!-- Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi -->\n"
-          + "\n";
-
-
-      OWLOntology ontology = OWLManager.createOWLOntologyManager().loadOntologyFromOntologyDocument(new StringInputStream(ontoS));
-
-      //OWLOntology ontology = (OWLOntology) createModel.invoke(task, input);
-      Reasoner reasoner = new Reasoner(ontology);
+      Reasoner reasoner = new Reasoner(new Configuration(), ontology);
 
       //IRI & IRI case
       output = (JSONArray) getReasonerOutput.invoke(task, reasoner, ontoIri, srcIri, dstIri, propIri);
-      assertTrue(output.toString().equals(new JSONArray().put(new JSONObject().put(ontoIri, true)).toString()));
+      assertTrue(output.toString().equals(new JSONArray().put(new JSONObject().put(ontoIri, new JSONObject().put("ObjectExactCardinality", 3))).toString()));
       output = (JSONArray) getReasonerOutput.invoke(task, reasoner, ontoIri, dstIri, srcIri, propIri);
       assertTrue(output.toString().equals(new JSONArray().put(new JSONObject().put(ontoIri, false)).toString()));
 
-
-    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | OWLOntologyCreationException e) {
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
       fail();
     }
 
   }
 
   @Test
-  public void testNewValueRestrictionCheckingTaskCreateModelMethod() {
-    ValueRestrictionCheckingTask task = new ValueRestrictionCheckingTask();
+  public void testNewCardinalityRestrictionCheckingTaskCreateModelMethod() {
+    CardinalityRestrictionCheckingTask task = new CardinalityRestrictionCheckingTask();
 
     try {
       Method createModel = task.getClass().getDeclaredMethod("createModel", JSONArray.class);
@@ -540,5 +467,64 @@ public class ValueRestrictionCheckingTaskTest {
 
   }
 
+  @Test
+  public void testNewCardinalityRestrictionCheckingTaskPrepareNtriplesMethod() {
+    CardinalityRestrictionCheckingTask task = new CardinalityRestrictionCheckingTask();
+
+    try {
+      Method prepareNtriples = task.getClass().getDeclaredMethod("prepareNtriples", JSONArray.class);
+      prepareNtriples.setAccessible(true);
+
+      JSONArray input = new JSONArray(
+          "[{\"s\": \"http://www.test.com/c1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/c2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/c3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
+              + "{\"s\": \"http://www.test.com/h2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
+              + "{\"s\": \"http://www.test.com/h3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
+              + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Restriction\"},"
+              + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Restriction\"},"
+              + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Restriction\"},"
+              + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/2002/07/owl#onProperty\", \"o\": \"http://www.test.com/h1\"},"
+              + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/2002/07/owl#onProperty\", \"o\": \"http://www.test.com/h2\"},"
+              + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/2002/07/owl#onProperty\", \"o\": \"http://www.test.com/h3\"},"
+              + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/2002/07/owl#qualifiedCardinality\", \"o\": '\"3\"^^http://www.w3.org/2001/XMLSchema#nonNegativeInteger'},"
+              + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/2002/07/owl#minQualifiedCardinality\", \"o\": '\"1\"^^http://www.w3.org/2001/XMLSchema#nonNegativeInteger'},"
+              + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/2002/07/owl#maxQualifiedCardinality\", \"o\": '\"2\"^^http://www.w3.org/2001/XMLSchema#nonNegativeInteger'},"
+              + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/2002/07/owl#onClass\", \"o\": \"http://www.test.com/c2\"},"
+              + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/2002/07/owl#onClass\", \"o\": \"http://www.test.com/c1\"},"
+              + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/2002/07/owl#onClass\", \"o\": \"http://www.test.com/c2\"},"
+              + "{\"s\": \"http://www.test.com/c1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/r1\"},"
+              + "{\"s\": \"http://www.test.com/c2\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/r2\"},"
+              + "{\"s\": \"http://www.test.com/c2\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/r3\"}]");
+
+      String ntriples = (String) prepareNtriples.invoke(task, input);
+      assertTrue(ntriples.contains("<http://www.test.com/c1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .\n"
+          + "<http://www.test.com/c2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .\n"
+          + "<http://www.test.com/c3> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .\n"
+          + "<http://www.test.com/h1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .\n"
+          + "<http://www.test.com/h2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .\n"
+          + "<http://www.test.com/h3> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .\n"));
+      assertTrue(ntriples.contains(" <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> .\n"));
+      assertTrue(ntriples.contains(" <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> .\n"));
+      assertTrue(ntriples.contains(" <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> .\n"));
+      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#onProperty> <http://www.test.com/h1> .\n"));
+      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#onProperty> <http://www.test.com/h2> .\n"));
+      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#onProperty> <http://www.test.com/h3> .\n"));
+      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#qualifiedCardinality> \"3\"^^<http://www.w3.org/2001/XMLSchema#nonNegativeInteger> .\n"));
+      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#minQualifiedCardinality> \"1\"^^<http://www.w3.org/2001/XMLSchema#nonNegativeInteger> .\n"));
+      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#maxQualifiedCardinality> \"2\"^^<http://www.w3.org/2001/XMLSchema#nonNegativeInteger> .\n"));
+      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#onClass> <http://www.test.com/c2> .\n"));
+      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#onClass> <http://www.test.com/c1> .\n"));
+      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#onClass> <http://www.test.com/c2> .\n"));
+      assertTrue(ntriples.contains("<http://www.test.com/c1> <http://www.w3.org/2000/01/rdf-schema#subClassOf>"));
+      assertTrue(ntriples.contains("<http://www.test.com/c2> <http://www.w3.org/2000/01/rdf-schema#subClassOf>"));
+      assertTrue(ntriples.contains("<http://www.test.com/c2> <http://www.w3.org/2000/01/rdf-schema#subClassOf>"));
+
+    } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+      fail();
+    }
+
+  }
 
 }

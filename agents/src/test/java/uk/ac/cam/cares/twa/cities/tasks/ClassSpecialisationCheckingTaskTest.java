@@ -16,12 +16,13 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import org.apache.jena.graph.Node;
-import org.coode.owlapi.rdfxml.parser.AnonymousNodeChecker;
+import org.semanticweb.owlapi.util.AnonymousNodeChecker;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.semanticweb.HermiT.Configuration;
 import org.semanticweb.HermiT.Reasoner;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -324,7 +325,7 @@ public class ClassSpecialisationCheckingTaskTest {
           + "{\"s\": \"http://www.test.com/3\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/4\"},"
           + "{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/3\"}]");
       OWLOntology ontology = (OWLOntology) createModel.invoke(task, input);
-      Reasoner reasoner = new Reasoner(ontology);
+      Reasoner reasoner = new Reasoner(new Configuration(), ontology);
 
       //IRI & IRI case
       output = (JSONArray) getReasonerOutput.invoke(task, reasoner, ontoIri, srcIri, dstIri);
