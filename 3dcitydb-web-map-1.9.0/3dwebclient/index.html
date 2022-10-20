@@ -515,17 +515,12 @@
 
         <div id="mySidebar" class="sidebar">
             <a href="javascript:void(0)" class="closebtn" onclick="closeSidebar()">×</a>
-            <a href="#demo1" id="demo1" onclick="chooseDemoType(1)">Programmatic Plot Finder</a>
-            <a href="#demo2" id="demo2" onclick="chooseDemoType(2)">Demonstration 2</a>
-            <a href="#demo3" id="demo3" onclick="chooseDemoType(3)">Demonstration 3</a>
+            <a href="#" class="navLink" id="PPF" onclick="chooseDemoType(this)" style="color:white;">Programmatic Plot Finder</a>
+            <a href="#" class="navLink" id="demo2" onclick="chooseDemoType(this)">Demonstration 2</a>
+            <a href="#" class="navLink" id="demo3" onclick="chooseDemoType(this)">Demonstration 3</a>
         </div>
 
 		<div id="ProgrammaticPlotFinder">
-            <!--<select id="demo_type" class="cesium-button" onchange="chooseDemoType()" style="font-size: 16px">
-                <option value="PPF">Programmatic Plot Finder</option>
-                <option value="demo2" style="color:grey">Demo 2</option>
-                <option value="demo3" style="color:grey">Demo 3</option>
-            </select>-->
             <button class="ProgrammaticPlotFinder-submitButton" onclick="openSidebar()">☰ <span id="demoTitle">Programmatic Plot Finder</span></button>
             <div id="demo" class="programmeFinder_toolbox">
                 <div id="programmeFinder_toolbox_upper" style="height: 35px">

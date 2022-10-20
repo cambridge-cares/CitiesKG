@@ -446,20 +446,27 @@ function showChooseDevType(){
 	}
 }
 
-function chooseDemoType(demotype) {
-	//var demo_type =  document.getElementById("demo_type")
-	switch (demotype) {
-		case 1:
+function chooseDemoType(obj) {
+
+	// reset all nav links color
+	var navLinks = document.getElementsByClassName("navLink");
+	for (var i = 0; i < navLinks.length; i++){
+		navLinks[i].style.color = "#818181";
+	}
+
+	var selectedDemo = obj.id;
+	obj.style.color = "white";
+	document.getElementById("demoTitle").innerText = obj.innerText;
+
+	switch (selectedDemo) {
+		case "PPF":
 			document.getElementById("demo").style.display = "inline-block";
-			document.getElementById("demoTitle").innerText = "Programmatic Plot Finder";
 			break;
-		case 2:
+		case "demo2":
 			document.getElementById("demo").style.display = "None";
-			document.getElementById("demoTitle").innerText = "Demonstration 2";
 			break;
-		case 3:
+		case "demo3":
 			document.getElementById("demo").style.display = "None";
-			document.getElementById("demoTitle").innerText = "Demonstration 3";
 			break;
 	}
 }
