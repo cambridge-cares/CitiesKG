@@ -138,13 +138,13 @@ public class CEAAgentTest {
             THEMATIC_SURFACE = agent.getClass().getDeclaredField("THEMATIC_SURFACE");
             assertEquals(THEMATIC_SURFACE.get(agent), "thematicsurface");
             KEY_GRID_CONSUMPTION = agent.getClass().getDeclaredField("KEY_GRID_CONSUMPTION");
-            assertEquals(KEY_GRID_CONSUMPTION.get(agent), "HourlyGridConsumption");
+            assertEquals(KEY_GRID_CONSUMPTION.get(agent), "GridConsumption");
             KEY_ELECTRICITY_CONSUMPTION = agent.getClass().getDeclaredField("KEY_ELECTRICITY_CONSUMPTION");
-            assertEquals(KEY_ELECTRICITY_CONSUMPTION.get(agent), "HourlyElectricityConsumption");
+            assertEquals(KEY_ELECTRICITY_CONSUMPTION.get(agent), "ElectricityConsumption");
             KEY_HEATING_CONSUMPTION = agent.getClass().getDeclaredField("KEY_HEATING_CONSUMPTION");
-            assertEquals(KEY_HEATING_CONSUMPTION.get(agent), "HourlyHeatingConsumption");
+            assertEquals(KEY_HEATING_CONSUMPTION.get(agent), "HeatingConsumption");
             KEY_COOLING_CONSUMPTION = agent.getClass().getDeclaredField("KEY_COOLING_CONSUMPTION");
-            assertEquals(KEY_COOLING_CONSUMPTION.get(agent), "HourlyCoolingConsumption");
+            assertEquals(KEY_COOLING_CONSUMPTION.get(agent), "CoolingConsumption");
             KEY_PV_ROOF_AREA = agent.getClass().getDeclaredField("KEY_PV_ROOF_AREA");
             assertEquals(KEY_PV_ROOF_AREA.get(agent), "PVRoofArea");
             KEY_PV_WALL_NORTH_AREA = agent.getClass().getDeclaredField("KEY_PV_WALL_NORTH_AREA");
@@ -156,15 +156,15 @@ public class CEAAgentTest {
             KEY_PV_WALL_WEST_AREA = agent.getClass().getDeclaredField("KEY_PV_WALL_WEST_AREA");
             assertEquals(KEY_PV_WALL_WEST_AREA.get(agent), "PVWallWestArea");
             KEY_PV_ROOF_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_ROOF_SUPPLY");
-            assertEquals(KEY_PV_ROOF_SUPPLY.get(agent), "HourlyPVRoofSupply");
+            assertEquals(KEY_PV_ROOF_SUPPLY.get(agent), "PVRoofSupply");
             KEY_PV_WALL_NORTH_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_WALL_NORTH_SUPPLY");
-            assertEquals(KEY_PV_WALL_NORTH_SUPPLY.get(agent), "HourlyPVWallNorthSupply");
+            assertEquals(KEY_PV_WALL_NORTH_SUPPLY.get(agent), "PVWallNorthSupply");
             KEY_PV_WALL_SOUTH_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_WALL_SOUTH_SUPPLY");
-            assertEquals(KEY_PV_WALL_SOUTH_SUPPLY.get(agent), "HourlyPVWallSouthSupply");
+            assertEquals(KEY_PV_WALL_SOUTH_SUPPLY.get(agent), "PVWallSouthSupply");
             KEY_PV_WALL_EAST_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_WALL_EAST_SUPPLY");
-            assertEquals(KEY_PV_WALL_EAST_SUPPLY.get(agent), "HourlyPVWallEastSupply");
+            assertEquals(KEY_PV_WALL_EAST_SUPPLY.get(agent), "PVWallEastSupply");
             KEY_PV_WALL_WEST_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_WALL_WEST_SUPPLY");
-            assertEquals(KEY_PV_WALL_WEST_SUPPLY.get(agent), "HourlyPVWallWestSupply");
+            assertEquals(KEY_PV_WALL_WEST_SUPPLY.get(agent), "PVWallWestSupply");
             KEY_TIMES = agent.getClass().getDeclaredField("KEY_TIMES");
             assertEquals(KEY_TIMES.get(agent), "times");
             NUM_CEA_THREADS = agent.getClass().getDeclaredField("NUM_CEA_THREADS");
@@ -385,7 +385,7 @@ public class CEAAgentTest {
                 assertTrue(result.contains(expected));
             }
             for (String ts : time_series_strings) {
-                String expected = "\"Annual " + ts.split("Hourly")[1] + "\"" + ":\"testAnnual testUnit\"";
+                String expected = "\"Annual " + ts + "\"" + ":\"testAnnual testUnit\"";
                 assertTrue(result.contains(expected));
             }
         }
@@ -1412,7 +1412,7 @@ public class CEAAgentTest {
         createConsumptionUpdate.invoke(agent,  ub, consumer, type, quantity, measure );
         ub.setVar(Var.alloc("graph"), graph);
 
-        String result = ub.build().toString();
+        String result = ub.buildRequest().toString();
         //test string contains expected insert data
         String expected_insert = "INSERT DATA";
         String expected_graph = "GRAPH \""+graph+"\"";
@@ -1445,7 +1445,7 @@ public class CEAAgentTest {
         createDeviceConsumptionUpdate.invoke(agent,  ub, building, device, deviceType, consumptionType, quantity, measure );
         ub.setVar(Var.alloc("graph"), graph);
 
-        String result = ub.build().toString();
+        String result = ub.buildRequest().toString();
         //test string contains expected insert data
         String expected_insert = "INSERT DATA";
         String expected_graph = "GRAPH \""+graph+"\"";
@@ -1479,7 +1479,7 @@ public class CEAAgentTest {
         createPVPanelSupplyUpdate.invoke(agent,  ub, PVPanels, quantity, measure );
         ub.setVar(Var.alloc("graph"), graph);
 
-        String result = ub.build().toString();
+        String result = ub.buildRequest().toString();
         //test string contains expected insert data
         String expected_insert = "INSERT DATA";
         String expected_graph = "GRAPH \""+graph+"\"";
@@ -1510,7 +1510,7 @@ public class CEAAgentTest {
         createPVPanelAreaUpdate.invoke(agent,  ub, building, PVPanels, panelType, quantity, measure, value );
         ub.setVar(Var.alloc("graph"), graph);
 
-        String result = ub.build().toString();
+        String result = ub.buildRequest().toString();
         //test string contains expected insert data
         String expected_insert = "INSERT DATA";
         String expected_graph = "GRAPH \""+graph+"\"";
@@ -1881,7 +1881,7 @@ public class CEAAgentTest {
         setTimeSeriesProps.setAccessible(true);
 
         String testFile = "test.properties";
-        String testEndpoint = "testEndpint";
+        String testEndpoint = "testEndpoint";
         String testUri = "test/namespace/testNamespace/sparql/cityobject/testUUID/";
         Path testPath = Files.createFile(tempDir.resolve(testFile));
         Properties testProp = new Properties();
