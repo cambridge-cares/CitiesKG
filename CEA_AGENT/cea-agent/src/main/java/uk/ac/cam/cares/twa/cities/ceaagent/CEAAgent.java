@@ -7,6 +7,8 @@ import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeries;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeriesClient;
+import uk.ac.cam.cares.jps.base.query.RemoteRDBStoreClient;
+import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.twa.cities.tasks.*;
 import org.json.JSONObject;
 import javax.ws.rs.BadRequestException;
@@ -20,6 +22,7 @@ import javax.servlet.annotation.WebServlet;
 import java.util.concurrent.*;
 import java.net.URISyntaxException;
 import java.util.stream.Stream;
+import java.sql.Connection;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
@@ -80,6 +83,9 @@ public class CEAAgent extends JPSAgent {
     private TimeSeriesClient<OffsetDateTime> tsClient;
     public static final String timeUnit = OffsetDateTime.class.getSimpleName();
     private static final String FS = System.getProperty("file.separator");
+    private RemoteRDBStoreClient rdbStoreClient;
+    private RemoteStoreClient storeClient;
+    private Connection conn;
 
     // Variables fetched from CEAAgentConfig.properties file.
     private String ocgmlUri;
@@ -100,6 +106,7 @@ public class CEAAgent extends JPSAgent {
 
     public CEAAgent() {
         readConfig();
+        setRDBConnection();
     }
 
     @Override
@@ -1624,6 +1631,8 @@ public class CEAAgent extends JPSAgent {
             props.setProperty("sparql.query.endpoint", queryEndpoint + "namespace" + "/" + namespace + "/" + "sparql");
             props.setProperty("sparql.update.endpoint", updateEndpoint + "namespace" + "/" + namespace + "/" + "sparql");
 
+            storeClient = new RemoteStoreClient(props.getProperty("sparql.query.endpoint"), props.getProperty("sparql.update.endpoint"));
+
             props.store(out, null);
             out.close();
         }
@@ -1650,5 +1659,28 @@ public class CEAAgent extends JPSAgent {
             e.printStackTrace();
             throw new JPSRuntimeException(e);
         }
+    }
+
+    /**
+     * Sets rdbStoreClient with the database url, username, and passowrd from timeseriesclient.properties. Also sets conn to the connection established by rdbStoreclient.
+     */
+    private void setRDBConnection(){
+        String path = getTimeSeriesPropsPath();
+
+        try {
+            FileInputStream in = new FileInputStream(path);
+            Properties props = new Properties();
+            props.load(in);
+            in.close();
+
+            rdbStoreClient = new RemoteRDBStoreClient(props.getProperty("db.url"), props.getProperty("db.user"), props.getProperty("db.password"));
+            conn = rdbStoreClient.getConnection();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            throw new JPSRuntimeException(e);
+        }
+
+
     }
 }
