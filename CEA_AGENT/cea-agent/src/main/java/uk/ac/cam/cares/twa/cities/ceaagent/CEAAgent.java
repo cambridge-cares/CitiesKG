@@ -445,7 +445,7 @@ public class CEAAgent extends JPSAgent {
                 classes.add(Double.class);
             }
             // Initialize the time series
-            tsClient.initTimeSeries(iris, classes, timeUnit);
+            tsClient.initTimeSeries(iris, classes, timeUnit, conn);
             //LOGGER.info(String.format("Initialized time series with the following IRIs: %s", String.join(", ", iris)));
         }
     }
@@ -467,17 +467,17 @@ public class CEAAgent extends JPSAgent {
             tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
         }
         TimeSeries<OffsetDateTime> currentTimeSeries = new TimeSeries<>(times, iris, values);
-        OffsetDateTime endDataTime = tsClient.getMaxTime(currentTimeSeries.getDataIRIs().get(0));
-        OffsetDateTime beginDataTime = tsClient.getMinTime(currentTimeSeries.getDataIRIs().get(0));
+        OffsetDateTime endDataTime = tsClient.getMaxTime(currentTimeSeries.getDataIRIs().get(0), conn);
+        OffsetDateTime beginDataTime = tsClient.getMinTime(currentTimeSeries.getDataIRIs().get(0), conn);
 
         // Delete old data if exists
         if (endDataTime != null) {
             for(Integer i=0; i<currentTimeSeries.getDataIRIs().size(); i++){
-                tsClient.deleteTimeSeriesHistory(currentTimeSeries.getDataIRIs().get(i), beginDataTime, endDataTime);
+                tsClient.deleteTimeSeriesHistory(currentTimeSeries.getDataIRIs().get(i), beginDataTime, endDataTime, conn);
             }
         }
         // Add New data
-        tsClient.addTimeSeriesData(currentTimeSeries);
+        tsClient.addTimeSeriesData(currentTimeSeries, conn);
     }
 
     /**
@@ -491,7 +491,7 @@ public class CEAAgent extends JPSAgent {
         // If any of the IRIs does not have a time series the time series does not exist
         for(String iri: iris) {
             try {
-                if (!tsClient.checkDataHasTimeSeries(iri)) {
+                if (!tsClient.checkDataHasTimeSeries(iri, conn)) {
                     return false;
                 }
                 // If central RDB lookup table ("dbTable") has not been initialised, the time series does not exist
@@ -1352,7 +1352,7 @@ public class CEAAgent extends JPSAgent {
         tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
         List<String> iris = new ArrayList<>();
         iris.add(dataIri);
-        TimeSeries<OffsetDateTime> data = tsClient.getTimeSeries(iris);
+        TimeSeries<OffsetDateTime> data = tsClient.getTimeSeries(iris, conn);
         return data;
     }
 
