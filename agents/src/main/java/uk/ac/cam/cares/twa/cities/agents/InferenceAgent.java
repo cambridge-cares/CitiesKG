@@ -9,6 +9,7 @@ import org.json.JSONArray;
 import org.semanticweb.owlapi.model.IRI;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
+import uk.ac.cam.cares.twa.cities.tasks.CardinalityRestrictionCheckingTask;
 import uk.ac.cam.cares.twa.cities.tasks.ClassDisjointnessCheckingTask;
 import uk.ac.cam.cares.twa.cities.tasks.ClassMembershipCheckingTask;
 import uk.ac.cam.cares.twa.cities.tasks.ClassSpecialisationCheckingTask;
@@ -52,6 +53,7 @@ public abstract class InferenceAgent extends JPSAgent {
   public static final String TASK_CDC = "ClassDisjointnessCheckingTask";
   public static final String TASK_PC = "PropertyCheckingTask";
   public static final String TASK_VRC = "ValueRestrictionCheckingTask";
+  public static final String TASK_CRC = "CardinalityRestrictionCheckingTask";
   protected final Map<IRI, UninitialisedDataQueueTask> TASKS = Stream.of(new Object[][] {
       {IRI.create(ONINF_SCHEMA + TASK_PR), new PageRankTask()},
       {IRI.create(ONINF_SCHEMA + TASK_EB), new EdgeBetweennessTask()},
@@ -61,7 +63,8 @@ public abstract class InferenceAgent extends JPSAgent {
       {IRI.create(ONINF_SCHEMA + TASK_CSC), new ClassSpecialisationCheckingTask()},
       {IRI.create(ONINF_SCHEMA + TASK_CDC), new ClassDisjointnessCheckingTask()},
       {IRI.create(ONINF_SCHEMA + TASK_PC), new PropertyCheckingTask()},
-      {IRI.create(ONINF_SCHEMA + TASK_VRC), new ValueRestrictionCheckingTask()}
+      {IRI.create(ONINF_SCHEMA + TASK_VRC), new ValueRestrictionCheckingTask()},
+      {IRI.create(ONINF_SCHEMA + TASK_VRC), new CardinalityRestrictionCheckingTask()}
   }).collect(Collectors.toMap(data -> (IRI) data[0], data -> (UninitialisedDataQueueTask) data[1]));
   protected static LinkedBlockingDeque<Map<String, JSONArray>> dataQueue = new LinkedBlockingDeque<>();
   protected static LinkedBlockingDeque<Map<String, JSONArray>> resultQueue = new LinkedBlockingDeque<>();

@@ -141,14 +141,9 @@ public class OntologyInferenceAgent extends InferenceAgent {
     sb.setBase(sparqlEndpoint.toString()).from(tBoxGraph)
         .addVar("?s").addVar("?p").addVar("?o")
         .addWhere("?s", "?p", "?o")
-        .addFilter("?p != <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>")
         .addFilter("?p != <http://ainf.aau.at/ontodebug#axiom>")
         .addFilter("?p != <http://ainf.aau.at/ontodebug#type>")
-        .addFilter("?o != \"only\"")
-        .addFilter("?o != <http://ainf.aau.at/ontodebug#testCase>")
-        .addFilter("?o != <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>")
-        .addFilter("?o != <http://www.w3.org/2002/07/owl#Thing>")
-    ;
+        .addFilter("?o != <http://ainf.aau.at/ontodebug#testCase>");
 
     JSONArray sparqlResult = AccessAgentCaller.queryStore(route, sb.buildString());
 
