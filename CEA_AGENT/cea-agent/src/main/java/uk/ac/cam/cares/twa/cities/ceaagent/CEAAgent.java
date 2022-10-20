@@ -445,7 +445,7 @@ public class CEAAgent extends JPSAgent {
                 classes.add(Double.class);
             }
             // Initialize the time series
-            tsClient.initTimeSeries(iris, classes, timeUnit, conn);
+            tsClient.initTimeSeries(iris, classes, timeUnit, conn, "StepwiseCumulative", null, null);
             //LOGGER.info(String.format("Initialized time series with the following IRIs: %s", String.join(", ", iris)));
         }
     }
