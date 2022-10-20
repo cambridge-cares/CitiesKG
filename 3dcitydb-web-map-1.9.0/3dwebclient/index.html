@@ -475,6 +475,10 @@
                 color: #f1f1f1;
             }
 
+            .sidebar a:target{
+                color: #f1f1f1;
+            }
+
             .sidebar .closebtn {
                 position: absolute;
                 top: 0;
@@ -511,9 +515,9 @@
 
         <div id="mySidebar" class="sidebar">
             <a href="javascript:void(0)" class="closebtn" onclick="closeSidebar()">×</a>
-            <a href="#" onclick="chooseDemoType(1)">Programmatic Plot Finder</a>
-            <a href="#" onclick="chooseDemoType(2)">Demostration 2</a>
-            <a href="#" onclick="chooseDemoType(3)">Demostration 3</a>
+            <a href="#demo1" id="demo1" onclick="chooseDemoType(1)">Programmatic Plot Finder</a>
+            <a href="#demo2" id="demo2" onclick="chooseDemoType(2)">Demonstration 2</a>
+            <a href="#demo3" id="demo3" onclick="chooseDemoType(3)">Demonstration 3</a>
         </div>
 
 		<div id="ProgrammaticPlotFinder">

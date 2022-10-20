@@ -455,11 +455,11 @@ function chooseDemoType(demotype) {
 			break;
 		case 2:
 			document.getElementById("demo").style.display = "None";
-			document.getElementById("demoTitle").innerText = "Demostration 2";
+			document.getElementById("demoTitle").innerText = "Demonstration 2";
 			break;
 		case 3:
 			document.getElementById("demo").style.display = "None";
-			document.getElementById("demoTitle").innerText = "Demostration 3";
+			document.getElementById("demoTitle").innerText = "Demonstration 3";
 			break;
 	}
 }
