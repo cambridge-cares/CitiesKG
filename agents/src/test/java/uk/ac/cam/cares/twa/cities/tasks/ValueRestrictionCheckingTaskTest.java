@@ -16,15 +16,19 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import org.apache.jena.graph.Node;
-import org.coode.owlapi.rdfxml.parser.AnonymousNodeChecker;
+import org.semanticweb.HermiT.Configuration;
+import org.semanticweb.owlapi.util.AnonymousNodeChecker;
+import org.hsqldb.lib.StringInputStream;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.semanticweb.HermiT.Reasoner;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ValueRestrictionCheckingTaskTest {
@@ -374,8 +378,136 @@ public class ValueRestrictionCheckingTaskTest {
           + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
           + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#domain\", \"o\": \"http://www.test.com/1\"},"
           + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#range\", \"o\": \"http://www.test.com/2\"}]");
-      OWLOntology ontology = (OWLOntology) createModel.invoke(task, input);
-      Reasoner reasoner = new Reasoner(ontology);
+
+      input = new JSONArray(
+          "[{\"s\": \"http://www.test.com/c1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/c2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/c3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
+              + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Restriction\"},"
+              + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Restriction\"},"
+              + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Restriction\"},"
+              + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/2002/07/owl#onProperty\", \"o\": \"http://www.test.com/h1\"},"
+              + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/2002/07/owl#onProperty\", \"o\": \"http://www.test.com/h2\"},"
+              + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/2002/07/owl#onProperty\", \"o\": \"http://www.test.com/h3\"},"
+              + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/2002/07/owl#qualifiedCardinality\", \"o\": '\"3\"^^http://www.w3.org/2001/XMLSchema#nonNegativeInteger'},"
+              + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/2002/07/owl#minQualifiedCardinality\", \"o\": '\"1\"^^http://www.w3.org/2001/XMLSchema#nonNegativeInteger'},"
+              + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/2002/07/owl#maxQualifiedCardinality\", \"o\": '\"2\"^^http://www.w3.org/2001/XMLSchema#nonNegativeInteger'},"
+              + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/2002/07/owl#onClass\", \"o\": \"http://www.test.com/c2\"},"
+              + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/2002/07/owl#onClass\", \"o\": \"http://www.test.com/c1\"},"
+              + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/2002/07/owl#onClass\", \"o\": \"http://www.test.com/c2\"},"
+              + "{\"s\": \"http://www.test.com/c1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/r1\"},"
+              + "{\"s\": \"http://www.test.com/c2\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/r2\"},"
+              + "{\"s\": \"http://www.test.com/c2\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/r3\"},"
+              + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
+              + "{\"s\": \"http://www.test.com/h2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
+              + "{\"s\": \"http://www.test.com/h3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"}]");
+
+      //OWLOntology ontology = (OWLOntology) createModel.invoke(task, input);
+      //Reasoner reasoner = new Reasoner(ontology);
+
+      String ontoS = "<?xml version=\"1.0\"?>\n"
+          + "<rdf:RDF xmlns=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#\"\n"
+          + "     xml:base=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52\"\n"
+          + "     xmlns:owl=\"http://www.w3.org/2002/07/owl#\"\n"
+          + "     xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n"
+          + "     xmlns:xml=\"http://www.w3.org/XML/1998/namespace\"\n"
+          + "     xmlns:xsd=\"http://www.w3.org/2001/XMLSchema#\"\n"
+          + "     xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\">\n"
+          + "    <owl:Ontology rdf:about=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52\"/>\n"
+          + "    \n"
+          + "\n"
+          + "\n"
+          + "    <!-- \n"
+          + "    ///////////////////////////////////////////////////////////////////////////////////////\n"
+          + "    //\n"
+          + "    // Object Properties\n"
+          + "    //\n"
+          + "    ///////////////////////////////////////////////////////////////////////////////////////\n"
+          + "     -->\n"
+          + "\n"
+          + "    \n"
+          + "\n"
+          + "\n"
+          + "    <!-- http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h1 -->\n"
+          + "\n"
+          + "    <owl:ObjectProperty rdf:about=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h1\"/>\n"
+          + "    \n"
+          + "\n"
+          + "\n"
+          + "    <!-- http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h2 -->\n"
+          + "\n"
+          + "    <owl:ObjectProperty rdf:about=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h2\"/>\n"
+          + "    \n"
+          + "\n"
+          + "\n"
+          + "    <!-- http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h3 -->\n"
+          + "\n"
+          + "    <owl:ObjectProperty rdf:about=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h3\"/>\n"
+          + "    \n"
+          + "\n"
+          + "\n"
+          + "    <!-- \n"
+          + "    ///////////////////////////////////////////////////////////////////////////////////////\n"
+          + "    //\n"
+          + "    // Classes\n"
+          + "    //\n"
+          + "    ///////////////////////////////////////////////////////////////////////////////////////\n"
+          + "     -->\n"
+          + "\n"
+          + "    \n"
+          + "\n"
+          + "\n"
+          + "    <!-- http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#1 -->\n"
+          + "\n"
+          + "    <owl:Class rdf:about=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#1\">\n"
+          + "        <rdfs:subClassOf>\n"
+          + "            <owl:Restriction>\n"
+          + "                <owl:onProperty rdf:resource=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h1\"/>\n"
+          + "                <owl:qualifiedCardinality rdf:datatype=\"http://www.w3.org/2001/XMLSchema#nonNegativeInteger\">3</owl:qualifiedCardinality>\n"
+          + "                <owl:onClass rdf:resource=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#2\"/>\n"
+          + "            </owl:Restriction>\n"
+          + "        </rdfs:subClassOf>\n"
+          + "    </owl:Class>\n"
+          + "    \n"
+          + "\n"
+          + "\n"
+          + "    <!-- http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#2 -->\n"
+          + "\n"
+          + "    <owl:Class rdf:about=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#2\">\n"
+          + "        <rdfs:subClassOf>\n"
+          + "            <owl:Restriction>\n"
+          + "                <owl:onProperty rdf:resource=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h2\"/>\n"
+          + "                <owl:minQualifiedCardinality rdf:datatype=\"http://www.w3.org/2001/XMLSchema#nonNegativeInteger\">1</owl:minQualifiedCardinality>\n"
+          + "                <owl:onClass rdf:resource=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#1\"/>\n"
+          + "            </owl:Restriction>\n"
+          + "        </rdfs:subClassOf>\n"
+          + "    </owl:Class>\n"
+          + "    \n"
+          + "\n"
+          + "\n"
+          + "    <!-- http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#3 -->\n"
+          + "\n"
+          + "    <owl:Class rdf:about=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#3\">\n"
+          + "        <rdfs:subClassOf>\n"
+          + "            <owl:Restriction>\n"
+          + "                <owl:onProperty rdf:resource=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#h3\"/>\n"
+          + "                <owl:maxQualifiedCardinality rdf:datatype=\"http://www.w3.org/2001/XMLSchema#nonNegativeInteger\">2</owl:maxQualifiedCardinality>\n"
+          + "                <owl:onClass rdf:resource=\"http://www.semanticweb.org/arek/ontologies/2022/9/untitled-ontology-52#2\"/>\n"
+          + "            </owl:Restriction>\n"
+          + "        </rdfs:subClassOf>\n"
+          + "    </owl:Class>\n"
+          + "</rdf:RDF>\n"
+          + "\n"
+          + "\n"
+          + "\n"
+          + "<!-- Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi -->\n"
+          + "\n";
+
+
+      OWLOntology ontology = OWLManager.createOWLOntologyManager().loadOntologyFromOntologyDocument(new StringInputStream(ontoS));
+
+      //OWLOntology ontology = (OWLOntology) createModel.invoke(task, input);
+      Reasoner reasoner = new Reasoner(new Configuration(), ontology);
 
       //IRI & IRI case
       output = (JSONArray) getReasonerOutput.invoke(task, reasoner, ontoIri, srcIri, dstIri, propIri);
@@ -384,7 +516,7 @@ public class ValueRestrictionCheckingTaskTest {
       assertTrue(output.toString().equals(new JSONArray().put(new JSONObject().put(ontoIri, false)).toString()));
 
 
-    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | OWLOntologyCreationException e) {
       fail();
     }
 
