@@ -106,12 +106,13 @@ public class CEAAgent extends JPSAgent {
 
     public CEAAgent() {
         readConfig();
-        setRDBConnection();
     }
 
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
         if (validateInput(requestParams)) {
+            setRDBConnection(getTimeSeriesPropsPath());
+
             requestUrl = requestParams.getString(KEY_REQ_URL);
             String uriArrayString = requestParams.get(KEY_IRI).toString();
             JSONArray uriArray = new JSONArray(uriArrayString);
@@ -1635,11 +1636,10 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Sets rdbStoreClient with the database url, username, and passowrd from timeseriesclient.properties. Also sets conn to the connection established by rdbStoreclient.
+     * @param path timeseriesclient.properties path as string
+     * Sets rdbStoreClient with the database url, username, and password from the file at path. Also sets conn to the connection established by rdbStoreclient.
      */
-    private void setRDBConnection(){
-        String path = getTimeSeriesPropsPath();
-
+    protected void setRDBConnection(String path){
         try {
             FileInputStream in = new FileInputStream(path);
             Properties props = new Properties();
@@ -1653,7 +1653,5 @@ public class CEAAgent extends JPSAgent {
             e.printStackTrace();
             throw new JPSRuntimeException(e);
         }
-
-
     }
 }
