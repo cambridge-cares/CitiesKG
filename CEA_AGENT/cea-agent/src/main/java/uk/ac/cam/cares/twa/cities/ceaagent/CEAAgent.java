@@ -388,7 +388,7 @@ public class CEAAgent extends JPSAgent {
         purlInfrastructureUri=config.getString("uri.ontology.purl.infrastructure");
         timeSeriesUri=config.getString("uri.ontology.ts");
         ontoBuiltEnvUri=config.getString("uri.ontology.ontobuiltenv");
-        geoUri=config.getString("uri.ontology.geo");
+        geoUri=config.getString("uri.service.geo");
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/", config.getString("berlin.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/", config.getString("singaporeEPSG24500.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/", config.getString("singaporeEPSG4326.targetresourceid"));
@@ -878,6 +878,22 @@ public class CEAAgent extends JPSAgent {
                 .addWhere("?s", "ocgml:srid", "?CRS");
         SelectBuilder sb = new SelectBuilder()
                 .addVar("?CRS")
+                .addWhere(wb);
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getNamespace(uriString)));
+        return sb.build();
+    }
+
+    /**
+     * builds a SPARQL query for the envelope of uriString
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getEnvelopeQuery(String uriString){
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ocgml", ocgmlUri)
+                .addWhere("?s", "ocgml:EnvelopeType", "?envelope");
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?envelope")
                 .addWhere(wb);
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getNamespace(uriString)));
         return sb.build();
