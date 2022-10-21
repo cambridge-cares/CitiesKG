@@ -91,6 +91,7 @@ public class CEAAgent extends JPSAgent {
     private String timeSeriesUri;
     private String thinkhomeUri;
     private String ontoBuiltEnvUri;
+    private String geoUri;
     private static String unitOntologyUri;
     private String requestUrl;
     private String targetUrl;
@@ -387,6 +388,7 @@ public class CEAAgent extends JPSAgent {
         purlInfrastructureUri=config.getString("uri.ontology.purl.infrastructure");
         timeSeriesUri=config.getString("uri.ontology.ts");
         ontoBuiltEnvUri=config.getString("uri.ontology.ontobuiltenv");
+        geoUri=config.getString("uri.ontology.geo");
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/", config.getString("berlin.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/", config.getString("singaporeEPSG24500.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/", config.getString("singaporeEPSG4326.targetresourceid"));
