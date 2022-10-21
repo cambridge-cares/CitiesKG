@@ -46,34 +46,14 @@ public class ClassDisjointnessCheckingTaskTest {
   @Test
   public void testNewClassDisjointnessCheckingTaskFields() {
     ClassDisjointnessCheckingTask task = new ClassDisjointnessCheckingTask();
-    assertEquals(6, task.getClass().getDeclaredFields().length);
+    assertEquals(1, task.getClass().getDeclaredFields().length);
 
     Field taskIri;
-    Field stop;
-    Field dataQueue;
-    Field resultQueue;
-    Field targetGraph;
-    Field anonymousNodeChecker;
 
     try {
       taskIri = task.getClass().getDeclaredField("taskIri");
       taskIri.setAccessible(true);
       assertEquals(taskIri.get(task), IRI.create("http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassDisjointnessCheckingTask"));
-      stop = task.getClass().getDeclaredField("stop");
-      stop.setAccessible(true);
-      assertFalse((Boolean) stop.get(task));
-      dataQueue = task.getClass().getDeclaredField("dataQueue");
-      dataQueue.setAccessible(true);
-      assertNull(dataQueue.get(task));
-      resultQueue = task.getClass().getDeclaredField("resultQueue");
-      resultQueue.setAccessible(true);
-      assertNull(resultQueue.get(task));
-      targetGraph = task.getClass().getDeclaredField("targetGraph");
-      targetGraph.setAccessible(true);
-      assertNull(targetGraph.get(task));
-      anonymousNodeChecker = task.getClass().getDeclaredField("anonymousNodeChecker");
-      anonymousNodeChecker.setAccessible(true);
-      assertFalse(((AnonymousNodeChecker) anonymousNodeChecker.get(task)).isAnonymousNode(""));
     }  catch (NoSuchFieldException | IllegalAccessException e) {
       fail();
     }
@@ -83,100 +63,7 @@ public class ClassDisjointnessCheckingTaskTest {
   @Test
   public void testNewClassDisjointnessCheckingTaskMethods() {
     ClassDisjointnessCheckingTask task = new ClassDisjointnessCheckingTask();
-    assertEquals(9, task.getClass().getDeclaredMethods().length);
-  }
-
-  @Test
-  public void testNewClassDisjointnessCheckingTaskGetTaskIriMethod() {
-    ClassDisjointnessCheckingTask task = new ClassDisjointnessCheckingTask();
-    try {
-      Method getTaskIri = task.getClass().getDeclaredMethod("getTaskIri");
-      getTaskIri.setAccessible(true);
-      assertEquals(((IRI) getTaskIri.invoke(task)).toString(), "http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassDisjointnessCheckingTask");
-    } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-      fail();
-    }
-  }
-
-  @Test
-  public void testNewClassDisjointnessCheckingTaskSetStringMapQueueMethod() {
-    ClassDisjointnessCheckingTask task = new ClassDisjointnessCheckingTask();
-    try {
-      Method setStringMapQueue = task.getClass().getDeclaredMethod("setStringMapQueue", BlockingQueue.class);
-      setStringMapQueue.setAccessible(true);
-      Field dataQueue = task.getClass().getDeclaredField("dataQueue");
-      dataQueue.setAccessible(true);
-      setStringMapQueue.invoke(task, new LinkedBlockingDeque<>());
-      assertTrue(((BlockingDeque) dataQueue.get(task)).isEmpty());
-   } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException | NoSuchFieldException e) {
-      fail();
-    }
-  }
-
-  @Test
-  public void testNewClassDisjointnessCheckingTaskSetResultMapQueueMethod() {
-    ClassDisjointnessCheckingTask task = new ClassDisjointnessCheckingTask();
-    try {
-      Method setStringMapQueue = task.getClass().getDeclaredMethod("setResultQueue", BlockingQueue.class);
-      setStringMapQueue.setAccessible(true);
-      Field resultQueue = task.getClass().getDeclaredField("resultQueue");
-      resultQueue.setAccessible(true);
-      setStringMapQueue.invoke(task, new LinkedBlockingDeque<>());
-      assertTrue(((BlockingDeque) resultQueue.get(task)).isEmpty());
-    } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException | NoSuchFieldException e) {
-      fail();
-    }
-  }
-
-  @Test
-  public void testNewClassDisjointnessCheckingTaskSetTargetGraphMethod() {
-    ClassDisjointnessCheckingTask task = new ClassDisjointnessCheckingTask();
-    try {
-      Method setTargetGraph = task.getClass().getDeclaredMethod("setTargetGraph", String.class);
-      setTargetGraph.setAccessible(true);
-      Field targetGraph = task.getClass().getDeclaredField("targetGraph");
-      targetGraph.setAccessible(true);
-      setTargetGraph.invoke(task, "http:/www.test.com/");
-      assertEquals(((Node) targetGraph.get(task)).getURI(), "http:/www.test.com/OntoInfer/");
-    } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException | NoSuchFieldException e) {
-      fail();
-    }
-  }
-
-  @Test
-  public void testNewClassDisjointnessCheckingTaskIsRunningMethod() {
-    ClassDisjointnessCheckingTask task = new ClassDisjointnessCheckingTask();
-    try {
-      Method isRunning = task.getClass().getDeclaredMethod("isRunning");
-      isRunning.setAccessible(true);
-      Field stopF = task.getClass().getDeclaredField("stop");
-      stopF.setAccessible(true);
-      assertTrue((Boolean) isRunning.invoke(task));
-      Method stopM = task.getClass().getDeclaredMethod("stop");
-      stopM.setAccessible(true);
-      stopM.invoke(task);
-      assertFalse((Boolean) isRunning.invoke(task));
-    } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-      fail();
-    }
-  }
-
-  @Test
-  public void testNewClassDisjointnessCheckingTaskStopMethod() {
-    ClassDisjointnessCheckingTask task = new ClassDisjointnessCheckingTask();
-
-    try {
-      Field stopF = task.getClass().getDeclaredField("stop");
-      stopF.setAccessible(true);
-      assertFalse((Boolean) stopF.get(task));
-      Method stopM = task.getClass().getDeclaredMethod("stop");
-      stopM.setAccessible(true);
-      stopM.invoke(task);
-      assertTrue((Boolean) stopF.get(task));
-    } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-      fail();
-    }
-
+    assertEquals(3, task.getClass().getDeclaredMethods().length);
   }
 
   @Test
@@ -186,23 +73,23 @@ public class ClassDisjointnessCheckingTaskTest {
     try {
       Method run = task.getClass().getDeclaredMethod("run");
       run.setAccessible(true);
-      Field stop = task.getClass().getDeclaredField("stop");
+      Field stop = task.getClass().getSuperclass().getDeclaredField("stop");
       stop.setAccessible(true);
-      Method isRunning = task.getClass().getDeclaredMethod("isRunning");
+      Method isRunning = task.getClass().getSuperclass().getDeclaredMethod("isRunning");
       isRunning.setAccessible(true);
-      Method setTargetGraph = task.getClass().getDeclaredMethod("setTargetGraph", String.class);
+      Method setTargetGraph = task.getClass().getSuperclass().getDeclaredMethod("setTargetGraph", String.class);
       setTargetGraph.setAccessible(true);
       setTargetGraph.invoke(task, "http:/www.test.com/");
       new LinkedBlockingDeque<>();
-      Method setStringMapQueue = task.getClass().getDeclaredMethod("setStringMapQueue", BlockingQueue.class);
+      Method setStringMapQueue = task.getClass().getSuperclass().getDeclaredMethod("setStringMapQueue", BlockingQueue.class);
       setStringMapQueue.setAccessible(true);
       setStringMapQueue.invoke(task, new LinkedBlockingDeque<>());
-      Field dataQueue = task.getClass().getDeclaredField("dataQueue");
+      Field dataQueue = task.getClass().getSuperclass().getDeclaredField("dataQueue");
       dataQueue.setAccessible(true);
-      Method setResultQueue = task.getClass().getDeclaredMethod("setResultQueue", BlockingQueue.class);
+      Method setResultQueue = task.getClass().getSuperclass().getDeclaredMethod("setResultQueue", BlockingQueue.class);
       setResultQueue.setAccessible(true);
       setResultQueue.invoke(task, new LinkedBlockingDeque<>());
-      Field resultQueue = task.getClass().getDeclaredField("resultQueue");
+      Field resultQueue = task.getClass().getSuperclass().getDeclaredField("resultQueue");
       resultQueue.setAccessible(true);
       String taskIRI = "http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassDisjointnessCheckingTask";
       JSONArray testOnto = new JSONArray(

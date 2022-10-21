@@ -6,10 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
 import org.apache.commons.io.IOUtils;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.semanticweb.HermiT.Configuration;
@@ -28,63 +25,12 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
-import org.semanticweb.owlapi.util.AnonymousNodeChecker;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 import uk.ac.cam.cares.twa.cities.agents.InferenceAgent;
 
-public class CardinalityRestrictionCheckingTask implements UninitialisedDataAndResultQueueTask {
-  private final IRI taskIri = IRI.create(InferenceAgent.ONINF_SCHEMA + InferenceAgent.TASK_CRC);
-  private boolean stop = false;
-  private BlockingQueue<Map<String, JSONArray>> dataQueue;
-  private BlockingQueue<Map<String, JSONArray>> resultQueue;
-  Node targetGraph;
-  AnonymousNodeChecker anonymousNodeChecker = new AnonymousNodeChecker() {
-    @Override
-    public boolean isAnonymousNode(IRI iri) {
-      return false;
-    }
-
-    @Override
-    public boolean isAnonymousNode(String s) {
-      return false;
-    }
-
-    @Override
-    public boolean isAnonymousSharedNode(String s) {
-      return false;
-    }
-  };
-
-  @Override
-  public IRI getTaskIri() {
-    return taskIri;
-  }
-
-  @Override
-  public void setStringMapQueue(BlockingQueue<Map<String, JSONArray>> queue) {
-    this.dataQueue = queue;
-  }
-
-  @Override
-  public void setResultQueue(BlockingQueue<Map<String, JSONArray>> queue) {
-    this.resultQueue = queue;
-  }
-
-  @Override
-  public void setTargetGraph(String endpointIRI) {
-    targetGraph = NodeFactory.createURI(endpointIRI + GraphInferenceAgent.ONTOINFER_GRAPH);
-  }
-
-  @Override
-  public boolean isRunning() {
-    return !stop;
-  }
-
-  @Override
-  public void stop() {
-    stop = true;
-  }
+public class CardinalityRestrictionCheckingTask extends TaxonomicReasoningTask {
+  protected final IRI taskIri = IRI.create(InferenceAgent.ONINF_SCHEMA + InferenceAgent.TASK_CRC);
 
   @Override
   public void run() {

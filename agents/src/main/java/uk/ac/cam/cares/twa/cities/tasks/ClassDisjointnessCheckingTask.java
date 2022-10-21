@@ -2,9 +2,6 @@ package uk.ac.cam.cares.twa.cities.tasks;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.semanticweb.HermiT.Configuration;
@@ -17,64 +14,13 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.rdf.rdfxml.parser.OWLRDFConsumer;
-import org.semanticweb.owlapi.util.AnonymousNodeChecker;
 import org.xml.sax.SAXException;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 import uk.ac.cam.cares.twa.cities.agents.InferenceAgent;
 
-public class ClassDisjointnessCheckingTask implements UninitialisedDataAndResultQueueTask {
+public class ClassDisjointnessCheckingTask extends TaxonomicReasoningTask {
   private final IRI taskIri = IRI.create(InferenceAgent.ONINF_SCHEMA + InferenceAgent.TASK_CDC);
-  private boolean stop = false;
-  private BlockingQueue<Map<String, JSONArray>> dataQueue;
-  private BlockingQueue<Map<String, JSONArray>> resultQueue;
-  Node targetGraph;
-  AnonymousNodeChecker anonymousNodeChecker = new AnonymousNodeChecker() {
-    @Override
-    public boolean isAnonymousNode(IRI iri) {
-      return false;
-    }
-
-    @Override
-    public boolean isAnonymousNode(String s) {
-      return false;
-    }
-
-    @Override
-    public boolean isAnonymousSharedNode(String s) {
-      return false;
-    }
-  };
-
-  @Override
-  public IRI getTaskIri() {
-    return taskIri;
-  }
-
-  @Override
-  public void setStringMapQueue(BlockingQueue<Map<String, JSONArray>> queue) {
-    this.dataQueue = queue;
-  }
-
-  @Override
-  public void setResultQueue(BlockingQueue<Map<String, JSONArray>> queue) {
-    this.resultQueue = queue;
-  }
-
-  @Override
-  public void setTargetGraph(String endpointIRI) {
-    targetGraph = NodeFactory.createURI(endpointIRI + GraphInferenceAgent.ONTOINFER_GRAPH);
-  }
-
-  @Override
-  public boolean isRunning() {
-    return !stop;
-  }
-
-  @Override
-  public void stop() {
-    stop = true;
-  }
 
   @Override
   public void run() {
@@ -126,7 +72,6 @@ public class ClassDisjointnessCheckingTask implements UninitialisedDataAndResult
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     OWLOntology ontology = manager.createOntology();
     OWLRDFConsumer consumer = new OWLRDFConsumer(ontology, anonymousNodeChecker , new OWLOntologyLoaderConfiguration());
-    //consumer.setOntologyFormat(new DefaultOntologyFormat());
 
     for (Object triple : data) {
       JSONObject obj = (JSONObject) triple;
