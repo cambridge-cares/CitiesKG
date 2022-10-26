@@ -48,6 +48,7 @@ import org.citydb.citygml.exporter.writer.FeatureWriter;
 import org.citydb.concurrent.WorkerPool;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.GeometryObject;
+import org.citydb.config.project.database.DatabaseType;
 import org.citydb.config.project.exporter.Exporter;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.schema.TableEnum;
@@ -166,6 +167,9 @@ public class CityGMLExportManager implements CityGMLExportHelper {
 
 	private boolean failOnError = false;
 	private boolean hasADESupport = false;
+
+	private Boolean isBlazegraph;
+	private String IRI_GRAPH_BASE;
 
 	public CityGMLExportManager(OutputFile outputFile,
 			Connection connection,
@@ -315,6 +319,19 @@ public class CityGMLExportManager implements CityGMLExportHelper {
 
 		return success ? object : null;
 	}
+
+	/**
+	 * Checks, if the current db connection is Blazegraph
+	 *
+	 * @return boolean
+	 */
+	public boolean isBlazegraph() {
+		if (isBlazegraph == null) {
+			isBlazegraph = getDatabaseAdapter().getDatabaseType().value().equals(DatabaseType.BLAZE.value());
+		}
+		return isBlazegraph.booleanValue();
+	}
+
 
 	@SuppressWarnings("unchecked")
 	@Override

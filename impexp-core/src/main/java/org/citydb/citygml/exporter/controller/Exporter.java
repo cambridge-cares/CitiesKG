@@ -48,12 +48,15 @@ import org.citydb.config.Config;
 import org.citydb.config.i18n.Language;
 import org.citydb.config.internal.Internal;
 import org.citydb.config.project.database.DatabaseSrs;
+import org.citydb.config.project.database.DatabaseType;
 import org.citydb.config.project.database.Workspace;
 import org.citydb.config.project.exporter.SimpleTilingOptions;
 import org.citydb.config.project.exporter.TileNameSuffixMode;
 import org.citydb.config.project.exporter.TileSuffixMode;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.IndexStatusInfo.IndexType;
+import org.citydb.database.adapter.blazegraph.BlazegraphAdapter;
+import org.citydb.database.adapter.blazegraph.BlazegraphConfigBuilder;
 import org.citydb.database.connection.DatabaseConnectionPool;
 import org.citydb.database.schema.mapping.SchemaMapping;
 import org.citydb.event.Event;
@@ -90,19 +93,14 @@ import org.citygml4j.model.citygml.cityobjectgroup.CityObjectGroup;
 import org.citygml4j.model.gml.GMLClass;
 import org.citygml4j.model.module.citygml.CityGMLModuleType;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -128,7 +126,12 @@ public class Exporter implements EventHandler {
 	private HashMap<Integer, Long> objectCounter;
 	private EnumMap<GMLClass, Long> geometryCounter;
 	private HashMap<Integer, Long> totalObjectCounter;
-	private EnumMap<GMLClass, Long> totalGeometryCounter;	
+	private EnumMap<GMLClass, Long> totalGeometryCounter;
+
+	private final String BLAZE_CFG_MSG = "Writing Blazegraph configuration to ";
+	private BlazegraphConfigBuilder blazegraphConfigBuilder;
+	private final String CFG_MSG_SUCCESS = " successful.";
+	private final String CFG_MSG_FAIL = " failed. ";
 
 	public Exporter(CityGMLBuilder cityGMLBuilder, 
 			SchemaMapping schemaMapping, 
@@ -144,6 +147,8 @@ public class Exporter implements EventHandler {
 		geometryCounter = new EnumMap<>(GMLClass.class);
 		totalObjectCounter = new HashMap<>();
 		totalGeometryCounter = new EnumMap<>(GMLClass.class);
+
+		blazegraphConfigBuilder = BlazegraphConfigBuilder.getInstance();
 	}
 
 	public void cleanup() {
@@ -562,6 +567,11 @@ public class Exporter implements EventHandler {
 					}
 				}
 
+				if (databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value())) {
+					log.info(writeBlazegraphConfig(BlazegraphAdapter.BLAZEGRAPH_CFG_PATH));
+					log.info(writeBlazegraphConfig(BlazegraphAdapter.BLAZEGRAPH_VOCAB_CFG_PATH));
+				}
+
 				// show exported features
 				if (!objectCounter.isEmpty()) {
 					log.info("Exported city objects:");
@@ -660,5 +670,39 @@ public class Exporter implements EventHandler {
 					xlinkExporterPool.drainWorkQueue();
 			}
 		}
+	}
+
+	/**
+	 * Writes configuration files for Blazegraph:
+	 * - db/RWStore.properties holding geo-datatype configuration entries
+	 * - db/vocabularies/src/main/resources/config.properties holding URIs used for geo-datatypes
+	 *
+	 * @param path
+	 * @return msg
+	 */
+	private String writeBlazegraphConfig(String path) {
+		Properties prop = null;
+		String msg = BLAZE_CFG_MSG + path;
+
+		try (OutputStream output = new FileOutputStream(path)) {
+			if (path.equals(BlazegraphAdapter.BLAZEGRAPH_CFG_PATH)) {
+				// build RWStore.properties for Blazegraph
+				prop = blazegraphConfigBuilder.build();
+			} else if (path.equals(BlazegraphAdapter.BLAZEGRAPH_VOCAB_CFG_PATH))  {
+				// build properties for vocabularies
+				prop = blazegraphConfigBuilder.buildVocabulariesConfig();
+			}
+
+			// save properties to vocabularies project folder
+			if (!prop.isEmpty()) {
+				prop.store(output, null);
+			}
+			msg = msg + CFG_MSG_SUCCESS;
+		} catch (IOException e) {
+			log.error(msg + CFG_MSG_FAIL + e.getMessage());
+			msg = msg + CFG_MSG_FAIL;
+		}
+
+		return msg;
 	}
 }
