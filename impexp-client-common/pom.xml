@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.citydb</groupId>
   <artifactId>impexp-client-common</artifactId>
-  <version>4.3.0-java11-SNAPSHOT</version>
+  <version>4.3.0</version>
   <build>
     <pluginManagement>
       <plugins>

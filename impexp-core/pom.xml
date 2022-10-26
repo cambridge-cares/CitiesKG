@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.citydb</groupId>
   <artifactId>impexp-core</artifactId>
-  <version>4.3.0-java11-SNAPSHOT</version>
+  <version>4.3.0</version>
   <repositories>
     <repository>
       <id>jcenter</id>
@@ -81,13 +81,13 @@
     <dependency>
       <groupId>org.citydb</groupId>
       <artifactId>impexp-config</artifactId>
-      <version>4.3.0-java11-SNAPSHOT</version>
+      <version>4.3.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.citydb</groupId>
       <artifactId>impexp-plugin-api</artifactId>
-      <version>4.3.0-java11-SNAPSHOT</version>
+      <version>4.3.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
