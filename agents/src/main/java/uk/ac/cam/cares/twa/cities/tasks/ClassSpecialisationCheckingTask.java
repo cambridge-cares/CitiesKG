@@ -11,12 +11,7 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.rdf.rdfxml.parser.OWLRDFConsumer;
 import org.semanticweb.owlapi.reasoner.impl.OWLClassNode;
-import org.xml.sax.SAXException;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 import uk.ac.cam.cares.twa.cities.agents.InferenceAgent;
@@ -83,21 +78,6 @@ public class ClassSpecialisationCheckingTask extends TaxonomicReasoningTask {
     }
     return output;
   }
-  
-  private OWLOntology createModel(JSONArray data) throws OWLOntologyCreationException, SAXException {
-    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-    OWLOntology ontology = manager.createOntology();
-    OWLRDFConsumer consumer = new OWLRDFConsumer(ontology, anonymousNodeChecker , new OWLOntologyLoaderConfiguration());
 
-    for (Object triple : data) {
-      JSONObject obj = (JSONObject) triple;
-      consumer.statementWithResourceValue(obj.getString("s"),
-          obj.getString("p"), obj.getString("o"));
-    }
-
-    consumer.endModel();
-
-    return ontology;
-  }
 
 }

@@ -59,7 +59,7 @@ public class ClassSpecialisationCheckingTaskTest {
   @Test
   public void testNewClassSpecialisationCheckingTaskMethods() {
     ClassSpecialisationCheckingTask task = new ClassSpecialisationCheckingTask();
-    assertEquals(3, task.getClass().getDeclaredMethods().length);
+    assertEquals(2, task.getClass().getDeclaredMethods().length);
   }
 
   @Test
@@ -139,9 +139,11 @@ public class ClassSpecialisationCheckingTaskTest {
       ((LinkedBlockingDeque) dataQueue.get(task)).put(map);
 
       run.invoke(task);
-      assertTrue(((Map) ((BlockingQueue) resultQueue.get(task)).take()).get(taskIRI).toString()
-          .equals(new JSONArray().put("http://www.test.com/1").put("http://www.test.com/2")
-              .put("http://www.test.com/3").put("http://www.w3.org/2002/07/owl#Nothing").toString()));
+      JSONArray output = (JSONArray) ((Map) ((BlockingQueue) resultQueue.get(task)).take()).get(taskIRI);
+      assertTrue(output.toList().contains(IRI.create("http://www.test.com/1")) &&
+          output.toList().contains(IRI.create("http://www.test.com/2")) &&
+          output.toList().contains(IRI.create("http://www.test.com/3")) &&
+          output.toList().contains(IRI.create("http://www.w3.org/2002/07/owl#Nothing")));
 
       assertFalse((Boolean) isRunning.invoke(task));
       stop.set(task, false);
@@ -155,10 +157,11 @@ public class ClassSpecialisationCheckingTaskTest {
       ((LinkedBlockingDeque) dataQueue.get(task)).put(map);
 
       run.invoke(task);
-
-      assertTrue(((Map) ((BlockingQueue) resultQueue.get(task)).take()).get(taskIRI).toString()
-          .equals(new JSONArray().put("http://www.test.com/2").put("http://www.w3.org/2002/07/owl#Thing")
-              .put("http://www.test.com/3").put("http://www.test.com/4").toString()));
+      output = (JSONArray) ((Map) ((BlockingQueue) resultQueue.get(task)).take()).get(taskIRI);
+      assertTrue(output.toList().contains(IRI.create("http://www.test.com/4")) &&
+          output.toList().contains(IRI.create("http://www.test.com/2")) &&
+          output.toList().contains(IRI.create("http://www.test.com/3")) &&
+          output.toList().contains(IRI.create("http://www.w3.org/2002/07/owl#Thing")));
 
       assertFalse((Boolean) isRunning.invoke(task));
       stop.set(task, false);
@@ -192,7 +195,7 @@ public class ClassSpecialisationCheckingTaskTest {
       Method getReasonerOutput = task.getClass().getDeclaredMethod("getReasonerOutput",
           Reasoner.class, String.class, String.class, String.class);
       getReasonerOutput.setAccessible(true);
-      Method createModel = task.getClass().getDeclaredMethod("createModel", JSONArray.class);
+      Method createModel = task.getClass().getSuperclass().getDeclaredMethod("createModel", JSONArray.class);
       createModel.setAccessible(true);
       String ontoIri = "http://www.test.com/onto";
       String srcIri = "http://www.test.com/1";
@@ -223,8 +226,10 @@ public class ClassSpecialisationCheckingTaskTest {
 
       //IRI & * case
       output = (JSONArray) getReasonerOutput.invoke(task, reasoner, ontoIri, srcIri, "*");
-      assertTrue(output.toString().equals(new JSONArray().put("http://www.test.com/2")
-          .put("http://www.w3.org/2002/07/owl#Thing").put("http://www.test.com/3").put("http://www.test.com/4").toString()));
+      assertTrue(output.toList().contains(IRI.create("http://www.test.com/2")) &&
+          output.toList().contains(IRI.create("http://www.w3.org/2002/07/owl#Thing")) &&
+          output.toList().contains(IRI.create("http://www.test.com/3")) &&
+          output.toList().contains(IRI.create("http://www.test.com/4")));
 
       //* & * case
       output = (JSONArray) getReasonerOutput.invoke(task, reasoner, ontoIri, "*", "*");
@@ -235,25 +240,5 @@ public class ClassSpecialisationCheckingTaskTest {
     }
 
   }
-
-  @Test
-  public void testNewClassSpecialisationCheckingTaskCreateModelMethod() {
-    ClassSpecialisationCheckingTask task = new ClassSpecialisationCheckingTask();
-
-    try {
-      Method createModel = task.getClass().getDeclaredMethod("createModel", JSONArray.class);
-      createModel.setAccessible(true);
-      JSONArray a = new JSONArray("[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.test.com/2#p\", \"o\": \"http://www.test.com/3\"}]");
-      OWLOntology o = (OWLOntology) createModel.invoke(task, a);
-      assertEquals(o.getAxiomCount(), 1);
-      assertEquals(o.getAxioms().toArray()[0].toString(),
-          "AnnotationAssertion(<http://www.test.com/2#p> <http://www.test.com/1> <http://www.test.com/3>)");
-
-    } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-      fail();
-    }
-
-  }
-
 
 }

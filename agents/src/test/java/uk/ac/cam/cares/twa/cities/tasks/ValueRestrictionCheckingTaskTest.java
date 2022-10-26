@@ -59,7 +59,7 @@ public class ValueRestrictionCheckingTaskTest {
   @Test
   public void testNewValueRestrictionCheckingTaskMethods() {
     ValueRestrictionCheckingTask task = new ValueRestrictionCheckingTask();
-    assertEquals(3, task.getClass().getDeclaredMethods().length);
+    assertEquals(2, task.getClass().getDeclaredMethods().length);
   }
 
   @Test
@@ -244,7 +244,7 @@ public class ValueRestrictionCheckingTaskTest {
       Method getReasonerOutput = task.getClass().getDeclaredMethod("getReasonerOutput",
           Reasoner.class, String.class, IRI.class, IRI.class, IRI.class);
       getReasonerOutput.setAccessible(true);
-      Method createModel = task.getClass().getDeclaredMethod("createModel", JSONArray.class);
+      Method createModel = task.getClass().getSuperclass().getDeclaredMethod("createModel", JSONArray.class);
       createModel.setAccessible(true);
       String ontoIri = "http://www.test.com/onto";
       IRI srcIri = IRI.create("http://www.test.com/1");
@@ -274,25 +274,5 @@ public class ValueRestrictionCheckingTaskTest {
     }
 
   }
-
-  @Test
-  public void testNewValueRestrictionCheckingTaskCreateModelMethod() {
-    ValueRestrictionCheckingTask task = new ValueRestrictionCheckingTask();
-
-    try {
-      Method createModel = task.getClass().getDeclaredMethod("createModel", JSONArray.class);
-      createModel.setAccessible(true);
-      JSONArray a = new JSONArray("[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.test.com/2#p\", \"o\": \"http://www.test.com/3\"}]");
-      OWLOntology o = (OWLOntology) createModel.invoke(task, a);
-      assertEquals(o.getAxiomCount(), 1);
-      assertEquals(o.getAxioms().toArray()[0].toString(),
-          "AnnotationAssertion(<http://www.test.com/2#p> <http://www.test.com/1> <http://www.test.com/3>)");
-
-    } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-      fail();
-    }
-
-  }
-
 
 }

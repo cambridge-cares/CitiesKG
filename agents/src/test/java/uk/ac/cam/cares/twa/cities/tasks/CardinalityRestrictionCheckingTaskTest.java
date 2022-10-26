@@ -59,7 +59,7 @@ public class CardinalityRestrictionCheckingTaskTest {
   @Test
   public void testNewCardinalityRestrictionCheckingTaskMethods() {
     CardinalityRestrictionCheckingTask task = new CardinalityRestrictionCheckingTask();
-    assertEquals(4, task.getClass().getDeclaredMethods().length);
+    assertEquals(2, task.getClass().getDeclaredMethods().length);
   }
 
   @Test
@@ -283,7 +283,7 @@ public class CardinalityRestrictionCheckingTaskTest {
       Method getReasonerOutput = task.getClass().getDeclaredMethod("getReasonerOutput",
           Reasoner.class, String.class, IRI.class, IRI.class, IRI.class);
       getReasonerOutput.setAccessible(true);
-      Method createModel = task.getClass().getDeclaredMethod("createModel", JSONArray.class);
+      Method createModel = task.getClass().getSuperclass().getDeclaredMethod("createModel", JSONArray.class);
       createModel.setAccessible(true);
       String ontoIri = "http://www.test.com/onto";
       IRI srcIri = IRI.create("http://www.test.com/c1");
@@ -326,85 +326,6 @@ public class CardinalityRestrictionCheckingTaskTest {
       assertTrue(output.toString().equals(new JSONArray().put(new JSONObject().put(ontoIri, false)).toString()));
 
     } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-      fail();
-    }
-
-  }
-
-  @Test
-  public void testNewCardinalityRestrictionCheckingTaskCreateModelMethod() {
-    CardinalityRestrictionCheckingTask task = new CardinalityRestrictionCheckingTask();
-
-    try {
-      Method createModel = task.getClass().getDeclaredMethod("createModel", JSONArray.class);
-      createModel.setAccessible(true);
-      JSONArray a = new JSONArray("[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.test.com/2#p\", \"o\": \"http://www.test.com/3\"}]");
-      OWLOntology o = (OWLOntology) createModel.invoke(task, a);
-      assertEquals(o.getAxiomCount(), 1);
-      assertEquals(o.getAxioms().toArray()[0].toString(),
-          "AnnotationAssertion(<http://www.test.com/2#p> <http://www.test.com/1> <http://www.test.com/3>)");
-
-    } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-      fail();
-    }
-
-  }
-
-  @Test
-  public void testNewCardinalityRestrictionCheckingTaskPrepareNtriplesMethod() {
-    CardinalityRestrictionCheckingTask task = new CardinalityRestrictionCheckingTask();
-
-    try {
-      Method prepareNtriples = task.getClass().getDeclaredMethod("prepareNtriples", JSONArray.class);
-      prepareNtriples.setAccessible(true);
-
-      JSONArray input = new JSONArray(
-          "[{\"s\": \"http://www.test.com/c1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
-              + "{\"s\": \"http://www.test.com/c2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
-              + "{\"s\": \"http://www.test.com/c3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Class\"},"
-              + "{\"s\": \"http://www.test.com/h1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
-              + "{\"s\": \"http://www.test.com/h2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
-              + "{\"s\": \"http://www.test.com/h3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#ObjectProperty\"},"
-              + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Restriction\"},"
-              + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Restriction\"},"
-              + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\", \"o\": \"http://www.w3.org/2002/07/owl#Restriction\"},"
-              + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/2002/07/owl#onProperty\", \"o\": \"http://www.test.com/h1\"},"
-              + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/2002/07/owl#onProperty\", \"o\": \"http://www.test.com/h2\"},"
-              + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/2002/07/owl#onProperty\", \"o\": \"http://www.test.com/h3\"},"
-              + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/2002/07/owl#qualifiedCardinality\", \"o\": '\"3\"^^http://www.w3.org/2001/XMLSchema#nonNegativeInteger'},"
-              + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/2002/07/owl#minQualifiedCardinality\", \"o\": '\"1\"^^http://www.w3.org/2001/XMLSchema#nonNegativeInteger'},"
-              + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/2002/07/owl#maxQualifiedCardinality\", \"o\": '\"2\"^^http://www.w3.org/2001/XMLSchema#nonNegativeInteger'},"
-              + "{\"s\": \"http://www.test.com/r1\", \"p\": \"http://www.w3.org/2002/07/owl#onClass\", \"o\": \"http://www.test.com/c2\"},"
-              + "{\"s\": \"http://www.test.com/r2\", \"p\": \"http://www.w3.org/2002/07/owl#onClass\", \"o\": \"http://www.test.com/c1\"},"
-              + "{\"s\": \"http://www.test.com/r3\", \"p\": \"http://www.w3.org/2002/07/owl#onClass\", \"o\": \"http://www.test.com/c2\"},"
-              + "{\"s\": \"http://www.test.com/c1\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/r1\"},"
-              + "{\"s\": \"http://www.test.com/c2\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/r2\"},"
-              + "{\"s\": \"http://www.test.com/c2\", \"p\": \"http://www.w3.org/2000/01/rdf-schema#subClassOf\", \"o\": \"http://www.test.com/r3\"}]");
-
-      String ntriples = (String) prepareNtriples.invoke(task, input);
-      assertTrue(ntriples.contains("<http://www.test.com/c1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .\n"
-          + "<http://www.test.com/c2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .\n"
-          + "<http://www.test.com/c3> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .\n"
-          + "<http://www.test.com/h1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .\n"
-          + "<http://www.test.com/h2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .\n"
-          + "<http://www.test.com/h3> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .\n"));
-      assertTrue(ntriples.contains(" <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> .\n"));
-      assertTrue(ntriples.contains(" <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> .\n"));
-      assertTrue(ntriples.contains(" <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> .\n"));
-      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#onProperty> <http://www.test.com/h1> .\n"));
-      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#onProperty> <http://www.test.com/h2> .\n"));
-      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#onProperty> <http://www.test.com/h3> .\n"));
-      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#qualifiedCardinality> \"3\"^^<http://www.w3.org/2001/XMLSchema#nonNegativeInteger> .\n"));
-      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#minQualifiedCardinality> \"1\"^^<http://www.w3.org/2001/XMLSchema#nonNegativeInteger> .\n"));
-      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#maxQualifiedCardinality> \"2\"^^<http://www.w3.org/2001/XMLSchema#nonNegativeInteger> .\n"));
-      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#onClass> <http://www.test.com/c2> .\n"));
-      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#onClass> <http://www.test.com/c1> .\n"));
-      assertTrue(ntriples.contains(" <http://www.w3.org/2002/07/owl#onClass> <http://www.test.com/c2> .\n"));
-      assertTrue(ntriples.contains("<http://www.test.com/c1> <http://www.w3.org/2000/01/rdf-schema#subClassOf>"));
-      assertTrue(ntriples.contains("<http://www.test.com/c2> <http://www.w3.org/2000/01/rdf-schema#subClassOf>"));
-      assertTrue(ntriples.contains("<http://www.test.com/c2> <http://www.w3.org/2000/01/rdf-schema#subClassOf>"));
-
-    } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       fail();
     }
 

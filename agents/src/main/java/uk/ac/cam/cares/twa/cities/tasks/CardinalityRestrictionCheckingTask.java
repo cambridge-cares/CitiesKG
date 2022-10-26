@@ -1,19 +1,13 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
-import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
-import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.semanticweb.HermiT.Configuration;
 import org.semanticweb.HermiT.Reasoner;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.formats.NTriplesDocumentFormat;
-import org.semanticweb.owlapi.io.StreamDocumentSource;
 import org.semanticweb.owlapi.model.ClassExpressionType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -23,8 +17,6 @@ import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLObjectCardinalityRestriction;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 import uk.ac.cam.cares.twa.cities.agents.InferenceAgent;
@@ -90,56 +82,6 @@ public class CardinalityRestrictionCheckingTask extends TaxonomicReasoningTask {
     output.put(outputMsg);
 
     return output;
-  }
-  
-  private OWLOntology createModel(JSONArray data) throws OWLOntologyCreationException {
-    String ntriples = prepareNtriples(data);
-
-    OWLOntology ontology = OWLManager.createOWLOntologyManager().loadOntologyFromOntologyDocument(new StreamDocumentSource(
-            IOUtils.toInputStream(ntriples, Charset.defaultCharset()), IRI.create(""), new NTriplesDocumentFormat(), null),
-        new OWLOntologyLoaderConfiguration());
-
-    return ontology;
-  }
-
-  private String prepareNtriples(JSONArray data) {
-    String ntriples = new String();
-    ArrayList<String> skolemized = new ArrayList<>();
-
-    for (Object triple : data) {
-      JSONObject obj = (JSONObject) triple;
-
-      String subject = obj.getString("s");
-      String predicate = "<" + obj.getString("p") + ">";
-      String object = obj.getString("o");
-
-      if (object.equals("http://www.w3.org/2002/07/owl#Restriction")) {
-        skolemized.add(subject);
-      }
-
-      if (!subject.contains("_:")) {
-        subject = "<" + subject + ">";
-      }
-
-      String ntriple = subject + " " + predicate + " ";
-
-      if (object.contains("http")) {
-        if (object.contains("^^")) {
-          String[] splitObj = object.split("\\^\\^");
-          object = splitObj[0] + "^^<" + splitObj[1] +">";
-        } else {
-          object = "<" + object + ">";
-        }
-      }
-      ntriple = ntriple + object + " .\n";
-      ntriples = ntriples.concat(ntriple);
-    }
-
-    for (String iri: skolemized) {
-      ntriples = ntriples.replaceAll("<" + iri + ">", "_:" + UUID.randomUUID());
-    }
-
-    return ntriples;
   }
 
 }

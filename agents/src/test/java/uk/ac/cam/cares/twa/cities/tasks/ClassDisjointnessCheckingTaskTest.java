@@ -3,7 +3,6 @@ package uk.ac.cam.cares.twa.cities.tasks;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -12,10 +11,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
-import org.apache.jena.graph.Node;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
@@ -25,7 +22,6 @@ import org.semanticweb.HermiT.Configuration;
 import org.semanticweb.HermiT.Reasoner;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.util.AnonymousNodeChecker;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ClassDisjointnessCheckingTaskTest {
@@ -63,7 +59,7 @@ public class ClassDisjointnessCheckingTaskTest {
   @Test
   public void testNewClassDisjointnessCheckingTaskMethods() {
     ClassDisjointnessCheckingTask task = new ClassDisjointnessCheckingTask();
-    assertEquals(3, task.getClass().getDeclaredMethods().length);
+    assertEquals(2, task.getClass().getDeclaredMethods().length);
   }
 
   @Test
@@ -190,7 +186,7 @@ public class ClassDisjointnessCheckingTaskTest {
       Method getReasonerOutput = task.getClass().getDeclaredMethod("getReasonerOutput",
           Reasoner.class, String.class, IRI.class, IRI.class);
       getReasonerOutput.setAccessible(true);
-      Method createModel = task.getClass().getDeclaredMethod("createModel", JSONArray.class);
+      Method createModel = task.getClass().getSuperclass().getDeclaredMethod("createModel", JSONArray.class);
       createModel.setAccessible(true);
       String ontoIri = "http://www.test.com/onto";
       IRI srcIri = IRI.create("http://www.test.com/1");
@@ -218,25 +214,5 @@ public class ClassDisjointnessCheckingTaskTest {
     }
 
   }
-
-  @Test
-  public void testNewClassDisjointnessCheckingTaskCreateModelMethod() {
-    ClassDisjointnessCheckingTask task = new ClassDisjointnessCheckingTask();
-
-    try {
-      Method createModel = task.getClass().getDeclaredMethod("createModel", JSONArray.class);
-      createModel.setAccessible(true);
-      JSONArray a = new JSONArray("[{\"s\": \"http://www.test.com/1\", \"p\": \"http://www.test.com/2#p\", \"o\": \"http://www.test.com/3\"}]");
-      OWLOntology o = (OWLOntology) createModel.invoke(task, a);
-      assertEquals(o.getAxiomCount(), 1);
-      assertEquals(o.getAxioms().toArray()[0].toString(),
-          "AnnotationAssertion(<http://www.test.com/2#p> <http://www.test.com/1> <http://www.test.com/3>)");
-
-    } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-      fail();
-    }
-
-  }
-
 
 }
