@@ -49,5 +49,5 @@ ENV PATH "/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH"
 SHELL ["/bin/bash", "-c"]
 
 # Start the Tomcat server
-ENTRYPOINT ["java", "-cp", "target/cea-agent-0.2.0-java11-SNAPSHOT-jar-with-dependencies.jar" , "uk.ac.cam.cares.twa.cities.ceaagent.Main"]
+ENTRYPOINT ["java", "-cp", "target/cea-agent-0.2.4-jar-with-dependencies.jar" , "uk.ac.cam.cares.twa.cities.ceaagent.Main"]
 #==================================================================================================

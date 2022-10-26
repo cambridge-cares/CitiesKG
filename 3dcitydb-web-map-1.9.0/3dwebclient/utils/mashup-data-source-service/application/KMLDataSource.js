@@ -88,7 +88,12 @@ var KMLDataSource = /** @class */ (function (_super) {
                 }
             }
             else if (jQuery.isArray(contextResponse[0]['chemplant']) && contextResponse[0]['chemplant'].length > 0){
-                var data = contextResponse[0]['chemplant'][0];
+                if (contextResponse[0]['chemplant'][0].length > 0){
+                    var data = contextResponse[0]['chemplant'][0][0];
+                }
+                else {
+                    var data = contextResponse[0]['chemplant'][0];
+                }
                 for (var key in data) {
                     if (key == null || key == 'context'){
                         continue;
@@ -151,6 +156,9 @@ var KMLDataSource = /** @class */ (function (_super) {
                             continue;
                         }
                         var value = innerdata[0][name];
+                        if (jQuery.isArray(value) && value.length == 0){
+                            continue;
+                        }
                         if (value != null){
                             result[name] = value;
                         }
