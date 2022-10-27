@@ -61,18 +61,18 @@ public class XlinkDeprecatedMaterial implements DBXlinkResolver {
 
 	public boolean insert(DBXlinkDeprecatedMaterial xlink) throws SQLException {
 		UIDCacheEntry surfaceDataEntry = resolverManager.getObjectId(xlink.getGmlId());
-		if (surfaceDataEntry == null || surfaceDataEntry.getId() == -1)
+		if (surfaceDataEntry == null || (int)surfaceDataEntry.getId() == -1)
 			return false;
 
 		long newSurfaceDataId = resolverManager.getDBId(SequenceEnum.SURFACE_DATA_ID_SEQ.getName());
 
 		psSurfaceData.setLong(1, newSurfaceDataId);
-		psSurfaceData.setLong(2, surfaceDataEntry.getId());
+		psSurfaceData.setObject(2, surfaceDataEntry.getId());
 		psSurfaceData.addBatch();
 
 		psTextureParam.setLong(1, xlink.getSurfaceGeometryId());
 		psTextureParam.setLong(2, newSurfaceDataId);
-		psTextureParam.setLong(3, surfaceDataEntry.getId());
+		psTextureParam.setObject(3, surfaceDataEntry.getId());
 		psTextureParam.addBatch();
 		
 		if (++batchCounter == resolverManager.getDatabaseAdapter().getMaxBatchSize())

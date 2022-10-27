@@ -98,7 +98,7 @@ implements UIDCachingModel {
 				PreparedStatement psDrain = psDrains[partition];
 
 				psDrain.setString(1, fileURI);
-				psDrain.setLong(2, entry.getValue().getId());
+				psDrain.setObject(2, entry.getValue().getId());
 
 				psDrain.addBatch();
 				if (++batchCounters[partition] == batchSize) {
@@ -125,7 +125,7 @@ implements UIDCachingModel {
 			PreparedStatement psDrain = psDrains[partition];
 
 			psDrain.setString(1, fileURI);
-			psDrain.setLong(2, entry.getValue().getId());
+			psDrain.setObject(2, entry.getValue().getId());
 
 			psDrain.addBatch();
 			if (++batchCounters[partition] == batchSize) {

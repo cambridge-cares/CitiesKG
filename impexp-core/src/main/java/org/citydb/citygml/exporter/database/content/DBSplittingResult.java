@@ -29,22 +29,22 @@ package org.citydb.citygml.exporter.database.content;
 
 import org.citydb.database.schema.mapping.AbstractObjectType;
 
-public class DBSplittingResult {
-	private final long id;
+public class DBSplittingResult<T> {
+	private final T id;
 	private final AbstractObjectType<?> objectType;
 	private final long sequenceId;
 
-	public DBSplittingResult(long id, AbstractObjectType<?> objectType, long sequenceId) {
+	public DBSplittingResult(T id, AbstractObjectType<?> objectType, long sequenceId) {
 		this.id = id;
 		this.objectType = objectType;
 		this.sequenceId = sequenceId;
 	}
 
-	public DBSplittingResult(long id, AbstractObjectType<?> objectType) {
+	public DBSplittingResult(T id, AbstractObjectType<?> objectType) {
 		this(id, objectType, -1);
 	}
 
-	public long getId() {
+	public T getId() {
 		return id;
 	}
 

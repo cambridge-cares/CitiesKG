@@ -109,12 +109,12 @@ public class XlinkTextureAssociation implements DBXlinkResolver {
 					if (worldToTexture != null) {
 						UIDCacheEntry entry = resolverManager.getGeometryId(xlink.getTargetURI());
 
-						if (entry == null || entry.getId() == -1) {
+						if (entry == null || (int)entry.getId() == -1) {
 							LOG.error("Failed to resolve XLink reference '" + xlink.getTargetURI() + "'.");
 							continue;
 						}
 
-						psTextureParam.setLong(1, entry.getId());
+						psTextureParam.setObject(1, entry.getId());
 						psTextureParam.setString(2, worldToTexture);
 						psTextureParam.setNull(3, Types.VARCHAR);
 						psTextureParam.setLong(4, xlink.getId());

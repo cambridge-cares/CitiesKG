@@ -29,16 +29,16 @@ package org.citydb.citygml.common.database.uid;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class UIDCacheEntry {
-	private final long id;
-	private final long rootId;
+public class UIDCacheEntry<T> {
+	private final T id;
+	private final T rootId;
 	private final boolean reverse;
 	private final String mapping;
 	private final int objectClassId;
 	private final AtomicBoolean isRegistered = new AtomicBoolean(false);
 	private final AtomicBoolean isRequested = new AtomicBoolean(false);
 
-	public UIDCacheEntry(long id, long rootId, boolean reverse, String mapping, int objectClassId) {
+	public UIDCacheEntry(T id, T rootId, boolean reverse, String mapping, int objectClassId) {
 		this.id = id;
 		this.rootId = rootId;
 		this.reverse = reverse;
@@ -46,15 +46,15 @@ public class UIDCacheEntry {
 		this.objectClassId = objectClassId;
 	}
 	
-	public UIDCacheEntry(long id, long rootId, boolean reverse, String mapping) {
+	public UIDCacheEntry(T id, T rootId, boolean reverse, String mapping) {
 		this(id, rootId, reverse, mapping, 0);
 	}
 
-	public long getId() {
+	public T getId() {
 		return id;
 	}
 
-	public long getRootId() {
+	public T getRootId() {
 		return rootId;
 	}
 

@@ -693,7 +693,7 @@ public class CityGMLImportManager implements CityGMLImportHelper {
 		if (cache != null) {
 			UIDCacheEntry entry = cache.get(gmlId);
 			if (entry != null)
-				return entry.getId();
+				return (Long)entry.getId();
 		}
 
 		return -1;
@@ -714,7 +714,7 @@ public class CityGMLImportManager implements CityGMLImportHelper {
 		if (cache != null) {
 			UIDCacheEntry entry = cache.get(gmlId);
 			if (entry != null)
-				return entry.getId();
+				return (Long)entry.getId();
 		}
 
 		return -1;
@@ -735,7 +735,7 @@ public class CityGMLImportManager implements CityGMLImportHelper {
 		if (cache != null) {
 			UIDCacheEntry entry = cache.getFromMemory(gmlId);
 			if (entry != null)
-				return entry.getId();
+				return (Long)entry.getId();
 		}
 
 		return -1;

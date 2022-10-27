@@ -67,7 +67,7 @@ public class XlinkGroupToCityObject implements DBXlinkResolver {
 		// for groupMembers, we do not only lookup gml:ids within the document
 		// but within the whole database
 		UIDCacheEntry cityObjectEntry = resolverManager.getObjectId(xlink.getGmlId(), true);
-		if (cityObjectEntry == null || cityObjectEntry.getId() == -1)
+		if (cityObjectEntry == null || (int)cityObjectEntry.getId() == -1)
 			return false;		
 		
 		FeatureType featureType = resolverManager.getFeatureType(cityObjectEntry.getObjectClassId());
@@ -79,7 +79,7 @@ public class XlinkGroupToCityObject implements DBXlinkResolver {
 			ResultSet rs = null;
 
 			try {
-				psSelectTmp.setLong(1, cityObjectEntry.getId());
+				psSelectTmp.setObject(1, cityObjectEntry.getId());
 				psSelectTmp.setLong(2, xlink.isParent() ? 1 : 0);
 				rs = psSelectTmp.executeQuery();			
 
@@ -102,7 +102,7 @@ public class XlinkGroupToCityObject implements DBXlinkResolver {
 		}
 
 		if (xlink.isParent()) {
-			psGroupParentToCityObject.setLong(1, cityObjectEntry.getId());
+			psGroupParentToCityObject.setObject(1, cityObjectEntry.getId());
 			psGroupParentToCityObject.setLong(2, xlink.getGroupId());
 			
 			psGroupParentToCityObject.addBatch();
@@ -111,7 +111,7 @@ public class XlinkGroupToCityObject implements DBXlinkResolver {
 				parentBatchCounter = 0;
 			}
 		} else {
-			psGroupMemberToCityObject.setLong(1, cityObjectEntry.getId());
+			psGroupMemberToCityObject.setObject(1, cityObjectEntry.getId());
 			psGroupMemberToCityObject.setLong(2, xlink.getGroupId());
 			psGroupMemberToCityObject.setString(3, xlink.getRole());
 

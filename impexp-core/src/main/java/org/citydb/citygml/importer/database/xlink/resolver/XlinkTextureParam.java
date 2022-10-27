@@ -61,10 +61,10 @@ public class XlinkTextureParam implements DBXlinkResolver {
 			return false;
 
 		UIDCacheEntry geometryEntry = resolverManager.getGeometryId(xlink.getGmlId());
-		if (geometryEntry == null || geometryEntry.getId() == -1)
+		if (geometryEntry == null || (int)geometryEntry.getId() == -1)
 			return false;
 
-		psTextureParam.setLong(1, geometryEntry.getId());
+		psTextureParam.setObject(1, geometryEntry.getId());
 		psTextureParam.setInt(2, xlink.isTextureParameterization() ? 1 : 0);
 		psTextureParam.setLong(4, xlink.getId());
 
@@ -82,7 +82,7 @@ public class XlinkTextureParam implements DBXlinkResolver {
 			// make sure xlinks to the corresponding texture parameterization can be resolved
 			resolverManager.propagateXlink(new DBXlinkTextureAssociationTarget(
 					xlink.getId(),
-					geometryEntry.getId(),
+					(Long)geometryEntry.getId(),
 					xlink.getTexParamGmlId()));
 		}
 

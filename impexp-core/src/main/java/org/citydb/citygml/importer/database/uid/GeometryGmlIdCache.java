@@ -96,8 +96,8 @@ public class GeometryGmlIdCache implements UIDCachingModel {
 				PreparedStatement psDrain = psDrains[partition];
 
 				psDrain.setString(1, gmlId);
-				psDrain.setLong(2, entry.getValue().getId());
-				psDrain.setLong(3, entry.getValue().getRootId());
+				psDrain.setObject(2, entry.getValue().getId());
+				psDrain.setObject(3, entry.getValue().getRootId());
 				psDrain.setInt(4, entry.getValue().isReverse() ? 1 : 0);
 				psDrain.setString(5, entry.getValue().getMapping());
 
@@ -126,8 +126,8 @@ public class GeometryGmlIdCache implements UIDCachingModel {
 			PreparedStatement psDrain = psDrains[partition];
 
 			psDrain.setString(1, gmlId);
-			psDrain.setLong(2, entry.getValue().getId());
-			psDrain.setLong(3, entry.getValue().getRootId());
+			psDrain.setObject(2, entry.getValue().getId());
+			psDrain.setObject(3, entry.getValue().getRootId());
 			psDrain.setInt(4, entry.getValue().isReverse() ? 1 : 0);
 			psDrain.setString(5, entry.getValue().getMapping());
 

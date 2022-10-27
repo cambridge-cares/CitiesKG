@@ -39,6 +39,7 @@ import org.citydb.config.geometry.BoundingBox;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.config.geometry.Position;
 import org.citydb.config.i18n.Language;
+import org.citydb.config.project.database.DatabaseType;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.connection.DatabaseConnectionPool;
 import org.citydb.database.schema.mapping.AbstractObjectType;
@@ -60,8 +61,10 @@ import org.citydb.query.builder.sql.SQLQueryBuilder;
 import org.citydb.query.filter.FilterException;
 import org.citydb.query.filter.selection.Predicate;
 import org.citydb.query.filter.selection.SelectionFilter;
+import org.citydb.query.filter.tiling.Tile;
 import org.citydb.query.filter.type.FeatureTypeFilter;
 import org.citydb.sqlbuilder.expression.LiteralList;
+import org.citydb.sqlbuilder.expression.PlaceHolder;
 import org.citydb.sqlbuilder.schema.Column;
 import org.citydb.sqlbuilder.schema.Table;
 import org.citydb.sqlbuilder.select.PredicateToken;
@@ -81,10 +84,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class DBSplitter {
 	private final Logger log = Logger.getInstance();
@@ -130,6 +133,7 @@ public class DBSplitter {
 		connection = DatabaseConnectionPool.getInstance().getConnection();
 		connection.setAutoCommit(false);
 		schema = databaseAdapter.getConnectionDetails().getSchema();
+
 
 		// try and change workspace for connection
 		if (databaseAdapter.hasVersioningSupport()) {
@@ -188,7 +192,7 @@ public class DBSplitter {
 	public void startQuery() throws SQLException, QueryBuildException, FilterException, FeatureWriteException {
 		try {
 			FeatureType cityObjectGroupType = schemaMapping.getFeatureType("CityObjectGroup", CityObjectGroupModule.v2_0_0.getNamespaceURI());
-			Map<Long, AbstractObjectType<?>> cityObjectGroups = new LinkedHashMap<>();
+			Map<Object, AbstractObjectType<?>> cityObjectGroups = new LinkedHashMap<>();
 			sequenceId = 0;
 
 			queryCityObject(cityObjectGroupType, cityObjectGroups);
@@ -222,7 +226,7 @@ public class DBSplitter {
 		}
 	}
 
-	private void queryCityObject(FeatureType cityObjectGroupType, Map<Long, AbstractObjectType<?>> cityObjectGroups) throws SQLException, QueryBuildException, FeatureWriteException {
+	private void queryCityObject(FeatureType cityObjectGroupType, Map<Object, AbstractObjectType<?>> cityObjectGroups) throws SQLException, QueryBuildException, FeatureWriteException {
 		if (!shouldRun)
 			return;
 
@@ -230,114 +234,190 @@ public class DBSplitter {
 			return;
 
 		// create query statement
+		boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value());
 		Select select = builder.buildQuery(query);
 
-		// calculate hits
-		long hits = 0;
-		if (calculateNumberMatched) {
-			log.debug("Calculating the number of matching top-level features...");
-			hits = getNumberMatched(query, connection);
-		}
+		if(is_Blazegraph){//temp for only one gmlid
+			List<PlaceHolder<?>> placeHolders = select.getInvolvedPlaceHolders();
+			int objectCount_sparql = 0;
+			writeDocumentHeader();
+			long hits = 0;
+			if (calculateNumberMatched) {
+				log.debug("Calculating the number of matching top-level features...");
+				hits = placeHolders.size();
+			}
+			Lock lock = new ReentrantLock();
+			try{
+				lock.lock();
+				for (int i  = 0; i < placeHolders.size(); ++i) {
 
-		// add spatial extent
-		if (calculateExtent) {
-			Table table = new Table(select);
-			select = new Select().addProjection(table.getColumn(MappingConstants.ID))
-					.addProjection(table.getColumn(MappingConstants.OBJECTCLASS_ID))
-					.addProjection(table.getColumn(MappingConstants.GMLID))
-					.addProjection(new Function(databaseAdapter.getSQLAdapter().resolveDatabaseOperationName("geom_extent") +
-					"(" + table.getColumn(MappingConstants.ENVELOPE) + ") over", "extent"));
-		}
 
-		// issue query
-		try (PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
-			 ResultSet rs = stmt.executeQuery()) {
-			if (rs.next()) {
-				if (calculateNumberMatched) {
-					log.info("Found " + hits + " top-level feature(s) matching the request.");
 
-					if (query.isSetCounterFilter() && query.getCounterFilter().isSetCount()) {
-						long count = query.getCounterFilter().getCount();
-						long startIndex = query.getCounterFilter().isSetStartIndex() ?query.getCounterFilter().getStartIndex() : 0;
-						long numberReturned = Math.min(Math.max(hits - startIndex, 0), count);
-						if (numberReturned < hits) {
-							log.info("Exporting " + numberReturned + " top-level feature(s) due to counter settings.");
-							hits = count;
+					Object gmlidUri = placeHolders.get(i).getValue();
+					PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
+
+					// Assign one gmlid, the predicateTokens
+					if (((String) gmlidUri).contains("*")) { // Query with * will refer to the whole database. No need to set parameters
+						// @TODO: as the preparedstatement will create different query for particular gmlid or *
+					} else {
+						stmt.setString(1, (String) gmlidUri);
+						stmt.setString(2, (String) gmlidUri);
+					}
+
+					long startTime = System.currentTimeMillis();
+					System.out.println("Processing: " + (String)gmlidUri);  // only the parameterized query
+					ResultSet rs = stmt.executeQuery();
+					long endTime = System.currentTimeMillis();
+
+
+					ArrayList<Integer> numbers = new ArrayList<>(Arrays.asList(64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26));
+
+					while (rs.next() && shouldRun) {
+
+						String id_str = rs.getString(MappingConstants.ID);
+						int objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
+						AbstractObjectType<?> objectType = schemaMapping.getAbstractObjectType(objectClassId);
+						String gmlId = rs.getString(MappingConstants.GMLID);
+
+						if (objectType == null) {
+							log.error("Failed to map the object class id '" + objectClassId + "' to an object type (ID: " + id_str + ").");
+							continue;
+						}
+
+						if (objectType.isEqualToOrSubTypeOf(cityObjectGroupType)) {
+							cityObjectGroups.put(id_str, objectType);
+
+							// register group in gml:id cache
+							if (gmlId != null && gmlId.length() > 0)
+								featureGmlIdCache.put(gmlId, id_str, "-1", false, null, objectClassId);
+
+							continue;
+						}
+
+
+						// set initial context...
+//						addWorkToQueue(id_str, objectType, sequenceId++);
+						DBSplittingResult splitter = new DBSplittingResult(id_str, objectType, sequenceId++);
+						dbWorkerPool.addWork(splitter);
+
+					}
+				}
+			}finally {
+				lock.unlock();
+			}
+
+		}else{
+			// calculate hits
+			long hits = 0;
+			if (calculateNumberMatched) {
+				log.debug("Calculating the number of matching top-level features...");
+				hits = getNumberMatched(query, connection);
+			}
+
+			// add spatial extent
+			if (calculateExtent) {
+				Table table = new Table(select);
+				select = new Select().addProjection(table.getColumn(MappingConstants.ID))
+						.addProjection(table.getColumn(MappingConstants.OBJECTCLASS_ID))
+						.addProjection(table.getColumn(MappingConstants.GMLID))
+						.addProjection(new Function(databaseAdapter.getSQLAdapter().resolveDatabaseOperationName("geom_extent") +
+								"(" + table.getColumn(MappingConstants.ENVELOPE) + ") over", "extent"));
+			}
+
+			// issue query
+			try (PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
+				 ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					if (calculateNumberMatched) {
+						log.info("Found " + hits + " top-level feature(s) matching the request.");
+
+						if (query.isSetCounterFilter() && query.getCounterFilter().isSetCount()) {
+							long count = query.getCounterFilter().getCount();
+							long startIndex = query.getCounterFilter().isSetStartIndex() ?query.getCounterFilter().getStartIndex() : 0;
+							long numberReturned = Math.min(Math.max(hits - startIndex, 0), count);
+							if (numberReturned < hits) {
+								log.info("Exporting " + numberReturned + " top-level feature(s) due to counter settings.");
+								hits = count;
+							}
+						}
+
+						if (query.isSetTiling())
+							log.info("The total number of exported features might be less due to tiling settings.");
+
+						eventDispatcher.triggerEvent(new StatusDialogProgressBar(ProgressBarEventType.INIT, (int)hits, this));
+					}
+
+					if (calculateExtent) {
+						Object extentObj = rs.getObject("extent");
+						if (!rs.wasNull() && extentObj != null) {
+							GeometryObject extent = databaseAdapter.getGeometryConverter().getEnvelope(extentObj);
+							double[] coordinates = extent.getCoordinates(0);
+
+							if (query.isSetTiling() &&
+									config.getProject().getExporter().getCityGMLOptions().getGMLEnvelope().getCityModelEnvelopeMode().isUseTileExtent()) {
+								BoundingBox tileExtent = query.getTiling().getActiveTile().getExtent();
+								coordinates[0] = tileExtent.getLowerCorner().getX();
+								coordinates[1] = tileExtent.getLowerCorner().getY();
+								coordinates[3] = tileExtent.getUpperCorner().getX();
+								coordinates[4] = tileExtent.getUpperCorner().getY();
+							}
+
+							writer.getMetadata().setSpatialExtent(getSpatialExtent(extent));
 						}
 					}
 
-					if (query.isSetTiling())
-						log.info("The total number of exported features might be less due to tiling settings.");
+					writeDocumentHeader();
 
-					eventDispatcher.triggerEvent(new StatusDialogProgressBar(ProgressBarEventType.INIT, (int)hits, this));
-				}
+					do {
+							long id = rs.getLong("id");
+							int objectClassId = rs.getInt("objectclass_id");
+							AbstractObjectType<?> objectType = schemaMapping.getAbstractObjectType(objectClassId);
+							if (objectType == null) {
+								log.error("Failed to map the object class id '" + objectClassId + "' to an object type (ID: " + id + ").");
+								continue;
+							}
 
-				if (calculateExtent) {
-					Object extentObj = rs.getObject("extent");
-					if (!rs.wasNull() && extentObj != null) {
-						GeometryObject extent = databaseAdapter.getGeometryConverter().getEnvelope(extentObj);
-						double[] coordinates = extent.getCoordinates(0);
+							if (objectType.isEqualToOrSubTypeOf(cityObjectGroupType)) {
+								String gmlId = rs.getString("gmlid");
+								cityObjectGroups.put(id, objectType);
 
-						if (query.isSetTiling() &&
-								config.getProject().getExporter().getCityGMLOptions().getGMLEnvelope().getCityModelEnvelopeMode().isUseTileExtent()) {
-							BoundingBox tileExtent = query.getTiling().getActiveTile().getExtent();
-							coordinates[0] = tileExtent.getLowerCorner().getX();
-							coordinates[1] = tileExtent.getLowerCorner().getY();
-							coordinates[3] = tileExtent.getUpperCorner().getX();
-							coordinates[4] = tileExtent.getUpperCorner().getY();
-						}
+								// register group in gml:id cache
+								if (gmlId != null && gmlId.length() > 0)
+									featureGmlIdCache.put(gmlId, id, -1, false, null, objectClassId);
 
-						writer.getMetadata().setSpatialExtent(getSpatialExtent(extent));
-					}
-				}
+								continue;
+							}
+							// set initial context...
+							DBSplittingResult splitter = new DBSplittingResult(id, objectType, sequenceId++);
+							dbWorkerPool.addWork(splitter);
 
-				writeDocumentHeader();
+					} while (rs.next() && shouldRun);
+				} else {
+					log.info("No top-level feature matches the query expression.");
 
-				do {
-					long id = rs.getLong("id");
-					int objectClassId = rs.getInt("objectclass_id");
+					if (calculateExtent
+							&& query.isSetTiling()
+							&& config.getProject().getExporter().getCityGMLOptions().getGMLEnvelope().getCityModelEnvelopeMode().isUseTileExtent()) {
+						BoundingBox extent = new BoundingBox(query.getTiling().getActiveTile().getExtent());
+						if (!extent.isSetSrs())
+							extent.setSrs(databaseAdapter.getConnectionMetaData().getReferenceSystem());
 
-					AbstractObjectType<?> objectType = schemaMapping.getAbstractObjectType(objectClassId);
-					if (objectType == null) {
-						log.error("Failed to map the object class id '" + objectClassId + "' to an object type (ID: " + id + ").");
-						continue;
-					}
-					
-					if (objectType.isEqualToOrSubTypeOf(cityObjectGroupType)) {
-						String gmlId = rs.getString("gmlid");
-						cityObjectGroups.put(id, objectType);
-
-						// register group in gml:id cache
-						if (gmlId != null && gmlId.length() > 0)
-							featureGmlIdCache.put(gmlId, id, -1, false, null, objectClassId);
-
-						continue;
+						GeometryObject extentObj = GeometryObject.createEnvelope(extent, true);
+						writer.getMetadata().setSpatialExtent(getSpatialExtent(extentObj));
 					}
 
-					// set initial context...
-					DBSplittingResult splitter = new DBSplittingResult(id, objectType, sequenceId++);
-					dbWorkerPool.addWork(splitter);
-				} while (rs.next() && shouldRun);
-			} else {
-				log.info("No top-level feature matches the query expression.");
-
-				if (calculateExtent
-						&& query.isSetTiling()
-						&& config.getProject().getExporter().getCityGMLOptions().getGMLEnvelope().getCityModelEnvelopeMode().isUseTileExtent()) {
-					BoundingBox extent = new BoundingBox(query.getTiling().getActiveTile().getExtent());
-					if (!extent.isSetSrs())
-						extent.setSrs(databaseAdapter.getConnectionMetaData().getReferenceSystem());
-
-					GeometryObject extentObj = GeometryObject.createEnvelope(extent, true);
-					writer.getMetadata().setSpatialExtent(getSpatialExtent(extentObj));
+					writeDocumentHeader();
 				}
-
-				writeDocumentHeader();
 			}
 		}
+
 	}
 
-	private void queryCityObjectGroups(FeatureType cityObjectGroupType, Map<Long, AbstractObjectType<?>> cityObjectGroups) throws SQLException, FilterException, QueryBuildException {
+	private void addWorkToQueue(String id, AbstractObjectType<?> objectType, long sequenceId) throws SQLException {
+		DBSplittingResult splitter = new DBSplittingResult(id, objectType, sequenceId++);
+		dbWorkerPool.addWork(splitter);
+	}
+	private void queryCityObjectGroups(FeatureType cityObjectGroupType, Map<Object, AbstractObjectType<?>> cityObjectGroups) throws SQLException, FilterException, QueryBuildException {
 		if (!shouldRun)
 			return;
 
@@ -447,8 +527,8 @@ public class DBSplitter {
 		if (calculateNumberMatched && hits == 0)
 			eventDispatcher.triggerEvent(new StatusDialogProgressBar(ProgressBarEventType.INIT, cityObjectGroups.size(), this));
 
-		for (Iterator<Entry<Long, AbstractObjectType<?>>> iter = cityObjectGroups.entrySet().iterator(); shouldRun && iter.hasNext(); ) {
-			Entry<Long, AbstractObjectType<?>> entry = iter.next();
+		for (Iterator<Entry<Object, AbstractObjectType<?>>> iter = cityObjectGroups.entrySet().iterator(); shouldRun && iter.hasNext(); ) {
+			Entry<Object, AbstractObjectType<?>> entry = iter.next();
 			DBSplittingResult splitter = new DBSplittingResult(entry.getKey(), entry.getValue(), sequenceId++);
 			dbWorkerPool.addWork(splitter);
 		}

@@ -130,7 +130,7 @@ public class DBDeleteWorker extends Worker<DBSplittingResult> implements EventHa
 			if (!shouldWork)
 				return;
 
-			long objectId = work.getId();
+			long objectId = (Long)work.getId();
 			long deletedObjectId;
 
 			if (config.getProject().getDeleter().getMode() == DeleteMode.TERMINATE) {

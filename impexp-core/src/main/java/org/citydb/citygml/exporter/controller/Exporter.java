@@ -168,6 +168,12 @@ public class Exporter implements EventHandler {
 				!databaseAdapter.getWorkspaceManager().existsWorkspace(workspace, true))
 			return false;
 
+		//check database is blazegraph
+		if (databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value())) {
+			log.info(writeBlazegraphConfig(BlazegraphAdapter.BLAZEGRAPH_CFG_PATH));
+			log.info(writeBlazegraphConfig(BlazegraphAdapter.BLAZEGRAPH_VOCAB_CFG_PATH));
+		}
+
 		// build query from filter settings
 		Query query;
 		try {
@@ -565,11 +571,6 @@ public class Exporter implements EventHandler {
 							shouldRun = false;
 						}					
 					}
-				}
-
-				if (databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value())) {
-					log.info(writeBlazegraphConfig(BlazegraphAdapter.BLAZEGRAPH_CFG_PATH));
-					log.info(writeBlazegraphConfig(BlazegraphAdapter.BLAZEGRAPH_VOCAB_CFG_PATH));
 				}
 
 				// show exported features

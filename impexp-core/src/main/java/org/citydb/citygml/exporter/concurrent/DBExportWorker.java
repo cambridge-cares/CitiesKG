@@ -171,9 +171,9 @@ public class DBExportWorker extends Worker<DBSplittingResult> implements EventHa
 
 			AbstractGML topLevelObject;
 			if (work.getObjectType().getObjectClassId() == MappingConstants.APPEARANCE_OBJECTCLASS_ID)
-				topLevelObject = exporter.exportGlobalAppearance(work.getId());			
+				topLevelObject = exporter.exportGlobalAppearance(Long.parseLong(work.getId().toString()));
 			else
-				topLevelObject = exporter.exportObject(work.getId(), work.getObjectType(), false);
+				topLevelObject = exporter.exportObject(Long.parseLong(work.getId().toString()), work.getObjectType(), false);
 
 			if (topLevelObject instanceof AbstractFeature) {
 				// cleanup appearances
@@ -195,7 +195,7 @@ public class DBExportWorker extends Worker<DBSplittingResult> implements EventHa
 
 				// register gml:id in cache
 				if (config.getInternal().isRegisterGmlIdInCache() && topLevelObject.isSetId())
-					exporter.putObjectUID(topLevelObject.getId(), work.getId(), work.getObjectType().getObjectClassId());
+					exporter.putObjectUID(topLevelObject.getId(), Long.parseLong(work.getId().toString()), work.getObjectType().getObjectClassId());
 				
 				// update export counter
 				exporter.updateExportCounter(topLevelObject);

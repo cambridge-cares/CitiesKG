@@ -66,9 +66,9 @@ public class XlinkBasic implements DBXlinkResolver {
 
 			if (xlink.isReverse()) {
 				ps.setLong(1, xlink.getId());
-				ps.setLong(2, entry.getId());
+				ps.setObject(2, entry.getId());
 			} else {
-				ps.setLong(1, entry.getId());
+				ps.setObject(1, entry.getId());
 				ps.setLong(2, xlink.getId());
 			}
 

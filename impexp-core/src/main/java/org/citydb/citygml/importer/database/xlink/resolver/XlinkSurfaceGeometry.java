@@ -105,7 +105,7 @@ public class XlinkSurfaceGeometry implements DBXlinkResolver {
 
 	public boolean insert(DBXlinkSurfaceGeometry xlink) throws SQLException {
 		UIDCacheEntry rootGeometryEntry = resolverManager.getGeometryId(xlink.getGmlId());
-		if (rootGeometryEntry == null || rootGeometryEntry.getRootId() == -1) {
+		if (rootGeometryEntry == null || (Integer) rootGeometryEntry.getRootId() == -1) {
 			// do not return an error in case of implicit geometries since the
 			// the implicit geometry might be a point or curve
 			return MappingConstants.IMPLICIT_GEOMETRY_TABLE.equalsIgnoreCase(xlink.getTable());
@@ -122,8 +122,8 @@ public class XlinkSurfaceGeometry implements DBXlinkResolver {
 					return false;
 
 				// check whether this geometry is referenced by another xlink
-				psSelectTmpSurfGeom.setLong(1, rootGeometryEntry.getId());
-				psSelectTmpSurfGeom.setLong(2, rootGeometryEntry.getId());
+				psSelectTmpSurfGeom.setObject(1, rootGeometryEntry.getId());
+				psSelectTmpSurfGeom.setObject(2, rootGeometryEntry.getId());
 				rs = psSelectTmpSurfGeom.executeQuery();
 
 				if (rs.next()) {
@@ -133,7 +133,7 @@ public class XlinkSurfaceGeometry implements DBXlinkResolver {
 				}
 
 				boolean reverse = rootGeometryEntry.isReverse() ^ xlink.isReverse();			
-				GeometryNode geomNode = read(rootGeometryEntry.getId(), reverse);
+				GeometryNode geomNode = read((Long)rootGeometryEntry.getId(), reverse);
 				if (geomNode == null)
 					return false;
 
@@ -170,7 +170,7 @@ public class XlinkSurfaceGeometry implements DBXlinkResolver {
 			}
 		}
 
-		psUpdateSurfGeom.setLong(1, rootGeometryEntry.getId());
+		psUpdateSurfGeom.setObject(1, rootGeometryEntry.getId());
 		psUpdateSurfGeom.addBatch();
 		if (++updateBatchCounter == resolverManager.getDatabaseAdapter().getMaxBatchSize())
 			executeUpdateSurfGeomBatch();

@@ -96,7 +96,7 @@ public class FeatureGmlIdCache implements UIDCachingModel {
 				PreparedStatement psDrain = psDrains[partition];
 
 				psDrain.setString(1, gmlId);
-				psDrain.setLong(2, entry.getValue().getId());
+				psDrain.setObject(2, entry.getValue().getId());
 				psDrain.setString(3, entry.getValue().getMapping());
 				psDrain.setInt(4, entry.getValue().getObjectClassId());
 
@@ -125,7 +125,7 @@ public class FeatureGmlIdCache implements UIDCachingModel {
 			PreparedStatement psDrain = psDrains[partition];
 
 			psDrain.setString(1, gmlId);
-			psDrain.setLong(2, entry.getValue().getId());
+			psDrain.setObject(2, entry.getValue().getId());
 			psDrain.setString(3, entry.getValue().getMapping());
 			psDrain.setInt(4, entry.getValue().getObjectClassId());
 

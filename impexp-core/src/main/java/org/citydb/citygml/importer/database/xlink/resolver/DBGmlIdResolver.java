@@ -71,7 +71,7 @@ public class DBGmlIdResolver {
 		gmlId = gmlId.replaceAll("^#", "");
 		UIDCacheEntry entry = cacheLookup(gmlId, null, cache);
 
-		if (entry == null || entry.getId() == -1) {
+		if (entry == null || Long.parseLong(entry.getId().toString()) == -1) {
 			
 			if (type == UIDCacheType.GEOMETRY) {
 				if (entry == null)
@@ -97,7 +97,7 @@ public class DBGmlIdResolver {
 		ResultSet rs = null;
 
 		try {
-			psSurfaceGeometryId.setLong(1, entry.getRootId());
+			psSurfaceGeometryId.setLong(1, Long.parseLong(entry.getRootId().toString()));
 			psSurfaceGeometryId.setString(2, entry.getMapping());
 			rs = psSurfaceGeometryId.executeQuery();
 
@@ -165,7 +165,7 @@ public class DBGmlIdResolver {
 		UIDCacheEntry entry = cache.get(gmlId);
 
 		// we get an answer and it has got some meaningful content. so we are done
-		if (entry != null && entry.getId() != -1) {
+		if (entry != null && Long.parseLong(entry.getId().toString()) != -1) {
 
 			// flip reverse attribute if necessary. since we do not want to
 			// change the entry in the gmlId cache we create a new one to do so
@@ -183,7 +183,7 @@ public class DBGmlIdResolver {
 		// if we get an answer but it just contains some mapping (be careful on how to correctly
 		// mark a mapping!) we have to ask the server again. we can have long recursive chains
 		// here, e.g. if we want to correctly resolve an orientable surface
-		if (entry != null && entry.getId() == -1 && entry.getMapping() != null) {
+		if (entry != null && Long.parseLong(entry.getId().toString()) == -1 && entry.getMapping() != null) {
 
 			// flip reverse attribute if necessary. since we do not want to
 			// change the entry in the gmlId cache we create a new one to do so
@@ -195,7 +195,7 @@ public class DBGmlIdResolver {
 						entry.getMapping(),
 						entry.getObjectClassId());
 			
-			if (entry.getRootId() == -1)
+			if (Long.parseLong(entry.getRootId().toString()) == -1)
 				entry = cacheLookup(entry.getMapping(), entry, cache);
 		}
 
