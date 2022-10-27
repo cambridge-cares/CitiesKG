@@ -10,6 +10,11 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.InferenceAgent;
 
+/**
+ * An ontology evaluation task that checks for ontology consistency.
+ *
+ * @author <a href="mailto:arkadiusz.chadzynski@cares.cam.ac.uk">Arkadiusz Chadzynski</a>
+ */
 public class ConsistencyCheckingTask extends TaxonomicReasoningTask {
   private final IRI taskIri = IRI.create(InferenceAgent.ONINF_SCHEMA + InferenceAgent.TASK_CC);
 

@@ -14,6 +14,11 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 import uk.ac.cam.cares.twa.cities.agents.InferenceAgent;
 
+/**
+ * A taxonomic reasoning task that checks for disjointness between two classes.
+ *
+ * @author <a href="mailto:arkadiusz.chadzynski@cares.cam.ac.uk">Arkadiusz Chadzynski</a>
+ */
 public class ClassDisjointnessCheckingTask extends TaxonomicReasoningTask {
   private final IRI taskIri = IRI.create(InferenceAgent.ONINF_SCHEMA + InferenceAgent.TASK_CDC);
 
@@ -52,6 +57,15 @@ public class ClassDisjointnessCheckingTask extends TaxonomicReasoningTask {
     }
   }
 
+  /**
+   * Method to check for disjointness between a class with srcIri and a class with dstIri.
+   *
+   * @param reasoner Reasoner to make inference with.
+   * @param ontoIri IRI of the Ontology
+   * @param srcIri Source class IRI
+   * @param dstIri Destination class IRI
+   * @return JSONArray with a JSONObject that contains boolean information about class disjointness
+   */
   private JSONArray getReasonerOutput(Reasoner reasoner, String ontoIri, IRI srcIri, IRI dstIri) {
     JSONArray output = new JSONArray();
     OWLDataFactory df = OWLManager.getOWLDataFactory();

@@ -14,6 +14,11 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 import uk.ac.cam.cares.twa.cities.agents.InferenceAgent;
 
+/**
+ * A taxonomic reasoning task that checks for a value restrictions on a certain property.
+ *
+ * @author <a href="mailto:arkadiusz.chadzynski@cares.cam.ac.uk">Arkadiusz Chadzynski</a>
+ */
 public class ValueRestrictionCheckingTask extends TaxonomicReasoningTask {
   protected final IRI taskIri = IRI.create(InferenceAgent.ONINF_SCHEMA + InferenceAgent.TASK_VRC);
 
@@ -52,12 +57,23 @@ public class ValueRestrictionCheckingTask extends TaxonomicReasoningTask {
     }
   }
 
+  /**
+   * Method to check whether a class with srcIri is within a domain of a property with propIri
+   * and a class with dstIri is within a range of that property.
+   *
+   * @param reasoner Reasoner to make inference with.
+   * @param ontoIri IRI of the Ontology
+   * @param srcIri Source class IRI
+   * @param dstIri Destination class IRI
+   * @return JSONArray with a JSONObject that contains boolean value restriction.
+   */
   private JSONArray getReasonerOutput(Reasoner reasoner, String ontoIri, IRI srcIri, IRI dstIri, IRI propIri) {
     JSONArray output = new JSONArray();
     OWLDataFactory df = OWLManager.getOWLDataFactory();
 
-    boolean member = reasoner.getObjectPropertyDomains(df.getOWLObjectProperty(propIri), false).containsEntity(df.getOWLClass(srcIri))
-        && reasoner.getObjectPropertyRanges(df.getOWLObjectProperty(propIri), false).containsEntity(df.getOWLClass(dstIri));
+    boolean member = reasoner.getObjectPropertyDomains(df.getOWLObjectProperty(propIri), false)
+        .containsEntity(df.getOWLClass(srcIri)) && reasoner.getObjectPropertyRanges(
+            df.getOWLObjectProperty(propIri), false).containsEntity(df.getOWLClass(dstIri));
     output.put(new JSONObject().put(ontoIri, member));
 
     return output;

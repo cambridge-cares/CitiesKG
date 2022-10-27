@@ -19,7 +19,14 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 
+/**
+ * A taxonomic reasoning task superclass that groups methods common to the other taxonomic reasoning
+ * task classes.
+ *
+ * @author <a href="mailto:arkadiusz.chadzynski@cares.cam.ac.uk">Arkadiusz Chadzynski</a>
+ */
 public abstract class TaxonomicReasoningTask implements UninitialisedDataAndResultQueueTask {
+  protected final String OWL_RESTRICTION_IRI = "http://www.w3.org/2002/07/owl#Restriction";
   protected final IRI taskIri = IRI.create("");
   protected boolean stop = false;
   protected BlockingQueue<Map<String, JSONArray>> dataQueue;
@@ -57,6 +64,13 @@ public abstract class TaxonomicReasoningTask implements UninitialisedDataAndResu
     stop = true;
   }
 
+  /**
+   * Creates OWL API model of an ontology represents as s-p-o triples in JSONArray.
+   *
+   * @param data S-P-O triples of an Ontology, in JSONArray format.
+   * @return ontology modeled in OWLAPI.
+   * @throws OWLOntologyCreationException
+   */
   protected OWLOntology createModel(JSONArray data) throws OWLOntologyCreationException {
     String ntriples = prepareNtriples(data);
 
@@ -65,6 +79,14 @@ public abstract class TaxonomicReasoningTask implements UninitialisedDataAndResu
         new OWLOntologyLoaderConfiguration());
   }
 
+  /**
+   * Converts JSONArray S-P-O ontology representation in triples to N-Triples format.
+   * Performs string replacements to do that. "Deskolemises" restriction IRIs to blank nodes for
+   * the purpose of N-Triples to be parsed correctly by OWLAPI.
+   *
+   * @param data S-P-O triples of an Ontology, in JSONArray format.
+   * @return S-P-O triples of an Ontology, in N-Triples format.
+   */
   private String prepareNtriples(JSONArray data) {
     String ntriples = "";
     ArrayList<String> skolemized = new ArrayList<>();
@@ -76,7 +98,7 @@ public abstract class TaxonomicReasoningTask implements UninitialisedDataAndResu
       String predicate = "<" + obj.getString("p") + ">";
       String object = obj.getString("o");
 
-      if (object.equals("http://www.w3.org/2002/07/owl#Restriction")) {
+      if (object.equals(OWL_RESTRICTION_IRI)) {
         skolemized.add(subject);
       }
 

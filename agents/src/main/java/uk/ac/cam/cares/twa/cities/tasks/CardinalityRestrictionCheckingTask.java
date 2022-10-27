@@ -21,6 +21,12 @@ import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 import uk.ac.cam.cares.twa.cities.agents.InferenceAgent;
 
+/**
+ * A taxonomic reasoning task that checks if there is any cardinality restriction for a specific class
+ * on a certain object property relating its instances to instances of another class.
+ *
+ * @author <a href="mailto:arkadiusz.chadzynski@cares.cam.ac.uk">Arkadiusz Chadzynski</a>
+ */
 public class CardinalityRestrictionCheckingTask extends TaxonomicReasoningTask {
   protected final IRI taskIri = IRI.create(InferenceAgent.ONINF_SCHEMA + InferenceAgent.TASK_CRC);
 
@@ -59,6 +65,17 @@ public class CardinalityRestrictionCheckingTask extends TaxonomicReasoningTask {
     }
   }
 
+  /**
+   * Method to check for a cardinality restriction for a specific class with srcIri on a certain property
+   * with propIri relating its instances to instances of a class with dstIri.
+   *
+   * @param reasoner Reasoner to make inference with.
+   * @param ontoIri IRI of the Ontology
+   * @param srcIri Source class IRI
+   * @param dstIri Destination class IRI
+   * @param propIri Property IRI
+   * @return JSONArray with a JSONObject that contains information about any cardinality restrictions or false
+   */
   private JSONArray getReasonerOutput(Reasoner reasoner, String ontoIri, IRI srcIri, IRI dstIri, IRI propIri) {
     JSONArray output = new JSONArray();
     JSONObject outputMsg = new JSONObject().put(ontoIri, false);
