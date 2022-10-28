@@ -254,7 +254,7 @@
                 border-radius: 4px;
                 color: #fff;
                 font-family: sans-serif;
-                font-size: 9pt;
+                font-size: 13px;
                 overflow-y: scroll;
                 vertical-align: top;
                 scrollbar-gutter: stable;
@@ -283,9 +283,8 @@
             }
             .querySentence {
                 float: left;
-                height:26px;
+                height:24px;
                 line-height: 28px;
-                font-size: 16px;
                 width: max-content;
                 margin: 2px;
                 padding: 2px;
@@ -378,7 +377,7 @@
                 border: 2px solid #1E90FFFF;
                 border-radius: 5px;
                 white-space: nowrap;
-                font-size: 16px;
+                font-size: 15px;
             }
             .ProgrammaticPlotFinder-submitButton:hover {
                 background: #1E90FFFF;
@@ -520,57 +519,49 @@
             <a href="#" class="navLink" id="demo3" onclick="chooseDemoType(this)">Demonstration 3</a>
         </div>
 
-		<div id="ProgrammaticPlotFinder">
+		    <div id="ProgrammaticPlotFinder">
             <button class="ProgrammaticPlotFinder-submitButton" onclick="openSidebar()">☰ <span id="demoTitle">Programmatic Plot Finder</span></button>
             <div id="demo" class="programmeFinder_toolbox">
-                <div id="programmeFinder_toolbox_upper" style="height: 35px">
+                <div id="programmeFinder_toolbox_upper" style="height: 50%">
                     <button id="exampleQuery" class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams()">Try Example Query</button>
                     <div id="querySentence" class="querySentence">Find plots that could allow...</div>
                 </div>
-                <div id="programmeFinder_toolbox_bottom" style="height: 35px">
-                    <div id="QueryBox" style="float: left">
-                        <select id="DevelopmentType" class="cesium-button" onchange="showChooseDevType()" style="height:30px;font-size: 16px; padding:3px" title="chooses the types of query scenario to explore">
-                            <option value="ViewAll">Search plots...</option>
+                <div id="programmeFinder_toolbox_bottom" style="height: 50%">
+                    <div id="QueryBox" style="float: left; ">
+                        <select id="DevelopmentType" class="cesium-button" onchange="showChooseDevType()" style="height:30px; font-size: 15px; padding:3px" title="Choose the type of query scenario to explore, the selection boxes will be adjusted">
+                            <option value="ViewAll" selected disabled>Search plots...</option>
                             <option value="OntozoningUses">by allowable land uses</option>
                             <option value="OntozoingProgrammes">by allowable programmes</option>
                             <option value="GfaUses">by allowable GFA (per land use)</option>
                             <option value="GfaProgrammes">by allowable GFA (per programme)</option>
-                            <option value="ViewAll">all search types (*)</option>
+                            <!--<option value="ViewAll">all search types (*)</option>-->
                         </select>
                     </div>
                     <div id="UsesBox" style="float: left">
-                        <div>
-                            <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
-                                <div style="width:240px" class="cesium-button" title ="Land use is a high-level term for the set of activities &#010;and developments that are allowed in a certain zoning type">Choose Land Use ...<div id='use_arrow' class="arrow down"></div></div>
-                            </div>
-                            <div id="choose_uses" class="finder_dynamic_box" ></div>
+                        <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
+                            <div style="width:240px" class="cesium-button" title ="Land use is a high-level term for the set of activities &#010;and developments that are allowed in a certain zoning type">Choose Land Use ...<div id='use_arrow' class="arrow down"></div></div>
                         </div>
+                        <div id="choose_uses" class="finder_dynamic_box" ></div>
                     </div>
                     <div id="ProgrammesBox" style="float: left">
-                        <div>
-                            <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
-                                <div style="width:240px" class="cesium-button" title="Programme is a term for specific activities and developments &#010;that may be allowed across many zoning types">Choose Programme ...<div id='programme_arrow' class="arrow down"></div></div>
-                            </div>
-                            <div id="choose_programmes" class="finder_dynamic_box" onblur="showChooseProgrammes()"></div>
+                        <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
+                            <div style="width:240px" class="cesium-button" title="Programme is a term for specific activities and developments &#010;that may be allowed across many zoning types">Choose Programme ...<div id='programme_arrow' class="arrow down"></div></div>
                         </div>
+                        <div id="choose_programmes" class="finder_dynamic_box" onblur="showChooseProgrammes()"></div>
                     </div>
                     <div id="GfaBox" style="float: left">
-                        <div>
-                            <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
-                                <div style="width:240px" class="cesium-button" title="Gross Floor Area is a term defining the total floor area contained within &#010; a building’s outer edges that excludes empty spaces">Assign Gross Floor Area (GFA) ...<div id='gfa_arrow' class="arrow down"></div></div>
-                            </div>
-                            <div id="assignGFA" class="finder_dynamic_box" onchange="getQuerySentence()">
-                                <div>
-                                    <div class='text_gfa'>Total Gross Floor Area (GFA)</div>
-                                    <div class='text_input' style="width: 80px" onchange="validateGFAInputs()"><input id="totalGFA" type='text' maxlength="10" size="3"></div>
-                                    <hr size="1">
-                                </div>
-                            </div>
+                        <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
+                            <div style="width:240px" class="cesium-button" title="Gross Floor Area is a term defining the total floor area contained within &#010; a building’s outer edges that excludes empty spaces">Assign Gross Floor Area (GFA) ...<div id='gfa_arrow' class="arrow down"></div></div>
+                        </div>
+                        <div id="assignGFA" class="finder_dynamic_box" onchange="getQuerySentence()">
+                            <div class='text_gfa'>Total Gross Floor Area (GFA)</div>
+                            <div class='text_input' style="width: 80px" onchange="validateGFAInputs()"><input id="totalGFA" type='text' maxlength="10" size="3"></div>
+                            <hr size="1">
                         </div>
                     </div>
                     <div id='CapBox' style="float: left">
-                        <select id="CapType" class="cesium-button" onchange="getQuerySentence()" style="height: 30px; font-size: 16px; padding: 3px" title="chooses the amount of plots to show">Show ...
-                            <option value="no_cap">Show ...</option>
+                        <select id="CapType" class="cesium-button" onchange="getQuerySentence()" style="height: 30px; font-size: 15px; padding: 3px" title="chooses the amount of plots to show">
+                            <option selected disabled>Show ...</option>
                             <option value="max_cap">only the 10 largest plots (by GFA)</option>
                             <option value="min_cap">only the 10 smallest plots (by GFA)</option>
                             <option value="no_cap">all results (*)</option>
@@ -580,6 +571,7 @@
                 </div>
             </div>
         </div>
+
         <div id="uiMenu">
             <div onclick="showToolbox()">
                 <select class="cesium-button">
