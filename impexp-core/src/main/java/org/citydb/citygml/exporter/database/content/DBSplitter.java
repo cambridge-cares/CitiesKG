@@ -242,68 +242,69 @@ public class DBSplitter {
 			int objectCount_sparql = 0;
 			writeDocumentHeader();
 			long hits = 0;
-			if (calculateNumberMatched) {
-				log.debug("Calculating the number of matching top-level features...");
-				hits = placeHolders.size();
-			}
-			Lock lock = new ReentrantLock();
-			try{
-				lock.lock();
-				for (int i  = 0; i < placeHolders.size(); ++i) {
+
+			for (int i  = 0; i < placeHolders.size(); ++i) {
+
+				Object gmlidUri = placeHolders.get(i).getValue();
+				PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
+
+				// Assign one gmlid, the predicateTokens
+				if (((String) gmlidUri).contains("*")) { // Query with * will refer to the whole database. No need to set parameters
+					// @TODO: as the preparedstatement will create different query for particular gmlid or *
+				} else {
+					stmt.setString(1, (String) gmlidUri);
+					stmt.setString(2, (String) gmlidUri);
+				}
+
+				long startTime = System.currentTimeMillis();
+				System.out.println("Processing: " + (String)gmlidUri);  // only the parameterized query
+				ResultSet rs = stmt.executeQuery();
+				long endTime = System.currentTimeMillis();
 
 
+				ArrayList<Integer> numbers = new ArrayList<>(Arrays.asList(64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26));
+				if (rs.next()) {
 
-					Object gmlidUri = placeHolders.get(i).getValue();
-					PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
+					if (calculateNumberMatched) {
+						log.debug("Calculating the number of matching top-level features...");
+						hits = placeHolders.size();
+						log.info("Found " + hits + " top-level feature(s) matching the request.");
 
-					// Assign one gmlid, the predicateTokens
-					if (((String) gmlidUri).contains("*")) { // Query with * will refer to the whole database. No need to set parameters
-						// @TODO: as the preparedstatement will create different query for particular gmlid or *
-					} else {
-						stmt.setString(1, (String) gmlidUri);
-						stmt.setString(2, (String) gmlidUri);
-					}
+						if (query.isSetTiling())
+							log.info("The total number of exported features might be less due to tiling settings.");
 
-					long startTime = System.currentTimeMillis();
-					System.out.println("Processing: " + (String)gmlidUri);  // only the parameterized query
-					ResultSet rs = stmt.executeQuery();
-					long endTime = System.currentTimeMillis();
-
-
-					ArrayList<Integer> numbers = new ArrayList<>(Arrays.asList(64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26));
-
-					while (rs.next() && shouldRun) {
-
-						String id_str = rs.getString(MappingConstants.ID);
-						int objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
-						AbstractObjectType<?> objectType = schemaMapping.getAbstractObjectType(objectClassId);
-						String gmlId = rs.getString(MappingConstants.GMLID);
-
-						if (objectType == null) {
-							log.error("Failed to map the object class id '" + objectClassId + "' to an object type (ID: " + id_str + ").");
-							continue;
-						}
-
-						if (objectType.isEqualToOrSubTypeOf(cityObjectGroupType)) {
-							cityObjectGroups.put(id_str, objectType);
-
-							// register group in gml:id cache
-							if (gmlId != null && gmlId.length() > 0)
-								featureGmlIdCache.put(gmlId, id_str, "-1", false, null, objectClassId);
-
-							continue;
-						}
-
-
-						// set initial context...
-//						addWorkToQueue(id_str, objectType, sequenceId++);
-						DBSplittingResult splitter = new DBSplittingResult(id_str, objectType, sequenceId++);
-						dbWorkerPool.addWork(splitter);
-
+						eventDispatcher.triggerEvent(new StatusDialogProgressBar(ProgressBarEventType.INIT, (int) hits, this));
 					}
 				}
-			}finally {
-				lock.unlock();
+
+				do {
+
+					String id_str = rs.getString(MappingConstants.ID);
+					int objectClassId = rs.getInt(MappingConstants.OBJECTCLASS_ID);
+					AbstractObjectType<?> objectType = schemaMapping.getAbstractObjectType(objectClassId);
+					String gmlId = rs.getString(MappingConstants.GMLID);
+
+					if (objectType == null) {
+						log.error("Failed to map the object class id '" + objectClassId + "' to an object type (ID: " + id_str + ").");
+						continue;
+					}
+
+					if (objectType.isEqualToOrSubTypeOf(cityObjectGroupType)) {
+						cityObjectGroups.put(id_str, objectType);
+
+						// register group in gml:id cache
+						if (gmlId != null && gmlId.length() > 0)
+							featureGmlIdCache.put(gmlId, id_str, "-1", false, null, objectClassId);
+
+						continue;
+					}
+
+
+					// set initial context...
+					DBSplittingResult splitter = new DBSplittingResult(id_str, objectType, sequenceId++);
+					dbWorkerPool.addWork(splitter);
+
+				}while (rs.next() && shouldRun);
 			}
 
 		}else{
@@ -413,10 +414,6 @@ public class DBSplitter {
 
 	}
 
-	private void addWorkToQueue(String id, AbstractObjectType<?> objectType, long sequenceId) throws SQLException {
-		DBSplittingResult splitter = new DBSplittingResult(id, objectType, sequenceId++);
-		dbWorkerPool.addWork(splitter);
-	}
 	private void queryCityObjectGroups(FeatureType cityObjectGroupType, Map<Object, AbstractObjectType<?>> cityObjectGroups) throws SQLException, FilterException, QueryBuildException {
 		if (!shouldRun)
 			return;
