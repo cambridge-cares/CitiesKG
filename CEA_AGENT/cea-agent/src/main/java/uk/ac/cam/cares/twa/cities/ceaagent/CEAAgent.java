@@ -7,6 +7,8 @@ import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeries;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeriesClient;
+import uk.ac.cam.cares.jps.base.query.RemoteRDBStoreClient;
+import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.twa.cities.tasks.*;
 import org.json.JSONObject;
 import javax.ws.rs.BadRequestException;
@@ -20,6 +22,7 @@ import javax.servlet.annotation.WebServlet;
 import java.util.concurrent.*;
 import java.net.URISyntaxException;
 import java.util.stream.Stream;
+import java.sql.Connection;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
@@ -80,6 +83,9 @@ public class CEAAgent extends JPSAgent {
     private TimeSeriesClient<OffsetDateTime> tsClient;
     public static final String timeUnit = OffsetDateTime.class.getSimpleName();
     private static final String FS = System.getProperty("file.separator");
+    private RemoteRDBStoreClient rdbStoreClient;
+    private RemoteStoreClient storeClient;
+    private Connection conn;
 
     // Variables fetched from CEAAgentConfig.properties file.
     private String ocgmlUri;
@@ -105,6 +111,8 @@ public class CEAAgent extends JPSAgent {
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
         if (validateInput(requestParams)) {
+            setRDBConnection(getTimeSeriesPropsPath());
+
             requestUrl = requestParams.getString(KEY_REQ_URL);
             String uriArrayString = requestParams.get(KEY_IRI).toString();
             JSONArray uriArray = new JSONArray(uriArrayString);
@@ -420,38 +428,27 @@ public class CEAAgent extends JPSAgent {
      * @param fixedIris map containing time series iris mapped to measurement type
      */
     private void createTimeSeries(String uriString, LinkedHashMap<String,String> fixedIris ) {
-        try{
-            String timeseries_props = getTimeSeriesPropsPath();
+        tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
 
-            tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, timeseries_props);
-
-            // Create a iri for each measurement
-            List<String> iris = new ArrayList<>();
-            for(String measurement: TIME_SERIES){
-                String iri = getGraph(uriString,ENERGY_PROFILE)+measurement+"_"+UUID.randomUUID()+ "/";
-                iris.add(iri);
-                fixedIris.put(measurement, iri);
-            }
-
-            // Check whether IRIs have a time series linked and if not initialize the corresponding time series
-            if(!timeSeriesExist(iris)) {
-                // All values are doubles
-                List<Class<?>> classes =  new ArrayList<>();
-                for(int i=0; i<iris.size(); i++){
-                    classes.add(Double.class);
-                }
-                // Initialize the time series
-                tsClient.initTimeSeries(iris, classes, timeUnit);
-                //LOGGER.info(String.format("Initialized time series with the following IRIs: %s", String.join(", ", iris)));
-            }
-
-
-        } catch (IOException e)
-        {
-            e.printStackTrace();
-            throw new JPSRuntimeException(e);
+        // Create a iri for each measurement
+        List<String> iris = new ArrayList<>();
+        for(String measurement: TIME_SERIES){
+            String iri = getGraph(uriString,ENERGY_PROFILE)+measurement+"_"+UUID.randomUUID()+ "/";
+            iris.add(iri);
+            fixedIris.put(measurement, iri);
         }
 
+        // Check whether IRIs have a time series linked and if not initialize the corresponding time series
+        if(!timeSeriesExist(iris)) {
+            // All values are doubles
+            List<Class<?>> classes =  new ArrayList<>();
+            for(int i=0; i<iris.size(); i++){
+                classes.add(Double.class);
+            }
+            // Initialize the time series
+            tsClient.initTimeSeries(iris, classes, timeUnit, conn, "StepwiseCumulative", null, null);
+            //LOGGER.info(String.format("Initialized time series with the following IRIs: %s", String.join(", ", iris)));
+        }
     }
 
     /**
@@ -468,28 +465,20 @@ public class CEAAgent extends JPSAgent {
         }
         // If CreateTimeSeries has not been run, get time series client
         if(tsClient==null){
-            try{
-                String timeseries_props = getTimeSeriesPropsPath();
-
-                tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, timeseries_props);
-            } catch (IOException e)
-            {
-                e.printStackTrace();
-                throw new JPSRuntimeException(e);
-            }
+            tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
         }
         TimeSeries<OffsetDateTime> currentTimeSeries = new TimeSeries<>(times, iris, values);
-        OffsetDateTime endDataTime = tsClient.getMaxTime(currentTimeSeries.getDataIRIs().get(0));
-        OffsetDateTime beginDataTime = tsClient.getMinTime(currentTimeSeries.getDataIRIs().get(0));
+        OffsetDateTime endDataTime = tsClient.getMaxTime(currentTimeSeries.getDataIRIs().get(0), conn);
+        OffsetDateTime beginDataTime = tsClient.getMinTime(currentTimeSeries.getDataIRIs().get(0), conn);
 
         // Delete old data if exists
         if (endDataTime != null) {
             for(Integer i=0; i<currentTimeSeries.getDataIRIs().size(); i++){
-                tsClient.deleteTimeSeriesHistory(currentTimeSeries.getDataIRIs().get(i), beginDataTime, endDataTime);
+                tsClient.deleteTimeSeriesHistory(currentTimeSeries.getDataIRIs().get(i), beginDataTime, endDataTime, conn);
             }
         }
         // Add New data
-        tsClient.addTimeSeriesData(currentTimeSeries);
+        tsClient.addTimeSeriesData(currentTimeSeries, conn);
     }
 
     /**
@@ -503,7 +492,7 @@ public class CEAAgent extends JPSAgent {
         // If any of the IRIs does not have a time series the time series does not exist
         for(String iri: iris) {
             try {
-                if (!tsClient.checkDataHasTimeSeries(iri)) {
+                if (!tsClient.checkDataHasTimeSeries(iri, conn)) {
                     return false;
                 }
                 // If central RDB lookup table ("dbTable") has not been initialised, the time series does not exist
@@ -1361,19 +1350,11 @@ public class CEAAgent extends JPSAgent {
      * @return time series data
      */
     public TimeSeries<OffsetDateTime> retrieveData(String dataIri){
-        try {
-            String timeseries_props = getTimeSeriesPropsPath();
-
-            tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, timeseries_props);
-            List<String> iris = new ArrayList<>();
-            iris.add(dataIri);
-            TimeSeries<OffsetDateTime> data = tsClient.getTimeSeries(iris);
-            return data;
-
-        } catch(IOException e){
-            e.printStackTrace();
-            throw new JPSRuntimeException(e);
-        }
+        tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
+        List<String> iris = new ArrayList<>();
+        iris.add(dataIri);
+        TimeSeries<OffsetDateTime> data = tsClient.getTimeSeries(iris, conn);
+        return data;
     }
 
     /**
@@ -1624,6 +1605,8 @@ public class CEAAgent extends JPSAgent {
             props.setProperty("sparql.query.endpoint", queryEndpoint + "namespace" + "/" + namespace + "/" + "sparql");
             props.setProperty("sparql.update.endpoint", updateEndpoint + "namespace" + "/" + namespace + "/" + "sparql");
 
+            storeClient = new RemoteStoreClient(props.getProperty("sparql.query.endpoint"), props.getProperty("sparql.update.endpoint"));
+
             props.store(out, null);
             out.close();
         }
@@ -1647,6 +1630,26 @@ public class CEAAgent extends JPSAgent {
             }
         }
         catch (URISyntaxException e) {
+            e.printStackTrace();
+            throw new JPSRuntimeException(e);
+        }
+    }
+
+    /**
+     * @param path timeseriesclient.properties path as string
+     * Sets rdbStoreClient with the database url, username, and password from the file at path. Also sets conn to the connection established by rdbStoreclient.
+     */
+    protected void setRDBConnection(String path){
+        try {
+            FileInputStream in = new FileInputStream(path);
+            Properties props = new Properties();
+            props.load(in);
+            in.close();
+
+            rdbStoreClient = new RemoteRDBStoreClient(props.getProperty("db.url"), props.getProperty("db.user"), props.getProperty("db.password"));
+            conn = rdbStoreClient.getConnection();
+        }
+        catch (Exception e) {
             e.printStackTrace();
             throw new JPSRuntimeException(e);
         }
