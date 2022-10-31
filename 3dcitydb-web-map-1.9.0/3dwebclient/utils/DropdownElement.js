@@ -21,67 +21,68 @@ function buildQuery(predicate, may_predicate){
 	return query
 }
 
-function getDropdownElementsLocal(predicate, may_predicate, element_type, dropdown_type){
-	if (predicate.includes("Programme")){
-		fetch('../3dwebclient/exported_singapore/dropdownMenu/programmes.txt')
-		.then(res => {
-			return res.text();
-		})
-		.then(function (data){
-			processDropdownElementsLocal(data, predicate, element_type, dropdown_type);
-			//console.log("Programme: " + data);
-		})}
-	else if(predicate.includes("Use")){
-		let url = "../3dwebclient/exported_singapore/dropdownMenu/uses.txt";
-		fetch(url)
-		.then(res => {
-			return res.text();
-		}).then(function (data){
-			processDropdownElementsLocal(data, predicate, element_type, dropdown_type);
-			//console.log("Uses: "+ data);
-		})}
+// To check if the KEY predicate already exists in the local starage
+function ifDropdownElementExists(predicate){
+	if(localStorage.getItem(predicate) != null){
+		return true;
+	}else {
+		return false;
+	}
 }
 
-function processDropdownElementsLocal(data, predicate, element_type, dropdown_type){
-
-	var checkbox_lines = [];
-	var results = data.split('\r');
-	for (let index in results) {
-		var checkbox_line = removePrefix(results[index]);
-		checkbox_lines.push(checkbox_line);
+function storeDropdownElements(predicate, results){
+	var resultsLength = results.length;
+	var localData = results[0]["g"];
+	for (let index = 1; index < resultsLength; ++index) {
+		localData = localData.concat('\r',results[index]["g"]);
 	}
-	checkbox_lines.sort();
-	for (let index in checkbox_lines) {
-		appendElement(checkbox_lines[index], predicate, element_type, dropdown_type)
-	}
+	localStorage.setItem(predicate, localData);
 }
 
 function getDropdownElements(predicate, may_predicate, element_type, dropdown_type) {
-	$.ajax({
-		url:"http://www.theworldavatar.com:83/access-agent/access",
-		//url:"http://localhost:48888/access-agent/access",
-		type: 'POST',
-		data: JSON.stringify({targetresourceiri:CONTEXT + "-" + CITY , sparqlquery: buildQuery(predicate, may_predicate)}),
-		//data: JSON.stringify({targetresourceiri:"http://localhost:48888/test" , sparqlquery: buildQuery(predicate)}),
-		dataType: 'json',
-		contentType: 'application/json',
-		success: function(data){  //function(data, status_message, xhr)
-			console.log(data["result"])
-			var results = JSON.parse(data["result"]);
-			var checkbox_lines = [];
-			for (let index in results) {
-				var checkbox_line = removePrefix(results[index]["g"]);
-				checkbox_lines.push(checkbox_line);
-			}
-			checkbox_lines.sort();
-			for (let index in checkbox_lines) {
-				appendElement(checkbox_lines[index], predicate, element_type, dropdown_type)
-			}
-		},
-		error: function(XMLHttpRequest, textStatus, errorThrown) {
-			alert("Status: " + textStatus); alert("Error: " + errorThrown);
+
+	// check if the dropdownElement list already exists in the LocalStorage
+	// Warning: In order to get any update in TWA effective on WMC, the local storage need to be deleted.
+	if (ifDropdownElementExists(predicate)){
+		var dropdownData = localStorage.getItem(predicate);
+		var checkbox_lines = [];
+		var results = dropdownData.split('\r');
+		for (let index in results) {
+			var checkbox_line = removePrefix(results[index]);
+			checkbox_lines.push(checkbox_line);
 		}
-	});
+		checkbox_lines.sort();
+		for (let index in checkbox_lines) {
+			appendElement(checkbox_lines[index], predicate, element_type, dropdown_type)
+		}
+	} else {
+		$.ajax({
+			url:"http://www.theworldavatar.com:83/access-agent/access",
+			//url:"http://localhost:48888/access-agent/access",
+			type: 'POST',
+			data: JSON.stringify({targetresourceiri:CONTEXT + "-" + CITY , sparqlquery: buildQuery(predicate, may_predicate)}),
+			//data: JSON.stringify({targetresourceiri:"http://localhost:48888/test" , sparqlquery: buildQuery(predicate)}),
+			dataType: 'json',
+			contentType: 'application/json',
+			success: function(data){  //function(data, status_message, xhr)
+				//console.log(data["result"])
+				var results = JSON.parse(data["result"]);
+				var checkbox_lines = [];
+				storeDropdownElements(predicate, results);
+				for (let index in results) {
+					var checkbox_line = removePrefix(results[index]["g"]);
+					checkbox_lines.push(checkbox_line);
+				}
+				checkbox_lines.sort();
+				for (let index in checkbox_lines) {
+					appendElement(checkbox_lines[index], predicate, element_type, dropdown_type)
+				}
+			},
+			error: function(XMLHttpRequest, textStatus, errorThrown) {
+				alert("Status: " + textStatus); alert("Error: " + errorThrown);
+			}
+		});
+	}
 }
 
 function appendElement(line, predicate, element_type, dropdown_type){
@@ -136,8 +137,6 @@ function validateGFAInputs(){
 	}
 	return true;
 }
-
-
 
 function getQuerySentence(){
 	var sentence = "Find plots that could allow...";
