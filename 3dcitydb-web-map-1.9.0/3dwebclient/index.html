@@ -529,27 +529,27 @@
                 <div id="programmeFinder_toolbox_bottom" style="height: 50%">
                     <div id="QueryBox" style="float: left; ">
                         <select id="DevelopmentType" class="cesium-button" onchange="showChooseDevType()" style="height:30px; font-size: 15px; padding:3px" title="Choose the type of query scenario to explore, the selection boxes will be adjusted">
-                            <option value="ViewAll" selected disabled>Search plots...</option>
+                            <option value="" selected disabled>Search plots...</option>
                             <option value="OntozoningUses">by allowable land uses</option>
                             <option value="OntozoingProgrammes">by allowable programmes</option>
                             <option value="GfaUses">by allowable GFA (per land use)</option>
                             <option value="GfaProgrammes">by allowable GFA (per programme)</option>
-                            <!--<option value="ViewAll">all search types (*)</option>-->
+                            <option value="ViewAll">show all search types (*)</option>
                         </select>
                     </div>
-                    <div id="UsesBox" style="float: left">
+                    <div id="UsesBox" style="float: left; display:none;">
                         <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
                             <div style="width:240px" class="cesium-button" title ="Land use is a high-level term for the set of activities &#010;and developments that are allowed in a certain zoning type">Choose Land Use ...<div id='use_arrow' class="arrow down"></div></div>
                         </div>
                         <div id="choose_uses" class="finder_dynamic_box" ></div>
                     </div>
-                    <div id="ProgrammesBox" style="float: left">
+                    <div id="ProgrammesBox" style="float: left; display:none;">
                         <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
                             <div style="width:240px" class="cesium-button" title="Programme is a term for specific activities and developments &#010;that may be allowed across many zoning types">Choose Programme ...<div id='programme_arrow' class="arrow down"></div></div>
                         </div>
                         <div id="choose_programmes" class="finder_dynamic_box" onblur="showChooseProgrammes()"></div>
                     </div>
-                    <div id="GfaBox" style="float: left">
+                    <div id="GfaBox" style="float: left; display:none;">
                         <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
                             <div style="width:240px" class="cesium-button" title="Gross Floor Area is a term defining the total floor area contained within &#010; a building’s outer edges that excludes empty spaces">Assign Gross Floor Area (GFA) ...<div id='gfa_arrow' class="arrow down"></div></div>
                         </div>
@@ -559,7 +559,7 @@
                             <hr size="1">
                         </div>
                     </div>
-                    <div id='CapBox' style="float: left">
+                    <div id='CapBox' style="float: left; display:none;">
                         <select id="CapType" class="cesium-button" onchange="getQuerySentence()" style="height: 30px; font-size: 15px; padding: 3px" title="chooses the amount of plots to show">
                             <option selected disabled>Show ...</option>
                             <option value="max_cap">only the 10 largest plots (by GFA)</option>
