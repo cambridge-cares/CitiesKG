@@ -30,6 +30,7 @@ package org.citydb.citygml.exporter.database.content;
 import org.citydb.citygml.exporter.CityGMLExportException;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.schema.TableEnum;
+import org.citydb.database.schema.mapping.AbstractObjectType;
 import org.citydb.database.schema.mapping.FeatureType;
 import org.citydb.query.filter.lod.LodFilter;
 import org.citydb.query.filter.lod.LodIterator;
@@ -47,11 +48,9 @@ import org.citygml4j.model.citygml.building.Door;
 import org.citygml4j.model.citygml.building.IntBuildingInstallation;
 import org.citygml4j.model.citygml.building.OpeningProperty;
 import org.citygml4j.model.citygml.building.Room;
-import org.citygml4j.model.citygml.core.Address;
-import org.citygml4j.model.citygml.core.AddressProperty;
-import org.citygml4j.model.citygml.core.ImplicitGeometry;
-import org.citygml4j.model.citygml.core.ImplicitRepresentationProperty;
+import org.citygml4j.model.citygml.core.*;
 import org.citygml4j.model.gml.GMLClass;
+import org.citygml4j.model.gml.base.AbstractGML;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurface;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
 import org.citygml4j.model.module.citygml.CityGMLModuleType;
@@ -60,12 +59,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public class DBThematicSurface extends AbstractFeatureExporter<AbstractBoundarySurface> {
 	private DBSurfaceGeometry geometryExporter;
@@ -146,6 +141,11 @@ public class DBThematicSurface extends AbstractFeatureExporter<AbstractBoundaryS
 
 	protected Collection<AbstractBoundarySurface> doExport(Room parent, long parentId) throws CityGMLExportException, SQLException {
 		return doExport(parentId, null, null, getOrCreateStatement("room_id"));
+	}
+
+	@Override
+	protected boolean doExport(AbstractBuilding object, String id, FeatureType featureType) throws CityGMLExportException, SQLException {
+		return false;
 	}
 
 	@Override
@@ -386,4 +386,38 @@ public class DBThematicSurface extends AbstractFeatureExporter<AbstractBoundaryS
 		}
 	}
 
+	@Override
+	protected Collection<AbstractBuilding> doExport(String id, AbstractBuilding root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException {
+		return null;
+	}
+
+	@Override
+	public void doExport(AbstractCityObject cityObject, long cityObjectId, HashSet<Long> generalizesTos) throws CityGMLExportException, SQLException {
+
+	}
+
+	@Override
+	public void doExport(AbstractCityObject cityObject, String cityObjectId, HashSet<Long> generalizesTos) throws CityGMLExportException, SQLException {
+
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, long objectId, AbstractObjectType<?> objectType) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, String objectId, AbstractObjectType<?> objectType) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, String objectId, AbstractObjectType<?> objectType, ProjectionFilter projectionFilter) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public void doExport(AbstractCityObject cityObject, String cityObjectId, ProjectionFilter projectionFilter) throws SQLException {
+
+	}
 }

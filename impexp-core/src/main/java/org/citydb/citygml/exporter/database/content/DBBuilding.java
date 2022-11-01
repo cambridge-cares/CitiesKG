@@ -31,7 +31,11 @@ import org.citydb.citygml.exporter.CityGMLExportException;
 import org.citydb.citygml.exporter.util.AttributeValueSplitter;
 import org.citydb.citygml.exporter.util.AttributeValueSplitter.SplitValue;
 import org.citydb.config.geometry.GeometryObject;
+import org.citydb.database.adapter.AbstractDatabaseAdapter;
+import org.citydb.database.adapter.blazegraph.StatementTransformer;
+import org.citydb.database.connection.DatabaseConnectionPool;
 import org.citydb.database.schema.TableEnum;
+import org.citydb.database.schema.mapping.AbstractObjectType;
 import org.citydb.database.schema.mapping.FeatureType;
 import org.citydb.query.filter.lod.LodFilter;
 import org.citydb.query.filter.lod.LodIterator;
@@ -56,6 +60,7 @@ import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.Address;
 import org.citygml4j.model.citygml.core.AddressProperty;
 import org.citygml4j.model.gml.GMLClass;
+import org.citygml4j.model.gml.base.AbstractGML;
 import org.citygml4j.model.gml.basicTypes.Code;
 import org.citygml4j.model.gml.basicTypes.DoubleOrNull;
 import org.citygml4j.model.gml.basicTypes.MeasureOrNullList;
@@ -67,19 +72,15 @@ import org.citygml4j.model.gml.geometry.primitives.SolidProperty;
 import org.citygml4j.model.gml.measures.Length;
 import org.citygml4j.model.module.citygml.CityGMLModuleType;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
@@ -99,6 +100,8 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 	private Set<String> buildingADEHookTables;
 	private Set<String> addressADEHookTables;
 
+	private PreparedStatement ps;
+	private final AbstractDatabaseAdapter databaseAdapter;
 	public DBBuilding(Connection connection, CityGMLExportManager exporter) throws CityGMLExportException, SQLException {
 		super(AbstractBuilding.class, connection, exporter);
 
@@ -108,47 +111,56 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 		String schema = exporter.getDatabaseAdapter().getConnectionDetails().getSchema();
 
 		hasObjectClassIdColumn = exporter.getDatabaseAdapter().getConnectionMetaData().getCityDBVersion().compareTo(4, 0, 0) >= 0;
-
 		table = new Table(TableEnum.BUILDING.getName(), schema);
 		Table address = new Table(TableEnum.ADDRESS.getName(), schema);
 
-		select = new Select().addProjection(table.getColumn("id"), table.getColumn("building_parent_id"));
-		if (hasObjectClassIdColumn) select.addProjection(table.getColumn("objectclass_id"));
-		if (projectionFilter.containsProperty("class", buildingModule)) select.addProjection(table.getColumn("class"), table.getColumn("class_codespace"));
-		if (projectionFilter.containsProperty("function", buildingModule)) select.addProjection(table.getColumn("function"), table.getColumn("function_codespace"));
-		if (projectionFilter.containsProperty("usage", buildingModule)) select.addProjection(table.getColumn("usage"), table.getColumn("usage_codespace"));
-		if (projectionFilter.containsProperty("yearOfConstruction", buildingModule)) select.addProjection(table.getColumn("year_of_construction"));
-		if (projectionFilter.containsProperty("yearOfDemolition", buildingModule)) select.addProjection(table.getColumn("year_of_demolition"));
-		if (projectionFilter.containsProperty("roofType", buildingModule)) select.addProjection(table.getColumn("roof_type"), table.getColumn("roof_type_codespace"));
-		if (projectionFilter.containsProperty("measuredHeight", buildingModule)) select.addProjection(table.getColumn("measured_height"), table.getColumn("measured_height_unit"));
-		if (projectionFilter.containsProperty("storeysAboveGround", buildingModule)) select.addProjection(table.getColumn("storeys_above_ground"));
-		if (projectionFilter.containsProperty("storeysBelowGround", buildingModule)) select.addProjection(table.getColumn("storeys_below_ground"));
-		if (projectionFilter.containsProperty("storeyHeightsAboveGround", buildingModule)) select.addProjection(table.getColumn("storey_heights_above_ground"), table.getColumn("storey_heights_ag_unit"));
-		if (projectionFilter.containsProperty("storeyHeightsBelowGround", buildingModule)) select.addProjection(table.getColumn("storey_heights_below_ground"), table.getColumn("storey_heights_bg_unit"));
-		if (projectionFilter.containsProperty("lod1TerrainIntersection", buildingModule)) select.addProjection(exporter.getGeometryColumn(table.getColumn("lod1_terrain_intersection")));
-		if (projectionFilter.containsProperty("lod2TerrainIntersection", buildingModule)) select.addProjection(exporter.getGeometryColumn(table.getColumn("lod2_terrain_intersection")));
-		if (projectionFilter.containsProperty("lod3TerrainIntersection", buildingModule)) select.addProjection(exporter.getGeometryColumn(table.getColumn("lod3_terrain_intersection")));
-		if (projectionFilter.containsProperty("lod4TerrainIntersection", buildingModule)) select.addProjection(exporter.getGeometryColumn(table.getColumn("lod4_terrain_intersection")));
-		if (projectionFilter.containsProperty("lod2MultiCurve", buildingModule)) select.addProjection(exporter.getGeometryColumn(table.getColumn("lod2_multi_curve")));
-		if (projectionFilter.containsProperty("lod3MultiCurve", buildingModule)) select.addProjection(exporter.getGeometryColumn(table.getColumn("lod3_multi_curve")));
-		if (projectionFilter.containsProperty("lod4MultiCurve", buildingModule)) select.addProjection(exporter.getGeometryColumn(table.getColumn("lod4_multi_curve")));
-		if (projectionFilter.containsProperty("lod0FootPrint", buildingModule)) select.addProjection(table.getColumn("lod0_footprint_id"));
-		if (projectionFilter.containsProperty("lod0RoofEdge", buildingModule)) select.addProjection(table.getColumn("lod0_roofprint_id"));
-		if (projectionFilter.containsProperty("lod1Solid", buildingModule)) select.addProjection(table.getColumn("lod1_solid_id"));
-		if (projectionFilter.containsProperty("lod2Solid", buildingModule)) select.addProjection(table.getColumn("lod2_solid_id"));
-		if (projectionFilter.containsProperty("lod3Solid", buildingModule)) select.addProjection(table.getColumn("lod3_solid_id"));
-		if (projectionFilter.containsProperty("lod4Solid", buildingModule)) select.addProjection(table.getColumn("lod4_solid_id"));
-		if (projectionFilter.containsProperty("lod1MultiSurface", buildingModule)) select.addProjection(table.getColumn("lod1_multi_surface_id"));
-		if (projectionFilter.containsProperty("lod2MultiSurface", buildingModule)) select.addProjection(table.getColumn("lod2_multi_surface_id"));
-		if (projectionFilter.containsProperty("lod3MultiSurface", buildingModule)) select.addProjection(table.getColumn("lod3_multi_surface_id"));
-		if (projectionFilter.containsProperty("lod4MultiSurface", buildingModule)) select.addProjection(table.getColumn("lod4_multi_surface_id"));
-		if (projectionFilter.containsProperty("address", buildingModule)) {
-			Table addressToBuilding = new Table(TableEnum.ADDRESS_TO_BUILDING.getName(), schema);
-			select.addJoin(JoinFactory.left(addressToBuilding, "building_id", ComparisonName.EQUAL_TO, table.getColumn("id")))
-			.addJoin(JoinFactory.left(address, "id", ComparisonName.EQUAL_TO, addressToBuilding.getColumn("address_id")))
-			.addProjection(address.getColumn("id", "addr_id"), address.getColumn("street"), address.getColumn("house_number"), address.getColumn("po_box"), address.getColumn("zip_code"), address.getColumn("city"),
-					address.getColumn("state"), address.getColumn("country"), address.getColumn("xal_source"), exporter.getGeometryColumn(address.getColumn("multi_point")));
+		databaseAdapter = DatabaseConnectionPool.getInstance().getActiveDatabaseAdapter();
+
+		if (exporter.isBlazegraph()) {
+
+			String stmt = StatementTransformer.getSPARQLStatement_BuildingParts(null); //temporary parameters
+			ps = connection.prepareStatement(stmt, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+		} else{
+
+			select = new Select().addProjection(table.getColumn("id"), table.getColumn("building_parent_id"));
+			if (hasObjectClassIdColumn) select.addProjection(table.getColumn("objectclass_id"));
+			if (projectionFilter.containsProperty("class", buildingModule)) select.addProjection(table.getColumn("class"), table.getColumn("class_codespace"));
+			if (projectionFilter.containsProperty("function", buildingModule)) select.addProjection(table.getColumn("function"), table.getColumn("function_codespace"));
+			if (projectionFilter.containsProperty("usage", buildingModule)) select.addProjection(table.getColumn("usage"), table.getColumn("usage_codespace"));
+			if (projectionFilter.containsProperty("yearOfConstruction", buildingModule)) select.addProjection(table.getColumn("year_of_construction"));
+			if (projectionFilter.containsProperty("yearOfDemolition", buildingModule)) select.addProjection(table.getColumn("year_of_demolition"));
+			if (projectionFilter.containsProperty("roofType", buildingModule)) select.addProjection(table.getColumn("roof_type"), table.getColumn("roof_type_codespace"));
+			if (projectionFilter.containsProperty("measuredHeight", buildingModule)) select.addProjection(table.getColumn("measured_height"), table.getColumn("measured_height_unit"));
+			if (projectionFilter.containsProperty("storeysAboveGround", buildingModule)) select.addProjection(table.getColumn("storeys_above_ground"));
+			if (projectionFilter.containsProperty("storeysBelowGround", buildingModule)) select.addProjection(table.getColumn("storeys_below_ground"));
+			if (projectionFilter.containsProperty("storeyHeightsAboveGround", buildingModule)) select.addProjection(table.getColumn("storey_heights_above_ground"), table.getColumn("storey_heights_ag_unit"));
+			if (projectionFilter.containsProperty("storeyHeightsBelowGround", buildingModule)) select.addProjection(table.getColumn("storey_heights_below_ground"), table.getColumn("storey_heights_bg_unit"));
+			if (projectionFilter.containsProperty("lod1TerrainIntersection", buildingModule)) select.addProjection(exporter.getGeometryColumn(table.getColumn("lod1_terrain_intersection")));
+			if (projectionFilter.containsProperty("lod2TerrainIntersection", buildingModule)) select.addProjection(exporter.getGeometryColumn(table.getColumn("lod2_terrain_intersection")));
+			if (projectionFilter.containsProperty("lod3TerrainIntersection", buildingModule)) select.addProjection(exporter.getGeometryColumn(table.getColumn("lod3_terrain_intersection")));
+			if (projectionFilter.containsProperty("lod4TerrainIntersection", buildingModule)) select.addProjection(exporter.getGeometryColumn(table.getColumn("lod4_terrain_intersection")));
+			if (projectionFilter.containsProperty("lod2MultiCurve", buildingModule)) select.addProjection(exporter.getGeometryColumn(table.getColumn("lod2_multi_curve")));
+			if (projectionFilter.containsProperty("lod3MultiCurve", buildingModule)) select.addProjection(exporter.getGeometryColumn(table.getColumn("lod3_multi_curve")));
+			if (projectionFilter.containsProperty("lod4MultiCurve", buildingModule)) select.addProjection(exporter.getGeometryColumn(table.getColumn("lod4_multi_curve")));
+			if (projectionFilter.containsProperty("lod0FootPrint", buildingModule)) select.addProjection(table.getColumn("lod0_footprint_id"));
+			if (projectionFilter.containsProperty("lod0RoofEdge", buildingModule)) select.addProjection(table.getColumn("lod0_roofprint_id"));
+			if (projectionFilter.containsProperty("lod1Solid", buildingModule)) select.addProjection(table.getColumn("lod1_solid_id"));
+			if (projectionFilter.containsProperty("lod2Solid", buildingModule)) select.addProjection(table.getColumn("lod2_solid_id"));
+			if (projectionFilter.containsProperty("lod3Solid", buildingModule)) select.addProjection(table.getColumn("lod3_solid_id"));
+			if (projectionFilter.containsProperty("lod4Solid", buildingModule)) select.addProjection(table.getColumn("lod4_solid_id"));
+			if (projectionFilter.containsProperty("lod1MultiSurface", buildingModule)) select.addProjection(table.getColumn("lod1_multi_surface_id"));
+			if (projectionFilter.containsProperty("lod2MultiSurface", buildingModule)) select.addProjection(table.getColumn("lod2_multi_surface_id"));
+			if (projectionFilter.containsProperty("lod3MultiSurface", buildingModule)) select.addProjection(table.getColumn("lod3_multi_surface_id"));
+			if (projectionFilter.containsProperty("lod4MultiSurface", buildingModule)) select.addProjection(table.getColumn("lod4_multi_surface_id"));
+			if (projectionFilter.containsProperty("address", buildingModule)) {
+				Table addressToBuilding = new Table(TableEnum.ADDRESS_TO_BUILDING.getName(), schema);
+				select.addJoin(JoinFactory.left(addressToBuilding, "building_id", ComparisonName.EQUAL_TO, table.getColumn("id")))
+						.addJoin(JoinFactory.left(address, "id", ComparisonName.EQUAL_TO, addressToBuilding.getColumn("address_id")))
+						.addProjection(address.getColumn("id", "addr_id"), address.getColumn("street"), address.getColumn("house_number"), address.getColumn("po_box"), address.getColumn("zip_code"), address.getColumn("city"),
+								address.getColumn("state"), address.getColumn("country"), address.getColumn("xal_source"), exporter.getGeometryColumn(address.getColumn("multi_point")));
+			}
 		}
+
 
 		// add joins to ADE hook tables
 		if (exporter.hasADESupport()) {
@@ -158,14 +170,14 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 			if (addressADEHookTables != null) addJoinsToADEHookTables(addressADEHookTables, address);
 		}
 
-		thematicSurfaceExporter = exporter.getExporter(DBThematicSurface.class);
-		buildingInstallationExporter = exporter.getExporter(DBBuildingInstallation.class);
-		roomExporter = exporter.getExporter(DBRoom.class);
+//		thematicSurfaceExporter = exporter.getExporter(DBThematicSurface.class);
+//		buildingInstallationExporter = exporter.getExporter(DBBuildingInstallation.class);
+//		roomExporter = exporter.getExporter(DBRoom.class);
 		cityObjectExporter = exporter.getExporter(DBCityObject.class);
 		geometryExporter = exporter.getExporter(DBSurfaceGeometry.class);
-		addressExporter = exporter.getExporter(DBAddress.class);
-		gmlConverter = exporter.getGMLConverter();
-		valueSplitter = exporter.getAttributeValueSplitter();
+//		addressExporter = exporter.getExporter(DBAddress.class);
+//		gmlConverter = exporter.getGMLConverter();
+//		valueSplitter = exporter.getAttributeValueSplitter();
 	}
 
 	@Override
@@ -173,6 +185,12 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 		ProjectionFilter projectionFilter = exporter.getProjectionFilter(featureType);
 		String column = projectionFilter.containsProperty("consistsOfBuildingPart", buildingModule) ? "building_root_id" : "id";
 		return !doExport(id, object, featureType, getOrCreateStatement(column)).isEmpty();
+	}
+
+	@Override
+	//blazegraph
+	protected boolean doExport(AbstractBuilding object, String id, FeatureType featureType) throws CityGMLExportException, SQLException {
+		return !doExport(id, object, featureType, ps).isEmpty();
 	}
 
 	@Override
@@ -589,4 +607,454 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 		}
 	}
 
+	@Override
+	protected Collection<AbstractBuilding> doExport(String id, AbstractBuilding root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException {
+		id = id.replace("cityobject", "building");
+		URL url = null;
+		try {
+			url = new URL(id);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+		ps.setURL(1, url);
+
+		try (ResultSet rs = ps.executeQuery()) {
+			String currentBuildingId = null;
+			AbstractBuilding building = null;
+			ProjectionFilter projectionFilter = null;
+			HashMap<String, AbstractBuilding> buildings = new HashMap<>();
+
+			while (rs.next()) {
+				String buildingId = rs.getString("id");
+
+				if (!buildingId.equals(currentBuildingId) || building == null) {
+					currentBuildingId = buildingId ;
+
+					building = buildings.get(buildingId);
+					if (building == null) {
+						FeatureType featureType = null;
+						if (buildingId.equals(id) && root != null) {
+							building = root;
+							featureType = rootType;
+						} else {
+							if (hasObjectClassIdColumn) {
+								int objectClassId = rs.getInt("objectclass_id");
+								featureType = exporter.getFeatureType(objectClassId);
+								if (featureType == null)
+									continue;
+
+								// create building object
+								building = exporter.createObject(featureType.getObjectClassId(), AbstractBuilding.class);
+								if (building == null) {
+									exporter.logOrThrowErrorMessage("Failed to instantiate " + exporter.getObjectSignature(featureType, buildingId) + " as building object.");
+									continue;
+								}
+							} else {
+								building = new BuildingPart();
+								featureType = exporter.getFeatureType(building);
+							}
+						}
+
+						// get projection filter
+						projectionFilter = exporter.getProjectionFilter(featureType);
+
+						// export city object information
+						boolean success = cityObjectExporter.doExport(building, buildingId, featureType, projectionFilter);
+						if (!success) {
+							if (building == root)
+								return Collections.emptyList();
+							else if (featureType.isSetTopLevel())
+								continue;
+						}
+
+//						if (projectionFilter.containsProperty("class", buildingModule)) {
+//							String clazz = rs.getString("class");
+//							if (!rs.wasNull()) {
+//								Code code = new Code(clazz);
+//								code.setCodeSpace(rs.getString("class_codespace"));
+//								building.setClazz(code);
+//							}
+//						}
+//
+//						if (projectionFilter.containsProperty("function", buildingModule)) {
+//							for (SplitValue splitValue : valueSplitter.split(rs.getString("function"), rs.getString("function_codespace"))) {
+//								Code function = new Code(splitValue.result(0));
+//								function.setCodeSpace(splitValue.result(1));
+//								building.addFunction(function);
+//							}
+//						}
+//
+//						if (projectionFilter.containsProperty("usage", buildingModule)) {
+//							for (SplitValue splitValue : valueSplitter.split(rs.getString("usage"), rs.getString("usage_codespace"))) {
+//								Code usage = new Code(splitValue.result(0));
+//								usage.setCodeSpace(splitValue.result(1));
+//								building.addUsage(usage);
+//							}
+//						}
+//
+//						if (projectionFilter.containsProperty("yearOfConstruction", buildingModule))
+//							building.setYearOfConstruction(rs.getObject("year_of_construction", LocalDate.class));
+//
+//						if (projectionFilter.containsProperty("yearOfDemolition", buildingModule))
+//							building.setYearOfDemolition(rs.getObject("year_of_demolition", LocalDate.class));
+//
+//						if (projectionFilter.containsProperty("roofType", buildingModule)) {
+//							String roofType = rs.getString("roof_type");
+//							if (!rs.wasNull()) {
+//								Code code = new Code(roofType);
+//								code.setCodeSpace(rs.getString("roof_type_codespace"));
+//								building.setRoofType(code);
+//							}
+//						}
+//
+//						if (projectionFilter.containsProperty("measuredHeight", buildingModule)) {
+//							double measuredHeight = rs.getDouble("measured_height");
+//							if (!rs.wasNull()) {
+//								Length length = new Length(measuredHeight);
+//								length.setUom(rs.getString("measured_height_unit"));
+//								building.setMeasuredHeight(length);
+//							}
+//						}
+//
+//						if (projectionFilter.containsProperty("storeysAboveGround", buildingModule)) {
+//							int storeysAboveGround = rs.getInt("storeys_above_ground");
+//							if (!rs.wasNull())
+//								building.setStoreysAboveGround(storeysAboveGround);
+//						}
+//
+//						if (projectionFilter.containsProperty("storeysBelowGround", buildingModule)) {
+//							int storeysBelowGround = rs.getInt("storeys_below_ground");
+//							if (!rs.wasNull())
+//								building.setStoreysBelowGround(storeysBelowGround);
+//						}
+//
+//						if (projectionFilter.containsProperty("storeyHeightsAboveGround", buildingModule)) {
+//							String storeyHeightsAboveGround = rs.getString("storey_heights_above_ground");
+//							if (!rs.wasNull()) {
+//								MeasureOrNullList measureList = new MeasureOrNullList();
+//								for (SplitValue splitValue : valueSplitter.split(Pattern.compile("\\s+"), storeyHeightsAboveGround)) {
+//									Double value = splitValue.asDouble(0);
+//									if (value != null)
+//										measureList.addDoubleOrNull(new DoubleOrNull(value));
+//								}
+//
+//								measureList.setUom(rs.getString("storey_heights_ag_unit"));
+//								building.setStoreyHeightsAboveGround(measureList);
+//							}
+//						}
+//
+//						if (projectionFilter.containsProperty("storeyHeightsBelowGround", buildingModule)) {
+//							String storeyHeightsBelowGround = rs.getString("storey_heights_below_ground");
+//							if (!rs.wasNull()) {
+//								MeasureOrNullList measureList = new MeasureOrNullList();
+//								for (SplitValue splitValue : valueSplitter.split(Pattern.compile("\\s+"), storeyHeightsBelowGround)) {
+//									Double value = splitValue.asDouble(0);
+//									if (value != null)
+//										measureList.addDoubleOrNull(new DoubleOrNull(value));
+//								}
+//
+//								measureList.setUom(rs.getString("storey_heights_bg_unit"));
+//								building.setStoreyHeightsBelowGround(measureList);
+//							}
+//						}
+
+						// bldg:boundedBy
+//						if (projectionFilter.containsProperty("boundedBy", buildingModule)
+//								&& lodFilter.containsLodGreaterThanOrEuqalTo(2)) {
+//							for (AbstractBoundarySurface boundarySurface : thematicSurfaceExporter.doExport(building, buildingId))
+//								building.addBoundedBySurface(new BoundarySurfaceProperty(boundarySurface));
+//						}
+
+//						// bldg:outerBuildingInstallation and bldg:interiorBuildingInstallation
+//						if (lodFilter.containsLodGreaterThanOrEuqalTo(2)) {
+//							for (AbstractCityObject installation : buildingInstallationExporter.doExport(building, buildingId, projectionFilter)) {
+//								if (installation instanceof BuildingInstallation)
+//									building.addOuterBuildingInstallation(new BuildingInstallationProperty((BuildingInstallation)installation));
+//								else if (installation instanceof IntBuildingInstallation)
+//									building.addInteriorBuildingInstallation(new IntBuildingInstallationProperty((IntBuildingInstallation)installation));
+//							}
+//						}
+
+						// bldg:interiorRoom
+//						if (projectionFilter.containsProperty("interiorRoom", buildingModule)
+//								&& lodFilter.isEnabled(4)) {
+//							for (Room room : roomExporter.doExport(building, buildingId))
+//								building.addInteriorRoom(new InteriorRoomProperty(room));
+//						}
+
+						// bldg:lodXTerrainIntersectionCurve
+//						LodIterator lodIterator = lodFilter.iterator(1, 4);
+//						while (lodIterator.hasNext()) {
+//							int lod = lodIterator.next();
+//
+//							if (!projectionFilter.containsProperty(new StringBuilder("lod").append(lod).append("TerrainIntersection").toString(), buildingModule))
+//								continue;
+//
+//							Object terrainIntersectionObj = rs.getObject(new StringBuilder("lod").append(lod).append("_terrain_intersection").toString());
+//							if (rs.wasNull())
+//								continue;
+//
+//							GeometryObject terrainIntersection = exporter.getDatabaseAdapter().getGeometryConverter().getMultiCurve(terrainIntersectionObj);
+//							if (terrainIntersection != null) {
+//								MultiCurveProperty multiCurveProperty = gmlConverter.getMultiCurveProperty(terrainIntersection, false);
+//								if (multiCurveProperty != null) {
+//									switch (lod) {
+//										case 1:
+//											building.setLod1TerrainIntersection(multiCurveProperty);
+//											break;
+//										case 2:
+//											building.setLod2TerrainIntersection(multiCurveProperty);
+//											break;
+//										case 3:
+//											building.setLod3TerrainIntersection(multiCurveProperty);
+//											break;
+//										case 4:
+//											building.setLod4TerrainIntersection(multiCurveProperty);
+//											break;
+//									}
+//								}
+//							}
+//						}
+//
+//						// bldg:lodXMultiCurve
+//						lodIterator = lodFilter.iterator(2, 4);
+//						while (lodIterator.hasNext()) {
+//							int lod = lodIterator.next();
+//
+//							if (!projectionFilter.containsProperty(new StringBuilder("lod").append(lod).append("MultiCurve").toString(), buildingModule))
+//								continue;
+//
+//							Object multiCurveObj = rs.getObject(new StringBuilder("lod").append(lod).append("_multi_curve").toString());
+//							if (rs.wasNull())
+//								continue;
+//
+//							GeometryObject multiCurve = exporter.getDatabaseAdapter().getGeometryConverter().getMultiCurve(multiCurveObj);
+//							if (multiCurve != null) {
+//								MultiCurveProperty multiCurveProperty = gmlConverter.getMultiCurveProperty(multiCurve, false);
+//								if (multiCurveProperty != null) {
+//									switch (lod) {
+//										case 2:
+//											building.setLod2MultiCurve(multiCurveProperty);
+//											break;
+//										case 3:
+//											building.setLod3MultiCurve(multiCurveProperty);
+//											break;
+//										case 4:
+//											building.setLod4MultiCurve(multiCurveProperty);
+//											break;
+//									}
+//								}
+//							}
+//						}
+//
+//						// bldg:lod0FootPrint and lod0RoofEdge
+//						if (lodFilter.isEnabled(0)) {
+//							for (int i = 0; i < 2; i++) {
+//								if (i == 0 && !projectionFilter.containsProperty("lod0FootPrint", buildingModule))
+//									continue;
+//								else if (i == 1 && !projectionFilter.containsProperty("lod0RoofEdge", buildingModule))
+//									continue;
+//
+//								long surfaceGeometryId = rs.getLong(i == 0 ? "lod0_footprint_id" : "lod0_roofprint_id");
+//								if (rs.wasNull())
+//									continue;
+//
+//								SurfaceGeometry geometry = geometryExporter.doExport(surfaceGeometryId);
+//								if (geometry != null && geometry.getType() == GMLClass.MULTI_SURFACE) {
+//									MultiSurfaceProperty multiSurfaceProperty = new MultiSurfaceProperty();
+//									if (geometry.isSetGeometry())
+//										multiSurfaceProperty.setMultiSurface((MultiSurface)geometry.getGeometry());
+//									else
+//										multiSurfaceProperty.setHref(geometry.getReference());
+//
+//									switch (i) {
+//										case 0:
+//											building.setLod0FootPrint(multiSurfaceProperty);
+//											break;
+//										case 1:
+//											building.setLod0RoofEdge(multiSurfaceProperty);
+//											break;
+//									}
+//								}
+//							}
+//						}
+//
+//						// bldg:lodXSolid
+//						lodIterator = lodFilter.iterator(1, 4);
+//						while (lodIterator.hasNext()) {
+//							int lod = lodIterator.next();
+//
+//							if (!projectionFilter.containsProperty(new StringBuilder("lod").append(lod).append("Solid").toString(), buildingModule))
+//								continue;
+//
+//							long surfaceGeometryId = rs.getLong(new StringBuilder("lod").append(lod).append("_solid_id").toString());
+//							if (rs.wasNull())
+//								continue;
+//
+//							SurfaceGeometry geometry = geometryExporter.doExport(surfaceGeometryId);
+//							if (geometry != null && (geometry.getType() == GMLClass.SOLID || geometry.getType() == GMLClass.COMPOSITE_SOLID)) {
+//								SolidProperty solidProperty = new SolidProperty();
+//								if (geometry.isSetGeometry())
+//									solidProperty.setSolid((AbstractSolid)geometry.getGeometry());
+//								else
+//									solidProperty.setHref(geometry.getReference());
+//
+//								switch (lod) {
+//									case 1:
+//										building.setLod1Solid(solidProperty);
+//										break;
+//									case 2:
+//										building.setLod2Solid(solidProperty);
+//										break;
+//									case 3:
+//										building.setLod3Solid(solidProperty);
+//										break;
+//									case 4:
+//										building.setLod4Solid(solidProperty);
+//										break;
+//								}
+//							}
+//						}
+//
+//						// bldg:lodXMultiSurface
+//						lodIterator.reset();
+//						while (lodIterator.hasNext()) {
+//							int lod = lodIterator.next();
+//
+//							if (!projectionFilter.containsProperty(new StringBuilder("lod").append(lod).append("MultiSurface").toString(), buildingModule))
+//								continue;
+//
+//							long surfaceGeometryId = rs.getLong(new StringBuilder("lod").append(lod).append("_multi_surface_id").toString());
+//							if (rs.wasNull())
+//								continue;
+//
+//							SurfaceGeometry geometry = geometryExporter.doExport(surfaceGeometryId);
+//							if (geometry != null && geometry.getType() == GMLClass.MULTI_SURFACE) {
+//								MultiSurfaceProperty multiSurfaceProperty = new MultiSurfaceProperty();
+//								if (geometry.isSetGeometry())
+//									multiSurfaceProperty.setMultiSurface((MultiSurface)geometry.getGeometry());
+//								else
+//									multiSurfaceProperty.setHref(geometry.getReference());
+//
+//								switch (lod) {
+//									case 1:
+//										building.setLod1MultiSurface(multiSurfaceProperty);
+//										break;
+//									case 2:
+//										building.setLod2MultiSurface(multiSurfaceProperty);
+//										break;
+//									case 3:
+//										building.setLod3MultiSurface(multiSurfaceProperty);
+//										break;
+//									case 4:
+//										building.setLod4MultiSurface(multiSurfaceProperty);
+//										break;
+//								}
+//							}
+//						}
+
+						// delegate export of generic ADE properties
+//						if (buildingADEHookTables != null) {
+//							List<String> adeHookTables = retrieveADEHookTables(buildingADEHookTables, rs);
+//							if (adeHookTables != null)
+//								exporter.delegateToADEExporter(adeHookTables, building, buildingId, featureType, projectionFilter);
+//						}
+
+						building.setLocalProperty("parent", rs.getLong("building_parent_id"));
+						building.setLocalProperty("projection", projectionFilter);
+						buildings.put(buildingId, building);
+					} else
+						projectionFilter = (ProjectionFilter)building.getLocalProperty("projection");
+				}
+
+				// bldg:address
+//				if (projectionFilter.containsProperty("address", buildingModule)) {
+//					long addressId = rs.getLong("addr_id");
+//					if (!rs.wasNull()) {
+//						AddressProperty addressProperty = addressExporter.doExport(addressId, rs);
+//						if (addressProperty != null) {
+//							building.addAddress(addressProperty);
+//
+//							// delegate export of generic ADE properties
+//							if (addressADEHookTables != null) {
+//								List<String> adeHookTables = retrieveADEHookTables(addressADEHookTables, rs);
+//								if (adeHookTables != null) {
+//									Address address = addressProperty.getAddress();
+//									FeatureType featureType = exporter.getFeatureType(address);
+//									exporter.delegateToADEExporter(adeHookTables, address, addressId, featureType, exporter.getProjectionFilter(featureType));
+//								}
+//							}
+//						}
+//					}
+//				}
+			}
+
+			// rebuild building part hierarchy
+			List<AbstractBuilding> result = new ArrayList<>();
+			for (Entry<String, AbstractBuilding> entry : buildings.entrySet()) {
+				building = entry.getValue();
+				String buildingId = entry.getKey();
+				long parentId = (Long)building.getLocalProperty("parent");
+
+				if (parentId == 0) {
+					result.add(building);
+					continue;
+				}
+
+				if (!(building instanceof BuildingPart)) {
+					exporter.logOrThrowErrorMessage("Expected " + exporter.getObjectSignature(exporter.getFeatureType(building), buildingId) + " to be a building part.");
+					continue;
+				}
+
+				AbstractBuilding parent = buildings.get(parentId);
+				if (parent != null) {
+					projectionFilter = (ProjectionFilter)parent.getLocalProperty("projection");
+					if (projectionFilter.containsProperty("consistsOfBuildingPart", buildingModule))
+						parent.addConsistsOfBuildingPart(new BuildingPartProperty((BuildingPart)building));
+				}
+			}
+
+			// check whether lod filter is satisfied
+			if (!lodFilter.preservesGeometry()) {
+				for (AbstractBuilding tmp : result) {
+					for (Iterator<BuildingPartProperty> iter = tmp.getConsistsOfBuildingPart().iterator(); iter.hasNext(); ) {
+						if (!exporter.satisfiesLodFilter(iter.next().getBuildingPart()))
+							iter.remove();
+					}
+				}
+			}
+
+			return result;
+		}
+	}
+
+	@Override
+	public void doExport(AbstractCityObject cityObject, long cityObjectId, HashSet<Long> generalizesTos) throws CityGMLExportException, SQLException {
+
+	}
+
+	@Override
+	public void doExport(AbstractCityObject cityObject, String cityObjectId, HashSet<Long> generalizesTos) throws CityGMLExportException, SQLException {
+
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, long objectId, AbstractObjectType<?> objectType) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, String objectId, AbstractObjectType<?> objectType) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, String objectId, AbstractObjectType<?> objectType, ProjectionFilter projectionFilter) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public void doExport(AbstractCityObject cityObject, String cityObjectId, ProjectionFilter projectionFilter) throws SQLException {
+
+	}
 }

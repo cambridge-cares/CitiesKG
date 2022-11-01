@@ -32,6 +32,7 @@ import org.citydb.citygml.exporter.util.AttributeValueSplitter;
 import org.citydb.citygml.exporter.util.AttributeValueSplitter.SplitValue;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.schema.TableEnum;
+import org.citydb.database.schema.mapping.AbstractObjectType;
 import org.citydb.database.schema.mapping.FeatureType;
 import org.citydb.query.filter.lod.LodFilter;
 import org.citydb.query.filter.lod.LodIterator;
@@ -39,6 +40,7 @@ import org.citydb.query.filter.projection.CombinedProjectionFilter;
 import org.citydb.query.filter.projection.ProjectionFilter;
 import org.citydb.sqlbuilder.schema.Table;
 import org.citydb.sqlbuilder.select.Select;
+import org.citygml4j.model.citygml.building.AbstractBuilding;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.tunnel.AbstractBoundarySurface;
 import org.citygml4j.model.citygml.tunnel.AbstractTunnel;
@@ -52,6 +54,7 @@ import org.citygml4j.model.citygml.tunnel.TunnelInstallationProperty;
 import org.citygml4j.model.citygml.tunnel.TunnelPart;
 import org.citygml4j.model.citygml.tunnel.TunnelPartProperty;
 import org.citygml4j.model.gml.GMLClass;
+import org.citygml4j.model.gml.base.AbstractGML;
 import org.citygml4j.model.gml.basicTypes.Code;
 import org.citygml4j.model.gml.geometry.aggregates.MultiCurveProperty;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurface;
@@ -65,14 +68,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public class DBTunnel extends AbstractFeatureExporter<AbstractTunnel> {
 	private DBSurfaceGeometry geometryExporter;
@@ -142,6 +139,16 @@ public class DBTunnel extends AbstractFeatureExporter<AbstractTunnel> {
 		ProjectionFilter projectionFilter = exporter.getProjectionFilter(featureType);
 		String column = projectionFilter.containsProperty("consistsOfTunnelPart", tunnelModule) ? "tunnel_root_id" : "id";
 		return !doExport(id, object, featureType, getOrCreateStatement(column)).isEmpty();
+	}
+
+	@Override
+	protected Collection<AbstractBuilding> doExport(String id, AbstractBuilding root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException {
+		return null;
+	}
+
+	@Override
+	protected boolean doExport(AbstractBuilding object, String id, FeatureType featureType) throws CityGMLExportException, SQLException {
+		return false;
 	}
 
 	@Override
@@ -435,4 +442,33 @@ public class DBTunnel extends AbstractFeatureExporter<AbstractTunnel> {
 		}
 	}
 
+	@Override
+	public void doExport(AbstractCityObject cityObject, long cityObjectId, HashSet<Long> generalizesTos) throws CityGMLExportException, SQLException {
+
+	}
+
+	@Override
+	public void doExport(AbstractCityObject cityObject, String cityObjectId, HashSet<Long> generalizesTos) throws CityGMLExportException, SQLException {
+
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, long objectId, AbstractObjectType<?> objectType) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, String objectId, AbstractObjectType<?> objectType) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, String objectId, AbstractObjectType<?> objectType, ProjectionFilter projectionFilter) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public void doExport(AbstractCityObject cityObject, String cityObjectId, ProjectionFilter projectionFilter) throws SQLException {
+
+	}
 }

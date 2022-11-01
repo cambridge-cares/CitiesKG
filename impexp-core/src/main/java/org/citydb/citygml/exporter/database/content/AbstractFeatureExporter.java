@@ -44,6 +44,7 @@ import org.citydb.database.schema.mapping.FeatureType;
 import org.citydb.database.schema.mapping.Join;
 import org.citydb.database.schema.mapping.JoinTable;
 import org.citydb.database.schema.mapping.MappingConstants;
+import org.citygml4j.model.citygml.building.AbstractBuilding;
 import org.citygml4j.model.gml.feature.AbstractFeature;
 
 import org.citydb.sqlbuilder.expression.IntegerLiteral;
@@ -67,7 +68,9 @@ public abstract class AbstractFeatureExporter<T extends AbstractFeature> extends
 		this.connection = connection;
 		statements = new HashMap<>();
 	}
-	
+
+	protected abstract boolean doExport(AbstractBuilding object, String id, FeatureType featureType) throws CityGMLExportException, SQLException;
+
 	protected abstract Collection<T> doExport(long id, T root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException;
 	
 	protected boolean doExport(T object, long id, FeatureType featureType) throws CityGMLExportException, SQLException {
@@ -177,5 +180,6 @@ public abstract class AbstractFeatureExporter<T extends AbstractFeature> extends
 		for (PreparedStatement ps : statements.values())
 			ps.close();
 	}
-	
+
+	protected abstract Collection<AbstractBuilding> doExport(String id, AbstractBuilding root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException;
 }

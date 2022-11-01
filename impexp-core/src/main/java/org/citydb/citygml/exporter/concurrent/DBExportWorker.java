@@ -38,6 +38,7 @@ import org.citydb.citygml.exporter.writer.FeatureWriter;
 import org.citydb.concurrent.Worker;
 import org.citydb.concurrent.WorkerPool;
 import org.citydb.config.Config;
+import org.citydb.config.project.database.DatabaseType;
 import org.citydb.config.project.global.LogLevel;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.schema.mapping.MappingConstants;
@@ -83,6 +84,10 @@ public class DBExportWorker extends Worker<DBSplittingResult> implements EventHa
 	private int topLevelFeatureCounter = 0;
 	private List<CityGMLExportExtension> plugins;
 
+	private Boolean isBlazegraph;
+
+	private final AbstractDatabaseAdapter databaseAdapter;
+
 	public DBExportWorker(OutputFile outputFile,
 			Connection connection,
 			AbstractDatabaseAdapter databaseAdapter,
@@ -99,6 +104,7 @@ public class DBExportWorker extends Worker<DBSplittingResult> implements EventHa
 		this.featureWriter = featureWriter;
 		this.eventDispatcher = eventDispatcher;
 		this.config = config;
+		this.databaseAdapter = databaseAdapter;
 
 		exporter = new CityGMLExportManager(
 				outputFile,
@@ -169,11 +175,15 @@ public class DBExportWorker extends Worker<DBSplittingResult> implements EventHa
 			if (!shouldWork)
 				return;
 
+			isBlazegraph = isBlazegraph();
 			AbstractGML topLevelObject;
 			if (work.getObjectType().getObjectClassId() == MappingConstants.APPEARANCE_OBJECTCLASS_ID)
 				topLevelObject = exporter.exportGlobalAppearance(Long.parseLong(work.getId().toString()));
 			else
-				topLevelObject = exporter.exportObject(Long.parseLong(work.getId().toString()), work.getObjectType(), false);
+				if(isBlazegraph)
+					topLevelObject = exporter.exportObject(work.getId().toString(), work.getObjectType(), false);
+				else
+					topLevelObject = exporter.exportObject((Long)work.getId(), work.getObjectType(), false);
 
 			if (topLevelObject instanceof AbstractFeature) {
 				// cleanup appearances
@@ -227,6 +237,22 @@ public class DBExportWorker extends Worker<DBSplittingResult> implements EventHa
 	public void handleEvent(Event event) throws Exception {
 		if (event.getChannel() == eventChannel)
 			shouldWork = false;
+	}
+
+	public AbstractDatabaseAdapter getDatabaseAdapter() {
+		return databaseAdapter;
+	}
+
+	/**
+	 * Checks, if the current db connection is Blazegraph
+	 *
+	 * @return boolean
+	 */
+	public boolean isBlazegraph() {
+		if (isBlazegraph == null) {
+			isBlazegraph = getDatabaseAdapter().getDatabaseType().value().equals(DatabaseType.BLAZE.value());
+		}
+		return isBlazegraph.booleanValue();
 	}
 
 }

@@ -30,12 +30,14 @@ package org.citydb.citygml.exporter.database.content;
 import org.citydb.citygml.exporter.CityGMLExportException;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.config.geometry.Point;
+import org.citydb.database.schema.mapping.AbstractObjectType;
 import org.citydb.database.schema.mapping.MappingConstants;
 import org.citydb.query.Query;
 import org.citydb.query.builder.QueryBuildException;
 import org.citydb.query.builder.sql.BuildProperties;
 import org.citydb.query.builder.sql.SQLQueryBuilder;
 import org.citydb.query.filter.FilterException;
+import org.citydb.query.filter.projection.ProjectionFilter;
 import org.citydb.query.filter.selection.Predicate;
 import org.citydb.query.filter.selection.SelectionFilter;
 import org.citydb.sqlbuilder.expression.LiteralList;
@@ -45,6 +47,7 @@ import org.citydb.sqlbuilder.select.Select;
 import org.citydb.sqlbuilder.select.operator.comparison.ComparisonFactory;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.GeneralizationRelation;
+import org.citygml4j.model.gml.base.AbstractGML;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -84,7 +87,7 @@ public class DBGeneralization implements DBExporter {
 		}
 	}
 
-	protected void doExport(AbstractCityObject cityObject, long cityObjectId, HashSet<Long> generalizesTos) throws CityGMLExportException, SQLException {
+	public void doExport(AbstractCityObject cityObject, long cityObjectId, HashSet<Long> generalizesTos) throws CityGMLExportException, SQLException {
 		// create select statement
 		Select select = null;
 		try {
@@ -130,6 +133,74 @@ public class DBGeneralization implements DBExporter {
 				cityObject.addGeneralizesTo(generalizesTo);
 			}
 		}
+	}
+
+	@Override
+	public void doExport(AbstractCityObject cityObject, String cityObjectId, HashSet<Long> generalizesTos) throws CityGMLExportException, SQLException {
+		// create select statement
+		Select select = null;
+		try {
+			select = builder.buildQuery(generalizationQuery);
+		} catch (QueryBuildException e) {
+			throw new CityGMLExportException("Failed to build sub-query for generalization objects.", e);
+		}
+
+		// add generalization predicate
+		if (generalizesTos.size() == 1)
+			select.addSelection(ComparisonFactory.equalTo((Column)select.getProjection().get(0), new LongLiteral(generalizesTos.iterator().next())));
+		else
+			select.addSelection(ComparisonFactory.in((Column)select.getProjection().get(0), new LiteralList(generalizesTos.toArray(new Long[generalizesTos.size()]))));
+
+		try (PreparedStatement stmt = exporter.getDatabaseAdapter().getSQLAdapter().prepareStatement(select, connection);
+			 ResultSet rs = stmt.executeQuery()) {
+
+			while (rs.next()) {
+				String gmlId = rs.getString("gmlid");
+				if (rs.wasNull())
+					continue;
+
+				if (generalizationQuery.isSetTiling()) {
+					Object object = rs.getObject("envelope");
+					if (!rs.wasNull()) {
+						GeometryObject geomObj = exporter.getDatabaseAdapter().getGeometryConverter().getEnvelope(object);
+						double[] coordinates = geomObj.getCoordinates(0);
+
+						try {
+							if (!generalizationQuery.getTiling().getActiveTile().isOnTile(new Point(
+											(coordinates[0] + coordinates[3]) / 2.0,
+											(coordinates[1] + coordinates[4]) / 2.0),
+									exporter.getDatabaseAdapter()))
+								continue;
+						} catch (FilterException e) {
+							throw new CityGMLExportException("Failed to apply the tiling filter to generalization objects.", e);
+						}
+					}
+				}
+
+				GeneralizationRelation generalizesTo = new GeneralizationRelation();
+				generalizesTo.setHref("#" + gmlId);
+				cityObject.addGeneralizesTo(generalizesTo);
+			}
+		}
+	}
+	@Override
+	public boolean doExport(AbstractGML object, long objectId, AbstractObjectType<?> objectType) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, String objectId, AbstractObjectType<?> objectType) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, String objectId, AbstractObjectType<?> objectType, ProjectionFilter projectionFilter) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public void doExport(AbstractCityObject cityObject, String cityObjectId, ProjectionFilter projectionFilter) throws SQLException {
+
 	}
 
 	@Override

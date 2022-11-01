@@ -33,14 +33,21 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import org.citydb.citygml.common.database.cache.CacheTable;
 import org.citydb.citygml.exporter.CityGMLExportException;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.GeometryObject;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
+import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.database.schema.TableEnum;
+import org.citydb.database.schema.mapping.AbstractObjectType;
+import org.citydb.query.filter.projection.ProjectionFilter;
+import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.gml.GMLClass;
+import org.citygml4j.model.gml.base.AbstractGML;
 import org.citygml4j.model.gml.geometry.AbstractGeometry;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSolid;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurface;
@@ -83,6 +90,10 @@ public class DBSurfaceGeometry implements DBExporter {
 
 	private int commitAfter;
 	private int batchCounter;
+	private String PREFIX_ONTOCITYGML;
+	private String IRI_GRAPH_BASE;
+	public static String IRI_GRAPH_OBJECT;
+	private static final String IRI_GRAPH_OBJECT_REL = "surfacegeometry/";
 
 	public DBSurfaceGeometry(Connection connection, CacheTable cacheTable, CityGMLExportManager exporter, Config config) throws SQLException {
 		this.exporter = exporter;
@@ -110,13 +121,51 @@ public class DBSurfaceGeometry implements DBExporter {
 			gmlIdPrefix = exporter.getExportConfig().getXlink().getGeometry().getIdPrefix();
 		}
 
-		Table table = new Table(TableEnum.SURFACE_GEOMETRY.getName(), schema);
-		Select select = new Select().addProjection(table.getColumn("id"), table.getColumn("gmlid"), table.getColumn("parent_id"), table.getColumn("is_solid"), table.getColumn("is_composite"),
-				table.getColumn("is_triangulated"), table.getColumn("is_xlink"), table.getColumn("is_reverse"),
-				exporter.getGeometryColumn(table.getColumn("geometry")), table.getColumn("implicit_geometry"))
-				.addSelection(ComparisonFactory.equalTo(table.getColumn("root_id"), new PlaceHolder<>()));
 
-		psSelect = connection.prepareStatement(select.toString());
+
+		if (exporter.isBlazegraph()) {
+			PREFIX_ONTOCITYGML = exporter.getOntoCityGmlPrefix();
+			IRI_GRAPH_BASE = exporter.getGraphBaseIri();
+			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
+
+			String  stmt = StatementTransformer.getSPARQLStatement_BuildingPartGeometry(); //temporary parameters
+			psSelect = connection.prepareStatement(stmt);
+		} else{
+			Table table = new Table(TableEnum.SURFACE_GEOMETRY.getName(), schema);
+			Select select = new Select().addProjection(table.getColumn("id"), table.getColumn("gmlid"), table.getColumn("parent_id"), table.getColumn("is_solid"), table.getColumn("is_composite"),
+							table.getColumn("is_triangulated"), table.getColumn("is_xlink"), table.getColumn("is_reverse"),
+							exporter.getGeometryColumn(table.getColumn("geometry")), table.getColumn("implicit_geometry"))
+					.addSelection(ComparisonFactory.equalTo(table.getColumn("root_id"), new PlaceHolder<>()));
+
+			psSelect = connection.prepareStatement(select.toString());
+		}
+
+	}
+
+	private StringBuilder getSPARQLStatement(){
+		StringBuilder stmt = new StringBuilder();
+		String param = "  ?;";
+		stmt = stmt.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"BASE <" + IRI_GRAPH_BASE + "> " +
+				"INSERT DATA" +
+				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
+				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
+				SchemaManagerAdapter.ONTO_GML_ID + param +
+				SchemaManagerAdapter.ONTO_PARENT_ID + param +
+				SchemaManagerAdapter.ONTO_ROOT_ID + param +
+				SchemaManagerAdapter.ONTO_IS_SOLID + param +
+				SchemaManagerAdapter.ONTO_IS_COMPOSITE + param +
+				SchemaManagerAdapter.ONTO_IS_TRIANGULATED + param +
+				SchemaManagerAdapter.ONTO_IS_XLINK + param +
+				SchemaManagerAdapter.ONTO_IS_REVERSE + param +
+				SchemaManagerAdapter.ONTO_GEOMETRY + param +
+				SchemaManagerAdapter.ONTO_GEOMETRY_SOLID + param +
+				SchemaManagerAdapter.ONTO_GEOMETRY_IMPLICIT + param +
+				SchemaManagerAdapter.ONTO_CITY_OBJECT_ID + param +
+				".}" +
+				"}"
+		);
+		return stmt;
 	}
 
 	protected SurfaceGeometry doExport(long rootId) throws CityGMLExportException, SQLException {
@@ -603,6 +652,36 @@ public class DBSurfaceGeometry implements DBExporter {
 			psImport.executeBatch();
 			batchCounter = 0;
 		}
+	}
+
+	@Override
+	public void doExport(AbstractCityObject cityObject, long cityObjectId, HashSet<Long> generalizesTos) throws CityGMLExportException, SQLException {
+
+	}
+
+	@Override
+	public void doExport(AbstractCityObject cityObject, String cityObjectId, HashSet<Long> generalizesTos) throws CityGMLExportException, SQLException {
+
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, long objectId, AbstractObjectType<?> objectType) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, String objectId, AbstractObjectType<?> objectType) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, String objectId, AbstractObjectType<?> objectType, ProjectionFilter projectionFilter) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public void doExport(AbstractCityObject cityObject, String cityObjectId, ProjectionFilter projectionFilter) throws SQLException {
+
 	}
 
 	@Override

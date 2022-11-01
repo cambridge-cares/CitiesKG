@@ -233,18 +233,18 @@ public class DBSplitter {
 		if (query.getFeatureTypeFilter().isEmpty())
 			return;
 
+		Lock lock = new ReentrantLock();
+		lock.lock();
 		// create query statement
 		boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value());
 		Select select = builder.buildQuery(query);
 
 		if(is_Blazegraph){//temp for only one gmlid
 			List<PlaceHolder<?>> placeHolders = select.getInvolvedPlaceHolders();
-			int objectCount_sparql = 0;
 			writeDocumentHeader();
 			long hits = 0;
 
 			for (int i  = 0; i < placeHolders.size(); ++i) {
-
 				Object gmlidUri = placeHolders.get(i).getValue();
 				PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(select, connection);
 
@@ -269,9 +269,6 @@ public class DBSplitter {
 						log.debug("Calculating the number of matching top-level features...");
 						hits = placeHolders.size();
 						log.info("Found " + hits + " top-level feature(s) matching the request.");
-
-						if (query.isSetTiling())
-							log.info("The total number of exported features might be less due to tiling settings.");
 
 						eventDispatcher.triggerEvent(new StatusDialogProgressBar(ProgressBarEventType.INIT, (int) hits, this));
 					}
@@ -301,11 +298,13 @@ public class DBSplitter {
 
 
 					// set initial context...
-					DBSplittingResult splitter = new DBSplittingResult(id_str, objectType, sequenceId++);
+					DBSplittingResult splitter = new DBSplittingResult(id_str, objectType, i);
 					dbWorkerPool.addWork(splitter);
 
 				}while (rs.next() && shouldRun);
+
 			}
+
 
 		}else{
 			// calculate hits
@@ -411,7 +410,6 @@ public class DBSplitter {
 				}
 			}
 		}
-
 	}
 
 	private void queryCityObjectGroups(FeatureType cityObjectGroupType, Map<Object, AbstractObjectType<?>> cityObjectGroups) throws SQLException, FilterException, QueryBuildException {

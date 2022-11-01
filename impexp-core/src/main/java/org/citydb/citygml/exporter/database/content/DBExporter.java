@@ -27,8 +27,27 @@
  */
 package org.citydb.citygml.exporter.database.content;
 
-import java.sql.SQLException;
+import org.citydb.citygml.exporter.CityGMLExportException;
+import org.citydb.database.schema.mapping.AbstractObjectType;
+import org.citydb.query.filter.projection.ProjectionFilter;
+import org.citygml4j.model.citygml.core.AbstractCityObject;
+import org.citygml4j.model.gml.base.AbstractGML;
 
-public interface DBExporter {	
-	public void close() throws SQLException;
+import java.sql.SQLException;
+import java.util.HashSet;
+
+public interface DBExporter {
+    void doExport(AbstractCityObject cityObject, long cityObjectId, HashSet<Long> generalizesTos) throws CityGMLExportException, SQLException;
+
+    void doExport(AbstractCityObject cityObject, String cityObjectId, HashSet<Long> generalizesTos) throws CityGMLExportException, SQLException;
+
+    boolean doExport(AbstractGML object, long objectId, AbstractObjectType<?> objectType) throws CityGMLExportException, SQLException;
+
+    boolean doExport(AbstractGML object, String objectId, AbstractObjectType<?> objectType) throws CityGMLExportException, SQLException;
+
+    boolean doExport(AbstractGML object, String objectId, AbstractObjectType<?> objectType, ProjectionFilter projectionFilter) throws CityGMLExportException, SQLException;
+
+    void doExport(AbstractCityObject cityObject, String cityObjectId, ProjectionFilter projectionFilter) throws SQLException;
+
+    public void close() throws SQLException;
 }

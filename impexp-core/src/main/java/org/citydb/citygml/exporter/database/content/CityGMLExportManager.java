@@ -171,6 +171,9 @@ public class CityGMLExportManager implements CityGMLExportHelper {
 	private Boolean isBlazegraph;
 	private String IRI_GRAPH_BASE;
 
+	private String PREFIX_ONTOCITYGML;
+
+
 	public CityGMLExportManager(OutputFile outputFile,
 			Connection connection,
 			Query query,
@@ -221,6 +224,32 @@ public class CityGMLExportManager implements CityGMLExportHelper {
 
 		AbstractGML object = exportObject(objectId, objectType, true);
 		return type.isInstance(object) ? type.cast(object) : null;
+	}
+
+	/**
+	 * Gets OntoCityGML prefix from connection details if the the current db connection is Blazegraph.
+	 *
+	 * @return OntoCityGML prefix
+	 */
+	public String getOntoCityGmlPrefix() {
+		if (PREFIX_ONTOCITYGML == null && isBlazegraph()) {
+			PREFIX_ONTOCITYGML = getDatabaseAdapter().getConnectionDetails().getSchema();
+		}
+		return PREFIX_ONTOCITYGML;
+	}
+
+	/**
+	 * Gets IRI of the base graph from connection details if the current db connection is Blazegraph.
+	 *
+	 * @return String - IRI of the base graph
+	 */
+	public String getGraphBaseIri() {
+		if (IRI_GRAPH_BASE == null && isBlazegraph()) {
+			IRI_GRAPH_BASE = "http://" + getDatabaseAdapter().getConnectionDetails().getServer() +
+					":" + getDatabaseAdapter().getConnectionDetails().getPort() +
+					getDatabaseAdapter().getConnectionDetails().getSid();
+		}
+		return IRI_GRAPH_BASE;
 	}
 
 	public AbstractGML exportObject(long objectId, AbstractObjectType<?> objectType, boolean exportStub) throws CityGMLExportException, SQLException {
@@ -314,6 +343,104 @@ public class CityGMLExportManager implements CityGMLExportHelper {
 			success = getExporter(DBAddress.class).doExport((Address)object, objectId, (FeatureType)objectType);
 
 		// generic fallback for any ADE object
+		else
+			success = getExporter(DBCityObject.class).doExport(object, objectId, objectType);
+
+		return success ? object : null;
+	}
+
+	@Override
+	public AbstractGML exportObject(String objectId, AbstractObjectType<?> objectType, boolean exportStub) throws CityGMLExportException, SQLException {
+		AbstractGML object = Util.createObject(objectType.getObjectClassId(), query.getTargetVersion());
+		if (object == null)
+			throw new CityGMLExportException("Failed to instantiate citygml4j object for " + getObjectSignature(objectType, objectId) + ". Skipping export.");
+
+		if (object instanceof ADEModelObject) {
+			ADEExtension extension = adeManager.getExtensionByObjectClassId(objectType.getObjectClassId());
+			if (extension != null && !extension.isEnabled())
+				throw new CityGMLExportException("ADE extension for object " + getObjectSignature(objectType, objectId) + " is disabled. Skipping export.");
+
+			if (exportStub)
+				object.setLocalProperty(CoreConstants.EXPORT_STUB, true);
+		}
+
+		boolean success;
+
+		// top-level feature types
+		if (object instanceof AbstractBuilding)
+			success = getExporter(DBBuilding.class).doExport((AbstractBuilding)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof AbstractBridge)
+//			success = getExporter(DBBridge.class).doExport((AbstractBridge)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof AbstractTunnel)
+//			success = getExporter(DBTunnel.class).doExport((AbstractTunnel)object, objectId, (FeatureType)objectType);
+		else if (object instanceof CityFurniture)
+			success = getExporter(DBCityFurniture.class).doExport((CityFurniture)object, objectId, (FeatureType)objectType);
+		else if (object instanceof CityObjectGroup)
+			success = getExporter(DBCityObjectGroup.class).doExport((CityObjectGroup)object, objectId, (FeatureType)objectType);
+		else if (object instanceof GenericCityObject)
+			success = getExporter(DBGenericCityObject.class).doExport((GenericCityObject)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof LandUse)
+//			success = getExporter(DBLandUse.class).doExport((LandUse)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof PlantCover)
+//			success = getExporter(DBPlantCover.class).doExport((PlantCover)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof SolitaryVegetationObject)
+//			success = getExporter(DBSolitaryVegetatObject.class).doExport((SolitaryVegetationObject)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof ReliefFeature)
+//			success = getExporter(DBReliefFeature.class).doExport((ReliefFeature)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof TransportationComplex)
+//			success = getExporter(DBTransportationComplex.class).doExport((TransportationComplex)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof WaterBody)
+//			success = getExporter(DBWaterBody.class).doExport((WaterBody)object, objectId, (FeatureType)objectType);
+
+			// nested feature types
+//		else if (object instanceof AbstractBoundarySurface)
+//			success = getExporter(DBThematicSurface.class).doExport((AbstractBoundarySurface)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof AbstractOpening)
+//			success = getExporter(DBOpening.class).doExport((AbstractOpening)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof BuildingInstallation)
+//			success = getExporter(DBBuildingInstallation.class).doExport((BuildingInstallation)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof IntBuildingInstallation)
+//			success = getExporter(DBBuildingInstallation.class).doExport((IntBuildingInstallation)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof Room)
+//			success = getExporter(DBRoom.class).doExport((Room)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof BuildingFurniture)
+//			success = getExporter(DBBuildingFurniture.class).doExport((BuildingFurniture)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof org.citygml4j.model.citygml.bridge.AbstractBoundarySurface)
+//			success = getExporter(DBBridgeThematicSurface.class).doExport((org.citygml4j.model.citygml.bridge.AbstractBoundarySurface)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof org.citygml4j.model.citygml.bridge.AbstractOpening)
+//			success = getExporter(DBBridgeOpening.class).doExport((org.citygml4j.model.citygml.bridge.AbstractOpening)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof BridgeConstructionElement)
+//			success = getExporter(DBBridgeConstrElement.class).doExport((BridgeConstructionElement)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof BridgeInstallation)
+//			success = getExporter(DBBridgeInstallation.class).doExport((BridgeInstallation)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof IntBridgeInstallation)
+//			success = getExporter(DBBridgeInstallation.class).doExport((IntBridgeInstallation)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof BridgeRoom)
+//			success = getExporter(DBBridgeRoom.class).doExport((BridgeRoom)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof BridgeFurniture)
+//			success = getExporter(DBBridgeFurniture.class).doExport((BridgeFurniture)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof org.citygml4j.model.citygml.tunnel.AbstractBoundarySurface)
+//			success = getExporter(DBTunnelThematicSurface.class).doExport((org.citygml4j.model.citygml.tunnel.AbstractBoundarySurface)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof org.citygml4j.model.citygml.tunnel.AbstractOpening)
+//			success = getExporter(DBTunnelOpening.class).doExport((org.citygml4j.model.citygml.tunnel.AbstractOpening)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof TunnelInstallation)
+//			success = getExporter(DBTunnelInstallation.class).doExport((TunnelInstallation)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof IntTunnelInstallation)
+//			success = getExporter(DBTunnelInstallation.class).doExport((IntTunnelInstallation)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof HollowSpace)
+//			success = getExporter(DBTunnelHollowSpace.class).doExport((HollowSpace)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof TunnelFurniture)
+//			success = getExporter(DBTunnelFurniture.class).doExport((TunnelFurniture)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof AbstractReliefComponent)
+//			success = getExporter(DBReliefComponent.class).doExport((AbstractReliefComponent)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof AbstractTransportationObject)
+//			success = getExporter(DBTrafficArea.class).doExport((AbstractTransportationObject)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof AbstractWaterBoundarySurface)
+//			success = getExporter(DBWaterBoundarySurface.class).doExport((AbstractWaterBoundarySurface)object, objectId, (FeatureType)objectType);
+//		else if (object instanceof Address)
+//			success = getExporter(DBAddress.class).doExport((Address)object, objectId, (FeatureType)objectType);
+
+			// generic fallback for any ADE object
 		else
 			success = getExporter(DBCityObject.class).doExport(object, objectId, objectType);
 
@@ -592,6 +719,11 @@ public class CityGMLExportManager implements CityGMLExportHelper {
 	@Override
 	public String getObjectSignature(AbstractObjectType<?> objectType, long id) {
 		return objectType.getSchema().getXMLPrefix() + ":" + objectType.getPath() + " (id: " + id + ")";
+	}
+
+	@Override
+	public String getObjectSignature(AbstractObjectType<?> objectType, String id) {
+		return null;
 	}
 
 	@Override

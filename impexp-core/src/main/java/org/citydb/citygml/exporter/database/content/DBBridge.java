@@ -32,6 +32,7 @@ import org.citydb.citygml.exporter.util.AttributeValueSplitter;
 import org.citydb.citygml.exporter.util.AttributeValueSplitter.SplitValue;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.schema.TableEnum;
+import org.citydb.database.schema.mapping.AbstractObjectType;
 import org.citydb.database.schema.mapping.FeatureType;
 import org.citydb.query.filter.lod.LodFilter;
 import org.citydb.query.filter.lod.LodIterator;
@@ -54,10 +55,12 @@ import org.citygml4j.model.citygml.bridge.BridgeRoom;
 import org.citygml4j.model.citygml.bridge.IntBridgeInstallation;
 import org.citygml4j.model.citygml.bridge.IntBridgeInstallationProperty;
 import org.citygml4j.model.citygml.bridge.InteriorBridgeRoomProperty;
+import org.citygml4j.model.citygml.building.AbstractBuilding;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.Address;
 import org.citygml4j.model.citygml.core.AddressProperty;
 import org.citygml4j.model.gml.GMLClass;
+import org.citygml4j.model.gml.base.AbstractGML;
 import org.citygml4j.model.gml.basicTypes.Code;
 import org.citygml4j.model.gml.geometry.aggregates.MultiCurveProperty;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurface;
@@ -71,14 +74,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public class DBBridge extends AbstractFeatureExporter<AbstractBridge> {
 	private DBSurfaceGeometry geometryExporter;
@@ -166,6 +163,16 @@ public class DBBridge extends AbstractFeatureExporter<AbstractBridge> {
 		ProjectionFilter projectionFilter = exporter.getProjectionFilter(featureType);
 		String column = projectionFilter.containsProperty("consistsOfBridgePart", bridgeModule) ? "bridge_root_id" : "id";
 		return !doExport(id, object, featureType, getOrCreateStatement(column)).isEmpty();
+	}
+
+	@Override
+	protected Collection<AbstractBuilding> doExport(String id, AbstractBuilding root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException {
+		return null;
+	}
+
+	@Override
+	protected boolean doExport(AbstractBuilding object, String id, FeatureType featureType) throws CityGMLExportException, SQLException {
+		return false;
 	}
 
 	@Override
@@ -502,4 +509,33 @@ public class DBBridge extends AbstractFeatureExporter<AbstractBridge> {
 		}
 	}
 
+	@Override
+	public void doExport(AbstractCityObject cityObject, long cityObjectId, HashSet<Long> generalizesTos) throws CityGMLExportException, SQLException {
+
+	}
+
+	@Override
+	public void doExport(AbstractCityObject cityObject, String cityObjectId, HashSet<Long> generalizesTos) throws CityGMLExportException, SQLException {
+
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, long objectId, AbstractObjectType<?> objectType) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, String objectId, AbstractObjectType<?> objectType) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public boolean doExport(AbstractGML object, String objectId, AbstractObjectType<?> objectType, ProjectionFilter projectionFilter) throws CityGMLExportException, SQLException {
+		return false;
+	}
+
+	@Override
+	public void doExport(AbstractCityObject cityObject, String cityObjectId, ProjectionFilter projectionFilter) throws SQLException {
+
+	}
 }
