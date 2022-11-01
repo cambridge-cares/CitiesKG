@@ -209,6 +209,15 @@ function getQuerySentence(){
 	document.getElementsByClassName('querySentence')[0].innerHTML = final_sentence;
 }
 
+
+/**
+ * Restrict the input possiblity for GFA rows
+ * @param {String} input - input value for the field
+ */
+function restrictInput(input){
+	input.value = input.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+}
+
 function updateGfaRows(){
 	var parent = document.getElementById("assignGFA");
 	var children = Array.from(parent.children);
@@ -241,7 +250,8 @@ function updateGfaRows(){
 				var clicked_element =
 						"<div class='gfa'>" +
 						"<div class='text_gfa' style='width: 180px'>" + checkboxes.item(i).id + "</div>" +
-						"<div class='text_input' onchange='validateGFAInputs()'><input type='text' maxLength='5' size='3' oninput=\"this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\\..*)\\./g, '$1');\" /></div>" +
+						"<div class='text_input' title='Only positive integer is allowed'>" +
+				    "<input type='text' maxLength='5' size='3' oninput='restrictInput(this)'></div>" +
 						"<hr size='1'>" +
 					  "</div>" ;
 				$("#assignGFA").append(clicked_element)

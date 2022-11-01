@@ -555,7 +555,7 @@
                         </div>
                         <div id="assignGFA" class="finder_dynamic_box" onchange="getQuerySentence()">
                             <div class='text_gfa'>Total Gross Floor Area (GFA)</div>
-                            <div class='text_input' style="width: 80px" onchange="validateGFAInputs()"><input id="totalGFA" type='text' maxlength="10" size="3"></div>
+                            <div class='text_input' style="width: 80px" title='Only positive integer is allowed'><input id="totalGFA" type='text' maxlength="10" size="3" oninput="restrictInput(this)"></div>
                             <hr size="1">
                         </div>
                     </div>
