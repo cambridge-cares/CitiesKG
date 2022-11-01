@@ -241,7 +241,7 @@ function updateGfaRows(){
 				var clicked_element =
 						"<div class='gfa'>" +
 						"<div class='text_gfa' style='width: 180px'>" + checkboxes.item(i).id + "</div>" +
-						"<div class='text_input' onchange='validateGFAInputs()'><input type='text' maxLength='5' size='3'></div>" +
+						"<div class='text_input' onchange='validateGFAInputs()'><input type='text' maxLength='5' size='3' oninput=\"this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\\..*)\\./g, '$1');\" /></div>" +
 						"<hr size='1'>" +
 					  "</div>" ;
 				$("#assignGFA").append(clicked_element)
