@@ -457,8 +457,8 @@ function showChooseDevType(){
 	document.getElementById('searchButton').style.display='block';
 }
 
-function chooseDemoType(obj) {
 
+function chooseDemoType(obj) {
 	// reset all nav links color
 	var navLinks = document.getElementsByClassName("navLink");
 	for (var i = 0; i < navLinks.length; i++){
