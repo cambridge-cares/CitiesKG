@@ -322,7 +322,7 @@ function getExampleParams() {
 
 function addFiltering(input_parameters){
 	var  filteringType = document.getElementById("CapType").value;
-	console.log(filteringType);
+	//console.log(filteringType);
 	switch (filteringType) {
 		case "max_cap":
 			input_parameters[MAX_CAP] = 'true';
@@ -454,6 +454,7 @@ function showChooseDevType(){
 			document.getElementById('CapBox').style.display='block';
 			break;
 	}
+	document.getElementById('searchButton').style.display='block';
 }
 
 function chooseDemoType(obj) {
