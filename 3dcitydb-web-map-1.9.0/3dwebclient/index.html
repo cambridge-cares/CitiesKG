@@ -519,7 +519,7 @@
             <a href="#" class="navLink" id="demo3" onclick="chooseDemoType(this)">Demonstration 3</a>
         </div>
 
-		    <div id="ProgrammaticPlotFinder">
+        <div id="ProgrammaticPlotFinder">
             <button class="ProgrammaticPlotFinder-submitButton" onclick="openSidebar()">☰ <span id="demoTitle">Programmatic Plot Finder</span></button>
             <div id="demo" class="programmeFinder_toolbox">
                 <div id="programmeFinder_toolbox_upper" style="height: 50%">
@@ -572,6 +572,7 @@
             </div>
         </div>
 
+        <div id="instructionContainer"></div>
         <div id="uiMenu">
             <div onclick="showToolbox()">
                 <select class="cesium-button">
@@ -1076,8 +1077,6 @@
 
             getDropdownElements(USE_PREDICATE, USE_PREDICATE_MAY, 'use_element', '#choose_uses');
             getDropdownElements(PROGRAMME_PREDICATE, PROGRAMME_PREDICATE_MAY, 'programme_element', '#choose_programmes');
-
-
         </script>
         <script src="script.js"></script>
         <script>

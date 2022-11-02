@@ -39,12 +39,19 @@ function storeDropdownElements(predicate, results){
 	localStorage.setItem(predicate, localData);
 }
 
+/**
+ * Retrieves the dropdownElements either from localStorage or TWA via access agent
+ * @param {String} predicate - 'allowsUse' or 'allowsProgramme'
+ * @param {String} may_predicate - 'mayAllowUse' or 'mayAllowProgramme'
+ * @param {String} element_type - 'use_element' or 'programme_element'
+ * @param {String} dropdown_type - '#choose_uses' or '#choose_programmes'
+ */
 function getDropdownElements(predicate, may_predicate, element_type, dropdown_type) {
 
 	// check if the dropdownElement list already exists in the LocalStorage
 	// Warning: In order to get any update in TWA effective on WMC, the local storage need to be deleted.
 	if (ifDropdownElementExists(predicate)){
-		var dropdownData = localStorage.getItem(predicate);
+		var dropdownData = localStorage.getItem(dropdown_type);
 		var checkbox_lines = [];
 		var results = dropdownData.split('\r');
 		for (let index in results) {
@@ -68,7 +75,7 @@ function getDropdownElements(predicate, may_predicate, element_type, dropdown_ty
 				//console.log(data["result"])
 				var results = JSON.parse(data["result"]);
 				var checkbox_lines = [];
-				storeDropdownElements(predicate, results);
+				storeDropdownElements(dropdown_type, results);
 				for (let index in results) {
 					var checkbox_line = removePrefix(results[index]["g"]);
 					checkbox_lines.push(checkbox_line);
@@ -514,8 +521,9 @@ function addDisclaimerButton(){
 
 	wrapper.appendChild(disclaimerButton);
 
-	var instructionContainer = createTapMenu();
-	wrapper.appendChild(instructionContainer);
+	createTapMenu();
+	//var instructionContainer = createTapMenu();
+	//wrapper.appendChild(instructionContainer);
 
 	disclaimerButton.onclick = function(){
 		//instructionContainer.classList.add('cesium-navigation-help-visible');
@@ -530,11 +538,10 @@ function addDisclaimerButton(){
 
 function createTapMenu(){
 	// Define the instruction DIV
-	var instructionContainer = document.createElement('div');
-	instructionContainer.id = "instructionContainer";
+	var instructionContainer = document.getElementById('instructionContainer');
 	instructionContainer.className = 'cesium-navigation-help cesium-navigation-help-visible';
 	instructionContainer.setAttribute('data-bind', 'css: { "cesium-navigation-help-visible" : showInstructions}');
-	instructionContainer.style = "width: 500px; height: 270px; filter:none; z-index:99999; display: block";
+	instructionContainer.style = "width: 25%; height: auto; filter:none; z-index:99999; display: block";
 
 	// By default: descriptionTap is selected
 	var descriptionTap = createTapButton("Description");
