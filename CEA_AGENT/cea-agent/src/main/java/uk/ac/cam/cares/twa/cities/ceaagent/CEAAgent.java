@@ -191,7 +191,11 @@ public class CEAAgent extends JPSAgent {
                         String footprint = getValue(uri, "Lod0FootprintId", route);
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
-                        testData.add(new CEAInputData(footprint, height));
+                        // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
+                        String usage = getValue(uri, "PropertyUsageCategory", route);
+                        if (usage == "") {usage = "MULTI_RES";}
+
+                        testData.add(new CEAInputData(footprint, height, usage));
                         if (i==0) {
                             crs = getValue(uri, "CRS", route);
                             crs = crs == "" ? crs = getValue(uri, "DatabasesrsCRS", route) : crs;
@@ -689,6 +693,8 @@ public class CEAAgent extends JPSAgent {
                 return getDatabasesrsCrsQuery(uriString);
             case "CRS":
                 return getCrsQuery(uriString);
+            case "PropertyUsageCategory":
+                return getPropertyUsageCategory(uriString);
         }
         return null;
     }
@@ -867,6 +873,26 @@ public class CEAAgent extends JPSAgent {
                 .addVar("?CRS")
                 .addWhere(wb);
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getNamespace(uriString)));
+        return sb.build();
+    }
+
+    /**
+     * builds a SPARQL query for a specific URI to retrive the building usage for data with ontoBuiltEnv:PropertyUsageCategory
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getPropertyUsageCategory(String uriString) {
+        WhereBuilder wb = new WhereBuilder();
+        SelectBuilder sb = new SelectBuilder();
+
+        wb.addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
+                .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s")
+                .addWhere("?building", "ontoBuiltEnv:hasUsageCategory", "?PropertyUsageCategory");
+
+        sb.addVar("?PropertyUsageCategory").addGraph(NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)), wb);
+
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
+
         return sb.build();
     }
 
