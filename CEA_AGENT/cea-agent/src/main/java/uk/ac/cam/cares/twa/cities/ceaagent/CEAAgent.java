@@ -588,6 +588,10 @@ public class CEAAgent extends JPSAgent {
             if (value == "Lod0FootprintId" || value == "FootprintThematicSurface"){
                 result = extractFootprint(queryResultArray);
             }
+            else if (value == "PropertyUsageCategory") {
+                result = queryResultArray.getJSONObject(0).get(value).toString().split(ontoBuiltEnvUri)[1].split(">")[0].toUpperCase();
+                result = toCEAConvention(result);
+            }
             else if (value!="FootprintSurfaceGeom") {
                 result = queryResultArray.getJSONObject(0).get(value).toString();
             }
@@ -1680,4 +1684,54 @@ public class CEAAgent extends JPSAgent {
             throw new JPSRuntimeException(e);
         }
     }
+
+    /**
+     * Convert obtained building usage type to convention used by CEA
+     * @param usage building usage type
+     * @return building usage per CEA convention
+     */
+    public String toCEAConvention(String usage)
+    {
+        switch(usage){
+            case("SINGLERESIDENTIAL"):
+                return "SINGLE_RES";
+            case("MULTIRESIDENTIAL"):
+                return "MULTI_RES";
+            case("FIRESTATION"):
+                return "MULTI_RES";
+            case("POLICESTATION"):
+                return "OFFICE";
+            case("HOSPITAL"):
+                return usage;
+            case("CLINIC"):
+                return "HOSPITAL";
+            case("SCHOOL"):
+                return usage;
+            case("UNIVERSITYFACILITY"):
+                return "UNIVERSITY";
+            case("OFFICE"):
+                return usage;
+            case("RETAILESTABLISHMENT"):
+                return "RETAIL";
+            case("RELIGIOUSFACILITY"):
+                return "OFFICE";
+            case("INDUSTRIALFACILITY"):
+                return "INDUSTRIAL";
+            case("EATINGESTABLISHMENT"):
+                return "RESTAURANT";
+            case("DRINKINGESTABLISHMENT"):
+                return "FOODSTORE";
+            case("HOTEL"):
+                return usage;
+            case("SPORTSFACILITY"):
+                return "GYM";
+            case("CULTURALFACILITY"):
+                return "SINGLE_RES";
+            case("TRANSPORTFACILITY"):
+                return "PARKING";
+            default:
+                return "MULTI_RES";
+        }
+    }
+
 }
