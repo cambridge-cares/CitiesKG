@@ -6,6 +6,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -18,6 +19,7 @@ import lombok.Getter;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
+import org.apache.jena.atlas.json.JSON;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.sparql.path.Path;
@@ -152,8 +154,10 @@ public class CityInformationAgent extends JPSAgent {
               }
             }
             JSONArray filtered_objs = getFilteredObjects(predicate, gfas, total_gfa, min_cap, max_cap);
-            response.put("filtered", filtered_objs);
-            response.put("filteredCounts", countFilteredObjects(filtered_objs));
+            // @todo: create unique set of the array, as the data on the TWA might not be clean
+            JSONArray uniqueArray = getUniqueArray(filtered_objs);
+            response.put("filtered", uniqueArray);
+            response.put("filteredCounts", countFilteredObjects(uniqueArray));
             requestParams.put(agentURL, response);
           }
           else {
@@ -170,6 +174,7 @@ public class CityInformationAgent extends JPSAgent {
     }
     return requestParams;
   }
+
 
   @Override
   public boolean validateInput(JSONObject requestParams) throws BadRequestException {
@@ -214,6 +219,24 @@ public class CityInformationAgent extends JPSAgent {
     }
     throw new BadRequestException();
   }
+
+
+  private JSONArray getUniqueArray(JSONArray initialArray) {
+    JSONArray uniqueArray = new JSONArray();
+    ArrayList<Object> listdata = new ArrayList<Object>();
+    for (int i = 0; i < initialArray.length(); i++){
+      listdata.add(initialArray.get(i));
+    }
+    Set<Object> uniqueSet = new HashSet<>(listdata);
+    Object[] myArray = new Object[uniqueSet.size()];
+    uniqueSet.toArray(myArray);
+
+    for (int i = 0; i < myArray.length; i++){
+      uniqueArray.put(myArray[i]);
+    }
+    return uniqueArray;
+  }
+
 
   /**
    * reads variable values relevant for CityInformationAgent class from config.properties file.
