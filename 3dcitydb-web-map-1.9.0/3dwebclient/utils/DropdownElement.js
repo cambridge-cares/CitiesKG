@@ -23,11 +23,7 @@ function buildQuery(predicate, may_predicate){
 
 // To check if the KEY predicate already exists in the local starage
 function ifDropdownElementExists(predicate){
-	if(localStorage.getItem(predicate) != null){
-		return true;
-	}else {
-		return false;
-	}
+	return localStorage.getItem(predicate) != null;
 }
 
 function storeDropdownElements(predicate, results){
@@ -552,7 +548,7 @@ function createTapMenu(){
 	var instructionContainer = document.getElementById('instructionContainer');
 	instructionContainer.className = 'cesium-navigation-help cesium-navigation-help-visible';
 	instructionContainer.setAttribute('data-bind', 'css: { "cesium-navigation-help-visible" : showInstructions}');
-	instructionContainer.style = "width: 25%; height: auto; filter:none; z-index:99999; display: block";
+	instructionContainer.style = 'width: 25%; max-width: 430px; height: auto; top: 43px; right: 8px; filter:none; z-index:99999; display: block';
 
 	// By default: descriptionTap is selected
 	var descriptionTap = createTapButton("Description");
@@ -583,15 +579,15 @@ function createTapMenu(){
 	descriptionContent.innerHTML = '\
             <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Programmatic Plot Finder</div>\
             <hr width=50% style="margin-top: -10px; border-color: grey;">\
-            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">The Programmatic Plot Finder is the first demonstrator of the Cities Knowledge \
+            <div class="infobox_content">The Programmatic Plot Finder is the first demonstrator of the Cities Knowledge \
             Graph project. It enables searching for plots that allow: </div>\
-            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">1. particular combinations of land uses or programmes (essentially more specific \
+            <div class="infobox_content">1. particular combinations of land uses or programmes (essentially more specific \
             land uses)</div>\
-            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">2. particular amounts, or gross floor areas (GFAs) of these combinations. \
+            <div class="infobox_content">2. particular amounts, or gross floor areas (GFAs) of these combinations. \
             The unit of GFA is square meters (sqm), see following table for more details.</div>\
             <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Example GFA Values</div>\
             <hr width=50% style="margin-top: -10px; border-color: grey;">\
-            <table id=exampleGFA style="color: #ffffff;">\
+            <table id=exampleGFA style="color: #ffffff; margin: 5px;">\
             <tr><th style="width:50%">Name</th><th style="width:50%">GFA (sqm)</th></tr>\
             <tr><td>Takashimaya</td><td>164,600</td></tr>\
 						<tr><td>Singapore National Gallery</td><td>64,000</td></tr>\
@@ -608,20 +604,20 @@ function createTapMenu(){
 	terminologyContent.innerHTML = '\
             <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Terminology</div>\
             <hr width="50%" style="margin-top: -10px; border-color: grey;">\
-            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">\
-            <span style="font-weight:bold; font-style: italic; color: ">Gross Floor Area (GFA)</span>\
-						<p>In Singapore, authorities define GFA as ‘the total area of covered floor space measured between the centre line of party walls, including the thickness of external \
-						walls but excluding voids’. </p></div>\
-            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">\
-            <span style="font-weight:bold; font-style: italic;">Land Uses</span>\
-            <p>Broad land use categories that are allowed in a specific zoning type. Land uses may have further regulations attached, e.g. maximum use quantums. For example, \
-            a land use might be ‘Commercial or Hotel Use in Commercial Zone’. This land use is broad in the sense that a commercial use encompasses more specific uses like ‘restaurant’, \
-            ‘bar’ and ‘bookstore.’ This land use is necessary to describe at this level of detail because in Singapore, a minimum use quantum of 60% applies to it, meaning that \
-            at least 60% of the GFA of a plot zoned as Commercial must be devoted to a mix of different commercial or hotel uses.</p></div>\
-  					<div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">\
-  					<span style="font-weight:bold; font-style: italic;">Programmes</span>\
-  					<p>More specific land uses that are allowed in one or more broader land use categories. For example, ‘restaurant’, ‘bar’ and ‘bookstore’ are programmes. No use quantums \
-  					are attached to programmes.</p></div>\
+            <div class="infobox_content">\
+            	<span style="font-weight:bold; font-style: italic; color: ">Gross Floor Area (GFA)</span>\
+							<p>In Singapore, authorities define GFA as ‘the total area of covered floor space measured between the centre line of party walls, including the thickness of external \
+							walls but excluding voids’. </p></div>\
+            <div class="infobox_content">\
+            	<span style="font-weight:bold; font-style: italic;">Land Uses</span>\
+            	<p>Broad land use categories that are allowed in a specific zoning type. Land uses may have further regulations attached, e.g. maximum use quantums. For example, \
+            	a land use might be ‘Commercial or Hotel Use in Commercial Zone’. This land use is broad in the sense that a commercial use encompasses more specific uses like ‘restaurant’, \
+            	‘bar’ and ‘bookstore.’ This land use is necessary to describe at this level of detail because in Singapore, a minimum use quantum of 60% applies to it, meaning that \
+            	at least 60% of the GFA of a plot zoned as Commercial must be devoted to a mix of different commercial or hotel uses.</p></div>\
+  					<div class="infobox_content">\
+  						<span style="font-weight:bold; font-style: italic;">Programmes</span>\
+  						<p>More specific land uses that are allowed in one or more broader land use categories. For example, ‘restaurant’, ‘bar’ and ‘bookstore’ are programmes. No use quantums \
+  						are attached to programmes.</p></div>\
 						<div style="padding: 10px 5px 5px 5px;"><img src="../3dwebclient/utils/image-source/class_diagram.png" style="width: 100%;"/></div>\
 						';
 	instructionContainer.appendChild(terminologyContent);
@@ -634,11 +630,11 @@ function createTapMenu(){
 	disclaimerContent.innerHTML = '\
             <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Disclaimer</div>\
             <hr width="50%" style="margin-top: -10px; border-color: grey;">\
-            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">Plot search by allowable programmes and uses is based on the Master Plan 2019 written \
+            <div class="infobox_content">Plot search by allowable programmes and uses is based on the Master Plan 2019 written \
             statement and does not integrate other regulations that may affect allowable uses or programmes.</div>\
-            <div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">Allowable GFA values were calculated without modelling rules for mixed-use zoning types, \
+            <div class="infobox_content">Allowable GFA values were calculated without modelling rules for mixed-use zoning types, \
             such as Education or Institution, Commercial & Residential, White or plots in strata landed housing.</div>\
-  					<div class="cesium-navigation-help-details" style="padding: 10px; text-align: left">The current GFA model represents buildable space up to Level of Detail (LoD) \
+  					<div class="infobox_content">The current GFA model represents buildable space up to Level of Detail (LoD) \
   					1. The integration of higher LoD regulatory data will improve the accuracy of buildable space and the allowable GFA values.</div>\
 	';
 	instructionContainer.appendChild(disclaimerContent);
@@ -728,7 +724,7 @@ function zoomToKeyGrowthAreas(direction) {
 }
 
 function openSidebar() {
-	if (document.getElementById("mySidebar").style.width == "150px"){
+	if (document.getElementById("mySidebar").style.width === "150px"){
 		document.getElementById("mySidebar").style.width = "0";
 		document.getElementById("ProgrammaticPlotFinder").style.marginLeft= "0";
 	}else{
