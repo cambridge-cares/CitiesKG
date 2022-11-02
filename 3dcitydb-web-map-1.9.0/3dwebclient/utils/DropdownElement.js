@@ -587,7 +587,7 @@ function createTapMenu(){
             The unit of GFA is square meters (sqm), see following table for more details.</div>\
             <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Example GFA Values</div>\
             <hr width=50% style="margin-top: -10px; border-color: grey;">\
-            <table id=exampleGFA style="color: #ffffff; margin: 5px;">\
+            <table id=exampleGFA style="color: #ffffff; margin: auto;">\
             <tr><th style="width:50%">Name</th><th style="width:50%">GFA (sqm)</th></tr>\
             <tr><td>Takashimaya</td><td>164,600</td></tr>\
 						<tr><td>Singapore National Gallery</td><td>64,000</td></tr>\
