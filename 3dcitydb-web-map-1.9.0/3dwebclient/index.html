@@ -386,7 +386,7 @@
                 display: block;
                 position: absolute;
                 min-width: 230px;
-                top: 80px;
+                top: 120px;
                 left: 5px;
                 background: #303336;
                 color: #edffff;
@@ -529,37 +529,37 @@
                 <div id="programmeFinder_toolbox_bottom" style="height: 50%">
                     <div id="QueryBox" style="float: left; ">
                         <select id="DevelopmentType" class="cesium-button" onchange="showChooseDevType()" style="height:30px; font-size: 15px; padding:3px" title="Choose the type of query scenario to explore, the selection boxes will be adjusted">
-                            <option value="ViewAll" selected disabled>Search plots...</option>
+                            <option value="" selected disabled>Search plots...</option>
                             <option value="OntozoningUses">by allowable land uses</option>
                             <option value="OntozoingProgrammes">by allowable programmes</option>
                             <option value="GfaUses">by allowable GFA (per land use)</option>
                             <option value="GfaProgrammes">by allowable GFA (per programme)</option>
-                            <!--<option value="ViewAll">all search types (*)</option>-->
+                            <option value="ViewAll">show all search types (*)</option>
                         </select>
                     </div>
-                    <div id="UsesBox" style="float: left">
+                    <div id="UsesBox" style="float: left; display:none;">
                         <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
                             <div style="width:240px" class="cesium-button" title ="Land use is a high-level term for the set of activities &#010;and developments that are allowed in a certain zoning type">Choose Land Use ...<div id='use_arrow' class="arrow down"></div></div>
                         </div>
                         <div id="choose_uses" class="finder_dynamic_box" ></div>
                     </div>
-                    <div id="ProgrammesBox" style="float: left">
+                    <div id="ProgrammesBox" style="float: left; display:none;">
                         <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
                             <div style="width:240px" class="cesium-button" title="Programme is a term for specific activities and developments &#010;that may be allowed across many zoning types">Choose Programme ...<div id='programme_arrow' class="arrow down"></div></div>
                         </div>
                         <div id="choose_programmes" class="finder_dynamic_box" onblur="showChooseProgrammes()"></div>
                     </div>
-                    <div id="GfaBox" style="float: left">
+                    <div id="GfaBox" style="float: left; display:none;">
                         <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
                             <div style="width:240px" class="cesium-button" title="Gross Floor Area is a term defining the total floor area contained within &#010; a building’s outer edges that excludes empty spaces">Assign Gross Floor Area (GFA) ...<div id='gfa_arrow' class="arrow down"></div></div>
                         </div>
                         <div id="assignGFA" class="finder_dynamic_box" onchange="getQuerySentence()">
                             <div class='text_gfa'>Total Gross Floor Area (GFA)</div>
-                            <div class='text_input' style="width: 80px" onchange="validateGFAInputs()"><input id="totalGFA" type='text' maxlength="10" size="3"></div>
+                            <div class='text_input' style="width: 80px" title='Only positive integer is allowed. If the particular GFAs are specified, the totalGFA should be empty or larger than the sum of particular GFAs.'><input id="totalGFA" type='text' maxlength="10" size="3" oninput="restrictInput(this)"></div>
                             <hr size="1">
                         </div>
                     </div>
-                    <div id='CapBox' style="float: left">
+                    <div id='CapBox' style="float: left; display:none;">
                         <select id="CapType" class="cesium-button" onchange="getQuerySentence()" style="height: 30px; font-size: 15px; padding: 3px" title="chooses the amount of plots to show">
                             <option selected disabled>Show ...</option>
                             <option value="max_cap">only the 10 largest plots (by GFA)</option>
@@ -567,9 +567,22 @@
                             <option value="no_cap">all results (*)</option>
                         </select>
                     </div>
-                    <button class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getInputParams()">Search Now</button>
+                    <button id="searchButton" class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getInputParams()" style="display: none;">Search Now</button>
                 </div>
             </div>
+            <div id="uiProgrammeFinder-result" class="ProgrammaticPlotFinder-resultBox">
+                <div id="resultBox-title" class="ProgrammaticPlotFinder-resultBox-title">
+                    <label>Search History</label>
+                </div>
+                <div id="resultBox-iframe" class="ProgrammaticPlotFinder-resultBox-iframe"></div>
+            </div>
+        </div>
+
+
+        <div class="keyGrowthAreas">
+            <div style="float: left" class="arrow_kga left" onclick="zoomToKeyGrowthAreas('backward')"></div>
+            <div id="area" class="area-name" onclick="zoomToKeyGrowthAreas('same')"></div>
+            <div style="float: right" class="arrow_kga right" onclick="zoomToKeyGrowthAreas('forward')"></div>
         </div>
 
         <div id="instructionContainer"></div>
@@ -599,101 +612,101 @@
                         <div id="citydb_addlayerpanel" class="citydb_dynamic_box">
                             <table class="citydb_inputtable">
                                 <tbody>
-                                    <tr>
-                                        <td WIDTH="25%">URL(*)</td>
-                                        <td WIDTH="75%">
-                                            <input type="text" data-bind="value: url">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Name(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: name">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Layer data type</td>
-                                        <td>
-                                            <select id="layerDataTypeDropdown" data-bind="value: layerDataType" onchange="layerDataTypeDropdownOnchange()">
-                                                <option value="COLLADA/KML/glTF" selected="selected">COLLADA/KML/glTF</option>
-                                                <option value="Cesium 3D Tiles">Cesium 3D Tiles</option>
-                                                <option value="Others">Others</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <tr id="layerProxyAndClampToGround" style="display: none;">
-                                        <td>
-                                            <label><input type="checkbox" id="layerProxyCheckbox" style="width:auto;" data-bind="checked: layerProxy"/> Load via proxy</label>
-                                        </td>
-                                        <td>
-                                            <label><input type="checkbox" id="layerClampToGroundCheckbox" style="width:auto;" data-bind="checked: layerClampToGround"/> KML clamp to ground</label>
-                                        </td>
-                                    </tr>
-                                    <tr id="gltfVersionDropdownRow" style="display: none;">
-                                        <td>glTF version</td>
-                                        <td>
-                                            <select id="gltfVersionDropdown" data-bind="value: gltfVersion">
-                                                <option value="0.8">0.8</option>
-                                                <option value="1.0">1.0</option>
-                                                <option value="2.0" selected="selected">2.0</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>thematicDataUrl</td>
-                                        <td>
-                                            <input type="text" data-bind="value: thematicDataUrl">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>> Thematic Data Source</td>
-                                        <td>
-                                            <select id="thematicDataSourceDropdown" data-bind="value: thematicDataSource" onchange="thematicDataSourceAndTableTypeDropdownOnchange()">
-                                                <option value="GoogleSheets" selected="selected">Google Sheets API</option>
-                                                <option value="PostgreSQL">PostgreSQL REST API</option>
-                                                <option value="KML">KML Documents</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>> Table type</td>
-                                        <td>
-                                            <select id="tableTypeDropdown" data-bind="value: tableType" onchange="thematicDataSourceAndTableTypeDropdownOnchange()">
-                                                <option value="Horizontal" selected="selected">All object attributes in one row</option>
-                                                <option value="Vertical">One row per object attribute</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>cityobjectsJsonUrl</td>
-                                        <td>
-                                            <input type="text" data-bind="value: cityobjectsJsonUrl">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>minLodPixels</td>
-                                        <td>
-                                            <input type="text" data-bind="value: minLodPixels">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>maxLodPixels</td>
-                                        <td>
-                                            <input type="text" data-bind="value: maxLodPixels">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>MaxCountOfVisibleTiles(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: maxCountOfVisibleTiles">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>MaxSizeOfCachedTiles(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: maxSizeOfCachedTiles">
-                                        </td>
-                                    </tr>
+                                <tr>
+                                    <td WIDTH="25%">URL(*)</td>
+                                    <td WIDTH="75%">
+                                        <input type="text" data-bind="value: url">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Name(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: name">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Layer data type</td>
+                                    <td>
+                                        <select id="layerDataTypeDropdown" data-bind="value: layerDataType" onchange="layerDataTypeDropdownOnchange()">
+                                            <option value="COLLADA/KML/glTF" selected="selected">COLLADA/KML/glTF</option>
+                                            <option value="Cesium 3D Tiles">Cesium 3D Tiles</option>
+                                            <option value="Others">Others</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr id="layerProxyAndClampToGround" style="display: none;">
+                                    <td>
+                                        <label><input type="checkbox" id="layerProxyCheckbox" style="width:auto;" data-bind="checked: layerProxy"/> Load via proxy</label>
+                                    </td>
+                                    <td>
+                                        <label><input type="checkbox" id="layerClampToGroundCheckbox" style="width:auto;" data-bind="checked: layerClampToGround"/> KML clamp to ground</label>
+                                    </td>
+                                </tr>
+                                <tr id="gltfVersionDropdownRow" style="display: none;">
+                                    <td>glTF version</td>
+                                    <td>
+                                        <select id="gltfVersionDropdown" data-bind="value: gltfVersion">
+                                            <option value="0.8">0.8</option>
+                                            <option value="1.0">1.0</option>
+                                            <option value="2.0" selected="selected">2.0</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>thematicDataUrl</td>
+                                    <td>
+                                        <input type="text" data-bind="value: thematicDataUrl">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>> Thematic Data Source</td>
+                                    <td>
+                                        <select id="thematicDataSourceDropdown" data-bind="value: thematicDataSource" onchange="thematicDataSourceAndTableTypeDropdownOnchange()">
+                                            <option value="GoogleSheets" selected="selected">Google Sheets API</option>
+                                            <option value="PostgreSQL">PostgreSQL REST API</option>
+                                            <option value="KML">KML Documents</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>> Table type</td>
+                                    <td>
+                                        <select id="tableTypeDropdown" data-bind="value: tableType" onchange="thematicDataSourceAndTableTypeDropdownOnchange()">
+                                            <option value="Horizontal" selected="selected">All object attributes in one row</option>
+                                            <option value="Vertical">One row per object attribute</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>cityobjectsJsonUrl</td>
+                                    <td>
+                                        <input type="text" data-bind="value: cityobjectsJsonUrl">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>minLodPixels</td>
+                                    <td>
+                                        <input type="text" data-bind="value: minLodPixels">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>maxLodPixels</td>
+                                    <td>
+                                        <input type="text" data-bind="value: maxLodPixels">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>MaxCountOfVisibleTiles(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: maxCountOfVisibleTiles">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>MaxSizeOfCachedTiles(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: maxSizeOfCachedTiles">
+                                    </td>
+                                </tr>
                                 </tbody>
                             </table>
                             <div class="citydb_short_container">
@@ -719,48 +732,48 @@
                         <div id="citydb_addwmspanel" class="citydb_dynamic_box">
                             <table class="citydb_inputtable">
                                 <tbody>
-                                    <tr>
-                                        <td WIDTH="25%">name(*)</td>
-                                        <td WIDTH="75%">
-                                            <input type="text" data-bind="value: name">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>iconUrl(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: iconUrl">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>tooltip(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: tooltip">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>url(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: url">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>layers(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: layers">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>additionalParameters</td>
-                                        <td>
-                                            <input type="text" data-bind="value: additionalParameters">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>proxyUrl</td>
-                                        <td>
-                                            <input type="text" data-bind="value: proxyUrl">
-                                        </td>
-                                    </tr>
+                                <tr>
+                                    <td WIDTH="25%">name(*)</td>
+                                    <td WIDTH="75%">
+                                        <input type="text" data-bind="value: name">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>iconUrl(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: iconUrl">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>tooltip(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: tooltip">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>url(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: url">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>layers(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: layers">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>additionalParameters</td>
+                                    <td>
+                                        <input type="text" data-bind="value: additionalParameters">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>proxyUrl</td>
+                                    <td>
+                                        <input type="text" data-bind="value: proxyUrl">
+                                    </td>
+                                </tr>
                                 </tbody>
                             </table>
                             <div class="citydb_long_container">
@@ -783,30 +796,30 @@
                         <div id="citydb_addterrainpanel" class="citydb_dynamic_box">
                             <table class="citydb_inputtable">
                                 <tbody>
-                                    <tr>
-                                        <td WIDTH="25%">name(*)</td>
-                                        <td WIDTH="75%">
-                                            <input type="text" data-bind="value: name">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>iconUrl(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: iconUrl">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>tooltip(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: tooltip">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>url(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: url">
-                                        </td>
-                                    </tr>
+                                <tr>
+                                    <td WIDTH="25%">name(*)</td>
+                                    <td WIDTH="75%">
+                                        <input type="text" data-bind="value: name">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>iconUrl(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: iconUrl">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>tooltip(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: tooltip">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>url(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: url">
+                                    </td>
+                                </tr>
                                 </tbody>
                             </table>
                             <div class="citydb_long_container">
@@ -854,9 +867,9 @@
                             <option selected="selected" disabled="disabled">Choose highlighted Object</option>
                         </select>
                     </div>
-					<div class="citydb_long_container">
-                            <button type="button" style="width: 100%;" class="cesium-button" onclick="computeDistance()">Compute distance</button>
-                        </div>
+                    <div class="citydb_long_container">
+                        <button type="button" style="width: 100%;" class="cesium-button" onclick="computeDistance()">Compute distance</button>
+                    </div>
                     <div class="citydb_long_container" onmouseover="listHiddenObjects()">
                         <select id = "citydb_hiddenlist" style="width: 100%;" class="cesium-button" onchange="flyToClickedObject(this)">
                             <option selected="selected" disabled="disabled">Choose hidden Object</option>
@@ -906,21 +919,6 @@
                 </div>
             </div>
         </div>
-
-
-        <div class="keyGrowthAreas">
-            <div style="float: left" class="arrow_kga left" onclick="zoomToKeyGrowthAreas('backward')"></div>
-            <div id="area" class="area-name" onclick="zoomToKeyGrowthAreas('same')"></div>
-            <div style="float: right" class="arrow_kga right" onclick="zoomToKeyGrowthAreas('forward')"></div>
-        </div>
-
-        <div id="uiProgrammeFinder-result" class="ProgrammaticPlotFinder-resultBox">
-            <div id="resultBox-title" class="ProgrammaticPlotFinder-resultBox-title">
-                <label>Search History</label>
-            </div>
-            <div id="resultBox-iframe" class="ProgrammaticPlotFinder-resultBox-iframe"></div>
-        </div>
-
         <!-- GPS button -->
         <button id="gpsButton" type="button" class="cesium-button"></button>
 
@@ -936,6 +934,7 @@
         </div>
 
         <script>
+            /** 3dcitydb WMC */
             var expanded = false;
             function showToolbox() {
                 var citydb_toolbox = document.getElementById("citydb_toolbox");
@@ -1070,6 +1069,7 @@
                 }
             }
 
+           /** citiesKG **/
             var USE_PREDICATE = 'allowsUse';
             var USE_PREDICATE_MAY = 'mayAllowUse';
             var PROGRAMME_PREDICATE = 'allowsProgramme';
