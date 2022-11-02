@@ -32,6 +32,7 @@ import org.citydb.citygml.exporter.util.AttributeValueSplitter;
 import org.citydb.citygml.exporter.util.AttributeValueSplitter.SplitValue;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.database.connection.DatabaseConnectionPool;
 import org.citydb.database.schema.TableEnum;
@@ -102,6 +103,10 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 
 	private PreparedStatement ps;
 	private final AbstractDatabaseAdapter databaseAdapter;
+	private String PREFIX_ONTOCITYGML;
+	private String IRI_GRAPH_BASE;
+	public static String IRI_GRAPH_OBJECT;
+	private static final String IRI_GRAPH_OBJECT_REL = "building/";
 	public DBBuilding(Connection connection, CityGMLExportManager exporter) throws CityGMLExportException, SQLException {
 		super(AbstractBuilding.class, connection, exporter);
 
@@ -117,8 +122,11 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 		databaseAdapter = DatabaseConnectionPool.getInstance().getActiveDatabaseAdapter();
 
 		if (exporter.isBlazegraph()) {
+			PREFIX_ONTOCITYGML = exporter.getOntoCityGmlPrefix();
+			IRI_GRAPH_BASE = exporter.getGraphBaseIri();
+			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
-			String stmt = StatementTransformer.getSPARQLStatement_BuildingParts(null); //temporary parameters
+			String stmt = getSPARQLStatement().toString(); //temporary parameters
 			ps = connection.prepareStatement(stmt, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 		} else{
 
@@ -625,47 +633,50 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 			HashMap<String, AbstractBuilding> buildings = new HashMap<>();
 
 			while (rs.next()) {
-				String buildingId = rs.getString("id");
+				String predicate = rs.getString("predicate");
+				String buildingId = null;
+				if(predicate.contains("#id")){
+					buildingId = rs.getString("value");
 
-				if (!buildingId.equals(currentBuildingId) || building == null) {
-					currentBuildingId = buildingId ;
+					if (!buildingId.equals(currentBuildingId) || building == null) {
+						currentBuildingId = buildingId ;
 
-					building = buildings.get(buildingId);
-					if (building == null) {
-						FeatureType featureType = null;
-						if (buildingId.equals(id) && root != null) {
-							building = root;
-							featureType = rootType;
-						} else {
-							if (hasObjectClassIdColumn) {
-								int objectClassId = rs.getInt("objectclass_id");
-								featureType = exporter.getFeatureType(objectClassId);
-								if (featureType == null)
-									continue;
-
-								// create building object
-								building = exporter.createObject(featureType.getObjectClassId(), AbstractBuilding.class);
-								if (building == null) {
-									exporter.logOrThrowErrorMessage("Failed to instantiate " + exporter.getObjectSignature(featureType, buildingId) + " as building object.");
-									continue;
-								}
+						building = buildings.get(buildingId);
+						if (building == null) {
+							FeatureType featureType = null;
+							if (buildingId.equals(id) && root != null) {
+								building = root;
+								featureType = rootType;
 							} else {
-								building = new BuildingPart();
-								featureType = exporter.getFeatureType(building);
+								if (hasObjectClassIdColumn) {
+									int objectClassId = rs.getInt("objectclass_id");
+									featureType = exporter.getFeatureType(objectClassId);
+									if (featureType == null)
+										continue;
+
+									// create building object
+									building = exporter.createObject(featureType.getObjectClassId(), AbstractBuilding.class);
+									if (building == null) {
+										exporter.logOrThrowErrorMessage("Failed to instantiate " + exporter.getObjectSignature(featureType, buildingId) + " as building object.");
+										continue;
+									}
+								} else {
+									building = new BuildingPart();
+									featureType = exporter.getFeatureType(building);
+								}
 							}
-						}
 
-						// get projection filter
-						projectionFilter = exporter.getProjectionFilter(featureType);
+							// get projection filter
+							projectionFilter = exporter.getProjectionFilter(featureType);
 
-						// export city object information
-						boolean success = cityObjectExporter.doExport(building, buildingId, featureType, projectionFilter);
-						if (!success) {
-							if (building == root)
-								return Collections.emptyList();
-							else if (featureType.isSetTopLevel())
-								continue;
-						}
+							// export city object information
+							boolean success = cityObjectExporter.doExport(building, buildingId, featureType, projectionFilter);
+							if (!success) {
+								if (building == root)
+									return Collections.emptyList();
+								else if (featureType.isSetTopLevel())
+									continue;
+							}
 
 //						if (projectionFilter.containsProperty("class", buildingModule)) {
 //							String clazz = rs.getString("class");
@@ -758,7 +769,7 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 //							}
 //						}
 
-						// bldg:boundedBy
+							// bldg:boundedBy
 //						if (projectionFilter.containsProperty("boundedBy", buildingModule)
 //								&& lodFilter.containsLodGreaterThanOrEuqalTo(2)) {
 //							for (AbstractBoundarySurface boundarySurface : thematicSurfaceExporter.doExport(building, buildingId))
@@ -775,14 +786,14 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 //							}
 //						}
 
-						// bldg:interiorRoom
+							// bldg:interiorRoom
 //						if (projectionFilter.containsProperty("interiorRoom", buildingModule)
 //								&& lodFilter.isEnabled(4)) {
 //							for (Room room : roomExporter.doExport(building, buildingId))
 //								building.addInteriorRoom(new InteriorRoomProperty(room));
 //						}
 
-						// bldg:lodXTerrainIntersectionCurve
+							// bldg:lodXTerrainIntersectionCurve
 //						LodIterator lodIterator = lodFilter.iterator(1, 4);
 //						while (lodIterator.hasNext()) {
 //							int lod = lodIterator.next();
@@ -953,19 +964,22 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 //							}
 //						}
 
-						// delegate export of generic ADE properties
+							// delegate export of generic ADE properties
 //						if (buildingADEHookTables != null) {
 //							List<String> adeHookTables = retrieveADEHookTables(buildingADEHookTables, rs);
 //							if (adeHookTables != null)
 //								exporter.delegateToADEExporter(adeHookTables, building, buildingId, featureType, projectionFilter);
 //						}
 
-						building.setLocalProperty("parent", rs.getLong("building_parent_id"));
-						building.setLocalProperty("projection", projectionFilter);
-						buildings.put(buildingId, building);
-					} else
-						projectionFilter = (ProjectionFilter)building.getLocalProperty("projection");
+							building.setLocalProperty("parent", rs.getLong("building_parent_id"));
+							building.setLocalProperty("projection", projectionFilter);
+							buildings.put(buildingId, building);
+						} else
+							projectionFilter = (ProjectionFilter)building.getLocalProperty("projection");
+					}
 				}
+
+
 
 				// bldg:address
 //				if (projectionFilter.containsProperty("address", buildingModule)) {
@@ -1056,5 +1070,19 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 	@Override
 	public void doExport(AbstractCityObject cityObject, String cityObjectId, ProjectionFilter projectionFilter) throws SQLException {
 
+	}
+
+	private StringBuilder getSPARQLStatement(){
+		StringBuilder stmt = new StringBuilder();
+		String param = "  ?;";
+		stmt = stmt.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"SELECT  ?value ?predicate ?datatype ?isblank ?graph ?model " +
+				"WHERE { GRAPH ?graph { ?model  ?predicate  ?value }" +
+				"BIND(datatype(?value) AS ?datatype) " +
+				"BIND(isBlank(?value) AS ?isblank) " +
+				"?model " +  SchemaManagerAdapter.ONTO_ID + param +
+				"} ORDER BY ?model"
+		);
+		return stmt;
 	}
 }
