@@ -25,6 +25,8 @@ def write_workflow_file(workflow_file, filepath):
 
     find_and_replace = {a: z, b: y, c: x, d: w}
 
+    output_yaml = filepath+os.sep+"workflow.yml"
+
     with open(workflow_file) as stream:
         data = yaml.safe_load(stream)
 
