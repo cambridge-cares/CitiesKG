@@ -881,7 +881,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrive the building usage for data with ontoBuiltEnv:PropertyUsageCategory
+     * builds a SPARQL query for a specific URI to retrieve the building usage for data with ontoBuiltEnv:PropertyUsageCategory
      * @param uriString city object id
      * @return returns a query string
      */
