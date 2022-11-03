@@ -157,7 +157,7 @@ public class DBCityObject implements DBExporter {
 			IRI_GRAPH_BASE = exporter.getGraphBaseIri();
 			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
-			String stmt = getSPARQLStatement().toString(); //temporary parameters
+			String stmt = getSPARQLStatement().toString();
 			ps = connection.prepareStatement(stmt);
 		} else{
 			select.addProjection(cityObject.getColumn("gmlid"), exporter.getGeometryColumn(cityObject.getColumn("envelope")),

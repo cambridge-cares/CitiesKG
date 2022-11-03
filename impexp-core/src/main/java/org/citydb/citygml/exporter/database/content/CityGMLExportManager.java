@@ -636,6 +636,9 @@ public class CityGMLExportManager implements CityGMLExportHelper {
 		return query.getTargetVersion();
 	}
 
+	public int getSrid(){
+		return query.getTargetSrs().getSrid();
+	}
 	@Override
 	public ProjectionFilter getProjectionFilter(AbstractObjectType<?> objectType) {
 		return query.getProjectionFilter(objectType);
@@ -818,7 +821,7 @@ public class CityGMLExportManager implements CityGMLExportHelper {
 			cache.put(gmlId, id, -1, false, null, objectClassId);
 	}	
 
-	public boolean lookupAndPutGeometryUID(String gmlId, long id) {
+	public boolean lookupAndPutGeometryUID(String gmlId, Object id) {
 		UIDCache cache = uidCacheManager.getCache(UIDCacheType.GEOMETRY);
 		if (cache != null)
 			return cache.lookupAndPut(gmlId, id, MappingConstants.SURFACE_GEOMETRY_OBJECTCLASS_ID);
@@ -830,7 +833,7 @@ public class CityGMLExportManager implements CityGMLExportHelper {
 		return getGeometrySignature(geometry.getGMLClass(), id);
 	}
 
-	public String getGeometrySignature(GMLClass geometryClass, long id) {
+	public String getGeometrySignature(GMLClass geometryClass, Object id) {
 		return "gml:" + geometryClass + " (ID: " + id + ")";
 	}
 

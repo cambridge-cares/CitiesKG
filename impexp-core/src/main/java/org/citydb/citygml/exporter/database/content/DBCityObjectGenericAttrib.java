@@ -298,7 +298,7 @@ public class DBCityObjectGenericAttrib implements DBExporter {
 									genericAttribute = new MeasureAttribute();
 									Measure measure = new Measure();
 									measure.setValue(measureVal);
-									measure.setUom(rs.getString(10));//unit
+									measure.setUom(rs.getString(10));//unit (need to change)
 									((MeasureAttribute)genericAttribute).setValue(measure);
 								}
 								break;

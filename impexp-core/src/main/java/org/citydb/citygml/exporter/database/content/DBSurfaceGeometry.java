@@ -27,6 +27,8 @@
  */
 package org.citydb.citygml.exporter.database.content;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -40,6 +42,7 @@ import org.citydb.citygml.common.database.cache.CacheTable;
 import org.citydb.citygml.exporter.CityGMLExportException;
 import org.citydb.config.Config;
 import org.citydb.config.geometry.GeometryObject;
+import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.database.schema.TableEnum;
@@ -75,6 +78,8 @@ import org.citydb.sqlbuilder.schema.Table;
 import org.citydb.sqlbuilder.select.Select;
 import org.citydb.sqlbuilder.select.operator.comparison.ComparisonFactory;
 import org.citydb.sqlbuilder.select.projection.ConstantColumn;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
 
 public class DBSurfaceGeometry implements DBExporter {
 	private final CityGMLExportManager exporter;
@@ -95,9 +100,13 @@ public class DBSurfaceGeometry implements DBExporter {
 	public static String IRI_GRAPH_OBJECT;
 	private static final String IRI_GRAPH_OBJECT_REL = "surfacegeometry/";
 
-	public DBSurfaceGeometry(Connection connection, CacheTable cacheTable, CityGMLExportManager exporter, Config config) throws SQLException {
+	private DBSurfaceGeometry geometryExporter;
+	private final Connection connection;
+
+	public DBSurfaceGeometry(Connection connection, CacheTable cacheTable, CityGMLExportManager exporter, Config config) throws SQLException, CityGMLExportException {
 		this.exporter = exporter;
 		String schema = exporter.getDatabaseAdapter().getConnectionDetails().getSchema();
+		this.connection = connection;
 
 		exportAppearance = config.getInternal().isExportGlobalAppearances();
 		if (exportAppearance) {
@@ -128,7 +137,7 @@ public class DBSurfaceGeometry implements DBExporter {
 			IRI_GRAPH_BASE = exporter.getGraphBaseIri();
 			IRI_GRAPH_OBJECT = IRI_GRAPH_BASE + IRI_GRAPH_OBJECT_REL;
 
-			String  stmt = StatementTransformer.getSPARQLStatement_BuildingPartGeometry(); //temporary parameters
+			String  stmt = getSPARQLStatement().toString();
 			psSelect = connection.prepareStatement(stmt);
 		} else{
 			Table table = new Table(TableEnum.SURFACE_GEOMETRY.getName(), schema);
@@ -146,26 +155,26 @@ public class DBSurfaceGeometry implements DBExporter {
 		StringBuilder stmt = new StringBuilder();
 		String param = "  ?;";
 		stmt = stmt.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
-				"BASE <" + IRI_GRAPH_BASE + "> " +
-				"INSERT DATA" +
-				" { GRAPH <" + IRI_GRAPH_OBJECT_REL + "> " +
-				"{ ? "+ SchemaManagerAdapter.ONTO_ID + param +
-				SchemaManagerAdapter.ONTO_GML_ID + param +
-				SchemaManagerAdapter.ONTO_PARENT_ID + param +
-				SchemaManagerAdapter.ONTO_ROOT_ID + param +
-				SchemaManagerAdapter.ONTO_IS_SOLID + param +
-				SchemaManagerAdapter.ONTO_IS_COMPOSITE + param +
-				SchemaManagerAdapter.ONTO_IS_TRIANGULATED + param +
-				SchemaManagerAdapter.ONTO_IS_XLINK + param +
-				SchemaManagerAdapter.ONTO_IS_REVERSE + param +
-				SchemaManagerAdapter.ONTO_GEOMETRY + param +
-				SchemaManagerAdapter.ONTO_GEOMETRY_SOLID + param +
-				SchemaManagerAdapter.ONTO_GEOMETRY_IMPLICIT + param +
-				SchemaManagerAdapter.ONTO_CITY_OBJECT_ID + param +
-				".}" +
-				"}"
+				"SELECT  ?value ?predicate ?datatype ?isblank ?graph ?model " +
+				"WHERE { GRAPH ?graph { ?model  ?predicate  ?value }" +
+				"BIND(datatype(?value) AS ?datatype) " +
+				"BIND(isBlank(?value) AS ?isblank) " +
+				"?model " +  SchemaManagerAdapter.ONTO_ID + param +
+				"} ORDER BY ?model"
 		);
 		return stmt;
+	}
+
+	private StringBuilder getChildrenStatement(){
+		StringBuilder sparqlString = new StringBuilder();
+		String param = "  ?;";
+		sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> " +
+				"SELECT distinct ?surf " +
+				"WHERE { ?surf " + SchemaManagerAdapter.ONTO_PARENT_ID + param +
+				SchemaManagerAdapter.ONTO_GEOMETRY + " ?geomtype ." +
+				"FILTER (!isBlank(?geomtype)) }");
+
+		return sparqlString;
 	}
 
 	protected SurfaceGeometry doExport(long rootId) throws CityGMLExportException, SQLException {
@@ -208,7 +217,7 @@ public class DBSurfaceGeometry implements DBExporter {
 			}
 
 			// interpret geometry tree as a single abstract geometry
-			if (geomTree.root != 0)
+			if (geomTree.root != null)
 				return rebuildGeometry(geomTree.getNode(geomTree.root), false, false);
 			else {
 				exporter.logOrThrowErrorMessage("Failed to interpret geometry object.");
@@ -217,6 +226,129 @@ public class DBSurfaceGeometry implements DBExporter {
 		}
 	}
 
+	protected SurfaceGeometry doExport(String rootId) throws CityGMLExportException, SQLException {
+		URL url = null;
+		try {
+			url = new URL(rootId);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+
+		psSelect.setURL(1, url);
+
+		try (ResultSet rs = psSelect.executeQuery()) {
+			GeometryTree geomTree = new GeometryTree();
+			GeometryNode geomNode = new GeometryNode();
+			geomTree.root = rootId;
+			// firstly, read the geometry entries into a flat geometry tree structure
+			geomNode = constructGeomNode(rs);
+			//query child
+			String stmt = getChildrenStatement().toString();
+			PreparedStatement psChildren = connection.prepareStatement(stmt);
+			psChildren.setURL(1, url);
+			try (ResultSet rsChildren = psChildren.executeQuery()) {
+				while (rsChildren.next()) {
+					String surfaceGeometryId = rsChildren.getString("surf");
+					String stmtChild = getSPARQLStatement().toString();
+					PreparedStatement psChild = connection.prepareStatement(stmtChild);
+					URL urlChild = null;
+					try {
+						urlChild = new URL(surfaceGeometryId);
+					} catch (MalformedURLException e) {
+						e.printStackTrace();
+					}
+
+					psChild.setURL(1, urlChild);
+					try (ResultSet rsChild = psChild.executeQuery()) {
+						GeometryNode childGeometry = constructGeomNode(rsChild);
+						geomNode.childNodes.add(childGeometry);
+					}
+				}
+			}
+
+			// put polygon into the geometry tree
+			geomTree.insertNode(geomNode, geomNode.parentId);
+
+			// interpret geometry tree as a single abstract geometry
+			if (geomTree.root != null)
+				return rebuildGeometry(geomTree.getNode(geomTree.root), false, false);
+			else {
+				exporter.logOrThrowErrorMessage("Failed to interpret geometry object.");
+				return null;
+			}
+		}
+	}
+
+	protected GeometryNode constructGeomNode(ResultSet rs) throws SQLException, CityGMLExportException {
+		GeometryNode geomNode = new GeometryNode();
+		while (rs.next()) {
+			String predicate = rs.getString("predicate");
+			Boolean isBlank = rs.getBoolean("isblank");
+
+			// constructing a geometry node
+			if(predicate.contains("#id") && !isBlank){
+				geomNode.id = rs.getString("value");
+			}else if(predicate.contains("#gmlId")){
+				geomNode.gmlId = rs.getString("value");
+			}else if(predicate.contains("#parentId") && !isBlank) {
+				geomNode.parentId = rs.getString("value");
+			}else if(predicate.contains("#isSolid") && !isBlank) {
+				if (rs.getInt("value") == 0)
+					geomNode.isSolid = false;
+				if (rs.getInt("value") == 1)
+					geomNode.isSolid = true;
+			}else if(predicate.contains("#isComposite") && !isBlank) {
+				if (rs.getInt("value") == 0)
+					geomNode.isComposite = false;
+				if (rs.getInt("value") == 1)
+					geomNode.isComposite = true;
+			}else if(predicate.contains("#isTriangulated") && !isBlank) {
+				if (rs.getInt("value") == 0)
+					geomNode.isTriangulated = false;
+				if (rs.getInt("value") == 1)
+					geomNode.isTriangulated = true;
+			}else if(predicate.contains("#isXlink") && !isBlank) {
+				if (rs.getInt("value") == 0)
+					geomNode.isXlink = false;
+				if (rs.getInt("value") == 1)
+					geomNode.isXlink = true;
+			}else if(predicate.contains("#isReverse") && !isBlank) {
+				if (rs.getInt("value") == 0)
+					geomNode.isReverse = false;
+				if (rs.getInt("value") == 1)
+					geomNode.isReverse = true;
+			}else if(predicate.contains("#GeometryType")) {
+				GeometryObject geometry = null;
+				if(!isBlank){
+					try {
+						Object object = rs.getObject("value");
+						String datatype = rs.getString("datatype");
+						Geometry geomS = GeoSpatialProcessor.createGeometry(object.toString(), datatype);
+						Coordinate[] geomCoord = geomS.getCoordinates();
+						double[] geomDouble = new double[geomCoord.length * 3];
+						int newI = 0;
+						for(int i = 0; i < geomCoord.length; i++){
+							if (i == 0)
+								geomDouble[newI] = geomCoord[i].getX();
+							else
+								geomDouble[++newI] = geomCoord[i].getX();
+
+							geomDouble[++newI] = geomCoord[i].getY();
+							geomDouble[++newI] = geomCoord[i].getZ();
+						}
+						int srid = exporter.getSrid();
+						geometry = GeometryObject.createPolygon(geomDouble, 3, srid);
+					} catch (Exception e) {
+						exporter.logOrThrowErrorMessage(new StringBuilder("Skipping ").append(exporter.getGeometrySignature(GMLClass.POLYGON, geomNode.id))
+								.append(": ").append(e.getMessage()).toString());
+						continue;
+					}
+				}
+				geomNode.geometry = geometry;
+			}
+		}
+		return geomNode;
+	}
 	protected SurfaceGeometry doExportImplicitGeometry(long rootId) throws CityGMLExportException, SQLException {
 		try {
 			isImplicit = true;
@@ -643,8 +775,8 @@ public class DBSurfaceGeometry implements DBExporter {
 	}
 
 	private void writeToAppearanceCache(GeometryNode geomNode) throws SQLException {
-		psImport.setLong(1, geomNode.id);
-		psImport.setLong(2, geomNode.id);
+		psImport.setObject(1, geomNode.id);
+		psImport.setObject(2, geomNode.id);
 		psImport.addBatch();
 		batchCounter++;
 
@@ -695,9 +827,9 @@ public class DBSurfaceGeometry implements DBExporter {
 	}
 
 	private class GeometryNode {
-		protected long id;
+		protected Object id;
 		protected String gmlId;
-		protected long parentId;
+		protected Object parentId;
 		protected boolean isSolid;
 		protected boolean isComposite;
 		protected boolean isTriangulated;
@@ -712,16 +844,16 @@ public class DBSurfaceGeometry implements DBExporter {
 	}
 
 	private class GeometryTree {
-		long root;
-		private HashMap<Long, GeometryNode> geometryTree;
+		Object root;
+		private HashMap<Object, GeometryNode> geometryTree;
 
 		public GeometryTree() {
-			geometryTree = new HashMap<Long, GeometryNode>();
+			geometryTree = new HashMap<Object, GeometryNode>();
 		}
 
-		public void insertNode(GeometryNode geomNode, long parentId) {
+		public void insertNode(GeometryNode geomNode, Object parentId) {
 
-			if (parentId == 0)
+			if (parentId == null)
 				root = geomNode.id;
 
 			if (geometryTree.containsKey(geomNode.id)) {
@@ -744,12 +876,12 @@ public class DBSurfaceGeometry implements DBExporter {
 			} else {
 				// identify hierarchy nodes and place them
 				// into the tree
-				if (geomNode.geometry == null || parentId == 0)
+				if (geomNode.geometry == null || parentId == null)
 					geometryTree.put(geomNode.id, geomNode);
 			}
 
 			// make the node known to its parent...
-			if (parentId != 0) {
+			if (parentId != null) {
 				GeometryNode parentNode = geometryTree.get(parentId);
 
 				if (parentNode == null) {
@@ -763,7 +895,7 @@ public class DBSurfaceGeometry implements DBExporter {
 			}
 		}
 
-		public GeometryNode getNode(long entryId) {
+		public GeometryNode getNode(Object entryId) {
 			return geometryTree.get(entryId);
 		}
 	}

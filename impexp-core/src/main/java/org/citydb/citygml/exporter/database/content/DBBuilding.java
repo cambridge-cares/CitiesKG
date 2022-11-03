@@ -631,53 +631,109 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 			AbstractBuilding building = null;
 			ProjectionFilter projectionFilter = null;
 			HashMap<String, AbstractBuilding> buildings = new HashMap<>();
-
-			while (rs.next()) {
+			String buildingIds = null;
+			int objectClassId = 0;
+			String parentIds =  null;
+			String surfaceGeometryId = null;
+			SurfaceGeometry geometry = null;
+			int lod = 0;
+			while (rs.next()) {//get value from triples
 				String predicate = rs.getString("predicate");
-				String buildingId = null;
-				if(predicate.contains("#id")){
-					buildingId = rs.getString("value");
+				Boolean isBlank = rs.getBoolean("isblank");
 
-					if (!buildingId.equals(currentBuildingId) || building == null) {
-						currentBuildingId = buildingId ;
-
-						building = buildings.get(buildingId);
-						if (building == null) {
-							FeatureType featureType = null;
-							if (buildingId.equals(id) && root != null) {
-								building = root;
-								featureType = rootType;
-							} else {
-								if (hasObjectClassIdColumn) {
-									int objectClassId = rs.getInt("objectclass_id");
-									featureType = exporter.getFeatureType(objectClassId);
-									if (featureType == null)
-										continue;
-
-									// create building object
-									building = exporter.createObject(featureType.getObjectClassId(), AbstractBuilding.class);
-									if (building == null) {
-										exporter.logOrThrowErrorMessage("Failed to instantiate " + exporter.getObjectSignature(featureType, buildingId) + " as building object.");
-										continue;
-									}
-								} else {
-									building = new BuildingPart();
-									featureType = exporter.getFeatureType(building);
+				if(predicate.contains("#id") && !isBlank){
+					buildingIds = rs.getString("value");
+				}else if(predicate.contains("#buildingParentId") && !isBlank) {
+					parentIds = rs.getString("value");
+				}else if(predicate.contains("#objectClassId") && !isBlank) {
+					objectClassId =  rs.getInt("value");
+				}else if(predicate.contains("#lod3MultiSurfaceId") && !isBlank) {
+					surfaceGeometryId =  rs.getString("value");
+					geometry = geometryExporter.doExport(surfaceGeometryId);
+					lod = 3;
+				}
+				// bldg:lodXMultiSurface
+//						lodIterator.reset();
+//						while (lodIterator.hasNext()) {
+//							int lod = lodIterator.next();
+//
+//							if (!projectionFilter.containsProperty(new StringBuilder("lod").append(lod).append("MultiSurface").toString(), buildingModule))
+//								continue;
+//
+//							long surfaceGeometryId = rs.getLong(new StringBuilder("lod").append(lod).append("_multi_surface_id").toString());
+//							if (rs.wasNull())
+//								continue;
+//
+//							SurfaceGeometry geometry = geometryExporter.doExport(surfaceGeometryId);
+//
+//						}
+			}
+			//create building object and set values
+			if (!buildingIds.equals(currentBuildingId) || building == null) {
+				currentBuildingId = buildingIds ;
+				building = buildings.get(buildingIds);
+				if (building == null) {
+					FeatureType featureType = null;
+					if (buildingIds.equals(id) && root != null) {
+						building = root;
+						featureType = rootType;
+					} else {
+						if (hasObjectClassIdColumn) {
+							featureType = exporter.getFeatureType(objectClassId);
+							if (featureType != null){
+								// create building object
+								building = exporter.createObject(featureType.getObjectClassId(), AbstractBuilding.class);
+								if (building == null) {
+									exporter.logOrThrowErrorMessage("Failed to instantiate " + exporter.getObjectSignature(featureType, buildingIds) + " as building object.");
+//									continue;
 								}
 							}
+						} else {
+							building = new BuildingPart();
+							featureType = exporter.getFeatureType(building);
+						}
+					}
 
-							// get projection filter
-							projectionFilter = exporter.getProjectionFilter(featureType);
+					// get projection filter
+					projectionFilter = exporter.getProjectionFilter(featureType);
 
-							// export city object information
-							boolean success = cityObjectExporter.doExport(building, buildingId, featureType, projectionFilter);
-							if (!success) {
-								if (building == root)
-									return Collections.emptyList();
-								else if (featureType.isSetTopLevel())
-									continue;
-							}
+					// export city object information
+					boolean success = cityObjectExporter.doExport(building, buildingIds, featureType, projectionFilter);
+					if (!success) {
+						if (building == root)
+							return Collections.emptyList();
+//						else if (featureType.isSetTopLevel())
+//							continue;
+					}
+				} else
+					projectionFilter = (ProjectionFilter)building.getLocalProperty("projection");
+			}
 
+			if (geometry != null && geometry.getType() == GMLClass.MULTI_SURFACE) {
+				MultiSurfaceProperty multiSurfaceProperty = new MultiSurfaceProperty();
+				if (geometry.isSetGeometry())
+					multiSurfaceProperty.setMultiSurface((MultiSurface)geometry.getGeometry());
+				else
+					multiSurfaceProperty.setHref(geometry.getReference());
+
+				switch (lod) {
+					case 1:
+						building.setLod1MultiSurface(multiSurfaceProperty);
+						break;
+					case 2:
+						building.setLod2MultiSurface(multiSurfaceProperty);
+						break;
+					case 3:
+						building.setLod3MultiSurface(multiSurfaceProperty);
+						break;
+					case 4:
+						building.setLod4MultiSurface(multiSurfaceProperty);
+						break;
+				}
+			}
+			building.setLocalProperty("parent", parentIds);
+			building.setLocalProperty("projection", projectionFilter);
+			buildings.put(buildingIds, building);
 //						if (projectionFilter.containsProperty("class", buildingModule)) {
 //							String clazz = rs.getString("class");
 //							if (!rs.wasNull()) {
@@ -927,42 +983,7 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 //							}
 //						}
 //
-//						// bldg:lodXMultiSurface
-//						lodIterator.reset();
-//						while (lodIterator.hasNext()) {
-//							int lod = lodIterator.next();
 //
-//							if (!projectionFilter.containsProperty(new StringBuilder("lod").append(lod).append("MultiSurface").toString(), buildingModule))
-//								continue;
-//
-//							long surfaceGeometryId = rs.getLong(new StringBuilder("lod").append(lod).append("_multi_surface_id").toString());
-//							if (rs.wasNull())
-//								continue;
-//
-//							SurfaceGeometry geometry = geometryExporter.doExport(surfaceGeometryId);
-//							if (geometry != null && geometry.getType() == GMLClass.MULTI_SURFACE) {
-//								MultiSurfaceProperty multiSurfaceProperty = new MultiSurfaceProperty();
-//								if (geometry.isSetGeometry())
-//									multiSurfaceProperty.setMultiSurface((MultiSurface)geometry.getGeometry());
-//								else
-//									multiSurfaceProperty.setHref(geometry.getReference());
-//
-//								switch (lod) {
-//									case 1:
-//										building.setLod1MultiSurface(multiSurfaceProperty);
-//										break;
-//									case 2:
-//										building.setLod2MultiSurface(multiSurfaceProperty);
-//										break;
-//									case 3:
-//										building.setLod3MultiSurface(multiSurfaceProperty);
-//										break;
-//									case 4:
-//										building.setLod4MultiSurface(multiSurfaceProperty);
-//										break;
-//								}
-//							}
-//						}
 
 							// delegate export of generic ADE properties
 //						if (buildingADEHookTables != null) {
@@ -971,13 +992,8 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 //								exporter.delegateToADEExporter(adeHookTables, building, buildingId, featureType, projectionFilter);
 //						}
 
-							building.setLocalProperty("parent", rs.getLong("building_parent_id"));
-							building.setLocalProperty("projection", projectionFilter);
-							buildings.put(buildingId, building);
-						} else
-							projectionFilter = (ProjectionFilter)building.getLocalProperty("projection");
-					}
-				}
+
+
 
 
 
@@ -1001,7 +1017,6 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 //						}
 //					}
 //				}
-			}
 
 			// rebuild building part hierarchy
 			List<AbstractBuilding> result = new ArrayList<>();

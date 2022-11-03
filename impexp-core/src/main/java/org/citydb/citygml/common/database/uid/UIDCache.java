@@ -89,7 +89,7 @@ public class UIDCache {
 		}
 	}
 
-	public boolean lookupAndPut(String key, long id, long rootId, boolean reverse, String mapping, int objectClassId) {
+	public boolean lookupAndPut(String key, Object id, Object rootId, boolean reverse, String mapping, int objectClassId) {
 		boolean lookup = lookupMap(key) != null;
 		if (!lookup && backUp)
 			lookup = lookupDB(key) != null;
@@ -106,7 +106,7 @@ public class UIDCache {
 		return lookup;
 	}
 
-	public boolean lookupAndPut(String key, long id, int objectClassId) {
+	public boolean lookupAndPut(String key, Object id, int objectClassId) {
 		return lookupAndPut(key, id, 0, false, null, objectClassId);
 	}
 
@@ -142,7 +142,7 @@ public class UIDCache {
 		return entry;
 	}
 
-	private UIDCacheEntry getOrCreate(String key, String id, String rootId, boolean reverse, String mapping, int objectClassId) {
+	private UIDCacheEntry getOrCreate(String key, Object id, Object rootId, boolean reverse, String mapping, int objectClassId) {
 		UIDCacheEntry entry = map.get(key);
 		if (entry == null) {
 			UIDCacheEntry newEntry = new UIDCacheEntry(id, rootId, reverse, mapping, objectClassId);
