@@ -1023,12 +1023,15 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 			for (Entry<String, AbstractBuilding> entry : buildings.entrySet()) {
 				building = entry.getValue();
 				String buildingId = entry.getKey();
-				long parentId = (Long)building.getLocalProperty("parent");
-
-				if (parentId == 0) {
+				Object parentObj = building.getLocalProperty("parent");
+				String parentId = null;
+				if(parentObj == null){
 					result.add(building);
 					continue;
+				}else{
+					parentId = parentObj.toString();
 				}
+
 
 				if (!(building instanceof BuildingPart)) {
 					exporter.logOrThrowErrorMessage("Expected " + exporter.getObjectSignature(exporter.getFeatureType(building), buildingId) + " to be a building part.");

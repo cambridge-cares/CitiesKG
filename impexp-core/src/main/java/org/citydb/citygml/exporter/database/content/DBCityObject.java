@@ -489,16 +489,38 @@ public class DBCityObject implements DBExporter {
 							Geometry geomS = GeoSpatialProcessor.createGeometry(geom.toString(), datatype);
 							Coordinate[] geomCoord = geomS.getCoordinates();
 							List<Coord> coordinates = new ArrayList<>();
-							for(int i= 0; i < geomCoord.length; i++){
-								Coord coord = new Coord();
-								coord.setX(geomCoord[i].getX());
-								coord.setY(geomCoord[i].getY());
-								coord.setZ(geomCoord[i].getZ());
-								coordinates.add(coord);
+							Point lowerPoint = new Point();
+							Point upperPoint = new Point();
+							for(int i = 0; i < geomCoord.length; i++){
+								if (i == 0 || (geomCoord[i].getX() <= lowerPoint.getX() && geomCoord[i].getY() <= lowerPoint.getY())){
+									lowerPoint.setX(geomCoord[i].getX());
+									lowerPoint.setY(geomCoord[i].getY());
+									lowerPoint.setZ(geomCoord[i].getZ());
+								}
+
+								if (i == 0 || (geomCoord[i].getX() >= upperPoint.getX() && geomCoord[i].getY() >= upperPoint.getY())){
+									upperPoint.setX(geomCoord[i].getX());
+									upperPoint.setY(geomCoord[i].getY());
+									upperPoint.setZ(geomCoord[i].getZ());
+								}
 							}
 
+//							Geometry testG = geomS.getEnvelope();
+//							org.locationtech.jts.geom.Envelope testE = geomS.getEnvelopeInternal();
+//							lowerPoint.setX(testE.getMinX());
+//							lowerPoint.setY(testE.getMinY());
+//							for(int i= 0; i < geomCoord.length; i++){
+//								Coord coord = new Coord();
+//								coord.setX(geomCoord[i].getX());
+//								coord.setY(geomCoord[i].getY());
+//								coord.setZ(geomCoord[i].getZ());
+//								coordinates.add(coord);
+//							}
+
 							Envelope envelope = new Envelope();
-							envelope.setCoord(coordinates);
+//							envelope.setCoord(coordinates);
+							envelope.setLowerCorner(lowerPoint);
+							envelope.setUpperCorner(upperPoint);
 
 							envelope.setSrsDimension(3);
 							envelope.setSrsName(gmlSrsName);

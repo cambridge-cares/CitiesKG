@@ -360,6 +360,7 @@ public class DBSurfaceGeometry implements DBExporter {
 
 	private SurfaceGeometry rebuildGeometry(GeometryNode geomNode, boolean isSetOrientableSurface, boolean wasXlink) throws CityGMLExportException, SQLException {
 		// try and determine the geometry type
+		String srsName = exporter.getDatabaseAdapter().getConnectionMetaData().getReferenceSystem().getGMLSrsName();
 		GMLClass surfaceGeometryType = null;
 		if (geomNode.geometry != null) {
 			surfaceGeometryType = GMLClass.POLYGON;
@@ -687,6 +688,8 @@ public class DBSurfaceGeometry implements DBExporter {
 
 			if (geomNode.gmlId != null)
 				multiSurface.setId(geomNode.gmlId);
+				multiSurface.setSrsDimension(3);
+				multiSurface.setSrsName(srsName);
 
 			for (GeometryNode childNode : geomNode.childNodes) {
 				SurfaceGeometry geomMember = rebuildGeometry(childNode, isSetOrientableSurface, wasXlink);
