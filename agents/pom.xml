@@ -7,13 +7,6 @@
     <version>0.3.0</version>
     <packaging>war</packaging>
 
-    <!-- Parent POM -->
-    <parent>
-        <groupId>uk.ac.cam.cares.jps</groupId>
-        <artifactId>jps-parent-pom</artifactId>
-        <version>1.0.0</version>
-    </parent>
-
     <!-- Project properties -->
     <properties>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -283,8 +276,24 @@
 
     <dependencyManagement>
 
-
-        <dependencies>
+     <dependencies>
+            <dependency>
+                <groupId>javax.xml.bind</groupId>
+                <artifactId>jaxb-api</artifactId>
+                <version>2.3.0</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.xml.bind</groupId>
+                <artifactId>jaxb-core</artifactId>
+                <version>2.3.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.xml.bind</groupId>
+                <artifactId>jaxb-impl</artifactId>
+                <version>2.3.0</version>
+                <scope>provided</scope>
+            </dependency>
 
             <dependency>
                 <groupId>log4j</groupId>
