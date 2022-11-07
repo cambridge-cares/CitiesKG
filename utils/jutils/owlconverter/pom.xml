@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>uk.ac.cam.cares.twa.cities.utils</groupId>
   <artifactId>owlconverter</artifactId>
-  <version>1.1.0-java11-SNAPSHOT</version>
+  <version>1.1.0</version>
 
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
