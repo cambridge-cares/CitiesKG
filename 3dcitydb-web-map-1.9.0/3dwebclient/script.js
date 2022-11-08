@@ -728,6 +728,7 @@ function showResultWindow(resultJson){
 
     listItem.appendChild(processInfoContext(resultJson));
 
+    /**
     var closeButton = document.createElement("span");
     closeButton.className = "close";
     closeButton.textContent = "x";
@@ -745,6 +746,7 @@ function showResultWindow(resultJson){
             this.parentNode.remove();
         });
     }
+     **/
 }
 
 // create the summary text for PPF result box

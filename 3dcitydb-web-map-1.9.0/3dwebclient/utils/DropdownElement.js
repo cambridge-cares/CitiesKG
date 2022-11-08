@@ -388,7 +388,7 @@ function getValidPlots(){
 		success: function (data) { //function (data, status_message, xhr)
 			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
 			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filteredCounts"]);
-			//showResultWindow(data);
+			showResultWindow(data);
 			processFilteredObjects(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
       		//pinHighlightObjects(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
 
