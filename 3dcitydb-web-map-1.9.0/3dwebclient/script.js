@@ -672,7 +672,7 @@ function getMidpoint(point1, point2) {
 
 }
 
-function showResultWindow(resultJson){
+function showResultWindow(resultJson, colorStr){
 
     var resultBoxTitle = document.getElementById("resultBox-title");
     resultBoxTitle.style.visibility = "visible";
@@ -688,12 +688,19 @@ function showResultWindow(resultJson){
 
     var checkbox = document.createElement("input");
     checkbox.type = 'checkbox';
-    checkbox.onchange = function (event){
-        // get parentnode id
-        var targetId = event.currentTarget.parentNode.id;
-        // TODO: show the datasource
-    }
+    checkbox.className = 'ciaResults';
+    checkbox.checked = true;
+    checkbox.onchange = function (){
+        updateSelectedDataSources();
+    };
+    listItem.appendChild(checkbox);
 
+    var colorbox = document.createElement('div');
+    colorbox.className = "colorbox";
+    colorbox.style = "width: 10px; height: 10px; display: inline-block; background-color: " + colorStr + ";"
+    // <div class="color-box" style="background-color: #FF850A;"></div>
+
+    listItem.appendChild(colorbox);
     var closeButton = document.createElement("span");
     closeButton.className = "close";
     closeButton.textContent = "x";
@@ -716,6 +723,19 @@ function showResultWindow(resultJson){
     }
 }
 
+function updateSelectedDataSources(){
+    // remove all DataSources
+    for (let [key, value] of customDataSourceMap){
+        cesiumViewer.dataSources.remove(value);
+    }
+    var ciaResultsArray = document.getElementsByClassName('ciaResults');
+    for (let i = 0; i < ciaResultsArray.length; ++i){
+        if (ciaResultsArray[i].checked){
+            cesiumViewer.dataSources.add(customDataSourceMap.get(ciaResultsArray[i].parentNode.id));
+        }
+    }
+}
+
 function removeDataSourceById(datasourceId){
     var targetDataSource = customDataSourceMap.get(datasourceId);
     customDataSourceMap.delete(datasourceId);
@@ -723,13 +743,14 @@ function removeDataSourceById(datasourceId){
 }
 
 function processCIAResult(CIAdata){
-    showResultWindow(CIAdata);
-    processFilteredObjects(CIAdata["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
+    var hexColorString = "#" + Math.floor(Math.random()*16777215).toString(16);
+    showResultWindow(CIAdata, hexColorString);
+    processFilteredObjects(CIAdata["http://www.theworldavatar.com:83/access-agent/access"]["filtered"], hexColorString);
     _customDataSourceCounter++;
 }
 
 //Shiying: highlight multiple cityobjects, create customDatasource, pinCityobjects
-function processFilteredObjects(cityObjectsArray){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
+function processFilteredObjects(cityObjectsArray, colorStr){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
     //var cityObjectsArray = ["UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d", "UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3"];
     //var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_b6f4d0de-cf5c-4917-aba0-c1a91fa4960b/"];
 
@@ -747,7 +768,7 @@ function processFilteredObjects(cityObjectsArray){  // citydbKmlLayer object, li
     }
 
     filteredObjects = filteredResult;
-    pinHighlightObjects(cityObjectsArray);
+    pinHighlightObjects(cityObjectsArray, colorStr);
     highlightFilteredObj(filteredObjects);
     return filteredObjects;
 }
@@ -841,7 +862,7 @@ function processInfoContext(resultjson){
     return infoText;
 }
 
-function pinHighlightObjects(cityObjectsArray){
+function pinHighlightObjects(cityObjectsArray, hexColorString){
 
     var gmlidArray = [];
 
@@ -868,26 +889,31 @@ function pinHighlightObjects(cityObjectsArray){
         var lat = (obj.envelope[1] + obj.envelope[3]) / 2.0;
         //console.log(gmlidArray[i] + ": " + lon + ", " + lat);
 
-        addPoint(customDataSource, id, lat, lon);
+        addPoint(customDataSource, id, lat, lon, hexColorString);
     }
 
+    /**
     // In order to only show the current dataSource, we need to remove the previous first.
     for (let [key, value] of customDataSourceMap){
         console.log(key + " : " + cesiumViewer.dataSources.remove(value));
-    }
+    }**/
 
     customDataSourceMap.set(dataUnifier, customDataSource);
     cesiumViewer.dataSources.add(customDataSource);
+
+    //var testdataSource = customDataSource;
+    //var testentity = testdataSource.getEntitiesById('UUID_3422c065-c104-4a48-9536-0f30ff96c670');
+    //console.log(testentity);
 }
 
-function addPoint(customDataSource, pointId, lat, long){
+function addPoint(customDataSource, pointId, lat, long, hexColorString){
 
     customDataSource.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(long, lat),
+        position: Cesium.Cartesian3.fromDegrees(long, lat, 5),
         id: pointId,
         point: {
             pixelSize: 10,
-            color: Cesium.Color.GOLD,
+            color: Cesium.Color.fromCssColorString(hexColorString),
             outlineColor: Cesium.Color.BLACK,
             outlineWidth:1,
         },
