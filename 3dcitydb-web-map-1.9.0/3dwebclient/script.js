@@ -145,7 +145,9 @@ splashController.setCookie("ignoreSplashWindow", "true")
 
 // added by Shiying
 var filteredObjects = {};
-
+var _customDataSourceCounter = 0;
+const dataSourcePrefix = "ciaResult_";
+var customDataSourceMap = new Map();
 /*---------------------------------  Load Configurations and Layers  ----------------------------------------*/
 
 initClient();
@@ -670,52 +672,6 @@ function getMidpoint(point1, point2) {
 
 }
 
-//Shiying: highlight multiple cityobjects
-function processFilteredObjects(cityObjectsArray){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
-    //var cityObjectsArray = ["UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d", "UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3"];
-    //var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_b6f4d0de-cf5c-4917-aba0-c1a91fa4960b/"];
-
-    // UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d - inside
-    // UUID_b6f4d0de-cf5c-4917-aba0-c1a91fa4960b - outside of the scene
-    var currentLayer = webMap.activeLayer;
-    var filteredResult= {};
-    var highlightColor = currentLayer._highlightColor; // new Cesium.Color(16/255, 77/255, 151/255, 1.0);
-    // unhighlight all objects first then highlight the filtered objects
-    //currentLayer.unHighlightAllObjects();
-
-    for (let i = 0; i < cityObjectsArray.length; i++) {
-        var strArray = cityObjectsArray[i].split("/");
-        var gmlid = strArray[strArray.length-2];
-        filteredResult[gmlid] = highlightColor; // new Cesium.Color(65/255, 168/255, 255/255, 0.8);
-    }
-    /**
-    var cameraPostion = {
-        latitude:  1.25648566126433,
-        longitude: 103.823907400709,
-        height: 2800,
-        heading: 360,
-        pitch: -60,
-        roll: 356,
-    }
-    flyToCameraPosition(cameraPostion); **/
-    //flyToMapLocation(1.264377, 103.837302);
-    //zoomToObjectById("UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d");
-    //currentLayer.highlight(filteredObjects);
-    filteredObjects = filteredResult;
-    pinHighlightObjects(cityObjectsArray);
-    highlightFilteredObj(filteredObjects);
-    return filteredObjects;
-}
-
-function highlightFilteredObj(filteredObjects){
-    if (filteredObjects != undefined){
-        var currentLayer = webMap.activeLayer;
-        currentLayer.highlight(filteredObjects);
-    }
-}
-
-
-
 function showResultWindow(resultJson){
 
     var resultBoxTitle = document.getElementById("resultBox-title");
@@ -725,14 +681,26 @@ function showResultWindow(resultJson){
     var resultBoxContent = document.createElement("div");
     resultBoxContent.style.display = "block";
     var listItem = document.createElement("li");
+    listItem.id = dataSourcePrefix + _customDataSourceCounter;
 
     listItem.appendChild(processInfoContext(resultJson));
+    // <input type='checkbox' onchange='updateGfaRows()'>
 
-    /**
+    var checkbox = document.createElement("input");
+    checkbox.type = 'checkbox';
+    checkbox.onchange = function (event){
+        // get parentnode id
+        var targetId = event.currentTarget.parentNode.id;
+        // TODO: show the datasource
+    }
+
     var closeButton = document.createElement("span");
     closeButton.className = "close";
     closeButton.textContent = "x";
-    closeButton.onclick = removeDataSource();
+    closeButton.onclick = function (event){
+        var targetId = event.currentTarget.parentNode.id;
+        removeDataSourceById(targetId);
+    }
     listItem.appendChild(closeButton);
     resultBoxContent.appendChild(listItem);
     resultBox.appendChild(resultBoxContent);
@@ -742,11 +710,54 @@ function showResultWindow(resultJson){
 
     for (i = 0; i < closebtns.length; i++) {
         closebtns[i].addEventListener("click", function() {
-            //this.parentElement.style.display = 'none';
+            console.log("this has been removed: " + this.parentNode.id);
             this.parentNode.remove();
         });
     }
-     **/
+}
+
+function removeDataSourceById(datasourceId){
+    var targetDataSource = customDataSourceMap.get(datasourceId);
+    customDataSourceMap.delete(datasourceId);
+    console.log("dataSource " + datasourceId + " has been removed: " + cesiumViewer.dataSources.remove(targetDataSource));
+}
+
+function processCIAResult(CIAdata){
+    showResultWindow(CIAdata);
+    processFilteredObjects(CIAdata["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
+    _customDataSourceCounter++;
+}
+
+//Shiying: highlight multiple cityobjects, create customDatasource, pinCityobjects
+function processFilteredObjects(cityObjectsArray){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
+    //var cityObjectsArray = ["UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d", "UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3"];
+    //var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_b6f4d0de-cf5c-4917-aba0-c1a91fa4960b/"];
+
+    // UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d - inside
+    // UUID_b6f4d0de-cf5c-4917-aba0-c1a91fa4960b - outside of the scene
+
+    var currentLayer = webMap.activeLayer;
+    var filteredResult= {};
+    var highlightColor = currentLayer._highlightColor; // new Cesium.Color(16/255, 77/255, 151/255, 1.0);
+
+    for (let i = 0; i < cityObjectsArray.length; i++) {
+        var strArray = cityObjectsArray[i].split("/");
+        var gmlid = strArray[strArray.length-2];
+        filteredResult[gmlid] = highlightColor; // new Cesium.Color(65/255, 168/255, 255/255, 0.8);
+    }
+
+    filteredObjects = filteredResult;
+    pinHighlightObjects(cityObjectsArray);
+    highlightFilteredObj(filteredObjects);
+    return filteredObjects;
+}
+
+function highlightFilteredObj(filteredObjects){
+    var currentLayer = webMap.activeLayer;
+    currentLayer.unHighlightAllObjects();
+    if (filteredObjects != undefined){
+        currentLayer.highlight(filteredObjects);
+    }
 }
 
 // create the summary text for PPF result box
@@ -830,19 +841,9 @@ function processInfoContext(resultjson){
     return infoText;
 }
 
-function removeDataSource(){
-    cesiumViewer.dataSources.removeAll();
-}
 function pinHighlightObjects(cityObjectsArray){
 
-    //var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e05bfbcc-561e-4dc3-a355-8106f3e7fcf4/",
-    //    "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_654c80ac-b52f-4a24-9569-3ed727ae9d4e/",
-    //    "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_32fdd5cf-bf30-40f3-96a6-e84960fae084/",
-    //    "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_aca851c3-2b12-489c-9d83-4d7b1c553e50/"];
-
     var gmlidArray = [];
-
-    //showResultWindow(cityObjectsArray.length);
 
     for (let i = 0; i < cityObjectsArray.length; i++) {
         var strArray = cityObjectsArray[i].split("/");
@@ -857,8 +858,8 @@ function pinHighlightObjects(cityObjectsArray){
         testcityobjectsJsonData = currentLayer.cityobjectsJsonData;
     }
 
-    var customDataSource = new Cesium.CustomDataSource("myPoints");
-
+    var dataUnifier = dataSourcePrefix + _customDataSourceCounter;
+    var customDataSource = new Cesium.CustomDataSource(dataUnifier);
 
     for (let i = 0; i < gmlidArray.length; i++){
         var obj = testcityobjectsJsonData[gmlidArray[i]];
@@ -870,34 +871,13 @@ function pinHighlightObjects(cityObjectsArray){
         addPoint(customDataSource, id, lat, lon);
     }
 
+    // In order to only show the current dataSource, we need to remove the previous first.
+    for (let [key, value] of customDataSourceMap){
+        console.log(key + " : " + cesiumViewer.dataSources.remove(value));
+    }
+
+    customDataSourceMap.set(dataUnifier, customDataSource);
     cesiumViewer.dataSources.add(customDataSource);
-
-    // lat#long
-    //var centroidArray = ["1.3171695133731451#104.00344181680501", "1.232218731520345#103.769346005816", "1.3183791030454#103.6429693656075", "1.4531236632754299#103.81758389573551"];
-    //var lon = (obj.envelope[0] + obj.envelope[2]) / 2.0;
-    //var lat = (obj.envelope[1] + obj.envelope[3]) / 2.0;
-    // Draw point
-    //for (let i = 0; i < centroidArray.length; i++){
-    //    var res = centroidArray[i].split("#");
-    //    addPoint(parseFloat(res[0]), parseFloat(res[1]));
-    //}
-
-    // set the camera to the view the centroid of sinagpore to view all results
-    // set camera view
-    //var cameraPostion = {
-    //    latitude: 0.023307207117772493,  //
-    //    longitude: 1.8121454529642347,
-    //    height: 66468.41306483748,
-    //    heading: 0.39630595415744363, //13.68838551977463,
-    //    pitch: -89.99396415604053,
-    //    roll: 0,
-    //}
-
-    //flyToCameraPosition(cameraPostion);
-    //cesiumViewer.camera.flyTo({
-    //    destination: Cesium.Cartesian3.fromRadians(1.8121454529642347, 0.023307207117772493, 66468)
-    //})
-
 }
 
 function addPoint(customDataSource, pointId, lat, long){
@@ -907,7 +887,6 @@ function addPoint(customDataSource, pointId, lat, long){
         id: pointId,
         point: {
             pixelSize: 10,
-            //color: Cesium.Color.YELLOW,
             color: Cesium.Color.GOLD,
             outlineColor: Cesium.Color.BLACK,
             outlineWidth:1,
@@ -915,8 +894,7 @@ function addPoint(customDataSource, pointId, lat, long){
     });
 }
 
-
-	//--- End of Extended Web-Map-Client part---//
+//--- End of Extended Web-Map-Client part---//
 
 function listHiddenObjects() {
     var hidddenListElement = document.getElementById("citydb_hiddenlist");
