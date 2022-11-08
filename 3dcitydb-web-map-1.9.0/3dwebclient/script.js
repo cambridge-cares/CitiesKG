@@ -684,7 +684,16 @@ function showResultWindow(resultJson){
     listItem.id = dataSourcePrefix + _customDataSourceCounter;
 
     listItem.appendChild(processInfoContext(resultJson));
+    // <input type='checkbox' onchange='updateGfaRows()'>
 
+    var checkbox = document.createElement("input");
+    checkbox.type = 'checkbox';
+    checkbox.onchange = function (event){
+        // get parentnode id
+        var targetId = event.currentTarget.parentNode.id;
+        // TODO: show the datasource
+
+    }
     var closeButton = document.createElement("span");
     closeButton.className = "close";
     closeButton.textContent = "x";
@@ -730,29 +739,12 @@ function processFilteredObjects(cityObjectsArray){  // citydbKmlLayer object, li
     var currentLayer = webMap.activeLayer;
     var filteredResult= {};
     var highlightColor = currentLayer._highlightColor; // new Cesium.Color(16/255, 77/255, 151/255, 1.0);
-    // unhighlight all objects first then highlight the filtered objects
-    //currentLayer.unHighlightAllObjects();
-    //console.log(cesiumViewer.dataSources);
-
 
     for (let i = 0; i < cityObjectsArray.length; i++) {
         var strArray = cityObjectsArray[i].split("/");
         var gmlid = strArray[strArray.length-2];
         filteredResult[gmlid] = highlightColor; // new Cesium.Color(65/255, 168/255, 255/255, 0.8);
     }
-    /**
-    var cameraPostion = {
-        latitude:  1.25648566126433,
-        longitude: 103.823907400709,
-        height: 2800,
-        heading: 360,
-        pitch: -60,
-        roll: 356,
-    }
-    flyToCameraPosition(cameraPostion); **/
-    //flyToMapLocation(1.264377, 103.837302);
-    //zoomToObjectById("UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d");
-    //currentLayer.highlight(filteredObjects);
 
     filteredObjects = filteredResult;
     pinHighlightObjects(cityObjectsArray);
@@ -851,11 +843,6 @@ function processInfoContext(resultjson){
 
 function pinHighlightObjects(cityObjectsArray){
 
-    /**var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e05bfbcc-561e-4dc3-a355-8106f3e7fcf4/",
-        "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_654c80ac-b52f-4a24-9569-3ed727ae9d4e/",
-        "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_32fdd5cf-bf30-40f3-96a6-e84960fae084/",
-        "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_aca851c3-2b12-489c-9d83-4d7b1c553e50/"]; **/
-
     var gmlidArray = [];
 
     for (let i = 0; i < cityObjectsArray.length; i++) {
@@ -874,7 +861,6 @@ function pinHighlightObjects(cityObjectsArray){
     var dataUnifier = dataSourcePrefix + _customDataSourceCounter;
     var customDataSource = new Cesium.CustomDataSource(dataUnifier);
 
-
     for (let i = 0; i < gmlidArray.length; i++){
         var obj = testcityobjectsJsonData[gmlidArray[i]];
         var id = gmlidArray[i];
@@ -886,40 +872,12 @@ function pinHighlightObjects(cityObjectsArray){
     }
 
     // In order to only show the current dataSource, we need to remove the previous first.
-
     for (let [key, value] of customDataSourceMap){
         console.log(key + " : " + cesiumViewer.dataSources.remove(value));
     }
 
     customDataSourceMap.set(dataUnifier, customDataSource);
     cesiumViewer.dataSources.add(customDataSource);
-
-    // lat#long
-    //var centroidArray = ["1.3171695133731451#104.00344181680501", "1.232218731520345#103.769346005816", "1.3183791030454#103.6429693656075", "1.4531236632754299#103.81758389573551"];
-    //var lon = (obj.envelope[0] + obj.envelope[2]) / 2.0;
-    //var lat = (obj.envelope[1] + obj.envelope[3]) / 2.0;
-    // Draw point
-    //for (let i = 0; i < centroidArray.length; i++){
-    //    var res = centroidArray[i].split("#");
-    //    addPoint(parseFloat(res[0]), parseFloat(res[1]));
-    //}
-
-    // set the camera to the view the centroid of sinagpore to view all results
-    // set camera view
-    //var cameraPostion = {
-    //    latitude: 0.023307207117772493,  //
-    //    longitude: 1.8121454529642347,
-    //    height: 66468.41306483748,
-    //    heading: 0.39630595415744363, //13.68838551977463,
-    //    pitch: -89.99396415604053,
-    //    roll: 0,
-    //}
-
-    //flyToCameraPosition(cameraPostion);
-    //cesiumViewer.camera.flyTo({
-    //    destination: Cesium.Cartesian3.fromRadians(1.8121454529642347, 0.023307207117772493, 66468)
-    //})
-
 }
 
 function addPoint(customDataSource, pointId, lat, long){
@@ -929,7 +887,6 @@ function addPoint(customDataSource, pointId, lat, long){
         id: pointId,
         point: {
             pixelSize: 10,
-            //color: Cesium.Color.YELLOW,
             color: Cesium.Color.GOLD,
             outlineColor: Cesium.Color.BLACK,
             outlineWidth:1,
@@ -937,8 +894,7 @@ function addPoint(customDataSource, pointId, lat, long){
     });
 }
 
-
-	//--- End of Extended Web-Map-Client part---//
+//--- End of Extended Web-Map-Client part---//
 
 function listHiddenObjects() {
     var hidddenListElement = document.getElementById("citydb_hiddenlist");
