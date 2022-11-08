@@ -14,6 +14,9 @@ var cameraPositions = {
 	'Paya_Lebar_Air_Base': {latitude: 1.325, longitude: 103.906240, height: 3000, heading: 360, pitch: -60, roll: 356},
 	'Woodlands_Centre': {latitude:  1.425, longitude: 103.789, height: 3000, heading: 360, pitch: -60, roll: 356 }}
 
+/**Added by Shiying**/
+var requestCounter = 0;
+
 function buildQuery(predicate, may_predicate){
 	query = "PREFIX zo:<http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#> "
 			+ "SELECT DISTINCT ?g WHERE { GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/> "
@@ -388,14 +391,13 @@ function getValidPlots(){
 		success: function (data) { //function (data, status_message, xhr)
 			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
 			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filteredCounts"]);
-			//showResultWindow(data);
-			processFilteredObjects(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
-      		//pinHighlightObjects(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
-
+			processCIAResult(data);
 		}
 	});
 	//highlightMultipleObjects();
 }
+
+
 
 function throwNotification() {
 	var popup = document.createElement('div');
