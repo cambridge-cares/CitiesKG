@@ -378,6 +378,7 @@ function getInputParams() {
 	addFiltering(input_parameters);
 	console.log(input_parameters);
 	getValidPlots();
+	resetAllInputs();
 }
 
 function getValidPlots(){
@@ -486,8 +487,9 @@ function chooseDemoType(obj) {
 }
 
 function resetAllInputs(){
-	var checkboxes = document.getElementsByClassName('checkbox');
-	let checkedCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+	var demoToolbox = document.getElementById("demo");
+	//var checkboxes = toolbox.getElementsByClassName('checkbox');
+	let checkedCheckboxes = demoToolbox.querySelectorAll('input[type="checkbox"]:checked');
 	checkedCheckboxes.forEach((checkbox) => {
 		checkbox.checked = false;
 		updateGfaRows();

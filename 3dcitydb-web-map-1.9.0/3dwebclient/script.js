@@ -697,9 +697,8 @@ function showResultWindow(resultJson, colorStr){
 
     var colorbox = document.createElement('div');
     colorbox.className = "colorbox";
-    colorbox.style = "width: 10px; height: 10px; display: inline-block; background-color: " + colorStr + ";"
-    // <div class="color-box" style="background-color: #FF850A;"></div>
-
+    colorbox.style = "width: 10px; height: 10px; display: inline-block;";
+    colorbox.style.backgroundColor = colorStr;
     listItem.appendChild(colorbox);
     var closeButton = document.createElement("span");
     closeButton.className = "close";
@@ -743,10 +742,23 @@ function removeDataSourceById(datasourceId){
 }
 
 function processCIAResult(CIAdata){
-    var hexColorString = "#" + Math.floor(Math.random()*16777215).toString(16);
+    var hexColorString =  generateColorHex();// generateLightColorHex();
     showResultWindow(CIAdata, hexColorString);
     processFilteredObjects(CIAdata["http://www.theworldavatar.com:83/access-agent/access"]["filtered"], hexColorString);
     _customDataSourceCounter++;
+}
+
+function generateColorHex(){
+    let color = "#";
+    color += Math.floor(Math.random()*16777215).toString(16);
+    return color;
+}
+
+function generateLightColorHex() {
+    let color = "#";
+    for (let i = 0; i < 3; i++)
+        color += ("0" + Math.floor(((1 + Math.random()) * Math.pow(16, 2)) / 2).toString(16)).slice(-2);
+    return color;
 }
 
 //Shiying: highlight multiple cityobjects, create customDatasource, pinCityobjects
@@ -891,7 +903,6 @@ function pinHighlightObjects(cityObjectsArray, hexColorString){
 
         addPoint(customDataSource, id, lat, lon, hexColorString);
     }
-
     /**
     // In order to only show the current dataSource, we need to remove the previous first.
     for (let [key, value] of customDataSourceMap){
