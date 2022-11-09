@@ -236,6 +236,7 @@ public class CityInformationAgent extends JPSAgent {
   private Query getFilterQuery(String predicate, ArrayList<String> onto_class, boolean gfa_case) {
     SelectBuilder sb = new SelectBuilder();
     sb.addVar(QM + CITY_OBJECT_ID);
+    sb.setDistinct(true);
     String namespaceURl = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql";
     String ontoZoneGraph = namespaceURl + "/ontozone/";
     String buildableSpaceGraph = namespaceURl + "/buildablespace/";
