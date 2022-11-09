@@ -477,6 +477,7 @@ public class DBSurfaceGeometry implements DBExporter {
 
 					directPositionList.setValue(values);
 					directPositionList.setSrsDimension(3);
+					directPositionList.setSrsName(srsName);
 					linearRing.setPosList(directPositionList);
 
 					Exterior exterior = new Exterior();
@@ -493,6 +494,7 @@ public class DBSurfaceGeometry implements DBExporter {
 
 					directPositionList.setValue(values);
 					directPositionList.setSrsDimension(3);
+					directPositionList.setSrsName(srsName);
 					linearRing.setPosList(directPositionList);
 
 					Interior interior = new Interior();

@@ -27,6 +27,7 @@
  */
 package org.citydb.citygml.exporter.database.content;
 
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.citydb.citygml.common.database.cache.CacheTable;
 import org.citydb.citygml.common.database.cache.CacheTableManager;
 import org.citydb.citygml.common.database.cache.model.CacheTableModel;
@@ -41,6 +42,8 @@ import org.citydb.config.geometry.Position;
 import org.citydb.config.i18n.Language;
 import org.citydb.config.project.database.DatabaseType;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
+import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
+import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.database.connection.DatabaseConnectionPool;
 import org.citydb.database.schema.mapping.AbstractObjectType;
 import org.citydb.database.schema.mapping.FeatureType;
@@ -111,6 +114,10 @@ public class DBSplitter {
 	private boolean calculateNumberMatched;
 	private boolean calculateExtent;
 	private long sequenceId;
+	private String PREFIX_ONTOCITYGML;
+	private String IRI_GRAPH_BASE;
+	public static String IRI_GRAPH_OBJECT;
+	private static final String IRI_GRAPH_OBJECT_REL = "cityobject/";
 
 	public DBSplitter(FeatureWriter writer,
 			SchemaMapping schemaMapping,
@@ -220,21 +227,21 @@ public class DBSplitter {
 			if (config.getInternal().isExportGlobalAppearances() && sequenceId > 0)
 				queryGlobalAppearance();
 
+		} catch (ParseException e) {
+			throw new RuntimeException(e);
 		} finally {
 			if (connection != null)
 				connection.close();
 		}
 	}
 
-	private void queryCityObject(FeatureType cityObjectGroupType, Map<Object, AbstractObjectType<?>> cityObjectGroups) throws SQLException, QueryBuildException, FeatureWriteException {
+	private void queryCityObject(FeatureType cityObjectGroupType, Map<Object, AbstractObjectType<?>> cityObjectGroups) throws SQLException, QueryBuildException, FeatureWriteException, ParseException {
 		if (!shouldRun)
 			return;
 
 		if (query.getFeatureTypeFilter().isEmpty())
 			return;
 
-		Lock lock = new ReentrantLock();
-		lock.lock();
 		// create query statement
 		boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value());
 		Select select = builder.buildQuery(query);
@@ -261,16 +268,13 @@ public class DBSplitter {
 				ResultSet rs = stmt.executeQuery();
 				long endTime = System.currentTimeMillis();
 
-
-				ArrayList<Integer> numbers = new ArrayList<>(Arrays.asList(64, 4, 5, 7, 8, 9, 42, 43, 44, 45, 14, 46, 85, 21, 23, 26));
 				if (rs.next()) {
-
 					if (calculateNumberMatched) {
 						log.debug("Calculating the number of matching top-level features...");
-						hits = placeHolders.size();
+						hits = getNumberMatched(query, connection);
 						log.info("Found " + hits + " top-level feature(s) matching the request.");
 
-						eventDispatcher.triggerEvent(new StatusDialogProgressBar(ProgressBarEventType.INIT, (int) hits, this));
+						eventDispatcher.triggerEvent(new StatusDialogProgressBar(ProgressBarEventType.INIT, (int)hits, this));
 					}
 				}
 
@@ -298,13 +302,13 @@ public class DBSplitter {
 
 
 					// set initial context...
-					DBSplittingResult splitter = new DBSplittingResult(id_str, objectType, i);
+					DBSplittingResult splitter = new DBSplittingResult(id_str, objectType, sequenceId++);
 					dbWorkerPool.addWork(splitter);
+
 
 				}while (rs.next() && shouldRun);
 
 			}
-
 
 		}else{
 			// calculate hits
@@ -412,7 +416,7 @@ public class DBSplitter {
 		}
 	}
 
-	private void queryCityObjectGroups(FeatureType cityObjectGroupType, Map<Object, AbstractObjectType<?>> cityObjectGroups) throws SQLException, FilterException, QueryBuildException {
+	private void queryCityObjectGroups(FeatureType cityObjectGroupType, Map<Object, AbstractObjectType<?>> cityObjectGroups) throws SQLException, FilterException, QueryBuildException, ParseException {
 		if (!shouldRun)
 			return;
 
@@ -529,7 +533,7 @@ public class DBSplitter {
 		}
 	}
 
-	private void queryGlobalAppearance() throws SQLException, QueryBuildException {
+	private void queryGlobalAppearance() throws SQLException, QueryBuildException, ParseException {
 		if (!shouldRun)
 			return;
 
@@ -586,7 +590,7 @@ public class DBSplitter {
 		}
 	}
 
-	private long getNumberMatched(Query query, Connection connection) throws QueryBuildException, SQLException {
+	private long getNumberMatched(Query query, Connection connection) throws QueryBuildException, SQLException, ParseException {
 		Query hitsQuery = new Query(query);
 		hitsQuery.unsetCounterFilter();
 		hitsQuery.unsetSorting();
@@ -594,15 +598,26 @@ public class DBSplitter {
 		return getNumberMatched(builder.buildQuery(hitsQuery), connection);
 	}
 
-	private long getNumberMatched(Select select, Connection connection) throws SQLException {
-		Select hitsQuery = new Select(select)
-				.unsetOrderBy()
-				.removeProjectionIf(t -> !(t instanceof Column) || !((Column) t).getName().equals(MappingConstants.ID));
+	private long getNumberMatched(Select select, Connection connection) throws SQLException, ParseException {
+		boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value());
+		if(is_Blazegraph){
 
-		hitsQuery = new Select().addProjection(new Function("count", new WildCardColumn(new Table(hitsQuery), false)));
-		try (PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(hitsQuery, connection);
-			 ResultSet rs = stmt.executeQuery()) {
-			return rs.next() ? rs.getLong(1) : 0;
+			String sparqlQuery = StatementTransformer.getCountTopFeature(select);
+			PreparedStatement stmt = connection.prepareStatement(sparqlQuery);
+			try (
+					ResultSet rs = stmt.executeQuery()) {
+						return rs.next() ? rs.getLong("count") : 0;
+			}
+		}else {
+			Select hitsQuery = new Select(select)
+					.unsetOrderBy()
+					.removeProjectionIf(t -> !(t instanceof Column) || !((Column) t).getName().equals(MappingConstants.ID));
+
+			hitsQuery = new Select().addProjection(new Function("count", new WildCardColumn(new Table(hitsQuery), false)));
+			try (PreparedStatement stmt = databaseAdapter.getSQLAdapter().prepareStatement(hitsQuery, connection);
+				 ResultSet rs = stmt.executeQuery()) {
+				return rs.next() ? rs.getLong(1) : 0;
+			}
 		}
 	}
 

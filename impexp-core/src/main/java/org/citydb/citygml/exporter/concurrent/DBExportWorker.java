@@ -205,8 +205,12 @@ public class DBExportWorker extends Worker<DBSplittingResult> implements EventHa
 
 				// register gml:id in cache
 				if (config.getInternal().isRegisterGmlIdInCache() && topLevelObject.isSetId())
-					exporter.putObjectUID(topLevelObject.getId(), Long.parseLong(work.getId().toString()), work.getObjectType().getObjectClassId());
-				
+					if (isBlazegraph){
+						exporter.putObjectUID(topLevelObject.getId(), work.getId().toString(), work.getObjectType().getObjectClassId());
+					}else{
+						exporter.putObjectUID(topLevelObject.getId(), Long.parseLong(work.getId().toString()), work.getObjectType().getObjectClassId());
+					}
+
 				// update export counter
 				exporter.updateExportCounter(topLevelObject);
 				if (topLevelObject instanceof Appearance) {

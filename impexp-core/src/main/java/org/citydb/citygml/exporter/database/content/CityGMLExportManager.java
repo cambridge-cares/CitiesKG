@@ -819,7 +819,13 @@ public class CityGMLExportManager implements CityGMLExportHelper {
 		UIDCache cache = uidCacheManager.getCache(UIDCacheType.OBJECT);
 		if (cache != null)
 			cache.put(gmlId, id, -1, false, null, objectClassId);
-	}	
+	}
+
+	public void putObjectUID(String gmlId, String id, int objectClassId) {
+		UIDCache cache = uidCacheManager.getCache(UIDCacheType.OBJECT);
+		if (cache != null)
+			cache.put(gmlId, id, null, false, null, objectClassId);
+	}
 
 	public boolean lookupAndPutGeometryUID(String gmlId, Object id) {
 		UIDCache cache = uidCacheManager.getCache(UIDCacheType.GEOMETRY);
