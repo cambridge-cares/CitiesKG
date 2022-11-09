@@ -27,6 +27,7 @@
  */
 package org.citydb.citygml.exporter.database.content;
 
+import javafx.scene.input.DataFormat;
 import org.citydb.citygml.exporter.CityGMLExportException;
 import org.citydb.citygml.exporter.util.AttributeValueSplitter;
 import org.citydb.citygml.exporter.util.AttributeValueSplitter.SplitValue;
@@ -80,6 +81,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
@@ -617,6 +622,7 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 
 	@Override
 	protected Collection<AbstractBuilding> doExport(String id, AbstractBuilding root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException {
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 		id = id.replace("cityobject", "building");
 		URL url = null;
 		try {
@@ -626,32 +632,67 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 		}
 		ps.setURL(1, url);
 
+		buildingNode bNode = new buildingNode();
 		try (ResultSet rs = ps.executeQuery()) {
 			String currentBuildingId = null;
 			AbstractBuilding building = null;
 			ProjectionFilter projectionFilter = null;
 			HashMap<String, AbstractBuilding> buildings = new HashMap<>();
-			String buildingIds = null;
-			int objectClassId = 0;
-			String parentIds =  null;
-			String surfaceGeometryId = null;
-			SurfaceGeometry geometry = null;
+//			String buildingIds = null;
+//			int objectClassId = 0;
+//			String parentIds =  null;
+//			String surfaceGeometryId = null;
+//			SurfaceGeometry geometry = null;
 			int lod = 0;
 			while (rs.next()) {//get value from triples
 				String predicate = rs.getString("predicate");
 				Boolean isBlank = rs.getBoolean("isblank");
 
 				if(predicate.contains("#id") && !isBlank){
-					buildingIds = rs.getString("value");
+					bNode.buildingId = rs.getString("value");
 				}else if(predicate.contains("#buildingParentId") && !isBlank) {
-					parentIds = rs.getString("value");
+					bNode.parentId = rs.getString("value");
 				}else if(predicate.contains("#objectClassId") && !isBlank) {
-					objectClassId =  rs.getInt("value");
+					bNode.objectClassId =  rs.getInt("value");
 				}else if(predicate.contains("#lod3MultiSurfaceId") && !isBlank) {
-					surfaceGeometryId =  rs.getString("value");
-					geometry = geometryExporter.doExport(surfaceGeometryId);
+					bNode.surfaceGeometryId =  rs.getString("value");
+					bNode.geometry = geometryExporter.doExport(bNode.surfaceGeometryId);
 					lod = 3;
+				}else if(predicate.contains("#class") && !isBlank) {
+					bNode.className = rs.getString("value");
+				}else if(predicate.contains("#classCodespace") && !isBlank) {
+					bNode.classCodespace = rs.getString("value");
+				}else if(predicate.contains("#function") && !isBlank) {
+					bNode.function = rs.getString("value");
+				}else if(predicate.contains("#functionCodespace") && !isBlank) {
+					bNode.functionCodespace = rs.getString("value");
+				}else if(predicate.contains("#usage") && !isBlank) {
+					bNode.usage = rs.getString("value");
+				}else if(predicate.contains("#usageCodespace") && !isBlank) {
+					bNode.usageCodespace = rs.getString("value");
+				}else if(predicate.contains("#yearOfConstruction") && !isBlank) {
+					bNode.yearOfConstruction = rs.getString("value");
+				}else if(predicate.contains("#yearOfDemolition") && !isBlank) {
+					bNode.yearOfDemolition = rs.getString("value");
+				}else if(predicate.contains("#roofType") && !isBlank) {
+					bNode.roofType = rs.getString("value");
+				}else if(predicate.contains("#roofTypeCodespace") && !isBlank) {
+					bNode.roofTypeCodespace = rs.getString("value");
+				}else if(predicate.contains("#measuredHeight") && !isBlank) {
+					bNode.measuredHeight = rs.getDouble("value");
+				}else if(predicate.contains("#measuredHeightUnit") && !isBlank) {
+					bNode.measuredHeightUnit = rs.getString("value");
 				}
+
+
+//
+//						if (projectionFilter.containsProperty("measuredHeight", buildingModule)) {
+//							double measuredHeight = rs.getDouble("measured_height");
+//							if (!rs.wasNull()) {
+//
+//							}
+//						}
+//
 				// bldg:lodXMultiSurface
 //						lodIterator.reset();
 //						while (lodIterator.hasNext()) {
@@ -669,22 +710,22 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 //						}
 			}
 			//create building object and set values
-			if (!buildingIds.equals(currentBuildingId) || building == null) {
-				currentBuildingId = buildingIds ;
-				building = buildings.get(buildingIds);
+			if (!bNode.buildingId.equals(currentBuildingId) || building == null) {
+				currentBuildingId = bNode.buildingId ;
+				building = buildings.get(bNode.buildingId);
 				if (building == null) {
 					FeatureType featureType = null;
-					if (buildingIds.equals(id) && root != null) {
+					if (bNode.buildingId.equals(id) && root != null) {
 						building = root;
 						featureType = rootType;
 					} else {
 						if (hasObjectClassIdColumn) {
-							featureType = exporter.getFeatureType(objectClassId);
+							featureType = exporter.getFeatureType(bNode.objectClassId);
 							if (featureType != null){
 								// create building object
 								building = exporter.createObject(featureType.getObjectClassId(), AbstractBuilding.class);
 								if (building == null) {
-									exporter.logOrThrowErrorMessage("Failed to instantiate " + exporter.getObjectSignature(featureType, buildingIds) + " as building object.");
+									exporter.logOrThrowErrorMessage("Failed to instantiate " + exporter.getObjectSignature(featureType, bNode.buildingId) + " as building object.");
 //									continue;
 								}
 							}
@@ -698,23 +739,56 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 					projectionFilter = exporter.getProjectionFilter(featureType);
 
 					// export city object information
-					boolean success = cityObjectExporter.doExport(building, buildingIds, featureType, projectionFilter);
+					boolean success = cityObjectExporter.doExport(building, bNode.buildingId, featureType, projectionFilter);
 					if (!success) {
 						if (building == root)
 							return Collections.emptyList();
 //						else if (featureType.isSetTopLevel())
 //							continue;
 					}
+
+					if(bNode.className != null){
+						Code code = new Code(bNode.className);
+						code.setCodeSpace(bNode.classCodespace);
+						building.setClazz(code);
+					}
+
+					if(bNode.function != null){
+						Code function = new Code(bNode.function);
+						function.setCodeSpace(bNode.functionCodespace);
+						building.addFunction(function);
+					}
+
+					if(bNode.usage != null){
+						Code usage = new Code(bNode.usage);
+						usage.setCodeSpace(bNode.usageCodespace);
+						building.addUsage(usage);
+					}
+
+					if(bNode.roofType != null){
+						Code code = new Code(bNode.roofType);
+						code.setCodeSpace(bNode.roofTypeCodespace);
+						building.setRoofType(code);
+					}
+
+					if(bNode.measuredHeight != null){
+						Length length = new Length(bNode.measuredHeight);
+						length.setUom(bNode.measuredHeightUnit);
+						building.setMeasuredHeight(length);
+					}
+
+					building.setYearOfConstruction(LocalDate.parse(bNode.yearOfConstruction, formatter));
+					building.setYearOfDemolition(LocalDate.parse(bNode.yearOfDemolition, formatter));
 				} else
 					projectionFilter = (ProjectionFilter)building.getLocalProperty("projection");
 			}
 
-			if (geometry != null && geometry.getType() == GMLClass.MULTI_SURFACE) {
+			if (bNode.geometry != null && bNode.geometry.getType() == GMLClass.MULTI_SURFACE) {
 				MultiSurfaceProperty multiSurfaceProperty = new MultiSurfaceProperty();
-				if (geometry.isSetGeometry())
-					multiSurfaceProperty.setMultiSurface((MultiSurface)geometry.getGeometry());
+				if (bNode.geometry.isSetGeometry())
+					multiSurfaceProperty.setMultiSurface((MultiSurface)bNode.geometry.getGeometry());
 				else
-					multiSurfaceProperty.setHref(geometry.getReference());
+					multiSurfaceProperty.setHref(bNode.geometry.getReference());
 
 				switch (lod) {
 					case 1:
@@ -731,58 +805,10 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 						break;
 				}
 			}
-			building.setLocalProperty("parent", parentIds);
+			building.setLocalProperty("parent", bNode.parentId);
 			building.setLocalProperty("projection", projectionFilter);
-			buildings.put(buildingIds, building);
-//						if (projectionFilter.containsProperty("class", buildingModule)) {
-//							String clazz = rs.getString("class");
-//							if (!rs.wasNull()) {
-//								Code code = new Code(clazz);
-//								code.setCodeSpace(rs.getString("class_codespace"));
-//								building.setClazz(code);
-//							}
-//						}
-//
-//						if (projectionFilter.containsProperty("function", buildingModule)) {
-//							for (SplitValue splitValue : valueSplitter.split(rs.getString("function"), rs.getString("function_codespace"))) {
-//								Code function = new Code(splitValue.result(0));
-//								function.setCodeSpace(splitValue.result(1));
-//								building.addFunction(function);
-//							}
-//						}
-//
-//						if (projectionFilter.containsProperty("usage", buildingModule)) {
-//							for (SplitValue splitValue : valueSplitter.split(rs.getString("usage"), rs.getString("usage_codespace"))) {
-//								Code usage = new Code(splitValue.result(0));
-//								usage.setCodeSpace(splitValue.result(1));
-//								building.addUsage(usage);
-//							}
-//						}
-//
-//						if (projectionFilter.containsProperty("yearOfConstruction", buildingModule))
-//							building.setYearOfConstruction(rs.getObject("year_of_construction", LocalDate.class));
-//
-//						if (projectionFilter.containsProperty("yearOfDemolition", buildingModule))
-//							building.setYearOfDemolition(rs.getObject("year_of_demolition", LocalDate.class));
-//
-//						if (projectionFilter.containsProperty("roofType", buildingModule)) {
-//							String roofType = rs.getString("roof_type");
-//							if (!rs.wasNull()) {
-//								Code code = new Code(roofType);
-//								code.setCodeSpace(rs.getString("roof_type_codespace"));
-//								building.setRoofType(code);
-//							}
-//						}
-//
-//						if (projectionFilter.containsProperty("measuredHeight", buildingModule)) {
-//							double measuredHeight = rs.getDouble("measured_height");
-//							if (!rs.wasNull()) {
-//								Length length = new Length(measuredHeight);
-//								length.setUom(rs.getString("measured_height_unit"));
-//								building.setMeasuredHeight(length);
-//							}
-//						}
-//
+			buildings.put(bNode.buildingId, building);
+
 //						if (projectionFilter.containsProperty("storeysAboveGround", buildingModule)) {
 //							int storeysAboveGround = rs.getInt("storeys_above_ground");
 //							if (!rs.wasNull())
@@ -1102,5 +1128,35 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 				"} ORDER BY ?model"
 		);
 		return stmt;
+	}
+
+	private class buildingNode {
+		protected String buildingId;
+		protected int objectClassId;
+		protected String parentId;
+		protected String rootId;
+		protected String className;
+		protected String classCodespace;
+		protected String function;
+		protected String functionCodespace;
+		protected String usage;
+		protected String usageCodespace;
+		protected String yearOfConstruction;
+		protected String yearOfDemolition;
+		protected String roofType;
+		protected String roofTypeCodespace;
+		protected Double measuredHeight;
+		protected String measuredHeightUnit;
+		protected int storeysAboveGround;
+		protected int storeysBelowGround;
+		protected String storeyHeightsAboveGround;
+		protected String storeyHeightsAgUnit;
+		protected String storeyHeightsBelowGround;
+		protected String storeyHeightsBgUnit;
+
+		protected String surfaceGeometryId;
+		protected SurfaceGeometry geometry;
+
+
 	}
 }
