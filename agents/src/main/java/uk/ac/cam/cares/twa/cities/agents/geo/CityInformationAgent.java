@@ -154,10 +154,8 @@ public class CityInformationAgent extends JPSAgent {
               }
             }
             JSONArray filtered_objs = getFilteredObjects(predicate, gfas, total_gfa, min_cap, max_cap);
-            // @todo: create unique set of the array, as the data on the TWA might not be clean
-            JSONArray uniqueArray = getUniqueArray(filtered_objs);
-            response.put("filtered", uniqueArray);
-            response.put("filteredCounts", countFilteredObjects(uniqueArray));
+            response.put("filtered", filtered_objs);
+            response.put("filteredCounts", countFilteredObjects(filtered_objs));
             requestParams.put(agentURL, response);
           }
           else {
@@ -218,23 +216,6 @@ public class CityInformationAgent extends JPSAgent {
       }
     }
     throw new BadRequestException();
-  }
-
-
-  private JSONArray getUniqueArray(JSONArray initialArray) {
-    JSONArray uniqueArray = new JSONArray();
-    ArrayList<Object> listdata = new ArrayList<Object>();
-    for (int i = 0; i < initialArray.length(); i++){
-      listdata.add(initialArray.get(i));
-    }
-    Set<Object> uniqueSet = new HashSet<>(listdata);
-    Object[] myArray = new Object[uniqueSet.size()];
-    uniqueSet.toArray(myArray);
-
-    for (int i = 0; i < myArray.length; i++){
-      uniqueArray.put(myArray[i]);
-    }
-    return uniqueArray;
   }
 
 
