@@ -781,7 +781,7 @@ function processFilteredObjects(cityObjectsArray, colorStr){  // citydbKmlLayer 
 
     filteredObjects = filteredResult;
     pinHighlightObjects(cityObjectsArray, colorStr);
-    highlightFilteredObj(filteredObjects);
+    //highlightFilteredObj(filteredObjects);
     return filteredObjects;
 }
 

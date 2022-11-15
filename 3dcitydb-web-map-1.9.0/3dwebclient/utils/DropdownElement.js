@@ -24,11 +24,20 @@ function buildQuery(predicate, may_predicate){
 	return query
 }
 
-// To check if the KEY predicate already exists in the local starage
+/**
+ * Check if the Key predicate already exists in the local storage
+ * @param {String} predicate - 'allowsUse' or 'allowsProgramme'
+ * @return {Boolean} true or false
+ */
 function ifDropdownElementExists(predicate){
 	return localStorage.getItem(predicate) != null;
 }
 
+/**
+ * Process and Store the results retrieved from the TWA into localStorage when it does not exist yet
+ * @param {String} predicate - 'allowsUse' or 'allowsProgramme'
+ * @param {JsonObject} results - JsonObject from CIA
+ */
 function storeDropdownElements(predicate, results){
 	var resultsLength = results.length;
 	var localData = results[0]["g"];
