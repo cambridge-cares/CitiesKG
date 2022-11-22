@@ -218,7 +218,7 @@ public class CEAAgent extends JPSAgent {
 
                     // Only set route once - assuming all iris passed in same namespace
                     if(i==0) {
-                        route = localRoute.isEmpty() ? getRoute(uri) : localRoute;f
+                        route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
                     }
                     String building = checkBuildingInitialised(uri, route);
                     if(building.equals("")){
@@ -596,11 +596,11 @@ public class CEAAgent extends JPSAgent {
                 result = queryResultArray.getJSONObject(0).get(value).toString().split(ontoBuiltEnvUri)[1].split(">")[0].toUpperCase();
                 result = toCEAConvention(result);
             }
-            else if (value!="FootprintSurfaceGeom") {
-                result = queryResultArray.getJSONObject(0).get(value).toString();
+            else if (value == "FootprintSurfaceGeom") {
+                result = extractFootprint(getGroundGeometry(queryResultArray));
             }
             else{
-                result = extractFootprint(getGroundGeometry(queryResultArray));
+                result = queryResultArray.getJSONObject(0).get(value).toString();
             }
         }
         return result;
@@ -1690,8 +1690,8 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Convert obtained building usage type to convention used by CEA
-     * @param usage building usage type
+     * Convert OntoBuiltEnv building usage type to convention used by CEA
+     * @param usage OntoBuiltEnv building usage type
      * @return building usage per CEA convention
      */
     public String toCEAConvention(String usage)
