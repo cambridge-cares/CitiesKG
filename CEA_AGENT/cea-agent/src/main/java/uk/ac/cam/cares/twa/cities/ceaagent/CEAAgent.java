@@ -101,6 +101,7 @@ public class CEAAgent extends JPSAgent {
     private String requestUrl;
     private String targetUrl;
     private String localRoute;
+    private String usageRoute;
 
     private Map<String, String> accessAgentRoutes = new HashMap<>();
 
@@ -142,6 +143,7 @@ public class CEAAgent extends JPSAgent {
                     }
 
                     String route = new String();
+
                     for (int i = 0; i < uriArray.length(); i++) {
                         LinkedHashMap<String,String> tsIris = new LinkedHashMap<>();
                         LinkedHashMap<String,String> scalarIris = new LinkedHashMap<>();
@@ -179,7 +181,9 @@ public class CEAAgent extends JPSAgent {
 
                         // Only set route once - assuming all iris passed in same namespace
                         // Will not be necessary if namespace is passed in request params
-                        if(i==0) route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
+                        if(i==0) {
+                            route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
+                        }
                         uriStringArray.add(uri);
                         // Set default value of 10m if height can not be obtained from knowledge graph
                         // Will only require one height query if height is represented in data consistently
@@ -192,7 +196,7 @@ public class CEAAgent extends JPSAgent {
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
                         // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
-                        String usage = getValue(uri, "PropertyUsageCategory", route);
+                        String usage = getValue(uri, "PropertyUsageCategory", usageRoute);
                         if (usage == "") {usage = "MULTI_RES";}
 
                         testData.add(new CEAInputData(footprint, height, usage));
@@ -208,13 +212,14 @@ public class CEAAgent extends JPSAgent {
                 }
             } else if (requestUrl.contains(URI_QUERY)) {
                 String route = new String();
+
                 for (int i = 0; i < uriArray.length(); i++) {
                     String uri = uriArray.getString(i);
                     setTimeSeriesProps(uri, getTimeSeriesPropsPath());
 
                     // Only set route once - assuming all iris passed in same namespace
                     if(i==0) {
-                        route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
+                        route = localRoute.isEmpty() ? getRoute(uri) : localRoute;f
                     }
                     String building = checkBuildingInitialised(uri, route);
                     if(building.equals("")){
@@ -405,7 +410,8 @@ public class CEAAgent extends JPSAgent {
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/", config.getString("kingslynnEPSG3857.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/", config.getString("kingslynnEPSG27700.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/", config.getString("pirmasensEPSG32633.targetresourceid"));
-        localRoute = config.getString("uri.route.local");
+        localRoute = config.getString("query.route.local");
+        usageRoute = config.getString("usagequery.route");
     }
 
     /**
