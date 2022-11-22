@@ -102,7 +102,6 @@ public class CEAAgentTest {
         Field owlUri;
         Field purlEnaeqUri;
         Field purlInfrastructureUri;
-        Field timeSeriesUri;
         Field thinkhomeUri;
         Field unitOntologyUri;
         Field ontoBuiltEnvUri;
@@ -110,6 +109,7 @@ public class CEAAgentTest {
         Field requestUrl;
         Field targetUrl;
         Field localRoute;
+        Field usageRoute;
 
         try {
             URI_ACTION = agent.getClass().getDeclaredField("URI_ACTION");
@@ -215,9 +215,6 @@ public class CEAAgentTest {
             purlInfrastructureUri = agent.getClass().getDeclaredField("purlInfrastructureUri");
             purlInfrastructureUri.setAccessible(true);
             assertEquals(purlInfrastructureUri.get(agent), config.getString("uri.ontology.purl.infrastructure"));
-            timeSeriesUri = agent.getClass().getDeclaredField("timeSeriesUri");
-            timeSeriesUri.setAccessible(true);
-            assertEquals(timeSeriesUri.get(agent), config.getString("uri.ontology.ts"));
             thinkhomeUri = agent.getClass().getDeclaredField("thinkhomeUri");
             thinkhomeUri.setAccessible(true);
             assertEquals(thinkhomeUri.get(agent), config.getString("uri.ontology.thinkhome"));
@@ -244,7 +241,10 @@ public class CEAAgentTest {
             assertEquals(accessAgentMap.get("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/"), config.getString("kingslynnEPSG27700.targetresourceid"));
             localRoute = agent.getClass().getDeclaredField("localRoute");
             localRoute.setAccessible(true);
-            assertEquals(localRoute.get(agent), config.getString("uri.route.local"));
+            assertEquals(localRoute.get(agent), config.getString("query.route.local"));
+            usageRoute = agent.getClass().getDeclaredField("usageRoute");
+            usageRoute.setAccessible(true);
+            assertEquals(usageRoute.get(agent), config.getString("usagequery.route"));
         } catch (NoSuchFieldException | IllegalAccessException e) {
             fail();
         }
@@ -253,7 +253,7 @@ public class CEAAgentTest {
     @Test
     public void testCEAAgentMethods() {
         CEAAgent agent = new CEAAgent();
-        assertEquals(58, agent.getClass().getDeclaredMethods().length);
+        assertEquals(60, agent.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -292,6 +292,8 @@ public class CEAAgentTest {
         String test_footprint = "559267.200000246#313892.7999989044#0.0#559280.5400002463#313892.7999989044#0.0#559280.5400002463#313908.7499989033#0.0#559267.200000246#313908.7499989033#0.0#559267.200000246#313892.7999989044#0.0";
         String measure_datatype = "datatype";
         String test_datatype = "<http://localhost/blazegraph/literals/POLYGON-3-15>";
+        String measure_usage = "PropertyUsageCategory";
+        String test_usage = "<https://www.theworldavatar.com/kg/ontobuiltenv/Office>";
         String measure_crs = "CRS";
         String test_crs = "test_crs";
         String testScalar = "testScalar";
@@ -299,6 +301,7 @@ public class CEAAgentTest {
         JSONArray expected_building = new JSONArray().put(new JSONObject().put(measure_building, building));
         JSONArray expected_height = new JSONArray().put(new JSONObject().put(measure_height, test_height));
         JSONArray expected_footprint = new JSONArray().put(new JSONObject().put(measure_footprint, test_footprint).put(measure_datatype, test_datatype));
+        JSONArray expected_usage = new JSONArray().put(new JSONObject().put(measure_usage, test_usage));
         JSONArray expected_crs = new JSONArray().put(new JSONObject().put(measure_crs, test_crs));
         JSONArray expected_iri = new JSONArray().put(new JSONObject().put("measure", test_measure).put("unit", test_unit));
         JSONArray expected_value = new JSONArray().put(new JSONObject().put("value", testScalar));
@@ -352,7 +355,7 @@ public class CEAAgentTest {
             requestParams.put(CEAAgent.KEY_REQ_URL, "http://localhost:8086/agents/cea/run");
 
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
-                    .thenReturn(expected_height).thenReturn(expected_footprint).thenReturn(expected_crs);
+                    .thenReturn(expected_height).thenReturn(expected_footprint).thenReturn(expected_usage).thenReturn(expected_crs);
 
             try (MockedConstruction<RunCEATask> mockTask = mockConstruction(RunCEATask.class)) {
                 ThreadPoolExecutor executor = mock(ThreadPoolExecutor.class);
@@ -685,7 +688,7 @@ public class CEAAgentTest {
             targetUrl.set(agent, "test");
 
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test"));
+            testData.add(new CEAInputData("test", "test","test"));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -956,6 +959,7 @@ public class CEAAgentTest {
         String case6 = "HeightGenAttr";
         String case7 = "DatabasesrsCRS";
         String case8 = "CRS";
+        String case9 = "PropertyUsageCategory";
         String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
         Method getQuery = agent.getClass().getDeclaredMethod("getQuery", String.class, String.class);
@@ -979,6 +983,8 @@ public class CEAAgentTest {
         assertTrue(q7.toString().contains("ocgml:srid"));
         Query q8 = (Query) getQuery.invoke(agent, uri, case8);
         assertTrue(q8.toString().contains("srid"));
+        Query q9 = (Query) getQuery.invoke(agent, uri, case9);
+        assertTrue(q9.toString().contains("ontoBuiltEnv:hasUsageCategory"));
     }
 
     @Test
@@ -1970,5 +1976,91 @@ public class CEAAgentTest {
 
         assertNotNull(rdbStoreClient.get(agent));
         assertNotNull(conn.get(agent));
+    }
+
+    @Test
+    public void testGetPropertyUsageCategory() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
+    {
+        CEAAgent agent = new CEAAgent();
+        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
+
+        Method getPropertyUsageCateogory = agent.getClass().getDeclaredMethod("getPropertyUsageCategory", String.class);
+        assertNotNull(getPropertyUsageCateogory);
+        getPropertyUsageCateogory.setAccessible(true);
+
+        // Ensure query contains correct predicate and object
+        Query q = (Query) getPropertyUsageCateogory.invoke(agent, uri);
+        assertTrue(q.toString().contains("ontoBuiltEnv:hasUsageCategory"));
+        assertTrue(q.toString().contains("ontoBuiltEnv:hasOntoCityGMLRepresentation"));
+        assertTrue(q.toString().contains("PropertyUsageCategory"));
+    }
+
+    @Test
+    public void testToCEAConvention() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
+    {
+        CEAAgent agent = new CEAAgent();
+        String test_usage = "test";
+
+        Method toCEAConvention = agent.getClass().getDeclaredMethod("toCEAConvention", String.class);
+        assertNotNull(toCEAConvention);
+
+        String result = (String) toCEAConvention.invoke(agent, test_usage);
+        assertTrue(result.equals("MULTI_RES"));
+
+        test_usage = "SINGLERESIDENTIAL";
+        result = (String) toCEAConvention.invoke(agent, test_usage);
+        assertTrue(result.equals("SINGLE_RES"));
+
+        test_usage = "POLICESTATION";
+        result = (String) toCEAConvention.invoke(agent, test_usage);
+        assertTrue(result.equals("MULTI_RES"));
+
+        test_usage = "HOSPITAL";
+        result = (String) toCEAConvention.invoke(agent, test_usage);
+        assertTrue(result.equals("HOSPITAL"));
+
+        test_usage = "CLINIC";
+        result = (String) toCEAConvention.invoke(agent, test_usage);
+        assertTrue(result.equals("HOSPITAL"));
+
+        test_usage = "UNIVERSITYFACILITY";
+        result = (String) toCEAConvention.invoke(agent, test_usage);
+        assertTrue(result.equals("UNIVERSITY"));
+
+        test_usage = "OFFICE";
+        result = (String) toCEAConvention.invoke(agent, test_usage);
+        assertTrue(result.equals("OFFICE"));
+
+        test_usage = "RETAILESTABLISHMENT";
+        result = (String) toCEAConvention.invoke(agent, test_usage);
+        assertTrue(result.equals("RETAIL"));
+
+        test_usage = "RELIGIOUSFACILITY";
+        result = (String) toCEAConvention.invoke(agent, test_usage);
+        assertTrue(result.equals("MUSEUM"));
+
+        test_usage = "EATINGESTABLISHMENT";
+        result = (String) toCEAConvention.invoke(agent, test_usage);
+        assertTrue(result.equals("RESTAURANT"));
+
+        test_usage = "DRINKINGESTABLISHMENT";
+        result = (String) toCEAConvention.invoke(agent, test_usage);
+        assertTrue(result.equals("FOODSTORE"));
+
+        test_usage = "HOTEL";
+        result = (String) toCEAConvention.invoke(agent, test_usage);
+        assertTrue(result.equals("HOTEL"));
+
+        test_usage = "SPORTSFACILITY";
+        result = (String) toCEAConvention.invoke(agent, test_usage);
+        assertTrue(result.equals("GYM"));
+
+        test_usage = "CULTURALFACILITY";
+        result = (String) toCEAConvention.invoke(agent, test_usage);
+        assertTrue(result.equals("MUSEUM"));
+
+        test_usage = "TRANSPORTFACILITY";
+        result = (String) toCEAConvention.invoke(agent, test_usage);
+        assertTrue(result.equals("INDUSTRIAL"));
     }
 }
