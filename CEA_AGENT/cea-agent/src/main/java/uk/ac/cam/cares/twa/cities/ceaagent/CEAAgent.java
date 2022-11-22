@@ -1704,7 +1704,7 @@ public class CEAAgent extends JPSAgent {
             case("FIRESTATION"):
                 return "MULTI_RES";
             case("POLICESTATION"):
-                return "OFFICE";
+                return "MULTI_RES";
             case("HOSPITAL"):
                 return usage;
             case("CLINIC"):
@@ -1718,7 +1718,7 @@ public class CEAAgent extends JPSAgent {
             case("RETAILESTABLISHMENT"):
                 return "RETAIL";
             case("RELIGIOUSFACILITY"):
-                return "OFFICE";
+                return "MUSEUM";
             case("INDUSTRIALFACILITY"):
                 return "INDUSTRIAL";
             case("EATINGESTABLISHMENT"):
@@ -1730,9 +1730,9 @@ public class CEAAgent extends JPSAgent {
             case("SPORTSFACILITY"):
                 return "GYM";
             case("CULTURALFACILITY"):
-                return "SINGLE_RES";
+                return "MUSEUM";
             case("TRANSPORTFACILITY"):
-                return "PARKING";
+                return "INDUSTRIAL";
             default:
                 return "MULTI_RES";
         }
