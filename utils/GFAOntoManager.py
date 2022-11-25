@@ -8,11 +8,11 @@ This class is meant to work as schema manager for ontologies needed to instantia
 class GFAOntoManager:
 
     # Ontologies
-    ONTO_BUILDABLE_SPACE_PREFIX = "http://www.theworldavatar.com/ontology/planningconceptonto/PlanningConceptOntology.owl#"
+    ONTO_BUILDABLE_SPACE_PREFIX = "http://www.theworldavatar.com/ontology/ontobuildablespace/OntoBuildableSpace.owl#"
     OM_URI_PREFIX = "http://www.ontology-of-units-of-measure.org/resource/om-2/"
     GEOSPARQL_URI_PREFIX = "http://www.opengis.net/ont/geosparql#"
     ONTO_ZONING_URI_PREFIX = "http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#"
-    ONTO_PLANNING_REG_PREFIX = "http://www.theworldavatar.com/ontology/planningconceptonto/OntoPlanningReg.owl#"
+    ONTO_PLANNING_REG_PREFIX = "http://www.theworldavatar.com/ontology/ontoplanningreg/OntoPlanningReg.owl#"
 
     # OntoPlanningReg classes and properties
     URA_REGULATION = URIRef(ONTO_PLANNING_REG_PREFIX + "URAPlanningRegulation")
@@ -27,9 +27,6 @@ class GFAOntoManager:
     CONSERVATION_AREA = URIRef(ONTO_PLANNING_REG_PREFIX + "ConservationArea")
     LANDED_HOUSING_AREA = URIRef(ONTO_PLANNING_REG_PREFIX + "LandedHousingArea")
     GOOD_CLASS_BUNGALOW_AREA = URIRef(ONTO_PLANNING_REG_PREFIX + "GoodClassBungalowArea")
-    BUNGALOW_AREA = URIRef(ONTO_PLANNING_REG_PREFIX + "BungalowArea")
-    MIXED_LANDED_AREA = URIRef(ONTO_PLANNING_REG_PREFIX + "MixedLandedArea")
-    SEMI_DETACHED_AREA = URIRef(ONTO_PLANNING_REG_PREFIX + "SemiDetachedArea")
     PLANNING_BOUNDARY = URIRef(ONTO_PLANNING_REG_PREFIX + "PlanningBoundary")
     PLANNING_REGION = URIRef(ONTO_PLANNING_REG_PREFIX + "PlanningRegion")
     CENTRAL_AREA = URIRef(ONTO_PLANNING_REG_PREFIX + "CentralArea")
@@ -48,6 +45,8 @@ class GFAOntoManager:
     ALLOWS_GROSS_PLOT_RATIO = URIRef(ONTO_PLANNING_REG_PREFIX + "allowsGrossPlotRatio")
     APPLIES_TO = URIRef(ONTO_PLANNING_REG_PREFIX + "appliesTo")
     IN_URBAN_DESIGN_AREA = URIRef(ONTO_PLANNING_REG_PREFIX + "inUrbanDesignArea")
+    IS_PART_OF_OPR = URIRef(ONTO_PLANNING_REG_PREFIX + "isPartOf")
+    HAS_VALUE_OPR = URIRef(ONTO_PLANNING_REG_PREFIX + "hasValue")
 
     # OntoBuildableSpace classes and properties
     BUILDABLE_SPACE = URIRef(ONTO_BUILDABLE_SPACE_PREFIX + "BuildableSpace")
@@ -107,8 +106,9 @@ class GFAOntoManager:
     WIDTH = URIRef(OM_URI_PREFIX + "Width")
     DEPTH = URIRef(OM_URI_PREFIX + "Depth")
     MEASURE = URIRef(OM_URI_PREFIX + "Measure")
-    LENGTH_UNIT = URIRef(OM_URI_PREFIX + "Length_unit")
-    AREA_UNIT = URIRef(OM_URI_PREFIX + "Area_unit")
+    LENGTH_UNIT = URIRef(OM_URI_PREFIX + "LengthUnit")
+    AREA_UNIT = URIRef(OM_URI_PREFIX + "AreaUnit")
+    RATIO_UNIT = URIRef(OM_URI_PREFIX + "RatioUnit")
     METRE = URIRef(OM_URI_PREFIX + "metre")
     SQUARE_PREFIXED_METRE = URIRef(OM_URI_PREFIX + "SquarePrefixedMetre")
     MAXIMUM = URIRef(OM_URI_PREFIX + "maximum")
@@ -120,7 +120,7 @@ class GFAOntoManager:
     HAS_UNIT = URIRef(OM_URI_PREFIX + "hasUnit")
     HAS_AGGREGATE_FUNCTION = URIRef(OM_URI_PREFIX + "hasAggregateFunction")
 
-    # GeoSPARQL ontology classes and properties
+    #GeoSPARQL ontology classes and properties
     FEATURE = GEOSPARQL_URI_PREFIX + "Feature"
     GEOMETRY = GEOSPARQL_URI_PREFIX + "Geometry"
     HAS_GEOMETRY = GEOSPARQL_URI_PREFIX + "hasGeometry"
