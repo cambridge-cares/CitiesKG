@@ -52,7 +52,7 @@ public class UtilAdapterTest {
     @Test
     public void testNewUtilAdapterMethods() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         UtilAdapter utilAdapter = createNewUtilAdapter();
-        assertEquals(22, utilAdapter.getClass().getDeclaredMethods().length);
+        assertEquals(24, utilAdapter.getClass().getDeclaredMethods().length);
     }
 
     //test case when endpoint has srid and srsname

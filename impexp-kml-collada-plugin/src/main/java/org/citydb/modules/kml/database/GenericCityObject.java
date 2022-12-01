@@ -48,6 +48,7 @@ import org.citydb.config.project.kmlExporter.PointAndCurve;
 import org.citydb.config.project.kmlExporter.PointDisplayMode;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.BlobExportAdapter;
+import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.event.EventDispatcher;
 import org.citydb.event.global.GeometryCounterEvent;
 import org.citydb.log.Logger;
@@ -62,6 +63,8 @@ import org.citygml4j.geometry.Point;
 import javax.vecmath.Point3d;
 import javax.xml.bind.JAXBException;
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -78,6 +81,7 @@ public class GenericCityObject extends KmlGenericObject{
 
 	private boolean isPointOrCurve;
 	private boolean isPoint;
+	public boolean isBlazegraph = kmlExporterManager.isBlazegraph();
 
 	public GenericCityObject(Connection connection,
 			Query query,
@@ -139,17 +143,45 @@ public class GenericCityObject extends KmlGenericObject{
 					break;
 
 				try {
-					String query = queries.getGenericCityObjectBasisData(currentLod);
-					psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-					for (int i = 1; i <= getParameterCount(query); i++)
-						psQuery.setLong(i, (long)work.getId());
+					String query = null;
+					if (isBlazegraph){
+						query = StatementTransformer.getGenericCityObjectBasisData(currentLod);
+						psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
-					rs = psQuery.executeQuery();
-					if (rs.isBeforeFirst()) {
-						rs.next();
-						if (rs.getLong(4) != 0 || rs.getLong(1) != 0)
-							break; // result set not empty
+						String baseURL = StatementTransformer.getIriObjectBase() + "genericcityobject/";
+						URL url = null;
+						try {
+							url = new URL(baseURL + work.getGmlId()+"/");
+						} catch (MalformedURLException e) {
+							e.printStackTrace();
+						}
+
+						psQuery.setURL(1, url);
+						psQuery.setURL(2, url);
+						rs = psQuery.executeQuery();
+
+						if (rs.isBeforeFirst()) {
+							rs.next();
+							//if (rs.getLong(4) != 0 || rs.getLong(1) != 0)
+							if (rs.getString(4) != null || rs.getString(1) != null)
+								//System.out.println("GenericCityObject: " + rs.getString(1));
+								break; // result set not empty
+						}
+
+					} else {
+						query = queries.getGenericCityObjectBasisData(currentLod);
+						psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+						for (int i = 1; i <= getParameterCount(query); i++)
+							psQuery.setLong(i, (long)work.getId());
+
+						rs = psQuery.executeQuery();
+						if (rs.isBeforeFirst()) {
+							rs.next();
+							if (rs.getLong(4) != 0 || rs.getLong(1) != 0)
+								break; // result set not empty
+						}
 					}
+
 
 					try { rs.close(); } catch (SQLException sqle) {} 
 					try { psQuery.close(); } catch (SQLException sqle) {}
@@ -204,23 +236,53 @@ public class GenericCityObject extends KmlGenericObject{
 				else {					
 					// decide whether explicit or implicit geometry
 					AffineTransformer transformer = null;
-					long sgRootId = rs.getLong(4);
-					if (sgRootId == 0) {
-						sgRootId = rs.getLong(1);
-						transformer = getAffineTransformer(rs, 2, 3);
+					String query = null;
+					if (isBlazegraph){
+						String cityObjectId = rs.getString(4);
+
+						try { rs.close(); } catch (SQLException sqle) {}
+						try { psQuery.close(); } catch (SQLException sqle) {}
+						rs = null;
+
+						query = StatementTransformer.getGenericCityObjectQuery(currentLod,
+								work.getDisplayForm(),
+								transformer != null,
+								work.getDisplayForm().getForm() == DisplayForm.COLLADA && !config.getProject().getKmlExporter().getAppearanceTheme().equals(KmlExporter.THEME_NONE));
+						psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
+						URL url = null;
+						try {
+							url = new URL(cityObjectId);
+						} catch (MalformedURLException e) {
+							e.printStackTrace();
+						}
+						psQuery.setURL(1, url);  // set sgRootId
+						psQuery.setURL(2, url);
+						rs = psQuery.executeQuery();
+
+					} else {
+
+						long sgRootId = rs.getLong(4);
+
+						// @TODO: Need to understand what 0 means //
+						if (sgRootId == 0) {
+							sgRootId = rs.getLong(1);
+							transformer = getAffineTransformer(rs, 2, 3);
+						}
+						try { rs.close(); } catch (SQLException sqle) {}
+						try { psQuery.close(); } catch (SQLException sqle) {}
+						rs = null;
+
+						query = queries.getGenericCityObjectQuery(currentLod,
+								work.getDisplayForm(),
+								transformer != null,
+								work.getDisplayForm().getForm() == DisplayForm.COLLADA && !config.getProject().getKmlExporter().getAppearanceTheme().equals(KmlExporter.THEME_NONE));
+						psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+						psQuery.setLong(1, sgRootId);
+						rs = psQuery.executeQuery();
+
 					}
 
-					try { rs.close(); } catch (SQLException sqle) {} 
-					try { psQuery.close(); } catch (SQLException sqle) {}
-					rs = null;
-
-					String query = queries.getGenericCityObjectQuery(currentLod, 
-							work.getDisplayForm(),
-							transformer != null, 
-							work.getDisplayForm().getForm() == DisplayForm.COLLADA && !config.getProject().getKmlExporter().getAppearanceTheme().equals(KmlExporter.THEME_NONE));
-					psQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-					psQuery.setLong(1, sgRootId);
-					rs = psQuery.executeQuery();
 
 					// get the proper displayForm (for highlighting)
 					int indexOfDf = getDisplayForms().indexOf(work.getDisplayForm());

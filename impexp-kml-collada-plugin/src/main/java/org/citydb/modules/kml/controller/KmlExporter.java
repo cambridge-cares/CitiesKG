@@ -27,29 +27,7 @@
  */
 package org.citydb.modules.kml.controller;
 
-import net.opengis.kml._2.BalloonStyleType;
-import net.opengis.kml._2.BasicLinkType;
-import net.opengis.kml._2.DocumentType;
-import net.opengis.kml._2.FolderType;
-import net.opengis.kml._2.IconStyleType;
-import net.opengis.kml._2.KmlType;
-import net.opengis.kml._2.LabelStyleType;
-import net.opengis.kml._2.LatLonAltBoxType;
-import net.opengis.kml._2.LineStringType;
-import net.opengis.kml._2.LineStyleType;
-import net.opengis.kml._2.LinkType;
-import net.opengis.kml._2.LodType;
-import net.opengis.kml._2.LookAtType;
-import net.opengis.kml._2.NetworkLinkType;
-import net.opengis.kml._2.ObjectFactory;
-import net.opengis.kml._2.PairType;
-import net.opengis.kml._2.PlacemarkType;
-import net.opengis.kml._2.PolyStyleType;
-import net.opengis.kml._2.RegionType;
-import net.opengis.kml._2.StyleMapType;
-import net.opengis.kml._2.StyleStateEnumType;
-import net.opengis.kml._2.StyleType;
-import net.opengis.kml._2.ViewRefreshModeEnumType;
+import net.opengis.kml._2.*;
 import org.citydb.ade.ADEExtensionManager;
 import org.citydb.concurrent.PoolSizeAdaptationStrategy;
 import org.citydb.concurrent.SingleWorkerPool;
@@ -489,6 +467,9 @@ public class KmlExporter implements EventHandler {
 						document.setOpen(false);
 						kmlType.setAbstractFeatureGroup(kmlFactory.createDocument(document));
 
+						// add extended data with iri prefix to document
+						document.setExtendedData(setIriPrefixToExtendedData());
+
 						// write file header
 						Marshaller marshaller = null;
 						try {
@@ -704,6 +685,27 @@ public class KmlExporter implements EventHandler {
 			log.info("Total export time: " + Util.formatElapsedTime(System.currentTimeMillis() - start) + ".");
 
 		return shouldRun;
+	}
+
+	/**
+	 * Stores IRI prefix of exported city objects as a Data kml type, and child of ExtendedData kml type.
+	 * Example of IRI prefix value: http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/
+	 **/
+	private ExtendedDataType setIriPrefixToExtendedData() {
+		ArrayList<DataType> list = new ArrayList<>();
+		DataType dataType = new DataType();
+
+		String prefixString = "http://" + databaseAdapter.getConnectionDetails().getServer() + ":"
+				+ databaseAdapter.getConnectionDetails().getPort() + databaseAdapter.getConnectionDetails().getSid();
+		prefixString = (prefixString.endsWith("/") ? prefixString.concat("cityobject/") : prefixString.concat("/cityobject/"));
+
+		dataType.setName("prefix");
+		dataType.setValue(prefixString);
+		list.add(dataType);
+
+		ExtendedDataType extendedDataType = kmlFactory.createExtendedDataType();
+		extendedDataType.setData(list);
+		return extendedDataType;
 	}
 
 	private SAXWriter writeMasterFileHeader(String fileName, String path, Query query) throws JAXBException, IOException, SAXException {
@@ -1235,6 +1237,8 @@ public class KmlExporter implements EventHandler {
 			String wallLineColor = Integer.toHexString(DisplayForm.DEFAULT_WALL_LINE_COLOR);
 			String roofFillColor = Integer.toHexString(DisplayForm.DEFAULT_ROOF_FILL_COLOR);
 			String roofLineColor = Integer.toHexString(DisplayForm.DEFAULT_ROOF_LINE_COLOR);
+			String groundFillColor = Integer.toHexString(DisplayForm.DEFAULT_GROUND_FILL_COLOR);
+			String groundLineColor = Integer.toHexString(DisplayForm.DEFAULT_GROUND_LINE_COLOR);
 			if (indexOfDf != -1) {
 				currentDisplayForm = displayFormsForObjectType.get(indexOfDf);
 				if (currentDisplayForm.isSetRgba0()) {
@@ -1248,6 +1252,12 @@ public class KmlExporter implements EventHandler {
 				}
 				if (currentDisplayForm.isSetRgba3()) {
 					roofLineColor = DisplayForm.formatColorStringForKML(Integer.toHexString(currentDisplayForm.getRgba3()));
+				}
+				if (currentDisplayForm.isSetRgba4()) {
+					groundFillColor = DisplayForm.formatColorStringForKML(Integer.toHexString(currentDisplayForm.getRgba4()));
+				}
+				if (currentDisplayForm.isSetRgba5()) {
+					groundLineColor = DisplayForm.formatColorStringForKML(Integer.toHexString(currentDisplayForm.getRgba5()));
 				}
 			}
 
@@ -1272,14 +1282,24 @@ public class KmlExporter implements EventHandler {
 
 			marshaller.marshal(kmlFactory.createStyle(styleWallNormal), saxWriter);
 
-			if (isBuilding)
-				styleWallNormal.setId(TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BUILDING_GROUND_SURFACE).toString() + "Normal");
-			else if (isBridge)
-				styleWallNormal.setId(TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BRIDGE_GROUND_SURFACE).toString() + "Normal");
-			else if (isTunnel)
-				styleWallNormal.setId(TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.TUNNEL_GROUND_SURFACE).toString() + "Normal");
+			LineStyleType lineStyleGroundNormal = kmlFactory.createLineStyleType();
+			lineStyleGroundNormal.setColor(hexStringToByteArray(groundLineColor));
+			PolyStyleType polyStyleGroundNormal = kmlFactory.createPolyStyleType();
+			polyStyleGroundNormal.setColor(hexStringToByteArray(groundFillColor));
+			StyleType styleGroundNormal = kmlFactory.createStyleType();
 
-			marshaller.marshal(kmlFactory.createStyle(styleWallNormal), saxWriter);
+			styleGroundNormal.setLineStyle(lineStyleGroundNormal);
+			styleGroundNormal.setPolyStyle(polyStyleGroundNormal);
+			styleGroundNormal.setBalloonStyle(balloonStyle);
+
+			if (isBuilding)
+				styleGroundNormal.setId(TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BUILDING_GROUND_SURFACE).toString() + "Normal");
+			else if (isBridge)
+				styleGroundNormal.setId(TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BRIDGE_GROUND_SURFACE).toString() + "Normal");
+			else if (isTunnel)
+				styleGroundNormal.setId(TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.TUNNEL_GROUND_SURFACE).toString() + "Normal");
+
+			marshaller.marshal(kmlFactory.createStyle(styleGroundNormal), saxWriter);
 
 			LineStyleType lineStyleRoofNormal = kmlFactory.createLineStyleType();
 			lineStyleRoofNormal.setColor(hexStringToByteArray(roofLineColor));

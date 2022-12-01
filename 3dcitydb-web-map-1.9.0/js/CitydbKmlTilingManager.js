@@ -252,7 +252,8 @@ var GlobeTileTaskQueue = {};
                     layerId: scope.citydbKmlLayerInstance.id,
                     camera: scope.citydbKmlLayerInstance.cesiumViewer.scene.camera,
                     canvas: scope.citydbKmlLayerInstance.cesiumViewer.scene.canvas,
-                    gltfVersion: scope.citydbKmlLayerInstance.gltfVersion
+                    gltfVersion: scope.citydbKmlLayerInstance.gltfVersion,
+                    iriPrefix: cesiumViewer._dataSourceCollection.get(0)._iriPrefix
                 });
                 var newNetworklinkItem = {
                     url: tileUrl,
