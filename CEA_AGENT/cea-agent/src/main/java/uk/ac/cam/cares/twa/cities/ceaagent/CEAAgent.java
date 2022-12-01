@@ -446,7 +446,7 @@ public class CEAAgent extends JPSAgent {
             }
             try (Connection conn = rdbStoreClient.getConnection()) {
                 // Initialize the time series
-                tsClient.initTimeSeries(iris, classes, timeUnit, conn, "StepwiseCumulative", null, null);
+                tsClient.initTimeSeries(iris, classes, timeUnit, conn, TimeSeriesClient.Type.STEPWISECUMULATIVE, null, null);
                 //LOGGER.info(String.format("Initialized time series with the following IRIs: %s", String.join(", ", iris)));
             }
             catch (SQLException e) {
@@ -1370,11 +1370,11 @@ public class CEAAgent extends JPSAgent {
         iris.add(dataIri);
         try (Connection conn = rdbStoreClient.getConnection()) {
             TimeSeries<OffsetDateTime> data = tsClient.getTimeSeries(iris, conn);
+            return data;
         }
         catch (SQLException e) {
             throw new JPSRuntimeException(e);
         }
-        return data;
     }
 
     /**
