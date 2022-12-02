@@ -409,7 +409,7 @@ public class CEAAgent extends JPSAgent {
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/", config.getString("kingslynnEPSG27700.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/", config.getString("pirmasensEPSG32633.targetresourceid"));
         localRoute = config.getString("query.route.local");
-        usageRoute = config.getString("usagequery.route");
+        usageRoute = config.getString("usage.query.route");
     }
 
     /**
@@ -897,7 +897,7 @@ public class CEAAgent extends JPSAgent {
                 .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s")
                 .addWhere("?building", "ontoBuiltEnv:hasUsageCategory", "?PropertyUsageCategory");
 
-        sb.addVar("?PropertyUsageCategory").addGraph(NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)), wb);
+        sb.addVar("?PropertyUsageCategory");
 
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
 
@@ -1504,7 +1504,7 @@ public class CEAAgent extends JPSAgent {
      * @param distance buffer distance
      * @return inflated polygon
      */
-    private Geometry inflatePolygon(Geometry geom, Double distance) {
+    private Geometry inflatePolygon(Geometry geom, Double distance){
         ArrayList<Double> zCoordinate = getPolygonZ(geom);
         BufferParameters bufferParameters = new BufferParameters();
         bufferParameters.setEndCapStyle(BufferParameters.CAP_ROUND);
@@ -1521,7 +1521,7 @@ public class CEAAgent extends JPSAgent {
      * @param distance buffer distance
      * @return deflated polygon
      */
-    private Geometry deflatePolygon(Geometry geom, Double distance) {
+    private Geometry deflatePolygon(Geometry geom, Double distance){
         ArrayList<Double> zCoordinate = getPolygonZ(geom);
         BufferParameters bufferParameters = new BufferParameters();
         bufferParameters.setEndCapStyle(BufferParameters.CAP_ROUND);
@@ -1552,7 +1552,6 @@ public class CEAAgent extends JPSAgent {
      * Sets a polygon's z coordinates to the values from zInput
      * @param geom polygon geometry
      * @param zInput ArrayList of values representing z coordinates
-     * @return geom with z coordinates from zInput
      */
     private void setPolygonZ(Geometry geom, ArrayList<Double> zInput){
         Double newZ = Double.NaN;
@@ -1694,8 +1693,7 @@ public class CEAAgent extends JPSAgent {
      * @param usage OntoBuiltEnv building usage type
      * @return building usage per CEA convention
      */
-    public String toCEAConvention(String usage)
-    {
+    public String toCEAConvention(String usage){
         switch(usage){
             case("SINGLERESIDENTIAL"):
                 return "SINGLE_RES";
