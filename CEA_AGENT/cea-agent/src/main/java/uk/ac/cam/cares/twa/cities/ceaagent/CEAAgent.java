@@ -894,10 +894,13 @@ public class CEAAgent extends JPSAgent {
         SelectBuilder sb = new SelectBuilder();
 
         wb.addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
+                .addPrefix("rdf", rdfUri)
                 .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s")
-                .addWhere("?building", "ontoBuiltEnv:hasUsageCategory", "?PropertyUsageCategory");
+                .addWhere("?building", "ontoBuiltEnv:hasUsageCategory", "?usage")
+                .addWhere("?usage", "rdf:type", "?PropertyUsageCategory");
 
-        sb.addVar("?PropertyUsageCategory");
+        sb.addVar("?PropertyUsageCategory")
+                .addWhere(wb);
 
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
 
