@@ -11,6 +11,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
+import uk.ac.cam.cares.jps.base.query.RemoteRDBStoreClient;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeries;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeriesClient;
 import org.apache.jena.query.Query;
@@ -27,6 +28,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -56,7 +59,7 @@ public class CEAAgentTest {
         CEAAgent agent = new CEAAgent();
         ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
 
-        assertEquals(54, agent.getClass().getDeclaredFields().length);
+        assertEquals(53, agent.getClass().getDeclaredFields().length);
 
         Field URI_ACTION;
         Field URI_UPDATE;
@@ -95,7 +98,6 @@ public class CEAAgentTest {
         Field FS;
         Field rdbStoreClient;
         Field storeClient;
-        Field conn;
         Field ocgmlUri;
         Field ontoUBEMMPUri;
         Field rdfUri;
@@ -192,9 +194,6 @@ public class CEAAgentTest {
             storeClient = agent.getClass().getDeclaredField("storeClient");
             storeClient.setAccessible(true);
             assertNull(storeClient.get(agent));
-            conn = agent.getClass().getDeclaredField("conn");
-            conn.setAccessible(true);
-            assertNull(conn.get(agent));
 
             // Test readConfig()
             ocgmlUri = agent.getClass().getDeclaredField("ocgmlUri");
@@ -258,7 +257,7 @@ public class CEAAgentTest {
 
     @Test
     public void testProcessRequestParameters()
-            throws NoSuchMethodException, InvocationTargetException , IllegalAccessException, NoSuchFieldException {
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException, SQLException {
 
         CEAAgent agent = spy(new CEAAgent());
         Method processRequestParameters = agent.getClass().getDeclaredMethod("processRequestParameters", JSONObject.class);
@@ -269,8 +268,17 @@ public class CEAAgentTest {
         localRoute.setAccessible(true);
         localRoute.set(agent, "test_route");
 
+        RemoteRDBStoreClient mockRDBClient = mock(RemoteRDBStoreClient.class);
+        Connection mockConnection = mock(Connection.class);
+
+        Field rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
+        rdbStoreClient.setAccessible(true);
+        rdbStoreClient.set(agent, mockRDBClient);
+
+        doReturn(mockConnection).when(mockRDBClient).getConnection();
+
         doNothing().when(agent).setTimeSeriesProps(anyString(), anyString());
-        doNothing().when(agent).setRDBConnection(anyString());
+        doNothing().when(agent).setRDBClient(anyString());
 
         // Test empty request params
         try {
@@ -713,6 +721,15 @@ public class CEAAgentTest {
             String prefix = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/";
             String testUri = prefix + "cityobject/UUID_test/";
 
+            RemoteRDBStoreClient mockRDBClient = mock(RemoteRDBStoreClient.class);
+            Connection mockConnection = mock(Connection.class);
+
+            Field rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
+            rdbStoreClient.setAccessible(true);
+            rdbStoreClient.set(agent, mockRDBClient);
+
+            doReturn(mockConnection).when(mockRDBClient).getConnection();
+
             createTimeSeries.invoke(agent, testUri, fixedIris);
 
             Field TIME_SERIES = agent.getClass().getDeclaredField("TIME_SERIES");
@@ -722,7 +739,7 @@ public class CEAAgentTest {
             for (String time_series : time_series_strings) {
                 assertTrue(fixedIris.get(time_series).contains(prefix + "energyprofile/" + time_series));
             }
-            verify(mockTs.constructed().get(0), times(1)).initTimeSeries(anyList(), anyList(), anyString(), any(), anyString(), any(), any());
+            verify(mockTs.constructed().get(0), times(1)).initTimeSeries(anyList(), anyList(), anyString(), any(), any(), any(), any());
         }
     }
 
@@ -753,6 +770,15 @@ public class CEAAgentTest {
             times.add(OffsetDateTime.now());
             times.add(OffsetDateTime.now());
 
+            RemoteRDBStoreClient mockRDBClient = mock(RemoteRDBStoreClient.class);
+            Connection mockConnection = mock(Connection.class);
+
+            Field rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
+            rdbStoreClient.setAccessible(true);
+            rdbStoreClient.set(agent, mockRDBClient);
+
+            doReturn(mockConnection).when(mockRDBClient).getConnection();
+
             addDataToTimeSeries.invoke(agent, values, times, iris);
 
             // Ensure correct methods on time series client are called
@@ -774,6 +800,15 @@ public class CEAAgentTest {
         List<String> iris = new ArrayList<>();
         iris.add("test_1");
         iris.add("test_2");
+
+        RemoteRDBStoreClient mockRDBClient = mock(RemoteRDBStoreClient.class);
+        Connection mockConnection = mock(Connection.class);
+
+        Field rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
+        rdbStoreClient.setAccessible(true);
+        rdbStoreClient.set(agent, mockRDBClient);
+
+        doReturn(mockConnection).when(mockRDBClient).getConnection();
 
         Field tsClient = agent.getClass().getDeclaredField("tsClient");
         tsClient.setAccessible(true);
@@ -1609,6 +1644,15 @@ public class CEAAgentTest {
             List<String> iris = new ArrayList<>();
             iris.add(iri);
 
+            RemoteRDBStoreClient mockRDBClient = mock(RemoteRDBStoreClient.class);
+            Connection mockConnection = mock(Connection.class);
+
+            Field rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
+            rdbStoreClient.setAccessible(true);
+            rdbStoreClient.set(agent, mockRDBClient);
+
+            doReturn(mockConnection).when(mockRDBClient).getConnection();
+
             retrieveData.invoke(agent, iri);
 
             // Ensure method to get time series client was invoked once
@@ -1938,24 +1982,17 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testSetRDBConnection(@TempDir Path tempDir) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException, IOException {
+    public void testSetRDBClient(@TempDir Path tempDir) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException, IOException {
         CEAAgent agent = new CEAAgent();
-        Method setRDBConnection = agent.getClass().getDeclaredMethod("setRDBConnection", String.class);
+        Method setRDBClient = agent.getClass().getDeclaredMethod("setRDBClient", String.class);
 
-        assertNotNull(setRDBConnection);
-        setRDBConnection.setAccessible(true);
+        assertNotNull(setRDBClient);
+        setRDBClient.setAccessible(true);
 
         Field rdbStoreClient;
-        Field conn;
 
         rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
         rdbStoreClient.setAccessible(true);
-
-        conn = agent.getClass().getDeclaredField("conn");
-        conn.setAccessible(true);
-
-        assertNull(rdbStoreClient.get(agent));
-        assertNull(conn.get(agent));
 
         String testFile = "test.properties";
         String url = "test_url";
@@ -1972,10 +2009,9 @@ public class CEAAgentTest {
         testProp.store(testOut, null);
         testOut.close();
 
-        setRDBConnection.invoke(agent);
+        setRDBClient.invoke(agent, testPath.toString());
 
         assertNotNull(rdbStoreClient.get(agent));
-        assertNotNull(conn.get(agent));
     }
 
     @Test

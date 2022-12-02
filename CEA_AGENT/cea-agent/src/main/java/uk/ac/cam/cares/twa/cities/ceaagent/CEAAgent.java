@@ -23,6 +23,7 @@ import java.util.concurrent.*;
 import java.net.URISyntaxException;
 import java.util.stream.Stream;
 import java.sql.Connection;
+import java.sql.SQLException;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
@@ -85,8 +86,6 @@ public class CEAAgent extends JPSAgent {
     private static final String FS = System.getProperty("file.separator");
     private RemoteRDBStoreClient rdbStoreClient;
     private RemoteStoreClient storeClient;
-    private Connection conn;
-
     // Variables fetched from CEAAgentConfig.properties file.
     private String ocgmlUri;
     private String ontoUBEMMPUri;
@@ -111,7 +110,7 @@ public class CEAAgent extends JPSAgent {
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
         if (validateInput(requestParams)) {
-            setRDBConnection(getTimeSeriesPropsPath());
+            setRDBClient(getTimeSeriesPropsPath());
 
             requestUrl = requestParams.getString(KEY_REQ_URL);
             String uriArrayString = requestParams.get(KEY_IRI).toString();
@@ -453,9 +452,14 @@ public class CEAAgent extends JPSAgent {
             for(int i=0; i<iris.size(); i++){
                 classes.add(Double.class);
             }
-            // Initialize the time series
-            tsClient.initTimeSeries(iris, classes, timeUnit, conn, "StepwiseCumulative", null, null);
-            //LOGGER.info(String.format("Initialized time series with the following IRIs: %s", String.join(", ", iris)));
+            try (Connection conn = rdbStoreClient.getConnection()) {
+                // Initialize the time series
+                tsClient.initTimeSeries(iris, classes, timeUnit, conn, TimeSeriesClient.Type.STEPWISECUMULATIVE, null, null);
+                //LOGGER.info(String.format("Initialized time series with the following IRIs: %s", String.join(", ", iris)));
+            }
+            catch (SQLException e) {
+                throw new JPSRuntimeException(e);
+            }
         }
     }
 
@@ -476,17 +480,23 @@ public class CEAAgent extends JPSAgent {
             tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
         }
         TimeSeries<OffsetDateTime> currentTimeSeries = new TimeSeries<>(times, iris, values);
-        OffsetDateTime endDataTime = tsClient.getMaxTime(currentTimeSeries.getDataIRIs().get(0), conn);
-        OffsetDateTime beginDataTime = tsClient.getMinTime(currentTimeSeries.getDataIRIs().get(0), conn);
 
-        // Delete old data if exists
-        if (endDataTime != null) {
-            for(Integer i=0; i<currentTimeSeries.getDataIRIs().size(); i++){
-                tsClient.deleteTimeSeriesHistory(currentTimeSeries.getDataIRIs().get(i), beginDataTime, endDataTime, conn);
+        try (Connection conn = rdbStoreClient.getConnection()) {
+            OffsetDateTime endDataTime = tsClient.getMaxTime(currentTimeSeries.getDataIRIs().get(0), conn);
+            OffsetDateTime beginDataTime = tsClient.getMinTime(currentTimeSeries.getDataIRIs().get(0), conn);
+
+            // Delete old data if exists
+            if (endDataTime != null) {
+                for (Integer i = 0; i < currentTimeSeries.getDataIRIs().size(); i++) {
+                    tsClient.deleteTimeSeriesHistory(currentTimeSeries.getDataIRIs().get(i), beginDataTime, endDataTime, conn);
+                }
             }
+            // Add New data
+            tsClient.addTimeSeriesData(currentTimeSeries, conn);
         }
-        // Add New data
-        tsClient.addTimeSeriesData(currentTimeSeries, conn);
+        catch (SQLException e) {
+            throw new JPSRuntimeException(e);
+        }
     }
 
     /**
@@ -500,8 +510,13 @@ public class CEAAgent extends JPSAgent {
         // If any of the IRIs does not have a time series the time series does not exist
         for(String iri: iris) {
             try {
-                if (!tsClient.checkDataHasTimeSeries(iri, conn)) {
-                    return false;
+                try (Connection conn = rdbStoreClient.getConnection()) {
+                    if (!tsClient.checkDataHasTimeSeries(iri, conn)) {
+                        return false;
+                    }
+                }
+                catch (SQLException e) {
+                    throw new JPSRuntimeException(e);
                 }
                 // If central RDB lookup table ("dbTable") has not been initialised, the time series does not exist
             } catch (DataAccessException e) {
@@ -1390,8 +1405,13 @@ public class CEAAgent extends JPSAgent {
         tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
         List<String> iris = new ArrayList<>();
         iris.add(dataIri);
-        TimeSeries<OffsetDateTime> data = tsClient.getTimeSeries(iris, conn);
-        return data;
+        try (Connection conn = rdbStoreClient.getConnection()) {
+            TimeSeries<OffsetDateTime> data = tsClient.getTimeSeries(iris, conn);
+            return data;
+        }
+        catch (SQLException e) {
+            throw new JPSRuntimeException(e);
+        }
     }
 
     /**
@@ -1673,9 +1693,9 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * @param path timeseriesclient.properties path as string
-     * Sets rdbStoreClient with the database url, username, and password from the file at path. Also sets conn to the connection established by rdbStoreclient.
+     * Sets rdbStoreClient with the database url, username, and password from the file at path
      */
-    protected void setRDBConnection(String path){
+    protected void setRDBClient(String path){
         try {
             FileInputStream in = new FileInputStream(path);
             Properties props = new Properties();
@@ -1683,7 +1703,6 @@ public class CEAAgent extends JPSAgent {
             in.close();
 
             rdbStoreClient = new RemoteRDBStoreClient(props.getProperty("db.url"), props.getProperty("db.user"), props.getProperty("db.password"));
-            conn = rdbStoreClient.getConnection();
         }
         catch (Exception e) {
             e.printStackTrace();
