@@ -2003,7 +2003,7 @@ public class CEAAgentTest {
         testProp.store(testOut, null);
         testOut.close();
 
-        setRDBClient.invoke(agent);
+        setRDBClient.invoke(agent, testPath.toString());
 
         assertNotNull(rdbStoreClient.get(agent));
     }
