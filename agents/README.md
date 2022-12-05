@@ -102,6 +102,13 @@ this folder contains all the libraries provided by the server.
 
 If this step has not been done, you might get a `NoClassDefFoundError`. 
 
+
+### Running a local blazegraph with Java 11
+Run a blazegraph on your local machine for testing and development using one of the following methods:
+1. Deploy a [blazegraph.war](https://github.com/blazegraph/database/releases/tag/BLAZEGRAPH_2_1_6_RC) file on your Tomcat server. The blazegraph will be accessible at localhost:8080/blazegraph (Change port to your Tomcat port).
+OR
+2. Deploy a blazegraph Docker image locally as found here - https://github.com/cambridge-cares/TheWorldAvatar/tree/main/Deploy/stacks/db/blazegraph_geo.
+
 #### Install and build local AccessAgent (for developers)
 For development and testing purposes, the [AccessAgent](https://github.com/cambridge-cares/TheWorldAvatar/wiki/Access-Agent) can be deployed locally via Docker to access your local Blazegraph.
 1. Set up a Docker environment as described in the [TWA Wiki - Docker: Environment](https://github.com/cambridge-cares/TheWorldAvatar/wiki/Docker%3A-Environment) page.
