@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   cea-agent:
-    image: cea-agent:1.0.0
+    image: cea-agent:0.2.4
     build: .
     container_name: cea-agent
     environment:
