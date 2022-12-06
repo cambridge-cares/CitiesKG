@@ -243,7 +243,7 @@ public class CEAAgentTest {
             assertEquals(localRoute.get(agent), config.getString("query.route.local"));
             usageRoute = agent.getClass().getDeclaredField("usageRoute");
             usageRoute.setAccessible(true);
-            assertEquals(usageRoute.get(agent), config.getString("usagequery.route"));
+            assertEquals(usageRoute.get(agent), config.getString("usage.query.route"));
         } catch (NoSuchFieldException | IllegalAccessException e) {
             fail();
         }
@@ -1019,7 +1019,7 @@ public class CEAAgentTest {
         Query q8 = (Query) getQuery.invoke(agent, uri, case8);
         assertTrue(q8.toString().contains("srid"));
         Query q9 = (Query) getQuery.invoke(agent, uri, case9);
-        assertTrue(q9.toString().contains("ontoBuiltEnv:hasUsageCategory"));
+        assertTrue(q9.toString().contains("hasUsageCategory"));
     }
 
     @Test
@@ -2026,8 +2026,8 @@ public class CEAAgentTest {
 
         // Ensure query contains correct predicate and object
         Query q = (Query) getPropertyUsageCateogory.invoke(agent, uri);
-        assertTrue(q.toString().contains("ontoBuiltEnv:hasUsageCategory"));
-        assertTrue(q.toString().contains("ontoBuiltEnv:hasOntoCityGMLRepresentation"));
+        assertTrue(q.toString().contains("hasUsageCategory"));
+        assertTrue(q.toString().contains("hasOntoCityGMLRepresentation"));
         assertTrue(q.toString().contains("PropertyUsageCategory"));
     }
 
