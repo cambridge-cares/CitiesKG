@@ -181,6 +181,7 @@ public class CEAAgent extends JPSAgent {
                         // Will not be necessary if namespace is passed in request params
                         if(i==0) {
                             route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
+                            usageRoute = usageRoute.isEmpty() ? route : usageRoute;
                         }
                         uriStringArray.add(uri);
                         // Set default value of 10m if height can not be obtained from knowledge graph
@@ -1717,18 +1718,26 @@ public class CEAAgent extends JPSAgent {
      */
     public String toCEAConvention(String usage){
         switch(usage){
+            case("DOMESTIC"):
+                return "MULTI_RES";
             case("SINGLERESIDENTIAL"):
                 return "SINGLE_RES";
             case("MULTIRESIDENTIAL"):
+                return "MULTI_RES";
+            case("EMERGENCYSERVICE"):
                 return "MULTI_RES";
             case("FIRESTATION"):
                 return "MULTI_RES";
             case("POLICESTATION"):
                 return "MULTI_RES";
+            case("MEDICALCARE"):
+                return "HOSPITAL";
             case("HOSPITAL"):
                 return usage;
             case("CLINIC"):
                 return "HOSPITAL";
+            case("EDUCATION"):
+                return "MULTI_RES";
             case("SCHOOL"):
                 return usage;
             case("UNIVERSITYFACILITY"):
@@ -1752,6 +1761,8 @@ public class CEAAgent extends JPSAgent {
             case("CULTURALFACILITY"):
                 return "MUSEUM";
             case("TRANSPORTFACILITY"):
+                return "INDUSTRIAL";
+            case("NON-DOMESTIC"):
                 return "INDUSTRIAL";
             default:
                 return "MULTI_RES";
