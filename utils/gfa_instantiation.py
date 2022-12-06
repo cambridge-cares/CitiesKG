@@ -1,5 +1,6 @@
 import uuid
 import requests
+import random
 import pandas as pd
 import numpy as np
 from rdflib import Dataset, Literal
@@ -444,7 +445,6 @@ class TripleDataset:
     add it to triple dataset.
     '''
     def get_regulation_overlap_triples(self, sparql, plots, accuracy, boolean):
-
         sparql.setQuery("""PREFIX ocgml:<http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
             SELECT ?obj_id ?geom
             WHERE { GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/surfacegeometry/> {
@@ -471,11 +471,10 @@ class TripleDataset:
                                      .drop_duplicates(subset=['plots']))
         else:
             intersection_filtered = intersection.loc[lambda df: df['intersection_area'] / df['area'] > accuracy]
-        print('Plots with regulations intersected. Number of filtered intersections: {}'.format(
-            len(intersection_filtered)))
-
+        print('Plots with regulations intersected. Number of filtered intersections: {}'.format(len(intersection_filtered)))
         for i in intersection_filtered.index:
-            self.dataset.add((URIRef(intersection_filtered.loc[i, 'obj_id']), GFAOntoManager.APPLIES_TO,
+            city_object_id = intersection_filtered.loc[i, 'obj_id'].replace('genericcityobject', 'cityobject')
+            self.dataset.add((URIRef(city_object_id), GFAOntoManager.APPLIES_TO,
                               URIRef(intersection_filtered.loc[i, 'plots']),
                               GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
@@ -494,7 +493,7 @@ def instantiate_reg_overlaps(central_area, urban_design_area, street_block_plan,
                              urban_design_guidelines, landed_housing, height_control, planning_boundaries):
 
     plots = get_plots("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql")
-    print('Plots retrieved')
+    print('Plots retrieved. Number of plots: {}'.format(len(plots)))
     regulations = TripleDataset()
 
     regulations.get_regulation_overlap_triples(SPARQLWrapper(central_area), plots, 0.4, False)
@@ -921,18 +920,17 @@ if __name__ == "__main__":
     # endpoint for area-based regulation content
     regulation_cont = url_prefix + 'regulationcontent/sparql'
 
-    instantiate_height_control(height_control)
-    instantiate_conservation_areas(conservation_areas)
-    instantiate_central_area(central_area)
-    instantiate_planning_boundaries(planning_boundaries)
-    instantiate_monuments(monument)
-    instantiate_landed_housing_areas(landed_housing)
-    instantiate_street_block_plan(street_block_plan)
-    instantiate_urban_design_areas(urban_design_areas)
+    #instantiate_height_control(height_control)
+    #instantiate_conservation_areas(conservation_areas)
+    #instantiate_central_area(central_area)
+    #instantiate_planning_boundaries(planning_boundaries)
+    #instantiate_monuments(monument)
+    #instantiate_landed_housing_areas(landed_housing)
+    #instantiate_street_block_plan(street_block_plan)
+    #instantiate_urban_design_areas(urban_design_areas)
     # urban design guidelines regulation content can be instantiated only if urban design area regulation content is
     # already loaded on KG to /regulationcontent/ graph.
-    instantiate_urban_design_guidelines(urban_design_guidelines, regulation_cont)
-
+    #instantiate_urban_design_guidelines(urban_design_guidelines, regulation_cont)
 
     instantiate_reg_overlaps(central_area_geo, urban_design_areas_geo, street_block_plan_geo, conservation_areas_geo,
                              monument_geo, urban_design_guidelines_geo, landed_housing_geo, height_control_geo,
