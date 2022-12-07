@@ -2,11 +2,9 @@ package org.citydb.database.adapter.blazegraph;
 
 import org.apache.jena.arq.querybuilder.ExprFactory;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
-import org.citydb.citygml.exporter.util.Metadata;
+import org.apache.jena.ext.com.google.common.primitives.Doubles;
 import org.citydb.config.geometry.BoundingBox;
 import org.citydb.config.geometry.GeometryObject;
-import org.citydb.config.geometry.GeometryType;
-import org.citydb.config.geometry.MultiPolygon;
 import org.citydb.config.project.database.DatabaseSrs;
 import org.citydb.config.project.database.DatabaseSrsType;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
@@ -14,7 +12,10 @@ import org.citydb.database.adapter.AbstractUtilAdapter;
 import org.citydb.database.adapter.IndexStatusInfo;
 import org.citydb.database.connection.DatabaseMetaData;
 import org.citydb.database.version.DatabaseVersion;
+import org.citygml4j.factory.DimensionMismatchException;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.CoordinateXY;
+import org.locationtech.jts.geom.CoordinateXYZM;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 
@@ -24,6 +25,7 @@ import java.net.URL;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import org.locationtech.jts.geom.LinearRing;
 
 public class UtilAdapter extends AbstractUtilAdapter {
 
@@ -174,6 +176,51 @@ public class UtilAdapter extends AbstractUtilAdapter {
         return updateStatement;
     }
 
+    /** double[] --> Coordinate[]**/
+    public Coordinate[] doubleArr2CoordinateArr(double[] coords, int dim) {
+
+        List<Coordinate> linearRingCoord = new ArrayList<>();
+
+        for (int i = 0; i < coords.length; i=i+dim) {
+            if (dim == 2) {
+                linearRingCoord.add(new CoordinateXY(coords[i], coords[i+1]));
+            } else if (dim == 3) {
+                linearRingCoord.add(new CoordinateXYZM(coords[i], coords[i+1], coords[i+2], 0.0));
+            }
+        }
+        Coordinate[] linearRing = linearRingCoord.toArray(new Coordinate[0]);
+        return linearRing;
+    }
+
+    /** Coordinate[] --> double[] **/
+    public double[][] CoordinateArr2doubleArr(Coordinate[] allCoords, int dim, int[] doubleArrLen) {
+
+        int numElements = doubleArrLen.length;
+        double[][] newCoordinates = new double[numElements][];
+
+        int i = 0; // index of allCoords
+
+        for (int k = 0; k < numElements; ++k) {
+            newCoordinates[k] = new double[doubleArrLen[k]];
+            for (int j = 0; j < doubleArrLen[k]; j = j + dim) {
+                if (dim == 2) {
+                    newCoordinates[k][j] = allCoords[i].getX();
+                    newCoordinates[k][j + 1] = allCoords[i].getY();
+                }
+                if (dim == 3) {
+                    newCoordinates[k][j] = allCoords[i].getX();
+                    newCoordinates[k][j + 1] = allCoords[i].getY();
+                    newCoordinates[k][j + 2] = allCoords[i].getZ();
+                }
+                ++i;
+            }
+        }
+        if (i != allCoords.length){
+            System.out.println("Dimension mismatch while create GeometryObject from Geometry object!");
+        }
+        return newCoordinates;
+    }
+
     @Override
     protected String[] createDatabaseReport(String schema, Connection connection) throws SQLException {
         return new String[0];
@@ -189,53 +236,98 @@ public class UtilAdapter extends AbstractUtilAdapter {
         return null;
     }
 
+    /* This method is used for boundingbox method for exporting tiles
+    *  2D ST_TRANSFORM */
     @Override
     protected BoundingBox transformBoundingBox(BoundingBox bbox, DatabaseSrs sourceSrs, DatabaseSrs targetSrs, Connection connection) throws SQLException {
-        return null;
+        BoundingBox result = new BoundingBox(bbox);
+        int sourceSrid = sourceSrs.getSrid(); // 4326
+        int targetSrid = targetSrs.getSrid(); // 25833 for berlin // 31466 for testing purpose
+        targetSrid = 31466 ;
+
+        List<Coordinate> bboxCoordList = new ArrayList<>();
+
+        bboxCoordList.add(new Coordinate( bbox.getLowerCorner().getX() , bbox.getLowerCorner().getY()) );
+        bboxCoordList.add(new Coordinate( bbox.getLowerCorner().getX() , bbox.getUpperCorner().getY()) );
+        bboxCoordList.add(new Coordinate( bbox.getUpperCorner().getX() , bbox.getUpperCorner().getY()) );
+        bboxCoordList.add(new Coordinate( bbox.getUpperCorner().getX() , bbox.getLowerCorner().getY()) );
+        bboxCoordList.add(new Coordinate( bbox.getLowerCorner().getX() , bbox.getLowerCorner().getY()) );
+
+        Coordinate[] bboxCoord = bboxCoordList.toArray(bboxCoordList.toArray(new Coordinate[0]));
+        GeometryFactory fac = new GeometryFactory();
+        Geometry bboxPolygon = fac.createPolygon(bboxCoord);
+        GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
+        Geometry converted = geospatial.Transform(bboxPolygon, sourceSrid, sourceSrid);
+        //Geometry testconverted = geospatial.reProject(bboxPolygon, sourceSrid, sourceSrid);
+        Coordinate[] reverseCoord = geospatial.getReversedCoordinates(converted);
+
+        result.getLowerCorner().setX(reverseCoord[0].x);
+        result.getLowerCorner().setY(reverseCoord[0].y);
+        result.getUpperCorner().setX(reverseCoord[2].x);
+        result.getUpperCorner().setY(reverseCoord[2].y);
+
+        result.setSrs(targetSrs);
+
+        return result;
     }
-    //The postgis implementation is to execute ST_Transform in postgis
+
+    /**
+     * Simulate ST_Transform for blazegraph using the GeoSpatialProcessor (based on JTS)
+     * tranform between GeometryObject defined by citydb.config.geometry
+     * the GeometryObject needs to be converted into geometry using JTS transform
+     *
+     * @param geometry     - GeometryObject to be transformed, can contain multipolygon
+     * @param targetSrs    - target SRID
+     * @param connection   - database connection
+     * @return GeometryObject - make sure the incoming and outgoing has the same format (dimension)
+     */
+
     @Override
     protected GeometryObject transform(GeometryObject geometry, DatabaseSrs targetSrs, Connection connection) throws SQLException {
-        GeometryObject result = null;
 
-        int numPolygon = geometry.getNumElements();
-        double[][] coordinates = new double[numPolygon][];
-        GeometryFactory fac = new GeometryFactory();
+        GeometryObject converted3d = null;
+
+        int numElements = geometry.getNumElements();
+        double[][] coordinates = geometry.getCoordinates();
+        int[] lengths = new int[numElements];
+        int dim = geometry.getDimension();
+        for (int i = 0; i < numElements; ++i){
+            lengths[i] = coordinates[i].length;
+        }
+
+        GeometryFactory fac = new GeometryFactory(); // no polygonZ
         GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
+        Geometry polygon = null;
 
-        List<Geometry> polygonlist = new ArrayList<>();
-
-        for (int i = 0; i < numPolygon; ++i){
-            coordinates[i] = geometry.getCoordinates(i);
-        }
-
-        for (int j = 0; j < numPolygon; ++j) {
-            List<Coordinate> polygoncoord = new ArrayList<>();
-            for (int k = 0; k < coordinates[j].length; k = k + 2){
-                polygoncoord.add(new Coordinate(coordinates[j][k], coordinates[j][k+1]));
+        if (geometry.getGeometryType().name() == "POLYGON"){
+            if (numElements == 1) {  // only the shell
+                // createPolygon(Coordinate[] shell)
+                Coordinate[] shell = doubleArr2CoordinateArr(coordinates[0], dim);
+                polygon = fac.createPolygon(shell);
+            }else{ // polygon with holes
+                //Polygon createPolygon(LinearRing shell, LinearRing[] holes)
+                Coordinate[] shellCoord = doubleArr2CoordinateArr(coordinates[0], dim);
+                LinearRing shell = fac.createLinearRing(shellCoord);
+                LinearRing[] holes = new LinearRing[numElements-1];
+                for (int i = 1; i < coordinates.length; ++i){
+                    Coordinate[] holeCoord = doubleArr2CoordinateArr(coordinates[i], dim);
+                    holes[i-1] = fac.createLinearRing(holeCoord);
+                }
+                polygon = fac.createPolygon(shell, holes);
             }
-            polygonlist.add(fac.createPolygon(polygoncoord.toArray(polygoncoord.toArray(new Coordinate[0]))));
         }
+        Geometry transformed = geospatial.Transform(polygon, geometry.getSrid(), targetSrs.getSrid());
 
-        int sourceSrsId;
-        if (geometry.getSrid() == 0){
-            sourceSrsId = 31466;
-        }else{
-            sourceSrsId = geometry.getSrid();
-        }
+        // Geometry --> GeometryObject; GeometryObject createPolygon(double[][] coordinates, int dimension, int srid)
+        double[][] newCoordinates = new double[numElements][];
 
-        List<Geometry> convertedGeometry = new ArrayList<>();
-        for (int i = 0; i < numPolygon; ++i){
-            Geometry converted = geospatial.Transform(polygonlist.get(i),25833, targetSrs.getSrid()); // the hague: 28992, berlin: 25933
-            Coordinate[] reverseCoord = geospatial.getReversedCoordinates(converted);
-            Geometry reverseConverted = fac.createPolygon(reverseCoord);
-            convertedGeometry.add(reverseConverted);
-        }
+        Coordinate[] reversedCoords = geospatial.reverseCoordinates(transformed.getCoordinates(), dim);  // EPSG 4326: latitude, longitude
 
-        // need to reverse the coordinates to match POSTGIS results
-        Geometry union = geospatial.UnaryUnion(convertedGeometry);
-        result = databaseAdapter.getGeometryConverter().getGeometry(union);
-        return result;
+        newCoordinates = CoordinateArr2doubleArr(reversedCoords, dim, lengths);
+
+        converted3d = GeometryObject.createPolygon(newCoordinates, dim, targetSrs.getSrid());
+
+        return converted3d;
     }
 
     @Override

@@ -2,7 +2,6 @@ package uk.ac.cam.cares.twa.cities.agents.geo;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.UUID;
@@ -21,17 +20,17 @@ import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.operation.distance3d.Distance3DOp;
+import org.locationtech.jts.geom.Coordinate;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.jps.base.interfaces.KnowledgeBaseClientInterface;
-import uk.ac.cam.cares.jps.base.query.KGRouter;
-import uk.ac.cam.cares.twa.cities.model.geo.Envelope;
+import uk.ac.cam.cares.twa.cities.AccessAgentMapping;
+import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.ogm.models.geo.CityObject;
+import uk.ac.cam.cares.ogm.models.geo.EnvelopeType;
+import uk.ac.cam.cares.ogm.models.geo.GeometryType;
 
 /**
  * DistanceAgent class retrieves existing distance between the centroids of two objects envelopes
@@ -49,8 +48,8 @@ public class DistanceAgent extends JPSAgent {
   private static final String RDF_SCHEMA = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
   private static final String XML_SCHEMA = "http://www.w3.org/2001/XMLSchema#";
   private static final String OWL_SCHEMA = "http://www.w3.org/2002/07/owl#";
-  private static final String DISTANCE_GRAPH = "/distance/";
-  public static final String DEFAULT_SRS = "EPSG:4236";
+  private static final String DISTANCE_GRAPH = "distance/";
+  public static final String DEFAULT_SRS = "EPSG:4326";
   public static final String DEFAULT_TARGET_SRS = "EPSG:24500";
 
   // Repeating variables in SPARQL queries
@@ -74,10 +73,10 @@ public class DistanceAgent extends JPSAgent {
   private static final String COLON = ":";
 
   // Variables fetched from config.properties file.
-  private String ocgmlUri;
+  private static String ocgmlUri;
   private static String unitOntology;
-  private KnowledgeBaseClientInterface kgClient;
   private static String route;
+  private static ModelContext context;
 
   public DistanceAgent() {
     super();
@@ -95,6 +94,14 @@ public class DistanceAgent extends JPSAgent {
       uris.add(iri.toString());
     }
 
+    if(uris.size() > 0) {
+      String route = AccessAgentMapping.getTargetResourceID(uris.get(0));
+      if (route != null) {
+        this.route = route;
+      }
+      this.context = new ModelContext(this.route, AccessAgentMapping.getNamespaceEndpoint(uris.get(0)));
+    }
+
     ArrayList<Double> distances = new ArrayList<>();
 
     for (int firstURI = 0; firstURI < uris.size(); firstURI++) {
@@ -108,12 +115,8 @@ public class DistanceAgent extends JPSAgent {
         if (distance < 0) {
           String firstSrs = getObjectSrs(firstObjectUri, true);
           String secondSrs = getObjectSrs(secondObjectUri, true);
-          String targetSrs = getObjectSrs(firstObjectUri, false);
           distance =
-              computeDistance(
-                  getEnvelope(firstObjectUri, firstSrs),
-                  getEnvelope(secondObjectUri, secondSrs),
-                  targetSrs);
+                  computeDistance(getEnvelope(firstObjectUri, firstSrs), getEnvelope(secondObjectUri, secondSrs));
           setDistance(firstObjectUri, secondObjectUri, distance);
         }
         distances.add(distance);
@@ -181,19 +184,8 @@ public class DistanceAgent extends JPSAgent {
    * @return uri of the distance graph in the object's namespace as string.
    */
   private String getDistanceGraphUri(String uriString) {
-    String namespace = getNamespace(uriString);
+    String namespace = AccessAgentMapping.getNamespaceEndpoint(uriString);
     return namespace + DISTANCE_GRAPH;
-  }
-
-  /**
-   * retrieves namespace from city object Uri.
-   *
-   * @param uriString city object id
-   * @return Uri of the object's namespace as string.
-   */
-  private String getNamespace(String uriString) {
-    String[] splitUri = uriString.split("/");
-    return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 2));
   }
 
   /**
@@ -206,26 +198,14 @@ public class DistanceAgent extends JPSAgent {
   private double getDistance(String firstUriString, String secondUriString) {
 
     double distance = -1.0;
-    setKGClient(true);
 
     Query q = getDistanceQuery(firstUriString, secondUriString);
-    String queryResultString = kgClient.execute(q.toString());
-    JSONArray queryResult = new JSONArray(queryResultString);
+    JSONArray queryResult = this.context.query(q.toString());
 
     if (!queryResult.isEmpty()) {
       distance = Double.parseDouble(queryResult.getJSONObject(0).get(DISTANCE_OBJECT).toString());
     }
     return distance;
-  }
-
-  /**
-   * sets KG Client for specific endpoint.
-   *
-   * @param isQuery boolean
-   */
-  private void setKGClient(boolean isQuery) {
-
-    this.kgClient = KGRouter.getKnowledgeBaseClient(route, isQuery, !isQuery);
   }
 
   /**
@@ -244,7 +224,7 @@ public class DistanceAgent extends JPSAgent {
             .addPrefix(OCGML_PREFIX, ocgmlUri)
             .addVar(QST_MARK + SRS_NAME_OBJECT)
             .addWhere(QST_MARK + "s" , predicate, QST_MARK + SRS_NAME_OBJECT);
-    sb.setVar(Var.alloc("s"), NodeFactory.createURI(getNamespace(uriString) + "/sparql"));
+    sb.setVar(Var.alloc("s"), NodeFactory.createURI(AccessAgentMapping.getNamespaceEndpoint(uriString)));
 
     return sb.build();
   }
@@ -260,11 +240,8 @@ public class DistanceAgent extends JPSAgent {
     if (source) { srs = DEFAULT_SRS; }
     else { srs = DEFAULT_TARGET_SRS; }
 
-    setKGClient(true);
-
     Query q = getObjectSRSQuery(uriString, source);
-    String queryResultString = kgClient.execute(q.toString());
-    JSONArray queryResult = new JSONArray(queryResultString);
+    JSONArray queryResult = this.context.query(q.toString());
 
     if (!queryResult.isEmpty()) {
       srs = queryResult.getJSONObject(0).get(SRS_NAME_OBJECT).toString();
@@ -278,12 +255,10 @@ public class DistanceAgent extends JPSAgent {
    * @param uriString city object id
    * @return envelope
    */
-  public Envelope getEnvelope(String uriString, String coordinateSystem) {
-    Envelope envelope = new Envelope(coordinateSystem);
-    String envelopeString = envelope.getEnvelopeString(uriString);
-    envelope.extractEnvelopePoints(envelopeString);
-
-    return envelope;
+  public EnvelopeType getEnvelope(String uriString, String coordinateSystem) {
+    GeometryType.setSourceCrsName(coordinateSystem);
+    CityObject cityObject = context.loadAll(CityObject.class, uriString);
+    return cityObject.getEnvelopeType();
   }
 
   /**
@@ -293,36 +268,19 @@ public class DistanceAgent extends JPSAgent {
    * @param envelope2 city object 2 envelope
    * @return distance
    */
-  public double computeDistance(Envelope envelope1, Envelope envelope2, String targetCrs) {
-
-    Point centroid1 = envelope1.getCentroid();
-    Point centroid2 = envelope2.getCentroid();
-    String crs1 = envelope1.getCRS();
-    String crs2 = envelope2.getCRS();
-    centroid1 = setUniformCRS(centroid1, crs1, targetCrs);
-    centroid2 = setUniformCRS(centroid2, crs2, targetCrs);
-
-    return Distance3DOp.distance(centroid1, centroid2);
-  }
-
-  /**
-   * sets point CRS to a fixed coordinate system.
-   *
-   * @param point original points
-   * @param sourceCRSstring source CRS
-   * @return points
-   */
-  private Point setUniformCRS(Point point, String sourceCRSstring, String targetCRSstring) {
-
+  public double computeDistance(EnvelopeType envelope1, EnvelopeType envelope2) {
+    Coordinate centroid1 = envelope1.getCentroid();
+    Coordinate centroid2 = envelope2.getCentroid();
+    CoordinateReferenceSystem crs1 = envelope1.getSourceCrs();
+    CoordinateReferenceSystem crs2 = envelope2.getSourceCrs();
+    CoordinateReferenceSystem targetCrs = envelope1.getMetricCrs();
     try {
-      CoordinateReferenceSystem sourceCRS = CRS.decode(sourceCRSstring);
-      CoordinateReferenceSystem targetCRS = CRS.decode(targetCRSstring);
-      MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
-      point = (Point) JTS.transform(point, transform);
-    } catch (FactoryException | TransformException | JPSRuntimeException e) {
+      Coordinate metricCentroid1 = JTS.transform(centroid1, null, CRS.findMathTransform(crs1, targetCrs, true));
+      Coordinate metricCentroid2 = JTS.transform(centroid2, null, CRS.findMathTransform(crs2, targetCrs, true));
+      return metricCentroid1.distance(metricCentroid2);
+    } catch (FactoryException | TransformException e) {
       throw new JPSRuntimeException(e);
     }
-    return point;
   }
 
   /**
@@ -365,13 +323,9 @@ public class DistanceAgent extends JPSAgent {
    * @param firstUri city object 1
    * @param secondUri city object 2
    * @param distance distance between two city objects
-   * @return confirmation
    */
-  private int setDistance(String firstUri, String secondUri, double distance) {
-
+  private void setDistance(String firstUri, String secondUri, double distance) {
     UpdateRequest ur = getSetDistanceQuery(firstUri, secondUri, distance);
-    setKGClient(false);
-
-    return kgClient.executeUpdate(ur);
+    this.context.update(ur.toString());
   }
 }

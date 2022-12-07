@@ -45,6 +45,7 @@ import org.citydb.config.geometry.GeometryObject;
 import org.citydb.config.geometry.GeometryType;
 import org.citydb.config.project.database.Database;
 import org.citydb.config.project.database.DatabaseSrs;
+import org.citydb.config.project.database.DatabaseType;
 import org.citydb.config.project.global.LogLevel;
 import org.citydb.config.project.kmlExporter.AltitudeOffsetMode;
 import org.citydb.config.project.kmlExporter.Balloon;
@@ -54,6 +55,7 @@ import org.citydb.config.project.kmlExporter.KmlExporter;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.AbstractGeometryConverterAdapter;
 import org.citydb.database.adapter.BlobExportAdapter;
+import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 import org.citydb.database.adapter.blazegraph.StatementTransformer;
 import org.citydb.event.EventDispatcher;
 import org.citydb.event.global.CounterEvent;
@@ -114,6 +116,11 @@ import org.collada._2005._11.colladaschema.Triangles;
 import org.collada._2005._11.colladaschema.UpAxisType;
 import org.collada._2005._11.colladaschema.Vertices;
 import org.collada._2005._11.colladaschema.VisualScene;
+import org.gdal.ogr.ogr;
+import org.gdal.osr.CoordinateTransformation;
+import org.gdal.osr.SpatialReference;
+import org.gdal.ogr.ogrConstants;
+import org.locationtech.jts.geom.Coordinate;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -147,6 +154,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
+
+
 
 public abstract class KmlGenericObject<T> {
 	private final Logger log = Logger.getInstance();
@@ -203,6 +212,9 @@ public abstract class KmlGenericObject<T> {
 	private SimpleDateFormat dateFormatter;
 	private final ImageReader imageReader;
 
+	// Added by Shiying
+	public boolean isBlazegraph;
+
 	protected KmlGenericObject(Connection connection,
 			Query query,
 			KmlExporterManager kmlExporterManager,
@@ -240,6 +252,9 @@ public abstract class KmlGenericObject<T> {
 
 		queries = new Queries(databaseAdapter, kmlExporterManager.getDatabaseAdapter().getConnectionDetails().getSchema());
 		imageReader = new ImageReader();
+
+		// Added by Shiying
+		isBlazegraph = kmlExporterManager.isBlazegraph();
 	}
 
 	public abstract void read(KmlSplittingResult work);
@@ -1360,11 +1375,7 @@ public abstract class KmlGenericObject<T> {
 		return Math.rint(originalValue * PRECISION) / PRECISION;
 	}
 
-	protected List<PlacemarkType> createPlacemarksForFootprint(ResultSet rs, KmlSplittingResult work) throws SQLException {
-		return createPlacemarksForFootprint(rs, work, null);
-	}
-
-	protected List<PlacemarkType> createPlacemarksForFootprint(ResultSet rs, KmlSplittingResult work, AffineTransformer transformer) throws SQLException {
+	protected List<PlacemarkType> createPlacemarksForFootprint_geospatial(ArrayList<ResultSet> sparqlResults, KmlSplittingResult work, boolean existGS, AffineTransformer transformer) throws SQLException {
 		List<PlacemarkType> placemarkList = new ArrayList<PlacemarkType>();
 		PlacemarkType placemark = kmlFactory.createPlacemarkType();
 		placemark.setName(work.getGmlId());
@@ -1383,14 +1394,167 @@ public abstract class KmlGenericObject<T> {
 		MultiGeometryType multiGeometry = kmlFactory.createMultiGeometryType();
 		placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
 
-		PolygonType polygon = null; 
+		PolygonType polygon = null;
+
+		// get SRID from blazegraph
+		DatabaseSrs srs = databaseAdapter.getConnectionMetaData().getReferenceSystem();
+		int databaseSrid = srs.getSrid();
+
+		if (existGS) {
+			for (ResultSet rs : sparqlResults) {
+				while (rs.next()) {
+					Object buildingGeometryObj = rs.getObject("geomtype");
+					String datatype = rs.getString("datatype");
+
+					//String obj = ((MaterializedSelectResults) rs).getNode(1).getLiteral();
+					if (!rs.wasNull() && buildingGeometryObj != null) {
+						eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
+
+						// Added by Shiying: convert the # string to geometry
+						buildingGeometryObj = GeoSpatialProcessor.createGeometry(buildingGeometryObj.toString(), datatype);
+
+						GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
+						unconvertedGeom.setSrid(databaseSrid);
+
+						if (unconvertedGeom == null || (
+								unconvertedGeom.getGeometryType() != GeometryType.POLYGON
+										&& unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON))
+							continue;
+
+						// for implicit geometries, we need to apply the transformation matrix first
+						if (transformer != null)
+							unconvertedGeom = transformer.applyTransformation(unconvertedGeom);
+
+						GeometryObject groundSurface = convertToWGS84(unconvertedGeom); // apply transformation, coordinates have totally been changed
+						unconvertedGeom = null;
+
+						int dim = groundSurface.getDimension();
+
+						for (int i = 0; i < groundSurface.getNumElements(); i++) {
+							LinearRingType linearRing = kmlFactory.createLinearRingType();
+							BoundaryType boundary = kmlFactory.createBoundaryType();
+							boundary.setLinearRing(linearRing);
+
+							if (groundSurface.getElementType(i) == ElementType.EXTERIOR_LINEAR_RING) {
+								polygon = kmlFactory.createPolygonType();
+								polygon.setTessellate(true);
+								polygon.setExtrude(false);
+								polygon.setAltitudeModeGroup(
+										kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
+								polygon.setOuterBoundaryIs(boundary);
+								multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
+							} else if (polygon != null){
+								polygon.getInnerBoundaryIs().add(boundary);}
+
+							// order points counter-clockwise
+							double[] ordinatesArray = groundSurface.getCoordinates(i);
+							for (int j = ordinatesArray.length - dim; j >= 0; j = j-dim)
+								linearRing.getCoordinates().add(String.valueOf(ordinatesArray[j] + "," + ordinatesArray[j+1] + ",0"));
+
+						}
+					}
+				}
+			}
+
+		} else {
+			// the getBuildingPartAggregateGeometries from building.java requires a postprocessing of the surfacegeometry here: they all will be union into 1 groundsurface
+			ArrayList<String> simpleGeom = new ArrayList<>();
+			for (ResultSet rs : sparqlResults) {
+				while (rs.next()) {
+					String row = rs.getString("geometry");  // "geometry"
+					simpleGeom.add(row);
+					String datatype = rs.getString("datatype");  // @note: not used so far
+				}
+			}
+			// Added by Shiying: The output of getSPARQLAggregateGeometriesForLOD2OrHigher in building.java should only contain 1 groundsurface.
+			// the filterResult will process the multisurface into groundsurface
+			Object buildingGeometryObj = StatementTransformer.filterResult(simpleGeom,0.001);
+
+			GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
+			//GeometryObject unconvertedGeom = GeoSpatialProcessor.create3dPolygon(buildingGeometryObj.toString(), datatype);
+
+			unconvertedGeom.setSrid(databaseSrid);
+			GeometryObject groundSurface = convertToWGS84(unconvertedGeom);
+
+			int dim = groundSurface.getDimension();
+
+			for (int i = 0; i < groundSurface.getNumElements(); i++) {
+				LinearRingType linearRing = kmlFactory.createLinearRingType();
+				BoundaryType boundary = kmlFactory.createBoundaryType();
+				boundary.setLinearRing(linearRing);
+
+				if (groundSurface.getElementType(i) == ElementType.EXTERIOR_LINEAR_RING) {
+					polygon = kmlFactory.createPolygonType();
+					polygon.setTessellate(true);
+					polygon.setExtrude(false);
+					polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
+					polygon.setOuterBoundaryIs(boundary);
+					multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
+				} else if (polygon != null){
+					polygon.getInnerBoundaryIs().add(boundary);}
+
+				// order points counter-clockwise
+				double[] ordinatesArray = groundSurface.getCoordinates(i);
+				for (int j = ordinatesArray.length - dim; j >= 0; j = j-dim)
+					linearRing.getCoordinates().add(String.valueOf(ordinatesArray[j] + "," + ordinatesArray[j+1] + ",0"));
+			}
+		}
+
+		if (polygon != null) { // if there is at least some content
+			placemarkList.add(placemark);
+		}
+		return placemarkList;
+	}
+	protected List<PlacemarkType> createPlacemarksForFootprint(ResultSet rs, KmlSplittingResult work) throws SQLException {
+		return createPlacemarksForFootprint(rs, work, null);
+	}
+
+	protected List<PlacemarkType> createPlacemarksForFootprint(ResultSet rs, KmlSplittingResult work, AffineTransformer transformer)
+			throws SQLException {
+		List<PlacemarkType> placemarkList = new ArrayList<PlacemarkType>();
+		PlacemarkType placemark = kmlFactory.createPlacemarkType();
+		placemark.setName(work.getGmlId());
+		placemark.setId(config.getProject().getKmlExporter().getIdPrefixes().getPlacemarkFootprint() + placemark.getName());
+
+		if (work.getDisplayForm().isHighlightingEnabled()) {
+			placemark.setStyleUrl("#" + getStyleBasisName() + DisplayForm.FOOTPRINT_STR + "Style");
+		}
+		else {
+			placemark.setStyleUrl("#" + getStyleBasisName() + DisplayForm.FOOTPRINT_STR + "Normal");
+		}
+
+		if (getBalloonSettings().isIncludeDescription()) {
+			addBalloonContents(placemark, (long)work.getId());
+		}
+		MultiGeometryType multiGeometry = kmlFactory.createMultiGeometryType();
+		placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
+
+		PolygonType polygon = null;
+
+		// get SRID from blazegraph
+		DatabaseSrs srs = databaseAdapter.getConnectionMetaData().getReferenceSystem();
+		int databaseSrid = srs.getSrid();
+
 		while (rs.next()) {
-			Object buildingGeometryObj = rs.getObject(1); 
+			Object buildingGeometryObj = rs.getObject(1);
+			String datatype = null;
+
+			if (isBlazegraph){
+				datatype = rs.getString("datatype");  // Added by Shiying
+			}
 
 			if (!rs.wasNull() && buildingGeometryObj != null) {
 				eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
 
-				GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
+				GeometryObject unconvertedGeom = null;
+				// Added by Shiying: convert the # string to geometry, it has to be 3D?
+				if (isBlazegraph){
+					//buildingGeometryObj = StatementTransformer.Str2Geometry(buildingGeometryObj.toString(), datatype);
+					unconvertedGeom = GeoSpatialProcessor.create3dPolygon(buildingGeometryObj.toString(), datatype, databaseSrid);
+				} else {
+					unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
+				}
+
 				if (unconvertedGeom == null || (unconvertedGeom.getGeometryType() != GeometryType.POLYGON && unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON))
 					continue;
 
@@ -1415,8 +1579,8 @@ public abstract class KmlGenericObject<T> {
 						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
 						polygon.setOuterBoundaryIs(boundary);
 						multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
-					} else if (polygon != null)
-						polygon.getInnerBoundaryIs().add(boundary);
+					} else if (polygon != null){
+						polygon.getInnerBoundaryIs().add(boundary);}
 
 					// order points counter-clockwise
 					double[] ordinatesArray = groundSurface.getCoordinates(i);
@@ -1435,9 +1599,12 @@ public abstract class KmlGenericObject<T> {
 		return createPlacemarksForExtruded(rs, work, measuredHeight, reversePointOrder, null);
 	}
 
-	// Designed for the geospatial extension for Blazegraph
-	// Added by Shiying
-	protected List<PlacemarkType> createPlacemarksForExtruded_geospatial(ResultSet rs, KmlSplittingResult work, double measuredHeight, boolean reversePointOrder, boolean existGS, AffineTransformer transformer) throws SQLException {
+	/** Designed for the geospatial extension for Blazegraph
+	 * Added by Shiying
+	 * There is no ResultSet to process.
+	 * @param existGS : @todo
+	 */
+	protected List<PlacemarkType> createPlacemarksForExtruded_geospatial(ArrayList<ResultSet> sparqlResults, KmlSplittingResult work, double measuredHeight, boolean reversePointOrder, boolean existGS, AffineTransformer transformer) throws SQLException {
 		List<PlacemarkType> placemarkList = new ArrayList<PlacemarkType>();
 		PlacemarkType placemark = kmlFactory.createPlacemarkType();
 		placemark.setName(work.getGmlId());
@@ -1455,23 +1622,174 @@ public abstract class KmlGenericObject<T> {
 
 		PolygonType polygon = null;
 
-		List<String> extractResult = new ArrayList<>();
-		List<Object> extractResult1 = new ArrayList<>();
+		// get SRID from blazegraph
+		DatabaseSrs srs = databaseAdapter.getConnectionMetaData().getReferenceSystem();
+		int databaseSrid = srs.getSrid();
 
-		if (existGS) {
+		if (existGS) { // Do not require the GeoSpatialProcessor, usually one entry
+			for (ResultSet rs : sparqlResults) {
+				while (rs.next()) {
+					Object buildingGeometryObj = rs.getObject("geomtype");
+					String datatype = rs.getString("datatype");
+
+					if (!rs.wasNull() && buildingGeometryObj != null) {
+						eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
+
+						// Convert the blazegraph geometry string (with #) to an actual Geometry
+						buildingGeometryObj = GeoSpatialProcessor.createGeometry(buildingGeometryObj.toString(), datatype);
+
+						// Convert a Geometry object to GeometryObject
+						GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
+						unconvertedGeom.setSrid(databaseSrid);
+
+						if (unconvertedGeom == null || (
+									unconvertedGeom.getGeometryType() != GeometryType.POLYGON
+											&& unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON))
+							continue;
+
+						// for implicit geometries, we need to apply the transformation matrix first
+						if (transformer != null)
+							unconvertedGeom = transformer.applyTransformation(unconvertedGeom);
+
+						GeometryObject groundSurface = convertToWGS84(unconvertedGeom); // apply transformation, coordinates have totally been changed
+						unconvertedGeom = null;
+
+						int dim = groundSurface.getDimension();
+
+						for (int i = 0; i < groundSurface.getNumElements(); i++) {
+							LinearRingType linearRing = kmlFactory.createLinearRingType();
+							BoundaryType boundary = kmlFactory.createBoundaryType();
+							boundary.setLinearRing(linearRing);
+
+							if (groundSurface.getElementType(i) == ElementType.EXTERIOR_LINEAR_RING) {
+								polygon = kmlFactory.createPolygonType();
+								polygon.setTessellate(true);
+								polygon.setExtrude(true);
+								polygon.setAltitudeModeGroup(
+											kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
+								polygon.setOuterBoundaryIs(boundary);
+								multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
+							} else
+								polygon.getInnerBoundaryIs().add(boundary);
+
+							double[] ordinatesArray = groundSurface.getCoordinates(i);
+							if (reversePointOrder) {
+								for (int j = 0; j < ordinatesArray.length; j = j + dim)
+									linearRing.getCoordinates().add(String.valueOf(
+												ordinatesArray[j] + "," + ordinatesArray[j + 1] + "," + measuredHeight));
+
+							} else if (polygon != null)
+								// order points counter-clockwise
+								for (int j = ordinatesArray.length - dim; j >= 0; j = j - dim)
+									linearRing.getCoordinates().add(String.valueOf(
+											ordinatesArray[j] + "," + ordinatesArray[j + 1] + "," + measuredHeight));
+						}
+					}
+				}
+			}
+		} else {// Require the GeoSpatialProcessor to post-process the data, return only 1 entry after ST_UNION
+				ArrayList<String> simpleGeom = new ArrayList<>();
+				for (ResultSet rs : sparqlResults) {
+					while (rs.next()) {
+						String row = rs.getString(1);  // "geometry"
+						Object buildingGeometryObj = rs.getObject("geometry");
+						String datatype = rs.getString("datatype");
+
+						simpleGeom.add(row);
+					}
+				}
+
+				// Added by Shiying: Filter the results, return Geometry object // only 1 entry after ST_UNION
+				Object buildingGeometryObj = StatementTransformer.filterResult(simpleGeom,
+						0.001);
+
+				if (!simpleGeom.isEmpty() && buildingGeometryObj != null) {
+					eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
+
+					GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(
+							buildingGeometryObj);
+					unconvertedGeom.setSrid(databaseSrid);
+					//if (unconvertedGeom == null || (unconvertedGeom.getGeometryType() != GeometryType.POLYGON && unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON)) {
+					//	continue;  // out of loop, no loop here so this condition is not needed
+					//}
+
+					// for implicit geometries, we need to apply the transformation matrix first
+					if (transformer != null)
+						unconvertedGeom = transformer.applyTransformation(unconvertedGeom);
+
+					GeometryObject groundSurface = convertToWGS84(
+							unconvertedGeom); // apply transformation, coordinates have totally been changed
+					unconvertedGeom = null;
+
+					int dim = groundSurface.getDimension();
+
+					for (int i = 0; i < groundSurface.getNumElements(); i++) {
+						LinearRingType linearRing = kmlFactory.createLinearRingType();
+						BoundaryType boundary = kmlFactory.createBoundaryType();
+						boundary.setLinearRing(linearRing);
+
+						if (groundSurface.getElementType(i) == ElementType.EXTERIOR_LINEAR_RING) {
+							polygon = kmlFactory.createPolygonType();
+							polygon.setTessellate(true);
+							polygon.setExtrude(true);
+							polygon.setAltitudeModeGroup(
+									kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
+							polygon.setOuterBoundaryIs(boundary);
+							multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
+						} else
+							polygon.getInnerBoundaryIs().add(boundary);
+
+						double[] ordinatesArray = groundSurface.getCoordinates(i);
+						if (reversePointOrder) {
+							for (int j = 0; j < ordinatesArray.length; j = j + dim)
+								linearRing.getCoordinates().add(String.valueOf(
+										ordinatesArray[j] + "," + ordinatesArray[j + 1] + "," + measuredHeight));
+
+						} else if (polygon != null)
+							// order points counter-clockwise
+							for (int j = ordinatesArray.length - dim; j >= 0; j = j - dim)
+								linearRing.getCoordinates().add(String.valueOf(
+										ordinatesArray[j] + "," + ordinatesArray[j + 1] + "," + measuredHeight));
+					}
+				}
+
+			}
+			if (polygon != null) { // if there is at least some content
+				placemarkList.add(placemark);
+			}
+			return placemarkList;
+		}
+
+		protected List<PlacemarkType> createPlacemarksForExtruded (ResultSet rs, KmlSplittingResult work,
+		double measuredHeight, boolean reversePointOrder, AffineTransformer transformer) throws
+		SQLException {
+			List<PlacemarkType> placemarkList = new ArrayList<PlacemarkType>();
+			PlacemarkType placemark = kmlFactory.createPlacemarkType();
+			placemark.setName(work.getGmlId());
+			placemark.setId(config.getProject().getKmlExporter().getIdPrefixes().getPlacemarkExtruded()
+					+ placemark.getName());
+			if (work.getDisplayForm().isHighlightingEnabled()) {
+				placemark.setStyleUrl("#" + getStyleBasisName() + DisplayForm.EXTRUDED_STR + "Style");
+			} else {
+				placemark.setStyleUrl("#" + getStyleBasisName() + DisplayForm.EXTRUDED_STR + "Normal");
+			}
+			if (getBalloonSettings().isIncludeDescription()) {
+				addBalloonContents(placemark, (long) work.getId());
+			}
+			MultiGeometryType multiGeometry = kmlFactory.createMultiGeometryType();
+			placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
+
+			PolygonType polygon = null;
 			while (rs.next()) {
-				Object buildingGeometryObj = rs.getObject("geomtype");
-				String datatype = rs.getString("type");
+				Object buildingGeometryObj = rs.getObject(1);
 
-				//String obj = ((MaterializedSelectResults) rs).getNode(1).getLiteral();
 				if (!rs.wasNull() && buildingGeometryObj != null) {
 					eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
 
-					// Added by Shiying: convert the # string to geometry
-					buildingGeometryObj = StatementTransformer.Str2Geometry(buildingGeometryObj.toString(), datatype);
-
 					GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
-					if (unconvertedGeom == null || (unconvertedGeom.getGeometryType() != GeometryType.POLYGON && unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON))
+
+					if (unconvertedGeom == null || (unconvertedGeom.getGeometryType() != GeometryType.POLYGON
+							&& unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON))
 						continue;
 
 					// for implicit geometries, we need to apply the transformation matrix first
@@ -1492,7 +1810,8 @@ public abstract class KmlGenericObject<T> {
 							polygon = kmlFactory.createPolygonType();
 							polygon.setTessellate(true);
 							polygon.setExtrude(true);
-							polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
+							polygon.setAltitudeModeGroup(
+									kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
 							polygon.setOuterBoundaryIs(boundary);
 							multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
 						} else
@@ -1500,316 +1819,212 @@ public abstract class KmlGenericObject<T> {
 
 						double[] ordinatesArray = groundSurface.getCoordinates(i);
 						if (reversePointOrder) {
-							for (int j = 0; j < ordinatesArray.length; j = j+dim)
-								linearRing.getCoordinates().add(String.valueOf(ordinatesArray[j] + "," + ordinatesArray[j+1] + "," + measuredHeight));
+							for (int j = 0; j < ordinatesArray.length; j = j + dim)
+								linearRing.getCoordinates().add(String.valueOf(
+										ordinatesArray[j] + "," + ordinatesArray[j + 1] + "," + measuredHeight));
 
 						} else if (polygon != null)
 							// order points counter-clockwise
-							for (int j = ordinatesArray.length - dim; j >= 0; j = j-dim)
-								linearRing.getCoordinates().add(String.valueOf(ordinatesArray[j] + "," + ordinatesArray[j+1] + "," + measuredHeight));
+							for (int j = ordinatesArray.length - dim; j >= 0; j = j - dim)
+								linearRing.getCoordinates().add(String.valueOf(
+										ordinatesArray[j] + "," + ordinatesArray[j + 1] + "," + measuredHeight));
 					}
 				}
 			}
-
-		} else {
-			while (rs.next()) {
-				String row = rs.getString(1);  // "geometry"
-				extractResult.add(row);
-				//Object row1 = rs.getObject(1);
-				//extractResult1.add(row1);
+			if (polygon != null) { // if there is at least some content
+				placemarkList.add(placemark);
 			}
-			// Added by Shiying: Filter the results, return Geometry object
-			Object buildingGeometryObj = StatementTransformer.filterResult(extractResult, 0.001);
-
-			if (!rs.wasNull() && buildingGeometryObj != null) {
-				eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
-
-				GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
-				//if (unconvertedGeom == null || (unconvertedGeom.getGeometryType() != GeometryType.POLYGON && unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON))
-				//	continue;
-
-				// for implicit geometries, we need to apply the transformation matrix first
-				if (transformer != null)
-					unconvertedGeom = transformer.applyTransformation(unconvertedGeom);
-
-				GeometryObject groundSurface = convertToWGS84(unconvertedGeom); // apply transformation, coordinates have totally been changed
-				unconvertedGeom = null;
-
-				int dim = groundSurface.getDimension();
-
-				for (int i = 0; i < groundSurface.getNumElements(); i++) {
-					LinearRingType linearRing = kmlFactory.createLinearRingType();
-					BoundaryType boundary = kmlFactory.createBoundaryType();
-					boundary.setLinearRing(linearRing);
-
-					if (groundSurface.getElementType(i) == ElementType.EXTERIOR_LINEAR_RING) {
-						polygon = kmlFactory.createPolygonType();
-						polygon.setTessellate(true);
-						polygon.setExtrude(true);
-						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
-						polygon.setOuterBoundaryIs(boundary);
-						multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
-					} else
-						polygon.getInnerBoundaryIs().add(boundary);
-
-					double[] ordinatesArray = groundSurface.getCoordinates(i);
-					if (reversePointOrder) {
-						for (int j = 0; j < ordinatesArray.length; j = j + dim)
-							linearRing.getCoordinates().add(String.valueOf(ordinatesArray[j] + "," + ordinatesArray[j + 1] + "," + measuredHeight));
-
-					} else if (polygon != null)
-						// order points counter-clockwise
-						for (int j = ordinatesArray.length - dim; j >= 0; j = j - dim)
-							linearRing.getCoordinates().add(String.valueOf(ordinatesArray[j] + "," + ordinatesArray[j + 1] + "," + measuredHeight));
-				}
-			}
-
+			return placemarkList;
 		}
-		if (polygon != null) { // if there is at least some content
-		placemarkList.add(placemark);
-	}
-		return placemarkList;
-	}
 
-
-	protected List<PlacemarkType> createPlacemarksForExtruded(ResultSet rs, KmlSplittingResult work, double measuredHeight, boolean reversePointOrder, AffineTransformer transformer) throws SQLException {
-		List<PlacemarkType> placemarkList = new ArrayList<PlacemarkType>();
-		PlacemarkType placemark = kmlFactory.createPlacemarkType();
-		placemark.setName(work.getGmlId());
-		placemark.setId(config.getProject().getKmlExporter().getIdPrefixes().getPlacemarkExtruded() + placemark.getName());
-		if (work.getDisplayForm().isHighlightingEnabled()) {
-			placemark.setStyleUrl("#" + getStyleBasisName() + DisplayForm.EXTRUDED_STR + "Style");
+		protected List<PlacemarkType> createPlacemarksForGeometry (ResultSet rs, KmlSplittingResult work,
+		boolean supportsNestedImplicitGeometries) throws SQLException {
+			return createPlacemarksForGeometry(rs, work, null, supportsNestedImplicitGeometries);
 		}
-		else {
-			placemark.setStyleUrl("#" + getStyleBasisName() + DisplayForm.EXTRUDED_STR + "Normal");
-		}
-		if (getBalloonSettings().isIncludeDescription()) {
-			addBalloonContents(placemark, (long)work.getId());
-		}
-		MultiGeometryType multiGeometry = kmlFactory.createMultiGeometryType();
-		placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
 
-		PolygonType polygon = null;
-		while (rs.next()) {
-			Object buildingGeometryObj = rs.getObject(1);
+		protected List<PlacemarkType> createPlacemarksForGeometry (ResultSet _rs, KmlSplittingResult
+		work, AffineTransformer globalTransformer,boolean supportsNestedImplicitGeometries) throws
+		SQLException {
+			HashSet<String> exportedGmlIds = new HashSet<String>();
+			HashMap<String, MultiGeometryType> multiGeometries = new HashMap<String, MultiGeometryType>();
+			MultiGeometryType multiGeometry = null;
+			PolygonType polygon = null;
 
-			if (!rs.wasNull() && buildingGeometryObj != null) {
-				eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
+			_rs.beforeFirst(); // return cursor to beginning
 
-				GeometryObject unconvertedGeom = geometryConverterAdapter.getGeometry(buildingGeometryObj);
-				if (unconvertedGeom == null || (unconvertedGeom.getGeometryType() != GeometryType.POLYGON && unconvertedGeom.getGeometryType() != GeometryType.MULTI_POLYGON))
-					continue;
+			while (_rs.next()) {
+				AffineTransformer transformer = globalTransformer;
+				long rootId = _rs.getLong(1);
 
-				// for implicit geometries, we need to apply the transformation matrix first
-				if (transformer != null)
-					unconvertedGeom = transformer.applyTransformation(unconvertedGeom);
-
-				GeometryObject groundSurface = convertToWGS84(unconvertedGeom); // apply transformation, coordinates have totally been changed
-				unconvertedGeom = null;
-
-				int dim = groundSurface.getDimension();
-
-				for (int i = 0; i < groundSurface.getNumElements(); i++) {
-					LinearRingType linearRing = kmlFactory.createLinearRingType();
-					BoundaryType boundary = kmlFactory.createBoundaryType();
-					boundary.setLinearRing(linearRing);
-
-					if (groundSurface.getElementType(i) == ElementType.EXTERIOR_LINEAR_RING) {
-						polygon = kmlFactory.createPolygonType();
-						polygon.setTessellate(true);
-						polygon.setExtrude(true);
-						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
-						polygon.setOuterBoundaryIs(boundary);
-						multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
-					} else
-						polygon.getInnerBoundaryIs().add(boundary);
-
-					double[] ordinatesArray = groundSurface.getCoordinates(i);
-					if (reversePointOrder) {
-						for (int j = 0; j < ordinatesArray.length; j = j+dim)
-							linearRing.getCoordinates().add(String.valueOf(ordinatesArray[j] + "," + ordinatesArray[j+1] + "," + measuredHeight));
-
-					} else if (polygon != null)
-						// order points counter-clockwise
-						for (int j = ordinatesArray.length - dim; j >= 0; j = j-dim)
-							linearRing.getCoordinates().add(String.valueOf(ordinatesArray[j] + "," + ordinatesArray[j+1] + "," + measuredHeight));
-				}
-			}
-		}
-		if (polygon != null) { // if there is at least some content
-			placemarkList.add(placemark);
-		}
-		return placemarkList;
-	}
-
-	protected List<PlacemarkType> createPlacemarksForGeometry(ResultSet rs, KmlSplittingResult work, boolean supportsNestedImplicitGeometries) throws SQLException {
-		return createPlacemarksForGeometry(rs, work, null, supportsNestedImplicitGeometries);
-	}
-
-	protected List<PlacemarkType> createPlacemarksForGeometry(ResultSet _rs, KmlSplittingResult work, AffineTransformer globalTransformer, boolean supportsNestedImplicitGeometries) throws SQLException {
-		HashSet<String> exportedGmlIds = new HashSet<String>();
-		HashMap<String, MultiGeometryType> multiGeometries = new HashMap<String, MultiGeometryType>();
-		MultiGeometryType multiGeometry = null;
-		PolygonType polygon = null;
-
-		_rs.beforeFirst(); // return cursor to beginning
-
-		while (_rs.next()) {
-			AffineTransformer transformer = globalTransformer;
-			long rootId = _rs.getLong(1);
-
-			if (rootId == 0) {
-				// get nested implicit geometry
-				if (supportsNestedImplicitGeometries) {
-					rootId = _rs.getLong(3);
-					transformer = getAffineTransformer(_rs, 4, 5);
-				}
-
-				if (rootId == 0 || transformer == null)
-					continue;
-			}
-
-			// skip closure surfaces
-			int surfaceTypeID = _rs.getInt("objectclass_id");
-			if (surfaceTypeID != 0
-					&& (Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BUILDING_CLOSURE_SURFACE 
-					|| Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BRIDGE_CLOSURE_SURFACE 
-					|| Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.TUNNEL_CLOSURE_SURFACE))				
-				continue;
-
-			PreparedStatement geometryQuery = null;
-			ResultSet rs = null;			
-
-			try {
-				String query = queries.getSurfaceGeometries(false, transformer != null);
-				geometryQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-				for (int i = 1; i <= getParameterCount(query); i++)
-					geometryQuery.setLong(i, rootId);
-
-				rs = geometryQuery.executeQuery();				
-
-				double zOffset = getZOffsetFromConfigOrDB((long)work.getId());
-				List<Point3d> lowestPointCandidates = getLowestPointsCoordinates(rs, (zOffset == Double.MAX_VALUE));
-				if (zOffset == Double.MAX_VALUE)
-					zOffset = getZOffsetFromGEService((long)work.getId(), lowestPointCandidates);
-
-				double lowestZCoordinate = convertPointCoordinatesToWGS84(new double[] {
-						lowestPointCandidates.get(0).x,
-						lowestPointCandidates.get(0).y,	
-						lowestPointCandidates.get(0).z}) [2];
-
-				rs.beforeFirst(); // return cursor to beginning
-
-				while (rs.next()) {
-					// skip duplicate geometries
-					String gmlId = rs.getString("gmlid");
-					boolean isXlink = rs.getBoolean("is_xlink");
-					if (isXlink && gmlId != null && !exportedGmlIds.add(gmlId))
-						continue;
-
-					// skip entries without geometry
-					Object buildingGeometryObj = rs.getObject(1);
-					if (buildingGeometryObj == null)
-						continue;
-
-					GeometryObject unconvertedSurface = geometryConverterAdapter.getPolygon(buildingGeometryObj);
-					if (unconvertedSurface == null || unconvertedSurface.getNumElements() == 0)
-						continue;
-
-					// for implicit geometries, we need to apply the transformation matrix first
-					if (transformer != null)
-						unconvertedSurface = transformer.applyTransformation(unconvertedSurface);
-
-					GeometryObject surface = convertToWGS84(unconvertedSurface);
-					unconvertedSurface = null;
-
-					eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
-
-					polygon = kmlFactory.createPolygonType();
-					switch (config.getProject().getKmlExporter().getAltitudeMode()) {
-					case ABSOLUTE:
-						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.ABSOLUTE));
-						break;
-					case RELATIVE:
-						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
-						break;
-					case CLAMP_TO_GROUND:
-						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
-						break;
+				if (rootId == 0) {
+					// get nested implicit geometry
+					if (supportsNestedImplicitGeometries) {
+						rootId = _rs.getLong(3);
+						transformer = getAffineTransformer(_rs, 4, 5);
 					}
 
-					// in case that the Building, Bridge or Tunnel don't have thematic Surface, but normal LODxSurface, the "surfaceType" variable will be null.
-					// in this case, the thematic surface e.g. WallSurface, RoofSurface can be determined by using a walk-around-way e.g. calculate the Normal-vector
-					String surfaceType = null;
-					if (surfaceTypeID != 0)
-						surfaceType = TypeAttributeValueEnum.fromCityGMLClass(Util.getCityGMLClass(surfaceTypeID)).toString();	
+					if (rootId == 0 || transformer == null)
+						continue;
+				}
 
-					// just in case surfaceType == null
-					boolean probablyRoof = true;
-					double nx = 0;
-					double ny = 0;
-					double nz = 0;
+				// skip closure surfaces
+				int surfaceTypeID = _rs.getInt("objectclass_id");
+				if (surfaceTypeID != 0
+						&& (Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BUILDING_CLOSURE_SURFACE
+						|| Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BRIDGE_CLOSURE_SURFACE
+						|| Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.TUNNEL_CLOSURE_SURFACE))
+					continue;
 
-					for (int i = 0; i < surface.getNumElements(); i++) {
-						LinearRingType linearRing = kmlFactory.createLinearRingType();
-						BoundaryType boundary = kmlFactory.createBoundaryType();
-						boundary.setLinearRing(linearRing);
+				PreparedStatement geometryQuery = null;
+				ResultSet rs = null;
 
-						if (i == 0)
-							polygon.setOuterBoundaryIs(boundary);
-						else
-							polygon.getInnerBoundaryIs().add(boundary);
+				try {
+					String query = queries.getSurfaceGeometries(false, transformer != null);
+					geometryQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE,
+							ResultSet.CONCUR_READ_ONLY);
+					for (int i = 1; i <= getParameterCount(query); i++)
+						geometryQuery.setLong(i, rootId);
 
-						// order points clockwise
-						double[] ordinatesArray = surface.getCoordinates(i);
-						for (int j = 0; j < ordinatesArray.length; j = j+3) {
-							linearRing.getCoordinates().add(String.valueOf(reducePrecisionForXorY(ordinatesArray[j]) + "," 
-									+ reducePrecisionForXorY(ordinatesArray[j+1]) + ","
-									+ reducePrecisionForZ(ordinatesArray[j+2] + zOffset)));
+					rs = geometryQuery.executeQuery();
 
-							// not touching the ground
-							probablyRoof = probablyRoof && (reducePrecisionForZ(ordinatesArray[j+2] - lowestZCoordinate) > 0);
+					double zOffset = getZOffsetFromConfigOrDB((long) work.getId());
+					List<Point3d> lowestPointCandidates = getLowestPointsCoordinates(rs,
+							(zOffset == Double.MAX_VALUE));
+					if (zOffset == Double.MAX_VALUE)
+						zOffset = getZOffsetFromGEService((long) work.getId(), lowestPointCandidates);
 
-							if (currentLod == 1) {
-								// calculate normal
-								int current = j;
-								int next = j+3;
-								if (next >= ordinatesArray.length) next = 0;
-								nx = nx + ((ordinatesArray[current+1] - ordinatesArray[next+1]) * (ordinatesArray[current+2] + ordinatesArray[next+2])); 
-								ny = ny + ((ordinatesArray[current+2] - ordinatesArray[next+2]) * (ordinatesArray[current] + ordinatesArray[next])); 
-								nz = nz + ((ordinatesArray[current] - ordinatesArray[next]) * (ordinatesArray[current+1] + ordinatesArray[next+1]));
+					double lowestZCoordinate = convertPointCoordinatesToWGS84(new double[]{
+							lowestPointCandidates.get(0).x,
+							lowestPointCandidates.get(0).y,
+							lowestPointCandidates.get(0).z})[2];
+
+					rs.beforeFirst(); // return cursor to beginning
+
+					while (rs.next()) {
+						// skip duplicate geometries
+						String gmlId = rs.getString("gmlid");
+						boolean isXlink = rs.getBoolean("is_xlink");
+						if (isXlink && gmlId != null && !exportedGmlIds.add(gmlId))
+							continue;
+
+						// skip entries without geometry
+						Object buildingGeometryObj = rs.getObject(1);
+						if (buildingGeometryObj == null)
+							continue;
+
+						GeometryObject unconvertedSurface = geometryConverterAdapter.getPolygon(
+								buildingGeometryObj);
+						if (unconvertedSurface == null || unconvertedSurface.getNumElements() == 0)
+							continue;
+
+						// for implicit geometries, we need to apply the transformation matrix first
+						if (transformer != null)
+							unconvertedSurface = transformer.applyTransformation(unconvertedSurface);
+
+						GeometryObject surface = convertToWGS84(unconvertedSurface);
+						unconvertedSurface = null;
+
+						eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
+
+						polygon = kmlFactory.createPolygonType();
+						switch (config.getProject().getKmlExporter().getAltitudeMode()) {
+							case ABSOLUTE:
+								polygon.setAltitudeModeGroup(
+										kmlFactory.createAltitudeMode(AltitudeModeEnumType.ABSOLUTE));
+								break;
+							case RELATIVE:
+								polygon.setAltitudeModeGroup(
+										kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
+								break;
+							case CLAMP_TO_GROUND:
+								polygon.setAltitudeModeGroup(
+										kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
+								break;
+						}
+
+						// in case that the Building, Bridge or Tunnel don't have thematic Surface, but normal LODxSurface, the "surfaceType" variable will be null.
+						// in this case, the thematic surface e.g. WallSurface, RoofSurface can be determined by using a walk-around-way e.g. calculate the Normal-vector
+						String surfaceType = null;
+						if (surfaceTypeID != 0)
+							surfaceType = TypeAttributeValueEnum.fromCityGMLClass(
+									Util.getCityGMLClass(surfaceTypeID)).toString();
+
+						// just in case surfaceType == null
+						boolean probablyRoof = true;
+						double nx = 0;
+						double ny = 0;
+						double nz = 0;
+
+						for (int i = 0; i < surface.getNumElements(); i++) {
+							LinearRingType linearRing = kmlFactory.createLinearRingType();
+							BoundaryType boundary = kmlFactory.createBoundaryType();
+							boundary.setLinearRing(linearRing);
+
+							if (i == 0)
+								polygon.setOuterBoundaryIs(boundary);
+							else
+								polygon.getInnerBoundaryIs().add(boundary);
+
+							// order points clockwise
+							double[] ordinatesArray = surface.getCoordinates(i);
+							for (int j = 0; j < ordinatesArray.length; j = j + 3) {
+								linearRing.getCoordinates()
+										.add(String.valueOf(reducePrecisionForXorY(ordinatesArray[j]) + ","
+												+ reducePrecisionForXorY(ordinatesArray[j + 1]) + ","
+												+ reducePrecisionForZ(ordinatesArray[j + 2] + zOffset)));
+
+								// not touching the ground
+								probablyRoof =
+										probablyRoof && (reducePrecisionForZ(ordinatesArray[j + 2] - lowestZCoordinate)
+												> 0);
+
+								if (currentLod == 1) {
+									// calculate normal
+									int current = j;
+									int next = j + 3;
+									if (next >= ordinatesArray.length)
+										next = 0;
+									nx = nx + ((ordinatesArray[current + 1] - ordinatesArray[next + 1]) * (
+											ordinatesArray[current + 2] + ordinatesArray[next + 2]));
+									ny = ny + ((ordinatesArray[current + 2] - ordinatesArray[next + 2]) * (
+											ordinatesArray[current] + ordinatesArray[next]));
+									nz = nz + ((ordinatesArray[current] - ordinatesArray[next]) * (
+											ordinatesArray[current + 1] + ordinatesArray[next + 1]));
+								}
 							}
 						}
-					}
 
-					if (currentLod == 1) { // calculate normal
-						double value = Math.sqrt(nx * nx + ny * ny + nz * nz);
-						if (value == 0) { // not a surface, but a line
-							continue;
+						if (currentLod == 1) { // calculate normal
+							double value = Math.sqrt(nx * nx + ny * ny + nz * nz);
+							if (value == 0) { // not a surface, but a line
+								continue;
+							}
+							nx = nx / value;
+							ny = ny / value;
+							nz = nz / value;
 						}
-						nx = nx / value;
-						ny = ny / value;
-						nz = nz / value;
-					}
 
-					if (surfaceType == null) {
-						if (work.getCityGMLClass() == CityGMLClass.BUILDING){
-							surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BUILDING_WALL_SURFACE).toString();
-							switch (currentLod) {
-							case 1:
-								if (probablyRoof && (nz > 0.999)) {
-									surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BUILDING_ROOF_SURFACE).toString();
+						if (surfaceType == null) {
+							if (work.getCityGMLClass() == CityGMLClass.BUILDING) {
+								surfaceType = TypeAttributeValueEnum.fromCityGMLClass(
+										CityGMLClass.BUILDING_WALL_SURFACE).toString();
+								switch (currentLod) {
+									case 1:
+										if (probablyRoof && (nz > 0.999)) {
+											surfaceType = TypeAttributeValueEnum.fromCityGMLClass(
+													CityGMLClass.BUILDING_ROOF_SURFACE).toString();
+										}
+										break;
+									case 2:
+										if (probablyRoof) {
+											surfaceType = TypeAttributeValueEnum.fromCityGMLClass(
+													CityGMLClass.BUILDING_ROOF_SURFACE).toString();
+										}
+										break;
 								}
-								break;
-							case 2:
-								if (probablyRoof) {
-									surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BUILDING_ROOF_SURFACE).toString();
-								}
-								break;
-							}					
-						}
-						else if (work.getCityGMLClass() == CityGMLClass.BRIDGE){
-							surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BRIDGE_WALL_SURFACE).toString();
+							} else if (work.getCityGMLClass() == CityGMLClass.BRIDGE) {
+								surfaceType = TypeAttributeValueEnum.fromCityGMLClass(
+										CityGMLClass.BRIDGE_WALL_SURFACE).toString();
 							/*							switch (currentLod) {
 							case 1:
 								if (probablyRoof && (nz > 0.999)) {
@@ -1821,10 +2036,10 @@ public abstract class KmlGenericObject<T> {
 									surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BRIDGE_ROOF_SURFACE).toString();
 								}
 								break;
-							}*/						
-						}
-						else if (work.getCityGMLClass() == CityGMLClass.TUNNEL){
-							surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.TUNNEL_WALL_SURFACE).toString();
+							}*/
+							} else if (work.getCityGMLClass() == CityGMLClass.TUNNEL) {
+								surfaceType = TypeAttributeValueEnum.fromCityGMLClass(
+										CityGMLClass.TUNNEL_WALL_SURFACE).toString();
 							/*							switch (currentLod) {
 							case 1:
 								if (probablyRoof && (nz > 0.999)) {
@@ -1836,26 +2051,32 @@ public abstract class KmlGenericObject<T> {
 									surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.TUNNEL_ROOF_SURFACE).toString();
 								}
 								break;
-							}	*/					
+							}	*/
+							}
 						}
-					}
 
-					multiGeometry = multiGeometries.get(surfaceType);
-					if (multiGeometry == null) {
-						multiGeometry = kmlFactory.createMultiGeometryType();
-						multiGeometries.put(surfaceType, multiGeometry);
+						multiGeometry = multiGeometries.get(surfaceType);
+						if (multiGeometry == null) {
+							multiGeometry = kmlFactory.createMultiGeometryType();
+							multiGeometries.put(surfaceType, multiGeometry);
+						}
+						multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
 					}
-					multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
+				} catch (SQLException e) {
+					log.error("SQL error while querying surface geometries: " + e.getMessage());
+				} finally {
+					if (rs != null)
+						try {
+							rs.close();
+						} catch (SQLException e) {
+						}
+					if (geometryQuery != null)
+						try {
+							geometryQuery.close();
+						} catch (SQLException e) {
+						}
 				}
-			} catch (SQLException e) {
-				log.error("SQL error while querying surface geometries: " + e.getMessage());
-			} finally {
-				if (rs != null)
-					try { rs.close(); } catch (SQLException e) {}
-				if (geometryQuery != null)
-					try { geometryQuery.close(); } catch (SQLException e) {}
 			}
-		}
 
 		List<PlacemarkType> placemarkList = new ArrayList<PlacemarkType>();
 		Set<String> keySet = multiGeometries.keySet();
@@ -1888,6 +2109,252 @@ public abstract class KmlGenericObject<T> {
 		return placemarkList;
 	}
 
+	protected List<PlacemarkType> createPlacemarksForGeometry_geospatial(ResultSet _rs, KmlSplittingResult work) throws SQLException {
+
+		HashSet<String> exportedGmlIds = new HashSet<String>();
+		HashMap<String, MultiGeometryType> multiGeometries = new HashMap<String, MultiGeometryType>();
+		MultiGeometryType multiGeometry = null;
+		PolygonType polygon = null;
+
+		GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
+
+		SpatialReference nativeSr = new SpatialReference("");
+		DatabaseSrs srs = databaseAdapter.getConnectionMetaData().getReferenceSystem();
+		nativeSr.SetFromUserInput(srs.getGMLSrsName());//need to get srid from blazegraph
+		SpatialReference tagetSr = new SpatialReference("");
+		tagetSr.SetFromUserInput("EPSG:4326"); // WGS84
+		CoordinateTransformation transform = CoordinateTransformation.CreateCoordinateTransformation(nativeSr, tagetSr);;
+
+		_rs.beforeFirst(); // return cursor to beginning
+
+		while (_rs.next()) {
+//			AffineTransformer transformer = globalTransformer;
+
+			int surfaceTypeID = _rs.getInt("surftype");
+			if (surfaceTypeID != 0
+					&& (Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BUILDING_CLOSURE_SURFACE
+					|| Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BRIDGE_CLOSURE_SURFACE
+					|| Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.TUNNEL_CLOSURE_SURFACE))
+				continue;
+
+				Object rsGeometry = _rs.getObject("geomtype");
+				String query = null;
+
+
+
+//				double zOffset = getZOffsetFromConfigOrDB((long)work.getId());
+				double zOffset = 0;
+				List<Point3d> lowestPointCandidates = getLowestPointsCoordinates_unconvert(rsGeometry, (zOffset == Double.MAX_VALUE));
+				if (zOffset == Double.MAX_VALUE)
+					zOffset = getZOffsetFromGEService((long)work.getId(), lowestPointCandidates);
+
+				double lowestZCoordinate = 0;
+				if(databaseAdapter.getDatabaseType() == DatabaseType.BLAZE){
+
+					if (lowestPointCandidates == null || lowestPointCandidates.size() == 0)
+						continue;
+
+					double[] lowestPoint = new double[]{lowestPointCandidates.get(0).x,lowestPointCandidates.get(0).y,
+							lowestPointCandidates.get(0).z};
+
+					transform.TransformPoint(lowestPoint);
+					lowestZCoordinate = lowestPoint [2];
+
+				}else{
+					lowestZCoordinate = convertPointCoordinatesToWGS84(new double[] {
+							lowestPointCandidates.get(0).x,
+							lowestPointCandidates.get(0).y,
+							lowestPointCandidates.get(0).z}) [2];
+				}
+
+				org.gdal.ogr.Geometry geom_poly = new org.gdal.ogr.Geometry(ogrConstants.wkbPolygon);
+				Coordinate[] coordinates = geospatial.str2coords(rsGeometry.toString()).toArray(new Coordinate[0]);
+
+				String datatype = _rs.getObject("datatype").toString();
+				String[] datatype_parts = datatype.split("-");
+				int coor_index = 0;
+				for (int s = 2; s < datatype_parts.length; s++) {
+					int pointCount = Integer.parseInt(datatype_parts[s]) / 3;
+					org.gdal.ogr.Geometry geomRing = new org.gdal.ogr.Geometry(ogr.wkbLinearRing);
+					for (int i = 0; i < pointCount; i++) {
+						double[] unconvertPoint = new double[]{coordinates[coor_index+i].getX(), coordinates[coor_index+i].getY(), coordinates[coor_index+i].getZ()};
+						transform.TransformPoint(unconvertPoint);
+						geomRing.AddPoint(unconvertPoint[0], unconvertPoint[1], unconvertPoint[2]);
+						if ( i == pointCount-1){
+							coor_index = coor_index + pointCount;
+						}
+					}
+					geom_poly.AddGeometry(geomRing);
+				}
+
+
+
+//				}
+					eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
+
+					polygon = kmlFactory.createPolygonType();
+					polygon.setTessellate(true);
+					polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.ABSOLUTE));
+
+
+					// in case that the Building, Bridge or Tunnel don't have thematic Surface, but normal LODxSurface, the "surfaceType" variable will be null.
+					// in this case, the thematic surface e.g. WallSurface, RoofSurface can be determined by using a walk-around-way e.g. calculate the Normal-vector
+					String surfaceType = null;
+					if (surfaceTypeID != 0)
+						surfaceType = TypeAttributeValueEnum.fromCityGMLClass(Util.getCityGMLClass(surfaceTypeID)).toString();
+
+					// just in case surfaceType == null
+					boolean probablyRoof = true;
+					double nx = 0;
+					double ny = 0;
+					double nz = 0;
+
+
+					for (int i = 0; i < geom_poly.GetGeometryCount(); i++) {
+						org.gdal.ogr.Geometry getRing = geom_poly.GetGeometryRef(i);
+						LinearRingType linearRing = kmlFactory.createLinearRingType();
+						BoundaryType boundary = kmlFactory.createBoundaryType();
+						boundary.setLinearRing(linearRing);
+
+						if (i == 0)
+							polygon.setOuterBoundaryIs(boundary);
+						else
+							polygon.getInnerBoundaryIs().add(boundary);
+
+						for(int j = 0; j< getRing.GetPointCount(); j++) {
+							// order points clockwise
+//							double[] ordinatesArray = getRing.GetPoint(j);
+							linearRing.getCoordinates().add(String.valueOf(reducePrecisionForXorY(getRing.GetY(j)) + ","
+									+ reducePrecisionForXorY(getRing.GetX(j)) + ","
+									+ reducePrecisionForZ(getRing.GetZ(j) + zOffset)));
+
+								// not touching the ground
+								probablyRoof = probablyRoof && (reducePrecisionForZ(getRing.GetZ(j) - lowestZCoordinate) > 0);
+
+//								if (currentLod == 1) {
+									// calculate normal
+//									int current = 0;
+//									int next = 3;
+//									if (next >= ordinatesArray.length) next = 0;
+//									nx = nx + ((ordinatesArray[current+1] - ordinatesArray[next+1]) * (ordinatesArray[current+2] + ordinatesArray[next+2]));
+//									ny = ny + ((ordinatesArray[current+2] - ordinatesArray[next+2]) * (ordinatesArray[current] + ordinatesArray[next]));
+//									nz = nz + ((ordinatesArray[current] - ordinatesArray[next]) * (ordinatesArray[current+1] + ordinatesArray[next+1]));
+//								}
+
+						}
+
+					}
+
+//					if (currentLod == 1) { // calculate normal
+//						double value = Math.sqrt(nx * nx + ny * ny + nz * nz);
+//						if (value == 0) { // not a surface, but a line
+//							continue;
+//						}
+//						nx = nx / value;
+//						ny = ny / value;
+//						nz = nz / value;
+//					}
+
+					if (surfaceType == null) {
+						if (work.getCityGMLClass() == CityGMLClass.BUILDING){
+							surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BUILDING_WALL_SURFACE).toString();
+							switch (currentLod) {
+								case 1:
+									if (probablyRoof && (nz > 0.999)) {
+										surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BUILDING_ROOF_SURFACE).toString();
+									}
+									break;
+								case 2:
+									if (probablyRoof) {
+										surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BUILDING_ROOF_SURFACE).toString();
+									}
+									break;
+							}
+						}
+						else if (work.getCityGMLClass() == CityGMLClass.BRIDGE){
+							surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BRIDGE_WALL_SURFACE).toString();
+							/*							switch (currentLod) {
+							case 1:
+								if (probablyRoof && (nz > 0.999)) {
+									surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BRIDGE_ROOF_SURFACE).toString();
+								}
+								break;
+							case 2:
+								if (probablyRoof) {
+									surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.BRIDGE_ROOF_SURFACE).toString();
+								}
+								break;
+							}*/
+						}
+						else if (work.getCityGMLClass() == CityGMLClass.TUNNEL){
+							surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.TUNNEL_WALL_SURFACE).toString();
+							/*							switch (currentLod) {
+							case 1:
+								if (probablyRoof && (nz > 0.999)) {
+									surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.TUNNEL_ROOF_SURFACE).toString();
+								}
+								break;
+							case 2:
+								if (probablyRoof) {
+									surfaceType = TypeAttributeValueEnum.fromCityGMLClass(CityGMLClass.TUNNEL_ROOF_SURFACE).toString();
+								}
+								break;
+							}	*/
+						}
+					}
+
+//				switch (surfaceType) {
+//					case "WallSurface":
+//						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
+//						break;
+//					case 'RoofSurface':
+//						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
+//						break;
+//					case 'GroundSurface':
+//						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
+//						break;
+//				}
+					multiGeometry = multiGeometries.get(surfaceType);
+					if (multiGeometry == null) {
+						multiGeometry = kmlFactory.createMultiGeometryType();
+						multiGeometries.put(surfaceType, multiGeometry);
+					}
+					multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
+			}
+
+
+		List<PlacemarkType> placemarkList = new ArrayList<PlacemarkType>();
+		Set<String> keySet = multiGeometries.keySet();
+		Iterator<String> iterator = keySet.iterator();
+		while (iterator.hasNext()) {
+			String surfaceType = iterator.next();
+			PlacemarkType placemark = kmlFactory.createPlacemarkType();
+			if (work.getCityGMLClass() == CityGMLClass.BUILDING
+					|| work.getCityGMLClass() == CityGMLClass.BRIDGE
+					|| work.getCityGMLClass() == CityGMLClass.TUNNEL){
+				placemark.setName(work.getGmlId() + "_" + surfaceType);
+				placemark.setId(config.getProject().getKmlExporter().getIdPrefixes().getPlacemarkGeometry() + placemark.getName());
+				placemark.setStyleUrl("#" + surfaceType + "Normal");
+			}
+			else{
+				placemark.setName(work.getGmlId());
+				placemark.setId(config.getProject().getKmlExporter().getIdPrefixes().getPlacemarkGeometry() + placemark.getName());
+				placemark.setStyleUrl("#" + getStyleBasisName() + DisplayForm.GEOMETRY_STR + "Normal");
+			}
+
+			if (getBalloonSettings().isIncludeDescription() &&
+					!work.getDisplayForm().isHighlightingEnabled()) { // avoid double description
+				addBalloonContents(placemark, (long)work.getId());
+			}
+			multiGeometry = multiGeometries.get(surfaceType);
+			placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
+			placemarkList.add(placemark);
+		}
+
+		return placemarkList;
+	}
+
+
 	protected X3DMaterial getX3dMaterialFromIntColor(int rgbColor) {
 		java.awt.Color color = new java.awt.Color(rgbColor, true);
 		double floatRed = color.getRed() / 255.0;
@@ -1916,742 +2383,863 @@ public abstract class KmlGenericObject<T> {
 		int texImageCounter = 0;
 
 		DisplayForm colladaDisplayForm = null;
-		for (DisplayForm displayForm: getDisplayForms()) {
+		for (DisplayForm displayForm : getDisplayForms()) {
 			if (displayForm.getForm() == DisplayForm.COLLADA) {
 				colladaDisplayForm = displayForm;
 				break;
 			}
 		}
 
-		X3DMaterial x3dWallMaterial = getX3dMaterialFromIntColor(colladaDisplayForm.getRgba0());
-		X3DMaterial x3dRoofMaterial = null;
-		if (colladaDisplayForm.isSetRgba2())
-			x3dRoofMaterial = getX3dMaterialFromIntColor(colladaDisplayForm.getRgba2());
+			X3DMaterial x3dWallMaterial = getX3dMaterialFromIntColor(colladaDisplayForm.getRgba0());
+			X3DMaterial x3dRoofMaterial = null;
+			if (colladaDisplayForm.isSetRgba2())
+				x3dRoofMaterial = getX3dMaterialFromIntColor(colladaDisplayForm.getRgba2());
 
-		HashMap<Long, Long> implicitIdMap = new HashMap<Long, Long>();
+			HashMap<Long, Long> implicitIdMap = new HashMap<Long, Long>();
 
-		while (_rs.next()) {
-			AffineTransformer transformer = globalTransformer;
-			long rootId = _rs.getLong(1);
+			while (_rs.next()) {
+				AffineTransformer transformer = globalTransformer;
+				long rootId = _rs.getLong(1);
 
-			if (rootId == 0) {
-				// get nested implicit geometry
-				if (supportsNestedImplicitGeometries) {
-					rootId = _rs.getLong(3);
-					transformer = getAffineTransformer(_rs, 4, 5);
-				}
-
-				if (rootId == 0 || transformer == null)
-					continue;
-			}
-
-			boolean isImplicit = transformer != null;
-
-			// skip closure surfaces
-			int surfaceTypeID = _rs.getInt("objectclass_id");
-			if (surfaceTypeID != 0
-					&& (Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BUILDING_CLOSURE_SURFACE 
-					|| Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BRIDGE_CLOSURE_SURFACE 
-					|| Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.TUNNEL_CLOSURE_SURFACE))
-				continue;
-
-			PreparedStatement geometryQuery = null;
-			ResultSet rs = null;
-
-			try {
-				long surfaceId = 0;
-				long previousSurfaceId = -1;
-				SurfaceInfo surfaceInfo = null;
-
-				String query = queries.getSurfaceGeometries(exportAppearance, isImplicit);
-				geometryQuery = connection.prepareStatement(query);
-				for (int i = 1; i <= getParameterCount(query); i++)
-					geometryQuery.setLong(i, rootId);
-
-				rs = geometryQuery.executeQuery();			
-
-				while (rs.next()) {
-					surfaceId = rs.getLong("id");
-
-					if (isImplicit) {
-						// we generate unique ids for implicit geometries. 
-						// this is only required for grouping objects because
-						// otherwise surfaces with the same id would be overwritten
-						Long tmp = implicitIdMap.get(surfaceId);
-						if (tmp == null) {
-							tmp = kmlExporterManager.nextImplicitId();
-							implicitIdMap.put(surfaceId, tmp);
-						}
-
-						surfaceId = tmp;
+				if (rootId == 0) {
+					// get nested implicit geometry
+					if (supportsNestedImplicitGeometries) {
+						rootId = _rs.getLong(3);
+						transformer = getAffineTransformer(_rs, 4, 5);
 					}
 
-					if (previousSurfaceId != surfaceId) {				
+					if (rootId == 0 || transformer == null)
+						continue;
+				}
+
+				boolean isImplicit = transformer != null;
+
+				// skip closure surfaces
+				int surfaceTypeID = _rs.getInt("objectclass_id");
+				if (surfaceTypeID != 0
+						&& (Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BUILDING_CLOSURE_SURFACE
+						|| Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BRIDGE_CLOSURE_SURFACE
+						|| Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.TUNNEL_CLOSURE_SURFACE))
+					continue;
+
+				PreparedStatement geometryQuery = null;
+				ResultSet rs = null;
+
+				try {
+					long surfaceId = 0;
+					long previousSurfaceId = -1;
+					SurfaceInfo surfaceInfo = null;
+
+					String query = queries.getSurfaceGeometries(exportAppearance, isImplicit);
+					geometryQuery = connection.prepareStatement(query);
+					for (int i = 1; i <= getParameterCount(query); i++)
+						geometryQuery.setLong(i, rootId);
+
+					rs = geometryQuery.executeQuery();
+
+					while (rs.next()) {
+						surfaceId = rs.getLong("id");
+
+						if (isImplicit) {
+							// we generate unique ids for implicit geometries.
+							// this is only required for grouping objects because
+							// otherwise surfaces with the same id would be overwritten
+							Long tmp = implicitIdMap.get(surfaceId);
+							if (tmp == null) {
+								tmp = kmlExporterManager.nextImplicitId();
+								implicitIdMap.put(surfaceId, tmp);
+							}
+
+							surfaceId = tmp;
+						}
+
+						if (previousSurfaceId != surfaceId) {
+							// skip duplicate geometries
+							String gmlId = rs.getString("gmlid");
+							boolean isXlink = rs.getBoolean("is_xlink");
+							if (isXlink && gmlId != null && !exportedGmlIds.add(gmlId))
+								continue;
+
+							// build geometry
+							Object surfaceObj = rs.getObject(1);
+							surfaceInfo = null;
+
+							// add surface geometry to internal vertex tree structure
+							if (surfaceObj != null) {
+								GeometryObject surface = geometryConverterAdapter.getPolygon(surfaceObj);
+								if (isImplicit)
+									surface = transformer.applyTransformation(surface);
+
+								List<VertexInfo> vertexInfos = new ArrayList<VertexInfo>();
+								int ringCount = surface.getNumElements();
+								int[] vertexCount = new int[ringCount];
+
+								for (int i = 0; i < surface.getNumElements(); i++) {
+									double[] ordinatesArray = surface.getCoordinates(i);
+									int vertices = 0;
+
+									for (int j = 0; j < ordinatesArray.length - 3; j += 3) {
+										// calculate origin and list of lowest points
+										updateOrigins(ordinatesArray[j], ordinatesArray[j + 1], ordinatesArray[j + 2]);
+
+										// get or create node in vertex info tree
+										VertexInfo vertexInfo = setVertexInfoForXYZ(surfaceId,
+												ordinatesArray[j],
+												ordinatesArray[j + 1],
+												ordinatesArray[j + 2]);
+
+										vertexInfos.add(vertexInfo);
+										vertices++;
+									}
+
+									vertexCount[i] = vertices;
+								}
+
+								surfaceInfo = new SurfaceInfo(ringCount, vertexCount, vertexInfos);
+								addSurfaceInfo(surfaceId, surfaceInfo);
+								eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
+							}
+
+							previousSurfaceId = surfaceId;
+						}
+
+						// handle appearance
+						if (selectedTheme.equals(KmlExporter.THEME_NONE)) {
+							if (surfaceInfo != null && getX3dMaterial(surfaceId) == null) {
+								if (surfaceTypeID != 0) {
+									if (Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BUILDING_WALL_SURFACE ||
+											Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BRIDGE_WALL_SURFACE ||
+											Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.TUNNEL_WALL_SURFACE) {
+										addX3dMaterial(surfaceId, x3dWallMaterial);
+									} else if (
+											Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BUILDING_ROOF_SURFACE ||
+													Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BRIDGE_ROOF_SURFACE ||
+													Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.TUNNEL_ROOF_SURFACE) {
+										addX3dMaterial(surfaceId, x3dRoofMaterial);
+									} else {
+										addX3dMaterial(surfaceId, x3dWallMaterial);
+									}
+								} else {
+									addX3dMaterial(surfaceId, x3dWallMaterial);
+								}
+							}
+						} else {
+							// skip if we have already assigned a texture
+							if (texImageUris.get(surfaceId) != null)
+								continue;
+
+							String theme = rs.getString("theme");
+
+							long parentId = rs.getLong(3);
+							if (isImplicit) {
+								// since we generate unique ids for implicit geometries,
+								// we need to retrieve the parentId from the internal map
+								Long tmp = implicitIdMap.get(parentId);
+								if (tmp != null)
+									parentId = tmp;
+							}
+
+							if (selectedTheme.equalsIgnoreCase(theme)) {
+								long textureImageId = rs.getLong("tex_image_id");
+								String texImageUri = rs.getString("tex_image_uri");
+								Object texCoordsObject = rs.getObject("texture_coordinates");
+								boolean hasTexture = false;
+
+								// textures have priority
+								if (texImageUri != null && texImageUri.trim().length() != 0
+										&& texCoordsObject != null && surfaceInfo != null) {
+									GeometryObject texCoordsGeometry = geometryConverterAdapter.getPolygon(
+											texCoordsObject);
+									texImageUri = texImageUri.replaceAll(" ", "_"); //replace spaces with underscores
+									hasTexture = true;
+
+									// handle texture image
+									int fileSeparatorIndex = Math.max(texImageUri.lastIndexOf("\\"),
+											texImageUri.lastIndexOf("/"));
+									texImageUri = "_" + texImageUri.substring(
+											fileSeparatorIndex + 1); // for example: _tex4712047.jpeg
+
+									if ((getUnsupportedTexImageId(texImageUri) == -1) && (getTexImage(texImageUri)
+											== null)) {
+										byte[] imageBytes = textureExportAdapter.getInByteArray(textureImageId,
+												texImageUri);
+										if (imageBytes != null) {
+											imageReader.setSupportRGB(generateTextureAtlas);
+
+											try {
+												TextureImage texImage = imageReader.read(
+														new ByteArrayInputStream(imageBytes));
+												if (texImage != null)
+													addTexImage(texImageUri, texImage);
+												else
+													addUnsupportedTexImageId(texImageUri, textureImageId);
+											} catch (IOException ioe) {
+												// unsupported image format
+												addUnsupportedTexImageId(texImageUri, textureImageId);
+											}
+
+											if (++texImageCounter == 20) {
+												eventDispatcher.triggerEvent(
+														new CounterEvent(CounterType.TEXTURE_IMAGE, texImageCounter, this));
+												texImageCounter = 0;
+											}
+										} else
+											hasTexture = false;
+									}
+
+									if (hasTexture) {
+										// assign texture coordinates to vertices within internal data structure
+										Iterator<VertexInfo> iter = surfaceInfo.getVertexInfos().iterator();
+										for (int i = 0; i < texCoordsGeometry.getNumElements(); i++) {
+											double[] texCoords = texCoordsGeometry.getCoordinates(i);
+											for (int j = 0; iter.hasNext() && j < texCoords.length - 2; j += 2)
+												iter.next()
+														.addTexCoords(surfaceId, new TexCoords(texCoords[j], texCoords[j + 1]));
+										}
+
+										addTexImageUri(surfaceId, texImageUri);
+										removeX3dMaterial(surfaceId);
+									}
+								}
+
+								// only use material if there is no texture
+								else {
+									X3DMaterial x3dMaterial = new X3DMaterial();
+									fillX3dMaterialValues(x3dMaterial, rs);
+									addX3dMaterial(surfaceId, x3dMaterial);
+								}
+							}
+
+							// appearance theme does not match selected theme
+							else if (surfaceInfo != null && getX3dMaterial(surfaceId) == null) {
+								if (getX3dMaterial(parentId) != null) // material for parent surface known
+									addX3dMaterial(surfaceId, getX3dMaterial(parentId));
+								else if (getX3dMaterial(rootId) != null) // material for root surface known
+									addX3dMaterial(surfaceId, getX3dMaterial(rootId));
+								else
+									addX3dMaterial(surfaceId, x3dWallMaterial);
+							}
+						}
+					}
+				} catch (SQLException e) {
+					log.error("SQL error while querying surface geometries: " + e.getMessage());
+				} finally {
+					if (rs != null)
+						try {
+							rs.close();
+						} catch (SQLException e) {
+						}
+					if (geometryQuery != null)
+						try {
+							geometryQuery.close();
+						} catch (SQLException e) {
+						}
+				}
+			}
+
+			eventDispatcher.triggerEvent(
+					new CounterEvent(CounterType.TEXTURE_IMAGE, texImageCounter, this));
+		}
+
+		public PlacemarkType createPlacemarkForColladaModel () throws SQLException {
+			PlacemarkType placemark = kmlFactory.createPlacemarkType();
+			placemark.setName(getGmlId());
+			placemark.setId(config.getProject().getKmlExporter().getIdPrefixes().getPlacemarkCollada()
+					+ placemark.getName());
+
+			DisplayForm colladaDisplayForm = null;
+			for (DisplayForm displayForm : getDisplayForms()) {
+				if (displayForm.getForm() == DisplayForm.COLLADA) {
+					colladaDisplayForm = displayForm;
+					break;
+				}
+			}
+
+			if (getBalloonSettings().isIncludeDescription()
+					&& !colladaDisplayForm.isHighlightingEnabled()) { // avoid double description
+
+				ColladaOptions colladaOptions = getColladaOptions();
+				if (!colladaOptions.isGroupObjects() || colladaOptions.getGroupSize() == 1) {
+					addBalloonContents(placemark, Long.class.cast(getId()));
+				}
+			}
+
+			ModelType model = kmlFactory.createModelType();
+			LocationType location = kmlFactory.createLocationType();
+
+			switch (config.getProject().getKmlExporter().getAltitudeMode()) {
+				case ABSOLUTE:
+					model.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.ABSOLUTE));
+					break;
+				case RELATIVE:
+					model.setAltitudeModeGroup(
+							kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
+					break;
+				case CLAMP_TO_GROUND:
+					model.setAltitudeModeGroup(
+							kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
+					break;
+			}
+
+			location.setLatitude(this.location.y);
+			location.setLongitude(this.location.x);
+			location.setAltitude(this.location.z + reducePrecisionForZ(getZOffset()));
+			model.setLocation(location);
+
+			// correct heading value
+			double lat1 = Math.toRadians(this.location.y);
+			double[] dummy = convertPointCoordinatesToWGS84(
+					new double[]{origin.x, origin.y - 20, origin.z});
+			double lat2 = Math.toRadians(dummy[1]);
+			double dLon = Math.toRadians(dummy[0] - this.location.x);
+			double y = Math.sin(dLon) * Math.cos(lat2);
+			double x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+			double bearing = Math.toDegrees(Math.atan2(y, x));
+			bearing = (bearing + 180) % 360;
+
+			OrientationType orientation = kmlFactory.createOrientationType();
+			orientation.setHeading(reducePrecisionForZ(bearing));
+			model.setOrientation(orientation);
+
+			LinkType link = kmlFactory.createLinkType();
+			if (config.getProject().getKmlExporter().isOneFilePerObject() &&
+					!config.getProject().getKmlExporter().isExportAsKmz() &&
+					query.isSetTiling()) {
+				link.setHref(getGmlId() + ".dae");
+			} else {
+				// File.separator would be wrong here, it MUST be "/"
+				link.setHref(getId() + "/" + getGmlId() + ".dae");
+			}
+			model.setLink(link);
+
+			placemark.setAbstractGeometryGroup(kmlFactory.createModel(model));
+			return placemark;
+		}
+
+		protected List<PlacemarkType> createPlacemarksForHighlighting (ResultSet rs, KmlSplittingResult
+		work,boolean supportsNestedImplicitGeometries) throws SQLException {
+			return createPlacemarksForHighlighting(rs, work, null, supportsNestedImplicitGeometries);
+		}
+
+		protected List<PlacemarkType> createPlacemarksForHighlighting (ResultSet _rs, KmlSplittingResult
+		work, AffineTransformer globalTransformer,boolean supportsNestedImplicitGeometries) throws
+		SQLException {
+			HashSet<String> exportedGmlIds = new HashSet<String>();
+
+			List<PlacemarkType> placemarkList = new ArrayList<PlacemarkType>();
+			PlacemarkType placemark = kmlFactory.createPlacemarkType();
+			placemark.setStyleUrl("#" + getStyleBasisName() + work.getDisplayForm().getName() + "Style");
+			placemark.setName(work.getGmlId());
+			placemark.setId(config.getProject().getKmlExporter().getIdPrefixes().getPlacemarkHighlight()
+					+ placemark.getName());
+			placemarkList.add(placemark);
+
+			if (getBalloonSettings().isIncludeDescription()) {
+				addBalloonContents(placemark, (long) work.getId());
+			}
+
+			MultiGeometryType multiGeometry = kmlFactory.createMultiGeometryType();
+			placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
+
+			double hlDistance = work.getDisplayForm().getHighlightingDistance();
+
+			_rs.beforeFirst(); // return cursor to beginning
+
+			while (_rs.next()) {
+				AffineTransformer transformer = globalTransformer;
+				long rootId = _rs.getLong(1);
+
+				if (rootId == 0) {
+					// get nested implicit geometry
+					if (supportsNestedImplicitGeometries) {
+						rootId = _rs.getLong(3);
+						transformer = getAffineTransformer(_rs, 4, 5);
+					}
+
+					if (rootId == 0 || transformer == null)
+						continue;
+				}
+
+				PreparedStatement geometryQuery = null;
+				ResultSet rs = null;
+
+				try {
+					String query = queries.getSurfaceGeometries(false, transformer != null);
+					geometryQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE,
+							ResultSet.CONCUR_READ_ONLY);
+					for (int i = 1; i <= getParameterCount(query); i++)
+						geometryQuery.setLong(i, rootId);
+
+					rs = geometryQuery.executeQuery();
+
+					double zOffset = getZOffsetFromConfigOrDB((long) work.getId());
+					if (zOffset == Double.MAX_VALUE) {
+						List<Point3d> lowestPointCandidates = getLowestPointsCoordinates(rs,
+								(zOffset == Double.MAX_VALUE));
+						zOffset = getZOffsetFromGEService((long) work.getId(), lowestPointCandidates);
+					}
+
+					rs.beforeFirst(); // return cursor to beginning
+
+					while (rs.next()) {
 						// skip duplicate geometries
 						String gmlId = rs.getString("gmlid");
 						boolean isXlink = rs.getBoolean("is_xlink");
 						if (isXlink && gmlId != null && !exportedGmlIds.add(gmlId))
 							continue;
 
-						// build geometry
-						Object surfaceObj = rs.getObject(1);
-						surfaceInfo = null;
-
-						// add surface geometry to internal vertex tree structure
-						if (surfaceObj != null) {
-							GeometryObject surface = geometryConverterAdapter.getPolygon(surfaceObj);
-							if (isImplicit)
-								surface = transformer.applyTransformation(surface);
-
-							List<VertexInfo> vertexInfos = new ArrayList<VertexInfo>();
-							int ringCount = surface.getNumElements();
-							int[] vertexCount = new int[ringCount];
-
-							for (int i = 0; i < surface.getNumElements(); i++) {
-								double[] ordinatesArray = surface.getCoordinates(i);
-								int vertices = 0;
-
-								for (int j = 0; j < ordinatesArray.length - 3; j += 3) {
-									// calculate origin and list of lowest points
-									updateOrigins(ordinatesArray[j], ordinatesArray[j + 1], ordinatesArray[j + 2]);
-
-									// get or create node in vertex info tree
-									VertexInfo vertexInfo = setVertexInfoForXYZ(surfaceId,
-											ordinatesArray[j],
-											ordinatesArray[j+1],
-											ordinatesArray[j+2]);
-
-									vertexInfos.add(vertexInfo);
-									vertices++;
-								}
-
-								vertexCount[i] = vertices;
-							}
-
-							surfaceInfo = new SurfaceInfo(ringCount, vertexCount, vertexInfos);
-							addSurfaceInfo(surfaceId, surfaceInfo);
-							eventDispatcher.triggerEvent(new GeometryCounterEvent(null, this));
-						}
-
-						previousSurfaceId = surfaceId;
-					}
-
-					// handle appearance
-					if (selectedTheme.equals(KmlExporter.THEME_NONE)) {
-						if (surfaceInfo != null && getX3dMaterial(surfaceId) == null) {
-							if (surfaceTypeID != 0) {
-								if (Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BUILDING_WALL_SURFACE ||
-										Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BRIDGE_WALL_SURFACE ||
-										Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.TUNNEL_WALL_SURFACE){
-									addX3dMaterial(surfaceId, x3dWallMaterial);
-								}
-								else if (Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BUILDING_ROOF_SURFACE ||
-										Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.BRIDGE_ROOF_SURFACE ||
-										Util.getCityGMLClass(surfaceTypeID) == CityGMLClass.TUNNEL_ROOF_SURFACE) {						
-									addX3dMaterial(surfaceId, x3dRoofMaterial);
-								}
-								else {
-									addX3dMaterial(surfaceId, x3dWallMaterial);
-								}
-							}
-							else {
-								addX3dMaterial(surfaceId, x3dWallMaterial);
-							}
-						}
-					} else {
-						// skip if we have already assigned a texture
-						if (texImageUris.get(surfaceId) != null)
+						// skip entries without geometry
+						Object unconvertedObj = rs.getObject(1);
+						if (unconvertedObj == null)
 							continue;
 
-						String theme = rs.getString("theme");
+						GeometryObject unconvertedSurface = geometryConverterAdapter.getPolygon(unconvertedObj);
+						if (unconvertedSurface == null || unconvertedSurface.getNumElements() == 0)
+							continue;
 
-						long parentId = rs.getLong(3);
-						if (isImplicit) {
-							// since we generate unique ids for implicit geometries,
-							// we need to retrieve the parentId from the internal map 
-							Long tmp = implicitIdMap.get(parentId);
-							if (tmp != null)
-								parentId = tmp;
+						// for implicit geometries, we need to apply the transformation matrix first
+						if (transformer != null)
+							unconvertedSurface = transformer.applyTransformation(unconvertedSurface);
+
+						double[] ordinatesArray = unconvertedSurface.getCoordinates(0);
+						double nx = 0;
+						double ny = 0;
+						double nz = 0;
+
+						for (int current = 0; current < ordinatesArray.length - 3; current = current + 3) {
+							int next = current + 3;
+							if (next >= ordinatesArray.length - 3)
+								next = 0;
+							nx = nx + ((ordinatesArray[current + 1] - ordinatesArray[next + 1]) * (
+									ordinatesArray[current + 2] + ordinatesArray[next + 2]));
+							ny = ny + ((ordinatesArray[current + 2] - ordinatesArray[next + 2]) * (
+									ordinatesArray[current] + ordinatesArray[next]));
+							nz = nz + ((ordinatesArray[current] - ordinatesArray[next]) * (
+									ordinatesArray[current + 1] + ordinatesArray[next + 1]));
 						}
 
-						if (selectedTheme.equalsIgnoreCase(theme)) {
-							long textureImageId = rs.getLong("tex_image_id");
-							String texImageUri = rs.getString("tex_image_uri");
-							Object texCoordsObject = rs.getObject("texture_coordinates");
-							boolean hasTexture = false;
+						double value = Math.sqrt(nx * nx + ny * ny + nz * nz);
+						if (value == 0) { // not a surface, but a line
+							continue;
+						}
+						nx = nx / value;
+						ny = ny / value;
+						nz = nz / value;
 
-							// textures have priority
-							if (texImageUri != null && texImageUri.trim().length() != 0 && texCoordsObject != null && surfaceInfo != null) {
-								GeometryObject texCoordsGeometry = geometryConverterAdapter.getPolygon(texCoordsObject);
-								texImageUri = texImageUri.replaceAll(" ", "_"); //replace spaces with underscores
-								hasTexture = true;
-
-								// handle texture image
-								int fileSeparatorIndex = Math.max(texImageUri.lastIndexOf("\\"), texImageUri.lastIndexOf("/")); 
-								texImageUri = "_" + texImageUri.substring(fileSeparatorIndex + 1); // for example: _tex4712047.jpeg
-
-								if ((getUnsupportedTexImageId(texImageUri) == -1) && (getTexImage(texImageUri) == null)) { 
-									byte[] imageBytes = textureExportAdapter.getInByteArray(textureImageId, texImageUri);
-									if (imageBytes != null) {
-										imageReader.setSupportRGB(generateTextureAtlas);
-
-										try {
-											TextureImage texImage = imageReader.read(new ByteArrayInputStream(imageBytes));
-											if (texImage != null)
-												addTexImage(texImageUri, texImage);
-											else
-												addUnsupportedTexImageId(texImageUri, textureImageId);
-										} catch (IOException ioe) {
-											// unsupported image format
-											addUnsupportedTexImageId(texImageUri, textureImageId);
-										}
-
-										if (++texImageCounter == 20) {
-											eventDispatcher.triggerEvent(new CounterEvent(CounterType.TEXTURE_IMAGE, texImageCounter, this));
-											texImageCounter = 0;
-										}
-									} else
-										hasTexture = false;
-								}
-
-								if (hasTexture) {
-									// assign texture coordinates to vertices within internal data structure
-									Iterator<VertexInfo> iter = surfaceInfo.getVertexInfos().iterator();
-									for (int i = 0; i < texCoordsGeometry.getNumElements(); i++) {
-										double[] texCoords = texCoordsGeometry.getCoordinates(i);
-										for (int j = 0; iter.hasNext() && j < texCoords.length - 2; j += 2)
-											iter.next().addTexCoords(surfaceId, new TexCoords(texCoords[j], texCoords[j + 1]));
-									}
-
-									addTexImageUri(surfaceId, texImageUri);
-									removeX3dMaterial(surfaceId);
-								}
+						for (int i = 0; i < unconvertedSurface.getNumElements(); i++) {
+							ordinatesArray = unconvertedSurface.getCoordinates(i);
+							for (int j = 0; j < ordinatesArray.length; j = j + 3) {
+								// coordinates = coordinates + hlDistance * (dot product of normal vector and unity vector)
+								ordinatesArray[j] = ordinatesArray[j] + hlDistance * nx;
+								ordinatesArray[j + 1] = ordinatesArray[j + 1] + hlDistance * ny;
+								ordinatesArray[j + 2] = ordinatesArray[j + 2] + zOffset + hlDistance * nz;
 							}
+						}
 
-							// only use material if there is no texture
-							else {
-								X3DMaterial x3dMaterial = new X3DMaterial();
-								fillX3dMaterialValues(x3dMaterial, rs);
-								addX3dMaterial(surfaceId, x3dMaterial);
-							}
-						} 
+						// now convert to WGS84
+						GeometryObject surface = convertToWGS84(unconvertedSurface);
+						unconvertedSurface = null;
 
-						// appearance theme does not match selected theme
-						else if (surfaceInfo != null && getX3dMaterial(surfaceId) == null) {
-							if (getX3dMaterial(parentId) != null) // material for parent surface known
-								addX3dMaterial(surfaceId, getX3dMaterial(parentId));
-							else if (getX3dMaterial(rootId) != null) // material for root surface known
-								addX3dMaterial(surfaceId, getX3dMaterial(rootId));
+						PolygonType polygon = kmlFactory.createPolygonType();
+						switch (config.getProject().getKmlExporter().getAltitudeMode()) {
+							case ABSOLUTE:
+								polygon.setAltitudeModeGroup(
+										kmlFactory.createAltitudeMode(AltitudeModeEnumType.ABSOLUTE));
+								break;
+							case RELATIVE:
+								polygon.setAltitudeModeGroup(
+										kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
+								break;
+							case CLAMP_TO_GROUND:
+								polygon.setAltitudeModeGroup(
+										kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
+								break;
+						}
+						multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
+
+						for (int i = 0; i < surface.getNumElements(); i++) {
+							LinearRingType linearRing = kmlFactory.createLinearRingType();
+							BoundaryType boundary = kmlFactory.createBoundaryType();
+							boundary.setLinearRing(linearRing);
+
+							if (i == 0)
+								polygon.setOuterBoundaryIs(boundary);
 							else
-								addX3dMaterial(surfaceId, x3dWallMaterial);
+								polygon.getInnerBoundaryIs().add(boundary);
+
+							// order points clockwise
+							ordinatesArray = surface.getCoordinates(i);
+							for (int j = 0; j < ordinatesArray.length; j = j + 3)
+								linearRing.getCoordinates()
+										.add(String.valueOf(reducePrecisionForXorY(ordinatesArray[j]) + ","
+												+ reducePrecisionForXorY(ordinatesArray[j + 1]) + ","
+												+ reducePrecisionForZ(ordinatesArray[j + 2])));
 						}
 					}
-				}
-			} catch (SQLException e) {
-				log.error("SQL error while querying surface geometries: " + e.getMessage());
-			} finally {
-				if (rs != null)
-					try { rs.close(); } catch (SQLException e) {}
-				if (geometryQuery != null)
-					try { geometryQuery.close(); } catch (SQLException e) {}
-			}
-		}
-
-		eventDispatcher.triggerEvent(new CounterEvent(CounterType.TEXTURE_IMAGE, texImageCounter, this));
-	}
-
-	public PlacemarkType createPlacemarkForColladaModel() throws SQLException {
-		PlacemarkType placemark = kmlFactory.createPlacemarkType();
-		placemark.setName(getGmlId());
-		placemark.setId(config.getProject().getKmlExporter().getIdPrefixes().getPlacemarkCollada() + placemark.getName());
-
-		DisplayForm colladaDisplayForm = null;
-		for (DisplayForm displayForm: getDisplayForms()) {
-			if (displayForm.getForm() == DisplayForm.COLLADA) {
-				colladaDisplayForm = displayForm;
-				break;
-			}
-		}
-
-		if (getBalloonSettings().isIncludeDescription() 
-				&& !colladaDisplayForm.isHighlightingEnabled()) { // avoid double description
-
-			ColladaOptions colladaOptions = getColladaOptions();
-			if (!colladaOptions.isGroupObjects() || colladaOptions.getGroupSize() == 1) {
-				addBalloonContents(placemark, Long.class.cast(getId()));
-			}
-		}
-
-		ModelType model = kmlFactory.createModelType();
-		LocationType location = kmlFactory.createLocationType();
-
-		switch (config.getProject().getKmlExporter().getAltitudeMode()) {
-		case ABSOLUTE:
-			model.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.ABSOLUTE));
-			break;
-		case RELATIVE:
-			model.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
-			break;
-		case CLAMP_TO_GROUND:
-			model.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
-			break;
-		}
-
-		location.setLatitude(this.location.y);
-		location.setLongitude(this.location.x);
-		location.setAltitude(this.location.z + reducePrecisionForZ(getZOffset()));
-		model.setLocation(location);
-
-		// correct heading value
-		double lat1 = Math.toRadians(this.location.y);
-		double[] dummy = convertPointCoordinatesToWGS84(new double[] {origin.x, origin.y - 20, origin.z});
-		double lat2 = Math.toRadians(dummy[1]);
-		double dLon = Math.toRadians(dummy[0] - this.location.x);
-		double y = Math.sin(dLon) * Math.cos(lat2);
-		double x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
-		double bearing = Math.toDegrees(Math.atan2(y, x));
-		bearing = (bearing + 180) % 360;
-
-		OrientationType orientation = kmlFactory.createOrientationType();
-		orientation.setHeading(reducePrecisionForZ(bearing));
-		model.setOrientation(orientation);
-
-		LinkType link = kmlFactory.createLinkType();
-		if (config.getProject().getKmlExporter().isOneFilePerObject() &&
-				!config.getProject().getKmlExporter().isExportAsKmz() &&
-				query.isSetTiling())
-		{
-			link.setHref(getGmlId() + ".dae");
-		}
-		else {
-			// File.separator would be wrong here, it MUST be "/"
-			link.setHref(getId() + "/" + getGmlId() + ".dae");
-		}
-		model.setLink(link);
-
-		placemark.setAbstractGeometryGroup(kmlFactory.createModel(model));
-		return placemark;
-	}
-
-	protected List<PlacemarkType> createPlacemarksForHighlighting(ResultSet rs, KmlSplittingResult work, boolean supportsNestedImplicitGeometries) throws SQLException {
-		return createPlacemarksForHighlighting(rs, work, null, supportsNestedImplicitGeometries);
-	}
-
-	protected List<PlacemarkType> createPlacemarksForHighlighting(ResultSet _rs, KmlSplittingResult work, AffineTransformer globalTransformer, boolean supportsNestedImplicitGeometries) throws SQLException {
-		HashSet<String> exportedGmlIds = new HashSet<String>();
-
-		List<PlacemarkType> placemarkList= new ArrayList<PlacemarkType>();
-		PlacemarkType placemark = kmlFactory.createPlacemarkType();
-		placemark.setStyleUrl("#" + getStyleBasisName() + work.getDisplayForm().getName() + "Style");
-		placemark.setName(work.getGmlId());
-		placemark.setId(config.getProject().getKmlExporter().getIdPrefixes().getPlacemarkHighlight() + placemark.getName());
-		placemarkList.add(placemark);
-
-		if (getBalloonSettings().isIncludeDescription()) {
-			addBalloonContents(placemark, (long)work.getId());
-		}
-
-		MultiGeometryType multiGeometry =  kmlFactory.createMultiGeometryType();
-		placemark.setAbstractGeometryGroup(kmlFactory.createMultiGeometry(multiGeometry));
-
-		double hlDistance = work.getDisplayForm().getHighlightingDistance();
-
-		_rs.beforeFirst(); // return cursor to beginning
-
-		while (_rs.next()) {
-			AffineTransformer transformer = globalTransformer;
-			long rootId = _rs.getLong(1);
-
-			if (rootId == 0) {
-				// get nested implicit geometry
-				if (supportsNestedImplicitGeometries) {
-					rootId = _rs.getLong(3);
-					transformer = getAffineTransformer(_rs, 4, 5);
-				}
-
-				if (rootId == 0 || transformer == null)
-					continue;
-			}
-
-			PreparedStatement geometryQuery = null;
-			ResultSet rs = null;
-
-			try {
-				String query = queries.getSurfaceGeometries(false, transformer != null);
-				geometryQuery = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-				for (int i = 1; i <= getParameterCount(query); i++)
-					geometryQuery.setLong(i, rootId);
-
-				rs = geometryQuery.executeQuery();
-
-				double zOffset = getZOffsetFromConfigOrDB((long)work.getId());
-				if (zOffset == Double.MAX_VALUE) {
-					List<Point3d> lowestPointCandidates = getLowestPointsCoordinates(rs, (zOffset == Double.MAX_VALUE));
-					zOffset = getZOffsetFromGEService((long)work.getId(), lowestPointCandidates);
-				}
-
-				rs.beforeFirst(); // return cursor to beginning
-
-				while (rs.next()) {
-					// skip duplicate geometries
-					String gmlId = rs.getString("gmlid");
-					boolean isXlink = rs.getBoolean("is_xlink");
-					if (isXlink && gmlId != null && !exportedGmlIds.add(gmlId))
-						continue;
-
-					// skip entries without geometry
-					Object unconvertedObj = rs.getObject(1);
-					if (unconvertedObj == null)
-						continue;
-
-					GeometryObject unconvertedSurface = geometryConverterAdapter.getPolygon(unconvertedObj);
-					if (unconvertedSurface == null || unconvertedSurface.getNumElements() == 0)
-						continue;
-
-					// for implicit geometries, we need to apply the transformation matrix first
-					if (transformer != null)
-						unconvertedSurface = transformer.applyTransformation(unconvertedSurface);
-
-					double[] ordinatesArray = unconvertedSurface.getCoordinates(0);
-					double nx = 0;
-					double ny = 0;
-					double nz = 0;
-
-					for (int current = 0; current < ordinatesArray.length - 3; current = current+3) {
-						int next = current+3;
-						if (next >= ordinatesArray.length - 3) next = 0;
-						nx = nx + ((ordinatesArray[current+1] - ordinatesArray[next+1]) * (ordinatesArray[current+2] + ordinatesArray[next+2])); 
-						ny = ny + ((ordinatesArray[current+2] - ordinatesArray[next+2]) * (ordinatesArray[current] + ordinatesArray[next])); 
-						nz = nz + ((ordinatesArray[current] - ordinatesArray[next]) * (ordinatesArray[current+1] + ordinatesArray[next+1])); 
-					}
-
-					double value = Math.sqrt(nx * nx + ny * ny + nz * nz);
-					if (value == 0) { // not a surface, but a line
-						continue;
-					}
-					nx = nx / value;
-					ny = ny / value;
-					nz = nz / value;
-
-					for (int i = 0; i < unconvertedSurface.getNumElements(); i++) {
-						ordinatesArray = unconvertedSurface.getCoordinates(i);
-						for (int j = 0; j < ordinatesArray.length; j = j + 3) {
-							// coordinates = coordinates + hlDistance * (dot product of normal vector and unity vector)
-							ordinatesArray[j] = ordinatesArray[j] + hlDistance * nx;
-							ordinatesArray[j+1] = ordinatesArray[j+1] + hlDistance * ny;
-							ordinatesArray[j+2] = ordinatesArray[j+2] + zOffset + hlDistance * nz;
+				} catch (SQLException e) {
+					log.error("SQL error while querying surface geometries: " + e.getMessage());
+				} finally {
+					if (rs != null)
+						try {
+							rs.close();
+						} catch (SQLException e) {
 						}
-					}
-
-					// now convert to WGS84
-					GeometryObject surface = convertToWGS84(unconvertedSurface);
-					unconvertedSurface = null;
-
-					PolygonType polygon = kmlFactory.createPolygonType();
-					switch (config.getProject().getKmlExporter().getAltitudeMode()) {
-					case ABSOLUTE:
-						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.ABSOLUTE));
-						break;
-					case RELATIVE:
-						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.RELATIVE_TO_GROUND));
-						break;
-					case CLAMP_TO_GROUND:
-						polygon.setAltitudeModeGroup(kmlFactory.createAltitudeMode(AltitudeModeEnumType.CLAMP_TO_GROUND));
-						break;
-					}
-					multiGeometry.getAbstractGeometryGroup().add(kmlFactory.createPolygon(polygon));
-
-					for (int i = 0; i < surface.getNumElements(); i++) {
-						LinearRingType linearRing = kmlFactory.createLinearRingType();
-						BoundaryType boundary = kmlFactory.createBoundaryType();
-						boundary.setLinearRing(linearRing);
-
-						if (i == 0)
-							polygon.setOuterBoundaryIs(boundary);
-						else
-							polygon.getInnerBoundaryIs().add(boundary);
-
-						// order points clockwise
-						ordinatesArray = surface.getCoordinates(i);
-						for (int j = 0; j < ordinatesArray.length; j = j+3)
-							linearRing.getCoordinates().add(String.valueOf(reducePrecisionForXorY(ordinatesArray[j]) + "," 
-									+ reducePrecisionForXorY(ordinatesArray[j+1]) + ","
-									+ reducePrecisionForZ(ordinatesArray[j+2])));
-					}
+					if (geometryQuery != null)
+						try {
+							geometryQuery.close();
+						} catch (SQLException e) {
+						}
 				}
-			} catch (SQLException e) {
-				log.error("SQL error while querying surface geometries: " + e.getMessage());
-			} finally {
-				if (rs != null)
-					try { rs.close(); } catch (SQLException e) {}
-				if (geometryQuery != null)
-					try { geometryQuery.close(); } catch (SQLException e) {}
 			}
+
+			return placemarkList;
 		}
 
-		return placemarkList;
-	}
-
-	protected AffineTransformer getAffineTransformer(ResultSet rs, int referencePoint, int transformationMatrix) throws SQLException {
-		GeometryObject obj = geometryConverterAdapter.getPoint(rs.getObject(referencePoint));
-		String transformationString = rs.getString(transformationMatrix);
-		if (obj != null && transformationString != null) {
-			double[] ordinatesArray = obj.getCoordinates(0);
-			Point point = new Point(ordinatesArray[0], ordinatesArray[1], ordinatesArray[2]);
-			List<Double> m = Util.string2double(transformationString, "\\s+");
-			if (m != null && m.size() >= 16)
-				return new AffineTransformer(new Matrix(m.subList(0, 16), 4), point, databaseAdapter.getConnectionMetaData().getReferenceSystem().getSrid());
-		}
-
-		return null;
-	}
-
-	private String getBalloonContentFromGenericAttribute(long id) {
-
-		String balloonContent = null;
-		String genericAttribName = "Balloon_Content"; 
-		PreparedStatement selectQuery = null;
-		ResultSet rs = null;
-
-		try {
-			// look for the value in the DB
-			selectQuery = connection.prepareStatement(queries.getStringAttributeById());
-			selectQuery.setLong(1, id);
-			selectQuery.setString(2, genericAttribName);
-			rs = selectQuery.executeQuery();
-			if (rs.next()) {
-				balloonContent = rs.getString(1);
+		protected AffineTransformer getAffineTransformer (ResultSet rs,int referencePoint,
+		int transformationMatrix) throws SQLException {
+			GeometryObject obj = geometryConverterAdapter.getPoint(rs.getObject(referencePoint));
+			String transformationString = rs.getString(transformationMatrix);
+			if (obj != null && transformationString != null) {
+				double[] ordinatesArray = obj.getCoordinates(0);
+				Point point = new Point(ordinatesArray[0], ordinatesArray[1], ordinatesArray[2]);
+				List<Double> m = Util.string2double(transformationString, "\\s+");
+				if (m != null && m.size() >= 16)
+					return new AffineTransformer(new Matrix(m.subList(0, 16), 4), point,
+							databaseAdapter.getConnectionMetaData().getReferenceSystem().getSrid());
 			}
-		}
-		catch (Exception e) {}
-		finally {
-			try {
-				if (rs != null) rs.close();
-				if (selectQuery != null) selectQuery.close();
-			}
-			catch (Exception e2) {}
-		}
-		return balloonContent;
-	}
 
-	protected void addBalloonContents(PlacemarkType placemark, long id) {
-		String schemaName = kmlExporterManager.getDatabaseAdapter().getConnectionDetails().getSchema();
-		try {
-			switch (getBalloonSettings().getBalloonContentMode()) {
-			case GEN_ATTRIB:
-				String balloonTemplate = getBalloonContentFromGenericAttribute(id);
-				if (balloonTemplate != null) {
-					if (getBalloonTemplateHandler() == null) { // just in case
-						setBalloonTemplateHandler(new BalloonTemplateHandler(balloonTemplate, databaseAdapter));
-					}
-					placemark.setDescription(getBalloonTemplateHandler().getBalloonContent(balloonTemplate, id, currentLod, connection, schemaName));
-				}
-				break;
-			case GEN_ATTRIB_AND_FILE:
-				balloonTemplate = getBalloonContentFromGenericAttribute(id);
-				if (balloonTemplate != null) {
-					placemark.setDescription(getBalloonTemplateHandler().getBalloonContent(balloonTemplate, id, currentLod, connection, schemaName));
-					break;
-				}
-			case FILE :
-				if (getBalloonTemplateHandler() != null) {
-					getBalloonTemplateHandler().getBalloonContent(id, currentLod, connection, schemaName);
-					placemark.setDescription(getBalloonTemplateHandler().getBalloonContent(id, currentLod, connection, schemaName));
-				}
-				break;
-			}
+			return null;
 		}
-		catch (Exception e) { } // invalid balloons are silently discarded
-	}
 
-	protected void fillX3dMaterialValues (X3DMaterial x3dMaterial, ResultSet rs) throws SQLException {
+		private String getBalloonContentFromGenericAttribute ( long id){
 
-		double ambientIntensity = rs.getDouble("x3d_ambient_intensity");
-		if (!rs.wasNull()) {
-			x3dMaterial.setAmbientIntensity(ambientIntensity);
-		}
-		double shininess = rs.getDouble("x3d_shininess");
-		if (!rs.wasNull()) {
-			x3dMaterial.setShininess(shininess);
-		}
-		double transparency = rs.getDouble("x3d_transparency");
-		if (!rs.wasNull()) {
-			x3dMaterial.setTransparency(transparency);
-		}
-		Color color = getX3dColorFromString(rs.getString("x3d_diffuse_color"));
-		if (color != null) {
-			x3dMaterial.setDiffuseColor(color);
-		}
-		color = getX3dColorFromString(rs.getString("x3d_specular_color"));
-		if (color != null) {
-			x3dMaterial.setSpecularColor(color);
-		}
-		color = getX3dColorFromString(rs.getString("x3d_emissive_color"));
-		if (color != null) {
-			x3dMaterial.setEmissiveColor(color);
-		}
-		x3dMaterial.setIsSmooth(rs.getInt("x3d_is_smooth") == 1);
-	}
-
-	private Color getX3dColorFromString(String colorString) {
-		Color color = null;
-		if (colorString != null) {
-			List<Double> colorList = Util.string2double(colorString, "\\s+");
-
-			if (colorList != null && colorList.size() >= 3) {
-				color = new Color(colorList.get(0), colorList.get(1), colorList.get(2));
-			}
-		}
-		return color;
-	}
-
-	protected double getZOffsetFromConfigOrDB (long id) {
-
-		double zOffset = Double.MAX_VALUE;
-
-		switch (config.getProject().getKmlExporter().getAltitudeOffsetMode()) {
-		case NO_OFFSET:
-			zOffset = 0;
-			break;
-		case CONSTANT:
-			zOffset = config.getProject().getKmlExporter().getAltitudeOffsetValue();
-			break;
-		case BOTTOM_ZERO:
-			zOffset = Double.MAX_VALUE;
-			break;
-		case GENERIC_ATTRIBUTE:
+			String balloonContent = null;
+			String genericAttribName = "Balloon_Content";
 			PreparedStatement selectQuery = null;
 			ResultSet rs = null;
-			String genericAttribName = "GE_LoD" + currentLod + "_zOffset";
+
 			try {
-				// first look for the value in the DB
+				// look for the value in the DB
 				selectQuery = connection.prepareStatement(queries.getStringAttributeById());
 				selectQuery.setLong(1, id);
 				selectQuery.setString(2, genericAttribName);
 				rs = selectQuery.executeQuery();
 				if (rs.next()) {
-					String strVal = rs.getString(1);
-					if (strVal != null) { // use value in DB 
-						StringTokenizer attributeTokenized = new StringTokenizer(strVal, "|");
-						attributeTokenized.nextToken(); // skip mode
-						zOffset = Double.parseDouble(attributeTokenized.nextToken());
+					balloonContent = rs.getString(1);
+				}
+			} catch (Exception e) {
+			} finally {
+				try {
+					if (rs != null)
+						rs.close();
+					if (selectQuery != null)
+						selectQuery.close();
+				} catch (Exception e2) {
+				}
+			}
+			return balloonContent;
+		}
+
+		protected void addBalloonContents (PlacemarkType placemark,long id){
+			String schemaName = kmlExporterManager.getDatabaseAdapter().getConnectionDetails()
+					.getSchema();
+			try {
+				switch (getBalloonSettings().getBalloonContentMode()) {
+					case GEN_ATTRIB:
+						String balloonTemplate = getBalloonContentFromGenericAttribute(id);
+						if (balloonTemplate != null) {
+							if (getBalloonTemplateHandler() == null) { // just in case
+								setBalloonTemplateHandler(
+										new BalloonTemplateHandler(balloonTemplate, databaseAdapter));
+							}
+							placemark.setDescription(
+									getBalloonTemplateHandler().getBalloonContent(balloonTemplate, id, currentLod,
+											connection, schemaName));
+						}
+						break;
+					case GEN_ATTRIB_AND_FILE:
+						balloonTemplate = getBalloonContentFromGenericAttribute(id);
+						if (balloonTemplate != null) {
+							placemark.setDescription(
+									getBalloonTemplateHandler().getBalloonContent(balloonTemplate, id, currentLod,
+											connection, schemaName));
+							break;
+						}
+					case FILE:
+						if (getBalloonTemplateHandler() != null) {
+							getBalloonTemplateHandler().getBalloonContent(id, currentLod, connection, schemaName);
+							placemark.setDescription(
+									getBalloonTemplateHandler().getBalloonContent(id, currentLod, connection,
+											schemaName));
+						}
+						break;
+				}
+			} catch (Exception e) {
+			} // invalid balloons are silently discarded
+		}
+
+		protected void fillX3dMaterialValues (X3DMaterial x3dMaterial, ResultSet rs) throws SQLException
+		{
+
+			double ambientIntensity = rs.getDouble("x3d_ambient_intensity");
+			if (!rs.wasNull()) {
+				x3dMaterial.setAmbientIntensity(ambientIntensity);
+			}
+			double shininess = rs.getDouble("x3d_shininess");
+			if (!rs.wasNull()) {
+				x3dMaterial.setShininess(shininess);
+			}
+			double transparency = rs.getDouble("x3d_transparency");
+			if (!rs.wasNull()) {
+				x3dMaterial.setTransparency(transparency);
+			}
+			Color color = getX3dColorFromString(rs.getString("x3d_diffuse_color"));
+			if (color != null) {
+				x3dMaterial.setDiffuseColor(color);
+			}
+			color = getX3dColorFromString(rs.getString("x3d_specular_color"));
+			if (color != null) {
+				x3dMaterial.setSpecularColor(color);
+			}
+			color = getX3dColorFromString(rs.getString("x3d_emissive_color"));
+			if (color != null) {
+				x3dMaterial.setEmissiveColor(color);
+			}
+			x3dMaterial.setIsSmooth(rs.getInt("x3d_is_smooth") == 1);
+		}
+
+		private Color getX3dColorFromString (String colorString){
+			Color color = null;
+			if (colorString != null) {
+				List<Double> colorList = Util.string2double(colorString, "\\s+");
+
+				if (colorList != null && colorList.size() >= 3) {
+					color = new Color(colorList.get(0), colorList.get(1), colorList.get(2));
+				}
+			}
+			return color;
+		}
+
+		protected double getZOffsetFromConfigOrDB ( long id){
+
+			double zOffset = Double.MAX_VALUE;
+
+			switch (config.getProject().getKmlExporter().getAltitudeOffsetMode()) {
+				case NO_OFFSET:
+					zOffset = 0;
+					break;
+				case CONSTANT:
+					zOffset = config.getProject().getKmlExporter().getAltitudeOffsetValue();
+					break;
+				case BOTTOM_ZERO:
+					zOffset = Double.MAX_VALUE;
+					break;
+				case GENERIC_ATTRIBUTE:
+					PreparedStatement selectQuery = null;
+					ResultSet rs = null;
+					String genericAttribName = "GE_LoD" + currentLod + "_zOffset";
+					try {
+						// first look for the value in the DB
+						selectQuery = connection.prepareStatement(queries.getStringAttributeById());
+						selectQuery.setLong(1, id);
+						selectQuery.setString(2, genericAttribName);
+						rs = selectQuery.executeQuery();
+						if (rs.next()) {
+							String strVal = rs.getString(1);
+							if (strVal != null) { // use value in DB
+								StringTokenizer attributeTokenized = new StringTokenizer(strVal, "|");
+								attributeTokenized.nextToken(); // skip mode
+								zOffset = Double.parseDouble(attributeTokenized.nextToken());
+							}
+						}
+					} catch (Exception e) {
+					} finally {
+						try {
+							if (rs != null)
+								rs.close();
+							if (selectQuery != null)
+								selectQuery.close();
+						} catch (Exception e2) {
+						}
+					}
+			}
+
+			return zOffset;
+		}
+
+		protected double getZOffsetFromGEService ( long id, List<Point3d > candidates){
+
+			double zOffset = 0;
+
+			if (config.getProject().getKmlExporter().getAltitudeOffsetMode()
+					== AltitudeOffsetMode.BOTTOM_ZERO) {
+				try {
+					// convert candidate points to WGS84
+					double[] coords = new double[candidates.size() * 3];
+					int index = 0;
+					for (Point3d point3d : candidates) {
+						coords[index++] = point3d.x;
+						coords[index++] = point3d.y;
+						coords[index++] = point3d.z;
+					}
+
+					if (candidates.size() == 1) {
+						coords = convertPointCoordinatesToWGS84(coords);
+					} else {
+						GeometryObject geomObj = convertToWGS84(
+								GeometryObject.createCurve(coords, 3, dbSrs.getSrid()));
+						coords = geomObj.getCoordinates(0);
+					}
+
+					double minElevation = Double.MAX_VALUE;
+					for (int i = 0; i < coords.length; i = i + 3) {
+						if (minElevation > coords[i + 2]) {
+							minElevation = coords[i + 2];
+						}
+					}
+					zOffset = 0 - minElevation;
+				} catch (Exception e) {
+				}
+			} else if (config.getProject().getKmlExporter()
+					.isCallGElevationService()) { // allowed to query
+				PreparedStatement insertQuery = null;
+				ResultSet rs = null;
+
+				try {
+					// convert candidate points to WGS84
+					double[] coords = new double[candidates.size() * 3];
+					int index = 0;
+					for (Point3d point3d : candidates) {
+						coords[index++] = point3d.x;
+						coords[index++] = point3d.y;
+						coords[index++] = point3d.z;
+					}
+
+					if (candidates.size() == 1) {
+						coords = convertPointCoordinatesToWGS84(coords);
+					} else {
+						GeometryObject geomObj = convertToWGS84(
+								GeometryObject.createCurve(coords, 3, dbSrs.getSrid()));
+						coords = geomObj.getCoordinates(0);
+					}
+
+					log.info("Getting zOffset from Google's elevation API for " + getGmlId() + " with "
+							+ candidates.size() + " points.");
+					zOffset = elevationServiceHandler.getZOffset(coords);
+
+					// save result in DB for next time
+					String genericAttribName = "GE_LoD" + currentLod + "_zOffset";
+					insertQuery = connection.prepareStatement(queries.insertGEOffset());
+					insertQuery.setString(1, genericAttribName);
+					String strVal =
+							"Auto|" + zOffset + "|" + dateFormatter.format(new Date(System.currentTimeMillis()));
+					insertQuery.setString(2, strVal);
+					insertQuery.setLong(3, id);
+					rs = insertQuery.executeQuery();
+				} catch (Exception e) {
+				} finally {
+					try {
+						if (rs != null)
+							rs.close();
+						if (insertQuery != null)
+							insertQuery.close();
+					} catch (Exception e2) {
 					}
 				}
 			}
-			catch (Exception e) {}
-			finally {
-				try {
-					if (rs != null) rs.close();
-					if (selectQuery != null) selectQuery.close();
-				}
-				catch (Exception e2) {}
-			}
+
+			return zOffset;
 		}
 
-		return zOffset;
-	}
+		protected List<Point3d> getLowestPointsCoordinates (ResultSet rs,boolean willCallGEService) throws
+		SQLException {
+			double currentlyLowestZCoordinate = Double.MAX_VALUE;
+			List<Point3d> coords = new ArrayList<Point3d>();
 
-	protected double getZOffsetFromGEService (long id, List<Point3d> candidates) {
+			// get SRID from blazegraph
+			DatabaseSrs srs = databaseAdapter.getConnectionMetaData().getReferenceSystem();
+			int databaseSrid = srs.getSrid();
 
-		double zOffset = 0;
-
-		if (config.getProject().getKmlExporter().getAltitudeOffsetMode() == AltitudeOffsetMode.BOTTOM_ZERO) {
-			try {
-				// convert candidate points to WGS84
-				double[] coords = new double[candidates.size()*3];
-				int index = 0;
-				for (Point3d point3d: candidates) {
-					coords[index++] = point3d.x;
-					coords[index++] = point3d.y;
-					coords[index++] = point3d.z;
-				}
-
-				if (candidates.size() == 1) {
-					coords = convertPointCoordinatesToWGS84(coords);
-				} else { 
-					GeometryObject geomObj = convertToWGS84(GeometryObject.createCurve(coords, 3, dbSrs.getSrid()));
-					coords = geomObj.getCoordinates(0);
-				}
-
-				double minElevation = Double.MAX_VALUE;
-				for (int i = 0; i < coords.length; i = i + 3) {
-					if (minElevation > coords[i+2]) {
-						minElevation = coords[i+2];
-					}					
-				}
-				zOffset = 0 - minElevation;
-			}
-			catch (Exception e) {}
-		}
-		else if (config.getProject().getKmlExporter().isCallGElevationService()) { // allowed to query
-			PreparedStatement insertQuery = null;
-			ResultSet rs = null;
-
-			try {
-				// convert candidate points to WGS84
-				double[] coords = new double[candidates.size()*3];
-				int index = 0;
-				for (Point3d point3d: candidates) {
-					coords[index++] = point3d.x;
-					coords[index++] = point3d.y;
-					coords[index++] = point3d.z;
-				}
-
-				if (candidates.size() == 1) {
-					coords = convertPointCoordinatesToWGS84(coords);
-				} else { 
-					GeometryObject geomObj = convertToWGS84(GeometryObject.createCurve(coords, 3, dbSrs.getSrid()));
-					coords = geomObj.getCoordinates(0);
-				}
-
-				log.info("Getting zOffset from Google's elevation API for " + getGmlId() + " with " + candidates.size() + " points.");
-				zOffset = elevationServiceHandler.getZOffset(coords);
-
-				// save result in DB for next time
-				String genericAttribName = "GE_LoD" + currentLod + "_zOffset";
-				insertQuery = connection.prepareStatement(queries.insertGEOffset());
-				insertQuery.setString(1, genericAttribName);
-				String strVal = "Auto|" + zOffset + "|" + dateFormatter.format(new Date(System.currentTimeMillis()));
-				insertQuery.setString(2, strVal);
-				insertQuery.setLong(3, id);
-				rs = insertQuery.executeQuery();
-			}
-			catch (Exception e) {}
-			finally {
-				try {
-					if (rs != null) rs.close();
-					if (insertQuery != null) insertQuery.close();
-				}
-				catch (Exception e2) {}
-			}
-		}
-
-		return zOffset;
-	}
-
-	protected List<Point3d> getLowestPointsCoordinates(ResultSet rs, boolean willCallGEService) throws SQLException {
-		double currentlyLowestZCoordinate = Double.MAX_VALUE;
-		List<Point3d> coords = new ArrayList<Point3d>();
-
-		while (rs.next()) {
-			Object buildingGeometryObj = rs.getObject(1);
+			while (rs.next()) {
+				Object buildingGeometryObj = rs.getObject(1);
 
 			if (buildingGeometryObj != null) {
-				GeometryObject geometry = geometryConverterAdapter.getGeometry(rs.getObject(1));
+				GeometryObject geometry = null;
+				if(databaseAdapter.getDatabaseType() == DatabaseType.BLAZE) {
+					buildingGeometryObj = rs.getObject("geom");
+					String datatype = rs.getString("datatype");
+					buildingGeometryObj = GeoSpatialProcessor.createGeometry(buildingGeometryObj.toString(), datatype);
+					geometry = geometryConverterAdapter.getGeometry(buildingGeometryObj);
+				}else{
+					geometry = geometryConverterAdapter.getGeometry(rs.getObject(1));
+				}
 
-				// we are only interested in the z coordinate 
-				for (int i = 0; i < geometry.getNumElements(); i++) {
-					double[] ordinatesArray = geometry.getCoordinates(i);
+					// we are only interested in the z coordinate
+					for (int i = 0; i < geometry.getNumElements(); i++) {
+						double[] ordinatesArray = geometry.getCoordinates(i);
 
-					for (int j = 2; j < ordinatesArray.length; j = j+3) {
-						if (ordinatesArray[j] < currentlyLowestZCoordinate) {
+						for (int j = 2; j < ordinatesArray.length; j = j + 3) {
+							if (ordinatesArray[j] < currentlyLowestZCoordinate) {
+								coords.clear();
+								Point3d point3d = new Point3d(ordinatesArray[j - 2], ordinatesArray[j - 1],
+										ordinatesArray[j]);
+								coords.add(point3d);
+								currentlyLowestZCoordinate = point3d.z;
+							}
+							if (willCallGEService && ordinatesArray[j] == currentlyLowestZCoordinate) {
+								Point3d point3d = new Point3d(ordinatesArray[j - 2], ordinatesArray[j - 1],
+										ordinatesArray[j]);
+								if (!coords.contains(point3d)) {
+									coords.add(point3d);
+								}
+							}
+						}
+					}
+				}
+			}
+
+		return coords;
+	}
+
+	protected List<Point3d> getLowestPointsCoordinates_unconvert(Object buildingGeometryObj, boolean willCallGEService) throws SQLException {
+		double currentlyLowestZCoordinate = Double.MAX_VALUE;
+		List<Point3d> coords = new ArrayList<Point3d>();
+		GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
+
+//		while (rs.next()) {
+//			Object buildingGeometryObj = rs.getObject(1);
+
+			if (buildingGeometryObj != null) {
+//				org.gdal.ogr.Geometry geomRing = null;
+//				buildingGeometryObj = rs.getObject("geom");
+//				String datatype = rs.getString("datatype");
+//				Coordinate[] coordinates = geospatial.str2coords(rs.getObject("geom").toString()).toArray(new Coordinate[0]);
+				Coordinate[] coordinates = geospatial.str2coords(buildingGeometryObj.toString()).toArray(new Coordinate[0]);
+				org.gdal.ogr.Geometry geomRing = new org.gdal.ogr.Geometry(ogrConstants.wkbLinearRing);
+
+				for(int i = 0; i < coordinates.length; i++){
+					geomRing.AddPoint(coordinates[i].getX(), coordinates[i].getY(), coordinates[i].getZ());
+				}
+
+				org.gdal.ogr.Geometry geom_poly = new org.gdal.ogr.Geometry(ogrConstants.wkbPolygon);
+				geom_poly.AddGeometry(geomRing);
+
+				// we are only interested in the z coordinate
+				for (int i = 0; i < geom_poly.GetGeometryCount(); i++) {
+					org.gdal.ogr.Geometry getRing = geom_poly.GetGeometryRef(i);
+
+//					double[] ordinatesArray = geom_poly.GetGeometryRef(i);
+
+					for(int j = 0; j< getRing.GetPointCount(); j++){
+						double ordinatesZ = getRing.GetZ(j);
+						if (ordinatesZ < currentlyLowestZCoordinate) {
 							coords.clear();
-							Point3d point3d = new Point3d(ordinatesArray[j-2], ordinatesArray[j-1], ordinatesArray[j]);
+							Point3d point3d = new Point3d(getRing.GetX(j), getRing.GetY(j), getRing.GetZ(j));
 							coords.add(point3d);
 							currentlyLowestZCoordinate = point3d.z;
 						}
-						if (willCallGEService && ordinatesArray[j] == currentlyLowestZCoordinate) {
-							Point3d point3d = new Point3d(ordinatesArray[j-2], ordinatesArray[j-1], ordinatesArray[j]);
+						if (willCallGEService && ordinatesZ == currentlyLowestZCoordinate) {
+							Point3d point3d = new Point3d(getRing.GetX(j), getRing.GetY(j), getRing.GetZ(j));
 							if (!coords.contains(point3d)) {
 								coords.add(point3d);
 							}
@@ -2659,7 +3247,7 @@ public abstract class KmlGenericObject<T> {
 					}
 				}
 			}
-		}
+//		}
 
 		return coords;
 	}
@@ -2675,38 +3263,43 @@ public abstract class KmlGenericObject<T> {
 			convertedPointGeom = convertToWGS84(GeometryObject.createCurve(coords, coords.length, dbSrs.getSrid()));
 			break;
 		case POSTGIS:
+		case BLAZE:
 			convertedPointGeom = convertToWGS84(GeometryObject.createPoint(coords, coords.length, dbSrs.getSrid()));
 			break;
-		}
 
+		}
 		if (convertedPointGeom != null)
 			pointCoords = convertedPointGeom.getCoordinates(0);
 
 		return pointCoords;
 	}
 
-	protected GeometryObject convertToWGS84(GeometryObject geomObj) throws SQLException {
-		GeometryObject convertedGeomObj = null;
-		try {
-			DatabaseSrs targetSrs = dbSrs.is3D() ? databaseAdapter.getUtil().getWGS843D() : Database.PREDEFINED_SRS.get(Database.PredefinedSrsName.WGS84_2D);
-			convertedGeomObj = databaseAdapter.getUtil().transform(geomObj, targetSrs);
-		} catch (SQLException e) {
-			log.warn("SQL exception when converting geometry to WGS84: " + e.getMessage());
-			throw e;
-		}
-
-		if (config.getProject().getKmlExporter().isUseOriginalZCoords() && geomObj.getDimension() == 3) {
-			double[][] originalCoords = geomObj.getCoordinates();			
-			double[][] convertedCoords = convertedGeomObj.getCoordinates();
-
-			for (int i = 0; i < originalCoords.length; i++) {
-				for (int j = 2; j < originalCoords[i].length; j += 3)
-					convertedCoords[i][j] = originalCoords[i][j];
+		protected GeometryObject convertToWGS84 (GeometryObject geomObj) throws SQLException {
+			GeometryObject convertedGeomObj = null;
+			try {
+				DatabaseSrs targetSrs = dbSrs.is3D() ? databaseAdapter.getUtil().getWGS843D()
+						: Database.PREDEFINED_SRS.get(Database.PredefinedSrsName.WGS84_2D);
+				convertedGeomObj = databaseAdapter.getUtil().transform(geomObj, targetSrs);
+			} catch (SQLException e) {
+				log.warn("SQL exception when converting geometry to WGS84: " + e.getMessage());
+				throw e;
 			}
-		}
 
-		return convertedGeomObj;
-	}
+			// To set the z-coordinate of the geometryObject, no need to reconstruct the GeometryObject using double[][]
+			// Need to make sure the originalCoords and convertedCoords has the same dimesion
+			if (config.getProject().getKmlExporter().isUseOriginalZCoords()
+					&& geomObj.getDimension() == 3) {
+				double[][] originalCoords = geomObj.getCoordinates();
+				double[][] convertedCoords = convertedGeomObj.getCoordinates();
+
+				for (int i = 0; i < originalCoords.length; i++) {
+					for (int j = 2; j < originalCoords[i].length; j += 3)
+						convertedCoords[i][j] = originalCoords[i][j];  // just to copy the z-coordinate to convertedCoords
+				}
+			}
+
+			return convertedGeomObj;
+		}
 
 	protected class Node{
 		double key;

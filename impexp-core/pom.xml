@@ -143,6 +143,13 @@
        <artifactId>uom-se</artifactId>
        <version>1.0.10</version>
      </dependency>-->
+     <!-- https://mvnrepository.com/artifact/org.gdal/gdal -->
+     <dependency>
+       <groupId>org.gdal</groupId>
+       <artifactId>gdal</artifactId>
+       <version>3.4.0</version>
+       <scope>compile</scope>
+     </dependency>
      <dependency>
        <groupId>com.h2database</groupId>
        <artifactId>h2</artifactId>
