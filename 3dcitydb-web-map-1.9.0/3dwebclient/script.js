@@ -932,7 +932,6 @@ function addPoint(customDataSource, pointId, lat, long, hexColorString){
 }
 
 //--- End of Extended Web-Map-Client part---//
-
 function listHiddenObjects() {
     var hidddenListElement = document.getElementById("citydb_hiddenlist");
 
