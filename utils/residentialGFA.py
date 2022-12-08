@@ -830,7 +830,7 @@ def find_buildable_footprints2(plots_df, residential_gfa_regs_df, lh_plots, non_
                     if offset_for_cur_type is not None and not pd.isnull(offset_for_cur_type):  # if offset is found, find the geometry (polygon) of the edge after offsetting on both sides by the value of the setback.
                         setback_geo = cur_plot_edges[i].buffer(offset_for_cur_type, single_sided=False, cap_style=2)
                     else: #this might happen if the edge does not have any neighbor due to e.g. removal of narrow plots at beginning of script.
-                        setback_geo = cur_plot_edges[i].buffer(0, single_sided=False, cap_style=2) # offset = 0. Ultimately GFA will be calculated based on the plot's area * max site coverage.
+                        setback_geo = cur_plot_edges[i].buffer(0, single_sided=False, cap_style=2) # offset = 0 for this edge, e.g. if the edge's main neighbour is a road with an unknown category.
                     buildable_geo = buildable_geo - setback_geo #subtract offset geometry from the current buildable footprint
 
                 if buildable_geo is not None: #remove any artefact pieces that are separate from the buildable footprint after offsetting edges
