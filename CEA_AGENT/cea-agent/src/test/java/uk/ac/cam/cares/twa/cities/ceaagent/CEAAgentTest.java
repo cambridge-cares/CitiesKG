@@ -300,7 +300,7 @@ public class CEAAgentTest {
         String test_footprint = "559267.200000246#313892.7999989044#0.0#559280.5400002463#313892.7999989044#0.0#559280.5400002463#313908.7499989033#0.0#559267.200000246#313908.7499989033#0.0#559267.200000246#313892.7999989044#0.0";
         String measure_datatype = "datatype";
         String test_datatype = "<http://localhost/blazegraph/literals/POLYGON-3-15>";
-        String measure_usage = "PropertyUsageCategory";
+        String measure_usage = "BuildingUsage";
         String test_usage = "<https://www.theworldavatar.com/kg/ontobuiltenv/Office>";
         String measure_crs = "CRS";
         String test_crs = "test_crs";
@@ -994,7 +994,7 @@ public class CEAAgentTest {
         String case6 = "HeightGenAttr";
         String case7 = "DatabasesrsCRS";
         String case8 = "CRS";
-        String case9 = "PropertyUsageCategory";
+        String case9 = "BuildingUsage";
         String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
         Method getQuery = agent.getClass().getDeclaredMethod("getQuery", String.class, String.class);
@@ -2015,20 +2015,20 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testGetPropertyUsageCategory() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
+    public void testGetBuildingUsage() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
     {
         CEAAgent agent = new CEAAgent();
         String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
-        Method getPropertyUsageCateogory = agent.getClass().getDeclaredMethod("getPropertyUsageCategory", String.class);
-        assertNotNull(getPropertyUsageCateogory);
-        getPropertyUsageCateogory.setAccessible(true);
+        Method getBuildingUsage = agent.getClass().getDeclaredMethod("getBuildingUsage", String.class);
+        assertNotNull(getBuildingUsage);
+        getBuildingUsage.setAccessible(true);
 
         // Ensure query contains correct predicate and object
-        Query q = (Query) getPropertyUsageCateogory.invoke(agent, uri);
+        Query q = (Query) getBuildingUsage.invoke(agent, uri);
         assertTrue(q.toString().contains("hasUsageCategory"));
         assertTrue(q.toString().contains("hasOntoCityGMLRepresentation"));
-        assertTrue(q.toString().contains("PropertyUsageCategory"));
+        assertTrue(q.toString().contains("BuildingUsage"));
     }
 
     @Test
