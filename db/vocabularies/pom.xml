@@ -6,12 +6,11 @@
 
     <groupId>uk.ac.cam.cares.jps.cities.blazegraph</groupId>
     <artifactId>vocabularies</artifactId>
-    <version>1.1.0</version>
+    <version>1.0.1</version>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <maven.compiler.release>8</maven.compiler.release>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
     </properties>
     <repositories>
         <repository>
@@ -40,9 +39,8 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>2.3.1</version>
                     <configuration>
-                        <source>1.8</source>
-                        <target>1.8</target>
-                        <release>8</release>
+                        <source>1.7</source>
+                        <target>1.7</target>
                     </configuration>
                 </plugin>
             </plugins>

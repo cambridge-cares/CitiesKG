@@ -448,14 +448,14 @@ public class DistanceAgentTest {
         String envelopeString2 = "1#2#1#1#3#1#2#3#1#2#2#1#1#2#1";
         EnvelopeType envelope2 = new EnvelopeType(envelopeString2, "POLYGON-3-15");
 
-        assertEquals(0.999897643510321, distanceAgent.computeDistance(envelope1, envelope2), 1E-10);
+        assertEquals(0.999897643510321, distanceAgent.computeDistance(envelope1, envelope2));
 
         // test distance calculation with CRS conversion.
         EnvelopeType.setSourceCrsName("EPSG:3414");
         String envelopeString3 = "2.85#-1.85#0#2.85#0.15#0#4.85#0.15#0#4.85#-1.85#0#2.85#-1.85#0";
         EnvelopeType envelope3 = new EnvelopeType(envelopeString3, "POLYGON-3-15");
 
-        assertEquals(1.0033228374688898, distanceAgent.computeDistance(envelope1, envelope3), 1E-10);
+        assertEquals(1.0033228374688898, distanceAgent.computeDistance(envelope1, envelope3));
     }
 
     @Test
