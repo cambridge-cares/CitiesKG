@@ -196,7 +196,6 @@ public class CEAAgent extends JPSAgent {
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
                         // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
                         String usage = getValue(uri, "PropertyUsageCategory", usageRoute);
-                        if (usage == "") {usage = "MULTI_RES";}
 
                         testData.add(new CEAInputData(footprint, height, usage));
                         if (i==0) {
@@ -1737,7 +1736,7 @@ public class CEAAgent extends JPSAgent {
             case("CLINIC"):
                 return "HOSPITAL";
             case("EDUCATION"):
-                return "MULTI_RES";
+                return "UNIVERSITY";
             case("SCHOOL"):
                 return usage;
             case("UNIVERSITYFACILITY"):
