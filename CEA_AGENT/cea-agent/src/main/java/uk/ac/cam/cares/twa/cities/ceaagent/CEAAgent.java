@@ -195,7 +195,7 @@ public class CEAAgent extends JPSAgent {
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
                         // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
-                        String usage = getValue(uri, "PropertyUsageCategory", usageRoute);
+                        String usage = getValue(uri, "BuildingUsage", usageRoute);
 
                         testData.add(new CEAInputData(footprint, height, usage));
                         if (i==0) {
@@ -607,7 +607,7 @@ public class CEAAgent extends JPSAgent {
             if (value == "Lod0FootprintId" || value == "FootprintThematicSurface"){
                 result = extractFootprint(queryResultArray);
             }
-            else if (value == "PropertyUsageCategory") {
+            else if (value == "BuildingUsage") {
                 result = queryResultArray.getJSONObject(0).get(value).toString().split(ontoBuiltEnvUri)[1].split(">")[0].toUpperCase();
                 result = toCEAConvention(result);
             }
@@ -716,8 +716,8 @@ public class CEAAgent extends JPSAgent {
                 return getDatabasesrsCrsQuery(uriString);
             case "CRS":
                 return getCrsQuery(uriString);
-            case "PropertyUsageCategory":
-                return getPropertyUsageCategory(uriString);
+            case "BuildingUsage":
+                return getBuildingUsage(uriString);
         }
         return null;
     }
@@ -900,11 +900,11 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve the building usage for data with ontoBuiltEnv:PropertyUsageCategory
+     * builds a SPARQL query for a specific URI to retrieve the building usage stored with OntoBuiltEnv concepts
      * @param uriString city object id
      * @return returns a query string
      */
-    private Query getPropertyUsageCategory(String uriString) {
+    private Query getBuildingUsage(String uriString) {
         WhereBuilder wb = new WhereBuilder();
         SelectBuilder sb = new SelectBuilder();
 
@@ -912,9 +912,9 @@ public class CEAAgent extends JPSAgent {
                 .addPrefix("rdf", rdfUri)
                 .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s")
                 .addWhere("?building", "ontoBuiltEnv:hasUsageCategory", "?usage")
-                .addWhere("?usage", "rdf:type", "?PropertyUsageCategory");
+                .addWhere("?usage", "rdf:type", "?BuildingUsage");
 
-        sb.addVar("?PropertyUsageCategory")
+        sb.addVar("?BuildingUsage")
                 .addWhere(wb);
 
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
