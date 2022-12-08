@@ -317,7 +317,7 @@ public class CityImportAgent extends JPSAgent {
       ArrayList<String> args = new ArrayList<>();
       args.add("python");
       args.add(new File(
-          Objects.requireNonNull(CityImportAgent.class.getClassLoader().getResource(SPLIT_SCRIPT)).toURI()).getAbsolutePath());
+          Objects.requireNonNull(getClass().getClassLoader().getResource(SPLIT_SCRIPT)).toURI()).getAbsolutePath());
       args.add(fileDst);
       args.add(String.valueOf(CHUNK_SIZE));
       Files.move(Paths.get(fileSrc), Paths.get(fileDst)); //throws IOException

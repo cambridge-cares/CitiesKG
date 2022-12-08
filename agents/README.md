@@ -6,7 +6,7 @@ It contains 6 agents: CityImportAgent, CityExportAgent, DistanceAgent, CityInfor
 ## System requirements
 
 * Windows 10 or Mac
-* Java JRE or JDK 11
+* Java JRE or JDK >= 1.8
 * IntelliJ IDE Ultimate version (for the developers)
 
 ## Getting Started
@@ -17,7 +17,7 @@ These detailed instructions describes the setup on a windows machine, for Mac OS
 
 ### Prerequisites
 
-* [Java JRE or JDK 11](https://adoptium.net/en-GB/temurin/releases?version=11)
+* Java JRE or JDK >= 1.8
 * [Tomcat 9](https://www.liquidweb.com/kb/installing-tomcat-9-on-windows/)
 * [Maven](https://maven.apache.org/) - Dependency Management >= 3.8.4
 * Python 3

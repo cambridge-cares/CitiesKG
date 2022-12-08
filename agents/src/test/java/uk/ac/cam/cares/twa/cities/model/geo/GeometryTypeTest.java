@@ -34,15 +34,9 @@ public class GeometryTypeTest {
     GeometryType.setSourceCrsName("EPSG:27700");
     GeometryType geometry = new GeometryType(coords, structure);
     assertEquals(new Coordinate(1, 1, 5), geometry.getPolygon().getExteriorRing().getCoordinateN(0));
-    Coordinate point0Coords = geometry.getMetricPolygon().getExteriorRing().getCoordinateN(0);
-    assertEquals(603902.5252167048, point0Coords.x, 1E-6);
-    assertEquals(5513703.7177186, point0Coords.y, 1E-6);
-    assertEquals(5.0, point0Coords.z);
+    assertEquals(new Coordinate(603902.5252167048, 5513703.7177186, 5.0), geometry.getMetricPolygon().getExteriorRing().getCoordinateN(0));
     assertEquals(new Coordinate(2, 3, 5), geometry.getPolygon().getExteriorRing().getCoordinateN(2));
-    Coordinate point2Coords = geometry.getMetricPolygon().getExteriorRing().getCoordinateN(2);
-    assertEquals(603903.3328829142, point2Coords.x, 1E-6);
-    assertEquals(5513705.798364675, point2Coords.y, 1E-6);
-    assertEquals(5.0, point2Coords.z);
+    assertEquals(new Coordinate(603903.3328829142, 5513705.798364675, 5.0), geometry.getMetricPolygon().getExteriorRing().getCoordinateN(2));
   }
 
   @Test
@@ -52,24 +46,16 @@ public class GeometryTypeTest {
     // normal (8,4,2) => (0.87,0.44,0.22)   (note the ccw winding order)
     String coords = "0.125#0#0#0#0.25#0#0#0#0.5#0.125#0#0";
     String structure = "http://localhost/blazegraph/literals/POLYGON-3-12";
-    Vector3D normal = new GeometryType(coords, structure).getNormal();
-    assertEquals(0.8284510730510422, normal.getX(), 1E-7);
-    assertEquals(0.5159635577328808, normal.getY(), 1E-7);
-    assertEquals(0.21783118842857427, normal.getZ(), 1E-7);
+    assertEquals(new Vector3D(0.8284510730510422, 0.5159635577328808, 0.21783118842857427).toString(),
+        new GeometryType(coords, structure).getNormal().toString());
     // Unit square should have unit area
     coords = "0#0#0#1#0#0#1#1#0#0#1#0#0#0#0";
     structure = "http://localhost/blazegraph/literals/POLYGON-3-15";
     GeometryType unitSquare = new GeometryType(coords, structure);
-    assertEquals(0.9962825445109047, unitSquare.getArea(), 1E-7);
+    assertEquals(0.9962825445109047, unitSquare.getArea());
     // Centroids: the native crs centroid should be at about (0.5,0.5,0.5)
-    Coordinate centroid = unitSquare.getCentroid();
-    assertEquals(0.5012210836284794, centroid.getX(), 1E-7);
-    assertEquals(0.507797131431289, centroid.getY(), 1E-7);
-    assertEquals(0.0, centroid.getZ());
-    Coordinate metricCentroid = unitSquare.getMetricCentroid();
-    assertEquals(603902.0748522267, metricCentroid.getX(), 1E-7);
-    assertEquals(5513703.1742914090, metricCentroid.getY(), 1E-7);
-    assertEquals(0.0, metricCentroid.getZ());
+    assertEquals(new Coordinate(0.5012210836284794, 0.507797131431289, 0.0), unitSquare.getCentroid());
+    assertEquals(new Coordinate(603902.0748522267, 5513703.1742914090, 0.0), unitSquare.getMetricCentroid());
   }
 
   @Test
@@ -81,7 +67,7 @@ public class GeometryTypeTest {
         new Coordinate(0, 4, 0)
     };
     assertEquals(new Coordinate(0.25, 1, 0.5), GeometryType.computeCentroid(coordinates, false));
-    assertEquals(new Coordinate(1.0 / 3, 0, 2.0 / 3), GeometryType.computeCentroid(coordinates, true));
+    assertEquals(new Coordinate(1.0/3, 0, 2.0/3), GeometryType.computeCentroid(coordinates, true));
   }
 
   @Test
