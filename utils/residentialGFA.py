@@ -803,7 +803,7 @@ def find_buildable_footprints2(plots_df, residential_gfa_regs_df, lh_plots, non_
         if front_edge == None or cur_gfa_regs.empty: # if front edge of min rect is missing for some reason, not enough info to calculate gfa
             pass
         else: # if front edge of min rect edge is found, continue buildable footprint calculation. First step is to store useful values for current plot.
-            edge_setbacks_per_edge = []  # list of dicts (one dict per edge), e.g. [{'Bungalow': 7.5, 'Semi-DetachedHouse': 7.5}, {'Bungalow': 9, 'Semi-DetachedHouse': 9}, ...]
+            setbacks_per_edge = []  # list of dicts (one dict per edge), e.g. [{'Bungalow': 7.5, 'Semi-DetachedHouse': 7.5}, {'Bungalow': 9, 'Semi-DetachedHouse': 9}, ...]
             cur_plot_edges = get_edges(row_plot['geometry'])  #plot's original edges
             cur_plot_id = row_plot['PlotId'] #plot's id
             cur_sbp_info = sbp_df.loc[sbp_df['PlotId'] == cur_plot_id, :] if cur_plot_id in sbp_df['PlotId'].values else None #street block plan df row that applies to plot, if exists
@@ -811,26 +811,24 @@ def find_buildable_footprints2(plots_df, residential_gfa_regs_df, lh_plots, non_
             cur_all_neighbours = row_plot['neighbour_list'] # current plot's list of neighbour ids
             cur_rd_neighbours_df = roads_df.loc[roads_df['PlotId'].isin(cur_all_neighbours), :] # current plot's road neighbours (all columns of roads df)
 
-            cur_site_coverage = None
-            buildable_geo = row_plot['geometry'] #initial buildable geo is the plot polygon. Edge offsets will be subtracted.
             for i in range (0, len(cur_plot_edges)): # for each edge in current plot polygon (not min rect polygon), find the setbacks per development type, and the edge type (front/side/rear)
-                print('i: ', i)
-                i_dict = {}
                 cur_edge = cur_plot_edges[i]
-                i_dict[i] = cur_edge
                 cur_setbacks, edge_type = find_edge_setbacks(cur_edge, cur_non_rd_neigh_dict, cur_all_neighbours, non_road_plots_df, cur_rd_neighbours_df, lh_plots, cur_sbp_info, cur_gfa_regs, road_cat_offset_index_dict)  # cur_setbacks = setbacks per dev. type for current edge, e.g. {'Bungalow': 7.5, 'Semi-DetachedHouse': 7.5, 'TerraceType1': 7.5, 'TerraceType2': 2.0}. Edge_type possible values: 'side'  or 'rear'  or 'front'
                 edges_types_per_plot_dict[cur_plot_id].append((cur_edge.wkt, edge_type)) # For the current plot's list (edges_types_per_plot_dict) add a tuple containing the current edge's geometry and type (front/side/rear).
-                edge_setbacks_per_edge.append(cur_setbacks) # For the current plot's list of setback dicts per edge, add dict for current edge. (see above for format of cur_setbacks)
+                setbacks_per_edge.append(cur_setbacks) # For the current plot's list of setback dicts per edge, add dict for current edge. (see above for format of cur_setbacks)
 
             for index, row_reg in cur_gfa_regs.iterrows(): #iterate over GFA param rows relevant to current plot, in order to find applicable offsets for each edge, for each development type allowed on the current plot.
                 cur_type = row_reg['type_property'] # development type that current regulation row applies to, e.g. Flat, Condominium...
-                for i in range(0, len(edge_setbacks_per_edge)): #iterate over edges of current plot
-                    edge_dict = edge_setbacks_per_edge[i] # offset values (float) per development type applicable to the edge, e.g. {'Flat':7.5, 'Condominium':12.4, ...})
-                    offset_for_cur_type = edge_dict[cur_type]
+                buildable_geo = row_plot['geometry'] # initial buildable geo for the current dev. type is the original plot geometry.
+
+                for i in range(0, len(setbacks_per_edge)): # subtract a buffered version of each plot edge from the initial buildable geo
+                    cur_edge_dict = setbacks_per_edge[i] # offset values (float) per development type applicable to the edge, e.g. {'Flat':7.5, 'Condominium':12.4, ...})
+                    offset_for_cur_type = cur_edge_dict[cur_type] #current edge's offset for current development type.
                     if offset_for_cur_type is not None and not pd.isnull(offset_for_cur_type):  # if offset is found, find the geometry (polygon) of the edge after offsetting on both sides by the value of the setback.
                         setback_geo = cur_plot_edges[i].buffer(offset_for_cur_type, single_sided=False, cap_style=2)
                     else: #this might happen if the edge does not have any neighbor due to e.g. removal of narrow plots at beginning of script.
                         setback_geo = cur_plot_edges[i].buffer(0, single_sided=False, cap_style=2) # offset = 0 for this edge, e.g. if the edge's main neighbour is a road with an unknown category.
+
                     buildable_geo = buildable_geo - setback_geo #subtract offset geometry from the current buildable footprint
 
                 if buildable_geo is not None: #remove any artefact pieces that are separate from the buildable footprint after offsetting edges
