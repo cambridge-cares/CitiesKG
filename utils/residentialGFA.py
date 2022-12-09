@@ -787,8 +787,7 @@ def find_edge_setbacks(edge_geo,non_rd_neigh_dict, all_neighs_list, non_road_plo
 
 '''Find buildable footprints for each allowed development type on each plot. Add this info in a new column in the plots_for_GFA df'''
 def find_buildable_footprints2(plots_df, residential_gfa_regs_df, lh_plots, non_road_plots_df, roads_df, sbp_df):
-    # This dict determines which road offset value is read from the Regulation Grouping 4 file, column 'setback_road_general.'
-    # Note that cat 3 gets the cat 2 offset (more conservative), since cats 2-3 not differentiated in ura data
+    # This dict determines which road offset value is read from the residential gfa parameters file, column 'setback_road_general.' Note that cat 3 gets the cat 2 offset (more conservative), since cats 2-3 not differentiated in ura data
     road_cat_offset_index_dict = {'cat_1': 0, 'cat_2_to_3' : 1, 'cat_4' : 3, 'cat_5' : 4}
     buildable_geos = []
     buildable_footprint_areas = []
