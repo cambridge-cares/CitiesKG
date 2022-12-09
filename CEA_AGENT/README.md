@@ -176,89 +176,34 @@ The 3dWebMapClient can be set up to visualise data produced by the CEA Agent (in
 ### Building usage mapping
 The agent queries for the building usage type, which are stored with ```OntoBuiltEnv``` concepts, to pass to CEA as input.
 
-In the CEA, there are 19 defined building usage types:
-
-| CEA available usage types |
-|:-------------------------:|
-|         COOLROOM          |
-|         FOODSTORE         |
-|            GYM            |
-|         HOSPITAL          |
-|           HOTEL           |
-|        INDUSTRIAL         |
-|            LAB            |
-|          LIBRARY          |
-|         MULTI_RES         |
-|          MUSEUM           |
-|          OFFICE           |
-|          PARKING          |
-|        RESTAURANT         |
-|          RETAIL           |
-|          SCHOOL           |
-|        SERVERROOM         |
-|        SINGLE_RES         |
-|         SWIMMING          |
-|        UNIVERSITY         |
+In the CEA, there are 19 defined building usage types. In the ```OntoBuiltEnv``` ontology, there are 23 classes for building usage type (see left 2 columns of table below). After querying for the ```OntoBuiltEnv``` concepts, the agent will map the concepts to the CEA defined usage types as shown in the right 2 columns of the following mapping table:
 
 
-In the ```OntoBuiltEnv``` ontology, there are 23 classes for building usage type:
-
-| ```OntoBuiltEnv``` concepts | 
-|:---------------------------:|
-|          Domestic           |
-|      SingleResidential      |
-|      MultiResidential       |
-|      EmergencyService       |
-|         FireStation         |
-|        PoliceStation        |
-|         MedicalCare         |
-|          Hospital           |
-|           Clinic            |
-|          Education          |
-|           School            |
-|     UniversityFacility      |
-|           Office            |
-|     RetailEstablishment     |
-|      ReligiousFacility      |
-|     IndustrialFacility      |
-|     EatingEstablishment     |
-|    DrinkingEstablishment    |
-|            Hotel            |
-|       SportsFacility        |
-|      CulturalFacility       |
-|      TransportFacility      |
-|        Non-Domestic         |
-
-
-After querying for the ```OntoBuiltEnv``` concepts, the agent will map the concepts to the CEA defined usage types according to the following table:
-
-**```OntoBuiltEnv``` concepts to CEA defined usage type mapping**
-
-| ```OntoBuiltEnv``` concepts | Mapped to CEA usage type |
-|:---------------------------:|:------------------------:|
-|          Domestic           |        MULTI_RES         |
-|      SingleResidential      |        SINGLE_RES        |
-|      MultiResidential       |        MULTI_RES         |
-|      EmergencyService       |         HOSPITAL         |
-|         FireStation         |         HOSPITAL         |
-|        PoliceStation        |         HOSPITAL         |
-|         MedicalCare         |         HOSPITAL         |
-|          Hospital           |         HOSPITAL         |
-|           Clinic            |         HOSPITAL         |
-|          Education          |        UNIVERSITY        |
-|           School            |          SCHOOL          |
-|     UniversityFacility      |        UNIVERSITY        |
-|           Office            |          OFFICE          |
-|     RetailEstablishment     |          RETAIL          |
-|      ReligiousFacility      |          MUSEUM          |
-|     IndustrialFacility      |        INDUSTRIAL        |
-|     EatingEstablishment     |        RESTAURANT        |
-|    DrinkingEstablishment    |        RESTAURANT        |
-|            Hotel            |          HOTEL           |
-|       SportsFacility        |           GYM            |
-|      CulturalFacility       |          MUSEUM          |
-|      TransportFacility      |        INDUSTRIAL        |
-|        Non-Domestic         |        INDUSTRIAL        |
+| CEA available usage types | ```OntoBuiltEnv``` concepts |   | ```OntoBuiltEnv``` concepts | Mapped to CEA usage type |
+|:-------------------------:|:---------------------------:|:-:|:---------------------------:|:------------------------:|
+|         COOLROOM          |          Domestic           |   |          Domestic           |        MULTI_RES         |
+|         FOODSTORE         |      SingleResidential      |   |      SingleResidential      |        SINGLE_RES        |
+|            GYM            |      MultiResidential       |   |      MultiResidential       |        MULTI_RES         |
+|         HOSPITAL          |      EmergencyService       |   |      EmergencyService       |         HOSPITAL         |
+|           HOTEL           |         FireStation         |   |         FireStation         |         HOSPITAL         |
+|        INDUSTRIAL         |        PoliceStation        |   |        PoliceStation        |         HOSPITAL         |
+|            LAB            |         MedicalCare         |   |         MedicalCare         |         HOSPITAL         |
+|          LIBRARY          |          Hospital           |   |          Hospital           |         HOSPITAL         |
+|         MULTI_RES         |           Clinic            |   |           Clinic            |         HOSPITAL         |
+|          MUSEUM           |          Education          |   |          Education          |        UNIVERSITY        |
+|          OFFICE           |           School            |   |           School            |          SCHOOL          |
+|          PARKING          |     UniversityFacility      |   |     UniversityFacility      |        UNIVERSITY        |
+|        RESTAURANT         |           Office            |   |           Office            |          OFFICE          |
+|          RETAIL           |     RetailEstablishment     |   |     RetailEstablishment     |          RETAIL          |
+|          SCHOOL           |      ReligiousFacility      |   |      ReligiousFacility      |          MUSEUM          |
+|        SERVERROOM         |     IndustrialFacility      |   |     IndustrialFacility      |        INDUSTRIAL        |
+|        SINGLE_RES         |     EatingEstablishment     |   |     EatingEstablishment     |        RESTAURANT        |
+|         SWIMMING          |    DrinkingEstablishment    |   |    DrinkingEstablishment    |        RESTAURANT        |
+|        UNIVERSITY         |            Hotel            |   |            Hotel            |          HOTEL           |
+|                           |       SportsFacility        |   |       SportsFacility        |           GYM            |
+|                           |      CulturalFacility       |   |      CulturalFacility       |          MUSEUM          |
+|                           |      TransportFacility      |   |      TransportFacility      |        INDUSTRIAL        |
+|                           |        Non-Domestic         |   |        Non-Domestic         |        INDUSTRIAL        |
 
 ## Build Instructions
 
