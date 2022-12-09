@@ -195,7 +195,7 @@ public class CEAAgent extends JPSAgent {
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
                         // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
-                        String usage = getValue(uri, "BuildingUsage", usageRoute);
+                        String usage = toCEAConvention(getValue(uri, "BuildingUsage", usageRoute));
 
                         testData.add(new CEAInputData(footprint, height, usage));
                         if (i==0) {
@@ -609,7 +609,6 @@ public class CEAAgent extends JPSAgent {
             }
             else if (value == "BuildingUsage") {
                 result = queryResultArray.getJSONObject(0).get(value).toString().split(ontoBuiltEnvUri)[1].split(">")[0].toUpperCase();
-                result = toCEAConvention(result);
             }
             else if (value == "FootprintSurfaceGeom") {
                 result = extractFootprint(getGroundGeometry(queryResultArray));
