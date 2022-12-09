@@ -5,7 +5,7 @@
 
 The CEA agent can be used to interact with the [City Energy Analyst (CEA)](https://www.cityenergyanalyst.com/) and the data it produces on building energy demands and the electricity supply available if PV panels are placed on available surfaces.
 
-The agent currently curries for building geometry and building usage stored in the knowledge graph, and the resulting output data is added to the named graph 'energyprofile'.
+The agent currently queries for building geometry and building usage stored in the knowledge graph, and the resulting output data is added to the named graph 'energyprofile'.
 
 The CEA Agent provides three endpoints:
 
@@ -288,18 +288,18 @@ The username and password for the postgreSQL database need to be provided in sin
 ```
 
 ### Building usage query route
-Please provide the route to query for the building usage type in ```usage.query.route``` in
+Please provide the route to query for building usage type in ```usage.query.route``` in
 ```
 ./cea-agent/src/main/resources
     CEAAgentConfig.properties
 ```
 
-If ```usage.query.route``` is not provided, the agent will attempt to query for building usage from the same endpoint as the building geometry queries.
+If ```usage.query.route``` is not provided, the agent will attempt to query for building usage from the same endpoint as the building geometry query.
 
 ### Access Agent
 
 The CEA agent also uses the [access agent](https://github.com/cambridge-cares/TheWorldAvatar/tree/main/JPS_ACCESS_AGENT). 
-Check that a mapping to a targetresourceid to pass to the access agent exists for the namespace being used for building geometry queries. 
+Check that a mapping to a targetresourceid to pass to the access agent exists for the namespace being used for building geometry query. 
 Currently included are:
 
 - citieskg-berlin
