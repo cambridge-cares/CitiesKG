@@ -1724,11 +1724,11 @@ public class CEAAgent extends JPSAgent {
             case("MULTIRESIDENTIAL"):
                 return "MULTI_RES";
             case("EMERGENCYSERVICE"):
-                return "MULTI_RES";
+                return "HOSPITAL";
             case("FIRESTATION"):
-                return "MULTI_RES";
+                return "HOSPITAL";
             case("POLICESTATION"):
-                return "MULTI_RES";
+                return "HOSPITAL";
             case("MEDICALCARE"):
                 return "HOSPITAL";
             case("HOSPITAL"):
@@ -1752,7 +1752,7 @@ public class CEAAgent extends JPSAgent {
             case("EATINGESTABLISHMENT"):
                 return "RESTAURANT";
             case("DRINKINGESTABLISHMENT"):
-                return "FOODSTORE";
+                return "RESTAURANT";
             case("HOTEL"):
                 return usage;
             case("SPORTSFACILITY"):
