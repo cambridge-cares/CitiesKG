@@ -903,11 +903,6 @@ function pinHighlightObjects(cityObjectsArray, hexColorString){
 
         addPoint(customDataSource, id, lat, lon, hexColorString);
     }
-    /**
-    // In order to only show the current dataSource, we need to remove the previous first.
-    for (let [key, value] of customDataSourceMap){
-        console.log(key + " : " + cesiumViewer.dataSources.remove(value));
-    }**/
 
     customDataSourceMap.set(dataUnifier, customDataSource);
     cesiumViewer.dataSources.add(customDataSource);
@@ -915,6 +910,12 @@ function pinHighlightObjects(cityObjectsArray, hexColorString){
     //var testdataSource = customDataSource;
     //var testentity = testdataSource.getEntitiesById('UUID_3422c065-c104-4a48-9536-0f30ff96c670');
     //console.log(testentity);
+
+    /**
+     // In order to only show the current dataSource, we need to remove the previous first.
+     for (let [key, value] of customDataSourceMap){
+        console.log(key + " : " + cesiumViewer.dataSources.remove(value));
+    }**/
 }
 
 function addPoint(customDataSource, pointId, lat, long, hexColorString){
