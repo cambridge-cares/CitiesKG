@@ -682,6 +682,7 @@ function showResultWindow(resultJson, colorStr){
     resultBoxContent.style.display = "block";
     var listItem = document.createElement("li");
     listItem.id = dataSourcePrefix + _customDataSourceCounter;
+    listItem.title = colorStr;
 
     listItem.appendChild(processInfoContext(resultJson));
     // <input type='checkbox' onchange='updateGfaRows()'>
@@ -705,7 +706,9 @@ function showResultWindow(resultJson, colorStr){
     closeButton.textContent = "x";
     closeButton.onclick = function (event){
         var targetId = event.currentTarget.parentNode.id;
-        removeDataSourceById(targetId);
+        var targetUnusedColor = event.currentTarget.parentNode.title;
+        //var targetUnusedColor = event.currentTarget.parentNode.getElementsByClassName("colorbox")[0].style.backgroundColor;  // can store the color in the title of li item. which is the description of the corresponding color
+        removeDataSourceById(targetId, targetUnusedColor);
     }
     listItem.appendChild(closeButton);
     resultBoxContent.appendChild(listItem);
@@ -735,17 +738,37 @@ function updateSelectedDataSources(){
     }
 }
 
-function removeDataSourceById(datasourceId){
+function removeDataSourceById(datasourceId, unusedColor){
     var targetDataSource = customDataSourceMap.get(datasourceId);
+    console.log("The unused color is ", unusedColor);
+    insertUnusedColor(unusedColor);
     customDataSourceMap.delete(datasourceId);
     console.log("dataSource " + datasourceId + " has been removed: " + cesiumViewer.dataSources.remove(targetDataSource));
 }
 
 function processCIAResult(CIAdata){
-    var hexColorString =  generateColorHex();// generateLightColorHex();
+    var hexColorString = pickColorFromArray(); // generateLightColorHex(); generateColorHex();
     showResultWindow(CIAdata, hexColorString);
     processFilteredObjects(CIAdata["http://www.theworldavatar.com:83/access-agent/access"]["filtered"], hexColorString);
     _customDataSourceCounter++;
+}
+
+/** generate color for the pin point **/
+var initColorsArr = ["#0096FF", "#FFA500", "#00FFC8", "#FF1694", "#E5DE00", "#009F30", "#964B00"];
+var colorsArr = initColorsArr;
+function pickColorFromArray(){
+    var pickedColor;
+    if(colorsArr.length > 0){
+        var j = Math.floor(Math.random() * (colorsArr.length));
+        pickedColor = colorsArr[j];
+        colorsArr.splice(j, 1);
+        console.log("The used color is ", pickedColor);
+    }
+    return pickedColor;
+}
+
+function insertUnusedColor(hexColorStr){
+    colorsArr.splice(colorsArr.length-1, 0, hexColorStr);
 }
 
 function generateColorHex(){
@@ -760,6 +783,7 @@ function generateLightColorHex() {
         color += ("0" + Math.floor(((1 + Math.random()) * Math.pow(16, 2)) / 2).toString(16)).slice(-2);
     return color;
 }
+/*******************************************/
 
 //Shiying: highlight multiple cityobjects, create customDatasource, pinCityobjects
 function processFilteredObjects(cityObjectsArray, colorStr){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
