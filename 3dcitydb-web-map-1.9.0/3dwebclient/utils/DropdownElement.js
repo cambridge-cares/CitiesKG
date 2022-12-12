@@ -58,7 +58,7 @@ function getDropdownElements(predicate, may_predicate, element_type, dropdown_ty
 
 	// check if the dropdownElement list already exists in the LocalStorage
 	// Warning: In order to get any update in TWA effective on WMC, the local storage need to be deleted.
-	if (ifDropdownElementExists(predicate)){
+	if (ifDropdownElementExists(dropdown_type)){
 		var dropdownData = localStorage.getItem(dropdown_type);
 		var checkbox_lines = [];
 		var results = dropdownData.split('\r');
