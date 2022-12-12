@@ -58,7 +58,7 @@ function getDropdownElements(predicate, may_predicate, element_type, dropdown_ty
 
 	// check if the dropdownElement list already exists in the LocalStorage
 	// Warning: In order to get any update in TWA effective on WMC, the local storage need to be deleted.
-	if (ifDropdownElementExists(predicate)){
+	if (ifDropdownElementExists(dropdown_type)){
 		var dropdownData = localStorage.getItem(dropdown_type);
 		var checkbox_lines = [];
 		var results = dropdownData.split('\r');
@@ -76,11 +76,11 @@ function getDropdownElements(predicate, may_predicate, element_type, dropdown_ty
 			//url:"http://localhost:48888/access-agent/access",
 			type: 'POST',
 			data: JSON.stringify({targetresourceiri:CONTEXT + "-" + CITY , sparqlquery: buildQuery(predicate, may_predicate)}),
-			//data: JSON.stringify({targetresourceiri:"http://localhost:48888/test" , sparqlquery: buildQuery(predicate)}),
+			//data: JSON.stringify({targetresourceiri:"http://localhost:48888/test" , sparqlquery: buildQuery(predicate, may_predicate)}),
 			dataType: 'json',
 			contentType: 'application/json',
-			success: function(data){  //function(data, status_message, xhr)
-				//console.log(data["result"])
+			success: function(data, status_message, xhr){  //function(data, status_message, xhr)
+				console.log(data["result"])
 				var results = JSON.parse(data["result"]);
 				var checkbox_lines = [];
 				storeDropdownElements(dropdown_type, results);
