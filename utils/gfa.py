@@ -90,8 +90,7 @@ def assign_road_category(road_plots, rn_lta):
 
     rn_int = gpd.overlay(road_plots, rn_lta_buffered, how='intersection', keep_geom_type=True)
     rn_int['intersection_area'] = rn_int.area
-    grouped_intersection = rn_int.groupby(['PlotId']).apply(
-        lambda x: x.sort_values(['intersection_area'], ascending=False).iloc[0, :]).drop(columns=['PlotId'])
+    grouped_intersection = rn_int.groupby(['PlotId']).apply(lambda x: x.sort_values(['intersection_area'], ascending=False).iloc[0, :]).drop(columns=['PlotId'])
     grouped_intersection = grouped_intersection.reset_index()
     grouped_intersection = grouped_intersection[['PlotId', 'RD_TYP_CD']].copy()
 
@@ -457,55 +456,39 @@ def compute_gfa(plots_for_GFA, plot_setbacks, dcp):
     return gfas
 
 
-def getPlots(endpoint):
+def get_plots(endpoint):
     sparql = SPARQLWrapper(endpoint)
     sparql.setQuery(
-        """PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
-        PREFIX geo: <http://www.bigdata.com/rdf/geospatial#>
-        SELECT ?cityObjectId ?Geometry ?ZoningType ?GPR
-        WHERE { 
-        GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/> { 
-        SERVICE geo:search {
-        ?cityObjectId geo:predicate ocgml:EnvelopeType .
-        ?cityObjectId geo:searchDatatype <http://localhost/blazegraph/literals/POLYGON-3-15> .
-        ?cityObjectId geo:customFields "X0#Y0#Z0#X1#Y1#Z1#X2#Y2#Z2#X3#Y3#Z3#X4#Y4#Z4" .
-        ?cityObjectId geo:customFieldsLowerBounds "1.279372#103.815651#0#1.279372#103.815651#0#1.279372#103.815651#0#1.279372#103.815651#0#1.279372#103.815651#0".
-        ?cityObjectId geo:customFieldsUpperBounds  "1.306702#103.863544#1000#1.306702#103.863544#1000#1.306702#103.863544#1000#1.306702#103.863544#1000#1.306702#103.863544#1000".
-        ?cityObjectId geo:customFieldsValues ?envelopes . }
-        BIND(IRI(REPLACE(STR(?cityObjectId), "cityobject", "genericcityobject")) AS ?Id) }
-        GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/surfacegeometry/>
-        { ?surfaceId ocgml:cityObjectId ?Id ;
-                     ocgml:GeometryType ?Geometry .
-        hint:Prior hint:runLast "true" .}
-        GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobjectgenericattrib/> {
-        ?genAttrId ocgml:cityObjectId ?cityObjectId ;
-                   ocgml:attrName 'LU_DESC' ;
-                   ocgml:strVal ?ZoningType . 
-        ?genAttrId2 ocgml:cityObjectId ?cityObjectId ;
-                    ocgml:attrName 'GPR'; 
-                    ocgml:strVal ?GPR . } } """)
-
+        """PREFIX ocgml:<http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
+SELECT ?cityObjectId ?Geometry ?ZoningType
+WHERE { 
+GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/>
+ { ?cityObjectId ocgml:id ?obj_id .
+ BIND(IRI(REPLACE(STR(?cityObjectId), "cityobject", "genericcityobject")) AS ?Id) }
+GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/surfacegeometry/> {
+  ?s ocgml:cityObjectId ?Id ;
+    ocgml:GeometryType ?Geometry . 
+    hint:Prior hint:runLast "true" . }
+GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobjectgenericattrib/> {
+    ?attr ocgml:cityObjectId ?cityObjectId;
+            ocgml:attrName 'LU_DESC' ;
+            ocgml:strVal ?ZoningType. } }""")
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
     queryResults = pd.DataFrame(results['results']['bindings'])
     queryResults = queryResults.applymap(lambda cell:cell['value'])
     geometries = gpd.GeoSeries(queryResults['Geometry'].map(lambda geo: envelopeStringToPolygon(geo, geodetic=True, flip=True)), crs='EPSG:4326')
     queried_plots = gpd.GeoDataFrame(queryResults, geometry=geometries).to_crs(epsg=3857).drop(columns = ['Geometry'])
-
     return queried_plots
 
 
-def process_plots(queried_plots):
-    plots = queried_plots
+def process_plots(plots):
     plots.geometry = plots.geometry.simplify(0.1)
     plots = plots[~(plots.geometry.type == "MultiPolygon")]
     plots['site_area'] = plots.area
-    plots = plots.loc[plots['site_area' ] >= 50]
-    plots = plots.rename(columns = {'cityObjectId':'PlotId', 'ZoningType':'PlotType'})
-    plots['GPR'] = pd.to_numeric(plots['GPR'], errors = 'coerce')
-    plots = plots[~plots['PlotType'].isin(['ROAD','WATERBODY', 'PARK', 'OPEN SPACE',
-                                           'CEMETERY', 'BEACH AREA', 'TRANSPORT FACILITIES',
-                                           'MASS RAPID TRANSIT'])]
+    plots = plots.loc[plots['site_area'] >= 50]
+    plots = plots.rename(columns= {'cityObjectId':'PlotId', 'ZoningType':'PlotType'})
+    plots = plots[~plots['PlotType'].isin(['ROAD'])]
     plots['context_storeys'] = float('NaN')
 
     narrow_plots = []
@@ -513,7 +496,6 @@ def process_plots(queried_plots):
         narrow_plots.append(~is_narrow(plot, 3, 0.1))
     plots = plots.loc[narrow_plots,:]
     return plots
-
 
 def read_landed_housing(fn_landed_housing):
     lh = gpd.read_file(fn_landed_housing).to_crs(3857)
@@ -761,6 +743,29 @@ def run_estimate_gfa():
 
     print('10. Plot GFAs computed and written to: ', gfa_out_dir)
 
+def process_roads(fn_rd_net, road_plots):
+    rn_lta = gpd.read_file(fn_rd_net).to_crs(epsg=3857)  # road network
+    rn_lta = rn_lta[~rn_lta['RD_TYP_CD'].isin(['Cross Junction', 'T-Junction', 'Expunged', 'Other Junction', 'Pedestrian Mall',
+                                   '2 T-Junction opposite each other', 'Unknown', 'Y-Junction', 'Imaginary Line'])]
+    road_cat_dict = {'Expressway': 'cat_1',
+                     'Semi Expressway': 'cat_1',
+                    'Major Arterials/Minor Arterials': 'cat_2_to_3',
+                    'Local Collector/Primary Access': 'cat_4',
+                    'Local Access': 'cat_5',
+                    'Service Road': 'cat_5',
+                    'Slip Road': 'cat_5',
+                    'no category': 'unknown'}
+    rd_plots = assign_road_category(road_plots, rn_lta)
+    rd_plots['category_number'] = [road_cat_dict[x] for x in rd_plots["RD_TYP_CD"]]
+    return rd_plots
+
 if __name__ == "__main__":
-    run_estimate_gfa()
+    fn_road_network = "C:/Users/AydaGrisiute/Desktop/demonstrator/roads/roads_whole_SG/roads.shp"
+    plots = get_plots("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql")
+    print('plots retrieved')
+    processed_plots = process_plots(plots)
+    print('plots processed')
+    road_plots = process_roads(fn_road_network, plots[plots['ZoningType'] == 'ROAD'].rename(columns={'ZoningType':'PlotType', 'cityObjectId': 'PlotId'}))
+
+    #run_estimate_gfa()
 
