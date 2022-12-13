@@ -478,13 +478,26 @@ class TripleDataset:
                               URIRef(intersection_filtered.loc[i, 'plots']),
                               GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
-    '''
-     A method to write the aggregated triple dataset into a nquad(text) file.
-     '''
+    ''' A method to write the aggregated triple dataset into a nquad(text) file.'''
     def write_triples(self, triple_type):
         with open(cur_dir + "/output_" + triple_type + ".nq", mode="wb") as file:
             file.write(self.dataset.serialize(format='nquads'))
 
+
+def instantiate_neighbors():
+    plots = get_plots("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql")
+    all_plots = plots.loc[:, ['plots', 'geometry']]
+    all_plots.rename(columns={'plots': 'context_plots'}, inplace=True)
+    plots['geometry'] = plots.buffer(2, cap_style=3)
+    intersection = gpd.overlay(plots, all_plots, how='intersection', keep_geom_type=True)
+    intersection['area'] = intersection.area
+    filtered_intersection = intersection.loc[lambda df: df['area'] > 1]
+    neighbors_dataset = TripleDataset()
+    for count, i in enumerate(filtered_intersection.index):
+        if filtered_intersection.loc[i, 'plots'] != filtered_intersection.loc[i, 'context_plots']:
+            neighbors_dataset.dataset.add((URIRef(filtered_intersection.loc[i, 'plots']), GFAOntoManager.HAS_NEIGHBOUR,
+                                   URIRef(filtered_intersection.loc[i, 'context_plots']), GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+    neighbors_dataset.write_triples('neighbors')
 
 ''' 
 A method to instantiate triples into /planningregulations/ graph for each regulation overlap.
@@ -559,8 +572,8 @@ def get_plots(endpoint):
                                crs='EPSG:4326')
     geometries = geometries.to_crs(epsg=3857)
     plots = gpd.GeoDataFrame(queryResults, geometry=geometries).drop(columns=['geom'])
-    plots = plots[plots['zone'] != 'ROAD']
-    plots = plots[plots['zone'] != 'WATERBODY']
+    #plots = plots[plots['zone'] != 'ROAD']
+    #plots = plots[plots['zone'] != 'WATERBODY']
     plots['area'] = plots.area
     return plots
 
@@ -932,9 +945,11 @@ if __name__ == "__main__":
     # already loaded on KG to /regulationcontent/ graph.
     #instantiate_urban_design_guidelines(urban_design_guidelines, regulation_cont)
 
-    instantiate_reg_overlaps(central_area_geo, urban_design_areas_geo, street_block_plan_geo, conservation_areas_geo,
-                             monument_geo, urban_design_guidelines_geo, landed_housing_geo, height_control_geo,
-                             planning_boundaries_geo)
+    #instantiate_reg_overlaps(central_area_geo, urban_design_areas_geo, street_block_plan_geo, conservation_areas_geo,
+    #                         monument_geo, urban_design_guidelines_geo, landed_housing_geo, height_control_geo,
+    #                         planning_boundaries_geo)
 
+    get_plots("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql")
+    #instantiate_neighbors()
     # generates nquads with gross floor area estimation for every plot .
     # instantiate_gfa()
