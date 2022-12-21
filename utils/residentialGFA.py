@@ -561,11 +561,13 @@ def find_allowed_residential_types(plots_df, roads_df, residential_regs_df, lh_d
                 lh_ok = True #all residential types are allowed in a non-landed housing area (except good class bungalows).
             elif lh_info is not None:
                 lh_ok = lh_regulation_check(row_reg, lh_info) #checks if the plot is in a lha and if that location and the lha's type matches the requirements for the current development type
-            if sbp_info is not None: #if a street block plan applies to a plot, check that the current development type is allowed by the street block plan.
+
+            if sbp_info is not None: #if a street block plan applies to a plot, check that its ResidentialType value is listed in the current residential development type's 'sbp_development_type' column.
                 suitable_sb_types = row_reg['sbp_development_type'] #suitable street block plan 'ResidentialType' column values, for the current development type
-                if len(sbp_info.ResidentialType.values) == 1:
-                    if sbp_info.ResidentialType.values in suitable_sb_types or sbp_info.ResidentialType.isna:
+                if len(sbp_info.ResidentialType.values[0]) >= 1: # sbp_info.ResidentialType.values[0] is a list, e.g. ['Flat', 'Terrace']
+                    if any(x in suitable_sb_types for x in sbp_info.ResidentialType.values[0]): #x is a list item, e.g. 'Flat', 'TerraceHouse'
                         sb_ok = True #sb ok because current development type is allowed in sbp
+
             else: #sbp does not apply to the plot
                 sb_ok = True # if no street block plan applies to the plot, then the sbp requirement is met
 
@@ -1024,6 +1026,7 @@ def find_regulation_ints(plots_df, fn_con, fn_hc, fn_sb_boundary, fn_sb_reg, fn_
     sb = to_list(sb, 'Setback_Front')
     sb = to_list(sb, 'Setback_Side')
     sb = to_list(sb, 'Setback_Rear')
+    sb = to_list_str(sb, 'ResidentialType') # Residential development types allowed in the street block plan (there can be several)
 
     udr = gpd.read_file(fn_udr).to_crs(epsg=3857)  # urban design goudelines
     udr['Storeys'] = pd.to_numeric(udr['Storeys'], errors='coerce')
