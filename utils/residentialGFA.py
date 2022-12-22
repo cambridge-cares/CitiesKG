@@ -1136,7 +1136,7 @@ fn_control_plans = root + "Regulation_grouping2.xlsx"
 fn_landed_housing = root + "landed_housing/landed_housing.shp"
 fn_roads = root + "roads/ROADNETWORKLINE.shp"
 fn_road_plots = root + "roads/road_plots/roads.shp"
-fn_residential_requirements = root + "residential_GFA/residential_dev_type_requirements_2022_12_08.xlsx" #file name updated
+fn_residential_requirements = root + "residential_GFA/residential_dev_type_requirements_2022_12_22.xlsx" #file name updated
 fn_planning_area_boundaries = root + "planning_area_boundaries/planning_boundary_area.shp"
 fn_residential_gfa_parameters = root + "residential_GFA/residential_gfa_parameters_2022_12_08.xlsx" # file name updated
 
