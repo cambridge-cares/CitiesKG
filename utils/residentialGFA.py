@@ -565,7 +565,7 @@ def find_allowed_residential_types(plots_df, roads_df, residential_regs_df, lh_d
             if sbp_info is not None: #if a street block plan applies to a plot, check that its ResidentialType value is listed in the current residential development type's 'sbp_development_type' column.
                 suitable_sb_types = row_reg['sbp_development_type'] #suitable street block plan 'ResidentialType' column values, for the current development type
                 if len(sbp_info.ResidentialType.values[0]) >= 1: # sbp_info.ResidentialType.values[0] is a list, e.g. ['Flat', 'Terrace']
-                    if any(x in suitable_sb_types for x in sbp_info.ResidentialType.values[0]): #x is a list item, e.g. 'Flat', 'TerraceHouse'
+                    if any(x in suitable_sb_types for x in sbp_info.ResidentialType.values[0]) or sbp_info.ResidentialType.values[0][0] == 'nan': #If current regulation's required sbp.ResidentialType value is in current sbp ResidentialTypes, or if sbp doesn't specify a dev.type (in this case, assume all are allowed):
                         sb_ok = True #sb ok because current development type is allowed in sbp
 
             else: #sbp does not apply to the plot
