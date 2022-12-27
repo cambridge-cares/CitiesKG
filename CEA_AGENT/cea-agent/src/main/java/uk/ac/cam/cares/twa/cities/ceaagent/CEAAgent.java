@@ -93,13 +93,13 @@ public class CEAAgent extends JPSAgent {
     private String owlUri;
     private String purlEnaeqUri;
     private String purlInfrastructureUri;
-    private String timeSeriesUri;
     private String thinkhomeUri;
     private String ontoBuiltEnvUri;
     private static String unitOntologyUri;
     private String requestUrl;
     private String targetUrl;
     private String localRoute;
+    private String usageRoute;
 
     private Map<String, String> accessAgentRoutes = new HashMap<>();
 
@@ -141,6 +141,7 @@ public class CEAAgent extends JPSAgent {
                     }
 
                     String route = new String();
+
                     for (int i = 0; i < uriArray.length(); i++) {
                         LinkedHashMap<String,String> tsIris = new LinkedHashMap<>();
                         LinkedHashMap<String,String> scalarIris = new LinkedHashMap<>();
@@ -178,7 +179,10 @@ public class CEAAgent extends JPSAgent {
 
                         // Only set route once - assuming all iris passed in same namespace
                         // Will not be necessary if namespace is passed in request params
-                        if(i==0) route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
+                        if(i==0) {
+                            route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
+                            usageRoute = usageRoute.isEmpty() ? route : usageRoute;
+                        }
                         uriStringArray.add(uri);
                         // Set default value of 10m if height can not be obtained from knowledge graph
                         // Will only require one height query if height is represented in data consistently
@@ -190,7 +194,10 @@ public class CEAAgent extends JPSAgent {
                         String footprint = getValue(uri, "Lod0FootprintId", route);
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
-                        testData.add(new CEAInputData(footprint, height));
+                        // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
+                        String usage = toCEAConvention(getValue(uri, "BuildingUsage", usageRoute));
+
+                        testData.add(new CEAInputData(footprint, height, usage));
                         if (i==0) {
                             crs = getValue(uri, "CRS", route);
                             crs = crs == "" ? crs = getValue(uri, "DatabasesrsCRS", route) : crs;
@@ -203,6 +210,7 @@ public class CEAAgent extends JPSAgent {
                 }
             } else if (requestUrl.contains(URI_QUERY)) {
                 String route = new String();
+
                 for (int i = 0; i < uriArray.length(); i++) {
                     String uri = uriArray.getString(i);
                     setTimeSeriesProps(uri, getTimeSeriesPropsPath());
@@ -392,7 +400,6 @@ public class CEAAgent extends JPSAgent {
         purlEnaeqUri=config.getString("uri.ontology.purl.enaeq");
         thinkhomeUri=config.getString("uri.ontology.thinkhome");
         purlInfrastructureUri=config.getString("uri.ontology.purl.infrastructure");
-        timeSeriesUri=config.getString("uri.ontology.ts");
         ontoBuiltEnvUri=config.getString("uri.ontology.ontobuiltenv");
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/", config.getString("berlin.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/", config.getString("singaporeEPSG24500.targetresourceid"));
@@ -400,7 +407,8 @@ public class CEAAgent extends JPSAgent {
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/", config.getString("kingslynnEPSG3857.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/", config.getString("kingslynnEPSG27700.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/", config.getString("pirmasensEPSG32633.targetresourceid"));
-        localRoute = config.getString("uri.route.local");
+        localRoute = config.getString("query.route.local");
+        usageRoute = config.getString("usage.query.route");
     }
 
     /**
@@ -599,11 +607,14 @@ public class CEAAgent extends JPSAgent {
             if (value == "Lod0FootprintId" || value == "FootprintThematicSurface"){
                 result = extractFootprint(queryResultArray);
             }
-            else if (value!="FootprintSurfaceGeom") {
-                result = queryResultArray.getJSONObject(0).get(value).toString();
+            else if (value == "BuildingUsage") {
+                result = queryResultArray.getJSONObject(0).get(value).toString().split(ontoBuiltEnvUri)[1].split(">")[0].toUpperCase();
+            }
+            else if (value == "FootprintSurfaceGeom") {
+                result = extractFootprint(getGroundGeometry(queryResultArray));
             }
             else{
-                result = extractFootprint(getGroundGeometry(queryResultArray));
+                result = queryResultArray.getJSONObject(0).get(value).toString();
             }
         }
         return result;
@@ -704,6 +715,8 @@ public class CEAAgent extends JPSAgent {
                 return getDatabasesrsCrsQuery(uriString);
             case "CRS":
                 return getCrsQuery(uriString);
+            case "BuildingUsage":
+                return getBuildingUsage(uriString);
         }
         return null;
     }
@@ -882,6 +895,29 @@ public class CEAAgent extends JPSAgent {
                 .addVar("?CRS")
                 .addWhere(wb);
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getNamespace(uriString)));
+        return sb.build();
+    }
+
+    /**
+     * builds a SPARQL query for a specific URI to retrieve the building usage stored with OntoBuiltEnv concepts
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getBuildingUsage(String uriString) {
+        WhereBuilder wb = new WhereBuilder();
+        SelectBuilder sb = new SelectBuilder();
+
+        wb.addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
+                .addPrefix("rdf", rdfUri)
+                .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s")
+                .addWhere("?building", "ontoBuiltEnv:hasUsageCategory", "?usage")
+                .addWhere("?usage", "rdf:type", "?BuildingUsage");
+
+        sb.addVar("?BuildingUsage")
+                .addWhere(wb);
+
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
+
         return sb.build();
     }
 
@@ -1490,7 +1526,7 @@ public class CEAAgent extends JPSAgent {
      * @param distance buffer distance
      * @return inflated polygon
      */
-    private Geometry inflatePolygon(Geometry geom, Double distance) {
+    private Geometry inflatePolygon(Geometry geom, Double distance){
         ArrayList<Double> zCoordinate = getPolygonZ(geom);
         BufferParameters bufferParameters = new BufferParameters();
         bufferParameters.setEndCapStyle(BufferParameters.CAP_ROUND);
@@ -1507,7 +1543,7 @@ public class CEAAgent extends JPSAgent {
      * @param distance buffer distance
      * @return deflated polygon
      */
-    private Geometry deflatePolygon(Geometry geom, Double distance) {
+    private Geometry deflatePolygon(Geometry geom, Double distance){
         ArrayList<Double> zCoordinate = getPolygonZ(geom);
         BufferParameters bufferParameters = new BufferParameters();
         bufferParameters.setEndCapStyle(BufferParameters.CAP_ROUND);
@@ -1538,7 +1574,6 @@ public class CEAAgent extends JPSAgent {
      * Sets a polygon's z coordinates to the values from zInput
      * @param geom polygon geometry
      * @param zInput ArrayList of values representing z coordinates
-     * @return geom with z coordinates from zInput
      */
     private void setPolygonZ(Geometry geom, ArrayList<Double> zInput){
         Double newZ = Double.NaN;
@@ -1673,4 +1708,63 @@ public class CEAAgent extends JPSAgent {
             throw new JPSRuntimeException(e);
         }
     }
+
+    /**
+     * Convert OntoBuiltEnv building usage type to convention used by CEA
+     * @param usage OntoBuiltEnv building usage type
+     * @return building usage per CEA convention
+     */
+    public String toCEAConvention(String usage){
+        switch(usage){
+            case("DOMESTIC"):
+                return "MULTI_RES";
+            case("SINGLERESIDENTIAL"):
+                return "SINGLE_RES";
+            case("MULTIRESIDENTIAL"):
+                return "MULTI_RES";
+            case("EMERGENCYSERVICE"):
+                return "HOSPITAL";
+            case("FIRESTATION"):
+                return "HOSPITAL";
+            case("POLICESTATION"):
+                return "HOSPITAL";
+            case("MEDICALCARE"):
+                return "HOSPITAL";
+            case("HOSPITAL"):
+                return usage;
+            case("CLINIC"):
+                return "HOSPITAL";
+            case("EDUCATION"):
+                return "UNIVERSITY";
+            case("SCHOOL"):
+                return usage;
+            case("UNIVERSITYFACILITY"):
+                return "UNIVERSITY";
+            case("OFFICE"):
+                return usage;
+            case("RETAILESTABLISHMENT"):
+                return "RETAIL";
+            case("RELIGIOUSFACILITY"):
+                return "MUSEUM";
+            case("INDUSTRIALFACILITY"):
+                return "INDUSTRIAL";
+            case("EATINGESTABLISHMENT"):
+                return "RESTAURANT";
+            case("DRINKINGESTABLISHMENT"):
+                return "RESTAURANT";
+            case("HOTEL"):
+                return usage;
+            case("SPORTSFACILITY"):
+                return "GYM";
+            case("CULTURALFACILITY"):
+                return "MUSEUM";
+            case("TRANSPORTFACILITY"):
+                return "INDUSTRIAL";
+            case("NON-DOMESTIC"):
+                return "INDUSTRIAL";
+            default:
+                return "MULTI_RES";
+        }
+    }
+
 }

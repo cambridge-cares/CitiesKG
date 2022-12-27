@@ -13,14 +13,17 @@ def write_workflow_file(workflow_file, filepath):
 
     :param filepath: file path of the cea project
     """
-    t = "directory_path"
-    u = "filepath_zone"
-    v = "scenario_path"
-    x = filepath
-    y = filepath+os.sep+"zone.shp"
-    z = filepath+os.sep+"testProject"+os.sep+"testScenario"
+    a = "directory_path"
+    b = "scenario_path"
+    c = "filepath_zone"
+    d = "filepath_typology"
 
-    find_and_replace = {t: x, u: y, v: z}
+    z = filepath
+    y = filepath+os.sep+"testProject"+os.sep+"testScenario"
+    x = filepath+os.sep+"zone.shp"
+    w = filepath+os.sep+"typology.dbf"
+
+    find_and_replace = {a: z, b: y, c: x, d: w}
 
     output_yaml = filepath+os.sep+"workflow.yml"
 

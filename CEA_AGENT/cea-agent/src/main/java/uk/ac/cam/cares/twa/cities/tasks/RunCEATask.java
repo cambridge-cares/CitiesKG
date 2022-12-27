@@ -30,6 +30,7 @@ public class RunCEATask implements Runnable {
     private Boolean stop = false;
     private static final String DATA_FILE = "datafile.txt";
     private static final String SHAPEFILE_SCRIPT = "create_shapefile.py";
+    private static final String TYPOLOGY_SCRIPT = "create_typologyfile.py";
     private static final String WORKFLOW_SCRIPT = "workflow.yml";
     private static final String CREATE_WORKFLOW_SCRIPT = "create_cea_workflow.py";
     private static final String FS = System.getProperty("file.separator");
@@ -325,6 +326,7 @@ public class RunCEATask implements Runnable {
                 ArrayList<String> args = new ArrayList<>();
                 ArrayList<String> args2 = new ArrayList<>();
                 ArrayList<String> args3 = new ArrayList<>();
+                ArrayList<String> args4 = new ArrayList<>();
                 String workflowPath = strTmp + FS + "workflow.yml";
                 String data_path = strTmp + FS + DATA_FILE;
 
@@ -346,20 +348,26 @@ public class RunCEATask implements Runnable {
 
                     args2.add("cmd.exe");
                     args2.add("/C");
-                    args2.add("conda activate cea && ");
-                    args2.add("python");
-                    args2.add(new File(
-                            Objects.requireNonNull(getClass().getClassLoader().getResource(CREATE_WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
-                    args2.add(new File(
-                            Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
-                    args2.add(strTmp);
+                    f_path = new File(Objects.requireNonNull(getClass().getClassLoader().getResource(TYPOLOGY_SCRIPT)).toURI()).getAbsolutePath();
+                    args2.add("conda activate cea && python " + f_path + " " + data_path + " " + strTmp);
 
                     args3.add("cmd.exe");
                     args3.add("/C");
-                    args3.add("conda activate cea && cea workflow --workflow " + workflowPath);
+                    args3.add("conda activate cea && ");
+                    args3.add("python");
+                    args3.add(new File(
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(CREATE_WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
+                    args3.add(new File(
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
+                    args3.add(strTmp);
+
+                    args4.add("cmd.exe");
+                    args4.add("/C");
+                    args4.add("conda activate cea && cea workflow --workflow " + workflowPath);
                 }
                 else {
                     String shapefile = FS+"target"+FS+"classes"+FS+SHAPEFILE_SCRIPT;
+                    String typologyfile = FS+"target"+FS+"classes"+FS+TYPOLOGY_SCRIPT;
                     String createWorkflowFile = FS+"target"+FS+"classes"+FS+CREATE_WORKFLOW_SCRIPT;
                     String workflowFile = FS+"target"+FS+"classes"+FS+WORKFLOW_SCRIPT;
 
@@ -369,21 +377,27 @@ public class RunCEATask implements Runnable {
 
                     args2.add("/bin/bash");
                     args2.add("-c");
-                    args2.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile + " " + strTmp);
-
+                    args2.add("export PROJ_LIB=/venv/share/lib && python " + typologyfile +" '"+ data_path +"' " + strTmp);
 
                     args3.add("/bin/bash");
                     args3.add("-c");
-                    args3.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath);
+                    args3.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile + " " + strTmp);
+
+
+                    args4.add("/bin/bash");
+                    args4.add("-c");
+                    args4.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath);
 
                 }
 
                 // create the shapefile process and run
                 runProcess(args);
-                // create the workflow process and run
+                // create the typologyfile process and run
                 runProcess(args2);
-                // Run workflow that runs all CEA scripts
+                // create the workflow process and run
                 runProcess(args3);
+                // Run workflow that runs all CEA scripts
+                runProcess(args4);
 
                 CEAOutputData result = extractTimeSeriesOutputs(strTmp);
                 returnOutputs(extractArea(strTmp,result));

@@ -6,6 +6,7 @@
     zone: filepath_zone
     terrain:
     streets:
+    typology: filepath_typology
 - script: weather-helper
   parameters:
     scenario: scenario_path

@@ -26,7 +26,7 @@ public class RunCEATaskTest {
         try {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test","test"));
+            testData.add(new CEAInputData("test","test","test"));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -42,7 +42,7 @@ public class RunCEATaskTest {
     public void testRunCEATaskFields() {
         try {
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test","test"));
+            testData.add(new CEAInputData("test","test","test"));
             URI testURI = new URI("http://localhost/test");
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
@@ -50,7 +50,7 @@ public class RunCEATaskTest {
             String test_CRS = "27700";
             RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
 
-            assertEquals(12, task.getClass().getDeclaredFields().length);
+            assertEquals(13, task.getClass().getDeclaredFields().length);
 
             Field inputs;
             Field uris;
@@ -111,7 +111,7 @@ public class RunCEATaskTest {
         try{
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test","test"));
+            testData.add(new CEAInputData("test","test","test"));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -131,7 +131,7 @@ public class RunCEATaskTest {
         try {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test","test"));
+            testData.add(new CEAInputData("test","test","test"));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -154,7 +154,7 @@ public class RunCEATaskTest {
     public void testRunProcess() throws Exception {
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test","test"));
+        testData.add(new CEAInputData("test","test","test"));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -195,7 +195,7 @@ public class RunCEATaskTest {
         try {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test","test"));
+            testData.add(new CEAInputData("test","test","test"));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -229,7 +229,7 @@ public class RunCEATaskTest {
 
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test","test"));
+        testData.add(new CEAInputData("test","test","test"));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -271,7 +271,7 @@ public class RunCEATaskTest {
 
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test","test"));
+        testData.add(new CEAInputData("test","test","test"));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -329,7 +329,7 @@ public class RunCEATaskTest {
         try {
             testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test"));
+            testData.add(new CEAInputData("test","test","test"));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -376,7 +376,7 @@ public class RunCEATaskTest {
     public void testRun() throws NoSuchMethodException, URISyntaxException, InvocationTargetException, IllegalAccessException {
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test", "test"));
+        testData.add(new CEAInputData("test","test","test"));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -395,7 +395,7 @@ public class RunCEATaskTest {
 
         run.invoke(task);
 
-        verify(task, times(3)).runProcess(any());
+        verify(task, times(4)).runProcess(any());
         verify(task, times(1)).extractTimeSeriesOutputs(anyString());
         verify(task, times(1)).extractArea(anyString(), any());
         verify(task, times(1)).returnOutputs(any());
