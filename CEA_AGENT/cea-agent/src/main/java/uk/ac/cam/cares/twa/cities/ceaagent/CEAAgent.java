@@ -440,7 +440,7 @@ public class CEAAgent extends JPSAgent {
         // Create a iri for each measurement
         List<String> iris = new ArrayList<>();
         for(String measurement: TIME_SERIES){
-            String iri = getGraph(uriString,ENERGY_PROFILE)+measurement+"_"+UUID.randomUUID()+ "/";
+            String iri = ontoUBEMMPUri+measurement+"_"+UUID.randomUUID()+ "/";
             iris.add(iri);
             fixedIris.put(measurement, iri);
         }
@@ -1126,7 +1126,7 @@ public class CEAAgent extends JPSAgent {
 
         String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
 
-        String buildingUri = outputGraphUri + "Building_" + UUID.randomUUID() + "/";
+        String buildingUri = ontoBuiltEnvUri + "Building_" + UUID.randomUUID() + "/";
 
         UpdateBuilder ub =
                 new UpdateBuilder()
@@ -1280,20 +1280,20 @@ public class CEAAgent extends JPSAgent {
         String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
 
         //Device uris
-        String heatingUri = outputGraphUri + "HeatingSystem_" + UUID.randomUUID() + "/";
-        String coolingUri = outputGraphUri + "CoolingSystem_" + UUID.randomUUID() + "/";
-        String pvRoofPanelsUri = outputGraphUri + "PVRoofPanels_" + UUID.randomUUID() + "/";
-        String pvWallSouthPanelsUri = outputGraphUri + "PVWallSouthPanels_" + UUID.randomUUID() + "/";
-        String pvWallNorthPanelsUri = outputGraphUri + "PVWallNorthPanels_" + UUID.randomUUID() + "/";
-        String pvWallEastPanelsUri = outputGraphUri + "PVWallEastPanels_" + UUID.randomUUID() + "/";
-        String pvWallWestPanelsUri = outputGraphUri + "PVWallWestPanels_" + UUID.randomUUID() + "/";
+        String heatingUri = ontoUBEMMPUri + "HeatingSystem_" + UUID.randomUUID() + "/";
+        String coolingUri = ontoUBEMMPUri + "CoolingSystem_" + UUID.randomUUID() + "/";
+        String pvRoofPanelsUri = ontoUBEMMPUri + "PVRoofPanels_" + UUID.randomUUID() + "/";
+        String pvWallSouthPanelsUri = ontoUBEMMPUri + "PVWallSouthPanels_" + UUID.randomUUID() + "/";
+        String pvWallNorthPanelsUri = ontoUBEMMPUri + "PVWallNorthPanels_" + UUID.randomUUID() + "/";
+        String pvWallEastPanelsUri = ontoUBEMMPUri + "PVWallEastPanels_" + UUID.randomUUID() + "/";
+        String pvWallWestPanelsUri = ontoUBEMMPUri + "PVWallWestPanels_" + UUID.randomUUID() + "/";
 
         // save om:measure uris for scalars and create om:quantity uris for scalars and time series
         // (time series om:measure iris already created in createTimeSeries)
         for (String measurement: SCALARS) {
-            String measure = outputGraphUri + measurement+"Value_" + UUID.randomUUID() + "/";
+            String measure = ontoUBEMMPUri + measurement+"Value_" + UUID.randomUUID() + "/";
             scalarIris.put(measurement, measure);
-            String quantity = outputGraphUri + measurement+"Quantity_" + UUID.randomUUID() + "/";
+            String quantity = ontoUBEMMPUri + measurement+"Quantity_" + UUID.randomUUID() + "/";
             switch(measurement){
                 case(KEY_PV_ROOF_AREA):
                     createPVPanelAreaUpdate(ub, buildingUri, pvRoofPanelsUri, "ontoubemmp:RoofPVPanels", quantity, measure, scalars.get(KEY_PV_ROOF_AREA).get(uriCounter));
@@ -1314,7 +1314,7 @@ public class CEAAgent extends JPSAgent {
         }
 
         for (String measurement: TIME_SERIES) {
-            String quantity = outputGraphUri + measurement + "Quantity_" + UUID.randomUUID() + "/";
+            String quantity = ontoUBEMMPUri + measurement + "Quantity_" + UUID.randomUUID() + "/";
             if (measurement.equals(KEY_GRID_CONSUMPTION) || measurement.equals(KEY_ELECTRICITY_CONSUMPTION)) {
                 createConsumptionUpdate(ub, buildingUri, "ontoubemmp:" + measurement, quantity, tsIris.get(measurement));
             }
