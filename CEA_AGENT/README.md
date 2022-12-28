@@ -267,7 +267,7 @@ The route should contain the port number your access agent is running on (eg. 48
 
 eg. `uri.route.local=http://host.docker.internal:48080/docker-kings-lynn`
 
-If you no longer want to use a local route, ensure you leave uri.route.local empty.
+If you no longer want to use a local route, ensure you leave ```query.route.local``` empty.
 
 Check [here](https://www.dropbox.com/s/z5dkdg5puqkfjtw/RunningCEAAgentLocallyGuide.pdf?dl=0) for a detailed guide on running CEA Agent locally.
 
