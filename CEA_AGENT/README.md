@@ -241,6 +241,14 @@ Please provide the route to query for building usage type in ```usage.query.rout
 
 If ```usage.query.route``` is not provided, the agent will attempt to query for building usage from the same endpoint as the building geometry query.
 
+### ```cea.store.route```
+```cea.store.route``` in
+```
+./cea-agent/src/main/resources
+    CEAAgentConfig.properties
+```
+is intended for accessing endpoint where CEA triples will be stored. This endpoint has yet been set up. Leave ```cea.store.route``` empty for now.
+
 ### Access Agent
 
 The CEA agent also uses the [access agent](https://github.com/cambridge-cares/TheWorldAvatar/tree/main/JPS_ACCESS_AGENT). 
