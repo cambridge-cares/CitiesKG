@@ -159,7 +159,7 @@ public class CEAAgent extends JPSAgent {
                         String building = checkBuildingInitialised(uri, ceaRoute);
                         if(building.equals("")){
                             // Check if DABGEO:Building IRI has already been created in another endpoint
-                            checkBuildingInitialised(uri, usageRoute);
+                            building = checkBuildingInitialised(uri, usageRoute);
                             building = initialiseBuilding(uri, building, ceaRoute);
                         }
                         if(!checkDataInitialised(uri, building, tsIris, scalarIris, ceaRoute)) {
@@ -1099,7 +1099,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Check building linked to ontoCityGML is initialised in KG
+     * Check building linked to ontoCityGML is initialised in KG and is a DABGEO:Building instance
      * @param uriString city object id
      * @param route route to pass to access agent
      * @return building
@@ -1108,8 +1108,11 @@ public class CEAAgent extends JPSAgent {
         WhereBuilder wb = new WhereBuilder();
         SelectBuilder sb = new SelectBuilder();
 
-        wb.addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
-                .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s");
+        wb.addPrefix("rdf", rdfUri)
+                .addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
+                .addPrefix("DABGEO", purlInfrastructureUri)
+                .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s")
+                .addWhere("?building", "rdf:type", "DABGEO:Building");
 
         sb.addVar("?building").addWhere(wb);
 
@@ -1124,7 +1127,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Initialise building in KG and link to ontoCityGMLRepresentation
+     * Initialise building in KG with buildingUri as the DABGEO:Building IRI, and link to ontoCityGMLRepresentation
      * @param uriString city object id
      * @param buildingUri building IRI from other endpoints if exist
      * @param route route to pass to access agent
