@@ -1,7 +1,11 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
+import org.apache.jena.arq.querybuilder.handlers.WhereHandler;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementService;
 import org.jooq.exception.DataAccessException;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -73,6 +77,8 @@ public class CEAAgent extends JPSAgent {
     public static final String KEY_PV_WALL_EAST_SUPPLY= "PVWallEastSupply";
     public static final String KEY_PV_WALL_WEST_SUPPLY= "PVWallWestSupply";
     public static final String KEY_TIMES= "times";
+    public String customDataType = "<http://localhost/blazegraph/literals/POLYGON-3-15>";
+    public String customField = "X0#Y0#Z0#X1#Y1#Z1#X2#Y2#Z2#X3#Y3#Z3#X4#Y4#Z4";
 
     public List<String> TIME_SERIES = Arrays.asList(KEY_GRID_CONSUMPTION,KEY_ELECTRICITY_CONSUMPTION,KEY_HEATING_CONSUMPTION,KEY_COOLING_CONSUMPTION, KEY_PV_ROOF_SUPPLY,KEY_PV_WALL_SOUTH_SUPPLY, KEY_PV_WALL_NORTH_SUPPLY,KEY_PV_WALL_EAST_SUPPLY, KEY_PV_WALL_WEST_SUPPLY);
     public List<String> SCALARS = Arrays.asList(KEY_PV_ROOF_AREA,KEY_PV_WALL_NORTH_AREA,KEY_PV_WALL_SOUTH_AREA,KEY_PV_WALL_EAST_AREA, KEY_PV_WALL_WEST_AREA);
@@ -946,6 +952,48 @@ public class CEAAgent extends JPSAgent {
         return sb.build();
     }
 
+    /**
+     * builds a SPARQL geospatial query for city object id of buildings whose envelope are within lowerBounds and upperBounds
+     * @param uriString city object id of the target building
+     * @param lowerBounds coordinates of customFieldsLowerBounds as a string
+     * @param upperBounds coordinates of customFieldsUpperBounds as a string
+     * @return returns a query string
+     */
+    private Query getBuildingsWithinBoundsQuery(String uriString, String lowerBounds, String upperBounds) throws ParseException {
+        // where clause for geospatial search
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ocgml", ocgmlUri)
+                .addPrefix("geo", geoUri)
+                .addWhere("?cityObject", "geo:predicate", "ocgml:EnvelopeType")
+                .addWhere("?cityObject", "geo:searchDatatype", customDataType)
+                .addWhere("?cityObject", "geo:customFields", customField)
+                .addWhere("?cityObject", "geo:customFieldsLowerBounds", lowerBounds)
+                .addWhere("?cityObject", "geo:customFieldsUpperBounds", upperBounds);
+
+        // where clause to check that the city object is a building
+        WhereBuilder wb2 = new WhereBuilder()
+                .addPrefix("ocgml", ocgmlUri)
+                .addWhere("?cityObject", "ocgml:objectClassId", "?id")
+                .addFilter("?id=26");
+
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?cityObject");
+
+        Query query = sb.build();
+        // add geospatial service
+        ElementGroup body = new ElementGroup();
+        body.addElement(new ElementService(geoUri + "search", wb.build().getQueryPattern()));
+        body.addElement(wb2.build().getQueryPattern());
+        query.setQueryPattern(body);
+
+        WhereHandler wh = new WhereHandler(query.cloneQuery());
+
+        // add city object graph
+        WhereHandler wh2 = new WhereHandler(sb.build());
+        wh2.addGraph(NodeFactory.createURI(getGraph(uriString,CITY_OBJECT)), wh);
+
+        return wh2.getQuery();
+    }
     /**
      * Add Where for Building Consumption
      * @param builder update builder
