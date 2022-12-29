@@ -100,6 +100,7 @@ public class CEAAgent extends JPSAgent {
     private String targetUrl;
     private String localRoute;
     private String usageRoute;
+    private String ceaRoute;
 
     private Map<String, String> accessAgentRoutes = new HashMap<>();
 
@@ -153,17 +154,20 @@ public class CEAAgent extends JPSAgent {
                         // Will not be necessary if namespace is passed in request params
                         if(i==0) {
                             route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
+                            ceaRoute = ceaRoute.isEmpty() ? route : ceaRoute;
                         }
-                        String building = checkBuildingInitialised(uri, route);
+                        String building = checkBuildingInitialised(uri, ceaRoute);
                         if(building.equals("")){
-                            building = initialiseBuilding(uri, route);
+                            // Check if DABGEO:Building IRI has already been created in another endpoint
+                            building = checkBuildingInitialised(uri, usageRoute);
+                            building = initialiseBuilding(uri, building, ceaRoute);
                         }
-                        if(!checkDataInitialised(uri, building, tsIris, scalarIris, route)) {
+                        if(!checkDataInitialised(uri, building, tsIris, scalarIris, ceaRoute)) {
                             createTimeSeries(uri,tsIris);
-                            initialiseData(uri, i, scalars, building, tsIris, scalarIris, route);
+                            initialiseData(uri, i, scalars, building, tsIris, scalarIris, ceaRoute);
                         }
                         else{
-                            updateScalars(uri, route, scalarIris, scalars, i);
+                            updateScalars(uri, ceaRoute, scalarIris, scalars, i);
                         }
                         addDataToTimeSeries(timeSeries.get(i), times, tsIris);
                     }
@@ -182,6 +186,7 @@ public class CEAAgent extends JPSAgent {
                         if(i==0) {
                             route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
                             usageRoute = usageRoute.isEmpty() ? route : usageRoute;
+                            ceaRoute = ceaRoute.isEmpty() ? route : ceaRoute;
                         }
                         uriStringArray.add(uri);
                         // Set default value of 10m if height can not be obtained from knowledge graph
@@ -200,7 +205,7 @@ public class CEAAgent extends JPSAgent {
                         testData.add(new CEAInputData(footprint, height, usage));
                         if (i==0) {
                             crs = getValue(uri, "CRS", route);
-                            crs = crs == "" ? crs = getValue(uri, "DatabasesrsCRS", route) : crs;
+                            crs = crs == "" ? getValue(uri, "DatabasesrsCRS", route) : crs;
                             if (crs == ""){crs = getNamespace(uri).split("EPSG").length == 2 ? getNamespace(uri).split("EPSG")[1].split("/")[0] : "27700";}
                         } //just get crs once - assuming all iris in same namespace
                     }
@@ -218,8 +223,9 @@ public class CEAAgent extends JPSAgent {
                     // Only set route once - assuming all iris passed in same namespace
                     if(i==0) {
                         route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
+                        ceaRoute = ceaRoute.isEmpty() ? route : ceaRoute;
                     }
-                    String building = checkBuildingInitialised(uri, route);
+                    String building = checkBuildingInitialised(uri, ceaRoute);
                     if(building.equals("")){
                         return requestParams;
                     }
@@ -227,14 +233,14 @@ public class CEAAgent extends JPSAgent {
                     List<String> allMeasures = new ArrayList<>();
                     Stream.of(TIME_SERIES, SCALARS).forEach(allMeasures::addAll);
                     for (String measurement: allMeasures) {
-                        ArrayList<String> result = getDataIRI(uri, building, measurement, route);
+                        ArrayList<String> result = getDataIRI(uri, building, measurement, ceaRoute);
                         if (!result.isEmpty()) {
                             String value;
                             if (TIME_SERIES.contains(measurement)) {
                                 value = calculateAnnual(retrieveData(result.get(0)), result.get(0));
                                 measurement = "Annual "+ measurement;
                             } else {
-                                value = getNumericalValue(uri, result.get(0), route);
+                                value = getNumericalValue(uri, result.get(0), ceaRoute);
                             }
                             // Return non-zero values
                             if(!(value.equals("0") || value.equals("0.0"))){
@@ -409,6 +415,7 @@ public class CEAAgent extends JPSAgent {
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/", config.getString("pirmasensEPSG32633.targetresourceid"));
         localRoute = config.getString("query.route.local");
         usageRoute = config.getString("usage.query.route");
+        ceaRoute = config.getString("cea.store.route");
     }
 
     /**
@@ -440,7 +447,7 @@ public class CEAAgent extends JPSAgent {
         // Create a iri for each measurement
         List<String> iris = new ArrayList<>();
         for(String measurement: TIME_SERIES){
-            String iri = getGraph(uriString,ENERGY_PROFILE)+measurement+"_"+UUID.randomUUID()+ "/";
+            String iri = ontoUBEMMPUri+measurement+"_"+UUID.randomUUID()+ "/";
             iris.add(iri);
             fixedIris.put(measurement, iri);
         }
@@ -1092,7 +1099,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Check building linked to ontoCityGML is initialised in KG
+     * Check building linked to ontoCityGML is initialised in KG and is a DABGEO:Building instance
      * @param uriString city object id
      * @param route route to pass to access agent
      * @return building
@@ -1101,10 +1108,13 @@ public class CEAAgent extends JPSAgent {
         WhereBuilder wb = new WhereBuilder();
         SelectBuilder sb = new SelectBuilder();
 
-        wb.addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
-                .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s");
+        wb.addPrefix("rdf", rdfUri)
+                .addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
+                .addPrefix("DABGEO", purlInfrastructureUri)
+                .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s")
+                .addWhere("?building", "rdf:type", "DABGEO:Building");
 
-        sb.addVar("?building").addGraph(NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)), wb);
+        sb.addVar("?building").addWhere(wb);
 
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
 
@@ -1117,16 +1127,19 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Initialise building in KG and link to ontoCityGMLRepresentation
+     * Initialise building in KG with buildingUri as the DABGEO:Building IRI, and link to ontoCityGMLRepresentation
      * @param uriString city object id
+     * @param buildingUri building IRI from other endpoints if exist
      * @param route route to pass to access agent
      * @return building
      */
-    public String initialiseBuilding(String uriString, String route){
+    public String initialiseBuilding(String uriString, String buildingUri, String route){
 
         String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
 
-        String buildingUri = outputGraphUri + "Building_" + UUID.randomUUID() + "/";
+        if (buildingUri.isEmpty()) {
+            buildingUri = ontoBuiltEnvUri + "Building_" + UUID.randomUUID() + "/";
+        }
 
         UpdateBuilder ub =
                 new UpdateBuilder()
@@ -1280,20 +1293,20 @@ public class CEAAgent extends JPSAgent {
         String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
 
         //Device uris
-        String heatingUri = outputGraphUri + "HeatingSystem_" + UUID.randomUUID() + "/";
-        String coolingUri = outputGraphUri + "CoolingSystem_" + UUID.randomUUID() + "/";
-        String pvRoofPanelsUri = outputGraphUri + "PVRoofPanels_" + UUID.randomUUID() + "/";
-        String pvWallSouthPanelsUri = outputGraphUri + "PVWallSouthPanels_" + UUID.randomUUID() + "/";
-        String pvWallNorthPanelsUri = outputGraphUri + "PVWallNorthPanels_" + UUID.randomUUID() + "/";
-        String pvWallEastPanelsUri = outputGraphUri + "PVWallEastPanels_" + UUID.randomUUID() + "/";
-        String pvWallWestPanelsUri = outputGraphUri + "PVWallWestPanels_" + UUID.randomUUID() + "/";
+        String heatingUri = ontoUBEMMPUri + "HeatingSystem_" + UUID.randomUUID() + "/";
+        String coolingUri = ontoUBEMMPUri + "CoolingSystem_" + UUID.randomUUID() + "/";
+        String pvRoofPanelsUri = ontoUBEMMPUri + "PVRoofPanels_" + UUID.randomUUID() + "/";
+        String pvWallSouthPanelsUri = ontoUBEMMPUri + "PVWallSouthPanels_" + UUID.randomUUID() + "/";
+        String pvWallNorthPanelsUri = ontoUBEMMPUri + "PVWallNorthPanels_" + UUID.randomUUID() + "/";
+        String pvWallEastPanelsUri = ontoUBEMMPUri + "PVWallEastPanels_" + UUID.randomUUID() + "/";
+        String pvWallWestPanelsUri = ontoUBEMMPUri + "PVWallWestPanels_" + UUID.randomUUID() + "/";
 
         // save om:measure uris for scalars and create om:quantity uris for scalars and time series
         // (time series om:measure iris already created in createTimeSeries)
         for (String measurement: SCALARS) {
-            String measure = outputGraphUri + measurement+"Value_" + UUID.randomUUID() + "/";
+            String measure = ontoUBEMMPUri + measurement+"Value_" + UUID.randomUUID() + "/";
             scalarIris.put(measurement, measure);
-            String quantity = outputGraphUri + measurement+"Quantity_" + UUID.randomUUID() + "/";
+            String quantity = ontoUBEMMPUri + measurement+"Quantity_" + UUID.randomUUID() + "/";
             switch(measurement){
                 case(KEY_PV_ROOF_AREA):
                     createPVPanelAreaUpdate(ub, buildingUri, pvRoofPanelsUri, "ontoubemmp:RoofPVPanels", quantity, measure, scalars.get(KEY_PV_ROOF_AREA).get(uriCounter));
@@ -1314,7 +1327,7 @@ public class CEAAgent extends JPSAgent {
         }
 
         for (String measurement: TIME_SERIES) {
-            String quantity = outputGraphUri + measurement + "Quantity_" + UUID.randomUUID() + "/";
+            String quantity = ontoUBEMMPUri + measurement + "Quantity_" + UUID.randomUUID() + "/";
             if (measurement.equals(KEY_GRID_CONSUMPTION) || measurement.equals(KEY_ELECTRICITY_CONSUMPTION)) {
                 createConsumptionUpdate(ub, buildingUri, "ontoubemmp:" + measurement, quantity, tsIris.get(measurement));
             }
@@ -1587,8 +1600,15 @@ public class CEAAgent extends JPSAgent {
 
         if(newZ.isNaN()){newZ = 10.0;}
 
-        while(geom.getNumPoints() != zInput.size()){
-            zInput.add(1, newZ);
+        if (geom.getNumPoints() < zInput.size()) {
+            while (geom.getNumPoints() != zInput.size()) {
+                zInput.remove(zInput.size()-1);
+            }
+        }
+        else {
+            while (geom.getNumPoints() != zInput.size()) {
+                zInput.add(1, newZ);
+            }
         }
 
         Collections.replaceAll(zInput, Double.NaN, newZ);

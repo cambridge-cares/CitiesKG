@@ -241,6 +241,14 @@ Please provide the route to query for building usage type in ```usage.query.rout
 
 If ```usage.query.route``` is not provided, the agent will attempt to query for building usage from the same endpoint as the building geometry query.
 
+### ```cea.store.route```
+```cea.store.route``` in
+```
+./cea-agent/src/main/resources
+    CEAAgentConfig.properties
+```
+is intended for accessing endpoint where CEA triples will be stored. This endpoint has yet been set up. Leave ```cea.store.route``` empty for now.
+
 ### Access Agent
 
 The CEA agent also uses the [access agent](https://github.com/cambridge-cares/TheWorldAvatar/tree/main/JPS_ACCESS_AGENT). 
@@ -267,7 +275,7 @@ The route should contain the port number your access agent is running on (eg. 48
 
 eg. `uri.route.local=http://host.docker.internal:48080/docker-kings-lynn`
 
-If you no longer want to use a local route, ensure you leave uri.route.local empty.
+If you no longer want to use a local route, ensure you leave ```query.route.local``` empty.
 
 Check [here](https://www.dropbox.com/s/z5dkdg5puqkfjtw/RunningCEAAgentLocallyGuide.pdf?dl=0) for a detailed guide on running CEA Agent locally.
 

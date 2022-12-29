@@ -59,7 +59,7 @@ public class CEAAgentTest {
         CEAAgent agent = new CEAAgent();
         ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
 
-        assertEquals(53, agent.getClass().getDeclaredFields().length);
+        assertEquals(54, agent.getClass().getDeclaredFields().length);
 
         Field URI_ACTION;
         Field URI_UPDATE;
@@ -112,6 +112,7 @@ public class CEAAgentTest {
         Field targetUrl;
         Field localRoute;
         Field usageRoute;
+        Field ceaRoute;
 
         try {
             URI_ACTION = agent.getClass().getDeclaredField("URI_ACTION");
@@ -244,6 +245,9 @@ public class CEAAgentTest {
             usageRoute = agent.getClass().getDeclaredField("usageRoute");
             usageRoute.setAccessible(true);
             assertEquals(usageRoute.get(agent), config.getString("usage.query.route"));
+            ceaRoute = agent.getClass().getDeclaredField("ceaRoute");
+            ceaRoute.setAccessible(true);
+            assertEquals(ceaRoute.get(agent), config.getString("cea.store.route"));
         } catch (NoSuchFieldException | IllegalAccessException e) {
             fail();
         }
@@ -737,7 +741,7 @@ public class CEAAgentTest {
 
             // Ensure iris created correctly and time series initialised
             for (String time_series : time_series_strings) {
-                assertTrue(fixedIris.get(time_series).contains(prefix + "energyprofile/" + time_series));
+                assertTrue(fixedIris.get(time_series).contains("https://www.theworldavatar.com/kg/ontoubemmp/" + time_series));
             }
             verify(mockTs.constructed().get(0), times(1)).initTimeSeries(anyList(), anyList(), anyString(), any(), any(), any(), any());
         }
@@ -1433,16 +1437,16 @@ public class CEAAgentTest {
     @Test
     public void testInitialiseBuilding() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = spy(new CEAAgent());
-        Method initialiseBuilding = agent.getClass().getDeclaredMethod("initialiseBuilding", String.class, String.class);
+        Method initialiseBuilding = agent.getClass().getDeclaredMethod("initialiseBuilding", String.class, String.class, String.class);
         assertNotNull(initialiseBuilding);
 
         String route = "test_route";
 
         String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
-        String expected = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/energyprofile/";
+        String expected = "https://www.theworldavatar.com/kg/ontobuiltenv/";
 
         doNothing().when(agent).updateStore(anyString(), anyString());
-        String result = (String) initialiseBuilding.invoke(agent,  uriString, route );
+        String result = (String) initialiseBuilding.invoke(agent,  uriString, "", route );
 
         //test string contains correct graph and update store is called once
         assertTrue( result.contains(expected));
