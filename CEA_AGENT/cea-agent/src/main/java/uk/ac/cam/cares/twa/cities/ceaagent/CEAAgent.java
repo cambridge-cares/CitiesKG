@@ -3,7 +3,6 @@ package uk.ac.cam.cares.twa.cities.ceaagent;
 import org.apache.jena.arq.querybuilder.handlers.WhereHandler;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
-import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementService;
 import org.jooq.exception.DataAccessException;
@@ -209,7 +208,9 @@ public class CEAAgent extends JPSAgent {
                         // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
                         String usage = toCEAConvention(getValue(uri, "BuildingUsage", usageRoute));
 
-                        testData.add(new CEAInputData(footprint, height, usage));
+                        ArrayList<CEAInputData> surrounding = getSurrounding(uri, route);
+
+                        testData.add(new CEAInputData(footprint, height, usage, uri, surrounding));
                         if (i==0) {
                             crs = getValue(uri, "CRS", route);
                             crs = crs == "" ? getValue(uri, "DatabasesrsCRS", route) : crs;
@@ -731,7 +732,9 @@ public class CEAAgent extends JPSAgent {
             case "CRS":
                 return getCrsQuery(uriString);
             case "BuildingUsage":
-                return getBuildingUsage(uriString);
+                return getBuildingUsageQuery(uriString);
+            case "envelope":
+                return getEnvelopeQuery(uriString);
         }
         return null;
     }
@@ -918,7 +921,7 @@ public class CEAAgent extends JPSAgent {
      * @param uriString city object id
      * @return returns a query string
      */
-    private Query getBuildingUsage(String uriString) {
+    private Query getBuildingUsageQuery(String uriString) {
         WhereBuilder wb = new WhereBuilder();
         SelectBuilder sb = new SelectBuilder();
 
@@ -994,6 +997,64 @@ public class CEAAgent extends JPSAgent {
 
         return wh2.getQuery();
     }
+
+    /**
+     * retrieves the surrounding buildings
+     * @param uriString city object id
+     * @param route route to pass to access agent
+     * @return the surrounding buildings as an ArrayList of CEAInputData
+     */
+    private ArrayList<CEAInputData> getSurrounding(String uriString, String route) {
+        try {
+            CEAInputData temp;
+            String uri;
+            ArrayList<CEAInputData> surrounding = new ArrayList<>();
+            String envelopeCoordinates = getValue(uriString, "envelope", route);
+
+            Double buffer = 500.00;
+
+            Polygon envelopePolygon = (Polygon) toPolygon(envelopeCoordinates);
+
+            Geometry surroundingRing = ((Polygon) inflatePolygon(envelopePolygon, buffer)).getExteriorRing();
+
+            Coordinate[] surroundingCoordinates = surroundingRing.getCoordinates();
+
+            String upperBound = coordinatesToString(surroundingCoordinates);
+
+            Query query = getBuildingsWithinBoundsQuery(uriString, envelopeCoordinates, upperBound);
+
+            JSONArray queryResultArray = this.queryStore(route, query.toString());
+
+            for (int i = 0; i < queryResultArray.length(); i++) {
+                uri = queryResultArray.getJSONObject(i).get("cityobject").toString();
+
+                // Set default value of 10m if height can not be obtained from knowledge graph
+                // Will only require one height query if height is represented in data consistently
+                String height = getValue(uri, "HeightMeasuredHeigh", route);
+                height = height.length() == 0 ? getValue(uri, "HeightMeasuredHeight", route): height;
+                height = height.length() == 0 ? getValue(uri, "HeightGenAttr", route): height;
+                height = height.length() == 0 ? "10.0" : height;
+                // Get footprint from ground thematic surface or find from surface geometries depending on data
+                String footprint = getValue(uri, "Lod0FootprintId", route);
+                footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
+                footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
+                // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
+                String usage = toCEAConvention(getValue(uri, "BuildingUsage", usageRoute));
+
+                temp = new CEAInputData(footprint, height, usage, uri, null);
+                surrounding.add(temp);
+            }
+
+
+
+            return surrounding;
+        }
+        catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     /**
      * Add Where for Building Consumption
      * @param builder update builder
