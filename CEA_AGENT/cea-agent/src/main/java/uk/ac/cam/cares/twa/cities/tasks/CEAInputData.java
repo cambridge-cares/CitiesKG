@@ -6,12 +6,14 @@ public class CEAInputData {
     public String geometry;
     public String height;
     public String usage;
-    public ArrayList<Object> surrounding;
+    public String uri;
+    public ArrayList<CEAInputData> surrounding;
 
-    public CEAInputData(String geometry_value, String height_value, String usage_value, ArrayList<Object> surrounding_value) {
+    public CEAInputData(String geometry_value, String height_value, String usage_value, String uri_value, ArrayList<CEAInputData> surrounding_value) {
         this.geometry = geometry_value;
         this.height = height_value;
         this.usage = usage_value;
+        this.uri = uri_value;
         this.surrounding = surrounding_value;
     }
 
@@ -27,7 +29,11 @@ public class CEAInputData {
         return this.usage;
     }
 
-    public ArrayList<Object> getSurrounding() {
+    public String getUri() {
+        return this.uri;
+    }
+
+    public ArrayList<CEAInputData> getSurrounding() {
         return this.surrounding;
     }
 
@@ -43,7 +49,11 @@ public class CEAInputData {
         this.usage = usage_value;
     }
 
-    public void setSurrounding(ArrayList<Object> surrounding_value) {
+    public void setUri(String uri_value) {
+        this.uri = uri_value;
+    }
+
+    public void setSurrounding(ArrayList<CEAInputData> surrounding_value) {
         this.surrounding = surrounding_value;
     }
 }
