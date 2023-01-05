@@ -13,11 +13,13 @@ import org.citydb.database.adapter.IndexStatusInfo;
 import org.citydb.database.connection.DatabaseMetaData;
 import org.citydb.database.version.DatabaseVersion;
 import org.citygml4j.factory.DimensionMismatchException;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.CoordinateXY;
-import org.locationtech.jts.geom.CoordinateXYZM;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
+import org.geotools.geometry.jts.JTS;
+import org.geotools.referencing.CRS;
+import org.locationtech.jts.geom.*;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.TransformException;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -25,7 +27,6 @@ import java.net.URL;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import org.locationtech.jts.geom.LinearRing;
 
 public class UtilAdapter extends AbstractUtilAdapter {
 
@@ -298,6 +299,7 @@ public class UtilAdapter extends AbstractUtilAdapter {
         GeometryFactory fac = new GeometryFactory(); // no polygonZ
         GeoSpatialProcessor geospatial = new GeoSpatialProcessor();
         Geometry polygon = null;
+        Geometry transformed = null;
 
         if (geometry.getGeometryType().name() == "POLYGON"){
             if (numElements == 1) {  // only the shell
@@ -315,8 +317,24 @@ public class UtilAdapter extends AbstractUtilAdapter {
                 }
                 polygon = fac.createPolygon(shell, holes);
             }
+
+        } else if(geometry.getGeometryType().name() == "ENVELOPE"){
+            final Coordinate[] coords = new Coordinate[5];
+            coords[0] = new Coordinate( coordinates[0][0], coordinates[0][1] );
+            coords[1] = new Coordinate( coordinates[0][0], coordinates[0][3]  );
+            coords[2] = new Coordinate( coordinates[0][2], coordinates[0][1] );
+            coords[3] = new Coordinate( coordinates[0][2], coordinates[0][3]);
+            coords[4] = new Coordinate( coordinates[0][0], coordinates[0][1] );
+
+            final LinearRing shell = fac.createLinearRing( coords );
+            polygon = fac.createPolygon(shell);
+//            lengths = new int[polygon.getCoordinates().length * dim];
+            for (int i = 0; i < numElements; ++i){
+                lengths[i] = polygon.getCoordinates().length * dim;
+            }
         }
-        Geometry transformed = geospatial.Transform(polygon, geometry.getSrid(), targetSrs.getSrid());
+
+        transformed = geospatial.Transform(polygon, geometry.getSrid(), targetSrs.getSrid());
 
         // Geometry --> GeometryObject; GeometryObject createPolygon(double[][] coordinates, int dimension, int srid)
         double[][] newCoordinates = new double[numElements][];
@@ -326,7 +344,6 @@ public class UtilAdapter extends AbstractUtilAdapter {
         newCoordinates = CoordinateArr2doubleArr(reversedCoords, dim, lengths);
 
         converted3d = GeometryObject.createPolygon(newCoordinates, dim, targetSrs.getSrid());
-
         return converted3d;
     }
 
