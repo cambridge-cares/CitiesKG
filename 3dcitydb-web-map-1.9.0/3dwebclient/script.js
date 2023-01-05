@@ -61,7 +61,7 @@ var cesiumViewerOptions = {
     timeline: false,
     animation: false,
     fullscreenButton: false,
-    shadows: (shadows == "true"),
+    shadows: (shadows === "true"),
     terrainShadows: parseInt(terrainShadows),
     clockViewModel: new Cesium.ClockViewModel(clock),
     terrainProvider: maptiler
@@ -142,6 +142,12 @@ Cesium.knockout.applyBindings(addSplashWindowModel, document.getElementById('cit
 var splashController = new SplashController(addSplashWindowModel);
 splashController.setCookie("ignoreSplashWindow", "true")
 
+
+// added by Shiying
+var filteredObjects = {};
+var _customDataSourceCounter = 0;
+const dataSourcePrefix = "ciaResult_";
+var customDataSourceMap = new Map();
 /*---------------------------------  Load Configurations and Layers  ----------------------------------------*/
 
 initClient();
@@ -226,7 +232,7 @@ function initClient() {
 
         var cesiumWorldTerrainString = urlController.getUrlParaValue('cesiumWorldTerrain', window.location.href, CitydbUtil);
         var maptilerTerrainString = urlController.getUrlParaValue('maptiler', window.location.href, CitydbUtil);
-        if(cesiumWorldTerrainString == "true") {
+        if(cesiumWorldTerrainString === "true") {
             // if the Cesium World Terrain is given in the URL --> activate, else other terrains
             cesiumViewer.terrainProvider = Cesium.createWorldTerrain();
             var baseLayerPickerViewModel = cesiumViewer.baseLayerPicker.viewModel;
@@ -263,20 +269,21 @@ function initClient() {
     // If the web client has a layer, add an onclick event to the home button to fly to this layer
     var cesiumHomeButton = document.getElementsByClassName("cesium-button cesium-toolbar-button cesium-home-button")[0];
     cesiumHomeButton.onclick = function () {
-        zoomToDefaultCameraPosition();
+        //zoomToDefaultCameraPosition();
+        zoomToCREATE();
     }
 }
 
 function loadCity(city) {
-    if (city == 'pirmasens') {
+    if (city === 'pirmasens') {
         loadPirmasens();
-    } else if (city == 'berlin') {
+    } else if (city === 'berlin') {
         loadBerlin();
-    } else if (city == 'kingslynn') {
+    } else if (city === 'kingslynn') {
         loadKingsLynn();
-    } else if (city == 'singaporeEPSG4326') {
+    } else if (city === 'singaporeEPSG4326') {
         loadSingapore();
-    } else if (city == 'jurongisland'){
+    } else if (city === 'jurongisland'){
         loadJurongIsland();
     }
 }
@@ -342,26 +349,6 @@ function loadKingsLynn() {
     getAndLoadLayers('exported_kingslynn');
 }
 
-function loadSingapore() {
-    // set title
-    document.title = 'Singapore';
-
-    // set camera view
-    var cameraPostion = {
-        latitude: 1.286014,
-        longitude: 103.836364,
-        height: 2000,
-        heading: 345.2992773976952,
-        pitch: -44.26228062802528,
-        roll: 359.933888621294
-    }
-
-    flyToCameraPosition(cameraPostion);
-
-    // find relevant files and load layers
-    getAndLoadLayers('exported_singapore');
-}
-
 function loadJurongIsland() {
     // set title
     document.title = 'Jurong Island';
@@ -385,8 +372,6 @@ function loadJurongIsland() {
 function loadSingapore() {
     // set title
     document.title = 'Singapore';
-
-
     // set camera view
     var cameraPostion = {
         latitude:  1.279,
@@ -396,8 +381,26 @@ function loadSingapore() {
         pitch: -60,
         roll: 356,
     }
-    flyToCameraPosition(cameraPostion);
+    // need decoder to make sure there is a string on which .replace() can be called. Replace is needed to format spaces.
+    var regionStr = urlController.getUrlParaValue('region', window.location.href, CitydbUtil);
+    var latitudeStr = urlController.getUrlParaValue('latitude', window.location.href, CitydbUtil);
+    var longitudeStr = urlController.getUrlParaValue('longitude', window.location.href, CitydbUtil);
 
+    if (latitudeStr && longitudeStr) {
+        cameraPostion['latitude'] = parseFloat(latitudeStr);
+        cameraPostion['longitude'] = parseFloat(longitudeStr);
+    }
+    var zoomed_area = document.getElementById('area');
+    if (regionStr in cameraPositions){
+        cameraPostion = cameraPositions[regionStr];
+        area_counter = Object.keys(cameraPositions).findIndex(p => p === regionStr);
+        zoomed_area.innerHTML = regionStr.replaceAll('_', ' ');
+    }
+    else {
+        zoomed_area.innerHTML = 'Singapore River Valley';
+    }
+
+    flyToCameraPosition(cameraPostion);
     // find relevant files and load layers
     getAndLoadLayers('exported_singapore');
 }
@@ -434,6 +437,7 @@ function getAndLoadLayers(folder) {
                 if (data[i].match(new RegExp("\\w*_\\w*_MasterJSON.json"))) {
                     filepathname = folderpath + data[i]
                     options.url = filepathname;
+                    options.cityobjectsJsonUrl = folderpath + "test_extruded.json"
                     options.name = (new URL(window.location.href)).searchParams.get('city');
                     _layers.push(new CitydbKmlLayer(options));
                     loadLayerGroup(_layers);
@@ -519,8 +523,8 @@ function adjustIonFeatures() {
                 }
             }
 
-            // Set default imagery to ESRI World Imagery
-            cesiumViewer.baseLayerPicker.viewModel.selectedImagery = imageryProviders[3];
+            // Ayda: Set default imagery to ESRI World Imagery --> imageryProviders[3]
+            cesiumViewer.baseLayerPicker.viewModel.selectedImagery = imageryProviders[8];
 
             // Disable auto-complete of OSM Geocoder due to OSM usage limitations
             // see https://operations.osmfoundation.org/policies/nominatim/#unacceptable-use
@@ -560,8 +564,9 @@ function inspectTileStatus() {
                 }
             }
         }
-        showedTilesInspector.innerHTML = 'Number of showed Tiles: ' + numberOfshowedTiles;
-        cachedTilesInspector.innerHTML = 'Number of cached Tiles: ' + numberOfCachedTiles;
+        //Ayda: currently user does not need to know about the tiling.
+        //showedTilesInspector.innerHTML = 'Number of showed Tiles: ' + numberOfshowedTiles;
+        //cachedTilesInspector.innerHTML = 'Number of cached Tiles: ' + numberOfCachedTiles;
 
         var loadingTilesInspector = document.getElementById('citydb_loadingTilesInspector');
         if (numberOfTasks > 0 || !tilesLoaded) {
@@ -569,6 +574,7 @@ function inspectTileStatus() {
         } else {
             loadingTilesInspector.style.display = 'none';
         }
+
     }, 200);
 }
 
@@ -666,44 +672,291 @@ function getMidpoint(point1, point2) {
 
 }
 
-//Shiying: highlight multiple cityobjects
-function highlightMultipleObjects(cityObjectsArray){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
-    //var cityObjectsArray = ["UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d", "UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3"];
-    //var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobjectUUID_b6f4d0de-cf5c-4917-aba0-c1a91fa4960b/"];
+function showResultWindow(resultJson, colorStr){
 
+    var resultBoxTitle = document.getElementById("resultBox-title");
+    resultBoxTitle.style.visibility = "visible";
+    var resultBox = document.getElementById("resultBox-iframe");
+    resultBox.style.visibility = "visible";
+    var resultBoxContent = document.createElement("div");
+    resultBoxContent.style.display = "block";
+    var listItem = document.createElement("li");
+    listItem.id = dataSourcePrefix + _customDataSourceCounter;
+    listItem.title = colorStr;
+
+    listItem.appendChild(processInfoContext(resultJson));
+    // <input type='checkbox' onchange='updateGfaRows()'>
+
+    var checkbox = document.createElement("input");
+    checkbox.type = 'checkbox';
+    checkbox.className = 'ciaResults';
+    checkbox.checked = true;
+    checkbox.onchange = function (){
+        updateSelectedDataSources();
+    };
+    listItem.appendChild(checkbox);
+
+    var colorbox = document.createElement('div');
+    colorbox.className = "colorbox";
+    colorbox.style = "width: 10px; height: 10px; display: inline-block;";
+    colorbox.style.backgroundColor = colorStr;
+    listItem.appendChild(colorbox);
+    var closeButton = document.createElement("span");
+    closeButton.className = "close";
+    closeButton.textContent = "x";
+    closeButton.onclick = function (event){
+        var targetId = event.currentTarget.parentNode.id;
+        var targetUnusedColor = event.currentTarget.parentNode.title;
+        //var targetUnusedColor = event.currentTarget.parentNode.getElementsByClassName("colorbox")[0].style.backgroundColor;  // can store the color in the title of li item. which is the description of the corresponding color
+        removeDataSourceById(targetId, targetUnusedColor);
+    }
+    listItem.appendChild(closeButton);
+    resultBoxContent.appendChild(listItem);
+    resultBox.appendChild(resultBoxContent);
+
+    var closebtns = document.getElementsByClassName("close");
+    var i;
+
+    for (i = 0; i < closebtns.length; i++) {
+        closebtns[i].addEventListener("click", function() {
+            console.log("this has been removed: " + this.parentNode.id);
+            this.parentNode.remove();
+        });
+    }
+}
+
+function updateSelectedDataSources(){
+    // remove all DataSources
+    for (let [key, value] of customDataSourceMap){
+        cesiumViewer.dataSources.remove(value);
+    }
+    var ciaResultsArray = document.getElementsByClassName('ciaResults');
+    for (let i = 0; i < ciaResultsArray.length; ++i){
+        if (ciaResultsArray[i].checked){
+            cesiumViewer.dataSources.add(customDataSourceMap.get(ciaResultsArray[i].parentNode.id));
+        }
+    }
+}
+
+function removeDataSourceById(datasourceId, unusedColor){
+    var targetDataSource = customDataSourceMap.get(datasourceId);
+    console.log("The unused color is ", unusedColor);
+    insertUnusedColor(unusedColor);
+    customDataSourceMap.delete(datasourceId);
+    console.log("dataSource " + datasourceId + " has been removed: " + cesiumViewer.dataSources.remove(targetDataSource));
+}
+
+function processCIAResult(CIAdata){
+    var hexColorString = pickColorFromArray(); // generateLightColorHex(); generateColorHex();
+    showResultWindow(CIAdata, hexColorString);
+    processFilteredObjects(CIAdata["http://www.theworldavatar.com:83/access-agent/access"]["filtered"], hexColorString);
+    _customDataSourceCounter++;
+}
+
+/** generate color for the pin point **/
+var initColorsArr = ["#0096FF", "#FFA500", "#00FFC8", "#FF1694", "#E5DE00", "#009F30", "#964B00"];
+var colorsArr = initColorsArr;
+function pickColorFromArray(){
+    var pickedColor;
+    if(colorsArr.length > 0){
+        var j = Math.floor(Math.random() * (colorsArr.length));
+        pickedColor = colorsArr[j];
+        colorsArr.splice(j, 1);
+        console.log("The used color is ", pickedColor);
+    }
+    return pickedColor;
+}
+
+function insertUnusedColor(hexColorStr){
+    colorsArr.splice(colorsArr.length-1, 0, hexColorStr);
+}
+
+function generateColorHex(){
+    let color = "#";
+    color += Math.floor(Math.random()*16777215).toString(16);
+    return color;
+}
+
+function generateLightColorHex() {
+    let color = "#";
+    for (let i = 0; i < 3; i++)
+        color += ("0" + Math.floor(((1 + Math.random()) * Math.pow(16, 2)) / 2).toString(16)).slice(-2);
+    return color;
+}
+/*******************************************/
+
+//Shiying: highlight multiple cityobjects, create customDatasource, pinCityobjects
+function processFilteredObjects(cityObjectsArray, colorStr){  // citydbKmlLayer object, list of files in the folder--> get the summaryfile
+    //var cityObjectsArray = ["UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d", "UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3"];
+    //var cityObjectsArray = ["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_e5779fd5-ea90-4d2c-9a0a-cf7f46e5aad3/", "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_b6f4d0de-cf5c-4917-aba0-c1a91fa4960b/"];
 
     // UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d - inside
     // UUID_b6f4d0de-cf5c-4917-aba0-c1a91fa4960b - outside of the scene
+
     var currentLayer = webMap.activeLayer;
-    var filteredObjects = {};
+    var filteredResult= {};
     var highlightColor = currentLayer._highlightColor; // new Cesium.Color(16/255, 77/255, 151/255, 1.0);
-    // unhighlight all objects first then highlight the filtered objects
-    currentLayer.unHighlightAllObjects();
 
     for (let i = 0; i < cityObjectsArray.length; i++) {
         var strArray = cityObjectsArray[i].split("/");
         var gmlid = strArray[strArray.length-2];
-        filteredObjects[gmlid] = highlightColor;
+        filteredResult[gmlid] = highlightColor; // new Cesium.Color(65/255, 168/255, 255/255, 0.8);
     }
-    /**
-    var cameraPostion = {
-        latitude:  1.25648566126433,
-        longitude: 103.823907400709,
-        height: 2800,
-        heading: 360,
-        pitch: -60,
-        roll: 356,
-    }
-    flyToCameraPosition(cameraPostion); **/
-    //flyToMapLocation(1.264377, 103.837302);
-    //zoomToObjectById("UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d");
-    currentLayer.highlight(filteredObjects);
 
+    filteredObjects = filteredResult;
+    pinHighlightObjects(cityObjectsArray, colorStr);
+    //highlightFilteredObj(filteredObjects);
+    return filteredObjects;
 }
 
+function highlightFilteredObj(filteredObjects){
+    var currentLayer = webMap.activeLayer;
+    currentLayer.unHighlightAllObjects();
+    if (filteredObjects != undefined){
+        currentLayer.highlight(filteredObjects);
+    }
+}
 
-	//--- End of Extended Web-Map-Client part---//
+// create the summary text for PPF result box
+// resultjson is json object
 
+function processInfoContext(resultjson){
+    let ifGFA = false;
+    var infoText = document.createElement("div");
+    var title = document.createElement("span");
+
+    var developmentType = document.getElementById("DevelopmentType");
+    title.innerHTML = "Search " + developmentType.options[developmentType.selectedIndex].text;
+    if (title.innerHTML === "Search Search plots...") {
+        title.innerHTML = "Search example query"
+    }
+
+    title.style.fontWeight = "bold";
+    title.style.fontSize = "12px";
+    infoText.appendChild(title);
+    infoText.appendChild(document.createElement("br"));
+
+     //{"allowsProgramme":{"Cafe":"","StudentRunBusiness":""},"TotalGFA":""}
+    var filteredCount = resultjson["http://www.theworldavatar.com:83/access-agent/access"]["filteredCounts"];
+    var inputs = resultjson["context"]["http://www.theworldavatar.com:83/access-agent/access"];
+    var allowOption;
+    var allowsObjects = [];
+    var allowsGFA = [];
+    if (Object.keys(inputs).includes("allowsProgramme")){
+        allowsObjects = Object.keys(inputs["allowsProgramme"]);
+        allowsGFA = Object.values(inputs["allowsProgramme"]);
+        allowOption = "allowsProgramme:";
+    } else if (Object.keys(inputs).includes("allowsUse")){
+        allowsObjects = Object.keys(inputs["allowsUse"]);
+        allowsGFA = Object.values(inputs["allowsUse"]);
+        allowOption = "allowsUse:";
+    }
+    var allowOpts = document.createElement("span");
+    allowOpts.textContent = allowOption;
+    infoText.appendChild(allowOpts);
+    infoText.appendChild(document.createElement("br"));
+
+    var allowOptText = document.createElement("span");
+    var allowsContent = "";
+    for (i = 0; i < allowsObjects.length; ++i){
+        if (allowsGFA[i] != ""){
+            ifGFA = true;
+            allowsContent += allowsObjects[i] + ": " + allowsGFA[i] + " sqm" + "<br />";
+        }else{
+            allowsContent += allowsObjects[i] + "<br/>";
+        }
+
+    }
+    allowOptText.innerHTML = allowsContent;
+    infoText.appendChild(allowOptText);
+    //infoText.appendChild(document.createElement("br"));
+
+    if (Object.keys(inputs).includes("TotalGFA") && inputs["TotalGFA"] > 0){
+        ifGFA = true;
+        var totalGFA = document.createElement("span");
+        var totalGFAValue = inputs["TotalGFA"];
+        totalGFA.textContent = "Total GFA: " + totalGFAValue + " sqm";
+        infoText.appendChild(totalGFA);
+        infoText.appendChild(document.createElement("br"));
+    }
+
+    var objCount = document.createElement("span");
+    objCount.textContent = "# search results: " + filteredCount + " plots";
+    infoText.appendChild(document.createElement("br"));
+    infoText.appendChild(objCount);
+    infoText.appendChild(document.createElement("br")); // Ayda: swapped white line positions according Pieter's instructions.
+
+    // static part: measure the impact of the demo
+    var docCount = document.createElement("span");
+    if (ifGFA){
+        docCount.innerHTML = "The search replaces manually checking <br /> 38 regulatory documents";
+    }else {
+        docCount.innerHTML = "The search replaces manually checking <br /> 17 regulatory documents ";
+    }
+    infoText.appendChild(document.createElement("br"));
+    infoText.appendChild(docCount);
+    return infoText;
+}
+
+function pinHighlightObjects(cityObjectsArray, hexColorString){
+
+    var gmlidArray = [];
+
+    for (let i = 0; i < cityObjectsArray.length; i++) {
+        var strArray = cityObjectsArray[i].split("/");
+        var gmlid = strArray[strArray.length-2];
+        gmlidArray.push(gmlid);
+    }
+
+    // get geolocation
+    var currentLayer = webMap._activeLayer;
+    var testcityobjectsJsonData;
+    if (Cesium.defined(currentLayer)) {
+        testcityobjectsJsonData = currentLayer.cityobjectsJsonData;
+    }
+
+    var dataUnifier = dataSourcePrefix + _customDataSourceCounter;
+    var customDataSource = new Cesium.CustomDataSource(dataUnifier);
+
+    for (let i = 0; i < gmlidArray.length; i++){
+        var obj = testcityobjectsJsonData[gmlidArray[i]];
+        var id = gmlidArray[i];
+        var lon = (obj.envelope[0] + obj.envelope[2]) / 2.0;
+        var lat = (obj.envelope[1] + obj.envelope[3]) / 2.0;
+        //console.log(gmlidArray[i] + ": " + lon + ", " + lat);
+
+        addPoint(customDataSource, id, lat, lon, hexColorString);
+    }
+
+    customDataSourceMap.set(dataUnifier, customDataSource);
+    cesiumViewer.dataSources.add(customDataSource);
+
+    //var testdataSource = customDataSource;
+    //var testentity = testdataSource.getEntitiesById('UUID_3422c065-c104-4a48-9536-0f30ff96c670');
+    //console.log(testentity);
+
+    /**
+     // In order to only show the current dataSource, we need to remove the previous first.
+     for (let [key, value] of customDataSourceMap){
+        console.log(key + " : " + cesiumViewer.dataSources.remove(value));
+    }**/
+}
+
+function addPoint(customDataSource, pointId, lat, long, hexColorString){
+
+    customDataSource.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(long, lat, 5),
+        id: pointId,
+        point: {
+            pixelSize: 10,
+            color: Cesium.Color.fromCssColorString(hexColorString),
+            outlineColor: Cesium.Color.BLACK,
+            outlineWidth:1,
+        },
+    });
+}
+
+//--- End of Extended Web-Map-Client part---//
 function listHiddenObjects() {
     var hidddenListElement = document.getElementById("citydb_hiddenlist");
 
@@ -921,6 +1174,20 @@ function addEventListeners(layer) {
     layer.registerEventHandler("CTRLCLICK", function (object) {
         auxClickEventListener(object);
     });
+}
+
+// Ayda: home button zoom in to CREATE Tower
+function zoomToCREATE(){
+    var cameraPosition = {
+        latitude: 1.295,
+        longitude: 103.776,
+        height: 1000,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+
+    return flyToCameraPosition(cameraPosition);
 }
 
 function zoomToDefaultCameraPosition() {

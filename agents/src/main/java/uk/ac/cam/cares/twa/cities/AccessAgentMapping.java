@@ -43,11 +43,15 @@ public class AccessAgentMapping {
 
     /**
      * Extracts endpoint from iri
+     * For the additional GFA implementation, the both iris have different length, so we need to differentiate them
      * @param iriString iri of object to be queried
      * @return Endpoint that iri belongs to
-     */
+     **/
     public static String getNamespaceEndpoint(String iriString) {
         String[] splitUri = iriString.split("/");
+        if (splitUri[splitUri.length - 1].equals("ontozone")){
+            return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 1)) + "/";
+        }
         return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 2)) + "/";
     }
 }
