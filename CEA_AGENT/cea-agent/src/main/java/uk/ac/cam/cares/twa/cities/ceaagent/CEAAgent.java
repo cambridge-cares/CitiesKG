@@ -212,7 +212,7 @@ public class CEAAgent extends JPSAgent {
 
                         ArrayList<CEAInputData> surrounding = getSurrounding(uri, route, uniqueSurrounding);
 
-                        testData.add(new CEAInputData(footprint, height, usage, uri, surrounding));
+                        testData.add(new CEAInputData(footprint, height, usage, surrounding));
                         if (i==0) {
                             crs = getValue(uri, "CRS", route);
                             crs = crs == "" ? getValue(uri, "DatabasesrsCRS", route) : crs;
@@ -1058,7 +1058,7 @@ public class CEAAgent extends JPSAgent {
                     footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                     footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
 
-                    temp = new CEAInputData(footprint, height, null, uri, null);
+                    temp = new CEAInputData(footprint, height, null, null);
                     unique.add(uri);
                     surrounding.add(temp);
                 }
