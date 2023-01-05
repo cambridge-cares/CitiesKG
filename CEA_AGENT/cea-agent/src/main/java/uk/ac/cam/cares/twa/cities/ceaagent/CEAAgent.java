@@ -953,7 +953,7 @@ public class CEAAgent extends JPSAgent {
         SelectBuilder sb = new SelectBuilder()
                 .addVar("?envelope")
                 .addWhere(wb);
-        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getNamespace(uriString)));
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
         return sb.build();
     }
 
