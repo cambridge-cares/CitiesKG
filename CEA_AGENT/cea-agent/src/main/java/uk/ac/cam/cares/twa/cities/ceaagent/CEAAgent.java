@@ -180,11 +180,13 @@ public class CEAAgent extends JPSAgent {
                 } else if (requestUrl.contains(URI_ACTION)) {
                     ArrayList<CEAInputData> testData = new ArrayList<>();
                     ArrayList<String> uriStringArray = new ArrayList<>();
+                    ArrayList<String> uniqueSurrounding = new ArrayList<>();
                     String crs= new String();
                     String route = new String();
 
                     for (int i = 0; i < uriArray.length(); i++) {
                         String uri = uriArray.getString(i);
+                        uniqueSurrounding.add(uri);
                         setTimeSeriesProps(uri, getTimeSeriesPropsPath());
 
                         // Only set route once - assuming all iris passed in same namespace
@@ -208,7 +210,7 @@ public class CEAAgent extends JPSAgent {
                         // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
                         String usage = toCEAConvention(getValue(uri, "BuildingUsage", usageRoute));
 
-                        ArrayList<CEAInputData> surrounding = getSurrounding(uri, route);
+                        ArrayList<CEAInputData> surrounding = getSurrounding(uri, route, uniqueSurrounding);
 
                         testData.add(new CEAInputData(footprint, height, usage, uri, surrounding));
                         if (i==0) {
@@ -970,8 +972,9 @@ public class CEAAgent extends JPSAgent {
                 .addWhere("?cityObject", "geo:predicate", "ocgml:EnvelopeType")
                 .addWhere("?cityObject", "geo:searchDatatype", customDataType)
                 .addWhere("?cityObject", "geo:customFields", customField)
-                .addWhere("?cityObject", "geo:customFieldsLowerBounds", lowerBounds)
-                .addWhere("?cityObject", "geo:customFieldsUpperBounds", upperBounds);
+                // PLACEHOLDER because lowerBounds and upperBounds would be otherwise added as doubles, not strings
+                .addWhere("?cityObject", "geo:customFieldsLowerBounds", "PLACEHOLDER" + lowerBounds)
+                .addWhere("?cityObject", "geo:customFieldsUpperBounds", "PLACEHOLDER" + upperBounds);
 
         // where clause to check that the city object is a building
         WhereBuilder wb2 = new WhereBuilder()
@@ -1002,9 +1005,10 @@ public class CEAAgent extends JPSAgent {
      * retrieves the surrounding buildings
      * @param uriString city object id
      * @param route route to pass to access agent
+     * @param unique array list of unique surrounding buildings
      * @return the surrounding buildings as an ArrayList of CEAInputData
      */
-    private ArrayList<CEAInputData> getSurrounding(String uriString, String route) {
+    private ArrayList<CEAInputData> getSurrounding(String uriString, String route, ArrayList<String> unique) {
         try {
             CEAInputData temp;
             String uri;
@@ -1019,34 +1023,46 @@ public class CEAAgent extends JPSAgent {
 
             Coordinate[] surroundingCoordinates = surroundingRing.getCoordinates();
 
-            String upperBound = coordinatesToString(surroundingCoordinates);
+            String boundingBox = coordinatesToString(surroundingCoordinates);
 
-            Query query = getBuildingsWithinBoundsQuery(uriString, envelopeCoordinates, upperBound);
+            String[] points = boundingBox.split("#");
 
-            JSONArray queryResultArray = this.queryStore(route, query.toString());
+            String lowerPoints= points[0] + "#" + points[1] + "#" + 0 + "#";
+
+            String lowerBounds = lowerPoints + lowerPoints + lowerPoints + lowerPoints + lowerPoints;
+            lowerBounds = lowerBounds.substring(0, lowerBounds.length() - 1 );
+
+            String upperPoints = points[6] + "#" + points[7] + "#" + String.valueOf(Double.parseDouble(points[8])+100) + "#";
+
+            String upperBounds = upperPoints + upperPoints + upperPoints + upperPoints + upperPoints;
+            upperBounds = upperBounds.substring(0, upperBounds.length() - 1);
+
+            Query query = getBuildingsWithinBoundsQuery(uriString, lowerBounds, upperBounds);
+
+            String queryString = query.toString().replace("PLACEHOLDER", "");
+
+            JSONArray queryResultArray = this.queryStore(route, queryString);
 
             for (int i = 0; i < queryResultArray.length(); i++) {
-                uri = queryResultArray.getJSONObject(i).get("cityobject").toString();
+                uri = queryResultArray.getJSONObject(i).get("cityObject").toString();
 
-                // Set default value of 10m if height can not be obtained from knowledge graph
-                // Will only require one height query if height is represented in data consistently
-                String height = getValue(uri, "HeightMeasuredHeigh", route);
-                height = height.length() == 0 ? getValue(uri, "HeightMeasuredHeight", route): height;
-                height = height.length() == 0 ? getValue(uri, "HeightGenAttr", route): height;
-                height = height.length() == 0 ? "10.0" : height;
-                // Get footprint from ground thematic surface or find from surface geometries depending on data
-                String footprint = getValue(uri, "Lod0FootprintId", route);
-                footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
-                footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
-                // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
-                String usage = toCEAConvention(getValue(uri, "BuildingUsage", usageRoute));
+                if (!unique.contains(uri)) {
+                    // Set default value of 10m if height can not be obtained from knowledge graph
+                    // Will only require one height query if height is represented in data consistently
+                    String height = getValue(uri, "HeightMeasuredHeigh", route);
+                    height = height.length() == 0 ? getValue(uri, "HeightMeasuredHeight", route) : height;
+                    height = height.length() == 0 ? getValue(uri, "HeightGenAttr", route) : height;
+                    height = height.length() == 0 ? "10.0" : height;
+                    // Get footprint from ground thematic surface or find from surface geometries depending on data
+                    String footprint = getValue(uri, "Lod0FootprintId", route);
+                    footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
+                    footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
 
-                temp = new CEAInputData(footprint, height, usage, uri, null);
-                surrounding.add(temp);
+                    temp = new CEAInputData(footprint, height, null, uri, null);
+                    unique.add(uri);
+                    surrounding.add(temp);
+                }
             }
-
-
-
             return surrounding;
         }
         catch (ParseException e) {
