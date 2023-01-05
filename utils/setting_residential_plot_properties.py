@@ -1,53 +1,14 @@
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-import plotly.express as px
-from SPARQLWrapper import SPARQLWrapper, JSON
-import matplotlib.pyplot as plt
-import contextily as ctx
-import mapclassify as mc
-import math
-import json
-from envelope_conversion import envelopeStringToPolygon
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from shapely.geometry import Polygon
-from shapely.geometry import Point
-from geopandas import datasets, GeoDataFrame, read_file
 from shapely.geometry import Polygon, MultiPolygon
-from rdflib import Dataset, Literal, URIRef
-from geopandas.tools import overlay
-from geopandas.tools import sjoin
-import shapely
-from shapely.geometry import LineString
-from math import atan2,degrees
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from itertools import groupby, chain
-from operator import itemgetter
-import sys
-import uuid
-import requests
-import random
-from rdflib import Dataset, Literal
-from rdflib.namespace import RDF
 from rdflib.namespace import XSD
-from requests.exceptions import HTTPError
 from GFAOntoManager import *
 from SPARQLWrapper import SPARQLWrapper, JSON
-from SPARQLWrapper import SPARQLWrapper, JSON
-import math
-import json
 from envelope_conversion import envelopeStringToPolygon
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from shapely.geometry import Polygon
-from shapely.geometry import Point
-from geopandas import datasets, GeoDataFrame, read_file
 from shapely.geometry.polygon import Polygon
 from rdflib import Dataset, Literal, URIRef
-from geopandas.tools import overlay
-from geopandas.tools import sjoin
 from shapely.geometry import LineString
-from math import atan2, degrees
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 cur_dir = 'C://Users/AydaGrisiute/Desktop'
 
@@ -81,7 +42,7 @@ def get_plots(endpoint):
     return plots
 
 
-'''filter and clean queried plot result.'''
+'''Filter and clean queried plot result.'''
 
 
 def process_plots(plots):
@@ -124,7 +85,7 @@ def check_fringe(res_plots, residential_area, intersection_buffer):
     return res_plots
 
 
-'''find residential plot neighbors and add neighbor ids into new column 'neighbor_list'. '''
+'''Find residential plot neighbors and add neighbor ids into new column 'neighbor_list'. '''
 
 
 def find_neighbours(plots, all_plots):
@@ -138,7 +99,7 @@ def find_neighbours(plots, all_plots):
     return plots
 
 
-''' gets the edges of any geometry.'''
+'''Get the edges of any geometry.'''
 
 
 def get_edges(polygon):
@@ -160,7 +121,7 @@ def get_min_rect_edge_df(res_plots):
     return edges
 
 
-'''intersect buffered edge dataframe with road plots and filter out intersections with not neighbor roads. '''
+'''Intersect buffered edge dataframe with road plots and filter out intersections with not neighbor roads. '''
 
 
 def intersect_roads_with_edges(edges, plots, res_plots):
@@ -173,7 +134,7 @@ def intersect_roads_with_edges(edges, plots, res_plots):
     return intersection
 
 
-''' sets min rectangle edge types and adds edge indices in corresponding df columns.'''
+'''Set min rectangle edge types and add edge indices in corresponding df columns.'''
 
 
 def set_min_rect_edge_types(intersection, edges, plots):
@@ -214,7 +175,7 @@ def is_corner_plot(intersection, min_rect_plots, overlap_ratio):
     return min_rect_plots
 
 
-''' calculates average width or depth of a plot using min rect front and side edges and stores it in corresponding columns.'''
+'''Calculate average width or depth of a plot using min rect front and side edges and stores it in corresponding columns.'''
 
 
 def find_average_width_or_depth(plot_row, width):
@@ -230,7 +191,7 @@ def find_average_width_or_depth(plot_row, width):
     return average_length
 
 
-'''sets plot properties, e.g. if it is a fringe plot, corner plot, plot's average depth and width.'''
+'''Set residential plot properties, e.g. if it is a fringe plot, corner plot, plot's average depth and width.'''
 
 
 def set_residential_plot_properties(plots):
@@ -259,14 +220,51 @@ def set_residential_plot_properties(plots):
     return res_plots
 
 
+'''Set road plot properties e.g. road type and road category'''
+
+
+def set_road_plot_properties(road_network, plots):
+    road_plots = plots[plots['zone'] == 'ROAD']
+    invalid_road_types = ['Cross Junction', 'T-Junction', 'Expunged', 'Other Junction', 'Pedestrian Mall',
+                          '2 T-Junction opposite each other', 'Unknown', 'Y-Junction', 'Imaginary Line']
+    road_network = road_network[~road_network['RD_TYP_CD'].isin(invalid_road_types)]
+    road_cat_dict = {'Expressway': '1',
+                     'Semi Expressway': '2-3',
+                     'Major Arterials/Minor Arterials': '2-3',
+                     'Local Collector/Primary Access': '4',
+                     'Local Access': '5',
+                     'Slip Road': '5',
+                     'Service Road': '5',
+                     'no category': 'unknown'}
+    road_plots = assign_road_category(road_plots, road_network)
+    road_plots['road_category'] = [road_cat_dict[x] for x in road_plots["RD_TYP_CD"]]
+    return road_plots
+
+
+'''Overlap road network data and road plots and links road network attributes to road plots.'''
+
+
+def assign_road_category(road_plots, road_network):
+    road_network.loc[:,'geometry'] = road_network.buffer(5)
+    intersection = gpd.overlay(road_plots,  road_network, how='intersection', keep_geom_type=True)
+    intersection['intersection_area'] = intersection.area
+    grouped_intersection = intersection.groupby(['plots']).apply(lambda x: x.sort_values(['intersection_area'], ascending=False).iloc[0, :]).drop(columns=['plots'])
+    grouped_intersection = grouped_intersection.reset_index()
+    grouped_intersection = grouped_intersection[['plots', 'RD_TYP_CD']].copy()
+    road_plots = road_plots.merge(grouped_intersection, on='plots', how='left')
+    road_plots.loc[road_plots["RD_TYP_CD"].isna(), "RD_TYP_CD"] = "no category"
+    return road_plots
+
+
 class TripleDataset:
 
     def __init__(self):
         self.dataset = Dataset()
 
-    ''' 
-    A method to generate necessary triples to represent residential plot properties.
-    '''
+
+    '''A method to generate necessary triples to represent residential plot properties.'''
+
+
     def create_plot_property_triples(self, res_plots):
         for i in res_plots.index:
             city_obj_uri = URIRef(res_plots.loc[i, 'plots'])
@@ -283,11 +281,31 @@ class TripleDataset:
                 corner_plot_bool = Literal(str(res_plots.loc[i, 'is_corner_plot']), datatype=XSD.boolean)
                 self.dataset.add((city_obj_uri, GFAOntoManager.IS_CORNER_PLOT, corner_plot_bool, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
 
-    ''' A method to write the aggregated triple dataset into a nquad(text) file.'''
+
+    '''A method to generate necessary triples to represent road plot properties.'''
+
+
+    def create_road_plot_property_triples(self, road_plots):
+        for i in road_plots.index:
+            city_obj_uri = URIRef(road_plots.loc[i, 'plots'])
+            if not pd.isna(road_plots.loc[i, 'RD_TYP_CD']):
+                road_type = Literal(str(road_plots.loc[i, 'RD_TYP_CD']), datatype=XSD.string)
+                self.dataset.add((city_obj_uri, GFAOntoManager.HAS_ROAD_TYPE, road_type, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+            # currently skipped as mapping between types and categories is arbitrary and not confirmed by URA.
+            #if not pd.isna(road_plots.loc[i, 'road_category']):
+            #    road_category = Literal(str(road_plots.loc[i, 'road_category']), datatype=XSD.string)
+            #    self.dataset.add((city_obj_uri, GFAOntoManager.HAS_ROAD_CATEGORY, road_category, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+
+
+    '''A method to write the aggregated triple dataset into a nquad(text) file.'''
+
 
     def write_triples(self, triple_type):
         with open(cur_dir + "/output_" + triple_type + ".nq", mode="wb") as file:
             file.write(self.dataset.serialize(format='nquads'))
+
+
+'''A method to write generated residential plot property triples into a nquad file'''
 
 
 def instantiate_residential_plot_property_triples(plots_df):
@@ -296,11 +314,30 @@ def instantiate_residential_plot_property_triples(plots_df):
     plot_properties.write_triples("residential_plot_properties_triples")
     print("plot properties nquads written.")
 
+
+'''A method to write generated road plot property triples into a nquad file'''
+
+
+def instantiate_road_plot_properties(plots_df):
+    road_plot_properties = TripleDataset()
+    road_plot_properties.create_road_plot_property_triples(plots_df)
+    road_plot_properties.write_triples("road_plot_properties_triples")
+    print("road plot properties nquads written.")
+
+
 if __name__ == "__main__":
     plots = get_plots("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql")
     print('plots retrieved')
-    residential_plots_df = set_residential_plot_properties(plots)
-    print('Residential plot properties set.')
-    instantiate_residential_plot_property_triples(residential_plots_df)
-    print('residential plot property triples written.')
+    #residential_plots_df = set_residential_plot_properties(plots)
+    #print('Residential plot properties set.')
+    #instantiate_residential_plot_property_triples(residential_plots_df)
+    #print('residential plot property triples written.')
+
+    road_network = gpd.read_file("C:/Users/AydaGrisiute/Desktop/demonstrator/roads/roads_whole_SG/roads.shp").to_crs(3857)
+    road_network = road_network[['RD_NAME', 'RD_TYP_CD', 'LVL_OF_RD', 'UNIQUE_ID', 'geometry']].copy()
+    print('Road network retrieved')
+    road_plots_df = set_road_plot_properties(road_network, plots)
+    print('Road plot properties set.')
+    instantiate_road_plot_properties(road_plots_df)
+    print('Road plot property triples written')
 
