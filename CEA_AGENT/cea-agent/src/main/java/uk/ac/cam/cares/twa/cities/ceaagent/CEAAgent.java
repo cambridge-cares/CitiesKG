@@ -182,7 +182,7 @@ public class CEAAgent extends JPSAgent {
                 } else if (requestUrl.contains(URI_ACTION)) {
                     ArrayList<CEAInputData> testData = new ArrayList<>();
                     ArrayList<String> uriStringArray = new ArrayList<>();
-                    ArrayList<String> uniqueSurrounding = new ArrayList<>();
+                    List<String> uniqueSurrounding = new ArrayList<>();
                     String crs= new String();
                     String route = new String();
 
@@ -1010,14 +1010,14 @@ public class CEAAgent extends JPSAgent {
      * @param unique array list of unique surrounding buildings
      * @return the surrounding buildings as an ArrayList of CEAInputData
      */
-    private ArrayList<CEAInputData> getSurroundings(String uriString, String route, ArrayList<String> unique) {
+    private ArrayList<CEAInputData> getSurroundings(String uriString, String route, List<String> unique) {
         try {
             CEAInputData temp;
             String uri;
             ArrayList<CEAInputData> surroundings = new ArrayList<>();
             String envelopeCoordinates = getValue(uriString, "envelope", route);
 
-            Double buffer = 500.00;
+            Double buffer = 200.00;
 
             Polygon envelopePolygon = (Polygon) toPolygon(envelopeCoordinates);
 
