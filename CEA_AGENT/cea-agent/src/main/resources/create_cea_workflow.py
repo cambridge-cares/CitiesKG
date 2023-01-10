@@ -17,13 +17,15 @@ def write_workflow_file(workflow_file, filepath):
     b = "scenario_path"
     c = "filepath_zone"
     d = "filepath_typology"
+    e = "filepath_surroundings"
 
     z = filepath
     y = filepath+os.sep+"testProject"+os.sep+"testScenario"
     x = filepath+os.sep+"zone.shp"
     w = filepath+os.sep+"typology.dbf"
+    v = filepath+os.sep+"surroundings.shp"
 
-    find_and_replace = {a: z, b: y, c: x, d: w}
+    find_and_replace = {a: z, b: y, c: x, d: w, e:v}
 
     output_yaml = filepath+os.sep+"workflow.yml"
 
