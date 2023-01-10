@@ -6,6 +6,7 @@ import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementService;
 import org.jooq.exception.DataAccessException;
+import org.locationtech.jts.geom.util.GeometryFixer;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeries;
@@ -37,6 +38,7 @@ import org.apache.jena.query.Query;
 import org.json.JSONArray;
 
 import org.locationtech.jts.geom.*;
+
 import org.locationtech.jts.operation.buffer.BufferOp;
 import org.locationtech.jts.operation.buffer.BufferParameters;
 
@@ -210,7 +212,7 @@ public class CEAAgent extends JPSAgent {
                         // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
                         String usage = toCEAConvention(getValue(uri, "BuildingUsage", usageRoute));
 
-                        ArrayList<CEAInputData> surrounding = getSurrounding(uri, route, uniqueSurrounding);
+                        ArrayList<CEAInputData> surrounding = getSurroundings(uri, route, uniqueSurrounding);
 
                         testData.add(new CEAInputData(footprint, height, usage, surrounding));
                         if (i==0) {
@@ -1008,11 +1010,11 @@ public class CEAAgent extends JPSAgent {
      * @param unique array list of unique surrounding buildings
      * @return the surrounding buildings as an ArrayList of CEAInputData
      */
-    private ArrayList<CEAInputData> getSurrounding(String uriString, String route, ArrayList<String> unique) {
+    private ArrayList<CEAInputData> getSurroundings(String uriString, String route, ArrayList<String> unique) {
         try {
             CEAInputData temp;
             String uri;
-            ArrayList<CEAInputData> surrounding = new ArrayList<>();
+            ArrayList<CEAInputData> surroundings = new ArrayList<>();
             String envelopeCoordinates = getValue(uriString, "envelope", route);
 
             Double buffer = 500.00;
@@ -1060,10 +1062,10 @@ public class CEAAgent extends JPSAgent {
 
                     temp = new CEAInputData(footprint, height, null, null);
                     unique.add(uri);
-                    surrounding.add(temp);
+                    surroundings.add(temp);
                 }
             }
-            return surrounding;
+            return surroundings;
         }
         catch (ParseException e) {
             e.printStackTrace();
@@ -1602,6 +1604,7 @@ public class CEAAgent extends JPSAgent {
         GeometryFactory geoFac = new GeometryFactory();
         GeometryCollection geoCol;
         Geometry merged;
+        Geometry temp;
         String geoType;
 
         if (results.length() == 1){
@@ -1610,7 +1613,11 @@ public class CEAAgent extends JPSAgent {
 
         else {
             for (int i = 0; i < results.length(); i++) {
-                geometries.add(toPolygon(ignoreHole(results.getJSONObject(i).get("geometry").toString(), results.getJSONObject(i).get("datatype").toString())));
+                temp = toPolygon(ignoreHole(results.getJSONObject(i).get("geometry").toString(), results.getJSONObject(i).get("datatype").toString()));
+                if (!temp.isValid()){
+                    temp = GeometryFixer.fix(temp);
+                }
+                geometries.add(temp);
             }
 
             geoCol = (GeometryCollection) geoFac.buildGeometry(geometries);
@@ -1623,7 +1630,11 @@ public class CEAAgent extends JPSAgent {
                 distance += increment;
 
                 for (int i = 0; i < geometries.size(); i++){
-                    geometries.set(i, inflatePolygon(geometries.get(i), distance));
+                    temp = inflatePolygon(geometries.get(i), distance);
+                    if (!temp.isValid()){
+                        temp = GeometryFixer.fix(temp);
+                    }
+                    geometries.set(i, temp);
                 }
 
                 geoCol = (GeometryCollection) geoFac.buildGeometry(geometries);
@@ -1632,6 +1643,10 @@ public class CEAAgent extends JPSAgent {
             }
 
             footprintPolygon = (Polygon) deflatePolygon(merged, distance);
+
+            if (!footprintPolygon.isValid()){
+                footprintPolygon = (Polygon) GeometryFixer.fix(footprintPolygon);
+            }
         }
 
         footprintRing = footprintPolygon.getExteriorRing();
