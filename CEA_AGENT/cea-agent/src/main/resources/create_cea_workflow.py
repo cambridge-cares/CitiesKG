@@ -7,7 +7,7 @@ import os
 import yaml
 
 
-def write_workflow_file(workflow_file, filepath):
+def write_workflow_file(workflow_file, filepath, noSurroundings):
     """
     :param workflow_file: input workflow file to be modified
 
@@ -17,20 +17,24 @@ def write_workflow_file(workflow_file, filepath):
     b = "scenario_path"
     c = "filepath_zone"
     d = "filepath_typology"
-    e = "filepath_surroundings"
 
     z = filepath
     y = filepath+os.sep+"testProject"+os.sep+"testScenario"
     x = filepath+os.sep+"zone.shp"
     w = filepath+os.sep+"typology.dbf"
-    v = filepath+os.sep+"surroundings.shp"
 
-    find_and_replace = {a: z, b: y, c: x, d: w, e:v}
+    find_and_replace = {a: z, b: y, c: x, d: w}
 
     output_yaml = filepath+os.sep+"workflow.yml"
 
     with open(workflow_file) as stream:
         data = yaml.safe_load(stream)
+
+    if noSurroundings == '1':
+        dic = {'script':'surroundings-helper', 'parameters':{'scenario':'scenario_path', 'buffer':200.}}
+        data.insert(2, dic)
+    else:
+        data[0]['parameters']['surroundings'] = filepath+os.sep+"surroundings.shp"
 
     for i in data:
         for j in i:
@@ -47,7 +51,7 @@ def write_workflow_file(workflow_file, filepath):
 def main(argv):
 
     try:
-        write_workflow_file(argv.workflow_file, argv.cea_file_path)
+        write_workflow_file(argv.workflow_file, argv.cea_file_path, argv.noSurroundings)
     except IOError:
         print('Error while processing file: ' + argv.worflow_file)
 
@@ -58,6 +62,7 @@ if __name__ == '__main__':
     # add arguments to the parser
     parser.add_argument("workflow_file")
     parser.add_argument("cea_file_path")
+    parser.add_argument("noSurroundings")
 
     # parse the arguments
     args = parser.parse_args()

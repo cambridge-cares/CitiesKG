@@ -25,6 +25,7 @@ public class RunCEATask implements Runnable {
     private final String crs;
     public static final String CTYPE_JSON = "application/json";
     private Boolean stop = false;
+    private Boolean noSurroundings = false;
     private static final String DATA_FILE = "datafile.txt";
     private static final String SURROUNDINGS_FILE = "surroundingdata.txt";
     private static final String SHAPEFILE_SCRIPT = "create_shapefile.py";
@@ -307,7 +308,7 @@ public class RunCEATask implements Runnable {
         ArrayList<CEAInputData> surroundings = new ArrayList<>();
 
         for(int i = 0; i < dataInputs.size(); i++) {
-            surroundings.addAll(dataInputs.get(i).getSurrounding());
+            if (!(dataInputs.get(i).getSurrounding() == null)) {surroundings.addAll(dataInputs.get(i).getSurrounding());}
             dataInputs.get(i).setSurrounding(null);
             dataString += new Gson().toJson(dataInputs.get(i));
             if(i!=dataInputs.size()-1) dataString += ", ";
@@ -327,7 +328,12 @@ public class RunCEATask implements Runnable {
             throw new JPSRuntimeException(e);
         }
 
-        dataToFile(surroundings, directory_path, surrounding_path);
+        if (surroundings.isEmpty()){
+            noSurroundings = true;
+        }
+        else{
+            dataToFile(surroundings, directory_path, surrounding_path);
+        }
     }
 
     private void dataToFile(ArrayList<CEAInputData> dataInputs, String directory_path, String file_path) {
@@ -374,6 +380,9 @@ public class RunCEATask implements Runnable {
 
                 dataToFile(this.inputs, strTmp, data_path, surroundings_path);
 
+                String flag = noSurroundings ? "1" : "0";
+
+
                 if(OS.contains("win")){
                     String f_path;
 
@@ -401,6 +410,7 @@ public class RunCEATask implements Runnable {
                     args4.add(new File(
                             Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
                     args4.add(strTmp);
+                    args4.add(flag);
 
                     args5.add("cmd.exe");
                     args5.add("/C");
@@ -426,7 +436,7 @@ public class RunCEATask implements Runnable {
 
                     args4.add("/bin/bash");
                     args4.add("-c");
-                    args4.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile + " " + strTmp);
+                    args4.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile + " " + strTmp + " " + flag);
 
 
                     args5.add("/bin/bash");
@@ -437,7 +447,8 @@ public class RunCEATask implements Runnable {
 
                 // create the shapefile process and run
                 runProcess(args);
-                runProcess(args2);
+
+                if (!noSurroundings){runProcess(args2);}
                 // create the typologyfile process and run
                 runProcess(args3);
                 // create the workflow process and run

@@ -7,7 +7,6 @@
     terrain:
     streets:
     typology: filepath_typology
-    surroundings: filepath_surroundings
 - script: weather-helper
   parameters:
     scenario: scenario_path
