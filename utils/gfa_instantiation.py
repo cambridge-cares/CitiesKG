@@ -54,20 +54,13 @@ class TripleDataset:
         gfa_value = Literal(str(gfa_value), datatype=XSD.decimal)
         lod_1 = Literal(str("LOD1"), datatype=XSD.string)
 
-        self.dataset.add((city_object_uri, GFAOntoManager.HAS_BUILDABLE_SPACE, buildable_space,
-                          GFAOntoManager.BUILDABLE_SPACE_GRAPH))
-        self.dataset.add(
-            (buildable_space, RDF.type, GFAOntoManager.BUILDABLE_SPACE, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
-        self.dataset.add(
-            (buildable_space, GFAOntoManager.AT_LEVEL_OF_DETAIL, lod_1, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+        self.dataset.add((city_object_uri, GFAOntoManager.HAS_BUILDABLE_SPACE, buildable_space, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+        self.dataset.add((buildable_space, RDF.type, GFAOntoManager.BUILDABLE_SPACE, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+        self.dataset.add((buildable_space, GFAOntoManager.AT_LEVEL_OF_DETAIL, lod_1, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
         self.dataset.add((buildable_space, GFAOntoManager.HAS_ALLOWED_GFA, gfa, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
         self.dataset.add((gfa, RDF.type, GFAOntoManager.GROSS_FLOOR_AREA, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
         self.dataset.add((gfa, GFAOntoManager.HAS_VALUE, measure, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
-        self.dataset.add((measure, RDF.type, GFAOntoManager.MEASURE, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
-        self.dataset.add((measure, GFAOntoManager.HAS_UNIT, GFAOntoManager.SQUARE_PREFIXED_METRE,
-                          GFAOntoManager.BUILDABLE_SPACE_GRAPH))
-        self.dataset.add((GFAOntoManager.SQUARE_PREFIXED_METRE, RDF.type, GFAOntoManager.AREA_UNIT,
-                          GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+        self.dataset.add((measure, GFAOntoManager.HAS_UNIT, GFAOntoManager.SQUARE_PREFIXED_METRE, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
         self.dataset.add((measure, GFAOntoManager.HAS_NUMERIC_VALUE, gfa_value, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
 
         if zoning_case != "default":
@@ -75,9 +68,7 @@ class TripleDataset:
                               URIRef(GFAOntoManager.ONTO_ZONING_URI_PREFIX + zoning_case),
                               GFAOntoManager.BUILDABLE_SPACE_GRAPH))
 
-    '''
-    A method to generate necessary triples to represent a Height Control Plans triples and add it to a triple dataset.
-    '''
+    ''' A method to generate necessary triples to represent a Height Control Plans triples and add it to a triple dataset.'''
     def create_height_control_triples(self, city_object_uri, ext_ref, height, unit):
         height_control_plan = URIRef(city_object_uri)
         external_reference_uri = URIRef(ext_ref)
@@ -105,9 +96,7 @@ class TripleDataset:
             self.dataset.add((height_control_plan, GFAOntoManager.HAS_ADDITIONAL_TYPE, GFAOntoManager.DETAILED_CONTROL,
                               GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
-    '''
-    A method to generate necessary triples to represent a Absolute Height triples and add it to a triple dataset.
-    '''
+    ''' A method to generate necessary triples to represent a Absolute Height triples and add it to a triple dataset.'''
     def create_absolute_height_triples(self, city_obj, height):
         absolute_height = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
         measure = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
@@ -127,30 +116,24 @@ class TripleDataset:
         self.dataset.add(
             (measure, GFAOntoManager.HAS_NUMERIC_VALUE, height, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
+    ''' A method to generate necessary triples to represent a Floor To Floor Height triples and add it to a triple dataset. '''
     def create_floor_height_triples(self, city_obj, floor_height):
         floor_height_uri = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
         measure = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
         self.dataset.add((city_obj, GFAOntoManager.REQUIRES_FLOOR_TO_FLOOR_HEIGHT, floor_height_uri, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         self.dataset.add((floor_height_uri, RDF.type, GFAOntoManager.FLOOR_TO_FLOOR_HEIGHT, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         self.dataset.add((floor_height_uri, GFAOntoManager.HAS_VALUE, measure, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-        self.dataset.add((measure, RDF.type, GFAOntoManager.MEASURE, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         self.dataset.add((measure, GFAOntoManager.HAS_UNIT, GFAOntoManager.METRE, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-        self.dataset.add((GFAOntoManager.METRE, RDF.type, GFAOntoManager.AREA_UNIT, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         self.dataset.add((measure, GFAOntoManager.HAS_NUMERIC_VALUE, floor_height, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
-
-    ''' 
-    A method to generate necessary triples to represent a Storey Aggregate triples and add it to to a triple dataset.
-    '''
+    ''' A method to generate necessary triples to represent a Storey Aggregate triples and add it to to a triple dataset.'''
     def create_storey_aggregate_triples(self, city_obj, storey_aggregate, height_value, function=GFAOntoManager.MAXIMUM):
         self.dataset.add((city_obj, GFAOntoManager.ALLOWS_STOREY_AGGREGATE, storey_aggregate, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         self.dataset.add((storey_aggregate, RDF.type, GFAOntoManager.STOREY_AGGREGATE, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         self.dataset.add((storey_aggregate, GFAOntoManager.HAS_AGGREGATE_FUNCTION, function, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         self.dataset.add((storey_aggregate, GFAOntoManager.NUMBER_OF_STOREYS, height_value, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
-    '''
-    A method to generate necessary triples to represent a Conservation Area triples and add it to a triple dataset.
-    '''
+    ''' A method to generate necessary triples to represent a Conservation Area triples and add it to a triple dataset.'''
     def create_conservation_triples(self, city_obj, ext_ref):
 
         conservation_area = URIRef(city_obj)
@@ -161,9 +144,7 @@ class TripleDataset:
         self.dataset.add((conservation_area, GFAOntoManager.HAS_EXTERNAL_REF, external_reference_uri,
                           GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
-    '''
-    A method to generate necessary triples to represent a Central Area triples and add it to a triple dataset.
-    '''
+    ''' A method to generate necessary triples to represent a Central Area triples and add it to a triple dataset.'''
     def create_central_area_triples(self, city_obj, ext_ref):
         central_area = URIRef(city_obj)
         external_reference_uri = URIRef(ext_ref)
@@ -173,9 +154,7 @@ class TripleDataset:
         self.dataset.add((central_area, GFAOntoManager.HAS_EXTERNAL_REF, external_reference_uri,
                           GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
-    '''
-    A method to generate necessary triples to represent a Planning Boundaries triples and add it to a triple dataset.
-    '''
+    '''A method to generate necessary triples to represent a Planning Boundaries triples and add it to a triple dataset.'''
     def create_planning_boundaries_triples(self, city_obj, ext_ref, planning_boundary_name, region):
 
         planning_boundary = URIRef(city_obj)
@@ -197,9 +176,7 @@ class TripleDataset:
         self.dataset.add(
             (regions[region], RDF.type, GFAOntoManager.PLANNING_REGION, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
-    '''
-    A method to generate necessary triples to represent a Monument triples and add it to a triple dataset.
-    '''
+    '''A method to generate necessary triples to represent a Monument triples and add it to a triple dataset.'''
     def create_monument_triples(self, city_obj, ext_ref, name):
         monument = URIRef(city_obj)
         external_reference_uri = URIRef(ext_ref)
@@ -211,9 +188,7 @@ class TripleDataset:
         self.dataset.add(
             (monument, GFAOntoManager.HAS_NAME, monument_name, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
-    '''
-    A method to generate necessary triples to represent a Landed Housing Triples triples and add it to a triple dataset.
-    '''
+    '''A method to generate necessary triples to represent a Landed Housing Triples triples and add it to a triple dataset.'''
     def create_landed_housing_areas_triples(self, city_obj, ext_ref, height, type, area):
         landed_housing_area = URIRef(city_obj)
         external_reference_uri = URIRef(ext_ref)
@@ -265,26 +240,17 @@ class TripleDataset:
                 self.dataset.add((landed_housing_area, GFAOntoManager.ALLOWS_PROGRAMME, terrace_type_2,
                                   GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
-    '''
-    A method to generate necessary triples to represent a setback triples and add it to a triple dataset.
-    '''
+    '''A method to generate necessary triples to represent a setback triples and add it to a triple dataset.'''
     def create_setback_triples(self, city_obj, setback, predicate_type, setback_type, setback_value):
         setback_measure = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
         self.dataset.add((city_obj, predicate_type, setback, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         self.dataset.add((setback, RDF.type, setback_type, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-        self.dataset.add((setback, GFAOntoManager.HAS_AGGREGATE_FUNCTION, GFAOntoManager.MINIMUM,
-                          GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-        self.dataset.add(
-            (setback, GFAOntoManager.HAS_VALUE, setback_measure, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-        self.dataset.add((setback_measure, GFAOntoManager.HAS_UNIT, GFAOntoManager.METRE,
-                          GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-        self.dataset.add((setback_measure, GFAOntoManager.HAS_NUMERIC_VALUE,
-                          Literal(str(setback_value), datatype=XSD.double),
-                          GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+        self.dataset.add((setback, GFAOntoManager.HAS_AGGREGATE_FUNCTION, GFAOntoManager.MINIMUM, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+        self.dataset.add((setback, GFAOntoManager.HAS_VALUE, setback_measure, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+        self.dataset.add((setback_measure, GFAOntoManager.HAS_UNIT, GFAOntoManager.METRE,GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+        self.dataset.add((setback_measure, GFAOntoManager.HAS_NUMERIC_VALUE, Literal(str(setback_value), datatype=XSD.double), GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
-    '''
-    A method to generate necessary triples to represent different types of setback triples and add it to a triple dataset.
-    '''
+    '''A method to generate necessary triples to represent different types of setback triples and add it to a triple dataset.'''
     def create_setback_collection(self, city_obj, setbacks, storey, storey_level, predicate_type, setback_type, height_provided):
         if height_provided:
             if not pd.isna(setbacks):
@@ -313,9 +279,7 @@ class TripleDataset:
                     setback = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
                     self.create_setback_triples(city_obj, setback, predicate_type, setback_type, current_setback_value)
 
-    '''
-    A method to generate necessary triples to represent the Street Block Plan and add it to a triple dataset.
-    '''
+    '''A method to generate necessary triples to represent the Street Block Plan and add it to a triple dataset.'''
     def create_street_block_plan_triples(self, city_obj, height, front_setback, side_setback, rear_setback,
                                          partywall_setback, ext_ref, name, landuse, gpr, allowed_programmes):
         street_block_plan = URIRef(city_obj)
@@ -384,9 +348,7 @@ class TripleDataset:
                 self.create_setback_collection(street_block_plan, partywall, storey, storey_level,
                                                GFAOntoManager.REQUIRES_PARTYWALL, GFAOntoManager.PARTYWALL, False)
 
-    ''' 
-    A method to generate necessary triples to represent Urban Design Areas and add it to triple dataset.
-    '''
+    ''' A method to generate necessary triples to represent Urban Design Areas and add it to triple dataset.'''
     def create_urban_design_areas_triples(self, city_obj, ext_ref, name):
         urban_design_area = URIRef(city_obj)
         ext_ref_uri = URIRef(ext_ref.strip())
@@ -397,9 +359,7 @@ class TripleDataset:
         self.dataset.add((urban_design_area, GFAOntoManager.HAS_NAME, Literal(str(name.strip()), datatype=XSD.string),
                           GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
-    '''
-    A metod to generate necessary triples to represent the Urban Design Guidelines and add it to a triple dataset.
-    '''
+    '''Generates necessary triples to represent the Urban Design Guidelines and add it to a triple dataset.'''
     def create_urban_design_guidelines_triples(self, city_obj, ext_ref, partywall_setback, height, setback,
                                                additional_type, area, urban_design_areas):
         urban_design_guideline = URIRef(city_obj)
@@ -442,52 +402,72 @@ class TripleDataset:
                 self.create_setback_collection(urban_design_guideline, partywall, storey, storey_level,
                                                GFAOntoManager.REQUIRES_PARTYWALL, GFAOntoManager.PARTYWALL, False)
 
-    def create_control_plan_triples(self, zone, setback, storeys, floor_height, site_coverage, site_area, gpr, gfa, programme, neighbor_zone, road_buffer_dict):
+    '''Generates necessary triples to represent the site area triples and add it to a triple dataset.'''
+    def create_site_area_triples(self, control_plan, site_area):
+        site_area_uri = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
+        site_area_value = Literal(str(site_area), datatype=XSD.double)
+        measure = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
+        self.dataset.add((site_area_uri, RDF.type, GFAOntoManager.SITE_AREA, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+        self.dataset.add((control_plan, GFAOntoManager.REQUIRES_SITE_AREA, site_area_uri,GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+        self.dataset.add((site_area_uri, GFAOntoManager.HAS_AGGREGATE_FUNCTION, GFAOntoManager.MINIMUM, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+        self.dataset.add((site_area_uri, GFAOntoManager.HAS_VALUE, measure, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+        self.dataset.add((site_area_uri, GFAOntoManager.HAS_UNIT, GFAOntoManager.SQUARE_PREFIXED_METRE, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+        self.dataset.add((measure, GFAOntoManager.HAS_NUMERIC_VALUE, site_area_value, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+
+    '''Generates necessary triples to represent the site area triples and add it to a triple dataset.'''
+    def create_site_coverage_triples(self, control_plan, site_coverage_value):
+        site_coverage_uri = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
+        self.dataset.add((site_coverage_uri, RDF.type, GFAOntoManager.SITE_COVERAGE, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+        self.dataset.add((control_plan, GFAOntoManager.ALLOWS_SITE_COVERAGE, site_coverage_uri, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+        self.dataset.add((site_coverage_uri, GFAOntoManager.HAS_VALUE_OPR, site_coverage_value, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+
+    '''Generates necessary triples to represent the site area triples and add it to a triple dataset.'''
+    def create_gpr_triples(self, control_plan, gpr_value):
+        gpr_uri = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
+        self.dataset.add((gpr_uri, RDF.type, GFAOntoManager.GROSS_PLOT_RATIO, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+        self.dataset.add((control_plan, GFAOntoManager.ALLOWS_GROSS_PLOT_RATIO, gpr_uri, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+        self.dataset.add((gpr_uri, GFAOntoManager.HAS_VALUE_OPR, gpr_value, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+
+    '''Generates necessary triples to represent the non-residential development control plans and adds it to a triple dataset.'''
+    def create_control_plan_triples(self, zone, programme, setback, storeys, floor_height, site_coverage, site_area, gpr, gfa, neighbor_zone, road_buffer_uris):
         control_plan = URIRef(GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH + str(uuid.uuid1()))
         zone_uri = URIRef(GFAOntoManager.ONTO_ZONING_URI_PREFIX + zone)
         self.dataset.add((control_plan, RDF.type, GFAOntoManager.DEVELOPMENT_CONTROL_PLAN, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         self.dataset.add((control_plan, GFAOntoManager.FOR_ZONING_TYPE, zone_uri, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         if not pd.isna(programme):
             programme_uri = URIRef(GFAOntoManager.ONTO_ZONING_URI_PREFIX + programme)
-            self.dataset.add((control_plan, GFAOntoManager.FOR_PROGRAMME_EXCEPTION, programme_uri, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+            self.dataset.add((control_plan, GFAOntoManager.FOR_PROGRAMME, programme_uri, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         if not pd.isna(setback):
             setback_uri = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
-            setback_value = Literal(str(setback), datatype=XSD.double)
-            self.create_setback_triples(control_plan, setback_uri, GFAOntoManager.REQUIRES_SETBACK, GFAOntoManager.SETBACK, setback_value)
-        #if not pd.isna(floor_height):
-        #    floor_height_value = Literal(str(floor_height), datatype=XSD.double)
-        #    self.create_floor_height_triples(control_plan, floor_height_value)
-        #if not pd.isna(site_coverage):
-        #    site_coverage_uri = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
-        #    site_coverage_value = Literal(str(site_coverage), datatype=XSD.double)
-        #    self.dataset.add((site_coverage_uri, RDF.type, GFAOntoManager.SITE_COVERAGE, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-        #    self.dataset.add((control_plan, GFAOntoManager.ALLOWS_SITE_COVERAGE, site_coverage_uri, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-        #    self.dataset.add((site_coverage_uri, GFAOntoManager.HAS_VALUE_OPR, site_coverage_value, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-        #if not pd.isna(gpr):
-        #    gpr_uri = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
-        #    gpr_value = Literal(str(gpr), datatype=XSD.double)
-        #    self.dataset.add((gpr_uri, RDF.type, GFAOntoManager.GROSS_PLOT_RATIO, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-        #    self.dataset.add((control_plan, GFAOntoManager.ALLOWS_GROSS_PLOT_RATIO, gpr_uri, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-        #    self.dataset.add((gpr_uri, GFAOntoManager.HAS_VALUE_OPR, gpr_value, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-        #if not pd.isna(gfa):
-        #    gfa_uri = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
-        #    gfa_value = Literal(str(gfa), datatype=XSD.double)
-        #    measure = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
-        #    self.dataset.add((control_plan, GFAOntoManager.ALLOWS_GROSS_FLOOR_AREA, gfa_uri, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-        #    self.dataset.add((gfa_uri, RDF.type, GFAOntoManager.GROSS_FLOOR_AREA, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-        #    self.dataset.add((gfa_uri, GFAOntoManager.HAS_AGGREGATE_FUNCTION, GFAOntoManager.MAXIMUM, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-        #    self.dataset.add((gfa_uri, GFAOntoManager.HAS_VALUE,  measure, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-        #    self.dataset.add((measure, GFAOntoManager.HAS_UNIT, GFAOntoManager.SQUARE_PREFIXED_METRE, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
-        #    self.dataset.add((measure, GFAOntoManager.HAS_NUMERIC_VALUE, gfa_value, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
-        if not pd.isna(road_buffer_uris):
+            self.create_setback_triples(control_plan, setback_uri, GFAOntoManager.REQUIRES_SETBACK, GFAOntoManager.SETBACK, Literal(str(setback), datatype=XSD.double))
+        if not pd.isna(storeys):
+            storey_aggregate = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
+            self.create_storey_aggregate_triples(control_plan, storey_aggregate, Literal(str(storeys), datatype=XSD.integerer))
+        if not pd.isna(floor_height):
+            self.create_floor_height_triples(control_plan, Literal(str(floor_height), datatype=XSD.double))
+        if not pd.isna(site_coverage):
+            self.create_site_coverage_triples(control_plan, Literal(str(site_coverage), datatype=XSD.double))
+        if not pd.isna(site_area):
+            self.create_site_area_triples(control_plan, site_area)
+        if not pd.isna(gpr):
+            self.create_gpr_triples(control_plan, Literal(str(gpr), datatype=XSD.double))
+        if not pd.isna(gfa):
+            gfa_uri = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
+            gfa_value = Literal(str(gfa), datatype=XSD.double)
+            measure = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
+            self.dataset.add((control_plan, GFAOntoManager.ALLOWS_GROSS_FLOOR_AREA, gfa_uri, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+            self.dataset.add((gfa_uri, RDF.type, GFAOntoManager.GROSS_FLOOR_AREA, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+            self.dataset.add((gfa_uri, GFAOntoManager.HAS_AGGREGATE_FUNCTION, GFAOntoManager.MAXIMUM, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+            self.dataset.add((gfa_uri, GFAOntoManager.HAS_VALUE,  measure, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+            self.dataset.add((measure, GFAOntoManager.HAS_UNIT, GFAOntoManager.SQUARE_PREFIXED_METRE, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+            self.dataset.add((measure, GFAOntoManager.HAS_NUMERIC_VALUE, gfa_value, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+        if len(road_buffer_uris) != 0:
             for i in road_buffer_uris:
                 self.dataset.add((control_plan, GFAOntoManager.IS_LINKED_TO, i, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
+    ''' Generates necessary triples to represent road category regulation triples.'''
     def create_road_category_triples(self, road_buffer_dict, storeys, function=GFAOntoManager.MAXIMUM):
         category_uris = []
-        if not pd.isna(storeys):
-            storey_aggregate = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
-            self.dataset.add((storey_aggregate, RDF.type, GFAOntoManager.STOREY_AGGREGATE, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         for i in road_buffer_dict:
             category = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
             category_uris.append(category)
@@ -499,12 +479,12 @@ class TripleDataset:
             self.dataset.add((measure, GFAOntoManager.HAS_UNIT, GFAOntoManager.METRE, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
             self.dataset.add((measure, GFAOntoManager.HAS_NUMERIC_VALUE, Literal(str(i['buffer']), datatype=XSD.double), GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
             if not pd.isna(storeys):
+                storey_aggregate = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
+                self.dataset.add((storey_aggregate, RDF.type, GFAOntoManager.STOREY_AGGREGATE, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
                 self.create_storey_aggregate_triples(category, storey_aggregate, Literal(str(storeys)), function)
-        print(category_uris)
-    '''
-    A method to generate necessary triples to represent overlaps between area-based planning regulations and plots and 
-    add it to triple dataset.
-    '''
+        return category_uris
+
+    ''' Generates necessary triples to represent overlaps between area-based planning regulations and plots.'''
     def get_regulation_overlap_triples(self, sparql, plots, accuracy, boolean):
         sparql.setQuery("""PREFIX ocgml:<http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
             SELECT ?obj_id ?geom
@@ -539,7 +519,7 @@ class TripleDataset:
                               URIRef(intersection_filtered.loc[i, 'plots']),
                               GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
-    ''' A method to write the aggregated triple dataset into a nquad(text) file.'''
+    ''' Writes the aggregated triple dataset into a nquad(text) file.'''
     def write_triples(self, triple_type):
         with open(cur_dir + "/output_" + triple_type + ".nq", mode="wb") as file:
             file.write(self.dataset.serialize(format='nquads'))
@@ -976,25 +956,21 @@ def instantiate_development_control_plans(cp):
                                 {'category': GFAOntoManager.ROAD_CATEGORY_3, 'buffer': 7.5},
                                 {'category': GFAOntoManager.ROAD_CATEGORY_4, 'buffer': 7.5},
                                 {'category': GFAOntoManager.ROAD_CATEGORY_5, 'buffer': 7.5}]
-    non_res_road_buffer_dict_uris = cp_dataset.create_road_category_triples(non_res_road_buffer_dict, None)
-    edu_road_buffer_6st_dict_uris = cp_dataset.create_road_category_triples(edu_road_buffer_6st_dict, 6, GFAOntoManager.MINIMUM)
-    edu_road_buffer_6st_dict_uris = cp_dataset.create_road_category_triples(edu_road_buffer_5st_dict, 5, GFAOntoManager.MAXIMUM)
+    non_res_road_buffer_uris = cp_dataset.create_road_category_triples(non_res_road_buffer_dict, None)
+    edu_road_buffer_6st_uris = cp_dataset.create_road_category_triples(edu_road_buffer_6st_dict, 6, GFAOntoManager.MINIMUM)
+    edu_road_buffer_5st_uris = cp_dataset.create_road_category_triples(edu_road_buffer_5st_dict, 5, GFAOntoManager.MAXIMUM)
 
     for i in cp.index:
         if cp.loc[i, 'Zone'] == 'EducationalInstitution':
-            cp_dataset.create_control_plan_triples(cp.loc[i, 'Zone'], cp.loc[i, 'Setback'], cp.loc[i, 'Storeys'], cp.loc[i, 'FloorToFloor Height'],
-                                                              cp.loc[i, 'Site Coverage'], cp.loc[i, 'Site Area'], cp.loc[i, 'GPR'], cp.loc[i, 'Max GFA'],
-                                                              cp.loc[i, 'Development Type Exception (Programme)'], cp.loc[i, 'Context Exception (Neighbor Zone Type)'],
-                                                              non_res_road_buffer_dict_uris)
-            cp_dataset.create_control_plan_triples(cp.loc[i, 'Zone'], cp.loc[i, 'Setback'], cp.loc[i, 'Storeys'], cp.loc[i, 'FloorToFloor Height'],
-                                                              cp.loc[i, 'Site Coverage'], cp.loc[i, 'Site Area'], cp.loc[i, 'GPR'], cp.loc[i, 'Max GFA'],
-                                                              cp.loc[i, 'Development Type Exception (Programme)'], cp.loc[i, 'Context Exception (Neighbor Zone Type)'],
-                                                              edu_road_buffer_6st_dict_uris)
+            edu_road_buffer_instances = edu_road_buffer_6st_uris + edu_road_buffer_5st_uris
+            cp_dataset.create_control_plan_triples(cp.loc[i, 'Zone'], cp.loc[i, 'Development Type Exception (Programme)'], cp.loc[i, 'Setback'], cp.loc[i, 'Storeys'],
+                                                   cp.loc[i, 'FloorToFloor Height'], cp.loc[i, 'Site Coverage'], cp.loc[i, 'Site Area'], cp.loc[i, 'GPR'],
+                                                   cp.loc[i, 'Max GFA'], cp.loc[i, 'Context Exception (Neighbor Zone Type)'], edu_road_buffer_instances)
         else:
-            cp_dataset.create_control_plan_triples(cp.loc[i, 'Zone'], cp.loc[i, 'Setback'], cp.loc[i, 'Storeys'], cp.loc[i, 'FloorToFloor Height'],
-                                                              cp.loc[i, 'Site Coverage'], cp.loc[i, 'Site Area'], cp.loc[i, 'GPR'], cp.loc[i, 'Max GFA'],
-                                                              cp.loc[i, 'Development Type Exception (Programme)'], cp.loc[i, 'Context Exception (Neighbor Zone Type)'],
-                                                              edu_road_buffer_6st_dict_uris)
+            cp_dataset.create_control_plan_triples(cp.loc[i, 'Zone'], cp.loc[i, 'Development Type Exception (Programme)'], cp.loc[i, 'Setback'],
+                                                   cp.loc[i, 'Storeys'], cp.loc[i, 'FloorToFloor Height'],cp.loc[i, 'Site Coverage'], cp.loc[i, 'Site Area'],
+                                                   cp.loc[i, 'GPR'], cp.loc[i, 'Max GFA'], cp.loc[i, 'Context Exception (Neighbor Zone Type)'],
+                                                   non_res_road_buffer_uris)
     print('triples generated.')
     cp_dataset.write_triples("control_plans")
     print("Control plan nquads written.")
@@ -1053,8 +1029,10 @@ if __name__ == "__main__":
     cur_dir = 'C:/Users/AydaGrisiute/Dropbox/Cities Knowledge Graph - [all team members]/Research/WP6 - Use Cases/PlanningConceptOntology/demonstrator_data/type_based_planning_regulations/'
     regs = pd.read_excel(cur_dir + 'non_residential_development_control_plans.xlsx')
     regs = regs.drop(index=[0, 1, 2, 3])
-    test = regs[21:22]
-    instantiate_development_control_plans(test)
+    business1 = educational = regs[5:6]
+    educational = regs[21:22]
+    #instantiate_development_control_plans(business1)
+    instantiate_development_control_plans(educational)
 
 
     #get_plots("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql")
