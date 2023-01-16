@@ -36,3 +36,4 @@
 - script: photovoltaic
   parameters:
     scenario: scenario_path
+    annual-radiation-threshold: 0.
