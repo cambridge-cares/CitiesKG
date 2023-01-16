@@ -14,7 +14,7 @@ class GFAOntoManager:
     ONTO_ZONING_URI_PREFIX = "http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#"
     ONTO_PLANNING_REG_PREFIX = "http://www.theworldavatar.com/ontology/ontoplanningreg/OntoPlanningReg.owl#"
 
-    # OntoPlanningReg classes and properties
+    # OntoPlanningReg classes
     URA_REGULATION = URIRef(ONTO_PLANNING_REG_PREFIX + "URAPlanningRegulation")
     AREA_PLANNING_REGULATION = URIRef(ONTO_PLANNING_REG_PREFIX + "AreaPlanningRegulation")
     TYPE_PLANNING_REGULATION = URIRef(ONTO_PLANNING_REG_PREFIX + "TypePlanningRegulation")
@@ -38,6 +38,7 @@ class GFAOntoManager:
     ROAD_CATEGORY_4 = URIRef(ONTO_PLANNING_REG_PREFIX + "RoadCategory4")
     ROAD_CATEGORY_5 = URIRef(ONTO_PLANNING_REG_PREFIX + "RoadCategory5")
 
+    # OntoPlanningReg predicate
     REQUIRES_SITE_AREA = URIRef(ONTO_PLANNING_REG_PREFIX + "requiresSiteArea")
     REQUIRES_SETBACK = URIRef(ONTO_PLANNING_REG_PREFIX + "requiresSetback")
     REQUIRES_PARTYWALL = URIRef(ONTO_PLANNING_REG_PREFIX + "requiresPartyWall")
@@ -58,9 +59,10 @@ class GFAOntoManager:
     HAS_VALUE_OPR = URIRef(ONTO_PLANNING_REG_PREFIX + "hasValue")
     FOR_ZONING_TYPE = URIRef(ONTO_PLANNING_REG_PREFIX + "forZoningType")
     FOR_PROGRAMME = URIRef(ONTO_PLANNING_REG_PREFIX + "forProgramme")
+    FOR_NEIGHBOUR_ZONING_TYPE = URIRef(ONTO_PLANNING_REG_PREFIX + "forNeighbourZoningType")
     IS_LINKED_TO = URIRef(ONTO_PLANNING_REG_PREFIX + "isLinkedTo")
 
-    # OntoBuildableSpace classes and properties
+    # OntoBuildableSpace classes
     BUILDABLE_SPACE = URIRef(ONTO_BUILDABLE_SPACE_PREFIX + "BuildableSpace")
     GROSS_FLOOR_AREA = URIRef(ONTO_BUILDABLE_SPACE_PREFIX + "GrossFloorArea")
     GROSS_PLOT_RATIO = URIRef(ONTO_BUILDABLE_SPACE_PREFIX + "GrossPlotRatio")
@@ -79,6 +81,7 @@ class GFAOntoManager:
     FOOTPRINT = URIRef(ONTO_BUILDABLE_SPACE_PREFIX + "Footprint")
     FOOTPRINT_AREA = URIRef(ONTO_BUILDABLE_SPACE_PREFIX + "FootprintArea")
 
+    # OntoBuildableSpace predicates
     HAS_BUILDABLE_SPACE = URIRef(ONTO_BUILDABLE_SPACE_PREFIX + "hasBuildableSpace")
     HAS_ROAD_TYPE = URIRef(ONTO_BUILDABLE_SPACE_PREFIX + 'hasRoadType')
     HAS_ROAD_CATEGORY =  URIRef(ONTO_BUILDABLE_SPACE_PREFIX + 'hasRoadCategory')
@@ -114,7 +117,7 @@ class GFAOntoManager:
     HAS_ZONE_TYPE = URIRef(ONTO_ZONING_URI_PREFIX + "hasZoneType")
     ALLOWS_PROGRAMME = URIRef(ONTO_ZONING_URI_PREFIX + "allowsProgramme")
 
-    # Units of Measure ontology classes and properties
+    # Units of Measure ontology classes
     AREA = URIRef(OM_URI_PREFIX + "Area")
     HEIGHT = URIRef(OM_URI_PREFIX + "Height")
     DISTANCE = URIRef(OM_URI_PREFIX + "Distance")
@@ -130,6 +133,7 @@ class GFAOntoManager:
     MINIMUM = URIRef(OM_URI_PREFIX + "minimum")
     AVERAGE = URIRef(OM_URI_PREFIX + "average")
 
+    # Units of Measure ontology properties
     HAS_VALUE = URIRef(OM_URI_PREFIX + "hasValue")
     HAS_NUMERIC_VALUE = URIRef(OM_URI_PREFIX + "hasNumericValue")
     HAS_UNIT = URIRef(OM_URI_PREFIX + "hasUnit")
