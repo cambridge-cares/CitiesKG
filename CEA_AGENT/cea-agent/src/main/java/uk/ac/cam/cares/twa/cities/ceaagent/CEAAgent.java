@@ -1,8 +1,12 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
+import org.apache.jena.arq.querybuilder.handlers.WhereHandler;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementService;
 import org.jooq.exception.DataAccessException;
+import org.locationtech.jts.geom.util.GeometryFixer;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeries;
@@ -34,6 +38,7 @@ import org.apache.jena.query.Query;
 import org.json.JSONArray;
 
 import org.locationtech.jts.geom.*;
+
 import org.locationtech.jts.operation.buffer.BufferOp;
 import org.locationtech.jts.operation.buffer.BufferParameters;
 
@@ -73,6 +78,8 @@ public class CEAAgent extends JPSAgent {
     public static final String KEY_PV_WALL_EAST_SUPPLY= "PVWallEastSupply";
     public static final String KEY_PV_WALL_WEST_SUPPLY= "PVWallWestSupply";
     public static final String KEY_TIMES= "times";
+    public String customDataType = "<http://localhost/blazegraph/literals/POLYGON-3-15>";
+    public String customField = "X0#Y0#Z0#X1#Y1#Z1#X2#Y2#Z2#X3#Y3#Z3#X4#Y4#Z4";
 
     public List<String> TIME_SERIES = Arrays.asList(KEY_GRID_CONSUMPTION,KEY_ELECTRICITY_CONSUMPTION,KEY_HEATING_CONSUMPTION,KEY_COOLING_CONSUMPTION, KEY_PV_ROOF_SUPPLY,KEY_PV_WALL_SOUTH_SUPPLY, KEY_PV_WALL_NORTH_SUPPLY,KEY_PV_WALL_EAST_SUPPLY, KEY_PV_WALL_WEST_SUPPLY);
     public List<String> SCALARS = Arrays.asList(KEY_PV_ROOF_AREA,KEY_PV_WALL_NORTH_AREA,KEY_PV_WALL_SOUTH_AREA,KEY_PV_WALL_EAST_AREA, KEY_PV_WALL_WEST_AREA);
@@ -95,6 +102,7 @@ public class CEAAgent extends JPSAgent {
     private String purlInfrastructureUri;
     private String thinkhomeUri;
     private String ontoBuiltEnvUri;
+    private String geoUri;
     private static String unitOntologyUri;
     private String requestUrl;
     private String targetUrl;
@@ -174,11 +182,13 @@ public class CEAAgent extends JPSAgent {
                 } else if (requestUrl.contains(URI_ACTION)) {
                     ArrayList<CEAInputData> testData = new ArrayList<>();
                     ArrayList<String> uriStringArray = new ArrayList<>();
+                    List<String> uniqueSurrounding = new ArrayList<>();
                     String crs= new String();
                     String route = new String();
 
                     for (int i = 0; i < uriArray.length(); i++) {
                         String uri = uriArray.getString(i);
+                        uniqueSurrounding.add(uri);
                         setTimeSeriesProps(uri, getTimeSeriesPropsPath());
 
                         // Only set route once - assuming all iris passed in same namespace
@@ -202,7 +212,9 @@ public class CEAAgent extends JPSAgent {
                         // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
                         String usage = toCEAConvention(getValue(uri, "BuildingUsage", usageRoute));
 
-                        testData.add(new CEAInputData(footprint, height, usage));
+                        ArrayList<CEAInputData> surrounding = getSurroundings(uri, route, uniqueSurrounding);
+
+                        testData.add(new CEAInputData(footprint, height, usage, surrounding));
                         if (i==0) {
                             crs = getValue(uri, "CRS", route);
                             crs = crs == "" ? getValue(uri, "DatabasesrsCRS", route) : crs;
@@ -407,6 +419,7 @@ public class CEAAgent extends JPSAgent {
         thinkhomeUri=config.getString("uri.ontology.thinkhome");
         purlInfrastructureUri=config.getString("uri.ontology.purl.infrastructure");
         ontoBuiltEnvUri=config.getString("uri.ontology.ontobuiltenv");
+        geoUri=config.getString("uri.service.geo");
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/", config.getString("berlin.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/", config.getString("singaporeEPSG24500.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/", config.getString("singaporeEPSG4326.targetresourceid"));
@@ -723,7 +736,9 @@ public class CEAAgent extends JPSAgent {
             case "CRS":
                 return getCrsQuery(uriString);
             case "BuildingUsage":
-                return getBuildingUsage(uriString);
+                return getBuildingUsageQuery(uriString);
+            case "envelope":
+                return getEnvelopeQuery(uriString);
         }
         return null;
     }
@@ -910,7 +925,7 @@ public class CEAAgent extends JPSAgent {
      * @param uriString city object id
      * @return returns a query string
      */
-    private Query getBuildingUsage(String uriString) {
+    private Query getBuildingUsageQuery(String uriString) {
         WhereBuilder wb = new WhereBuilder();
         SelectBuilder sb = new SelectBuilder();
 
@@ -926,6 +941,136 @@ public class CEAAgent extends JPSAgent {
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
 
         return sb.build();
+    }
+
+    /**
+     * builds a SPARQL query for the envelope of uriString
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getEnvelopeQuery(String uriString){
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ocgml", ocgmlUri)
+                .addWhere("?s", "ocgml:EnvelopeType", "?envelope");
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?envelope")
+                .addWhere(wb);
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
+        return sb.build();
+    }
+
+    /**
+     * builds a SPARQL geospatial query for city object id of buildings whose envelope are within lowerBounds and upperBounds
+     * @param uriString city object id of the target building
+     * @param lowerBounds coordinates of customFieldsLowerBounds as a string
+     * @param upperBounds coordinates of customFieldsUpperBounds as a string
+     * @return returns a query string
+     */
+    private Query getBuildingsWithinBoundsQuery(String uriString, String lowerBounds, String upperBounds) throws ParseException {
+        // where clause for geospatial search
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ocgml", ocgmlUri)
+                .addPrefix("geo", geoUri)
+                .addWhere("?cityObject", "geo:predicate", "ocgml:EnvelopeType")
+                .addWhere("?cityObject", "geo:searchDatatype", customDataType)
+                .addWhere("?cityObject", "geo:customFields", customField)
+                // PLACEHOLDER because lowerBounds and upperBounds would be otherwise added as doubles, not strings
+                .addWhere("?cityObject", "geo:customFieldsLowerBounds", "PLACEHOLDER" + lowerBounds)
+                .addWhere("?cityObject", "geo:customFieldsUpperBounds", "PLACEHOLDER" + upperBounds);
+
+        // where clause to check that the city object is a building
+        WhereBuilder wb2 = new WhereBuilder()
+                .addPrefix("ocgml", ocgmlUri)
+                .addWhere("?cityObject", "ocgml:objectClassId", "?id")
+                .addFilter("?id=26");
+
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?cityObject");
+
+        Query query = sb.build();
+        // add geospatial service
+        ElementGroup body = new ElementGroup();
+        body.addElement(new ElementService(geoUri + "search", wb.build().getQueryPattern()));
+        body.addElement(wb2.build().getQueryPattern());
+        query.setQueryPattern(body);
+
+        WhereHandler wh = new WhereHandler(query.cloneQuery());
+
+        // add city object graph
+        WhereHandler wh2 = new WhereHandler(sb.build());
+        wh2.addGraph(NodeFactory.createURI(getGraph(uriString,CITY_OBJECT)), wh);
+
+        return wh2.getQuery();
+    }
+
+    /**
+     * retrieves the surrounding buildings
+     * @param uriString city object id
+     * @param route route to pass to access agent
+     * @param unique array list of unique surrounding buildings
+     * @return the surrounding buildings as an ArrayList of CEAInputData
+     */
+    private ArrayList<CEAInputData> getSurroundings(String uriString, String route, List<String> unique) {
+        try {
+            CEAInputData temp;
+            String uri;
+            ArrayList<CEAInputData> surroundings = new ArrayList<>();
+            String envelopeCoordinates = getValue(uriString, "envelope", route);
+
+            Double buffer = 200.00;
+
+            Polygon envelopePolygon = (Polygon) toPolygon(envelopeCoordinates);
+
+            Geometry surroundingRing = ((Polygon) inflatePolygon(envelopePolygon, buffer)).getExteriorRing();
+
+            Coordinate[] surroundingCoordinates = surroundingRing.getCoordinates();
+
+            String boundingBox = coordinatesToString(surroundingCoordinates);
+
+            String[] points = boundingBox.split("#");
+
+            String lowerPoints= points[0] + "#" + points[1] + "#" + 0 + "#";
+
+            String lowerBounds = lowerPoints + lowerPoints + lowerPoints + lowerPoints + lowerPoints;
+            lowerBounds = lowerBounds.substring(0, lowerBounds.length() - 1 );
+
+            String upperPoints = points[6] + "#" + points[7] + "#" + String.valueOf(Double.parseDouble(points[8])+100) + "#";
+
+            String upperBounds = upperPoints + upperPoints + upperPoints + upperPoints + upperPoints;
+            upperBounds = upperBounds.substring(0, upperBounds.length() - 1);
+
+            Query query = getBuildingsWithinBoundsQuery(uriString, lowerBounds, upperBounds);
+
+            String queryString = query.toString().replace("PLACEHOLDER", "");
+
+            JSONArray queryResultArray = this.queryStore(route, queryString);
+
+            for (int i = 0; i < queryResultArray.length(); i++) {
+                uri = queryResultArray.getJSONObject(i).get("cityObject").toString();
+
+                if (!unique.contains(uri)) {
+                    // Set default value of 10m if height can not be obtained from knowledge graph
+                    // Will only require one height query if height is represented in data consistently
+                    String height = getValue(uri, "HeightMeasuredHeigh", route);
+                    height = height.length() == 0 ? getValue(uri, "HeightMeasuredHeight", route) : height;
+                    height = height.length() == 0 ? getValue(uri, "HeightGenAttr", route) : height;
+                    height = height.length() == 0 ? "10.0" : height;
+                    // Get footprint from ground thematic surface or find from surface geometries depending on data
+                    String footprint = getValue(uri, "Lod0FootprintId", route);
+                    footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
+                    footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
+
+                    temp = new CEAInputData(footprint, height, null, null);
+                    unique.add(uri);
+                    surroundings.add(temp);
+                }
+            }
+            return surroundings;
+        }
+        catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -1459,6 +1604,7 @@ public class CEAAgent extends JPSAgent {
         GeometryFactory geoFac = new GeometryFactory();
         GeometryCollection geoCol;
         Geometry merged;
+        Geometry temp;
         String geoType;
 
         if (results.length() == 1){
@@ -1467,7 +1613,11 @@ public class CEAAgent extends JPSAgent {
 
         else {
             for (int i = 0; i < results.length(); i++) {
-                geometries.add(toPolygon(ignoreHole(results.getJSONObject(i).get("geometry").toString(), results.getJSONObject(i).get("datatype").toString())));
+                temp = toPolygon(ignoreHole(results.getJSONObject(i).get("geometry").toString(), results.getJSONObject(i).get("datatype").toString()));
+                if (!temp.isValid()){
+                    temp = GeometryFixer.fix(temp);
+                }
+                geometries.add(temp);
             }
 
             geoCol = (GeometryCollection) geoFac.buildGeometry(geometries);
@@ -1480,7 +1630,11 @@ public class CEAAgent extends JPSAgent {
                 distance += increment;
 
                 for (int i = 0; i < geometries.size(); i++){
-                    geometries.set(i, inflatePolygon(geometries.get(i), distance));
+                    temp = inflatePolygon(geometries.get(i), distance);
+                    if (!temp.isValid()){
+                        temp = GeometryFixer.fix(temp);
+                    }
+                    geometries.set(i, temp);
                 }
 
                 geoCol = (GeometryCollection) geoFac.buildGeometry(geometries);
@@ -1489,6 +1643,10 @@ public class CEAAgent extends JPSAgent {
             }
 
             footprintPolygon = (Polygon) deflatePolygon(merged, distance);
+
+            if (!footprintPolygon.isValid()){
+                footprintPolygon = (Polygon) GeometryFixer.fix(footprintPolygon);
+            }
         }
 
         footprintRing = footprintPolygon.getExteriorRing();
@@ -1587,6 +1745,7 @@ public class CEAAgent extends JPSAgent {
      * Sets a polygon's z coordinates to the values from zInput
      * @param geom polygon geometry
      * @param zInput ArrayList of values representing z coordinates
+     * @return geom with z coordinates from zInput
      */
     private void setPolygonZ(Geometry geom, ArrayList<Double> zInput){
         Double newZ = Double.NaN;

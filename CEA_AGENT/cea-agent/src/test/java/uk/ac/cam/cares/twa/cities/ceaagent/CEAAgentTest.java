@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.ceaagent;
 
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
+import org.apache.jena.atlas.json.JSON;
 import org.apache.jena.sparql.core.Var;
 import org.jooq.exception.DataAccessException;
 import org.json.JSONArray;
@@ -59,7 +60,7 @@ public class CEAAgentTest {
         CEAAgent agent = new CEAAgent();
         ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
 
-        assertEquals(54, agent.getClass().getDeclaredFields().length);
+        assertEquals(57, agent.getClass().getDeclaredFields().length);
 
         Field URI_ACTION;
         Field URI_UPDATE;
@@ -256,7 +257,7 @@ public class CEAAgentTest {
     @Test
     public void testCEAAgentMethods() {
         CEAAgent agent = new CEAAgent();
-        assertEquals(60, agent.getClass().getDeclaredMethods().length);
+        assertEquals(63, agent.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -309,6 +310,8 @@ public class CEAAgentTest {
         String measure_crs = "CRS";
         String test_crs = "test_crs";
         String testScalar = "testScalar";
+        String test_envelope = "555438.08#305587.27999#-0.6#555484.04#305587.27999#-0.6#555484.04#305614.87999#-0.6#555438.08#305614.87999#-0.6#555438.08#305587.27999#-0.6";
+
 
         JSONArray expected_building = new JSONArray().put(new JSONObject().put(measure_building, building));
         JSONArray expected_height = new JSONArray().put(new JSONObject().put(measure_height, test_height));
@@ -317,6 +320,9 @@ public class CEAAgentTest {
         JSONArray expected_crs = new JSONArray().put(new JSONObject().put(measure_crs, test_crs));
         JSONArray expected_iri = new JSONArray().put(new JSONObject().put("measure", test_measure).put("unit", test_unit));
         JSONArray expected_value = new JSONArray().put(new JSONObject().put("value", testScalar));
+        JSONArray expected_envelope = new JSONArray().put(new JSONObject().put("envelope", test_envelope));
+        JSONArray expected_buildings = new JSONArray().put(new JSONObject().put("cityObject", "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/")).put(new JSONObject().put("cityObject", "http://localhost/kings-lynn-open-data/cityobject/UUID_447787a5-1678-4246-8658-4036436c1052/"));
+
 
         // Test the update endpoint
         requestParams.put(CEAAgent.KEY_REQ_URL, "http://localhost:8086/agents/cea/update");
@@ -367,7 +373,9 @@ public class CEAAgentTest {
             requestParams.put(CEAAgent.KEY_REQ_URL, "http://localhost:8086/agents/cea/run");
 
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
-                    .thenReturn(expected_height).thenReturn(expected_footprint).thenReturn(expected_usage).thenReturn(expected_crs);
+                    .thenReturn(expected_height).thenReturn(expected_footprint).thenReturn(expected_usage)
+                    .thenReturn(expected_envelope).thenReturn(expected_buildings).thenReturn(expected_height).thenReturn(expected_footprint)
+                    .thenReturn(expected_crs);
 
             try (MockedConstruction<RunCEATask> mockTask = mockConstruction(RunCEATask.class)) {
                 ThreadPoolExecutor executor = mock(ThreadPoolExecutor.class);
@@ -700,7 +708,7 @@ public class CEAAgentTest {
             targetUrl.set(agent, "test");
 
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test","test"));
+            testData.add(new CEAInputData("test", "test", "test", null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -2019,12 +2027,12 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testGetBuildingUsage() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
+    public void testGetBuildingUsageQuery() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
     {
         CEAAgent agent = new CEAAgent();
         String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
-        Method getBuildingUsage = agent.getClass().getDeclaredMethod("getBuildingUsage", String.class);
+        Method getBuildingUsage = agent.getClass().getDeclaredMethod("getBuildingUsageQuery", String.class);
         assertNotNull(getBuildingUsage);
         getBuildingUsage.setAccessible(true);
 
@@ -2046,5 +2054,74 @@ public class CEAAgentTest {
 
         String result = (String) toCEAConvention.invoke(agent, test_usage);
         assertTrue(result.equals("MULTI_RES"));
+    }
+
+    @Test
+    public void testGetEnvelopeQuery() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
+
+        Method getEnvelopeQuery = agent.getClass().getDeclaredMethod("getEnvelopeQuery", String.class);
+        assertNotNull(getEnvelopeQuery);
+        getEnvelopeQuery.setAccessible(true);
+
+        Query q = (Query) getEnvelopeQuery.invoke(agent, uri);
+
+        assertTrue(q.toString().contains("EnvelopeType"));
+    }
+
+    @Test
+    public void testGetBuildingsWithinBoundsQuery() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
+        CEAAgent agent = new CEAAgent();
+        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
+
+        Method getBuildingsWithinBoundsQuery = agent.getClass().getDeclaredMethod("getBuildingsWithinBoundsQuery", String.class, String.class, String.class);
+        assertNotNull(getBuildingsWithinBoundsQuery);
+        getBuildingsWithinBoundsQuery.setAccessible(true);
+
+        Query q = (Query) getBuildingsWithinBoundsQuery.invoke(agent, uri, "test", "test");
+
+        Field customDataType = agent.getClass().getDeclaredField("customDataType");
+        Field customField = agent.getClass().getDeclaredField("customField");
+
+        assertTrue(q.toString().contains("predicate"));
+        assertTrue(q.toString().contains("searchDatatype"));
+        assertTrue(q.toString().contains("customFields"));
+        assertTrue(q.toString().contains("customFieldsLowerBounds"));
+        assertTrue(q.toString().contains("customFieldsUpperBounds"));
+        assertTrue(q.toString().contains((String) customDataType.get(agent)));
+        assertTrue(q.toString().contains((String) customField.get(agent)));
+    }
+
+    @Test
+    public void testGetSurroundings() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = spy(new CEAAgent());
+        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
+
+        Method getSurroundings = agent.getClass().getDeclaredMethod("getSurroundings", String.class, String.class, List.class);
+        assertNotNull(getSurroundings);
+        getSurroundings.setAccessible(true);
+
+        String geometry = "555438.08#305587.27999#-0.6#555484.04#305587.27999#-0.6#555484.04#305614.87999#-0.6#555438.08#305614.87999#-0.6#555438.08#305587.27999#-0.6";
+        List<String> unique = new ArrayList<>();
+        unique.add(uri);
+
+        JSONArray geometryArray = new JSONArray().put(new JSONObject().put("envelope", geometry).put("geometry", geometry).put("datatype", "<http://localhost/blazegraph/literals/POLYGON-3-15>"));
+        JSONArray buildingsArray = new JSONArray().put(new JSONObject().put("cityObject", uri)).put(new JSONObject().put("cityObject", "http://localhost/kings-lynn-open-data/cityobject/UUID_447787a5-1678-4246-8658-4036436c1052/"));
+        JSONArray heightArray = new JSONArray().put(new JSONObject().put("HeightMeasuredHeigh", 10.0));
+
+
+        try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = mockStatic(AccessAgentCaller.class)) {
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn(geometryArray).thenReturn(buildingsArray).thenReturn(heightArray).thenReturn(geometryArray);
+
+            ArrayList<CEAInputData> result = (ArrayList<CEAInputData>) getSurroundings.invoke(agent, uri, "testRoute", unique);
+
+            assertFalse(result.isEmpty());
+            assertTrue(result.get(0).getGeometry().equals(geometry));
+            assertTrue(result.get(0).getHeight().equals("10.0"));
+            assertNull(result.get(0).getUsage());
+            assertNull(result.get(0).getSurrounding());
+        }
     }
 }

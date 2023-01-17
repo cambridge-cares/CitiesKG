@@ -46,12 +46,16 @@ def create_shapefile(geometries, heights, crs, shapefile):
         floors_bg.append(0)
         height_bg.append(0)
         floor_height.append(3.2)  # approximate floor-to-floor height
-        if i<10:
-            names.append("B00" + str(i))
-        elif i<100:
-            names.append("B0" + str(i))
+        if "zone.shp" in shapefile:
+            initial = "B"
         else:
-            names.append("B" + str(i))
+            initial = "S"
+        if i<10:
+            names.append(initial + "00" + str(i))
+        elif i<100:
+            names.append(initial + "0" + str(i))
+        else:
+            names.append(initial + str(i))
 
         i = i+1
 
@@ -85,7 +89,7 @@ def create_shapefile(geometries, heights, crs, shapefile):
 
 
 def main(argv):
-    shapefile_file = "zone.shp"
+    shapefile_file = argv.file_name
     shapefile = argv.zone_file_location + os.sep + shapefile_file
     with open(argv.data_file_location, "r") as f:
         dataString = f.readlines()[0]
@@ -110,6 +114,7 @@ if __name__ == '__main__':
     parser.add_argument("data_file_location")
     parser.add_argument("zone_file_location")
     parser.add_argument("crs")
+    parser.add_argument("file_name")
 
     # parse the arguments
     args = parser.parse_args()
