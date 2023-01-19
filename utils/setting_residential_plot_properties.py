@@ -180,7 +180,7 @@ def is_corner_plot(intersection, min_rect_plots, overlap_ratio):
 
 def find_average_width_or_depth(plot_row, width):
     cur_front_edge = plot_row.loc['min_rect_edges'][int(plot_row.loc['min_rect_front_edge'])]
-    cur_side_edge = plot_row.loc['min_rect_edges'][int(plot_row.loc[ 'min_rect_side_edges'][0])]
+    cur_side_edge = plot_row.loc['min_rect_edges'][int(plot_row.loc['min_rect_side_edges'][0])]
     if width == 'average_width':
         offset_distances = np.linspace(0, cur_side_edge.length, 12)[1:-1]
         lines = [cur_front_edge.parallel_offset(cur_offset, 'left') for cur_offset in offset_distances]
@@ -227,7 +227,7 @@ def set_road_plot_properties(road_network, plots):
     road_plots = plots[plots['zone'] == 'ROAD']
     invalid_road_types = ['Cross Junction', 'T-Junction', 'Expunged', 'Other Junction', 'Pedestrian Mall',
                           '2 T-Junction opposite each other', 'Unknown', 'Y-Junction', 'Imaginary Line']
-    road_network = road_network[~road_network['RD_TYP_CD'].isin(invalid_road_types)]
+    road_network_valid = road_network[~road_network['RD_TYP_CD'].isin(invalid_road_types)]
     road_cat_dict = {'Expressway': '1',
                      'Semi Expressway': '2-3',
                      'Major Arterials/Minor Arterials': '2-3',
@@ -236,9 +236,10 @@ def set_road_plot_properties(road_network, plots):
                      'Slip Road': '5',
                      'Service Road': '5',
                      'no category': 'unknown'}
-    road_plots = assign_road_category(road_plots, road_network)
-    road_plots['road_category'] = [road_cat_dict[x] for x in road_plots["RD_TYP_CD"]]
-    return road_plots
+
+    road_plots_cat = assign_road_category(road_plots, road_network_valid.copy())
+    road_plots_cat['road_category'] = [road_cat_dict[x] for x in road_plots_cat["RD_TYP_CD"]]
+    return road_plots_cat
 
 
 '''Overlap road network data and road plots and links road network attributes to road plots.'''
@@ -255,6 +256,52 @@ def assign_road_category(road_plots, road_network):
     road_plots.loc[road_plots["RD_TYP_CD"].isna(), "RD_TYP_CD"] = "no category"
     return road_plots
 
+
+def find_allowed_residential_types(plots):
+    allowed_types = []
+    for i in plots.index:
+        cur_plot_allowed_types = []
+        in_landed_area = not plots.loc[i, 'linked_landed_areas'].isna()
+        in_good_class_bungalow_area = not plots.loc[i, 'linked_good_class_bungalow_areas'].isna()
+        sbp_allowed_types = plots.loc[i, 'sbp_allowed_types']
+        area, width, depth = plots.loc[i, 'plot_area'], plots.loc[i, 'avg_width'], plots.loc[i, 'avg_depth']
+        zone, is_corner, is_fringe = plots.loc[i, 'zone'], plots.loc[i, 'is_corner'], plots.loc[i, 'is_fringe']
+        road_condition = plots.loc[i, 'neighbour_road_type'].isin('Expressway', 'Semi Expressway','Major Arterials/Minor Arterials')
+
+        # for Bungalow
+        bungalow_geom_condition = (area >= 400) and (width >= 10)
+        if bungalow_geom_condition and ('Bungalow' in (sbp_allowed_types or in_landed_area)) and not in_good_class_bungalow_area:
+            cur_plot_allowed_types.append('Bungalow')
+        # for Semi-Detached House
+        semi_detached_house_geom_condition = (area >= 200) and (width >= 8)
+        if semi_detached_house_geom_condition and ('Semi-DetachedHouse' in (sbp_allowed_types or in_landed_area)) and not in_good_class_bungalow_area:
+            cur_plot_allowed_types.append('Semi-DetachedHouse')
+        # for Terrace Type 1
+        terrace1_geom_condition_inner = (area >= 150) and (width >= 6) and not is_corner
+        terrace1_geom_condition_corner = (area >= 200) and (width >= 8) and is_corner
+        if (terrace1_geom_condition_inner or terrace1_geom_condition_corner) and ('TerraceType1' in (sbp_allowed_types or in_landed_area)) and not in_good_class_bungalow_area:
+            cur_plot_allowed_types.append('TerraceType1')
+        # for Terrace Type 2
+        terrace2_geom_condition_inner = area >= 80 and width >= 6 and not is_corner
+        terrace2_geom_condition_corner = area >= 80 and width >= 8 and is_corner
+        if (terrace2_geom_condition_inner or terrace2_geom_condition_corner) and ('TerraceType2' in (sbp_allowed_types or in_landed_area)) and not in_good_class_bungalow_area:
+            cur_plot_allowed_types.append('TerraceType2')
+        # for Good Class Bungalow type
+        good_class_bungalow_geom_condition = (area >= 1400) and (width >= 18.5) and (depth >= 30)
+        if good_class_bungalow_geom_condition and (in_good_class_bungalow_area or ('GoodClassBungalow' in sbp_allowed_types)):
+            cur_plot_allowed_types.append('GoodClassBungalow')
+        # for Flats, Condominiums and Serviced Apartments type
+        if not in_good_class_bungalow_area and not in_landed_area:
+            if (area >= 1000) or ((area >= 1000) and ('Flat' in sbp_allowed_types)):
+                cur_plot_allowed_types.append('Flat')
+            if area >= 4000:
+                cur_plot_allowed_types.append('Condominium')
+            if (area >= 1000) and is_fringe and road_condition:
+                cur_plot_allowed_types.append('ServicedApartmentResidentialZone')
+            if (area >= 1000) and is_fringe:
+                cur_plot_allowed_types.append('ServicedApartmentMixedUseZone')
+        allowed_types.append(cur_plot_allowed_types)
+    return allowed_types
 
 class TripleDataset:
 
@@ -328,7 +375,7 @@ def instantiate_road_plot_properties(plots_df):
 if __name__ == "__main__":
     plots = get_plots("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql")
     print('plots retrieved')
-    #residential_plots_df = set_residential_plot_properties(plots)
+    residential_plots_df = set_residential_plot_properties(plots)
     #print('Residential plot properties set.')
     #instantiate_residential_plot_property_triples(residential_plots_df)
     #print('residential plot property triples written.')

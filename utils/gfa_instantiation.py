@@ -211,32 +211,21 @@ class TripleDataset:
                               GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
             i += 1
         if 'GOOD CLASS BUNGALOW AREA' in area:
-            self.dataset.add((landed_housing_area, RDF.type, GFAOntoManager.GOOD_CLASS_BUNGALOW_AREA,
-                              GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-            self.dataset.add((landed_housing_area, GFAOntoManager.ALLOWS_PROGRAMME, good_class_bungalow,
-                              GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+            self.dataset.add((landed_housing_area, RDF.type, GFAOntoManager.GOOD_CLASS_BUNGALOW_AREA, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+            self.dataset.add((landed_housing_area, GFAOntoManager.ALLOWS_PROGRAMME, good_class_bungalow,GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         elif 'LANDED HOUSING AREA' in area:
             if 'SEMI-DETACHED' in type:
-                self.dataset.add((landed_housing_area, RDF.type, GFAOntoManager.LANDED_HOUSING_AREA,
-                                  GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-                self.dataset.add((landed_housing_area, GFAOntoManager.ALLOWS_PROGRAMME, semi_detached_house,
-                                  GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+                self.dataset.add((landed_housing_area, RDF.type, GFAOntoManager.LANDED_HOUSING_AREA, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+                self.dataset.add((landed_housing_area, GFAOntoManager.ALLOWS_PROGRAMME, semi_detached_house, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
             elif 'BUNGALOWS' in type:
-                self.dataset.add((landed_housing_area, RDF.type, GFAOntoManager.LANDED_HOUSING_AREA,
-                                  GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-                self.dataset.add((landed_housing_area, GFAOntoManager.ALLOWS_PROGRAMME, bungalow,
-                                  GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+                self.dataset.add((landed_housing_area, RDF.type, GFAOntoManager.LANDED_HOUSING_AREA, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+                self.dataset.add((landed_housing_area, GFAOntoManager.ALLOWS_PROGRAMME, bungalow, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
             elif 'MIXED LANDED' in type:
-                self.dataset.add((landed_housing_area, RDF.type, GFAOntoManager.LANDED_HOUSING_AREA,
-                                  GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-                self.dataset.add((landed_housing_area, GFAOntoManager.ALLOWS_PROGRAMME, bungalow,
-                                  GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-                self.dataset.add((landed_housing_area, GFAOntoManager.ALLOWS_PROGRAMME, semi_detached_house,
-                                  GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-                self.dataset.add((landed_housing_area, GFAOntoManager.ALLOWS_PROGRAMME, terrace_type_1,
-                                  GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
-                self.dataset.add((landed_housing_area, GFAOntoManager.ALLOWS_PROGRAMME, terrace_type_2,
-                                  GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+                self.dataset.add((landed_housing_area, RDF.type, GFAOntoManager.LANDED_HOUSING_AREA, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+                self.dataset.add((landed_housing_area, GFAOntoManager.ALLOWS_PROGRAMME, bungalow, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+                self.dataset.add((landed_housing_area, GFAOntoManager.ALLOWS_PROGRAMME, semi_detached_house, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+                self.dataset.add((landed_housing_area, GFAOntoManager.ALLOWS_PROGRAMME, terrace_type_1, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+                self.dataset.add((landed_housing_area, GFAOntoManager.ALLOWS_PROGRAMME, terrace_type_2, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
     '''Generates necessary triples to represent a setback triples and add it to a triple dataset.'''
     def create_setback_triples(self, city_obj, setback, predicate_type, setback_type, setback_value):
@@ -511,8 +500,7 @@ class TripleDataset:
         query_results = query_results.applymap(lambda cell: cell['value'])
         print('Regulation query results returned.')
 
-        geometries = gpd.GeoSeries(query_results['geom'].map(lambda geo: envelopeStringToPolygon(geo, geodetic=True)),
-                                   crs='EPSG:4326')
+        geometries = gpd.GeoSeries(query_results['geom'].map(lambda geo: envelopeStringToPolygon(geo, geodetic=True)), crs='EPSG:4326')
         geometries = geometries.to_crs(epsg=3857)
         area = gpd.GeoDataFrame(query_results, geometry=geometries).drop(columns=['geom'])
         print('Regulation dataframe created. Number of geometries: {}'.format(len(area)))
@@ -521,16 +509,13 @@ class TripleDataset:
         intersection['intersection_area'] = intersection.area
 
         if boolean:
-            intersection_filtered = (intersection.sort_values(['plots', 'intersection_area'], ascending=False)
-                                     .drop_duplicates(subset=['plots']))
+            intersection_filtered = (intersection.sort_values(['plots', 'intersection_area'], ascending=False).drop_duplicates(subset=['plots']))
         else:
             intersection_filtered = intersection.loc[lambda df: df['intersection_area'] / df['area'] > accuracy]
         print('Plots with regulations intersected. Number of filtered intersections: {}'.format(len(intersection_filtered)))
         for i in intersection_filtered.index:
             city_object_id = intersection_filtered.loc[i, 'obj_id'].replace('genericcityobject', 'cityobject')
-            self.dataset.add((URIRef(city_object_id), GFAOntoManager.APPLIES_TO,
-                              URIRef(intersection_filtered.loc[i, 'plots']),
-                              GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+            self.dataset.add((URIRef(city_object_id), GFAOntoManager.APPLIES_TO, URIRef(intersection_filtered.loc[i, 'plots']), FAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
     ''' Writes the aggregated triple dataset into a nquad(text) file.'''
     def write_triples(self, triple_type):
@@ -541,18 +526,22 @@ class TripleDataset:
 ''' Instantiates plot neighbours relationships into triples .'''
 def instantiate_neighbors():
     plots = get_plots("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql")
+    print('plots retrieved')
     all_plots = plots.loc[:, ['plots', 'geometry']]
     all_plots.rename(columns={'plots': 'context_plots'}, inplace=True)
     plots['geometry'] = plots.buffer(2, cap_style=3)
+    print('plots buffered')
     intersection = gpd.overlay(plots, all_plots, how='intersection', keep_geom_type=True)
+    print('plots intersected')
     intersection['area'] = intersection.area
     filtered_intersection = intersection.loc[lambda df: df['area'] > 1]
+    print('intersections filtered')
     neighbors_dataset = TripleDataset()
     for count, i in enumerate(filtered_intersection.index):
         if filtered_intersection.loc[i, 'plots'] != filtered_intersection.loc[i, 'context_plots']:
-            neighbors_dataset.dataset.add((URIRef(filtered_intersection.loc[i, 'plots']), GFAOntoManager.HAS_NEIGHBOUR,
-                                   URIRef(filtered_intersection.loc[i, 'context_plots']), GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+            neighbors_dataset.dataset.add((URIRef(filtered_intersection.loc[i, 'plots']), GFAOntoManager.HAS_NEIGHBOUR, URIRef(filtered_intersection.loc[i, 'context_plots']), GFAOntoManager.BUILDABLE_SPACE_GRAPH))
     neighbors_dataset.write_triples('neighbors')
+    print('triples written into nquads')
 
 ''' Instantiates triples into /planningregulations/ graph for each regulation overlap.'''
 def instantiate_reg_overlaps(central_area, urban_design_area, street_block_plan, conservation, monument,
@@ -980,8 +969,8 @@ if __name__ == "__main__":
     # endpoint for area-based regulation content
     #regulation_cont = url_prefix + 'regulationcontent/sparql'
 
-    cur_dir = 'C:/Users/AydaGrisiute/Dropbox/Cities Knowledge Graph - [all team members]/Research/WP6 - Use Cases/PlanningConceptOntology/demonstrator_data/type_based_planning_regulations/'
-    control_plans = pd.read_excel(cur_dir + 'non_residential_development_control_plans.xlsx')
+    #cur_dir = 'C:/Users/AydaGrisiute/Dropbox/Cities Knowledge Graph - [all team members]/Research/WP6 - Use Cases/PlanningConceptOntology/demonstrator_data/type_based_planning_regulations/'
+    #control_plans = pd.read_excel(cur_dir + 'non_residential_development_control_plans.xlsx')
 
     #instantiate_height_control(height_control)
     #instantiate_conservation_areas(conservation_areas)
@@ -996,11 +985,11 @@ if __name__ == "__main__":
     #instantiate_reg_overlaps(central_area, urban_design_areas, street_block_plan, conservation_areas, monument,
     #                         urban_design_guidelines, landed_housing, height_control, planning_boundaries)
 
-    control_plans = control_plans.drop(index=[0, 1, 2, 3, 4]) # temporary
-    instantiate_development_control_plans(control_plans)
+    #control_plans = control_plans.drop(index=[0, 1, 2, 3, 4]) # temporary
+    #instantiate_development_control_plans(control_plans)
 
-    #get_plots("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql")
-    #instantiate_neighbors()
+    get_plots("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql")
+    instantiate_neighbors()
 
     # generates nquads with gross floor area estimation for every plot .
     # instantiate_gfa()
