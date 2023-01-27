@@ -1,0 +1,7 @@
+PUT http://localhost:8080/agents/uprn
+Content-Type: application/json
+
+{
+  "namespace":"http://127.0.0.1:9999/blazegraph/namespace/churchill/sparql/",
+  "cityObjectIRI": "http://localhost:9999/blazegraph/namespace/churchill/sparql/building/UUID_d4068704-504a-4873-9a92-2d483876cb92/"
+}
