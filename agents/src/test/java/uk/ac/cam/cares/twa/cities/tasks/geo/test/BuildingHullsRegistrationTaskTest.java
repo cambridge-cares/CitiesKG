@@ -1,19 +1,25 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo.test;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
-import uk.ac.cam.cares.twa.cities.models.ModelContext;
-import uk.ac.cam.cares.twa.cities.models.geo.Building;
-import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
+import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.twa.cities.model.geo.Building;
+import uk.ac.cam.cares.twa.cities.model.geo.SurfaceGeometry;
+import uk.ac.cam.cares.twa.cities.model.geo.ThematicSurface;
 import uk.ac.cam.cares.twa.cities.tasks.geo.BuildingHullsRegistrationTask;
 import uk.ac.cam.cares.twa.cities.tasks.geo.MultiSurfaceThematicisationTask;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class BuildingHullsRegistrationTaskTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+public class BuildingHullsRegistrationTaskTest{
+
+  @Test
   public void testInvocation() throws NoSuchFieldException, IllegalAccessException {
 
     ConcurrentLinkedQueue<MultiSurfaceThematicisationTask> queue = new ConcurrentLinkedQueue<>();
@@ -30,7 +36,8 @@ public class BuildingHullsRegistrationTaskTest extends TestCase {
     Building building = context.createNewModel(Building.class, "a");
     building.setLod1MultiSurfaceId(context.createHollowModel(SurfaceGeometry.class, "b"));
     building.setLod2MultiSurfaceId(context.createHollowModel(SurfaceGeometry.class, "c"));
-    Mockito.doReturn(building).when(context).loadAll(Mockito.any(), Mockito.anyString());
+    Mockito.doReturn(new ArrayList<ThematicSurface>()).when(context).pullPartialWhere(Mockito.any(), Mockito.any(), Mockito.any());
+    Mockito.doReturn(building).when(context).loadPartial(Mockito.any(), Mockito.anyString(), Mockito.any());
     Field contextField = BuildingHullsRegistrationTask.class.getDeclaredField("context");
     contextField.setAccessible(true);
     contextField.set(task, context);

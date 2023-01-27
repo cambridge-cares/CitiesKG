@@ -1,9 +1,8 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo.test;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
-import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
 import uk.ac.cam.cares.twa.cities.tasks.geo.MultiSurfaceThematicisationTask;
 import uk.ac.cam.cares.twa.cities.tasks.geo.ThematicSurfaceDiscoveryTask;
 
@@ -14,8 +13,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ThematicSurfaceDiscoveryTaskTest extends TestCase {
+public class ThematicSurfaceDiscoveryTaskTest{
 
+  @Test
   public void testResolveIndeterminateFlips() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
 
     ThematicSurfaceDiscoveryTask task = new ThematicSurfaceDiscoveryTask(Arrays.asList("http://first"),

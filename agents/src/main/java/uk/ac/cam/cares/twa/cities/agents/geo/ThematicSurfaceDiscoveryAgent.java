@@ -19,12 +19,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.twa.cities.SPARQLUtils;
-import uk.ac.cam.cares.twa.cities.models.ModelContext;
-import uk.ac.cam.cares.twa.cities.models.geo.*;
+import uk.ac.cam.cares.ogm.models.SPARQLUtils;
+import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.twa.cities.model.geo.GeometryType;
 import uk.ac.cam.cares.twa.cities.tasks.geo.ThematicSurfaceDiscoveryTask;
 
 
@@ -88,7 +87,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
   private static final String BUILDING_PARENT = "bldgParent";
 
   // Default task parameters
-  private static final double DEFAULT_THRESHOLD = 15;
+  private static final double DEFAULT_THRESHOLD = 5;
 
   private final String targetResourceId;
   @Getter private String buildingIri;

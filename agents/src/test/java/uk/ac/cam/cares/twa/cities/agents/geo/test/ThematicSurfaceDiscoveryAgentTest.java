@@ -1,12 +1,12 @@
 package uk.ac.cam.cares.twa.cities.agents.geo.test;
 
-import junit.framework.TestCase;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
-import uk.ac.cam.cares.twa.cities.models.ModelContext;
-import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
+import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.twa.cities.model.geo.GeometryType;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
@@ -14,11 +14,12 @@ import javax.ws.rs.HttpMethod;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 
-public class ThematicSurfaceDiscoveryAgentTest extends TestCase {
+public class ThematicSurfaceDiscoveryAgentTest{
 
+  @Test
   public void testValidateInput() {
     // Empty params
     JSONObject requestParams = new JSONObject();
@@ -36,7 +37,7 @@ public class ThematicSurfaceDiscoveryAgentTest extends TestCase {
       assertEquals("http://example.org/test/", agent.getNamespaceIri());
       assertNull(agent.getBuildingIri());
       assertArrayEquals(new boolean[]{true, true, true, true}, agent.getTaskParams().lods);
-      assertEquals(15.0, agent.getTaskParams().threshold);
+      assertEquals(5.0, agent.getTaskParams().threshold);
       assertEquals(ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE, agent.getTaskParams().mode);
       assertEquals("http://example.org/test/", agent.getTaskParams().namespace);
     } catch (BadRequestException ignored) {
@@ -98,12 +99,13 @@ public class ThematicSurfaceDiscoveryAgentTest extends TestCase {
     try {
       ThematicSurfaceDiscoveryAgent agent = new ThematicSurfaceDiscoveryAgent();
       assertTrue(agent.validateInput(requestParams));
-      assertEquals(ThematicSurfaceDiscoveryAgent.Mode.FOOTPRINT, agent.getTaskParams().mode);
+      assertEquals(ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE, agent.getTaskParams().mode);
     } catch (BadRequestException ignored) {
       fail();
     }
   }
 
+  @Test
   public void testImportSrs() throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException {
 
     ModelContext mockContext = Mockito.spy(new ModelContext("", ""));

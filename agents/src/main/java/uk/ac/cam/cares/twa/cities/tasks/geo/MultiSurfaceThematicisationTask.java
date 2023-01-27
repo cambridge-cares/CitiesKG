@@ -7,10 +7,10 @@ import org.apache.jena.graph.NodeFactory;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.locationtech.jts.geom.Coordinate;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.twa.cities.SPARQLUtils;
+import uk.ac.cam.cares.ogm.models.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
-import uk.ac.cam.cares.twa.cities.models.ModelContext;
-import uk.ac.cam.cares.twa.cities.models.geo.*;
+import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.twa.cities.model.geo.*;
 
 import java.math.BigInteger;
 import java.net.URI;
@@ -97,10 +97,10 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
     } else {
       if(params.mode == ThematicSurfaceDiscoveryAgent.Mode.RESTRUCTURE)
         restructureAndPush();
-      else if(params.mode == ThematicSurfaceDiscoveryAgent.Mode.VALIDATE)
-        commentAndPush();
-      else
+      else if(params.mode == ThematicSurfaceDiscoveryAgent.Mode.FOOTPRINT)
         addFootprintAndPush();
+      else
+        commentAndPush();
     }
     return null;
   }
@@ -272,7 +272,7 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
     for (SurfaceGeometry geometry : bottomLevelThematicGeometries.get(Theme.ROOF.index)) {
       whereBuilder.addWhere(NodeFactory.createURI(geometry.getIri()), COMMENT_PREDICATE, NodeFactory.createLiteral(ROOF_COMMENT));
     }
-    Node graph = NodeFactory.createURI(params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH);
+    Node graph = NodeFactory.createURI(params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH + SLASH);
     context.update(new UpdateBuilder().addInsert(graph, whereBuilder).build().toString());
   }
 
@@ -285,7 +285,17 @@ public class MultiSurfaceThematicisationTask implements Callable<Void> {
 
     if (bottomLevelThematicGeometries.get(Theme.GROUND.index).size() > 0) {
       // Get Building and create Ground MultiSurface
-      Building bldg = context.getModel(Building.class, bottomLevelThematicGeometries.get(0).get(0).getCityObjectId().toString());
+      Building bldg;
+      String cityObjectId = bottomLevelThematicGeometries.get(0).get(0).getCityObjectId().toString();
+      if (cityObjectId.contains(params.namespace + SchemaManagerAdapter.THEMATIC_SURFACE_GRAPH)) {
+        // Get parent building in case thematic surfaces already exist ...
+        ThematicSurface thematicSurface = context.getModel(ThematicSurface.class, cityObjectId);
+        context.pullPartial(thematicSurface, "buildingId");
+        bldg = context.getModel(Building.class, thematicSurface.getBuildingId().getIri());
+      } else {
+        // ... otherwise fetch building as CityObjectId of surfaces directly
+        bldg = context.getModel(Building.class, bottomLevelThematicGeometries.get(0).get(0).getCityObjectId().toString());
+      }
       bldg.setDirty("lod0FootprintId");
       String uuid = "UUID_" + UUID.randomUUID().toString();
       String groundSurfaceIri = params.namespace + SchemaManagerAdapter.SURFACE_GEOMETRY_GRAPH + SLASH + uuid;

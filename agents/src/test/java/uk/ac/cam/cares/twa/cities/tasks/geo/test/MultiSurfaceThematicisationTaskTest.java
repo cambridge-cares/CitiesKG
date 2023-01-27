@@ -1,11 +1,11 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo.test;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
-import uk.ac.cam.cares.twa.cities.models.ModelContext;
-import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
-import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
+import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.twa.cities.model.geo.GeometryType;
+import uk.ac.cam.cares.twa.cities.model.geo.SurfaceGeometry;
 import uk.ac.cam.cares.twa.cities.tasks.geo.MultiSurfaceThematicisationTask;
 
 import java.lang.reflect.Field;
@@ -15,9 +15,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class MultiSurfaceThematicisationTaskTest extends TestCase {
+public class MultiSurfaceThematicisationTaskTest{
 
   static Field contextField;
   static Field rootsField;
@@ -48,6 +48,7 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
     return mockContext;
   }
 
+  @Test
   public void testTryClassifyGeometries() throws NoSuchFieldException, IllegalAccessException {
 
     ModelContext context = makeMockContext();
@@ -205,6 +206,7 @@ public class MultiSurfaceThematicisationTaskTest extends TestCase {
 
   }
 
+  @Test
   public void testImplementChangesAndPush() throws IllegalAccessException, URISyntaxException {
 
     ModelContext context = makeMockContext();

@@ -34,6 +34,7 @@ import org.citydb.sqlbuilder.SQLStatement;
 import org.citydb.sqlbuilder.expression.PlaceHolder;
 import org.citydb.sqlbuilder.schema.Column;
 import org.citydb.sqlbuilder.select.PredicateToken;
+import org.citydb.sqlbuilder.select.Select;
 import org.citydb.sqlbuilder.select.projection.Function;
 
 import java.sql.Connection;
@@ -89,9 +90,6 @@ public abstract class AbstractSQLAdapter {
 	
 	public abstract BlobImportAdapter getBlobImportAdapter(Connection connection, BlobType type) throws SQLException;
 	public abstract BlobExportAdapter getBlobExportAdapter(Connection connection, BlobType type);
-
-	//Added by Shiying
-	public abstract PreparedStatement transformStatement(SQLStatement statement, Connection connection) throws SQLException;
 
 	public String resolveDatabaseOperationName(String key) {
 		if (databaseOperations == null) {
@@ -188,5 +186,4 @@ public abstract class AbstractSQLAdapter {
 				preparedStatement.setLong(i + 1, (Long)value);
 		}
 	}
-	
 }

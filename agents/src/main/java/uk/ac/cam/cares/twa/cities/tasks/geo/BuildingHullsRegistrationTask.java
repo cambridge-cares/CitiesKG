@@ -1,19 +1,16 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import uk.ac.cam.cares.twa.cities.SPARQLUtils;
+import uk.ac.cam.cares.ogm.models.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
-import uk.ac.cam.cares.twa.cities.models.ModelContext;
-import uk.ac.cam.cares.twa.cities.models.geo.Building;
-import uk.ac.cam.cares.twa.cities.models.geo.SurfaceGeometry;
-import uk.ac.cam.cares.twa.cities.models.geo.ThematicSurface;
+import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.twa.cities.model.geo.Building;
+import uk.ac.cam.cares.twa.cities.model.geo.ThematicSurface;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -38,15 +35,18 @@ public class BuildingHullsRegistrationTask implements Callable<Void> {
   }
 
   public Void call() {
-    if (params.mode == ThematicSurfaceDiscoveryAgent.Mode.VALIDATE) {
+    // Pull thematic surfaces belonging to the target building
+    WhereBuilder where = new WhereBuilder();
+    SPARQLUtils.addPrefix(SchemaManagerAdapter.ONTO_BUILDING_ID, where);
+    where.addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_BUILDING_ID, NodeFactory.createURI(buildingIri));
+    List<ThematicSurface> thematicSurfaces = context.pullPartialWhere(ThematicSurface.class, where,
+        "lod2MultiSurfaceId", "lod3MultiSurfaceId", "lod4MultiSurfaceId");
+
+    if (params.mode == ThematicSurfaceDiscoveryAgent.Mode.VALIDATE ||
+            (params.mode == ThematicSurfaceDiscoveryAgent.Mode.FOOTPRINT && thematicSurfaces.size() > 0)) {
       // One root list for each level of detail from 2-4
       List<List<String>> roots = new ArrayList<>();
       for(int i = 0; i < 3; i++) roots.add(new ArrayList<>());
-      // Pull thematic surfaces belonging to the target building
-      WhereBuilder where = new WhereBuilder();
-      SPARQLUtils.addPrefix(SchemaManagerAdapter.ONTO_BUILDING_ID, where);
-      where.addWhere(ModelContext.getModelVar(), SchemaManagerAdapter.ONTO_BUILDING_ID, NodeFactory.createURI(buildingIri));
-      List<ThematicSurface> thematicSurfaces = context.pullAllWhere(ThematicSurface.class, where);
       // Populate virtual parents with thematic surface multisurfaces
       for (ThematicSurface themSurf: thematicSurfaces) {
         if(params.lods[1] && themSurf.getLod2MultiSurfaceId() != null)
@@ -61,7 +61,8 @@ public class BuildingHullsRegistrationTask implements Callable<Void> {
         if(roots.get(i).size() > 0)
           outputQueue.add(new MultiSurfaceThematicisationTask(i+1, params, roots.get(i).toArray(new String[0])));
     } else {
-      Building building = context.loadAll(Building.class, buildingIri);
+      Building building = context.loadPartial(Building.class, buildingIri,
+          "lod1MultiSurfaceId", "lod2MultiSurfaceId", "lod3MultiSurfaceId", "lod4MultiSurfaceId");
       if(params.lods[0] && building.getLod1MultiSurfaceId() != null)
         outputQueue.add(new MultiSurfaceThematicisationTask(1, params, building.getLod1MultiSurfaceId().getIri()));
       if(params.lods[1] && building.getLod2MultiSurfaceId() != null)

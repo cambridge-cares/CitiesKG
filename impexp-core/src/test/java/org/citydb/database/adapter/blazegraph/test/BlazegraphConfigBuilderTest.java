@@ -287,6 +287,7 @@ public class BlazegraphConfigBuilderTest {
     Properties prop = new Properties();
     prop.setProperty(BlazegraphGeoDatatype.KEY_MAIN + 0, TEST_GEODATATYPE);
     prop.store(output, null);
+    output.close();
   }
 
   /**
@@ -297,6 +298,7 @@ public class BlazegraphConfigBuilderTest {
     Properties prop = new Properties();
     prop.setProperty(BlazegraphAdapter.BLAZEGRAPH_VOCAB_CFG_KEY_URIS, "[\"" + TEST_URI + "\"]");
     prop.store(output, null);
+    output.close();
   }
 
 

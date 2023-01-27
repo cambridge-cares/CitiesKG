@@ -1,233 +1,262 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo.test;
 
-import junit.framework.TestCase;
 import org.citydb.ImpExp;
 import org.json.JSONObject;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
-import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
+import uk.ac.cam.cares.twa.cities.agents.geo.CityExportAgent;
 import uk.ac.cam.cares.twa.cities.tasks.geo.ExporterTask;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
 import java.util.Objects;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
-public class ExporterTaskTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.*;
 
-    public String[] testgmlIds = {"abc"};
-    public String outFileName = "/test.kml";
-    public String outTmpDir = "java.io.tmpdir"; // Note: this path is dependent on the PC, e.g., C:\Users\Shiying\AppData\Local\Temp\test_extruded.kml
-    public JSONObject testServerInfo = initialServerInfo();
+public class ExporterTaskTest {
+    // set up task params
+    public String FS = System.getProperty("file.separator");
+    public String namespaceIri = "http://127.0.0.1:9999/blazegraph/namespace/test/sparql";
+    public JSONObject serverInfo = new JSONObject().put("host", "127.0.0.1").put("port", "9999").put("namespace", "/blazegraph/namespace/test/sparql");
+    public int srid = 25833;
+    public String outputDir = System.getProperty("java.io.tmpdir") + "export";
+    public String outputPath = outputDir + this.FS + "test.kml";
+    public String[] displayMode = {"false", "true", "false", "false"};
+    public int lod = 2;
+    public String[] gmlIds = {"BLDG_123a"};
+    public CityExportAgent.Params taskParams = new CityExportAgent.Params(namespaceIri, serverInfo, srid, outputDir, outputPath, displayMode, lod, gmlIds);
 
-    public JSONObject initialServerInfo() {
-        JSONObject serverInfo = new JSONObject();
-        serverInfo.put("host", "127.0.0.1");
-        serverInfo.put("port", "9999");
-        serverInfo.put("namespace", "/blazegraph/namespace/testdata/sparql");
-        return serverInfo;
-    }
+    // for tear down of directories and files
+    public File kmlDir = new File(this.outputDir + this.FS + "kmlFiles");
+    public File exportFile = new File(kmlDir.getAbsolutePath() + this.FS + "test.kml");
+    public File outputDirFile = new File(this.outputDir);
+    public File cfgDir = new File(this.outputDir + this.FS + "cfgFiles");
+    public File cfgFile = new File(this.cfgDir + this.FS + "test_project.xml");
 
-
+    @Test
     public void testNewExporterTask() {
-        ExporterTask task;
-
-        String[] gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
-        String outputPath= outputFile.getAbsolutePath();
-
         try {
-            task = new ExporterTask(gmlIds, outputPath, testServerInfo);
+            ExporterTask task = new ExporterTask(this.taskParams);
+
+            Field taskParams = task.getClass().getDeclaredField("taskParams");
+            taskParams.setAccessible(true);
+            Field lod = task.getClass().getDeclaredField("lod");
+            lod.setAccessible(true);
+
             assertNotNull(task);
-        }  catch (Exception e) {
-            fail();
-        }
-    }
-
-    public void testNewExporterTaskFields() {
-
-        // Setup of input parameters for the method
-        String[] gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
-        String outputPath = outputFile.getAbsolutePath();
-
-        ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo);
-        assertEquals(13, task.getClass().getDeclaredFields().length);
-
-        Field PROJECT_CONFIG;
-        Field EXT_FILE_KML;
-        Field PLACEHOLDER_HOST;
-        Field PLACEHOLDER_PORT;
-        Field PLACEHOLDER_NS;
-        Field inputs;
-        Field outputpath;
-        Field serverinfo;
-        Field stop;
-        Field PLACEHOLDER_GMLID;
-        Field ARG_SHELL;
-        Field ARG_KMLEXPORT;
-        Field ARG_CFG;
-
-        try {
-            PROJECT_CONFIG = task.getClass().getDeclaredField("PROJECT_CONFIG");
-            assertEquals("project.xml", PROJECT_CONFIG.get(task));
-            EXT_FILE_KML = task.getClass().getDeclaredField("EXT_FILE_KML");
-            assertEquals(".kml", EXT_FILE_KML.get(task));
-            PLACEHOLDER_GMLID = task.getClass().getDeclaredField("PLACEHOLDER_GMLID");
-            assertEquals("{{gmlid}}", PLACEHOLDER_GMLID.get(task));
-            PLACEHOLDER_HOST = task.getClass().getDeclaredField("PLACEHOLDER_HOST");
-            assertEquals("{{host}}", PLACEHOLDER_HOST.get(task));
-            PLACEHOLDER_PORT = task.getClass().getDeclaredField("PLACEHOLDER_PORT");
-            assertEquals("{{port}}", PLACEHOLDER_PORT.get(task));
-            PLACEHOLDER_NS = task.getClass().getDeclaredField("PLACEHOLDER_NS");
-            assertEquals("{{namespace}}", PLACEHOLDER_NS.get(task));
-            ARG_SHELL = task.getClass().getDeclaredField("ARG_SHELL");
-            assertEquals("-shell", ARG_SHELL.get(task));
-            ARG_KMLEXPORT = task.getClass().getDeclaredField("ARG_KMLEXPORT");
-            assertEquals("-kmlExport=", ARG_KMLEXPORT.get(task));
-            ARG_CFG = task.getClass().getDeclaredField("ARG_CFG");
-            assertEquals("-config=", ARG_CFG.get(task));
-            inputs = task.getClass().getDeclaredField("inputs");
-            inputs.setAccessible(true);
-            assertEquals(gmlIds, inputs.get(task));
-            outputpath = task.getClass().getDeclaredField("outputpath");
-            outputpath.setAccessible(true);
-            assertEquals(outputPath, outputpath.get(task));
-            serverinfo = task.getClass().getDeclaredField("serverinfo");
-            serverinfo.setAccessible(true);
-            assertEquals(testServerInfo, serverinfo.get(task));
-            stop = task.getClass().getDeclaredField("stop");
-            stop.setAccessible(true);
-            assertFalse((boolean) stop.get(task));
+            assertEquals(this.taskParams, taskParams.get(task));
+            assertEquals(this.lod, lod.get(task));
         } catch (NoSuchFieldException | IllegalAccessException e) {
             fail();
         }
-
     }
 
-
-    public void testNewExporterTaskMethods() {
-
-        String[] gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
-        String outputPath= outputFile.getAbsolutePath();
-
-        ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo);
-        assertEquals(4, task.getClass().getDeclaredMethods().length);
-    }
-
-
-    public void testNewExporterTaskStopMethod() {
-
-        String[] gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
-        String outputPath= outputFile.getAbsolutePath();
-
-        ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo);
-
+    @Test
+    public void testNewExporterTaskFields() {
         try {
-            Field stopF = task.getClass().getDeclaredField("stop");
-            stopF.setAccessible(true);
-            assertFalse((Boolean) stopF.get(task));
-            Method stopM = task.getClass().getDeclaredMethod("stop");
-            stopM.setAccessible(true);
-            stopM.invoke(task);
-            assertTrue((Boolean) stopF.get(task));
-        } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            fail();
-        }
+            ExporterTask task = new ExporterTask(this.taskParams);
+            assertEquals(17, task.getClass().getDeclaredFields().length);
 
-    }
+            assertEquals("project.xml", task.getClass().getDeclaredField("PROJECT_CONFIG").get(task));
+            assertEquals(".kml", task.getClass().getDeclaredField("EXT_FILE_KML").get(task));
+            assertEquals("{{gmlid}}", task.getClass().getDeclaredField("PLACEHOLDER_GMLID").get(task));
+            assertEquals("{{host}}", task.getClass().getDeclaredField("PLACEHOLDER_HOST").get(task));
+            assertEquals("{{port}}", task.getClass().getDeclaredField("PLACEHOLDER_PORT").get(task));
+            assertEquals("{{lod}}", task.getClass().getDeclaredField("PLACEHOLDER_LOD").get(task));
+            assertEquals("{{display1}}", task.getClass().getDeclaredField("PLACEHOLDER_FOOTPRINT").get(task));
+            assertEquals("{{display2}}", task.getClass().getDeclaredField("PLACEHOLDER_EXTRUDED").get(task));
+            assertEquals("{{display3}}", task.getClass().getDeclaredField("PLACEHOLDER_GEOMETRY").get(task));
+            assertEquals("{{display4}}", task.getClass().getDeclaredField("PLACEHOLDER_COLLADA").get(task));
+            assertEquals("{{namespace}}", task.getClass().getDeclaredField("PLACEHOLDER_NS").get(task));
+            assertEquals("-shell", task.getClass().getDeclaredField("ARG_SHELL").get(task));
+            assertEquals("-kmlExport", task.getClass().getDeclaredField("ARG_KMLEXPORT").get(task));
+            assertEquals("-config", task.getClass().getDeclaredField("ARG_CFG").get(task));
 
-
-    public void testNewExporterTaskSetupConfigMethod() {
-
-        // Setup the CityExportAgent
-        String[] gmlIds = testgmlIds;
-        File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
-        String outputPath= outputFile.getAbsolutePath();
-        ExporterTask task = new ExporterTask(gmlIds, outputPath, testServerInfo);
-
-        // Working with tempFolder and tempFile
-        File configFile = new File(System.getProperty(outTmpDir) + "/testproject.xml");  //initialize File object and passing path as argument but the file is not created yet
-        File modifiedConfigFile = null;
-
-        try {
-            // test the modified gmlids with the expected gmlids
-            Method setupConfig = task.getClass().getDeclaredMethod("setupConfig");
-            setupConfig.setAccessible(true);
-            try {
-                modifiedConfigFile = (File) setupConfig.invoke(task);
-            } catch (InvocationTargetException e) {
-                fail();
-                //assertEquals(IOException.class.getName(), e.getTargetException().getClass().getSuperclass().getSuperclass().getName());
-            }
-
-            assert modifiedConfigFile != null;
-            assertEquals(configFile.getName(), modifiedConfigFile.getName());
-
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document cfg = builder.parse(modifiedConfigFile);
-            assertEquals(gmlIds[0], cfg.getElementsByTagName("id").item(1).getTextContent());
-
-        } catch (NoSuchMethodException | IllegalAccessException | SAXException | IOException | ParserConfigurationException e) {
-            fail();
-        } finally {
-            if (Objects.requireNonNull(configFile).isFile()) {
-                if (!configFile.delete()) {
-                    fail();
-                }
-            }
-        }
-    }
-
-
-    public void testNewExporterTaskRunMethod() {
-        File testKml = new File(
-                Objects.requireNonNull(this.getClass().getResource("/testoutput.kml")).getFile());
-
-        // Test with fake gmlId
-        String[] exampleGmlIds = {"BLDG_000300000001c242"};
-
-        // Setup the CityExportAgent
-        File outputFile = new File(System.getProperty(outTmpDir) + outFileName);
-        String outputPath = outputFile.getAbsolutePath();
-
-        ExporterTask task = new ExporterTask(exampleGmlIds, outputPath, testServerInfo);
-        String actualFilePath = outputPath.replace(".kml", "_extruded.kml");
-        File actualFile = new File(actualFilePath);
-
-        try {
+            Field lod = task.getClass().getDeclaredField("lod");
+            lod.setAccessible(true);
+            assertEquals(this.lod, lod.get(task));
             Field stop = task.getClass().getDeclaredField("stop");
             stop.setAccessible(true);
-            try (MockedStatic<ImpExp> mock = Mockito.mockStatic(ImpExp.class)) {
-                mock.when(() -> ImpExp.main(ArgumentMatchers.any())).thenAnswer((Answer<Void>) invocation -> {
-                    Files.copy(testKml.toPath(), actualFile.toPath());
-                    return null;
-                });
-                task.run();
-                assertTrue((Boolean) stop.get(task));
-                assertTrue(actualFile.exists());  // if the task is successfully executed, test_extruded.kml should be generated
-            }
+            assertFalse((Boolean) stop.get(task));
+            Field taskParams = task.getClass().getDeclaredField("taskParams");
+            taskParams.setAccessible(true);
+            assertEquals(this.taskParams, taskParams.get(task));
         } catch (NoSuchFieldException | IllegalAccessException e) {
             fail();
-        } finally {
-            if (!actualFile.delete()) {
-                fail();
-            }
-            NquadsExporterTaskTest.NquadsExporterTaskTestHelper.tearDown();
         }
-
     }
 
+    @Test
+    public void testNewExporterTaskMethods() {
+        ExporterTask task = new ExporterTask(this.taskParams);
+        assertEquals(7, task.getClass().getDeclaredMethods().length);
+    }
+
+    @Test
+    public void testGetStopStatus() {
+        try {
+            ExporterTask task = new ExporterTask(this.taskParams);
+            Field stop = task.getClass().getDeclaredField("stop");
+            stop.setAccessible(true);
+
+            assertFalse(task.getStopStatus());
+            stop.set(task, true);
+            assertTrue(task.getStopStatus());
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testStop() {
+        try {
+            ExporterTask task = new ExporterTask(this.taskParams);
+            Field stop = task.getClass().getDeclaredField("stop");
+            stop.setAccessible(true);
+
+            assertFalse((Boolean) stop.get(task));
+            task.stop();
+            assertTrue((Boolean) stop.get(task));
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testIsRunning() {
+        try {
+            ExporterTask task = new ExporterTask(this.taskParams);
+            Field stop = task.getClass().getDeclaredField("stop");
+            stop.setAccessible(true);
+
+            assertTrue(task.isRunning());
+            stop.set(task, true);
+            assertFalse(task.isRunning());
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testRun() {
+        tearDown();
+        ExporterTask task = new ExporterTask(this.taskParams);
+        assertTrue(task.isRunning());
+
+        try (MockedStatic<ImpExp> mock = Mockito.mockStatic(ImpExp.class)) {
+            task.run();
+            assertTrue(this.cfgFile.exists());
+            assertTrue(this.kmlDir.exists());
+            mock.verify(() -> ImpExp.main(ArgumentMatchers.any()), Mockito.times(1));
+            assertFalse(task.isRunning());
+        } catch (Exception e) {
+            fail();
+        } finally {
+            tearDown();
+        }
+    }
+
+    @Test
+    public void testSetupKmlPath() {
+        tearDown();
+        try {
+            ExporterTask task = new ExporterTask(this.taskParams);
+            Method setupKmlPath = task.getClass().getDeclaredMethod("setupKmlPath", CityExportAgent.Params.class);
+            setupKmlPath.setAccessible(true);
+
+            assertEquals(this.exportFile, setupKmlPath.invoke(task, this.taskParams));
+            assertTrue(this.kmlDir.exists());
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            fail();
+        } finally {
+            tearDown();
+        }
+    }
+
+    @Test
+    public void testSetupConfig() {
+        tearDown();
+        try {
+            ExporterTask task = new ExporterTask(this.taskParams);
+            Method setupConfig = task.getClass().getDeclaredMethod("setupConfig", CityExportAgent.Params.class);
+            setupConfig.setAccessible(true);
+
+            setupConfig.invoke(task, this.taskParams);
+            assertTrue(this.cfgFile.exists());
+
+            DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            XPath xpath = XPathFactory.newInstance().newXPath();
+            Document cfg = builder.parse(this.cfgFile);
+
+            assertEquals("BLDG_123a", ((Node) xpath.compile("/project/kmlExport/query/gmlIds/id").evaluate(cfg, XPathConstants.NODE)).getTextContent());
+            assertEquals("127.0.0.1", ((Node) xpath.compile("/project/database/connections/connection/server").evaluate(cfg, XPathConstants.NODE)).getTextContent());
+            assertEquals("9999", ((Node) xpath.compile("/project/database/connections/connection/port").evaluate(cfg, XPathConstants.NODE)).getTextContent());
+            assertEquals("/blazegraph/namespace/test/sparql", ((Node) xpath.compile("/project/database/connections/connection/sid").evaluate(cfg, XPathConstants.NODE)).getTextContent());
+            assertEquals("2", ((Node) xpath.compile("/project/kmlExport/lodToExportFrom").evaluate(cfg, XPathConstants.NODE)).getTextContent());
+            assertEquals("false", ((Node) xpath.compile("/project/kmlExport/buildingDisplayForms/displayForm[form=4]/active").evaluate(cfg, XPathConstants.NODE)).getTextContent());
+            assertEquals("false", ((Node) xpath.compile("/project/kmlExport/buildingDisplayForms/displayForm[form=3]/active").evaluate(cfg, XPathConstants.NODE)).getTextContent());
+            assertEquals("true", ((Node) xpath.compile("/project/kmlExport/buildingDisplayForms/displayForm[form=2]/active").evaluate(cfg, XPathConstants.NODE)).getTextContent());
+            assertEquals("false", ((Node) xpath.compile("/project/kmlExport/buildingDisplayForms/displayForm[form=1]/active").evaluate(cfg, XPathConstants.NODE)).getTextContent());
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ParserConfigurationException | SAXException | IOException | XPathExpressionException e) {
+            fail();
+        } finally {
+            tearDown();
+        }
+    }
+
+    @Test
+    public void testCreateGmlIds() {
+        try {
+            ExporterTask task = new ExporterTask(this.taskParams);
+            Method createGmlids = task.getClass().getDeclaredMethod("createGmlids", String[].class);
+            createGmlids.setAccessible(true);
+
+            assertEquals("<id>BLDG_123a</id>\n", createGmlids.invoke(task, (Object) this.gmlIds));
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            fail();
+        }
+    }
+
+    public void tearDown() {
+        if (Objects.requireNonNull(this.cfgFile).exists()) {
+            if (!this.cfgFile.delete()) {
+                fail();
+            }
+        }
+        if (Objects.requireNonNull(this.cfgDir).exists()) {
+            if (!this.cfgDir.delete()) {
+                fail();
+            }
+        }
+        if (Objects.requireNonNull(this.exportFile).exists()) {
+            if (!this.exportFile.delete()) {
+                fail();
+            }
+        }
+        if (Objects.requireNonNull(this.kmlDir).exists()) {
+            if (!this.kmlDir.delete()) {
+                fail();
+            }
+        }
+        if (Objects.requireNonNull(this.outputDirFile).exists()) {
+            if (!this.outputDirFile.delete()) {
+                fail();
+            }
+        }
+    }
 }
