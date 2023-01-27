@@ -41,6 +41,8 @@ class GFAOntoManager:
     # OntoPlanningReg predicate
     REQUIRES_SITE_AREA = URIRef(ONTO_PLANNING_REG_PREFIX + "requiresSiteArea")
     REQUIRES_SETBACK = URIRef(ONTO_PLANNING_REG_PREFIX + "requiresSetback")
+    REQUIRES_WIDTH = URIRef(ONTO_PLANNING_REG_PREFIX + "requiresWidth")
+    REQUIRES_DEPTH = URIRef(ONTO_PLANNING_REG_PREFIX + "requiresDepth")
     REQUIRES_PARTYWALL = URIRef(ONTO_PLANNING_REG_PREFIX + "requiresPartyWall")
     REQUIRES_ROAD_BUFFER = URIRef(ONTO_PLANNING_REG_PREFIX + "requiresRoadBuffer")
     REQUIRES_BUILDING_EDGE = URIRef(ONTO_PLANNING_REG_PREFIX + "requiresBuildingEdge")
@@ -59,8 +61,13 @@ class GFAOntoManager:
     HAS_VALUE_OPR = URIRef(ONTO_PLANNING_REG_PREFIX + "hasValue")
     FOR_ZONING_TYPE = URIRef(ONTO_PLANNING_REG_PREFIX + "forZoningType")
     FOR_PROGRAMME = URIRef(ONTO_PLANNING_REG_PREFIX + "forProgramme")
-    FOR_NEIGHBOUR_ZONING_TYPE = URIRef(ONTO_PLANNING_REG_PREFIX + "forNeighbourZoningType")
-    IS_LINKED_TO = URIRef(ONTO_PLANNING_REG_PREFIX + "isLinkedTo")
+    FOR_NEIGHBOUR_ZONE_TYPE = URIRef(ONTO_PLANNING_REG_PREFIX + "forNeighbourZoneType")
+    IS_CONSTRAINED_BY = URIRef(ONTO_PLANNING_REG_PREFIX + "isConstrainedBy")
+    FOR_CORNER_PLOT = URIRef(ONTO_PLANNING_REG_PREFIX + "forCornerPlot")
+    FOR_FRINGE_PLOT = URIRef(ONTO_PLANNING_REG_PREFIX + "forFringePlot")
+    FOR_PLOT_CONTAINED_IN = URIRef(ONTO_PLANNING_REG_PREFIX + "forPlotContainedIn")
+    PLOT_ABUTS_GOOD_CLASS_BUNGALOW_AREA = URIRef(ONTO_PLANNING_REG_PREFIX + "plotAbutsGoodClassBungalowArea")
+    PLOT_ABUTS_1_3_ROAD_CATEGORY = URIRef(ONTO_PLANNING_REG_PREFIX + "plotAbuts1-3RoadCategory")
 
     # OntoBuildableSpace classes
     BUILDABLE_SPACE = URIRef(ONTO_BUILDABLE_SPACE_PREFIX + "BuildableSpace")
@@ -80,6 +87,8 @@ class GFAOntoManager:
     PARTYWALL = URIRef(ONTO_BUILDABLE_SPACE_PREFIX + "PartyWall")
     FOOTPRINT = URIRef(ONTO_BUILDABLE_SPACE_PREFIX + "Footprint")
     FOOTPRINT_AREA = URIRef(ONTO_BUILDABLE_SPACE_PREFIX + "FootprintArea")
+    AVERAGE_WIDTH = URIRef(ONTO_BUILDABLE_SPACE_PREFIX + "AverageWidth")
+    AVERAGE_DEPTH = URIRef(ONTO_BUILDABLE_SPACE_PREFIX + "AverageDepth")
 
     # OntoBuildableSpace predicates
     HAS_BUILDABLE_SPACE = URIRef(ONTO_BUILDABLE_SPACE_PREFIX + "hasBuildableSpace")
@@ -139,7 +148,7 @@ class GFAOntoManager:
     HAS_UNIT = URIRef(OM_URI_PREFIX + "hasUnit")
     HAS_AGGREGATE_FUNCTION = URIRef(OM_URI_PREFIX + "hasAggregateFunction")
 
-    #GeoSPARQL ontology classes and properties
+    # GeoSPARQL ontology classes and properties
     FEATURE = GEOSPARQL_URI_PREFIX + "Feature"
     GEOMETRY = GEOSPARQL_URI_PREFIX + "Geometry"
     HAS_GEOMETRY = GEOSPARQL_URI_PREFIX + "hasGeometry"
@@ -149,6 +158,38 @@ class GFAOntoManager:
     BUILDABLE_SPACE_GRAPH = PREFIX_URI + "buildablespace" + "/"
     ONTO_ZONING_GRAPH = PREFIX_URI + "ontozone" + "/"
     ONTO_PLANNING_REGULATIONS_GRAPH = PREFIX_URI + "planningregulations" + "/"
+
+    # Road categories
+    ROAD_BUFFER_15 = [{'category': ROAD_CATEGORY_1, 'buffer': 15},
+                      {'category': ROAD_CATEGORY_2, 'buffer': 7.5},
+                      {'category': ROAD_CATEGORY_3, 'buffer': 5},
+                      {'category': ROAD_CATEGORY_4, 'buffer': 5},
+                      {'category': ROAD_CATEGORY_5, 'buffer': 5}]
+
+    ROAD_BUFFER_30 = [{'category': ROAD_CATEGORY_1, 'buffer': 30},
+                      {'category': ROAD_CATEGORY_2, 'buffer': 15},
+                      {'category': ROAD_CATEGORY_3, 'buffer': 10},
+                      {'category': ROAD_CATEGORY_4, 'buffer': 7.5},
+                      {'category': ROAD_CATEGORY_5, 'buffer': 7.5}]
+
+    ROAD_BUFFER_24 = [{'category': ROAD_CATEGORY_1, 'buffer': 24},
+                      {'category': ROAD_CATEGORY_2, 'buffer': 12},
+                      {'category': ROAD_CATEGORY_3, 'buffer': 7.5},
+                      {'category': ROAD_CATEGORY_4, 'buffer': 7.5},
+                      {'category': ROAD_CATEGORY_5, 'buffer': 7.5}]
+
+    ROAD_BUFFER_7 = [{'category': ROAD_CATEGORY_1, 'buffer': 7.5},
+                      {'category': ROAD_CATEGORY_2, 'buffer': 7.5},
+                      {'category': ROAD_CATEGORY_3, 'buffer': 7.5},
+                      {'category': ROAD_CATEGORY_4, 'buffer': 7.5},
+                      {'category': ROAD_CATEGORY_5, 'buffer': 7.5}]
+
+    ROAD_BUFFER_2 = [{'category': ROAD_CATEGORY_1, 'buffer': 2},
+                      {'category': ROAD_CATEGORY_2, 'buffer': 2},
+                      {'category': ROAD_CATEGORY_3, 'buffer': 2},
+                      {'category': ROAD_CATEGORY_4, 'buffer': 2},
+                      {'category': ROAD_CATEGORY_5, 'buffer': 2}]
+
 
 
 
