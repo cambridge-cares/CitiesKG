@@ -4,8 +4,8 @@ import junit.framework.TestCase;
 import org.json.JSONObject;
 import org.locationtech.jts.geom.Coordinate;
 import uk.ac.cam.cares.twa.cities.agents.geo.UPRNAgent;
-import uk.ac.cam.cares.twa.cities.models.ModelContext;
-import uk.ac.cam.cares.twa.cities.models.geo.GeometryType;
+import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.twa.cities.model.geo.GeometryType;
 import uk.ac.cam.cares.twa.cities.models.osid.UPRN;
 import uk.ac.cam.cares.twa.cities.tasks.geo.UPRNTask;
 

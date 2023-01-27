@@ -22,9 +22,9 @@ import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.twa.cities.SPARQLUtils;
-import uk.ac.cam.cares.twa.cities.models.ModelContext;
-import uk.ac.cam.cares.twa.cities.models.geo.*;
+import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.ogm.models.SPARQLUtils;
+import uk.ac.cam.cares.twa.cities.model.geo.*;
 import uk.ac.cam.cares.twa.cities.models.osid.UPRN;
 import uk.ac.cam.cares.twa.cities.tasks.geo.UPRNTask;
 

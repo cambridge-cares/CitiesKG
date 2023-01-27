@@ -3,14 +3,13 @@ package uk.ac.cam.cares.twa.cities.models.osid;
 import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONObject;
-import uk.ac.cam.cares.twa.cities.models.FieldAnnotation;
-import uk.ac.cam.cares.twa.cities.models.Model;
-import uk.ac.cam.cares.twa.cities.models.ModelAnnotation;
-import uk.ac.cam.cares.twa.cities.models.ModelContext;
-import uk.ac.cam.cares.twa.cities.models.geo.CityObject;
+import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.ogm.models.FieldAnnotation;
+import uk.ac.cam.cares.ogm.models.Model;
+import uk.ac.cam.cares.ogm.models.ModelAnnotation;
+import uk.ac.cam.cares.twa.cities.model.geo.CityObject;
 
 import java.math.BigInteger;
-import java.net.URI;
 import java.util.ArrayList;
 
 @ModelAnnotation(defaultGraphName = "identifiers")
