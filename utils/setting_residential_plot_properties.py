@@ -3,42 +3,41 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Polygon, MultiPolygon
 from rdflib.namespace import XSD
+from rdflib.namespace import RDF
 from GFAOntoManager import *
 from SPARQLWrapper import SPARQLWrapper, JSON
 from envelope_conversion import envelopeStringToPolygon
 from shapely.geometry.polygon import Polygon
 from rdflib import Dataset, Literal, URIRef
 from shapely.geometry import LineString
+import uuid
 
 cur_dir = 'C://Users/AydaGrisiute/Desktop'
 
 def get_plots(endpoint):
     sparql = SPARQLWrapper(endpoint)
-    sparql.setQuery(""" PREFIX ocgml:<http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
+    sparql.setQuery("""PREFIX ocgml:<http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
     SELECT ?plots ?geom ?zone ?gpr
-    WHERE { 
-    GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/>
-     { ?plots ocgml:id ?obj_id .
-     BIND(IRI(REPLACE(STR(?plots), "cityobject", "genericcityobject")) AS ?gen_obj) }
+    WHERE { GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/>
+    { ?plots ocgml:id ?obj_id .
+    BIND(IRI(REPLACE(STR(?plots), "cityobject", "genericcityobject")) AS ?gen_obj) }
     GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/surfacegeometry/> {
-      ?s ocgml:cityObjectId ?gen_obj ;
-        ocgml:GeometryType ?geom . 
-        hint:Prior hint:runLast "true" . }
+    ?s ocgml:cityObjectId ?gen_obj ;
+    ocgml:GeometryType ?geom . 
+    hint:Prior hint:runLast "true" . }
     GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobjectgenericattrib/> {
-        ?attr ocgml:cityObjectId ?plots ;
-                ocgml:attrName 'LU_DESC' ;
-                ocgml:strVal ?zone . 
-        ?attr1 ocgml:cityObjectId ?plots ;
-            ocgml:attrName 'GPR' ;
-            ocgml:strVal ?gpr . }         
-    } """)
+    ?attr ocgml:cityObjectId ?plots ;
+    ocgml:attrName 'LU_DESC' ;
+    ocgml:strVal ?zone . 
+    ?attr1 ocgml:cityObjectId ?plots ;
+    ocgml:attrName 'GPR' ;
+    ocgml:strVal ?gpr . } } """)
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
 
     queryResults = pd.DataFrame(results['results']['bindings'])
     queryResults = queryResults.applymap(lambda cell: cell['value'])
-    geometries = gpd.GeoSeries(queryResults['geom'].map(lambda geo: envelopeStringToPolygon(geo, geodetic=True)),
-                               crs='EPSG:4326')
+    geometries = gpd.GeoSeries(queryResults['geom'].map(lambda geo: envelopeStringToPolygon(geo, geodetic=True)), crs='EPSG:4326')
     geometries = geometries.to_crs(epsg=3857)
     plots = gpd.GeoDataFrame(queryResults, geometry=geometries).drop(columns=['geom'])
     plots = process_plots(plots)
@@ -54,8 +53,8 @@ def process_plots(plots):
     plots.loc[:,'geometry'] = plots.loc[:, 'geometry'].buffer(0)
     plots = plots.loc[plots.area >= 50]
     plots['plot_area'] = plots.area
+    plots['gpr'] = pd.to_numeric(plots['gpr'], errors='coerce')
     return plots
-
 
 '''Generate an abstract residential areas boundary by merging residential plot buffered polygons. '''
 
@@ -97,7 +96,7 @@ def find_neighbours(plots, all_plots):
     buffered_plots['geometry'] = buffered_plots.buffer(2, cap_style=3)
     intersection = gpd.overlay(buffered_plots, all_plots, how='intersection', keep_geom_type=True)
     intersection['area'] = intersection.area
-    intersection = intersection.loc[intersection['area'] > 1,:].drop(columns={'area', 'geometry'})
+    intersection = intersection.loc[intersection['area'] > 1, :].drop(columns={'area', 'geometry'})
     neighbors = intersection.groupby('plots')['context_plots'].unique()
     plots['neighbor_list'] = neighbors.loc[plots['plots']].to_numpy()
     return plots
@@ -198,8 +197,7 @@ def find_average_width_or_depth(plot_row, width):
 '''Set residential plot properties, e.g. if it is a fringe plot, corner plot, plot's average depth and width.'''
 
 
-def set_residential_plot_properties(plots):
-    res_plots = plots
+def set_residential_plot_properties(res_plots, plots):
     residential_area = get_residential_area(res_plots, 200, 120000)
     res_plots = check_fringe(res_plots.copy(), residential_area, 10)
     print('fringe plots set.')
@@ -224,8 +222,7 @@ def set_residential_plot_properties(plots):
 '''Set road plot properties e.g. road type and road category'''
 
 
-def set_road_plot_properties(road_network, plots):
-    road_plots = plots[plots['zone'] == 'ROAD']
+def set_road_plot_properties(road_network, road_plots):
     invalid_road_types = ['Cross Junction', 'T-Junction', 'Expunged', 'Other Junction', 'Pedestrian Mall',
                           '2 T-Junction opposite each other', 'Unknown', 'Y-Junction', 'Imaginary Line']
     road_network_valid = road_network[~road_network['RD_TYP_CD'].isin(invalid_road_types)]
@@ -237,9 +234,9 @@ def set_road_plot_properties(road_network, plots):
                      'Slip Road': '5',
                      'Service Road': '5',
                      'no category': 'unknown'}
-
     road_plots_cat = assign_road_category(road_plots, road_network_valid.copy())
     road_plots_cat['road_category'] = [road_cat_dict[x] for x in road_plots_cat["RD_TYP_CD"]]
+    print('road properties set.')
     return road_plots_cat
 
 
@@ -258,29 +255,55 @@ def assign_road_category(road_plots, road_network):
     return road_plots
 
 
-'''Queries residential plot properties.'''
+'''Queries plot properties.'''
 
 
 def get_plot_properties(plots, endpoint):
     sparql = SPARQLWrapper(endpoint)
-    sparql.setQuery("""PREFIX opr: <http://www.theworldavatar.com/ontology/ontoplanningreg/OntoPlanningReg.owl#>
-    PREFIX obs: <http://www.theworldavatar.com/ontology/ontobuildablespace/OntoBuildableSpace.owl#>
-    PREFIX oz: <http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#>
-    SELECT ?plots ?road_type ?avg_depth ?avg_width ?is_corner ?at_fringe
-    WHERE { GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/buildablespace/> {
-    OPTIONAL {?plots obs:hasWidth ?avg_width . } 
-    OPTIONAL {?plots obs:hasDepth ?avg_depth . }
-    OPTIONAL {?plots obs:isCornerPlot ?is_corner . }
-    OPTIONAL {?plots obs:atResidentialFringe ?at_fringe . } } }""")
+    sparql.setQuery("""PREFIX obs: <http://www.theworldavatar.com/ontology/ontobuildablespace/OntoBuildableSpace.owl#>
+        PREFIX om: <http://www.ontology-of-units-of-measure.org/resource/om-2/>
+        SELECT ?plots ?avg_width
+        WHERE { GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/buildablespace/> {
+        OPTIONAL { ?plots obs:hasWidth/om:hasValue/om:hasNumericValue ?avg_width . } } }""")
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
     plot_properties = pd.DataFrame(results['results']['bindings'])
     plot_properties = plot_properties.applymap(lambda cell: cell['value'], na_action='ignore')
     plots = plots.merge(plot_properties, how='left', on='plots')
+
+    sparql = SPARQLWrapper(endpoint)
+    sparql.setQuery("""PREFIX obs: <http://www.theworldavatar.com/ontology/ontobuildablespace/OntoBuildableSpace.owl#>
+        PREFIX om: <http://www.ontology-of-units-of-measure.org/resource/om-2/>
+        SELECT ?plots ?avg_depth
+        WHERE { GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/buildablespace/> {
+        OPTIONAL { ?plots obs:hasDepth/om:hasValue/om:hasNumericValue ?avg_depth . } } }""")
+    sparql.setReturnFormat(JSON)
+    results = sparql.query().convert()
+    plot_properties = pd.DataFrame(results['results']['bindings'])
+    plot_properties = plot_properties.applymap(lambda cell: cell['value'], na_action='ignore')
+    plots = plots.merge(plot_properties, how='left', on='plots')
+
+    sparql = SPARQLWrapper(endpoint)
+    sparql.setQuery("""PREFIX obs: <http://www.theworldavatar.com/ontology/ontobuildablespace/OntoBuildableSpace.owl#>
+    PREFIX om: <http://www.ontology-of-units-of-measure.org/resource/om-2/>
+    PREFIX oz: <http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#>
+    SELECT ?plots ?zone ?corner_plot ?fringe_plot
+    WHERE {?plots oz:hasZone ?zone_uri . 
+        BIND(STRAFTER(STR(?zone_uri), '#') AS ?zone)
+        OPTIONAL { ?plots obs:isCornerPlot ?corner_plot . }
+        OPTIONAL { ?plots obs:atResidentialFringe ?fringe_plot . } }""")
+    sparql.setReturnFormat(JSON)
+    results = sparql.query().convert()
+    plot_properties = pd.DataFrame(results['results']['bindings'])
+    plot_properties = plot_properties.applymap(lambda cell: cell['value'], na_action='ignore')
+    plots = plots.drop(columns=['zone'])
+    plots = plots.merge(plot_properties, how='left', on='plots')
+    plots['avg_width'] = pd.to_numeric(plots['avg_width'], errors='coerce')
+    plots['avg_depth'] = pd.to_numeric(plots['avg_depth'], errors='coerce')
     return plots
 
 
-'''Queries residential plot road neighbour types.'''
+'''Queries residential plot neighbour types: road type, zone type and whether neighbour is in a god class bungalow area.'''
 
 
 def get_plot_neighbour_types(plots, endpoint):
@@ -288,17 +311,22 @@ def get_plot_neighbour_types(plots, endpoint):
     sparql.setQuery("""PREFIX opr: <http://www.theworldavatar.com/ontology/ontoplanningreg/OntoPlanningReg.owl#>
     PREFIX obs: <http://www.theworldavatar.com/ontology/ontobuildablespace/OntoBuildableSpace.owl#>
     PREFIX oz: <http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#>
-    SELECT ?plots (GROUP_CONCAT(?type; separator=",") as ?road_type)
-    WHERE { OPTIONAL {?plots obs:hasNeighbour ?neighbour .
-              ?neighbour obs:hasRoadType ?type . } } 
+    SELECT ?plots (GROUP_CONCAT(?type; separator=",") as ?neighbour_road_type) (GROUP_CONCAT(DISTINCT ?zone; separator=",") as ?neighbour_zones) (COUNT(?gcba) AS ?abuts_gcba)
+    WHERE { ?plots obs:hasNeighbour ?neighbour .
+    ?neighbour oz:hasZone ?zone_uri .
+    BIND(STRAFTER(STR(?zone_uri), '#') AS ?zone)
+    OPTIONAL { ?neighbour obs:hasRoadType ?type . }
+    OPTIONAL { ?gcba opr:appliesTo ?neighbour ;
+    rdf:type opr:GoodClassBungalowArea . }} 
     GROUP By ?plots""")
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
-    road_neighbours = pd.DataFrame(results['results']['bindings'])
-    road_neighbours = road_neighbours.applymap(lambda cell: cell['value'], na_action='ignore')
-    plots = plots.merge(road_neighbours, how='left', on='plots')
-    plots['road_type'] = plots['road_type'].replace(np.nan, '', regex=True)
-    plots['road_type'] = [i.split(',') for i in plots['road_type']]
+    neighbours = pd.DataFrame(results['results']['bindings'])
+    neighbours = neighbours.applymap(lambda cell: cell['value'], na_action='ignore')
+    plots = plots.merge(neighbours, how='left', on='plots')
+    plots['neighbour_road_type'] = [plots.loc[i, 'neighbour_road_type'].split(',') if not pd.isnull(plots.loc[i, 'neighbour_road_type']) else [] for i in plots.index]
+    plots['neighbour_zones'] = [plots.loc[i, 'neighbour_zones'].split(',') if not pd.isnull(plots.loc[i, 'neighbour_zones']) else [] for i in plots.index]
+    plots['abuts_gcba'] = pd.to_numeric(plots['abuts_gcba'], errors='ignore')
     return plots
 
 
@@ -310,172 +338,305 @@ def get_plot_allowed_programmes(plots, endpoint):
     sparql.setQuery("""PREFIX opr: <http://www.theworldavatar.com/ontology/ontoplanningreg/OntoPlanningReg.owl#>
     PREFIX obs: <http://www.theworldavatar.com/ontology/ontobuildablespace/OntoBuildableSpace.owl#>
     PREFIX oz: <http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#>
-    SELECT ?plots (GROUP_CONCAT(DISTINCT ?sbp_programme_name; separator=",") as ?sbps) (GROUP_CONCAT(DISTINCT ?lha_programme_name; separator=",") as ?lhas) (COUNT(?gcba) as ?in_gcba)
-    WHERE { GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/> {
-    ?plots oz:hasZone ?zone . }
-    OPTIONAL  {?sbp rdf:type opr:StreetBlockPlan ;
-                     opr:appliesTo ?plots ;
-                     oz:allowsProgramme ?sbp_programme . 
-              BIND(STRAFTER(STR(?sbp_programme), '#') as ?sbp_programme_name)}
+    SELECT ?plots (GROUP_CONCAT(DISTINCT ?pb; separator=',') AS ?in_pb) (GROUP_CONCAT(DISTINCT ?sbp_programme_name; separator=",") as ?sbp_programmes) (GROUP_CONCAT(DISTINCT ?lha) AS ?in_lha) (GROUP_CONCAT(DISTINCT ?lha_programme_name; separator=",") as ?lha_programmes) (COUNT(?gcba) as ?in_gcba)
+    WHERE { GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/> 
+              { ?plots oz:hasZone ?zone . }
+    OPTIONAL  { ?sbp rdf:type opr:StreetBlockPlan ;
+                    opr:appliesTo ?plots ;
+                    oz:allowsProgramme ?sbp_programme . 
+    BIND(STRAFTER(STR(?sbp_programme), '#') as ?sbp_programme_name)}
     OPTIONAL {?lha rdf:type opr:LandedHousingArea ;
-                            opr:appliesTo ?plots ;
-                            oz:allowsProgramme ?lha_programme .
-              BIND(STRAFTER(STR(?lha_programme), '#') as ?lha_programme_name)}
+                    opr:appliesTo ?plots ;
+                    oz:allowsProgramme ?lha_programme .
+    BIND(STRAFTER(STR(?lha_programme), '#') as ?lha_programme_name)}
     OPTIONAL  {?gcba rdf:type opr:GoodClassBungalowArea ;
-                     opr:appliesTo ?plots . }}
+                    opr:appliesTo ?plots . }
+    OPTIONAL {?pb opr:appliesTo ?plots;
+                  rdf:type opr:PlanningBoundary.  }  }
     GROUP BY ?plots""")
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
     applicable_regulations = pd.DataFrame(results['results']['bindings'])
     applicable_regulations = applicable_regulations.applymap(lambda cell: cell['value'])
-    applicable_regulations[['lhas', 'sbps', 'in_gcba']] = applicable_regulations[['lhas', 'sbps', 'in_gcba']]
     plots = plots.merge(applicable_regulations, how='left', on='plots')
+    plots['sbp_programmes'] = [plots.loc[i, 'sbp_programmes'].split(',') if not pd.isnull(plots.loc[i, 'sbp_programmes']) else [] for i in plots.index]
+    plots['lha_programmes'] = [plots.loc[i, 'lha_programmes'].split(',') if not pd.isnull(plots.loc[i, 'lha_programmes']) else [] for i in plots.index]
+    plots['in_pb'] = [plots.loc[i, 'in_pb'].split(',') if not pd.isnull(plots.loc[i, 'in_pb']) else [] for i in plots.index]
+    plots['in_lha'] = [plots.loc[i, 'in_lha'].split(',') if not pd.isnull(plots.loc[i, 'in_lha']) else [] for i in plots.index]
     return plots
 
 
-'''Finds allowed residential development type on residential plots.'''
-
-
-def find_allowed_residential_types(plots, endpoint):
+def get_plot_information(plots, endpoint, road_list):
     plots = get_plot_properties(plots, endpoint)
+    print('plot properties retrieved.')
     plots = get_plot_neighbour_types(plots, endpoint)
+    print('plot neighbour properties retrieved.')
     plots = get_plot_allowed_programmes(plots, endpoint)
+    print('plot allowed programmes by area regulations retrieved.')
+    plots = find_allowed_residential_types(plots, road_list)
+    print('')
+    return plots
 
+
+'''Finds allowed residential development types on plots.'''
+
+
+def find_allowed_residential_types(plots, road_list):
+    zone_list = ['Residential', 'ResidentialWithCommercialAtFirstStorey', 'CommercialAndResidential', 'ResidentialOrInstitution', 'White', 'BusinesParkWhite', 'Business1White', 'Business2White']
+    mixed_zone_list = ['ResidentialWithCommercialAtFirstStorey', 'CommercialAndResidential', 'White', 'BusinesParkWhite', 'Business1White', 'Business2White']
     allowed_types = []
     for i in plots.index:
-        cur_allowed_types = []
-        in_lha = plots.loc[i, 'lhas']
-        in_gcba = int(plots.loc[i, 'in_gcba']) > 0
-        in_sbp = plots.loc[i, 'sbps']
-        area = float(plots.loc[i, 'plot_area'])
-        width = float(plots.loc[i, 'avg_width'])
-        depth = float(plots.loc[i, 'avg_depth'])
         zone = plots.loc[i, 'zone']
-        is_corner = plots.loc[i, 'is_corner']
-        at_fringe = plots.loc[i, 'at_fringe']
-        road_list = ['Expressway', 'Semi Expressway', 'Major Arterials/Minor Arterials']
-        road_condition = any(True for x in road_list if x in plots.loc[i, 'road_type'])
-        zone_list = ['RESIDENTIAL', 'RESIDENTIAL WITH COMMERCIAL AT 1ST STOREY', 'COMMERCIAL & RESIDENTIAL',
-                     'RESIDENTIAL/INSTITUTION']
+        cur_allowed_types = []
+        if zone in zone_list:
+            in_lha = plots.loc[i, 'lha_programmes']
+            in_gcba = int(plots.loc[i, 'in_gcba']) > 0
+            in_sbp = plots.loc[i, 'sbp_programmes']
+            area = plots.loc[i, 'plot_area']
+            width = plots.loc[i, 'avg_width'] if not pd.isnull(plots.loc[i, 'avg_width']) else 0
+            depth = plots.loc[i, 'avg_depth'] if not pd.isnull(plots.loc[i, 'avg_depth']) else 0
+            is_corner = plots.loc[i, 'corner_plot'] == 'true'
+            at_fringe = plots.loc[i, 'fringe_plot'] == 'true'
+            road_condition = len(set(plots.loc[i, 'neighbour_road_type']).intersection(road_list)) > 0
 
-        # filter for Bungalow
-        b_geo_condition = (area >= 400) and (width >= 10)
-        if b_geo_condition and ((zone == 'RESIDENTIAL') or ('Bungalow' in (in_sbp or in_lha))) and not in_gcba:
-            cur_allowed_types.append('Bungalow')
-        # filter for Semi-Detached House
-        sdh_geo_condition = (area >= 200) and (width >= 8)
-        if sdh_geo_condition and ((zone == 'RESIDENTIAL') or ('Semi-DetachedHouse' in (in_lha or in_sbp))) and not in_gcba:
-            cur_allowed_types.append('Semi-DetachedHouse')
-        # filter for Terrace Type 1
-        t1_geo_condition_inner = (area >= 150) and (width >= 6) and not is_corner
-        t1_geo_condition_corner = (area >= 200) and (width >= 8) and is_corner
-        if (t1_geo_condition_inner or t1_geo_condition_corner) and ((zone == 'RESIDENTIAL') or ('TerraceHouse' or 'TerraceType1') in (in_sbp or in_lha)) and not in_gcba:
-            cur_allowed_types.append('TerraceType1')
-        # filter for Terrace Type 2
-        t2_geo_condition_inner = area >= 80 and width >= 6 and not is_corner
-        t2_geo_condition_corner = area >= 80 and width >= 8 and is_corner
-        if (t2_geo_condition_inner or t2_geo_condition_corner) and ((zone == 'RESIDENTIAL') or ('TerraceHouse' or 'TerraceType2') in (in_sbp or in_lha)) and not in_gcba:
-            cur_allowed_types.append('TerraceType2')
-        # filter for Good Class Bungalow type
-        gcb_geo_condition = (area >= 1400) and (width >= 18.5) and (depth >= 30)
-        if gcb_geo_condition and (in_gcba or ('GoodClassBungalow' in in_sbp)):
-            cur_allowed_types.append('GoodClassBungalow')
-        # filter for Flats, Condominiums and Serviced Apartments type
-        if (area >= 1000) and ((not in_gcba and not in_lha) or ('Flat' in in_sbp)):
-            cur_allowed_types.append('Flat')
-        if area >= 4000 and not in_gcba and not in_lha:
-            cur_allowed_types.append('Condominium')
-        if ((area >= 1000) and zone == 'RESIDENTIAL') and (not in_gcba and not in_lha) and at_fringe and road_condition:
-            cur_allowed_types.append('ServicedApartmentResidentialZone')
-        if ((area >= 1000) and zone.isin(zone_list.remove('RESIDENTIAL'))) and (not in_gcba and not in_lha) and at_fringe:
-            cur_allowed_types.append('ServicedApartmentMixedUseZone')
-        allowed_types.append(cur_allowed_types)
-    return allowed_types
+            # filter for Bungalow
+            b_geo_condition = (area >= 400) and (width >= 10)
+            if b_geo_condition and ((zone == 'Residential') or ('Bungalow' in (in_sbp or in_lha))) and not in_gcba:
+                cur_allowed_types.append('Bungalow')
+            # filter for Semi-Detached House
+            sdh_geo_condition = (area >= 200) and (width >= 8)
+            if sdh_geo_condition and ((zone == 'Residential') or ('Semi-DetachedHouse' in (in_lha or in_sbp))) and not in_gcba:
+                cur_allowed_types.append('Semi-DetachedHouse')
+            # filter for Terrace Type 1
+            t1_geo_condition_inner = (area >= 150) and (width >= 6) and not is_corner
+            t1_geo_condition_corner = (area >= 200) and (width >= 8) and is_corner
+            if (t1_geo_condition_inner or t1_geo_condition_corner) and ((zone == 'Residential') or ('TerraceHouse' or 'TerraceType1') in (in_sbp or in_lha)) and not in_gcba:
+                cur_allowed_types.append('TerraceType1')
+            # filter for Terrace Type 2
+            t2_geo_condition_inner = area >= 80 and width >= 6 and not is_corner
+            t2_geo_condition_corner = area >= 80 and width >= 8 and is_corner
+            if (t2_geo_condition_inner or t2_geo_condition_corner) and ((zone == 'Residential') or ('TerraceHouse' or 'TerraceType2') in (in_sbp or in_lha)) and not in_gcba:
+                cur_allowed_types.append('TerraceType2')
+            # filter for Good Class Bungalow type
+            gcb_geo_condition = (area >= 1400) and (width >= 18.5) and (depth >= 30)
+            if gcb_geo_condition and (in_gcba or ('GoodClassBungalow' in in_sbp)):
+                cur_allowed_types.append('GoodClassBungalow')
+            # filter for Flats, Condominiums and Serviced Apartments type
+            if (area >= 1000) and ((zone in zone_list) or ('Flat' in in_sbp)) and (not in_gcba and not in_lha):
+                cur_allowed_types.append('Flat')
+            if (area >= 4000) and (zone in ['Residential', 'ResidentialOrInstitution']) and (not in_gcba and not in_lha):
+                cur_allowed_types.append('Condominium')
+            if ((area >= 1000) and zone == 'Residential') and (not in_gcba and not in_lha) and at_fringe and road_condition:
+                cur_allowed_types.append('ServicedApartmentResidentialZone')
+            if (area >= 1000) and (zone in mixed_zone_list) and (not in_gcba and not in_lha) and at_fringe:
+                cur_allowed_types.append('ServicedApartmentMixedUseZone')
+            allowed_types.append(cur_allowed_types)
+        else:
+            allowed_types.append(cur_allowed_types)
+    plots['allowed_residential_types'] = allowed_types
+    return plots
+
+
+'''Retrieves type based planning regulations.'''
+
+
+def get_type_regulations(endpoint):
+    sparql = SPARQLWrapper(endpoint)
+    sparql.setQuery("""PREFIX opr: <http://www.theworldavatar.com/ontology/ontoplanningreg/OntoPlanningReg.owl#>
+    PREFIX obs: <http://www.theworldavatar.com/ontology/ontobuildablespace/OntoBuildableSpace.owl#>
+    PREFIX oz: <http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#>
+    PREFIX om: <http://www.ontology-of-units-of-measure.org/resource/om-2/>
+    SELECT ?reg (GROUP_CONCAT(DISTINCT ?zone; separator=",") AS ?for_zones) (SAMPLE(?gpr_value) AS ?requires_gpr) (SAMPLE(?function) AS ?gpr_function) (SAMPLE(?fringe) AS ?for_fringe_plot) (SAMPLE(?corner) AS ?for_corner_plot)  (SAMPLE(?gcba) AS ?abuts_gcba) (SAMPLE(?road) AS ?abuts_road) (GROUP_CONCAT(DISTINCT ?programme; separator=",") AS ?for_programme)  (GROUP_CONCAT(?neighbour_zone; separator=",") AS ?neighbour_zones) (GROUP_CONCAT(?areas; separator=",") AS ?in_area_regs)
+    WHERE { GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/planningregulations/>  {
+             ?reg rdf:type opr:DevelopmentControlPlan . }
+      OPTIONAL { ?reg opr:forZoningType ?zone_type_uri .
+               BIND(STRAFTER(STR(?zone_type_uri), '#') AS ?zone)}
+      OPTIONAL { ?reg opr:forNeighbourZoneType ?neighbour_zone_uri . 
+               BIND(STRAFTER(STR(?neighbour_zone_uri), '#') AS ?neighbour_zone)}
+      OPTIONAL { ?reg opr:plotAbuts1-3RoadCategory ?road . }
+      OPTIONAL { ?reg opr:plotAbutsGoodClassBungalowArea ?gcba .}
+      OPTIONAL { ?reg opr:forPlotContainedIn ?areas .}   
+      OPTIONAL { ?reg opr:forFringePlot ?fringe . }
+      OPTIONAL { ?reg opr:forCornerPlot ?corner . }
+      OPTIONAL { ?reg opr:forProgramme ?programme_uri .
+               BIND(STRAFTER(STR(?programme_uri), '#') AS ?programme)}
+      OPTIONAL {?reg opr:allowsGrossPlotRatio ?gpr.
+                ?gpr opr:hasValue ?gpr_value. 
+                OPTIONAL {?gpr om:hasAggregateFunction ?function . } }}
+    GROUP BY ?reg""")
+    sparql.setReturnFormat(JSON)
+    results = sparql.query().convert()
+    type_regs = pd.DataFrame(results['results']['bindings'])
+    type_regs = type_regs.applymap(lambda cell: cell['value'], na_action='ignore')
+    type_regs = type_regs.replace('', np.nan, regex=True)
+    type_regs['for_fringe_plot'] = type_regs['for_fringe_plot'].fillna(False).astype(bool)
+    type_regs['for_corner_plot'] = type_regs['for_corner_plot'].fillna(False).astype(bool)
+    type_regs['abuts_road'] = type_regs['abuts_road'].fillna(False).astype(bool)
+    type_regs['for_zones'] = [i.split(',') for i in type_regs['for_zones']]
+    type_regs['requires_gpr'] = pd.to_numeric(type_regs['requires_gpr'])
+    type_regs['neighbour_zones'] = [type_regs.loc[i, 'neighbour_zones'].split(',') if not pd.isnull(type_regs.loc[i, 'neighbour_zones']) else [] for i in type_regs.index]
+    type_regs['in_area_regs'] = [type_regs.loc[i, 'in_area_regs'].split(',') if not pd.isnull(type_regs.loc[i, 'in_area_regs']) else [] for i in type_regs.index]
+    type_regs['abuts_gcba'] = pd.to_numeric(type_regs['abuts_gcba'], errors='ignore')
+    return type_regs
+
+
+'''Links type regulations to plots based on set of conditions.'''
+
+
+def link_type_regulations_to_plots(regs, plots, road_list):
+    reg_plots = []
+    for i in regs.index:
+        applies_to_plots = plots['zone'].isin(regs.loc[i, 'for_zones'])
+        if regs.loc[i, 'for_programme'] in ['Semi-DetahcedHouse', 'Bungalow', 'TerraceType1', 'TerraceType2']:
+            applies_to_plots = applies_to_plots & (regs.loc[i, 'for_programme'] in plots['allowed_residential_types'])
+        if regs.loc[i, 'for_programme'] in ['Flat', 'Condominium', 'ServicedApartmentMixedUseZone', 'ServicedApartmentResidentialZone']:
+            if not pd.isnull(regs.loc[i, 'gpr_function']):
+                applies_to_plots = applies_to_plots & (plots['gpr'] > regs.loc[i, 'requires_gpr'])
+            else:
+                applies_to_plots = applies_to_plots & (plots['gpr'] == regs.loc[i, 'requires_gpr'])
+        if regs.loc[i, 'in_area_regs']:
+            pb_condition = plots['in_pb'].apply(lambda in_pb: len(set(in_pb).intersection(regs.loc[i, 'in_area_regs'])) > 0)
+            lha_condition = plots['in_lha'].apply( lambda in_lha: len(set(in_lha).intersection(regs.loc[i, 'in_area_regs'])) > 0)
+            applies_to_plots = applies_to_plots & (pb_condition | lha_condition)
+        if regs.loc[i, 'for_fringe_plot']:
+            applies_to_plots = applies_to_plots & (plots['fringe_plot'] == 'true')
+        if regs.loc[i, 'for_corner_plot']:
+            applies_to_plots = applies_to_plots & (plots['corner_plot'] == 'true')
+        if regs.loc[i, 'abuts_road']:
+            road_condition = plots['neighbour_road_type'].apply(lambda neighbor_road_types: len(set(neighbor_road_types).intersection(road_list)) > 0)
+            applies_to_plots = applies_to_plots & road_condition
+        if regs.loc[i, 'abuts_gcba'] == 'true':
+            abuts_gcba = plots['abuts_gcba'].apply(lambda abuts_gcba: abuts_gcba > 0 if (not pd.isnull(abuts_gcba)) else False)
+            applies_to_plots = applies_to_plots & abuts_gcba
+        if len(regs.loc[i, 'neighbour_zones']) > 1:
+            neighbour_zone_condition = plots['neighbour_zones'].apply(lambda neighbor_zones: len(set(neighbor_zones).intersection(regs.loc[i, 'neighbour_zones'])) > 0)
+            applies_to_plots = applies_to_plots & neighbour_zone_condition
+        reg_plots.append(list(plots.loc[applies_to_plots, 'plots']))
+    regs['applies_to'] = reg_plots
+    return regs
 
 class TripleDataset:
 
     def __init__(self):
         self.dataset = Dataset()
 
+    '''A method to generate necessary triples to represent plot area.'''
+    def create_site_area_triples(self, plots):
+        for i in plots.index:
+            city_obj = URIRef(plots.loc[i, 'plots'])
+            if not pd.isna(plots.loc[i, 'plot_area']):
+                area_value = Literal(str(plots.loc[i, 'plot_area']), datatype=XSD.decimal)
+                site_area = URIRef(URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1())))
+                measure = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
+                self.dataset.add((site_area, RDF.type, GFAOntoManager.SITE_AREA, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+                self.dataset.add((city_obj, GFAOntoManager.HAS_SITE_AREA, site_area, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+                self.dataset.add((site_area, GFAOntoManager.HAS_VALUE, measure, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+                self.dataset.add((site_area, GFAOntoManager.HAS_UNIT, GFAOntoManager.SQUARE_PREFIXED_METRE, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+                self.dataset.add((measure, GFAOntoManager.HAS_NUMERIC_VALUE, area_value, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+
+    '''A method to generate necessary triples to represent plot's average width.'''
+    def create_average_width_triples(self, city_obj, width_value):
+        avg_width = URIRef(URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1())))
+        measure = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
+        self.dataset.add((city_obj, GFAOntoManager.HAS_WIDTH, avg_width, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+        self.dataset.add((avg_width, RDF.type, GFAOntoManager.AVERAGE_WIDTH, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+        self.dataset.add((avg_width, GFAOntoManager.HAS_VALUE, measure, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+        self.dataset.add((measure, GFAOntoManager.HAS_UNIT, GFAOntoManager.METRE, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+        self.dataset.add((measure, GFAOntoManager.HAS_NUMERIC_VALUE, width_value, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+
+    '''A method to generate necessary triples to represent plot's average depth.'''
+    def create_average_depth_triples(self, city_obj, depth_value):
+        avg_depth = URIRef(URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1())))
+        measure = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
+        self.dataset.add((city_obj, GFAOntoManager.HAS_DEPTH, avg_depth, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+        self.dataset.add((avg_depth, RDF.type, GFAOntoManager.AVERAGE_DEPTH, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+        self.dataset.add((avg_depth, GFAOntoManager.HAS_VALUE, measure, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+        self.dataset.add((measure, GFAOntoManager.HAS_UNIT, GFAOntoManager.METRE, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+        self.dataset.add((measure, GFAOntoManager.HAS_NUMERIC_VALUE, depth_value, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
 
     '''A method to generate necessary triples to represent residential plot properties.'''
-
-
-    def create_plot_property_triples(self, res_plots):
-        for i in res_plots.index:
-            city_obj_uri = URIRef(res_plots.loc[i, 'plots'])
-            if not pd.isna(res_plots.loc[i, 'fringe']):
-                fringe_bool = Literal(str(res_plots.loc[i, 'fringe']), datatype=XSD.boolean)
-                self.dataset.add((city_obj_uri, GFAOntoManager.IS_AT_RESIDENTIAL_FRINGE, fringe_bool, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
-            if not pd.isna(res_plots.loc[i, 'average_width']):
-                average_width = Literal(str(res_plots.loc[i, 'average_width']), datatype=XSD.decimal)
-                self.dataset.add((city_obj_uri, GFAOntoManager.HAS_WIDTH, average_width, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
-            if not pd.isna(res_plots.loc[i, 'average_depth']):
-                average_depth = Literal(str(res_plots.loc[i, 'average_depth']), datatype=XSD.decimal)
-                self.dataset.add((city_obj_uri, GFAOntoManager.HAS_DEPTH, average_depth, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
-            if not pd.isna(res_plots.loc[i, 'is_corner_plot']):
-                corner_plot_bool = Literal(str(res_plots.loc[i, 'is_corner_plot']), datatype=XSD.boolean)
-                self.dataset.add((city_obj_uri, GFAOntoManager.IS_CORNER_PLOT, corner_plot_bool, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
-
+    def create_residential_plot_property_triples(self, res_plots, plots):
+        res_plots_df = set_residential_plot_properties(res_plots, plots)
+        for i in res_plots_df.index:
+            city_obj = URIRef(res_plots_df.loc[i, 'plots'])
+            if not pd.isna(res_plots_df.loc[i, 'fringe']):
+                at_fringe = Literal(str(res_plots_df.loc[i, 'fringe']), datatype=XSD.boolean)
+                self.dataset.add((city_obj, GFAOntoManager.IS_AT_RESIDENTIAL_FRINGE, at_fringe, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
+            if not pd.isna(res_plots_df.loc[i, 'average_width']):
+                width_value = Literal(str(res_plots_df.loc[i, 'average_width']), datatype=XSD.decimal)
+                self.create_average_width_triples(city_obj, width_value)
+            if not pd.isna(res_plots_df.loc[i, 'average_depth']):
+                depth_value = Literal(str(res_plots_df.loc[i, 'average_depth']), datatype=XSD.decimal)
+                self.create_average_depth_triples(city_obj, depth_value)
+            if not pd.isna(res_plots_df.loc[i, 'is_corner_plot']):
+                corner_plot = Literal(str(res_plots_df.loc[i, 'is_corner_plot']), datatype=XSD.boolean)
+                self.dataset.add((city_obj, GFAOntoManager.IS_CORNER_PLOT, corner_plot, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
 
     '''A method to generate necessary triples to represent road plot properties.'''
-
-
-    def create_road_plot_property_triples(self, road_plots):
+    def create_road_plot_property_triples(self, road_network, road_plots):
+        road_plots = set_road_plot_properties(road_network, road_plots)
         for i in road_plots.index:
             city_obj_uri = URIRef(road_plots.loc[i, 'plots'])
             if not pd.isna(road_plots.loc[i, 'RD_TYP_CD']):
                 road_type = Literal(str(road_plots.loc[i, 'RD_TYP_CD']), datatype=XSD.string)
                 self.dataset.add((city_obj_uri, GFAOntoManager.HAS_ROAD_TYPE, road_type, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
-            # currently skipped as mapping between types and categories is arbitrary and not confirmed by URA.
-            #if not pd.isna(road_plots.loc[i, 'road_category']):
-            #    road_category = Literal(str(road_plots.loc[i, 'road_category']), datatype=XSD.string)
-            #    self.dataset.add((city_obj_uri, GFAOntoManager.HAS_ROAD_CATEGORY, road_category, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
 
+    def get_type_regulation_overlap_triples(self, type_regs):
+        for i in type_regs.index:
+            for j in type_regs.loc[i, 'applies_to']:
+                print(j)
+                self.dataset.add((URIRef(type_regs.loc[i, 'reg']), GFAOntoManager.APPLIES_TO, URIRef(j), FAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
     '''A method to write the aggregated triple dataset into a nquad(text) file.'''
-
-
     def write_triples(self, triple_type):
         with open(cur_dir + "/output_" + triple_type + ".nq", mode="wb") as file:
             file.write(self.dataset.serialize(format='nquads'))
 
 
-'''A method to write generated residential plot property triples into a nquad file'''
+'''Writes generated residential plot property triples into a nquad file.'''
 
 
-def instantiate_residential_plot_property_triples(plots_df):
+def instantiate_plot_property_triples(res_plots, plots, road_network, road_plots):
     plot_properties = TripleDataset()
-    plot_properties.create_plot_property_triples(plots_df)
-    plot_properties.write_triples("residential_plot_properties_triples")
+    plot_properties.create_residential_plot_property_triples(res_plots, plots)
+    print('residential plot property triples created.')
+    plot_properties.create_site_area_triples(plots)
+    print('plot site area triples created.')
+    plot_properties.create_road_plot_property_triples(road_network, road_plots)
+    print("road plot properties triples creates.")
+    plot_properties.write_triples("plot_properties_triples")
     print("plot properties nquads written.")
 
 
-'''A method to write generated road plot property triples into a nquad file'''
+'''Write generated triples of plot and type-based regulation overlap into a nquad file.'''
 
-
-def instantiate_road_plot_properties(plots_df):
-    road_plot_properties = TripleDataset()
-    road_plot_properties.create_road_plot_property_triples(plots_df)
-    road_plot_properties.write_triples("road_plot_properties_triples")
-    print("road plot properties nquads written.")
-
+def instantiate_type_regulation_and_plot_triples(type_regs):
+    type_regulation_links = TripleDataset()
+    type_regulation_links.get_type_regulation_overlap_triples(type_regs)
+    print('type regulation and plot overlap triples created.')
+    type_regulation_links.write_triples("type_regulation_and_plot_overlap_triples")
+    print("plot properties nquads written.")
 
 if __name__ == "__main__":
+
+    local_endpoint = "http://10.25.182.158:9999/blazegraph/namespace/regulationcontent/sparql"
     plots = get_plots("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql")
     print('plots retrieved')
-    residential_plots = plots[plots['zone'].isin(['RESIDENTIAL', 'RESIDENTIAL / INSTITUTION', 'COMMERCIAL & RESIDENTIAL','RESIDENTIAL WITH COMMERCIAL AT 1ST STOREY'])].drop(columns=['gpr'])
-    #residential_plots_df = set_residential_plot_properties(residential_plots)
-    #print('Residential plot properties set.')
-    #instantiate_residential_plot_property_triples(residential_plots_df)
-    #print('residential plot property triples written.')
-    residential_plots['allowed_development_types'] = find_allowed_residential_types(residential_plots, "http://10.25.182.158:9999/blazegraph/namespace/regulationcontent/sparql")
-    print(residential_plots)
 
+    road_plots = plots[plots['zone'] == 'ROAD']
+    residential_plots = plots[plots['zone'].isin(['RESIDENTIAL', 'RESIDENTIAL / INSTITUTION', 'COMMERCIAL & RESIDENTIAL',
+                                                 'RESIDENTIAL WITH COMMERCIAL AT 1ST STOREY', 'WHITE', 'BUSINESS PARK - WHITE',
+                                                  'BUSINESS 1 - WHITE', 'BUSINESS 2 - WHITE'])]
+    road_list = ['Expressway', 'Semi Expressway', 'Major Arterials/Minor Arterials']
     #road_network = gpd.read_file("C:/Users/AydaGrisiute/Desktop/demonstrator/roads/roads_whole_SG/roads.shp").to_crs(3857)
     #road_network = road_network[['RD_NAME', 'RD_TYP_CD', 'LVL_OF_RD', 'UNIQUE_ID', 'geometry']].copy()
-    #print('Road network retrieved')
-    #road_plots_df = set_road_plot_properties(road_network, plots)
-    #print('Road plot properties set.')
-    #instantiate_road_plot_properties(road_plots_df)
-    #print('Road plot property triples written')
+    #print('road network retrieved')
+    #instantiate_plot_property_triples(residential_plots, plots, road_network, road_plots)
+    #print('plot property triples written to file.')
+
+    plots = get_plot_information(plots, local_endpoint, road_list)
+    type_regulations = get_type_regulations(local_endpoint)
+    print('type regulations retrieved.')
+    type_regulations = link_type_regulations_to_plots(type_regulations, plots, road_list)
+    print('type regulations linked to plots.')
+    instantiate_type_regulation_and_plot_triples(type_regulations)

@@ -30,11 +30,6 @@ from shapely.geometry import LineString
 from math import atan2, degrees
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-json_dir = "C:/Users/AydaGrisiute/Dropbox/Cities Knowledge Graph - [all team members]/Research/WP6 - Use Cases/PlanningConceptOntology/estimate_GFA[AG][HS]_2022_08_25.json"
-cur_dir = 'C://Users/AydaGrisiute/Desktop'
-endpoint = "http://192.168.0.144:9999/blazegraph/namespace/singaporeEPSG4326/sparql"
-
-
 class TripleDataset:
 
     def __init__(self):
@@ -554,7 +549,7 @@ class TripleDataset:
         print('Plots with regulations intersected. Number of filtered intersections: {}'.format(len(intersection_filtered)))
         for i in intersection_filtered.index:
             city_object_id = intersection_filtered.loc[i, 'obj_id'].replace('genericcityobject', 'cityobject')
-            self.dataset.add((URIRef(city_object_id), GFAOntoManager.APPLIES_TO, URIRef(intersection_filtered.loc[i, 'plots']), FAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+            self.dataset.add((URIRef(city_object_id), GFAOntoManager.APPLIES_TO, URIRef(intersection_filtered.loc[i, 'plots']), GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
     ''' Writes the aggregated triple dataset into a nquad(text) file.'''
     def write_triples(self, triple_type):
@@ -1056,6 +1051,9 @@ def instantiate_gfa():
     print("Nquads written")
 
 
+''' Retrieves landed housing areas ids from TWA.'''
+
+
 def get_landed_housing_areas(endpoint):
     sparql = SPARQLWrapper(endpoint)
     sparql.setQuery("""PREFIX opr: <http://www.theworldavatar.com/ontology/ontoplanningreg/OntoPlanningReg.owl#>
@@ -1067,6 +1065,10 @@ def get_landed_housing_areas(endpoint):
     query_results = pd.DataFrame(results['results']['bindings'])
     lha = query_results.applymap(lambda cell: cell['value'], na_action='ignore')
     return lha
+
+
+''' Retrieves planning boundary ids from TWA.'''
+
 
 def get_planning_boundaries(endpoint):
     sparql = SPARQLWrapper(endpoint)
@@ -1083,7 +1085,7 @@ def get_planning_boundaries(endpoint):
 
 
 if __name__ == "__main__":
-    url_prefix = 'http://192.168.0.210:9999/blazegraph/namespace/'
+    url_prefix = 'http://10.25.182.158:9999/blazegraph/namespace/'
     twa_endpoint = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql"
     local_regulation_content = url_prefix + 'regulationcontent/sparql'
     cur_dir = 'C:/Users/AydaGrisiute/Dropbox/Cities Knowledge Graph - [all team members]/Research/WP6 - Use Cases/PlanningConceptOntology/demonstrator_data/type_based_planning_regulations/'
