@@ -585,7 +585,7 @@ class TripleDataset:
         for i in type_regs.index:
             for j in type_regs.loc[i, 'applies_to']:
                 print(j)
-                self.dataset.add((URIRef(type_regs.loc[i, 'reg']), GFAOntoManager.APPLIES_TO, URIRef(j), FAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+                self.dataset.add((URIRef(type_regs.loc[i, 'reg']), GFAOntoManager.APPLIES_TO, URIRef(j), GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
     '''A method to write the aggregated triple dataset into a nquad(text) file.'''
     def write_triples(self, triple_type):
