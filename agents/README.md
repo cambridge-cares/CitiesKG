@@ -244,6 +244,26 @@ Footprint mode inspects building(s)' `lodXMultiSurface`s, identifying themes as 
 `lod0FootprintId`. Unlike restructure mode, this does not destroy the old `lodXMultiSurface`. This is useful if the
 large triple overhead of a full thematicisation is not desired, but footprints are needed to be extracted for other use.
 
+## UPRN Agent User Guide
+
+An AccessAgent instance is required, similar to the steps described in the Thematic Surface Discovery Agent [configuration](#configuration)
+
+###Request
+
+Example HTTP Request for UPRN Agent:
+```
+PUT http://localhost:8080/agents/uprn
+Content-Type: application/json
+
+{ "namespace": "http://localhost:9999/blazegraph/namespace/churchill/sparql/",
+  "cityObjectIRI": "http://localhost:9999/blazegraph/namespace/churchill/sparql/building/..../" }
+```
+Parameters:
+
+- `namespace`: target namespace, e.g. "http://localhost:9999/blazegraph/namespace/churchill/sparql/", which is used to prefix named graph IRIs and newly created object IRIs. Typically the same as configured `uri.route`, but not necessarily.
+- `cityObjectIRI` (optional): optionally specify a single building to target. If omitted, all buildings in the
+  `namespace` are targeted. `namespace` is still necessary even with `cityObjectIRI` specified.
+
 ## 3DCityDB-Web-Map-Client
 
 We use the 3DCityDB-Web-Map-Client to visualise *CityExportAgent* exported .kml data. We extended original code with new functions and interface elements for displaying analytical capabilities of the *DistanceAgent*. The extended Web-Map-client version can be found in CitiesKG project directory `/CitiesKG/3dcitydb-web-map-1.9.0/`.
