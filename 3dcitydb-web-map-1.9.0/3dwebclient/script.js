@@ -917,6 +917,7 @@ function pinHighlightObjects(cityObjectsArray, hexColorString){
 
     var dataUnifier = dataSourcePrefix + _customDataSourceCounter;
     var customDataSource = new Cesium.CustomDataSource(dataUnifier);
+    var currentLayer = webMap.activeLayer;
 
     for (let i = 0; i < gmlidArray.length; i++){
         var obj = testcityobjectsJsonData[gmlidArray[i]];
@@ -925,9 +926,9 @@ function pinHighlightObjects(cityObjectsArray, hexColorString){
         var lat = (obj.envelope[1] + obj.envelope[3]) / 2.0;
         //console.log(gmlidArray[i] + ": " + lon + ", " + lat);
 
-        addPoint(customDataSource, id, lat, lon, hexColorString);
+        addPoint(customDataSource, id, lat, lon, currentLayer ,hexColorString);
     }
-
+    //addEventListeners(customDataSource);
     customDataSourceMap.set(dataUnifier, customDataSource);
     cesiumViewer.dataSources.add(customDataSource);
 
@@ -942,7 +943,7 @@ function pinHighlightObjects(cityObjectsArray, hexColorString){
     }**/
 }
 
-function addPoint(customDataSource, pointId, lat, long, hexColorString){
+function addPoint(customDataSource, pointId, lat, long, parentLayer ,hexColorString){
 
     customDataSource.entities.add({
         position: Cesium.Cartesian3.fromDegrees(long, lat, 5),
@@ -953,6 +954,9 @@ function addPoint(customDataSource, pointId, lat, long, hexColorString){
             outlineColor: Cesium.Color.BLACK,
             outlineWidth:1,
         },
+        layerId: parentLayer.id,
+        name: pointId,
+        iriPrefix: parentLayer._citydbKmlDataSource._iriPrefix,
     });
 }
 
