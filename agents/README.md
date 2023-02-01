@@ -248,7 +248,7 @@ large triple overhead of a full thematicisation is not desired, but footprints a
 
 An AccessAgent instance is required, similar to the steps described in the Thematic Surface Discovery Agent [configuration](#configuration)
 
-###HTTP Request
+### Request
 
 Example HTTP Request for UPRN Agent:
 ```
