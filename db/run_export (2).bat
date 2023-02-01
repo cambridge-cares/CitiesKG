@@ -1,2 +1,0 @@
-call java -Xmx32g -classpath "vocabularies/target/lib/json-20190722.jar;vocabularies/target/vocabularies-1.0.1.jar;blazegraph.jar" -server com.bigdata.rdf.sail.ExportKB -format N-Quads RWStore.properties ontobuiltenv
-cmd /k
