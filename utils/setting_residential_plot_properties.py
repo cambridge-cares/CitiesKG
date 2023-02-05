@@ -296,7 +296,6 @@ def get_plot_properties(plots, endpoint):
     results = sparql.query().convert()
     plot_properties = pd.DataFrame(results['results']['bindings'])
     plot_properties = plot_properties.applymap(lambda cell: cell['value'], na_action='ignore')
-    plots = plots.drop(columns=['zone'])
     plots = plots.merge(plot_properties, how='left', on='plots')
     plots['avg_width'] = pd.to_numeric(plots['avg_width'], errors='coerce')
     plots['avg_depth'] = pd.to_numeric(plots['avg_depth'], errors='coerce')
@@ -363,18 +362,7 @@ def get_plot_allowed_programmes(plots, endpoint):
     plots['lha_programmes'] = [plots.loc[i, 'lha_programmes'].split(',') if not pd.isnull(plots.loc[i, 'lha_programmes']) else [] for i in plots.index]
     plots['in_pb'] = [plots.loc[i, 'in_pb'].split(',') if not pd.isnull(plots.loc[i, 'in_pb']) else [] for i in plots.index]
     plots['in_lha'] = [plots.loc[i, 'in_lha'].split(',') if not pd.isnull(plots.loc[i, 'in_lha']) else [] for i in plots.index]
-    return plots
-
-
-def get_plot_information(plots, endpoint, road_list):
-    plots = get_plot_properties(plots, endpoint)
-    print('plot properties retrieved.')
-    plots = get_plot_neighbour_types(plots, endpoint)
-    print('plot neighbour properties retrieved.')
-    plots = get_plot_allowed_programmes(plots, endpoint)
-    print('plot allowed programmes by area regulations retrieved.')
-    plots = find_allowed_residential_types(plots, road_list)
-    print('')
+    plots['in_gcba'] = pd.to_numeric(plots['in_gcba'], errors='ignore')
     return plots
 
 
@@ -382,53 +370,57 @@ def get_plot_information(plots, endpoint, road_list):
 
 
 def find_allowed_residential_types(plots, road_list):
-    zone_list = ['Residential', 'ResidentialWithCommercialAtFirstStorey', 'CommercialAndResidential', 'ResidentialOrInstitution', 'White', 'BusinesParkWhite', 'Business1White', 'Business2White']
-    mixed_zone_list = ['ResidentialWithCommercialAtFirstStorey', 'CommercialAndResidential', 'White', 'BusinesParkWhite', 'Business1White', 'Business2White']
+    zone_list = ['Residential', 'ResidentialWithCommercialAtFirstStorey', 'CommercialAndResidential',
+                 'ResidentialOrInstitution', 'White', 'BusinesParkWhite', 'Business1White', 'Business2White']
+    mixed_zone_list = ['ResidentialWithCommercialAtFirstStorey', 'CommercialAndResidential', 'White',
+                       'BusinesParkWhite', 'Business1White', 'Business2White']
     allowed_types = []
     for i in plots.index:
         zone = plots.loc[i, 'zone']
         cur_allowed_types = []
         if zone in zone_list:
-            in_lha = plots.loc[i, 'lha_programmes']
-            in_gcba = int(plots.loc[i, 'in_gcba']) > 0
-            in_sbp = plots.loc[i, 'sbp_programmes']
+            lha_programmes = plots.loc[i, 'lha_programmes']
+            in_lha = '' not in lha_programmes
+            in_gcba = plots.loc[i, 'in_gcba'] > 0
+            sbp_programmes = plots.loc[i, 'sbp_programmes']
             area = plots.loc[i, 'plot_area']
             width = plots.loc[i, 'avg_width'] if not pd.isnull(plots.loc[i, 'avg_width']) else 0
             depth = plots.loc[i, 'avg_depth'] if not pd.isnull(plots.loc[i, 'avg_depth']) else 0
             is_corner = plots.loc[i, 'corner_plot'] == 'true'
             at_fringe = plots.loc[i, 'fringe_plot'] == 'true'
             road_condition = len(set(plots.loc[i, 'neighbour_road_type']).intersection(road_list)) > 0
+            allowed_programmes = sbp_programmes + lha_programmes
 
             # filter for Bungalow
             b_geo_condition = (area >= 400) and (width >= 10)
-            if b_geo_condition and ((zone == 'Residential') or ('Bungalow' in (in_sbp or in_lha))) and not in_gcba:
+            if b_geo_condition and ((zone == 'Residential') or ('Bungalow' in (sbp_programmes or lha_programmes))) and (not in_gcba):
                 cur_allowed_types.append('Bungalow')
             # filter for Semi-Detached House
             sdh_geo_condition = (area >= 200) and (width >= 8)
-            if sdh_geo_condition and ((zone == 'Residential') or ('Semi-DetachedHouse' in (in_lha or in_sbp))) and not in_gcba:
+            if sdh_geo_condition and ((zone == 'Residential') or ('Semi-DetachedHouse' in allowed_programmes)) and (not in_gcba):
                 cur_allowed_types.append('Semi-DetachedHouse')
             # filter for Terrace Type 1
-            t1_geo_condition_inner = (area >= 150) and (width >= 6) and not is_corner
+            t1_geo_condition_inner = (area >= 150) and (width >= 6) and (not is_corner)
             t1_geo_condition_corner = (area >= 200) and (width >= 8) and is_corner
-            if (t1_geo_condition_inner or t1_geo_condition_corner) and ((zone == 'Residential') or ('TerraceHouse' or 'TerraceType1') in (in_sbp or in_lha)) and not in_gcba:
+            if (t1_geo_condition_inner or t1_geo_condition_corner) and ((zone == 'Residential') or (('TerraceHouse' or 'TerraceType1') in allowed_programmes)) and (not in_gcba):
                 cur_allowed_types.append('TerraceType1')
             # filter for Terrace Type 2
             t2_geo_condition_inner = area >= 80 and width >= 6 and not is_corner
             t2_geo_condition_corner = area >= 80 and width >= 8 and is_corner
-            if (t2_geo_condition_inner or t2_geo_condition_corner) and ((zone == 'Residential') or ('TerraceHouse' or 'TerraceType2') in (in_sbp or in_lha)) and not in_gcba:
+            if (t2_geo_condition_inner or t2_geo_condition_corner) and ((zone == 'Residential') or (('TerraceHouse' or 'TerraceType2') in allowed_programmes)) and (not in_gcba):
                 cur_allowed_types.append('TerraceType2')
             # filter for Good Class Bungalow type
             gcb_geo_condition = (area >= 1400) and (width >= 18.5) and (depth >= 30)
-            if gcb_geo_condition and (in_gcba or ('GoodClassBungalow' in in_sbp)):
+            if gcb_geo_condition and (in_gcba or ('GoodClassBungalow' in sbp_programmes)):
                 cur_allowed_types.append('GoodClassBungalow')
             # filter for Flats, Condominiums and Serviced Apartments type
-            if (area >= 1000) and ((zone in zone_list) or ('Flat' in in_sbp)) and (not in_gcba and not in_lha):
+            if (area >= 1000) and ((zone in zone_list) or ('Flat' in sbp_programmes)) and (not in_gcba) and (not in_lha):
                 cur_allowed_types.append('Flat')
-            if (area >= 4000) and (zone in ['Residential', 'ResidentialOrInstitution']) and (not in_gcba and not in_lha):
+            if (area >= 4000) and (zone in ['Residential', 'ResidentialOrInstitution']) and (not in_gcba) and (not in_lha):
                 cur_allowed_types.append('Condominium')
-            if ((area >= 1000) and zone == 'Residential') and (not in_gcba and not in_lha) and at_fringe and road_condition:
+            if (zone == 'Residential') and (not in_gcba) and (not in_lha) and at_fringe and road_condition:
                 cur_allowed_types.append('ServicedApartmentResidentialZone')
-            if (area >= 1000) and (zone in mixed_zone_list) and (not in_gcba and not in_lha) and at_fringe:
+            if (zone in mixed_zone_list) and (not in_gcba) and (not in_lha) and at_fringe:
                 cur_allowed_types.append('ServicedApartmentMixedUseZone')
             allowed_types.append(cur_allowed_types)
         else:
@@ -436,6 +428,19 @@ def find_allowed_residential_types(plots, road_list):
     plots['allowed_residential_types'] = allowed_types
     return plots
 
+'''gets all relevant plot information to link it to type based regulations.'''
+
+def get_plot_information(plots, endpoint, road_list):
+    plots = plots.drop(columns=['zone'])
+    plots = get_plot_properties(plots, endpoint)
+    print('plot properties retrieved.')
+    plots = get_plot_neighbour_types(plots, endpoint)
+    print('plot neighbour properties retrieved.')
+    plots = get_plot_allowed_programmes(plots, endpoint)
+    print('plot allowed programmes by area regulations retrieved.')
+    plots = find_allowed_residential_types(plots, road_list)
+    print('plot allowed residential types found.')
+    return plots
 
 '''Retrieves type based planning regulations.'''
 
@@ -446,7 +451,7 @@ def get_type_regulations(endpoint):
     PREFIX obs: <http://www.theworldavatar.com/ontology/ontobuildablespace/OntoBuildableSpace.owl#>
     PREFIX oz: <http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#>
     PREFIX om: <http://www.ontology-of-units-of-measure.org/resource/om-2/>
-    SELECT ?reg (GROUP_CONCAT(DISTINCT ?zone; separator=",") AS ?for_zones) (SAMPLE(?gpr_value) AS ?requires_gpr) (SAMPLE(?function) AS ?gpr_function) (SAMPLE(?fringe) AS ?for_fringe_plot) (SAMPLE(?corner) AS ?for_corner_plot)  (SAMPLE(?gcba) AS ?abuts_gcba) (SAMPLE(?road) AS ?abuts_road) (GROUP_CONCAT(DISTINCT ?programme; separator=",") AS ?for_programme)  (GROUP_CONCAT(?neighbour_zone; separator=",") AS ?neighbour_zones) (GROUP_CONCAT(?areas; separator=",") AS ?in_area_regs)
+    SELECT ?reg (GROUP_CONCAT(DISTINCT ?zone; separator=",") AS ?for_zones) (SAMPLE(?gpr_value) AS ?requires_gpr) (SAMPLE(?function) AS ?gpr_function) (SAMPLE(?fringe) AS ?for_fringe_plot) (SAMPLE(?corner) AS ?for_corner_plot)  (SAMPLE(?gcba) AS ?abuts_gcba) (SAMPLE(?gcba_in) AS ?in_gcba)  (SAMPLE(?road) AS ?abuts_road) (GROUP_CONCAT(DISTINCT ?programme; separator=",") AS ?for_programme)  (GROUP_CONCAT(?neighbour_zone; separator=",") AS ?neighbour_zones) (GROUP_CONCAT(?areas; separator=",") AS ?in_area_regs)
     WHERE { GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/planningregulations/>  {
              ?reg rdf:type opr:DevelopmentControlPlan . }
       OPTIONAL { ?reg opr:forZoningType ?zone_type_uri .
@@ -455,6 +460,7 @@ def get_type_regulations(endpoint):
                BIND(STRAFTER(STR(?neighbour_zone_uri), '#') AS ?neighbour_zone)}
       OPTIONAL { ?reg opr:plotAbuts1-3RoadCategory ?road . }
       OPTIONAL { ?reg opr:plotAbutsGoodClassBungalowArea ?gcba .}
+      OPTIONAL { ?reg opr:plotInGoodClassBungalowArea ?gcba_in .}
       OPTIONAL { ?reg opr:forPlotContainedIn ?areas .}   
       OPTIONAL { ?reg opr:forFringePlot ?fringe . }
       OPTIONAL { ?reg opr:forCornerPlot ?corner . }
@@ -477,6 +483,7 @@ def get_type_regulations(endpoint):
     type_regs['neighbour_zones'] = [type_regs.loc[i, 'neighbour_zones'].split(',') if not pd.isnull(type_regs.loc[i, 'neighbour_zones']) else [] for i in type_regs.index]
     type_regs['in_area_regs'] = [type_regs.loc[i, 'in_area_regs'].split(',') if not pd.isnull(type_regs.loc[i, 'in_area_regs']) else [] for i in type_regs.index]
     type_regs['abuts_gcba'] = pd.to_numeric(type_regs['abuts_gcba'], errors='ignore')
+    type_regs['in_gcba'] = pd.to_numeric(type_regs['in_gcba'], errors='ignore')
     return type_regs
 
 
@@ -487,9 +494,9 @@ def link_type_regulations_to_plots(regs, plots, road_list):
     reg_plots = []
     for i in regs.index:
         applies_to_plots = plots['zone'].isin(regs.loc[i, 'for_zones'])
-        if regs.loc[i, 'for_programme'] in ['Semi-DetahcedHouse', 'Bungalow', 'TerraceType1', 'TerraceType2']:
-            applies_to_plots = applies_to_plots & (regs.loc[i, 'for_programme'] in plots['allowed_residential_types'])
-        if regs.loc[i, 'for_programme'] in ['Flat', 'Condominium', 'ServicedApartmentMixedUseZone', 'ServicedApartmentResidentialZone']:
+        if regs.loc[i, 'for_programme'] in ['Semi-DetahcedHouse', 'Bungalow', 'TerraceType1', 'TerraceType2', 'GoodClassBungalow']:
+            applies_to_plots = applies_to_plots & [regs.loc[i, 'for_programme'] in plots.loc[j, 'allowed_residential_types'] for j in plots.index]
+        if regs.loc[i, 'for_programme'] in ['Flat', 'Condominium']:
             if not pd.isnull(regs.loc[i, 'gpr_function']):
                 applies_to_plots = applies_to_plots & (plots['gpr'] > regs.loc[i, 'requires_gpr'])
             else:
@@ -499,15 +506,18 @@ def link_type_regulations_to_plots(regs, plots, road_list):
             lha_condition = plots['in_lha'].apply( lambda in_lha: len(set(in_lha).intersection(regs.loc[i, 'in_area_regs'])) > 0)
             applies_to_plots = applies_to_plots & (pb_condition | lha_condition)
         if regs.loc[i, 'for_fringe_plot']:
-            applies_to_plots = applies_to_plots & (plots['fringe_plot'] == 'true')
+            applies_to_plots = applies_to_plots & (plots['fringe_plot']=='true')
         if regs.loc[i, 'for_corner_plot']:
-            applies_to_plots = applies_to_plots & (plots['corner_plot'] == 'true')
+            applies_to_plots = applies_to_plots & (plots['corner_plot']=='true')
         if regs.loc[i, 'abuts_road']:
             road_condition = plots['neighbour_road_type'].apply(lambda neighbor_road_types: len(set(neighbor_road_types).intersection(road_list)) > 0)
             applies_to_plots = applies_to_plots & road_condition
         if regs.loc[i, 'abuts_gcba'] == 'true':
             abuts_gcba = plots['abuts_gcba'].apply(lambda abuts_gcba: abuts_gcba > 0 if (not pd.isnull(abuts_gcba)) else False)
             applies_to_plots = applies_to_plots & abuts_gcba
+        if regs.loc[i, 'in_gcba'] == 'true':
+            in_gcba = plots['in_gcba'].apply(lambda gcba: int(gcba) > 0 if (not pd.isnull(gcba)) else False)
+            applies_to_plots = applies_to_plots & in_gcba
         if len(regs.loc[i, 'neighbour_zones']) > 1:
             neighbour_zone_condition = plots['neighbour_zones'].apply(lambda neighbor_zones: len(set(neighbor_zones).intersection(regs.loc[i, 'neighbour_zones'])) > 0)
             applies_to_plots = applies_to_plots & neighbour_zone_condition
@@ -581,10 +591,10 @@ class TripleDataset:
                 road_type = Literal(str(road_plots.loc[i, 'RD_TYP_CD']), datatype=XSD.string)
                 self.dataset.add((city_obj_uri, GFAOntoManager.HAS_ROAD_TYPE, road_type, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
 
-    def get_type_regulation_overlap_triples(self, type_regs):
+    '''Generates necessary triples to represent links between type regulations and plots.'''
+    def create_type_regulation_overlap_triples(self, type_regs):
         for i in type_regs.index:
             for j in type_regs.loc[i, 'applies_to']:
-                print(j)
                 self.dataset.add((URIRef(type_regs.loc[i, 'reg']), GFAOntoManager.APPLIES_TO, URIRef(j), GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
 
     '''A method to write the aggregated triple dataset into a nquad(text) file.'''
@@ -612,14 +622,14 @@ def instantiate_plot_property_triples(res_plots, plots, road_network, road_plots
 
 def instantiate_type_regulation_and_plot_triples(type_regs):
     type_regulation_links = TripleDataset()
-    type_regulation_links.get_type_regulation_overlap_triples(type_regs)
+    type_regulation_links.create_type_regulation_overlap_triples(type_regs)
     print('type regulation and plot overlap triples created.')
-    type_regulation_links.write_triples("type_regulation_and_plot_overlap_triples")
+    type_regulation_links.write_triples("type_regulation_overlap_triples")
     print("plot properties nquads written.")
 
 if __name__ == "__main__":
 
-    local_endpoint = "http://10.25.182.158:9999/blazegraph/namespace/regulationcontent/sparql"
+    local_endpoint = "http://192.168.0.143:9999/blazegraph/namespace/regulationcontent/sparql"
     plots = get_plots("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql")
     print('plots retrieved')
 
@@ -640,3 +650,4 @@ if __name__ == "__main__":
     type_regulations = link_type_regulations_to_plots(type_regulations, plots, road_list)
     print('type regulations linked to plots.')
     instantiate_type_regulation_and_plot_triples(type_regulations)
+    print('type regulation links to plots instantiated.')

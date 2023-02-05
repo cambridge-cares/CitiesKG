@@ -456,6 +456,8 @@ class TripleDataset:
             self.dataset.add((control_plan, GFAOntoManager.FOR_PROGRAMME, programme_uri, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         if not pd.isna(parameters['abuts_GCBA']):
             self.dataset.add((control_plan, GFAOntoManager.PLOT_ABUTS_GOOD_CLASS_BUNGALOW_AREA, Literal(str(True), datatype=XSD.boolean), GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+        if not pd.isna(parameters['in_GCBA']):
+            self.dataset.add((control_plan, GFAOntoManager.PLOT_IN_GOOD_CLASS_BUNGALOW_AREA, Literal(str(True), datatype=XSD.boolean), GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         if not pd.isna(parameters['abuts_1_3_road_category']):
             self.dataset.add((control_plan, GFAOntoManager.PLOT_ABUTS_1_3_ROAD_CATEGORY, Literal(str(True), datatype=XSD.boolean), GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         if not pd.isna(parameters['for_neighbour_zone_type']):
@@ -511,6 +513,7 @@ class TripleDataset:
             measure = URIRef(GFAOntoManager.BUILDABLE_SPACE_GRAPH + str(uuid.uuid1()))
             self.dataset.add((category, RDF.type, i['category'], GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
             self.dataset.add((category, GFAOntoManager.REQUIRES_ROAD_BUFFER, buffer, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+            self.dataset.add((buffer, RDF.type, GFAOntoManager.ROAD_BUFFER, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
             self.dataset.add((buffer, GFAOntoManager.HAS_VALUE, measure, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
             self.dataset.add((measure, GFAOntoManager.HAS_UNIT, GFAOntoManager.METRE, GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
             self.dataset.add((measure, GFAOntoManager.HAS_NUMERIC_VALUE, Literal(str(i['buffer']), datatype=XSD.double), GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
@@ -1005,6 +1008,7 @@ def instantiate_development_control_plans(cp, landed_housing_areas, planning_bou
                       'for_neighbour_zone_type': cp.loc[i, 'for_neighbour_zone_type'],
                       'abuts_1_3_road_category': cp.loc[i, 'abuts_1_3_road_category'],
                       'abuts_GCBA': cp.loc[i, 'abuts_GCBA'],
+                      'in_GCBA': cp.loc[i, 'in_GCBA'],
                       'for_corner_plot': cp.loc[i, 'for_corner_plot'],
                       'for_fringe_plot': cp.loc[i, 'for_fringe_plot'],
                       'in_landed_housing_area': cp.loc[i, 'in_landed_housing_area'],
@@ -1018,8 +1022,11 @@ def instantiate_development_control_plans(cp, landed_housing_areas, planning_bou
             dataset.create_control_plan_triples(parameters, landed_housing_areas, planning_boundaries, road_buffer_30_uris)
         elif cp.loc[i, 'for_programme'] == 'TerraceType2':
             dataset.create_control_plan_triples(parameters, landed_housing_areas, planning_boundaries, road_buffer_2_uris)
+
         elif cp.loc[i, 'for_programme'] == ('Bungalow' or 'GoodClassBungalow' or 'Semi-DetachedHouse' or 'TerraceType1'):
             dataset.create_control_plan_triples(parameters, landed_housing_areas, planning_boundaries, road_buffer_24_uris)
+
+
         elif cp.loc[i, 'for_programme'] == 'Condominium' and not pd.isna(cp.loc[i, 'in_planning_boundary']):
             dataset.create_control_plan_triples(parameters, landed_housing_areas, planning_boundaries, road_buffer_30_uris)
         elif cp.loc[i, 'for_programme'] == 'Flat' and not pd.isna(cp.loc[i, 'in_planning_boundary']):
@@ -1085,7 +1092,7 @@ def get_planning_boundaries(endpoint):
 
 
 if __name__ == "__main__":
-    url_prefix = 'http://10.25.182.158:9999/blazegraph/namespace/'
+    url_prefix = 'http://192.168.0.143:9999/blazegraph/namespace/'
     twa_endpoint = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql"
     local_regulation_content = url_prefix + 'regulationcontent/sparql'
     cur_dir = 'C:/Users/AydaGrisiute/Dropbox/Cities Knowledge Graph - [all team members]/Research/WP6 - Use Cases/PlanningConceptOntology/demonstrator_data/type_based_planning_regulations/'
