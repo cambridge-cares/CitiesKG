@@ -7,7 +7,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.util.HashSet;
-import junit.framework.TestCase;
 import org.apache.jena.datatypes.BaseDatatype;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.graph.NodeFactory;
@@ -19,9 +18,14 @@ import org.citydb.database.adapter.DatabaseAdapterFactory;
 import org.citydb.database.adapter.blazegraph.BlazegraphConfigBuilder;
 import org.citydb.database.adapter.blazegraph.GeometryConverterAdapter;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import org.apache.jena.graph.Node;
 
-public class GeometryConverterAdapterTest extends TestCase {
+public class GeometryConverterAdapterTest {
   private final String TEST_DB_ADAPTER_TYPE = "Blazegraph";
   private final String TEST_URI = "http://localhost/blazegraph/literals/POINT-3-3";
   private final String TEST_GEODATATYPE = "{\"config\":{\"fields\":["
@@ -68,7 +72,7 @@ public class GeometryConverterAdapterTest extends TestCase {
         .createDatabaseAdapter(DatabaseType.fromValue(TEST_DB_ADAPTER_TYPE));
     GeometryConverterAdapter converter = (GeometryConverterAdapter) adapter.getGeometryConverter();
 
-    assertEquals(12, converter.getClass().getDeclaredMethods().length);
+    assertEquals(15, converter.getClass().getDeclaredMethods().length);
   }
 
   @Test

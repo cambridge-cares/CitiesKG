@@ -1,19 +1,24 @@
 package org.citydb.citygml.importer.controller.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import junit.framework.TestCase;
 import org.citydb.citygml.importer.controller.Importer;
 import org.citydb.citygml.importer.database.content.DBObjectTestHelper;
 import org.citydb.database.adapter.blazegraph.BlazegraphConfigBuilder;
 import org.citygml4j.builder.jaxb.CityGMLBuilderException;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 //@Note: Testing only additions for Blazegraph
-public class ImporterTest extends TestCase {
+public class ImporterTest {
 
   @Test
   public void testNewImporter() {

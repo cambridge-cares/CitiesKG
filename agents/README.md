@@ -1,7 +1,7 @@
 # Semantic 3D City Agents
 
 The Semantic City Agents is an intelligent automation for Dynamic Geospatial Knowledge Graphs. 
-It contains 3 agents: CityImportAgent, CityExportAgent and DistanceAgent. All 3 agnets works with the semantic cities database - [Cities Knowledge Graphs](http://www.theworldavatar.com:83/citieskg/#query).
+It contains 6 agents: CityImportAgent, CityExportAgent, DistanceAgent, CityInformationAgent, ThematicSurfaceDiscoveryAgent, and CEAAgent. All agents works with the semantic cities database - [Cities Knowledge Graphs](http://www.theworldavatar.com:83/citieskg/#query).
 
 ## System requirements
 
@@ -19,7 +19,7 @@ These detailed instructions describes the setup on a windows machine, for Mac OS
 
 * Java JRE or JDK >= 1.8
 * [Tomcat 9](https://www.liquidweb.com/kb/installing-tomcat-9-on-windows/)
-* [Maven](https://maven.apache.org/) - Dependency Management
+* [Maven](https://maven.apache.org/) - Dependency Management >= 3.8.4
 * Python 3
 
 JDK or JRE will need to be installed on the Windows Server before you can configure Tomcat 9 on the server.
@@ -61,11 +61,15 @@ This folder is by default not accessible, in order to make it executable, you ne
 
 ### Install and Build
 
-<<<<<<< HEAD
-1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repository. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
-=======
-1. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
->>>>>>> release_0.1.0
+1. Additional dependencies used by agents are JPS_BASE_LIB and AsynchronousWatcherService, which provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository. You may skip this step if both dependencies have been set up before. 
+
+Clone the TWA project from the [TWA repository](https://github.com/cambridge-cares/TheWorldAvatar) and checkout to 'main' branch.
+
+Run the command *mvn clean install -DskipTests* on the corresponding directories where the POM file is found.
+* JPS_BASE_LIB project can be found in the [JPS_BASE_LIB directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/JPS_BASE_LIB).
+* AsynchronousWatcherService project can be found in the [AsynchronousWatcherService directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/AsynchronousWatcherService).
+
+2. The build requires two dependencies, which are provided through the installation of two local jars to the .m2 repoistory. Go the main project directory "CitiesKG" (not "agents") and execute the initialization step to install the two local jars.
 
 ```
 cd <main project directory>
@@ -73,24 +77,14 @@ cd <main project directory>
 mvn initialize
 ```
 
-2. If the initialization is done successful, you should be able to run the following to create the war package
+3. If the initialization is done successfully, you should be able to run the following to create the war package:
 
 
 ```
-mvn clean install -DskipTests
+mvn clean install
 ```
+4. There is one dependency `blazegraph-jar-2.1.5.jar` which needs to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
 
-<<<<<<< HEAD
-In case building the .war file fails due to the missing `JPS_AWS.jar`, please build this locally first via running the following command within the [JPS_AWS] repository:
-```
-mvn clean install -DskipTests
-```
-
-3. There is one dependency `blazegraph-jar-2.1.5.jar` which needs to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
-=======
-
-3. There is one dependency *blazegraph-jar-2.1.5.jar* need to be provided directly on the server, as it has been declared as following in the agents/pom.xml:
->>>>>>> release_0.1.0
 ```
     <dependency>
       <groupId>com.blazegraph</groupId>
@@ -98,7 +92,6 @@ mvn clean install -DskipTests
       <version>2.1.5</version>
       <scope>provided</scope>
     </dependency>
-
 ```
 
 This dependency can be either found in your .m2 repository or downloaded from this [website](https://search.maven.org/search?q=g:com.blazegraph%20AND%20a:blazegraph-jar&core=gav).
@@ -107,20 +100,39 @@ Make sure that you download the correct version 2.1.5, otherwise the POM file of
 After you get the correct artifact *blazegraph-jar-2.1.5.jar*, you can place it into the folder on your server in *C:\Program Files\Apache Software Foundation\Tomcat 9.0\lib*, 
 this folder contains all the libraries provided by the server. 
 
-If this step has not been done, the CityImportAgent might not work. 
+If this step has not been done, you might get a `NoClassDefFoundError`. 
 
-4. Additional dependencies used by agents are JPS_BASE_LIB and JPS_AWS are provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository.
 
-Clone the TWA project from the [TWA repository](https://github.com/cambridge-cares/TheWorldAvatar) and checkout to develop and master branches
+### Running a local blazegraph with Java 11
+Run a blazegraph on your local machine for testing and development using one of the following methods:
+1. Deploy a [blazegraph.war](https://github.com/blazegraph/database/releases/tag/BLAZEGRAPH_2_1_6_RC) file on your Tomcat server. The blazegraph will be accessible at localhost:8080/blazegraph (Change port to your Tomcat port).
+OR
+2. Deploy a blazegraph Docker image locally as found here - https://github.com/cambridge-cares/TheWorldAvatar/tree/main/Deploy/stacks/db/blazegraph_geo.
 
-Run the command *mvn clean install -DskipTests* on the corresponding directories where the POM file is found.
-* JPS_BASE_LIB project can be found in the [JPS_BASE_LIB directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/JPS_BASE_LIB) from the *master* branch (stable version)
-* JPS_AWS project can be found in the [AsynchronousWatcherService](https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/AsynchronousWatcherService) directory from the *develop* branch. Before run the install command, please comment out the JPS_BASE dependency in the POM file. 
-
+#### Install and build local AccessAgent (for developers)
+For development and testing purposes, the [AccessAgent](https://github.com/cambridge-cares/TheWorldAvatar/wiki/Access-Agent) can be deployed locally via Docker to access your local Blazegraph.
+1. Set up a Docker environment as described in the [TWA Wiki - Docker: Environment](https://github.com/cambridge-cares/TheWorldAvatar/wiki/Docker%3A-Environment) page.
+2. In the TWA repository clone, locate the properties file in _TheWorldAvatar/JPS_ACCESS_AGENT/access-agent/src/main/resources/accessagent.properties_, and replace `http://www.theworldavatar.com/blazegraph/namespace/ontokgrouter/sparql` with `http://host.docker.internal:9999/blazegraph/namespace/ontokgrouter/sparql`.
+    If using a different port for Blazegraph, replace `9999` with your port number.
+3. In your local Blazegraph, create a new namespace called 'ontokgrouter'.
+4. For each endpoint to be accessed, 5 triples need to be added to the 'ontokgrouter' namespace. An example SPARQL update is shown, which inserts the triples required to access a namespace 'test' in a local Blazegraph on port 9999. Replace all occurrences of `test` with the name of the namespace and `9999` with your port number, and execute the SPARQL update. 
+```
+INSERT DATA {
+<http://host.docker.internal:9999/blazegraph/ontokgrouter/test>	<http://www.theworldavatar.com/ontology/ontokgrouter/OntoKGRouter.owl#hasQueryEndpoint>	"http://host.docker.internal:9999/blazegraph/namespace/test/sparql".
+<http://host.docker.internal:9999/blazegraph/ontokgrouter/test>	<http://www.theworldavatar.com/ontology/ontokgrouter/OntoKGRouter.owl#hasUpdateEndpoint> "http://host.docker.internal:9999/blazegraph/namespace/test/sparql".
+<http://host.docker.internal:9999/blazegraph/ontokgrouter/test>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.theworldavatar.com/ontology/ontokgrouter/OntoKGRouter.owl#TargetResource>.
+<http://host.docker.internal:9999/blazegraph/ontokgrouter/test>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual>.
+<http://host.docker.internal:9999/blazegraph/ontokgrouter/test>	<http://www.w3.org/2000/01/rdf-schema#label> "test".
+}
+```
+5. In this repository, locate the agents properties file in _agents/src/main/resources/config.properties_, and set the uri.route to `http://localhost:48080/access-agent/access/test`, replacing `test` with the name of the namespace to connect to.
+7. Build and deploy the AccessAgent as described in the README of the [JPS_ACCESS_AGENT directory](https://github.com/cambridge-cares/TheWorldAvatar/tree/main/JPS_ACCESS_AGENT) in the TWA repository.
 
 ### Deployment (for users)
 
 If the build is successful, you should be able to find the war artifact under ${projectDir}/${tomcatPath}/webapps/agents##0.1.0.war
+
+#### Tomcat setup for Windows
 
 Start the tomcat service by clicking on the executable *C:\Program Files\Apache Software Foundation\Tomcat 9.0\bin\Tomcat9w.exe*
 and click on *Start*. After that, you can see the startup page on the browser under [http://localhost:8080].
@@ -129,6 +141,7 @@ As CityImportAgent will execute a python script from java program, it requires t
 The tomcat server needs to be configured as following:
 
 On the logOn tab of the Tomcat properties windows, select *Log on as: Local System account* and check the box *Allow service to interact with Desktop*
+(For Mac: you need to put your import folder at same place of your tomcat service, in order to let your tomcat has right to access import folder.)
 
 After starting the tomcat server, you can place the agent .war artifact into the directory *C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps*.
 
@@ -153,12 +166,83 @@ POST http://localhost:8080/agents/import/source
 Content-Type: application/json
 
 {"directory":"C:\\tmp\\import",
-  "targetURL": "http://192.168.10.111:9999/blazegraph/namespace/testdata/sparql"}
+  "targetURL": "http://127.0.0.1:9995/blazegraph/namespace/testdata/sparql",
+  "srid": "25833",
+  "srsName": "urn:ogc:def:crs,crs:EPSG::25833,crs:EPSG::5783"}
 ```
 
 Executing this request, will create a directory at the specified location. When placing any `.gml` file into this folder, this file will automatically be imported into the specified triple store. For further details, please see the "Semantic 3D City Agents - an intelligent automation for Dynamic Geospatial Knowledge Graphs" [preprint].
 
 Please note that splitting of large files into smaller chunks to improve performance will not work if the `.gml` file contains the `core:` namespace tag in front of CityGML features. Please remove those manually beforehand.
+
+## Thematic Surface Discovery Agent User Guide
+
+### Configuration
+
+In the `resources/config.properties` file, the property `uri.route` must be specified. This is the target resource 
+ID which queries and updates will be addressed to. By default, this is an AccessAgent string, where e.g. 
+`http://localhost:48080/churchill` is interpreted as "using an AccessAgent instance hosted at `http://localhost:48080`, 
+access the knowledge graph `churchill` registered in ontokgrouter". Therefore, an AccessAgent instance is required to use this.
+
+### Request
+
+Example HTTPRequest for ThematicSurfaceDiscoveryAgent:
+```
+PUT http://localhost:8080/agents/discovery/thematicsurface
+Content-Type: application/json
+
+{ "namespace": "http://localhost:9999/blazegraph/namespace/churchill/sparql/",
+  "cityObjectIRI": "http://localhost:9999/blazegraph/namespace/building/..../",
+  "lod2": "true",
+  "threshold": "5",
+  "mode": "validate" }
+```
+
+Parameters:
+
+- `namespace`: target namespace, e.g. "http://localhost:9999/blazegraph/namespace/churchill/sparql/", which is used to prefix named graph IRIs and newly created object IRIs. Typically the same as configured `uri.route`, but not necessarily.
+- `mode`: "restructure", "validate" or "footprint". See sections below.
+- `lod1`, `lod2`, `lod3`, `lod4` (optional): optionally specify one or more levels of detail to target by providing `true`. All other LoDs are ignored. If no LoD is specified, all are targeted.
+- `cityObjectIRI` (optional): optionally specify a single building to target. If omitted, all buildings in the 
+  namespace are targeted. `namespace` is still necessary even with `cityObjectIRI` specified.
+- `threshold` (optional): the threshold angle in degrees; if the angle between a polygon's normal and the horizontal plane exceeds this, it is no longer considered a wall. Defaults to 15 if omitted.
+
+### Restructure mode
+
+In restructure mode, building(s)' `lodXMultiSurface`s are converted into thematic surfaces by reparenting their largest possible thematically homogeneous geometry subtrees to newly created thematic surfaces. `Building.lod1MultiSurfaceId` and `Building.lod2MultiSurfaceId` map to `ThematicSurface.lod2MultiSurfaceId` as thematic surfaces do not have an LoD 1 property; else, the LoD of the linking property is preserved in the conversion.
+
+Before:
+
+![Before](README-resources/tsda-restructure-before.png)
+
+Red, blue and green indicate classified roof, wall and ground surfaces, where a composite surface whose components
+are all the same theme is also considered that theme. Brown is a "mixed" composite surface with components of
+different themes, and is therefore destroyed in the conversion. After:
+
+![After](README-resources/tsda-restructure-after.png)
+
+### Validate mode
+
+In validate mode, building(s)' thematic surfaces are inspected and their themes classified using the same algorithm as restructure mode. The classifications are tagged onto bottom-level (leaf node) SurfaceGeometries by `rdfs:comment` properties. This allows comparison and debugging in Blazegraph workbench using a query e.g.
+
+```
+SELECT ?class ?comment (COUNT(*) AS ?count) WHERE {
+  ?surfaceGeometry ocgml:cityObjectId ?cityObject;
+            ocgml:GeometryType ?geometryType.
+  ?cityObject  ocgml:objectClassId ?class.
+  OPTIONAL{?surfaceGeometry rdfs:comment ?comment}
+  FILTER(!ISBLANK(?geometryType))
+} GROUP BY ?class ?comment
+```
+
+which counts all the combinations of original data themes and classified themes.
+
+### Footprint mode
+
+Footprint mode inspects building(s)' `lodXMultiSurface`s, identifying themes as in restructure mode, and then
+*copies* identifies ground surfaces into a new SurfaceGeometry tree which is linked to the building by
+`lod0FootprintId`. Unlike restructure mode, this does not destroy the old `lodXMultiSurface`. This is useful if the
+large triple overhead of a full thematicisation is not desired, but footprints are needed to be extracted for other use.
 
 ## 3DCityDB-Web-Map-Client
 
@@ -168,13 +252,13 @@ We use the 3DCityDB-Web-Map-Client to visualise *CityExportAgent* exported .kml 
 
 A complete and comprehensive documentation on the 3DCityDB-Web-Map-Client is available online here (https://github.com/3dcitydb/3dcitydb-web-map) and here (https://3dcitydb-docs.readthedocs.io/en/release-v4.2.3/webmap/index.html).
 
- ### Getting Started
+### Getting Started
 
 In order to use the extended 3DCityDB-Web-Map-Client for city agents make sure that:
 
-* your browser support WebGL (visit http://get.webgl.org/ for checking it).
-* open source JavaScript runtime environment Node.js is installed on your machine (visit https://nodejs.org/en/ to download the latest version). 
-* the extended web-map-client does not have node_modules folder thus, download original web-map-client via the following GitHub link (https://github.com/3dcitydb/3dcitydb-web-map/releases) and copy node_modules folder in `/CitiesKG/3dcitydb-web-map-1.9.0/`.
+* Your browser support WebGL (visit http://get.webgl.org/ for checking it).
+* Open source JavaScript runtime environment Node.js is installed on your machine (visit https://nodejs.org/en/ to download the latest version). 
+* The extended web-map-client does not have node_modules folder thus, download original web-map-client via the following GitHub link (https://github.com/3dcitydb/3dcitydb-web-map/releases) and copy node_modules folder in `/CitiesKG/3dcitydb-web-map-1.9.0/`.
 
 To run the web-map-client, in a shell environment navigate to the folder where *server.js* file is located `/CitiesKG/3dcitydb-web-map-1.9.0/` and simply run the following command to launch the server:
 
@@ -184,6 +268,9 @@ To run the web-map-client, in a shell environment navigate to the folder where *
 
 The web-map-client is now available via the URL (http://localhost:8080/3dwebclient/index.html). Place the .kml file in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/` and add the web link of the .kml file in `URL(*)` input field of the web-map-client Toolbox widget. In the input field `Name(*)`, a proper layer name must be specified as well. After clicking AddLayer, the .kml file will be visualised in the web-map-client.
 
+Solutions to common issues:
+* DistanceAgent and CityInformationAgent URL, used in POST request, is hardcoded in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/script.js` and `CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/utils/mashup-data-source-service/application/KMLDataSource.js` respectively. If agents are deployed on another port than 8080, agent URL needs to be updated accordingly in the respective files.
+* If *DistanceAgent* is used with .kml files that were generated not by *ExporterAgent*, .kml file should have `<name>` value exactly same way as it is stored in the KG.
 
 ## Contributing
 

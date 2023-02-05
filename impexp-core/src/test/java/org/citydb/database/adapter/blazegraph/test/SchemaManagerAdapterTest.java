@@ -1,13 +1,13 @@
 package org.citydb.database.adapter.blazegraph.test;
 
-import junit.framework.TestCase;
 import org.citydb.citygml.importer.database.content.CityGMLImportManager;
 import org.citydb.citygml.importer.database.content.DBObjectTestHelper;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.sql.Connection;
 
-public class SchemaManagerAdapterTest extends TestCase {
+public class SchemaManagerAdapterTest {
 
     @Test
     public void existsSchemaTest()  {

@@ -6,11 +6,13 @@ import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
-import junit.framework.TestCase;
 import org.citydb.database.adapter.blazegraph.BlazegraphConfig;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class BlazegraphConfigTest extends TestCase {
+public class BlazegraphConfigTest {
 
   @Test
   public void testNewBlazegraphConfig() {
