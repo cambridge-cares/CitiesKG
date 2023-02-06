@@ -1,7 +1,7 @@
 # Semantic 3D City Agents
 
 The Semantic City Agents is an intelligent automation for Dynamic Geospatial Knowledge Graphs. 
-It contains 6 agents: CityImportAgent, CityExportAgent, DistanceAgent, CityInformationAgent, ThematicSurfaceDiscoveryAgent, and CEAAgent. All agents works with the semantic cities database - [Cities Knowledge Graphs](http://www.theworldavatar.com:83/citieskg/#query).
+It contains 7 agents: CityImportAgent, CityExportAgent, DistanceAgent, CityInformationAgent, ThematicSurfaceDiscoveryAgent, UPRNAgent, and CEAAgent. All agents works with the semantic cities database - [Cities Knowledge Graphs](http://www.theworldavatar.com:83/citieskg/#query).
 
 ## System requirements
 
@@ -181,7 +181,7 @@ Please note that splitting of large files into smaller chunks to improve perform
 
 In the `resources/config.properties` file, the property `uri.route` must be specified. This is the target resource 
 ID which queries and updates will be addressed to. By default, this is an AccessAgent string, where e.g. 
-`http://localhost:48080/churchill` is interpreted as "using an AccessAgent instance hosted at `http://localhost:48080`, 
+`http://localhost:48888/churchill` is interpreted as "using an AccessAgent instance hosted at `http://localhost:48888`, 
 access the knowledge graph `churchill` registered in ontokgrouter". Therefore, an AccessAgent instance is required to use this.
 
 ### Request
@@ -243,6 +243,26 @@ Footprint mode inspects building(s)' `lodXMultiSurface`s, identifying themes as 
 *copies* identifies ground surfaces into a new SurfaceGeometry tree which is linked to the building by
 `lod0FootprintId`. Unlike restructure mode, this does not destroy the old `lodXMultiSurface`. This is useful if the
 large triple overhead of a full thematicisation is not desired, but footprints are needed to be extracted for other use.
+
+## UPRN Agent User Guide
+
+An AccessAgent instance is required, similar to the steps described in the Thematic Surface Discovery Agent [configuration](#configuration)
+
+### HTTP Request
+
+Example HTTP Request for UPRN Agent:
+```
+PUT http://localhost:8080/agents/uprn
+Content-Type: application/json
+
+{ "namespace": "http://localhost:9999/blazegraph/namespace/churchill/sparql/",
+  "cityObjectIRI": "http://localhost:9999/blazegraph/namespace/churchill/sparql/building/..../" }
+```
+Parameters:
+
+- `namespace`: target namespace, e.g. "http://localhost:9999/blazegraph/namespace/churchill/sparql/", which is used to prefix named graph IRIs and newly created object IRIs. Typically the same as configured `uri.route`, but not necessarily.
+- `cityObjectIRI` (optional): optionally specify a single building to target. If omitted, all buildings in the
+  `namespace` are targeted. `namespace` is still necessary even with `cityObjectIRI` specified. Even though the parameter is called cityObjectIRI, it actually refers to a building IRI.
 
 ## 3DCityDB-Web-Map-Client
 
