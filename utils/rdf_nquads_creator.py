@@ -7,7 +7,6 @@ cur_dir = 'C:\\Users\\HeidiSilvennoinen\\Dropbox (ontoZoning)\\Zoning ontology p
 
 '''Ontology URIs'''
 tbox_uri = 'http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#'
-#abox_uri =  'http://www.theworldavatar.com/kb/ontozoning'
 hasZone_uri = tbox_uri + 'hasZone'
 plot_class_uri = tbox_uri + 'Plot'
 zone_class_uri = tbox_uri + 'Zone'
@@ -37,7 +36,6 @@ for i in range(0,len(plots_df)):
     cur_uri = plots_df.at[i, 'CityObject'].strip("<>")
     cur_LU_DESC = plots_df.at[i, 'Zone'].strip("<>")
     cur_zone_uri = tbox_uri + LUdesc_zones_dict[cur_LU_DESC]
-    #print(cur_uri, cur_LU_DESC)
 
 
     ds.add( (URIRef(cur_uri), RDF.type ,  URIRef(plot_class_uri), g )) # add row with subject, predicate (is a plot), object, graph

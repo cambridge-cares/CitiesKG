@@ -9,17 +9,13 @@ Credit: Zhongming Shi, Heidi Silvennoinen (Singapore-ETH Centre)
 import pandas as pd
 from rdflib import URIRef, Dataset, Literal
 from rdflib.namespace import RDF
-from rdflib.namespace import FOAF
 
-
-# Link to your local path to the CKG folder
 cur_dir = 'C:\\Users\\ShiZhongming\\Dropbox\\Cities Knowledge Graph - [all team members]\\'
 
 '''Ontology URIs'''
 tbox_uri = 'http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#'
 tbox_uri_local = 'http://localhost/berlin/cityobject/'
 tbox_uri_twa = 'http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/cityobject/'
-#abox_uri =  'http://www.theworldavatar.com/kb/ontozoning'
 
 hasProgramme_uri = tbox_uri + 'hasProgramme'
 plot_class_uri = tbox_uri + 'Plot'
@@ -79,12 +75,10 @@ Programme_type_dict = {'gym': 'Gym',
 programme_type_list = []
 
 '''Fill dataset with 1) subject, 2) predicate, 3) object and 4) graph URIs for each item in your data'''
-# Creating Plot hasProgramme Office, Plot hasProgramme Restaurant, ...
 for key, val in Programme_type_dict.items():
     cur_uri = tbox_uri + val
     ds.add((URIRef(plot_class_uri), URIRef(hasProgramme_uri), URIRef(cur_uri), g)) # add row with subject (Plot), predicate (hasProgramme), object, graph
 
-#for i in range(0, len(plots_df)):
 for i in range(0, 2):
     cur_cityobject = plots_df.at[i, 'UUID'].__str__().strip("<>") + '/'
     cur_uri = tbox_uri_local + cur_cityobject
@@ -93,10 +87,8 @@ for i in range(0, 2):
     for key, val in Programme_type_dict.items():
         hasProgrammeRatio_uri = tbox_uri + 'hasRatio' + val
         cur_ratio = plots_df.at[i, key].astype(str)
-        # cur_ratio_uri = tbox_uri + cur_ratio
 
         ds.add((URIRef(cur_uri), URIRef(hasProgrammeRatio_uri), Literal(cur_ratio), g))  # add row with subject, predicate (has programme_ratio), object, graph
-    # print(ds)
 
 '''Save the dataset in nquads format (this format accepts the 4th graph argument too)'''
 file = open(path_output_mlines, mode="w")
