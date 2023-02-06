@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import org.locationtech.jts.geom.Coordinate;
 import uk.ac.cam.cares.twa.cities.agents.geo.UPRNAgent;
 import uk.ac.cam.cares.ogm.models.ModelContext;
+import uk.ac.cam.cares.twa.cities.model.geo.CityObject;
 import uk.ac.cam.cares.twa.cities.model.geo.GeometryType;
 import uk.ac.cam.cares.twa.cities.models.osid.UPRN;
 import uk.ac.cam.cares.twa.cities.tasks.geo.UPRNTask;
@@ -16,9 +17,10 @@ import java.lang.reflect.Method;
 public class UPRNTaskTest extends TestCase {
 
   public void testCrossCrsUprnQuery() {
+    CityObject cityObject = new CityObject();
     UPRNTask task = new UPRNTask(new ModelContext("", ""), null, "http://example.org/test/");
     // The [280000,180000,300000,200000] bounding box in converted from EPSG27700 to EPSG4326.
-    UPRN[] uprns = task.queryUprns(-3.7304225, 51.5061517, -3.4480673, 51.6898178, "EPSG:4326");
+    UPRN[] uprns = task.queryUprns(-3.7304225, 51.5061517, -3.4480673, 51.6898178, "EPSG:4326", cityObject);
     for(UPRN uprn: uprns) {
       Coordinate en = uprn.getEastingNorthingCoordinate().coordinate;
       assertTrue(en.x >= 280000);
