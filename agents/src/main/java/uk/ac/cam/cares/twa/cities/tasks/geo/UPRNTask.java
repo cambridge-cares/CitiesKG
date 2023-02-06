@@ -8,9 +8,12 @@ import org.apache.http.util.EntityUtils;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -42,6 +45,7 @@ public class UPRNTask implements Runnable {
   private static final String ROOT = "root";
   private static final String BUILDING = "building";
   private static final String THEMSURF = "themsurf";
+  private static final ArrayList<CityObject> failed_bldgs = new ArrayList<>();
 
   // for Features API
   private static final String FEATURES_API_ENDPOINT = "https://api.os.uk/features/v1/wfs";
@@ -50,6 +54,7 @@ public class UPRNTask implements Runnable {
   private static final GeometryFactory geometryFactory = new GeometryFactory();
   private static final CoordinateReferenceSystem epsg27700;
 
+  private static final Logger LOGGER = LogManager.getLogger(UPRNTask.class);
   static {
     try {
       epsg27700 = CRS.decode("EPSG:27700");
@@ -83,7 +88,7 @@ public class UPRNTask implements Runnable {
     for (CityObject building : buildings) {
       Coordinate lower = building.getEnvelopeType().getLowerBound();
       Coordinate upper = building.getEnvelopeType().getUpperBound();
-      UPRN[] uprns = queryUprns(lower.x, lower.y, upper.x, upper.y, GeometryType.getSourceCrsName());
+      UPRN[] uprns = queryUprns(lower.x, lower.y, upper.x, upper.y, GeometryType.getSourceCrsName(), building);
       for (UPRN uprn : uprns)
         for (SurfaceGeometry geometry : footprints.get(building.getGmlId()))
           if (uprnIntersectsGeometry(uprn, geometry.getGeometryType()))
@@ -91,6 +96,9 @@ public class UPRNTask implements Runnable {
               uprn.getIntersects().add(building);
     }
 
+    for(CityObject cityObject : failed_bldgs){
+      LOGGER.info(cityObject.getIri());
+    }
     context.pushAllChanges();
 
   }
@@ -160,7 +168,7 @@ public class UPRNTask implements Runnable {
   }
 
 
-  public UPRN[] queryUprns(double startX, double startY, double endX, double endY, String srsName) {
+  public UPRN[] queryUprns(double startX, double startY, double endX, double endY, String srsName, CityObject bldg) {
     try {
       // Build request
       String url = FEATURES_API_ENDPOINT + "?key=" + osApiKey;
@@ -171,7 +179,12 @@ public class UPRNTask implements Runnable {
       get.addHeader("Content-Type", "application/json");
       HttpResponse response = HttpClients.createDefault().execute(get);
       String responseString = EntityUtils.toString(response.getEntity());
-      JSONArray uprnJsons = new JSONObject(responseString).getJSONArray("features");
+      JSONArray uprnJsons=null;
+      try{
+        uprnJsons = new JSONObject(responseString).getJSONArray("features");
+      }catch(JSONException e){
+        failed_bldgs.add(bldg);
+      }
       UPRN[] uprns = new UPRN[uprnJsons.length()];
       for (int i = 0; i < uprnJsons.length(); i++) {
         uprns[i] = UPRN.loadFromJson(context, uprnJsons.getJSONObject(i));
