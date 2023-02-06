@@ -72,6 +72,8 @@ public class UPRNTask implements Runnable {
   @Override
   public void run (){
 
+    // Clear list of failed buildings (to avoid accumulation for consecutive requests with individual buildings)
+    failed_bldgs.clear();
     // Query building cityobjects, which have envelopes
     WhereBuilder condition = new WhereBuilder();
     SPARQLUtils.addPrefix("ocgml", condition);
@@ -96,6 +98,7 @@ public class UPRNTask implements Runnable {
               uprn.getIntersects().add(building);
     }
 
+    LOGGER.info("Failed buildings:");
     for(CityObject cityObject : failed_bldgs){
       LOGGER.info(cityObject.getIri());
     }
