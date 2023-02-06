@@ -10,65 +10,34 @@
      xmlns:ontodebug="http://ainf.aau.at/ontodebug#">
     <owl:Ontology rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl">
         <ontodebug:testCase>
-            <rdf:Description>
-                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (maybeAllowedInUse only
-(CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
-                <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-            </rdf:Description>
+            <rdf:Description/>
         </ontodebug:testCase>
         <ontodebug:testCase>
-            <rdf:Description>
-                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
-                <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-            </rdf:Description>
+            <rdf:Description/>
         </ontodebug:testCase>
         <ontodebug:testCase>
-            <rdf:Description>
-                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">SupercomputingCentre SubClassOf DataProcessing and (allowedInUse only
-(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-                <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-            </rdf:Description>
+            <rdf:Description/>
         </ontodebug:testCase>
         <ontodebug:testCase>
-            <rdf:Description>
-                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PrototypeProduction SubClassOf ResearchAndDevelopment and (allowedInUse only
-(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-                <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-            </rdf:Description>
+            <rdf:Description/>
         </ontodebug:testCase>
         <ontodebug:testCase>
-            <rdf:Description>
-                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">HotelLibrary SubClassOf HotelProgramme and (allowedInUse only
-(CommercialOrHotelUseCommercialAndResidentialZone or CommercialUseWhiteZone or HotelUseCommercialOrInstitutionZone or HotelUseHotelZone or HotelUseWhiteZone or WhiteUseBusinessPark or WhiteUseBusinessParkWhite))</ontodebug:axiom>
-                <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-            </rdf:Description>
+            <rdf:Description/>
         </ontodebug:testCase>
         <ontodebug:testCase>
-            <rdf:Description>
-                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">TVNetworkProgramming SubClassOf CoreMedia and (allowedInUse only
-(MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-                <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-            </rdf:Description>
+            <rdf:Description/>
         </ontodebug:testCase>
         <ontodebug:testCase>
-            <rdf:Description>
-                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DataFarmOrCentre SubClassOf Ebusiness and (allowedInUse only
-(MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-                <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-            </rdf:Description>
+            <rdf:Description/>
         </ontodebug:testCase>
         <ontodebug:testCase>
-            <rdf:Description>
-                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BiotechLaboratory SubClassOf TestLaboratory and (allowedInUse only
-(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-                <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-            </rdf:Description>
+            <rdf:Description/>
         </ontodebug:testCase>
     </owl:Ontology>
+    
 
 
-
-    <!--
+    <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Annotation properties
@@ -76,7 +45,7 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-
+    
 
 
     <!-- http://ainf.aau.at/ontodebug#axiom -->
@@ -84,13 +53,13 @@
     <owl:AnnotationProperty rdf:about="http://ainf.aau.at/ontodebug#axiom">
         <rdfs:subPropertyOf rdf:resource="http://ainf.aau.at/ontodebug#testCase"/>
     </owl:AnnotationProperty>
-
+    
 
 
     <!-- http://ainf.aau.at/ontodebug#testCase -->
 
     <owl:AnnotationProperty rdf:about="http://ainf.aau.at/ontodebug#testCase"/>
-
+    
 
 
     <!-- http://ainf.aau.at/ontodebug#type -->
@@ -98,22 +67,22 @@
     <owl:AnnotationProperty rdf:about="http://ainf.aau.at/ontodebug#type">
         <rdfs:subPropertyOf rdf:resource="http://ainf.aau.at/ontodebug#testCase"/>
     </owl:AnnotationProperty>
-
+    
 
 
     <!-- http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl#class_property_type -->
 
     <owl:AnnotationProperty rdf:about="http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl#class_property_type"/>
-
+    
 
 
     <!-- http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl#python_name -->
 
     <owl:AnnotationProperty rdf:about="http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl#python_name"/>
+    
 
 
-
-    <!--
+    <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Object Properties
@@ -121,7 +90,7 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#allowedInUse -->
@@ -132,7 +101,7 @@
         <owlr:class_property_type>only</owlr:class_property_type>
         <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cur_property</owlr:python_name>
     </owl:ObjectProperty>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#allowsProgramme -->
@@ -143,7 +112,7 @@
         <owlr:class_property_type>only</owlr:class_property_type>
         <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cur_property</owlr:python_name>
     </owl:ObjectProperty>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#allowsUse -->
@@ -154,7 +123,7 @@
         <owlr:class_property_type>only</owlr:class_property_type>
         <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cur_property</owlr:python_name>
     </owl:ObjectProperty>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#doesNotAllowUse -->
@@ -165,7 +134,7 @@
         <owlr:class_property_type>only</owlr:class_property_type>
         <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cur_property</owlr:python_name>
     </owl:ObjectProperty>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasMaxUseQuantum -->
@@ -176,7 +145,7 @@
         <owlr:class_property_type>only</owlr:class_property_type>
         <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cur_property</owlr:python_name>
     </owl:ObjectProperty>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasMinUseQuantum -->
@@ -187,7 +156,7 @@
         <owlr:class_property_type>only</owlr:class_property_type>
         <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cur_property</owlr:python_name>
     </owl:ObjectProperty>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasSource -->
@@ -198,7 +167,7 @@
         <owlr:class_property_type>only</owlr:class_property_type>
         <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cur_property</owlr:python_name>
     </owl:ObjectProperty>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasUnit -->
@@ -216,7 +185,7 @@
         <owlr:class_property_type>only</owlr:class_property_type>
         <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has_unit</owlr:python_name>
     </owl:ObjectProperty>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasZone -->
@@ -226,7 +195,7 @@
         <rdfs:range rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ZoningType"/>
         <owlr:class_property_type>only</owlr:class_property_type>
     </owl:ObjectProperty>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#isRelativeTo -->
@@ -244,7 +213,7 @@
         <owlr:class_property_type>only</owlr:class_property_type>
         <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cur_property</owlr:python_name>
     </owl:ObjectProperty>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#mayAllowProgramme -->
@@ -255,7 +224,7 @@
         <owlr:class_property_type>only</owlr:class_property_type>
         <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cur_property</owlr:python_name>
     </owl:ObjectProperty>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#mayAllowUse -->
@@ -266,7 +235,7 @@
         <owlr:class_property_type>only</owlr:class_property_type>
         <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cur_property</owlr:python_name>
     </owl:ObjectProperty>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#maybeAllowedInUse -->
@@ -277,10 +246,10 @@
         <owlr:class_property_type>only</owlr:class_property_type>
         <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cur_property</owlr:python_name>
     </owl:ObjectProperty>
+    
 
 
-
-    <!--
+    <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Data properties
@@ -288,7 +257,7 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasValue -->
@@ -299,10 +268,10 @@
         <owlr:class_property_type>only</owlr:class_property_type>
         <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cur_property</owlr:python_name>
     </owl:DatatypeProperty>
+    
 
 
-
-    <!--
+    <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Classes
@@ -310,25 +279,25 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-
+    
 
 
     <!-- http://www.ontology-of-units-of-measure.org/resource/om-2/AreaUnit -->
 
     <owl:Class rdf:about="http://www.ontology-of-units-of-measure.org/resource/om-2/AreaUnit"/>
-
+    
 
 
     <!-- http://www.ontology-of-units-of-measure.org/resource/om-2/Percentage -->
 
     <owl:Class rdf:about="http://www.ontology-of-units-of-measure.org/resource/om-2/Percentage"/>
-
+    
 
 
     <!-- http://www.ontology-of-units-of-measure.org/resource/om-2/RatioUnit -->
 
     <owl:Class rdf:about="http://www.ontology-of-units-of-measure.org/resource/om-2/RatioUnit"/>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AgriculturalUse -->
@@ -355,7 +324,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Agriculture -->
@@ -376,7 +345,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AirportFacility -->
@@ -396,7 +365,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AirportTerminal -->
@@ -416,7 +385,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AirportUse -->
@@ -444,7 +413,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryAgriculturalUse -->
@@ -468,7 +437,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryDisplayArea -->
@@ -495,7 +464,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryNonReligiousUse -->
@@ -525,7 +494,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryOffice -->
@@ -553,7 +522,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryReligiousUse -->
@@ -574,7 +543,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryUseBusiness1 -->
@@ -605,7 +574,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryUseBusiness1White -->
@@ -636,7 +605,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryUseBusiness2 -->
@@ -668,7 +637,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryUseBusiness2White -->
@@ -700,7 +669,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryUseBusinessPark -->
@@ -731,7 +700,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryUseBusinessParkWhite -->
@@ -762,7 +731,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillarylUseEducationalInstitutionZone -->
@@ -808,7 +777,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ArtGallery -->
@@ -843,7 +812,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ArterialRoad -->
@@ -863,7 +832,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ArtsCentre -->
@@ -883,7 +852,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Assembly -->
@@ -910,7 +879,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Association -->
@@ -942,7 +911,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AudioEngineering -->
@@ -950,7 +919,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AudioEngineering">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPostProductionAndDistribution"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AudioRecording -->
@@ -958,7 +927,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AudioRecording">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaProduction"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Bakery -->
@@ -985,7 +954,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Bank -->
@@ -1029,7 +998,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Bar -->
@@ -1080,7 +1049,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BeachArea -->
@@ -1094,7 +1063,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BeautySalon -->
@@ -1129,7 +1098,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BicycleStore -->
@@ -1137,7 +1106,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BicycleStore">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BiotechLaboratory -->
@@ -1145,7 +1114,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BiotechLaboratory">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TestLaboratory"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BookStore -->
@@ -1173,7 +1142,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BotanicGarden -->
@@ -1193,7 +1162,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BowlingAlley -->
@@ -1232,7 +1201,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BroadcastingServices -->
@@ -1240,7 +1209,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BroadcastingServices">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Telecommunications"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BuiltOpenSpace -->
@@ -1268,7 +1237,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Bungalow -->
@@ -1288,7 +1257,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Business1 -->
@@ -1310,7 +1279,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Business1White -->
@@ -1333,7 +1302,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Business2 -->
@@ -1354,7 +1323,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Business2White -->
@@ -1377,7 +1346,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BusinessPark -->
@@ -1400,7 +1369,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BusinessParkWhite -->
@@ -1423,7 +1392,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Cafe -->
@@ -1478,7 +1447,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CallCentre -->
@@ -1507,7 +1476,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CampingActivities -->
@@ -1527,7 +1496,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Canal -->
@@ -1547,7 +1516,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarDealer -->
@@ -1582,7 +1551,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarPark -->
@@ -1602,7 +1571,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarRental -->
@@ -1637,7 +1606,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarRepair -->
@@ -1672,7 +1641,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarWash -->
@@ -1707,7 +1676,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CemeteryProgramme -->
@@ -1727,7 +1696,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CemeteryUse -->
@@ -1755,7 +1724,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CemeteryZone -->
@@ -1769,7 +1738,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CentralDistributionCentre -->
@@ -1796,7 +1765,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Chalet -->
@@ -1804,7 +1773,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Chalet">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Golf"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ChildcareCentre -->
@@ -1840,7 +1809,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Cinema -->
@@ -1869,7 +1838,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CivicAndCommunityInstitutionZone -->
@@ -1891,7 +1860,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CivicInstitutionUse -->
@@ -1930,7 +1899,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Classroom-typeActivities -->
@@ -1950,7 +1919,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Clinic -->
@@ -1987,7 +1956,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ClinicalResearchFacility -->
@@ -2007,7 +1976,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ClothingStore -->
@@ -2015,7 +1984,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ClothingStore">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ClubHouse -->
@@ -2023,7 +1992,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ClubHouse">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Golf"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoastalRecreationUse -->
@@ -2051,7 +2020,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Columbarium -->
@@ -2078,7 +2047,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ColumbariumUse -->
@@ -2098,7 +2067,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Commercial -->
@@ -2125,7 +2094,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialAndResidential -->
@@ -2147,7 +2116,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialOrHotelUseCommercialAndResidentialZone -->
@@ -2226,7 +2195,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialOrInstitution -->
@@ -2260,7 +2229,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialSchool -->
@@ -2294,7 +2263,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseBusiness1 -->
@@ -2324,7 +2293,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseCommercialOrInstitutionZone -->
@@ -2385,7 +2354,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseCommercialZone -->
@@ -2456,7 +2425,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseHealthAndMedicalCareZone -->
@@ -2504,7 +2473,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseHotelZone -->
@@ -2569,7 +2538,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseResidentialWithCommercialAtFirstStorey -->
@@ -2637,7 +2606,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseWhiteZone -->
@@ -2709,7 +2678,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommunityCentre -->
@@ -2737,7 +2706,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommunityHall -->
@@ -2765,7 +2734,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommunityInstitutionExcludingDormitoryAndFuneral -->
@@ -2791,7 +2760,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommunityInstitutionResidentialOrInstitutionZone -->
@@ -2817,7 +2786,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommunityInstitutionUseCivicAndCommunityInstitutionZone -->
@@ -2845,7 +2814,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommunityPark -->
@@ -2865,7 +2834,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Composing -->
@@ -2873,7 +2842,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Composing">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPreProduction"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ComputerReservationSystems -->
@@ -2881,7 +2850,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ComputerReservationSystems">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataProcessing"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConcertHall -->
@@ -2901,7 +2870,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Condominium -->
@@ -2932,7 +2901,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConferenceRoom -->
@@ -2952,7 +2921,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConstructionActivities -->
@@ -2979,7 +2948,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConvenienceStore -->
@@ -2987,7 +2956,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConvenienceStore">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConventionCentre -->
@@ -3016,7 +2985,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoreMedia -->
@@ -3047,7 +3016,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Courts -->
@@ -3067,7 +3036,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoveredAgriculture -->
@@ -3087,7 +3056,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CreativeConceptualisation -->
@@ -3095,7 +3064,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CreativeConceptualisation">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPreProduction"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Crematory -->
@@ -3115,7 +3084,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CruiseCentre -->
@@ -3135,7 +3104,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CulturalInstitutionUse -->
@@ -3176,7 +3145,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataFarmOrCentre -->
@@ -3184,7 +3153,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataFarmOrCentre">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Ebusiness"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataOrInformationTransmission -->
@@ -3192,7 +3161,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataOrInformationTransmission">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Telecommunications"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataProcessing -->
@@ -3219,7 +3188,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Dentist -->
@@ -3256,7 +3225,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DepartmentStore -->
@@ -3264,7 +3233,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DepartmentStore">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DesalinationPlant -->
@@ -3284,7 +3253,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DetachedHouse -->
@@ -3304,7 +3273,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DiagnosticFacility -->
@@ -3324,7 +3293,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DieselAndPumpPoint -->
@@ -3351,7 +3320,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DigitalAuthoring -->
@@ -3359,7 +3328,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DigitalAuthoring">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPostProductionAndDistribution"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Dispensary -->
@@ -3379,7 +3348,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Doctor -->
@@ -3416,7 +3385,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DrainageUse -->
@@ -3450,7 +3419,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DrivingRange -->
@@ -3458,7 +3427,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DrivingRange">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Golf"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DrivingTestCentre -->
@@ -3478,7 +3447,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DrugRehabilitationCentre -->
@@ -3498,7 +3467,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Dubbing -->
@@ -3506,7 +3475,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Dubbing">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaProduction"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EarthSatelliteStation -->
@@ -3526,7 +3495,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Ebusiness -->
@@ -3557,7 +3526,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EditorialEditing -->
@@ -3565,7 +3534,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EditorialEditing">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPreProduction"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EducationalInstitution -->
@@ -3586,7 +3555,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EducationalInstitutionUse -->
@@ -3631,7 +3600,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ElectricalSubstation -->
@@ -3651,7 +3620,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ElectronicMessageSending -->
@@ -3659,7 +3628,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ElectronicMessageSending">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Telecommunications"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ElectronicsStore -->
@@ -3667,7 +3636,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ElectronicsStore">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Embassy -->
@@ -3702,7 +3671,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Entertainment -->
@@ -3732,7 +3701,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ExhibitionCentre -->
@@ -3761,7 +3730,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Expressway -->
@@ -3781,7 +3750,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FilmPrinting -->
@@ -3789,7 +3758,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FilmPrinting">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPostProductionAndDistribution"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FinancialBackEndProcessingCentre -->
@@ -3797,7 +3766,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FinancialBackEndProcessingCentre">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataProcessing"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FireAndRescueActivities -->
@@ -3817,7 +3786,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FireStation -->
@@ -3837,7 +3806,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FishingPort -->
@@ -3857,7 +3826,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FitnessCentre -->
@@ -3887,7 +3856,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Flat -->
@@ -3918,7 +3887,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryShopUseResidentialZone -->
@@ -3946,7 +3915,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryShopUseWhiteZone -->
@@ -3968,7 +3937,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseResidentialOrInstitutionZone -->
@@ -3990,7 +3959,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumUseCommercialAndResidentialZone -->
@@ -4023,7 +3992,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumUseCommercialOrInstitution -->
@@ -4044,7 +4013,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumUseCommercialOrInstitutionZone -->
@@ -4052,7 +4021,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumUseCommercialOrInstitutionZone">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandUse"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumUseResidentialOrInstitutionZone -->
@@ -4073,7 +4042,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumUseResidentialWithCommercialAtFirstStorey -->
@@ -4100,7 +4069,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumUseResidentialZone -->
@@ -4127,7 +4096,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumUseWhiteZone -->
@@ -4154,7 +4123,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Florist -->
@@ -4162,7 +4131,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Florist">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FoodCentre -->
@@ -4192,7 +4161,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FoodLaboratory -->
@@ -4200,7 +4169,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FoodLaboratory">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TestLaboratory"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FoodPacking -->
@@ -4227,7 +4196,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ForeignSchool -->
@@ -4247,7 +4216,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FormatConversion -->
@@ -4255,7 +4224,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FormatConversion">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPostProductionAndDistribution"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FuneralParlour -->
@@ -4275,7 +4244,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FurnitureStore -->
@@ -4283,7 +4252,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FurnitureStore">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GardenUse -->
@@ -4310,7 +4279,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GasInstallation -->
@@ -4330,7 +4299,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GasTakeoffStation -->
@@ -4350,7 +4319,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GatheringsAtFairsAndExhibitions -->
@@ -4370,7 +4339,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GeneralAdministrationSpace -->
@@ -4390,7 +4359,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GeologyLaboratory -->
@@ -4398,7 +4367,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GeologyLaboratory">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TestLaboratory"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Golf -->
@@ -4425,7 +4394,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GolfCourse -->
@@ -4433,7 +4402,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GolfCourse">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Golf"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GolfUse -->
@@ -4456,7 +4425,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GoodClassBungalow -->
@@ -4476,7 +4445,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GoodsOrientedShopping -->
@@ -4513,7 +4482,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Google -->
@@ -4521,7 +4490,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Google">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Source"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GroceryStore -->
@@ -4541,7 +4510,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Guesthouse -->
@@ -4549,7 +4518,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Guesthouse">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Golf"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Gym -->
@@ -4601,7 +4570,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HairCare -->
@@ -4649,7 +4618,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HardwareStore -->
@@ -4657,7 +4626,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HardwareStore">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HealthAndMedicalCare -->
@@ -4680,7 +4649,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HeavyVehicleCarPark -->
@@ -4700,7 +4669,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HighTechManufacturing -->
@@ -4727,7 +4696,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HomeForTheAged -->
@@ -4755,7 +4724,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HomeForTheDisabled -->
@@ -4783,7 +4752,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HomeGoodsStore -->
@@ -4791,7 +4760,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HomeGoodsStore">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HospitalVisitorsHostel -->
@@ -4811,7 +4780,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HostelUseHealthAndMedicalCareZone -->
@@ -4831,7 +4800,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HostelUseResidentialZone -->
@@ -4858,7 +4827,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelAncillaryOffice -->
@@ -4866,7 +4835,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelAncillaryOffice">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelBusinessCentre -->
@@ -4874,7 +4843,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelBusinessCentre">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelLibrary -->
@@ -4882,7 +4851,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelLibrary">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme -->
@@ -4914,7 +4883,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelRecreationalFacility -->
@@ -4922,7 +4891,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelRecreationalFacility">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelRooms -->
@@ -4930,7 +4899,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelRooms">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelUseCommercialOrInstitutionZone -->
@@ -4950,7 +4919,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelUseHotelZone -->
@@ -4983,7 +4952,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelUseWhiteZone -->
@@ -5010,7 +4979,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelZone -->
@@ -5032,7 +5001,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HouseholdActivities -->
@@ -5066,7 +5035,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HousekeepingRoom -->
@@ -5074,7 +5043,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HousekeepingRoom">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ImageAndAudioRestoration -->
@@ -5082,7 +5051,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ImageAndAudioRestoration">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPostProductionAndDistribution"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#IncinerationPlant -->
@@ -5102,7 +5071,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#IndustrialCanteen -->
@@ -5133,7 +5102,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#IndustrialTraining -->
@@ -5164,7 +5133,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InfrastructureUse -->
@@ -5212,7 +5181,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InpatientFacility -->
@@ -5232,7 +5201,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InstituteOfTechnicalEducation -->
@@ -5252,7 +5221,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InstitutionalLiving -->
@@ -5272,7 +5241,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InterimProgramme -->
@@ -5292,7 +5261,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InterimUse -->
@@ -5306,7 +5275,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InternetServiceProvider -->
@@ -5315,7 +5284,7 @@
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Ebusiness"/>
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#IrrigationWaterStorageAndDistributionActivities -->
@@ -5335,7 +5304,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#JewelryStore -->
@@ -5343,7 +5312,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#JewelryStore">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#JuniorCollege -->
@@ -5363,7 +5332,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#KaraokeBar -->
@@ -5391,7 +5360,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Kindergarten -->
@@ -5421,7 +5390,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#KnittingMill -->
@@ -5448,7 +5417,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LBCSv2 -->
@@ -5456,7 +5425,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LBCSv2">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Source"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LRTDepotOrMarshallingYard -->
@@ -5476,7 +5445,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LaboratoryTesting -->
@@ -5484,7 +5453,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LaboratoryTesting">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResearchAndDevelopment"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandUse -->
@@ -5493,7 +5462,7 @@
         <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
         <rdfs:comment>Broad land use categories that are allowed in a specific zoning type in Singapore. Land uses may have further regulations attached, e.g. maximum use quantums. For example, a land use might be ‘Commercial or Hotel Use in Commercial Zone’. This land use is broad in the sense that a commercial use encompasses more specific uses like ‘restaurant’, ‘bar’ and ‘bookstore.’ This land use is necessary to describe at this level of detail because in Singapore, a minimum use quantum of 60% applies to it, meaning that at least 60% of the GFA of a plot zoned as Commercial must be devoted to a mix of different commercial or hotel uses which may include, for example, &apos;restaurant&apos;, &apos;bar&apos;, and &apos;bookstore&apos;.</rdfs:comment>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandedHousingUse -->
@@ -5525,7 +5494,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandfillingOrDumping -->
@@ -5545,7 +5514,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandingSite -->
@@ -5565,7 +5534,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandscapedPlaza -->
@@ -5585,7 +5554,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Laundromat -->
@@ -5613,7 +5582,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Laundry -->
@@ -5648,7 +5617,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Library -->
@@ -5682,7 +5651,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LightIndustry -->
@@ -5709,7 +5678,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LinenAndLaundryRoom -->
@@ -5717,7 +5686,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LinenAndLaundryRoom">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LiquorStore -->
@@ -5725,7 +5694,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LiquorStore">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LocalAccessRoad -->
@@ -5745,7 +5714,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LocationProduction -->
@@ -5753,7 +5722,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LocationProduction">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaProduction"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Locksmith -->
@@ -5761,7 +5730,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Locksmith">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Lodging -->
@@ -5790,7 +5759,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Lounge -->
@@ -5818,7 +5787,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MRTDepotOrMarshallingYard -->
@@ -5838,7 +5807,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusiness1 -->
@@ -5883,7 +5852,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusiness1White -->
@@ -5928,7 +5897,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusiness2 -->
@@ -5979,7 +5948,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusiness2White -->
@@ -6030,7 +5999,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusinessPark -->
@@ -6059,7 +6028,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusinessParkWhite -->
@@ -6094,7 +6063,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MajorArterialRoad -->
@@ -6114,7 +6083,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MajorDrain -->
@@ -6134,7 +6103,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Mall -->
@@ -6163,7 +6132,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ManufacturingBackEndProcessingCentre -->
@@ -6171,7 +6140,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ManufacturingBackEndProcessingCentre">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataProcessing"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ManufacturingGeneral -->
@@ -6198,7 +6167,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Marina -->
@@ -6218,7 +6187,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MarinaUse -->
@@ -6250,7 +6219,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Market -->
@@ -6279,7 +6248,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaLibraryServices -->
@@ -6287,7 +6256,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaLibraryServices">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaProduction"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaMasteringAndReplication -->
@@ -6295,7 +6264,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaMasteringAndReplication">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPostProductionAndDistribution"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPostProductionAndDistribution -->
@@ -6304,7 +6273,7 @@
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoreMedia"/>
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPreProduction -->
@@ -6313,7 +6282,7 @@
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoreMedia"/>
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaProduction -->
@@ -6322,7 +6291,7 @@
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoreMedia"/>
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MedicalAdministrationSpace -->
@@ -6342,7 +6311,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MedicalStaffFacility -->
@@ -6362,7 +6331,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MedicalSuite -->
@@ -6382,7 +6351,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MedicalUse -->
@@ -6433,7 +6402,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MeetingRoom -->
@@ -6465,7 +6434,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MiniMart -->
@@ -6496,7 +6465,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MotorVehicleRenting -->
@@ -6516,7 +6485,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MotorVehicleTrading -->
@@ -6543,7 +6512,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MovieRental -->
@@ -6551,7 +6520,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MovieRental">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Museum -->
@@ -6578,7 +6547,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NationalPark -->
@@ -6598,7 +6567,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NaturalGasReceivingTerminal -->
@@ -6618,7 +6587,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NaturalOpenSpace -->
@@ -6638,7 +6607,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NeighbourhoodPark -->
@@ -6658,7 +6627,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Nightclub -->
@@ -6694,7 +6663,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NursingBedArea -->
@@ -6714,7 +6683,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NursingHome -->
@@ -6734,7 +6703,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Office -->
@@ -6776,7 +6745,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OfficeActivities -->
@@ -6811,7 +6780,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OnlineDirectory -->
@@ -6819,7 +6788,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OnlineDirectory">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataProcessing"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OpenAirAgriculture -->
@@ -6839,7 +6808,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OpenSpace -->
@@ -6860,7 +6829,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OriginationPlayback -->
@@ -6868,7 +6837,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OriginationPlayback">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TVNetworkProgramming"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OtherAncillaryUseHealthAndMedicalCareZone -->
@@ -6895,7 +6864,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OtherInstructionalActivities -->
@@ -6915,7 +6884,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OtherProgramme -->
@@ -6935,7 +6904,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OtherUseUnderElevatedRoad -->
@@ -6949,7 +6918,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OutdoorPedestrianMall -->
@@ -6969,7 +6938,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OutpatientFacility -->
@@ -6989,7 +6958,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Park -->
@@ -7011,7 +6980,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ParkConnector -->
@@ -7031,7 +7000,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ParkUse -->
@@ -7060,7 +7029,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PassengerAssembly -->
@@ -7080,7 +7049,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PedestrianLinkage -->
@@ -7108,7 +7077,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PedestrianMovement -->
@@ -7128,7 +7097,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Percentage -->
@@ -7136,7 +7105,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Percentage">
         <rdfs:subClassOf rdf:resource="http://www.ontology-of-units-of-measure.org/resource/om-2/RatioUnit"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PerformingArtsCentre -->
@@ -7156,7 +7125,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PersonalServiceTrade -->
@@ -7184,7 +7153,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PetStore -->
@@ -7192,7 +7161,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PetStore">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PetrolStation -->
@@ -7212,7 +7181,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PetrolStationAncillaryUse -->
@@ -7232,7 +7201,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PetrolStationCommercialUse -->
@@ -7266,7 +7235,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PetrolStationMainUse -->
@@ -7280,7 +7249,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PharmaceuticalLaboratory -->
@@ -7288,7 +7257,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PharmaceuticalLaboratory">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TestLaboratory"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Pharmacy -->
@@ -7316,7 +7285,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Physiotherapist -->
@@ -7353,7 +7322,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PlaceOfWorship -->
@@ -7376,15 +7345,16 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Plot -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Plot">
         <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:comment xml:lang="en">As defined by URA Masterplan 2019.</rdfs:comment>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PoliceStation -->
@@ -7404,7 +7374,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Polytechnic -->
@@ -7424,7 +7394,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Pond -->
@@ -7444,7 +7414,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PortFacility -->
@@ -7464,7 +7434,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PortOrAirport -->
@@ -7485,7 +7455,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PortTerminal -->
@@ -7505,7 +7475,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PortUse -->
@@ -7542,7 +7512,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PostOffice -->
@@ -7577,7 +7547,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PowerStation -->
@@ -7597,7 +7567,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PowerTransmissionLinesOrControlActivities -->
@@ -7617,7 +7587,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrayingArea -->
@@ -7637,7 +7607,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PredominantReligiousUse -->
@@ -7657,7 +7627,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PriestRoom -->
@@ -7677,7 +7647,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrimarilyGoodsStorageOrHandlingActivities -->
@@ -7706,7 +7676,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrimarilyPlantOrFactoryActivities -->
@@ -7734,7 +7704,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrimaryAccessRoad -->
@@ -7754,7 +7724,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrimarySchool -->
@@ -7774,7 +7744,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrintMediaSortingAndPackaging -->
@@ -7782,7 +7752,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrintMediaSortingAndPackaging">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPostProductionAndDistribution"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrintingOrPublishing -->
@@ -7809,7 +7779,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrintingPress -->
@@ -7817,7 +7787,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrintingPress">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaProduction"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Prison -->
@@ -7837,7 +7807,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrivateMedicalClinicBusiness1White -->
@@ -7864,7 +7834,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrivateMedicalClinicBusiness2White -->
@@ -7884,7 +7854,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrivateMedicalClinicBusinessPark -->
@@ -7911,7 +7881,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrivateMedicalClinicBusinessParkWhite -->
@@ -7938,7 +7908,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrivateMedicalClinicCommercialAndResidentialZone -->
@@ -7965,7 +7935,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrivateMedicalClinicCommercialZone -->
@@ -7992,7 +7962,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrivateMedicalClinicHotelZone -->
@@ -8019,7 +7989,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrivateMedicalClinicResidentialWithCommercialAtFirstStorey -->
@@ -8046,7 +8016,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrivateMedicalClinicWhiteZone -->
@@ -8073,7 +8043,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ProShop -->
@@ -8081,7 +8051,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ProShop">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Golf"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ProductDesignOrDevelopment -->
@@ -8108,7 +8078,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Production -->
@@ -8135,7 +8105,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme -->
@@ -8144,7 +8114,7 @@
         <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
         <rdfs:comment>More specific land uses that are allowed in one or more broader land use categories. For example, ‘restaurant’, ‘bar’ and ‘bookstore’ are programmes. No use quantums are attached to programmes.</rdfs:comment>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ProgrammeManagement -->
@@ -8152,7 +8122,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ProgrammeManagement">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TVNetworkProgramming"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PromenadingAndOtherActivitiesInParks -->
@@ -8181,7 +8151,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrototypeProduction -->
@@ -8189,7 +8159,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrototypeProduction">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResearchAndDevelopment"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PublicInstallationUse -->
@@ -8203,7 +8173,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PublicPromenade -->
@@ -8223,7 +8193,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PublicUtilityUse -->
@@ -8262,7 +8232,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RapidTransit -->
@@ -8276,7 +8246,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RapidTransitStation -->
@@ -8296,7 +8266,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RapidTransitUse -->
@@ -8323,7 +8293,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RecreationClub -->
@@ -8356,7 +8326,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RecreationClubUse -->
@@ -8386,7 +8356,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RecreationClubUseCommercialOrInstitutionZone -->
@@ -8416,7 +8386,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RecreationClubUseCommercialZone -->
@@ -8446,7 +8416,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RecreationClubUseWhiteZone -->
@@ -8476,7 +8446,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RecreationalClubUseCommercialZone -->
@@ -8484,7 +8454,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RecreationalClubUseCommercialZone">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandUse"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RegionalMarketingCentre -->
@@ -8492,7 +8462,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RegionalMarketingCentre">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataProcessing"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RegionalPark -->
@@ -8512,7 +8482,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ReligiousClassroom -->
@@ -8532,7 +8502,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RepairAndServicing -->
@@ -8559,7 +8529,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResearchAndDevelopment -->
@@ -8586,7 +8556,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ReserveSite -->
@@ -8607,7 +8577,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Reservoir -->
@@ -8627,7 +8597,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Residential -->
@@ -8652,7 +8622,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResidentialOrInstitution -->
@@ -8674,7 +8644,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResidentialWithCommercialAtFirstStorey -->
@@ -8697,7 +8667,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Resort -->
@@ -8717,7 +8687,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResortUse -->
@@ -8737,7 +8707,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Restaurant -->
@@ -8783,7 +8753,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Restaurant-typeActivity -->
@@ -8820,7 +8790,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RetirementHousing -->
@@ -8840,7 +8810,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RetirementHousingUse -->
@@ -8860,7 +8830,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#River -->
@@ -8880,7 +8850,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Road -->
@@ -8901,7 +8871,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RoadUse -->
@@ -8942,7 +8912,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Scheduling -->
@@ -8950,7 +8920,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Scheduling">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TVNetworkProgramming"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#School -->
@@ -8985,7 +8955,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SchoolOrLibraryActivities -->
@@ -9005,7 +8975,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ScienceCentre -->
@@ -9025,7 +8995,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Scripting -->
@@ -9033,7 +9003,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Scripting">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPreProduction"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SecondarySchool -->
@@ -9053,7 +9023,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SeismicDataAnalysisCentre -->
@@ -9061,7 +9031,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SeismicDataAnalysisCentre">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataProcessing"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Semi-DetachedHouse -->
@@ -9081,7 +9051,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Semi-Expressway -->
@@ -9101,7 +9071,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServiceOrientedShopping -->
@@ -9138,7 +9108,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServiceReservoir -->
@@ -9158,7 +9128,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServiceRoadOrBacklane -->
@@ -9178,7 +9148,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartment -->
@@ -9205,7 +9175,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartmentAncillaryUseResidentialZone -->
@@ -9232,7 +9202,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartmentAncillaryUseWhiteZone -->
@@ -9253,7 +9223,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartmentMixedUseZone -->
@@ -9261,7 +9231,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartmentMixedUseZone">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartment"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartmentResidentialZone -->
@@ -9269,7 +9239,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartmentResidentialZone">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartment"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartmentUseResidentialZone -->
@@ -9296,7 +9266,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartmentUseWhiteZone -->
@@ -9323,7 +9293,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SewagePumpingStation -->
@@ -9343,7 +9313,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SewerTreatmentAndProcessing -->
@@ -9363,7 +9333,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShoeStore -->
@@ -9371,7 +9341,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShoeStore">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Shop -->
@@ -9408,7 +9378,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShopHouseUseGeneral -->
@@ -9429,7 +9399,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Shopping -->
@@ -9466,7 +9436,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Showroom -->
@@ -9502,7 +9472,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SickRoom -->
@@ -9531,7 +9501,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SoftwareDevelopment -->
@@ -9540,7 +9510,7 @@
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Ebusiness"/>
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResearchAndDevelopment"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SolidWasteCollectionAndStorage -->
@@ -9560,7 +9530,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SolidWasteManagementActivities -->
@@ -9580,15 +9550,16 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Source -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Source">
         <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:comment xml:lang="en">The list of programmes in this ontology is currently derived from three distinctive sources. However, the list of programmes in this ontology may be extended through other sources. Hence, to know where from every programme is comming from, their source needs to be explicitly defined.</rdfs:comment>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Spa -->
@@ -9623,7 +9594,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialEducationAmbulatorySchool -->
@@ -9643,7 +9614,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialEducationNonAmbulatorySchool -->
@@ -9663,7 +9634,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialProgramme -->
@@ -9683,7 +9654,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialUse -->
@@ -9697,7 +9668,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialUseZone -->
@@ -9711,7 +9682,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpectatorSportsAssembly -->
@@ -9739,7 +9710,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsAndRecreation -->
@@ -9765,7 +9736,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsAndRecreationFacility -->
@@ -9794,7 +9765,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsComplex -->
@@ -9814,7 +9785,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsComplexUse -->
@@ -9843,7 +9814,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Stadium -->
@@ -9863,7 +9834,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StadiumUse -->
@@ -9890,7 +9861,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StaffCanteen -->
@@ -9898,7 +9869,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StaffCanteen">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StaffChangingRoom -->
@@ -9906,7 +9877,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StaffChangingRoom">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StandardConversion -->
@@ -9914,7 +9885,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StandardConversion">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPostProductionAndDistribution"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StorageOfChemicalsOils -->
@@ -9941,7 +9912,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store -->
@@ -9976,7 +9947,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Strata-LandedHousing -->
@@ -9996,7 +9967,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StudentHostel -->
@@ -10016,7 +9987,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StudentRunBusiness -->
@@ -10036,7 +10007,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StudioProduction -->
@@ -10044,7 +10015,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StudioProduction">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaProduction"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SupercomputingCentre -->
@@ -10052,7 +10023,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SupercomputingCentre">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataProcessing"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Supermarket -->
@@ -10060,7 +10031,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Supermarket">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SwampArea -->
@@ -10080,7 +10051,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TVNetworkProgramming -->
@@ -10089,7 +10060,7 @@
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoreMedia"/>
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TapeDuplication -->
@@ -10097,7 +10068,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TapeDuplication">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPostProductionAndDistribution"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TelecommunicationUse -->
@@ -10111,7 +10082,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Telecommunications -->
@@ -10120,7 +10091,7 @@
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Ebusiness"/>
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TelevisionOrFilmingStudioComplex -->
@@ -10140,7 +10111,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Tennis -->
@@ -10174,7 +10145,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TerraceHouse -->
@@ -10194,7 +10165,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TerraceType1 -->
@@ -10202,7 +10173,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TerraceType1">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TerraceHouse"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TerraceType2 -->
@@ -10210,7 +10181,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TerraceType2">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TerraceHouse"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TestLaboratory -->
@@ -10237,7 +10208,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TextLayout -->
@@ -10245,7 +10216,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TextLayout">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPreProduction"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TextileLaboratory -->
@@ -10253,7 +10224,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TextileLaboratory">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TestLaboratory"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Townhouse -->
@@ -10273,7 +10244,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TradeMission -->
@@ -10302,7 +10273,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrailerPark -->
@@ -10322,7 +10293,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrainingInstitute -->
@@ -10342,7 +10313,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrainingOrInstructionalActivitiesOutsideClassrooms -->
@@ -10362,7 +10333,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrainsOrOtherRailMovement -->
@@ -10382,7 +10353,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransientLiving -->
@@ -10412,7 +10383,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransmissionServices -->
@@ -10420,7 +10391,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransmissionServices">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TVNetworkProgramming"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransmittingStation -->
@@ -10440,7 +10411,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransportDepot -->
@@ -10460,7 +10431,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransportFacilities -->
@@ -10483,7 +10454,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TravelAgency -->
@@ -10503,7 +10474,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TreatmentFacility -->
@@ -10523,7 +10494,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#URA -->
@@ -10531,7 +10502,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#URA">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Source"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#UnbuiltOpenSpace -->
@@ -10553,7 +10524,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#UndeterminedProgramme -->
@@ -10573,7 +10544,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#UndeterminedUse -->
@@ -10587,7 +10558,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#University -->
@@ -10607,15 +10578,16 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#UseQuantum -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#UseQuantum">
         <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:comment xml:lang="en">A ratio between the predominant allowed uses and the ancillary allowed uses by the zoning type expressed in percentage. For instance, Business 2 zoning type allows at least 60% of the floor area to be dedicated for industrial purpose uses and the remaining 40% may be dedicated for ancillary uses such as Showroom, Industrial Canteen, Ancillary Office, etc.</rdfs:comment>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Utility -->
@@ -10638,7 +10610,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ValueAddedNetwork -->
@@ -10646,7 +10618,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ValueAddedNetwork">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataProcessing"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VehicleParkingUse -->
@@ -10672,7 +10644,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VehicularMovement -->
@@ -10692,7 +10664,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VeterinaryCare -->
@@ -10727,7 +10699,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VideoEditing -->
@@ -10735,7 +10707,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VideoEditing">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPostProductionAndDistribution"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VoiceCallServices -->
@@ -10743,7 +10715,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VoiceCallServices">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Telecommunications"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WasteProcessingOrRecycling -->
@@ -10763,7 +10735,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Water-skiing -->
@@ -10791,7 +10763,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterAreaUse -->
@@ -10819,7 +10791,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterPumpHouse -->
@@ -10839,7 +10811,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterPurificationAndFiltrationActivities -->
@@ -10859,7 +10831,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterReclamationPlant -->
@@ -10879,7 +10851,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterSportsAndRelatedLeisureActivities -->
@@ -10906,7 +10878,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterSportsCentre -->
@@ -10926,7 +10898,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterSportsCentreUse -->
@@ -10959,7 +10931,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterStorage -->
@@ -10979,7 +10951,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterTreatmentPlant -->
@@ -10999,7 +10971,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Waterbody -->
@@ -11020,7 +10992,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WebHosting -->
@@ -11028,7 +11000,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WebHosting">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InternetServiceProvider"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WebSiteBuilding -->
@@ -11036,7 +11008,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WebSiteBuilding">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InternetServiceProvider"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WelfareHome -->
@@ -11064,7 +11036,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#White -->
@@ -11091,7 +11063,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusiness1White -->
@@ -11167,7 +11139,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusiness2White -->
@@ -11241,7 +11213,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusinessPark -->
@@ -11320,7 +11292,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusinessParkWhite -->
@@ -11397,7 +11369,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WoodedArea -->
@@ -11417,7 +11389,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WorkersDormitory -->
@@ -11445,7 +11417,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WorkersQuarters -->
@@ -11465,15 +11437,16 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ZoningType -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ZoningType">
         <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:comment xml:lang="en">As defined by URA. For instance, The Written Statement for Masterpla 2019 and Development handbooks describe the meaning of each zoning type in terms of the ‘uses’ and ‘developments’ that are, may, or may not be allowed in a specific zone.</rdfs:comment>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ZoologicalGarden -->
@@ -11493,7 +11466,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#squareMetre -->
@@ -11501,7 +11474,7 @@
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#squareMetre">
         <rdfs:subClassOf rdf:resource="http://www.ontology-of-units-of-measure.org/resource/om-2/AreaUnit"/>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq001 -->
@@ -11537,7 +11510,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq002 -->
@@ -11573,7 +11546,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq003 -->
@@ -11609,7 +11582,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq004 -->
@@ -11639,7 +11612,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq005 -->
@@ -11675,7 +11648,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq006 -->
@@ -11711,7 +11684,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq007 -->
@@ -11747,7 +11720,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq008 -->
@@ -11783,7 +11756,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq009 -->
@@ -11819,7 +11792,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq010 -->
@@ -11855,7 +11828,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq011 -->
@@ -11891,7 +11864,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq012 -->
@@ -11927,7 +11900,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq013 -->
@@ -11957,7 +11930,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq014 -->
@@ -11993,7 +11966,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq015 -->
@@ -12023,7 +11996,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq016 -->
@@ -12059,7 +12032,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq017 -->
@@ -12095,7 +12068,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq018 -->
@@ -12125,7 +12098,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq019 -->
@@ -12161,7 +12134,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq020 -->
@@ -12197,7 +12170,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq021 -->
@@ -12233,7 +12206,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq022 -->
@@ -12269,7 +12242,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq023 -->
@@ -12299,7 +12272,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq024 -->
@@ -12335,7 +12308,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq025 -->
@@ -12371,7 +12344,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq026 -->
@@ -12407,7 +12380,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq027 -->
@@ -12443,7 +12416,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq028 -->
@@ -12479,7 +12452,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq029 -->
@@ -12515,7 +12488,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq030 -->
@@ -12551,7 +12524,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq031 -->
@@ -12587,7 +12560,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq032 -->
@@ -12617,7 +12590,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq033 -->
@@ -12653,7 +12626,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq034 -->
@@ -12689,7 +12662,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq035 -->
@@ -12725,7 +12698,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq036 -->
@@ -12761,7 +12734,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq037 -->
@@ -12797,7 +12770,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq038 -->
@@ -12827,7 +12800,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq039 -->
@@ -12863,7 +12836,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq040 -->
@@ -12899,7 +12872,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq041 -->
@@ -12935,7 +12908,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq042 -->
@@ -12971,7 +12944,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq043 -->
@@ -13007,7 +12980,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq044 -->
@@ -13043,7 +13016,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq045 -->
@@ -13079,7 +13052,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq046 -->
@@ -13115,7 +13088,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq047 -->
@@ -13145,7 +13118,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#uq048 -->
@@ -13181,7 +13154,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AircraftTakeoff,Landing,Taxiing,Parking -->
@@ -13201,7 +13174,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BoatMooring,Docking,Servicing -->
@@ -13228,7 +13201,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Boating,Sailing,Etc -->
@@ -13256,7 +13229,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Canoeing,Kayaking,Etc -->
@@ -13284,7 +13257,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Drive-in,DriveThrough,Stop-n-go,Etc -->
@@ -13304,7 +13277,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Emergency,DisasterResponseActivities -->
@@ -13324,7 +13297,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EmergencyResponse,Public-safetyActivities -->
@@ -13344,7 +13317,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Farming,Tilling,Plowing,Harvesting,RelatedActivities -->
@@ -13364,7 +13337,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Fishing,Angling,Etc -->
@@ -13392,7 +13365,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FloodControl,Dams,OtherLargeIrrigationActivities -->
@@ -13412,7 +13385,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Flying,Air-relatedSports -->
@@ -13432,7 +13405,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GatheringsAtMuseums,Aquariums,ZoologicalParks,Etc -->
@@ -13452,7 +13425,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HealthCare,Medical,TreatmentActivities -->
@@ -13472,7 +13445,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HistoricalOrCulturalCelebrations,Parades,Etc -->
@@ -13500,7 +13473,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Hockey,IceSkating,Etc -->
@@ -13520,7 +13493,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Interment,Cremation,GraveDiggingActivities -->
@@ -13540,7 +13513,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#M&amp;EServices -->
@@ -13567,7 +13540,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Movies,Concerts,EntertainmentShows -->
@@ -13587,7 +13560,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NaturalGasOrFuelsControl,Monitor,DistributionActivities -->
@@ -13607,7 +13580,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Plant,Factory,HeavyGoodsStorageOrHandlingActivities -->
@@ -13634,7 +13607,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Police,Security,ProtectionActivities -->
@@ -13654,7 +13627,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Port,Ship-building,RelatedActivities -->
@@ -13681,7 +13654,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PowerGeneration,Control,Monitor,DistributionActivities -->
@@ -13701,7 +13674,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Running,Jogging,Bicycling,Aerobics,Exercising,Etc -->
@@ -13735,7 +13708,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Sailing,Boating,OtherPort,MarineAndWater-basedActivities -->
@@ -13762,7 +13735,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ScubaDiving,Snorkeling,Etc -->
@@ -13789,7 +13762,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SewageStoring,Pumping,Piping -->
@@ -13809,7 +13782,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Sewer-relatedControl,Monitor,DistributionActivities -->
@@ -13829,7 +13802,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Social,Cultural,ReligiousAssembly -->
@@ -13849,7 +13822,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StorageOfChemical,Nuclear,OtherMaterials -->
@@ -13876,7 +13849,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StorageOfNaturalGas,Fuels,Etc -->
@@ -13896,7 +13869,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Swimming,Diving,Etc -->
@@ -13931,7 +13904,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TelecommunicationsControl,Monitor,DistributionActivities -->
@@ -13961,7 +13934,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrackAndField,TeamSports,OtherSports -->
@@ -13981,7 +13954,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VehicularParking,Storage,Etc -->
@@ -14001,7 +13974,7 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterStoring,Pumping,Piping -->
@@ -14021,10 +13994,10 @@
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
+    
 
 
-
-    <!--
+    <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Individuals
@@ -14032,7 +14005,7 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Agriculture -->
@@ -14040,7 +14013,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Agriculture">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Agriculture"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BeachArea -->
@@ -14048,7 +14021,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BeachArea">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BeachArea"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Business1 -->
@@ -14056,7 +14029,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Business1">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Business1"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Business1White -->
@@ -14064,7 +14037,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Business1White">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Business1White"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Business2 -->
@@ -14072,7 +14045,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Business2">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Business2"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Business2White -->
@@ -14080,7 +14053,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Business2White">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Business2White"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BusinessPark -->
@@ -14088,7 +14061,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BusinessPark">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BusinessPark"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BusinessParkWhite -->
@@ -14096,7 +14069,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BusinessParkWhite">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BusinessParkWhite"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CemeteryZone -->
@@ -14104,7 +14077,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CemeteryZone">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CemeteryZone"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CivicAndCommunityInstitutionZone -->
@@ -14112,7 +14085,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CivicAndCommunityInstitutionZone">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CivicAndCommunityInstitutionZone"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Commercial -->
@@ -14120,7 +14093,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Commercial">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Commercial"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialAndResidential -->
@@ -14128,7 +14101,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialAndResidential">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialAndResidential"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialOrInstitution -->
@@ -14136,7 +14109,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialOrInstitution">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialOrInstitution"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EducationalInstitution -->
@@ -14144,7 +14117,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EducationalInstitution">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EducationalInstitution"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HealthAndMedicalCare -->
@@ -14152,7 +14125,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HealthAndMedicalCare">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HealthAndMedicalCare"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelZone -->
@@ -14160,7 +14133,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelZone">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelZone"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OpenSpace -->
@@ -14168,7 +14141,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OpenSpace">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OpenSpace"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Park -->
@@ -14176,7 +14149,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Park">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Park"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PlaceOfWorship -->
@@ -14184,7 +14157,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PlaceOfWorship">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PlaceOfWorship"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PortOrAirport -->
@@ -14192,7 +14165,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PortOrAirport">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PortOrAirport"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RapidTransit -->
@@ -14200,7 +14173,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RapidTransit">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RapidTransit"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ReserveSite -->
@@ -14208,7 +14181,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ReserveSite">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ReserveSite"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Residential -->
@@ -14216,7 +14189,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Residential">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Residential"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResidentialOrInstitution -->
@@ -14224,7 +14197,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResidentialOrInstitution">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResidentialOrInstitution"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResidentialWithCommercialAtFirstStorey -->
@@ -14232,7 +14205,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResidentialWithCommercialAtFirstStorey">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResidentialWithCommercialAtFirstStorey"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Road -->
@@ -14240,7 +14213,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Road">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Road"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialUseZone -->
@@ -14248,7 +14221,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialUseZone">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialUseZone"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsAndRecreation -->
@@ -14256,7 +14229,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsAndRecreation">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsAndRecreation"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransportFacilities -->
@@ -14264,7 +14237,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransportFacilities">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransportFacilities"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Utility -->
@@ -14272,7 +14245,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Utility">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Utility"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Waterbody -->
@@ -14280,7 +14253,7 @@
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Waterbody">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Waterbody"/>
     </owl:NamedIndividual>
-
+    
 
 
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#White -->
@@ -14289,16 +14262,16 @@
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#White"/>
     </owl:NamedIndividual>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (maybeAllowedInUse only
-(CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">SupercomputingCentre SubClassOf DataProcessing and (allowedInUse only
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DataFarmOrCentre SubClassOf Ebusiness and (allowedInUse only
+(MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BiotechLaboratory SubClassOf TestLaboratory and (allowedInUse only
 (MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
@@ -14313,8 +14286,47 @@
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">SupercomputingCentre SubClassOf DataProcessing and (allowedInUse only
+(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">TVNetworkProgramming SubClassOf CoreMedia and (allowedInUse only
 (MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (maybeAllowedInUse only
+(CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PrototypeProduction SubClassOf ResearchAndDevelopment and (allowedInUse only
+(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">SupercomputingCentre SubClassOf DataProcessing and (allowedInUse only
+(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">TVNetworkProgramming SubClassOf CoreMedia and (allowedInUse only
+(MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BiotechLaboratory SubClassOf TestLaboratory and (allowedInUse only
+(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">HotelLibrary SubClassOf HotelProgramme and (allowedInUse only
+(CommercialOrHotelUseCommercialAndResidentialZone or CommercialUseWhiteZone or HotelUseCommercialOrInstitutionZone or HotelUseHotelZone or HotelUseWhiteZone or WhiteUseBusinessPark or WhiteUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
@@ -14323,8 +14335,47 @@
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (maybeAllowedInUse only
+(CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">TVNetworkProgramming SubClassOf CoreMedia and (allowedInUse only
+(MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (maybeAllowedInUse only
+(CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DataFarmOrCentre SubClassOf Ebusiness and (allowedInUse only
+(MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">HotelLibrary SubClassOf HotelProgramme and (allowedInUse only
+(CommercialOrHotelUseCommercialAndResidentialZone or CommercialUseWhiteZone or HotelUseCommercialOrInstitutionZone or HotelUseHotelZone or HotelUseWhiteZone or WhiteUseBusinessPark or WhiteUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BiotechLaboratory SubClassOf TestLaboratory and (allowedInUse only
 (MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PrototypeProduction SubClassOf ResearchAndDevelopment and (allowedInUse only
+(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">SupercomputingCentre SubClassOf DataProcessing and (allowedInUse only
+(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
 </rdf:RDF>
