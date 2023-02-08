@@ -68,6 +68,7 @@ class GFAOntoManager:
     FOR_PLOT_CONTAINED_IN = URIRef(ONTO_PLANNING_REG_PREFIX + "forPlotContainedIn")
     PLOT_ABUTS_GOOD_CLASS_BUNGALOW_AREA = URIRef(ONTO_PLANNING_REG_PREFIX + "plotAbutsGoodClassBungalowArea")
     PLOT_IN_GOOD_CLASS_BUNGALOW_AREA = URIRef(ONTO_PLANNING_REG_PREFIX + "plotInGoodClassBungalowArea")
+    PLOT_IN_CENTRAL_AREA = URIRef(ONTO_PLANNING_REG_PREFIX + "plotInCentralArea")
     PLOT_ABUTS_1_3_ROAD_CATEGORY = URIRef(ONTO_PLANNING_REG_PREFIX + "plotAbuts1-3RoadCategory")
 
     # OntoBuildableSpace classes
@@ -192,6 +193,12 @@ class GFAOntoManager:
                       {'category': ROAD_CATEGORY_3, 'buffer': 2},
                       {'category': ROAD_CATEGORY_4, 'buffer': 2},
                       {'category': ROAD_CATEGORY_5, 'buffer': 2}]
+
+    ROAD_BUFFER_0 = [{'category': ROAD_CATEGORY_1, 'buffer': 0},
+                     {'category': ROAD_CATEGORY_2, 'buffer': 0},
+                     {'category': ROAD_CATEGORY_3, 'buffer': 0},
+                     {'category': ROAD_CATEGORY_4, 'buffer': 0},
+                     {'category': ROAD_CATEGORY_5, 'buffer': 0}]
 
 
 

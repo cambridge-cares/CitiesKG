@@ -12,7 +12,6 @@ from rdflib import Dataset, Literal, URIRef
 from shapely.geometry import LineString
 import uuid
 
-cur_dir = 'C://Users/AydaGrisiute/Desktop'
 
 def get_plots(endpoint):
     sparql = SPARQLWrapper(endpoint)
@@ -55,6 +54,7 @@ def process_plots(plots):
     plots['plot_area'] = plots.area
     plots['gpr'] = pd.to_numeric(plots['gpr'], errors='coerce')
     return plots
+
 
 '''Generate an abstract residential areas boundary by merging residential plot buffered polygons. '''
 
@@ -310,10 +310,12 @@ def get_plot_neighbour_types(plots, endpoint):
     sparql.setQuery("""PREFIX opr: <http://www.theworldavatar.com/ontology/ontoplanningreg/OntoPlanningReg.owl#>
     PREFIX obs: <http://www.theworldavatar.com/ontology/ontobuildablespace/OntoBuildableSpace.owl#>
     PREFIX oz: <http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#>
-    SELECT ?plots (GROUP_CONCAT(?type; separator=",") as ?neighbour_road_type) (GROUP_CONCAT(DISTINCT ?zone; separator=",") as ?neighbour_zones) (COUNT(?gcba) AS ?abuts_gcba)
+    SELECT ?plots (GROUP_CONCAT(?type; separator=",") as ?neighbour_road_type) (GROUP_CONCAT(DISTINCT ?zone; separator=",") as ?neighbour_zones) (COUNT(?gcba) AS ?abuts_gcba)  (COUNT(?reg) AS ?in_central_area)
     WHERE { ?plots obs:hasNeighbour ?neighbour .
     ?neighbour oz:hasZone ?zone_uri .
     BIND(STRAFTER(STR(?zone_uri), '#') AS ?zone)
+    OPTIONAL { ?reg opr:appliesTo ?plots ;
+                    rdf:type opr:CentralArea . }
     OPTIONAL { ?neighbour obs:hasRoadType ?type . }
     OPTIONAL { ?gcba opr:appliesTo ?neighbour ;
     rdf:type opr:GoodClassBungalowArea . }} 
@@ -326,6 +328,7 @@ def get_plot_neighbour_types(plots, endpoint):
     plots['neighbour_road_type'] = [plots.loc[i, 'neighbour_road_type'].split(',') if not pd.isnull(plots.loc[i, 'neighbour_road_type']) else [] for i in plots.index]
     plots['neighbour_zones'] = [plots.loc[i, 'neighbour_zones'].split(',') if not pd.isnull(plots.loc[i, 'neighbour_zones']) else [] for i in plots.index]
     plots['abuts_gcba'] = pd.to_numeric(plots['abuts_gcba'], errors='ignore')
+    plots['in_central_area'] = pd.to_numeric(plots['in_central_area'], errors='ignore')
     return plots
 
 
@@ -451,7 +454,7 @@ def get_type_regulations(endpoint):
     PREFIX obs: <http://www.theworldavatar.com/ontology/ontobuildablespace/OntoBuildableSpace.owl#>
     PREFIX oz: <http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#>
     PREFIX om: <http://www.ontology-of-units-of-measure.org/resource/om-2/>
-    SELECT ?reg (GROUP_CONCAT(DISTINCT ?zone; separator=",") AS ?for_zones) (SAMPLE(?gpr_value) AS ?requires_gpr) (SAMPLE(?function) AS ?gpr_function) (SAMPLE(?fringe) AS ?for_fringe_plot) (SAMPLE(?corner) AS ?for_corner_plot)  (SAMPLE(?gcba) AS ?abuts_gcba) (SAMPLE(?gcba_in) AS ?in_gcba)  (SAMPLE(?road) AS ?abuts_road) (GROUP_CONCAT(DISTINCT ?programme; separator=",") AS ?for_programme)  (GROUP_CONCAT(?neighbour_zone; separator=",") AS ?neighbour_zones) (GROUP_CONCAT(?areas; separator=",") AS ?in_area_regs)
+    SELECT ?reg (GROUP_CONCAT(DISTINCT ?zone; separator=",") AS ?for_zones) (SAMPLE(?gpr_value) AS ?requires_gpr) (SAMPLE(?function) AS ?gpr_function) (SAMPLE(?fringe) AS ?for_fringe_plot) (SAMPLE(?corner) AS ?for_corner_plot)  (SAMPLE(?gcba) AS ?abuts_gcba) (SAMPLE(?gcba_in) AS ?in_gcba) (SAMPLE(?central_area) AS ?in_central_area) (SAMPLE(?road) AS ?abuts_road) (GROUP_CONCAT(DISTINCT ?programme; separator=",") AS ?for_programme)  (GROUP_CONCAT(DISTINCT ?neighbour_zone; separator=",") AS ?neighbour_zones) (GROUP_CONCAT(?areas; separator=",") AS ?in_area_regs)
     WHERE { GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/planningregulations/>  {
              ?reg rdf:type opr:DevelopmentControlPlan . }
       OPTIONAL { ?reg opr:forZoningType ?zone_type_uri .
@@ -461,6 +464,7 @@ def get_type_regulations(endpoint):
       OPTIONAL { ?reg opr:plotAbuts1-3RoadCategory ?road . }
       OPTIONAL { ?reg opr:plotAbutsGoodClassBungalowArea ?gcba .}
       OPTIONAL { ?reg opr:plotInGoodClassBungalowArea ?gcba_in .}
+      OPTIONAL { ?reg opr:plotInCentralArea ?central_area .}
       OPTIONAL { ?reg opr:forPlotContainedIn ?areas .}   
       OPTIONAL { ?reg opr:forFringePlot ?fringe . }
       OPTIONAL { ?reg opr:forCornerPlot ?corner . }
@@ -501,6 +505,12 @@ def link_type_regulations_to_plots(regs, plots, road_list):
                 applies_to_plots = applies_to_plots & (plots['gpr'] > regs.loc[i, 'requires_gpr'])
             else:
                 applies_to_plots = applies_to_plots & (plots['gpr'] == regs.loc[i, 'requires_gpr'])
+        if regs.loc[i, 'in_central_area'] == 'true':
+            in_central_area = plots['in_central_area'] > 0
+            applies_to_plots = applies_to_plots & in_central_area
+        if regs.loc[i, 'in_central_area'] == 'false':
+            in_central_area = plots['in_central_area'] == 0
+            applies_to_plots = applies_to_plots & in_central_area
         if regs.loc[i, 'in_area_regs']:
             pb_condition = plots['in_pb'].apply(lambda in_pb: len(set(in_pb).intersection(regs.loc[i, 'in_area_regs'])) > 0)
             lha_condition = plots['in_lha'].apply( lambda in_lha: len(set(in_lha).intersection(regs.loc[i, 'in_area_regs'])) > 0)
@@ -627,9 +637,11 @@ def instantiate_type_regulation_and_plot_triples(type_regs):
     type_regulation_links.write_triples("type_regulation_overlap_triples")
     print("plot properties nquads written.")
 
-if __name__ == "__main__":
 
-    local_endpoint = "http://192.168.0.143:9999/blazegraph/namespace/regulationcontent/sparql"
+if __name__ == "__main__":
+    cur_dir = 'C://Users/AydaGrisiute/Desktop'
+
+    local_endpoint = "http://10.25.182.158:9999/blazegraph/namespace/regulationcontent/sparql"
     plots = get_plots("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql")
     print('plots retrieved')
 
@@ -644,10 +656,10 @@ if __name__ == "__main__":
     #instantiate_plot_property_triples(residential_plots, plots, road_network, road_plots)
     #print('plot property triples written to file.')
 
-    plots = get_plot_information(plots, local_endpoint, road_list)
-    type_regulations = get_type_regulations(local_endpoint)
-    print('type regulations retrieved.')
-    type_regulations = link_type_regulations_to_plots(type_regulations, plots, road_list)
-    print('type regulations linked to plots.')
-    instantiate_type_regulation_and_plot_triples(type_regulations)
-    print('type regulation links to plots instantiated.')
+    #plots = get_plot_information(plots, local_endpoint, road_list)
+    #type_regulations = get_type_regulations(local_endpoint)
+    #print('type regulations retrieved.')
+    #type_regulations = link_type_regulations_to_plots(type_regulations, plots, road_list)
+    #print('type regulations linked to plots.')
+    #instantiate_type_regulation_and_plot_triples(type_regulations)
+    #print('type regulation links to plots instantiated.')

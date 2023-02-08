@@ -458,6 +458,11 @@ class TripleDataset:
             self.dataset.add((control_plan, GFAOntoManager.PLOT_ABUTS_GOOD_CLASS_BUNGALOW_AREA, Literal(str(True), datatype=XSD.boolean), GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         if not pd.isna(parameters['in_GCBA']):
             self.dataset.add((control_plan, GFAOntoManager.PLOT_IN_GOOD_CLASS_BUNGALOW_AREA, Literal(str(True), datatype=XSD.boolean), GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+        if not pd.isna(parameters['in_central_area']):
+            if parameters['in_central_area'] == 1.0:
+                self.dataset.add((control_plan, GFAOntoManager.PLOT_IN_CENTRAL_AREA, Literal(str(True), datatype=XSD.boolean), GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
+            else:
+                self.dataset.add((control_plan, GFAOntoManager.PLOT_IN_CENTRAL_AREA, Literal(str(False), datatype=XSD.boolean),GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         if not pd.isna(parameters['abuts_1_3_road_category']):
             self.dataset.add((control_plan, GFAOntoManager.PLOT_ABUTS_1_3_ROAD_CATEGORY, Literal(str(True), datatype=XSD.boolean), GFAOntoManager.ONTO_PLANNING_REGULATIONS_GRAPH))
         if not pd.isna(parameters['for_neighbour_zone_type']):
@@ -992,6 +997,7 @@ def instantiate_development_control_plans(cp, landed_housing_areas, planning_bou
     road_buffer_24_uris = dataset.create_road_category_triples(GFAOntoManager.ROAD_BUFFER_24, 5, GFAOntoManager.MAXIMUM)
     road_buffer_7_uris = dataset.create_road_category_triples(GFAOntoManager.ROAD_BUFFER_7)
     road_buffer_2_uris = dataset.create_road_category_triples(GFAOntoManager.ROAD_BUFFER_2)
+    road_buffer_0_uris = dataset.create_road_category_triples(GFAOntoManager.ROAD_BUFFER_0)
 
     for i in cp.index:
         parameters = {'zone': cp.loc[i, 'zone'].split(';'),
@@ -1012,7 +1018,8 @@ def instantiate_development_control_plans(cp, landed_housing_areas, planning_bou
                       'for_corner_plot': cp.loc[i, 'for_corner_plot'],
                       'for_fringe_plot': cp.loc[i, 'for_fringe_plot'],
                       'in_landed_housing_area': cp.loc[i, 'in_landed_housing_area'],
-                      'in_planning_boundary': cp.loc[i, 'in_planning_boundary']}
+                      'in_planning_boundary': cp.loc[i, 'in_planning_boundary'],
+                      'in_central_area': cp.loc[i, 'in_central_area']}
 
         if cp.loc[i, 'zone'] == 'EducationalInstitution':
             dataset.create_control_plan_triples(parameters, landed_housing_areas, planning_boundaries, (road_buffer_30_uris + road_buffer_24_uris))
@@ -1022,17 +1029,16 @@ def instantiate_development_control_plans(cp, landed_housing_areas, planning_bou
             dataset.create_control_plan_triples(parameters, landed_housing_areas, planning_boundaries, road_buffer_30_uris)
         elif cp.loc[i, 'for_programme'] == 'TerraceType2':
             dataset.create_control_plan_triples(parameters, landed_housing_areas, planning_boundaries, road_buffer_2_uris)
-
         elif cp.loc[i, 'for_programme'] == ('Bungalow' or 'GoodClassBungalow' or 'Semi-DetachedHouse' or 'TerraceType1'):
             dataset.create_control_plan_triples(parameters, landed_housing_areas, planning_boundaries, road_buffer_24_uris)
-
-
         elif cp.loc[i, 'for_programme'] == 'Condominium' and not pd.isna(cp.loc[i, 'in_planning_boundary']):
             dataset.create_control_plan_triples(parameters, landed_housing_areas, planning_boundaries, road_buffer_30_uris)
         elif cp.loc[i, 'for_programme'] == 'Flat' and not pd.isna(cp.loc[i, 'in_planning_boundary']):
             dataset.create_control_plan_triples(parameters, landed_housing_areas, planning_boundaries, (road_buffer_30_uris + road_buffer_15_uris))
         elif cp.loc[i, 'for_programme'] == ('Condominium' or 'Flat') and not pd.isna(cp.loc[i, 'in_planning_boundary']):
             dataset.create_control_plan_triples(parameters, landed_housing_areas, planning_boundaries, (road_buffer_7_uris + road_buffer_15_uris))
+        elif not pd.isna(cp.loc[i, 'in_central_area']):
+            dataset.create_control_plan_triples(parameters, landed_housing_areas, planning_boundaries, road_buffer_0_uris)
         else:
             dataset.create_control_plan_triples(parameters, landed_housing_areas, planning_boundaries, road_buffer_15_uris)
 
@@ -1092,7 +1098,7 @@ def get_planning_boundaries(endpoint):
 
 
 if __name__ == "__main__":
-    url_prefix = 'http://192.168.0.143:9999/blazegraph/namespace/'
+    url_prefix = 'http://10.25.182.158:9999/blazegraph/namespace/'
     twa_endpoint = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql"
     local_regulation_content = url_prefix + 'regulationcontent/sparql'
     cur_dir = 'C:/Users/AydaGrisiute/Dropbox/Cities Knowledge Graph - [all team members]/Research/WP6 - Use Cases/PlanningConceptOntology/demonstrator_data/type_based_planning_regulations/'
@@ -1113,9 +1119,9 @@ if __name__ == "__main__":
     #get_plots(twa_endpoint)
     #instantiate_reg_overlaps(twa_endpoint, central_area, urban_design_areas, street_block_plan, conservation_areas, monument, urban_design_guidelines, landed_housing, height_control, planning_boundaries)
 
-    landed_housing_areas = get_landed_housing_areas(local_regulation_content)
-    planning_boundaries = get_planning_boundaries(local_regulation_content)
-    instantiate_development_control_plans(control_plans, landed_housing_areas['lha'], planning_boundaries)
+    #landed_housing_areas = get_landed_housing_areas(local_regulation_content)
+    #planning_boundaries = get_planning_boundaries(local_regulation_content)
+    #instantiate_development_control_plans(control_plans, landed_housing_areas['lha'], planning_boundaries)
 
     #instantiate_neighbors(twa_endpoint)
 
