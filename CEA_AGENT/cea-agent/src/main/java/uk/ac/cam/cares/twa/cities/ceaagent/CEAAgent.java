@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
+import org.apache.jena.arq.querybuilder.Order;
 import org.apache.jena.arq.querybuilder.handlers.WhereHandler;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
@@ -25,6 +26,7 @@ import java.util.*;
 import javax.servlet.annotation.WebServlet;
 import java.util.concurrent.*;
 import java.net.URISyntaxException;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -210,7 +212,7 @@ public class CEAAgent extends JPSAgent {
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
                         // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
-                        String usage = toCEAConvention(getValue(uri, "BuildingUsage", usageRoute));
+                        Map<String, Double> usage = getBuildingUsages(uri, usageRoute);
 
                         ArrayList<CEAInputData> surrounding = getSurroundings(uri, route, uniqueSurrounding);
 
@@ -932,11 +934,36 @@ public class CEAAgent extends JPSAgent {
         wb.addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
                 .addPrefix("rdf", rdfUri)
                 .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s")
-                .addWhere("?building", "ontoBuiltEnv:hasUsageCategory", "?usage")
+                .addWhere("?building", "ontoBuiltEnv:hasPropertyUsage", "?usage")
                 .addWhere("?usage", "rdf:type", "?BuildingUsage");
 
         sb.addVar("?BuildingUsage")
                 .addWhere(wb);
+
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
+
+        return sb.build();
+    }
+
+    /**
+     * builds a SPARQL query for a specific URI to retrieve the building usage and the building usage share with OntoBuiltEnv concepts
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getUsageShareQuery(String uriString) {
+        WhereBuilder wb = new WhereBuilder();
+        SelectBuilder sb = new SelectBuilder();
+
+        wb.addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
+                .addPrefix("rdf", rdfUri)
+                .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s")
+                .addWhere("?building", "ontoBuiltEnv:hasPropertyUsage", "?usage")
+                .addWhere("?usage", "rdf:type", "?BuildingUsage")
+                .addWhere("?usage", "ontoBuiltEnv:hasUsageShare", "?UsageShare");
+
+        sb.addVar("?BuildingUsage").addVar("?UsageShare")
+                .addWhere(wb)
+                .addOrderBy("UsageShare", Order.DESCENDING);
 
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
 
@@ -1071,6 +1098,64 @@ public class CEAAgent extends JPSAgent {
             e.printStackTrace();
             return null;
         }
+    }
+
+    /**
+     * retrieves the usages of a building and each usage's corresponding weight, and returns the usages and their weight as a map
+     * @param uriString city object id
+     * @param route route to pass to access agent
+     * @return the usages and their corresponding weighting
+     */
+    private Map<String, Double> getBuildingUsages(String uriString, String route) {
+        Map<String, Double> result = new HashMap<>();
+        Map<String, Double> temp = new HashMap<>();
+        String usage;
+        Query q = getUsageShareQuery(uriString);
+
+        JSONArray queryResultArray = this.queryStore(route, q.toString());
+
+        if (queryResultArray.isEmpty()){
+            // only one usage for the building
+            usage = getValue(uriString, "BuildingUsage", route);
+            usage = toCEAConvention(usage);
+            result.put(usage, 1.00);
+        }
+        else{
+            // CEA only support up to three usages for each building
+
+            // convert all usages to CEA defined usages first
+            for (int i = 0; i < queryResultArray.length(); i++){
+                usage = queryResultArray.getJSONObject(i).get("BuildingUsage").toString().split(ontoBuiltEnvUri)[1].split(">")[0].toUpperCase();
+                usage = toCEAConvention(usage);
+
+                if (temp.containsKey(usage)){
+                    temp.put(usage, temp.get(usage) + queryResultArray.getJSONObject(i).getDouble("UsageShare"));
+                }
+                else{
+                    temp.put(usage, queryResultArray.getJSONObject(i).getDouble("UsageShare"));
+                }
+            }
+
+            // get the top 3 usages
+            result = temp.entrySet().stream()
+                    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                    .limit(3)
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+        }
+
+        // normalise the usage weights in result so that they sum up to 1
+        Double sum = 0.00;
+
+        for (Double val : result.values()){
+            sum += val;
+        }
+
+        for (Map.Entry<String, Double> entry : result.entrySet()){
+            result.put(entry.getKey(), entry.getValue() / sum);
+        }
+
+        return result;
     }
 
     /**
