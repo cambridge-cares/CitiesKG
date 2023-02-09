@@ -16,6 +16,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,7 +31,7 @@ public class RunCEATaskTest {
         try {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", "test", null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -45,7 +47,7 @@ public class RunCEATaskTest {
     public void testRunCEATaskFields() {
         try {
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", "test", null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
             URI testURI = new URI("http://localhost/test");
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
@@ -114,7 +116,7 @@ public class RunCEATaskTest {
         try{
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", "test", null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -134,7 +136,7 @@ public class RunCEATaskTest {
         try {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", "test", null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -157,7 +159,7 @@ public class RunCEATaskTest {
     public void testRunProcess() throws Exception {
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test", "test", "test", null));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -198,7 +200,7 @@ public class RunCEATaskTest {
         try {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", "test", null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -232,7 +234,7 @@ public class RunCEATaskTest {
 
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test", "test", "test", null));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -274,7 +276,7 @@ public class RunCEATaskTest {
 
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test", "test", "test", null));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -332,7 +334,7 @@ public class RunCEATaskTest {
         try {
             testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", "test", null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -379,7 +381,7 @@ public class RunCEATaskTest {
     public void testRun() throws NoSuchMethodException, URISyntaxException, InvocationTargetException, IllegalAccessException {
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test", "test", "test", null));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -408,7 +410,7 @@ public class RunCEATaskTest {
     public void testDataToFile(@TempDir Path tempDir) throws URISyntaxException, NoSuchMethodException, NoSuchFieldException, InvocationTargetException, IllegalAccessException, IOException {
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<>();
-        testData.add(new CEAInputData("test", "test", "test", null));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -417,7 +419,7 @@ public class RunCEATaskTest {
         RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS));
 
         ArrayList<CEAInputData> surroundings = new ArrayList<>();
-        surroundings.add(new CEAInputData("test", "test", "test", null));
+        surroundings.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
         testData.get(0).setSurrounding(surroundings);
 
         Method dataToFile = task.getClass().getDeclaredMethod("dataToFile", ArrayList.class, String.class, String.class, String.class);

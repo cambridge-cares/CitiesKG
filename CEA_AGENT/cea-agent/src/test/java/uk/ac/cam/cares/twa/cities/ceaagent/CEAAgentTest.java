@@ -257,7 +257,7 @@ public class CEAAgentTest {
     @Test
     public void testCEAAgentMethods() {
         CEAAgent agent = new CEAAgent();
-        assertEquals(63, agent.getClass().getDeclaredMethods().length);
+        assertEquals(66, agent.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -306,7 +306,10 @@ public class CEAAgentTest {
         String measure_datatype = "datatype";
         String test_datatype = "<http://localhost/blazegraph/literals/POLYGON-3-15>";
         String measure_usage = "BuildingUsage";
-        String test_usage = "<https://www.theworldavatar.com/kg/ontobuiltenv/Office>";
+        String test_usage1 = "<https://www.theworldavatar.com/kg/ontobuiltenv/Office>";
+        String test_usage2 = "<https://www.theworldavatar.com/kg/ontobuiltenv/Office>";
+        String measure_share = "UsageShare";
+        String test_share = "0.5";
         String measure_crs = "CRS";
         String test_crs = "test_crs";
         String testScalar = "testScalar";
@@ -316,7 +319,7 @@ public class CEAAgentTest {
         JSONArray expected_building = new JSONArray().put(new JSONObject().put(measure_building, building));
         JSONArray expected_height = new JSONArray().put(new JSONObject().put(measure_height, test_height));
         JSONArray expected_footprint = new JSONArray().put(new JSONObject().put(measure_footprint, test_footprint).put(measure_datatype, test_datatype));
-        JSONArray expected_usage = new JSONArray().put(new JSONObject().put(measure_usage, test_usage));
+        JSONArray expected_usage = new JSONArray().put(new JSONObject().put(measure_usage, test_usage1).put(measure_share, test_share)).put(new JSONObject().put(measure_usage, test_usage2).put(measure_share, test_share));
         JSONArray expected_crs = new JSONArray().put(new JSONObject().put(measure_crs, test_crs));
         JSONArray expected_iri = new JSONArray().put(new JSONObject().put("measure", test_measure).put("unit", test_unit));
         JSONArray expected_value = new JSONArray().put(new JSONObject().put("value", testScalar));
@@ -708,7 +711,7 @@ public class CEAAgentTest {
             targetUrl.set(agent, "test");
 
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", "test", null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -1031,7 +1034,7 @@ public class CEAAgentTest {
         Query q8 = (Query) getQuery.invoke(agent, uri, case8);
         assertTrue(q8.toString().contains("srid"));
         Query q9 = (Query) getQuery.invoke(agent, uri, case9);
-        assertTrue(q9.toString().contains("hasUsageCategory"));
+        assertTrue(q9.toString().contains("hasPropertyUsage"));
     }
 
     @Test
@@ -2038,7 +2041,6 @@ public class CEAAgentTest {
 
         // Ensure query contains correct predicate and object
         Query q = (Query) getBuildingUsage.invoke(agent, uri);
-        assertTrue(q.toString().contains("hasUsageCategory"));
         assertTrue(q.toString().contains("hasOntoCityGMLRepresentation"));
         assertTrue(q.toString().contains("BuildingUsage"));
     }
@@ -2122,6 +2124,82 @@ public class CEAAgentTest {
             assertTrue(result.get(0).getHeight().equals("10.0"));
             assertNull(result.get(0).getUsage());
             assertNull(result.get(0).getSurrounding());
+        }
+    }
+
+    @Test
+    public void testGetUsageShareQuery() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = spy(new CEAAgent());
+        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
+
+        Method getUsageShareQuery = agent.getClass().getDeclaredMethod("getUsageShareQuery", String.class);
+        assertNotNull(getUsageShareQuery);
+        getUsageShareQuery.setAccessible(true);
+
+        Query q = (Query) getUsageShareQuery.invoke(agent, uri);
+
+        assertTrue(q.toString().contains("hasUsageShare"));
+        assertTrue(q.toString().contains("hasPropertyUsage"));
+    }
+
+    @Test
+    public void testGetBuildingUsages() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = spy(new CEAAgent());
+        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
+
+        Method getBuildingUsages = agent.getClass().getDeclaredMethod("getBuildingUsages", String.class, String.class);
+        assertNotNull(getBuildingUsages);
+        getBuildingUsages.setAccessible(true);
+
+        JSONArray emptyArray = new JSONArray();
+        JSONArray usageArray = new JSONArray().put(new JSONObject().put("BuildingUsage", "https://www.theworldavatar.com/kg/ontobuiltenv/Hospital").put("UsageShare", 1.00));
+
+        try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = mockStatic(AccessAgentCaller.class)) {
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn(emptyArray).thenReturn(usageArray);
+
+            Map<String, Double> result = (Map<String, Double>) getBuildingUsages.invoke(agent, uri, "");
+            assertEquals(result.size(), 1);
+            assertTrue(result.containsKey("HOSPITAL"));
+            assertEquals(result.get("HOSPITAL"), 1.00);
+        }
+
+        JSONArray usagesArray = new JSONArray();
+
+        // the three usages below all map to the CEA defined HOSPITAL
+        usagesArray.put(new JSONObject().put("BuildingUsage", "https://www.theworldavatar.com/kg/ontobuiltenv/Clinic").put("UsageShare", 0.125));
+        usagesArray.put(new JSONObject().put("BuildingUsage", "https://www.theworldavatar.com/kg/ontobuiltenv/Hospital").put("UsageShare", 0.125));
+        usagesArray.put(new JSONObject().put("BuildingUsage", "https://www.theworldavatar.com/kg/ontobuiltenv/EmergencyService").put("UsageShare", 0.125));
+
+        // the two usages below all map to the CEA defined RESTAURANT
+        usagesArray.put(new JSONObject().put("BuildingUsage", "https://www.theworldavatar.com/kg/ontobuiltenv/DrinkingEstablishment").put("UsageShare", 0.125));
+        usagesArray.put(new JSONObject().put("BuildingUsage", "https://www.theworldavatar.com/kg/ontobuiltenv/EatingEstablishment").put("UsageShare", 0.125));
+
+        // the two usages below all map to the CEA defined INDUSTRIAL
+        usagesArray.put(new JSONObject().put("BuildingUsage", "https://www.theworldavatar.com/kg/ontobuiltenv/IndustrialFacility").put("UsageShare", 0.125));
+        usagesArray.put(new JSONObject().put("BuildingUsage", "https://www.theworldavatar.com/kg/ontobuiltenv/TransportFacility").put("UsageShare", 0.125));
+
+        // the one usage below map to the CEA defined HOTEL
+        usagesArray.put(new JSONObject().put("BuildingUsage", "https://www.theworldavatar.com/kg/ontobuiltenv/Hotel").put("UsageShare", 0.125));
+
+        Map<String, Double> expected = new HashMap<>();
+
+        // after mapped to CEA defined usages, HOSPITAL, RESTAURANT, and INDUSTRIAL will be the top 3 usages
+        // the usage weights are normalised
+        expected.put("HOSPITAL", (3 * 0.125) / (7 * 0.125));
+        expected.put("RESTAURANT", (2 * 0.125) / (7 * 0.125));
+        expected.put("INDUSTRIAL", (2 * 0.125) / (7 * 0.125));
+
+        try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = mockStatic(AccessAgentCaller.class)) {
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn(usagesArray);
+
+            Map<String, Double> result = (Map<String, Double>) getBuildingUsages.invoke(agent, uri, "");
+            assertEquals(result.size(), 3);
+            for (Map.Entry<String, Double> entry : expected.entrySet()){
+                assertTrue(result.containsKey(entry.getKey()));
+                assertEquals(entry.getValue(), result.get(entry.getKey()));
+            }
         }
     }
 }
