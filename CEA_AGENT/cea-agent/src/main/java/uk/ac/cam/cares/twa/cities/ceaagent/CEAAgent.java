@@ -405,7 +405,6 @@ public class CEAAgent extends JPSAgent {
         return error;
     }
 
-
     /**
      * Gets variables from config
      *
@@ -450,6 +449,7 @@ public class CEAAgent extends JPSAgent {
             throw new JPSRuntimeException(e);
         }
     }
+
     /**
      * Creates and initialises a time series using the time series client
      *
