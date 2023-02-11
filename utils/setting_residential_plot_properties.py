@@ -641,7 +641,7 @@ def instantiate_type_regulation_and_plot_triples(type_regs):
 if __name__ == "__main__":
     cur_dir = 'C://Users/AydaGrisiute/Desktop'
 
-    local_endpoint = "http://10.25.182.158:9999/blazegraph/namespace/regulationcontent/sparql"
+    local_endpoint = "http://192.168.0.143:9999/blazegraph/namespace/regulationcontent/sparql"
     plots = get_plots("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql")
     print('plots retrieved')
 
@@ -656,10 +656,10 @@ if __name__ == "__main__":
     #instantiate_plot_property_triples(residential_plots, plots, road_network, road_plots)
     #print('plot property triples written to file.')
 
-    #plots = get_plot_information(plots, local_endpoint, road_list)
-    #type_regulations = get_type_regulations(local_endpoint)
-    #print('type regulations retrieved.')
-    #type_regulations = link_type_regulations_to_plots(type_regulations, plots, road_list)
-    #print('type regulations linked to plots.')
-    #instantiate_type_regulation_and_plot_triples(type_regulations)
-    #print('type regulation links to plots instantiated.')
+    plots = get_plot_information(plots, local_endpoint, road_list)
+    type_regulations = get_type_regulations(local_endpoint)
+    print('type regulations retrieved.')
+    type_regulations = link_type_regulations_to_plots(type_regulations, plots, road_list)
+    print('type regulations linked to plots.')
+    instantiate_type_regulation_and_plot_triples(type_regulations)
+    print('type regulation links to plots instantiated.')
