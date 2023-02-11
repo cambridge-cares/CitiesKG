@@ -5251,7 +5251,7 @@
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandedHousingUse"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartmentUseResidentialZone"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartmentUseWhiteZone"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShopHouseUseGeneral"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShopHouseUse"/>
                         </owl:unionOf>
                     </owl:Class>
                 </owl:allValuesFrom>
@@ -8647,7 +8647,7 @@
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ClinicUseResidentialWithCommercialAtFirstStorey"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseResidentialWithCommercialAtFirstStoreyZone"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumUseResidentialWithCommercialAtFirstStoreyZone"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShopHouseUseGeneral"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShopHouseUse"/>
                         </owl:unionOf>
                     </owl:Class>
                 </owl:allValuesFrom>
@@ -9368,9 +9368,9 @@
     
 
 
-    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShopHouseUseGeneral -->
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShopHouseUse -->
 
-    <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShopHouseUseGeneral">
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShopHouseUse">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandUse"/>
         <rdfs:subClassOf>
             <owl:Restriction>
@@ -9924,7 +9924,7 @@
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseHotelZone"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseResidentialWithCommercialAtFirstStoreyZone"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseWhiteZone"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShopHouseUseGeneral"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShopHouseUse"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusiness1WhiteZone"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusiness2WhiteZone"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusinessParkZone"/>
