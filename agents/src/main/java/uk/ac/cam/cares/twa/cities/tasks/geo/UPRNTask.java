@@ -86,8 +86,10 @@ public class UPRNTask implements Runnable {
     getFootprintsFromThematicSurfaces();
     getFootprintsFromLod0FootprintId();
 
+    int k=0;
     // Obtain UPRNs for each building by envelope, then geometrically test for only intersects to actually store.
     for (CityObject building : buildings) {
+      k+=1;
       Coordinate lower = building.getEnvelopeType().getLowerBound();
       Coordinate upper = building.getEnvelopeType().getUpperBound();
       UPRN[] uprns = queryUprns(lower.x, lower.y, upper.x, upper.y, GeometryType.getSourceCrsName(), building);
@@ -96,6 +98,8 @@ public class UPRNTask implements Runnable {
           if (uprnIntersectsGeometry(uprn, geometry.getGeometryType()))
             if(!uprn.getIntersects().contains(building))
               uprn.getIntersects().add(building);
+      if(k%2000==0)
+        context.pushAllChanges();
     }
 
     LOGGER.info("Failed buildings:");
@@ -182,16 +186,18 @@ public class UPRNTask implements Runnable {
       get.addHeader("Content-Type", "application/json");
       HttpResponse response = HttpClients.createDefault().execute(get);
       String responseString = EntityUtils.toString(response.getEntity());
-      JSONArray uprnJsons=null;
-      try{
-        uprnJsons = new JSONObject(responseString).getJSONArray("features");
-      }catch(JSONException e){
+
+      UPRN[] uprns = new UPRN[0];
+      try {
+        JSONArray uprnJsons = new JSONObject(responseString).getJSONArray("features");
+        uprns = new UPRN[uprnJsons.length()];
+        for (int i = 0; i < uprnJsons.length(); i++) {
+          uprns[i] = UPRN.loadFromJson(context, uprnJsons.getJSONObject(i));
+        }
+      } catch (Exception e) {
         failed_bldgs.add(bldg);
       }
-      UPRN[] uprns = new UPRN[uprnJsons.length()];
-      for (int i = 0; i < uprnJsons.length(); i++) {
-        uprns[i] = UPRN.loadFromJson(context, uprnJsons.getJSONObject(i));
-      }
+
       return uprns;
     } catch (IOException e) {
       throw new JPSRuntimeException(e);
