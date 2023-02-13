@@ -749,7 +749,7 @@ public class CEAAgentTest {
 
             // Ensure iris created correctly and time series initialised
             for (String time_series : time_series_strings) {
-                assertTrue(fixedIris.get(time_series).contains("https://www.theworldavatar.com/kg/ontoubemmp/" + time_series));
+                assertTrue(fixedIris.get(time_series).contains(prefix + "energyprofile/" + time_series));
             }
             verify(mockTs.constructed().get(0), times(1)).initTimeSeries(anyList(), anyList(), anyString(), any(), any(), any(), any());
         }
@@ -1451,7 +1451,7 @@ public class CEAAgentTest {
         String route = "test_route";
 
         String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
-        String expected = "https://www.theworldavatar.com/kg/ontobuiltenv/";
+        String expected = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/energyprofile/";
 
         doNothing().when(agent).updateStore(anyString(), anyString());
         String result = (String) initialiseBuilding.invoke(agent,  uriString, "", route );
