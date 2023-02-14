@@ -2094,13 +2094,13 @@
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Entertainment"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ExhibitionCentre"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FoodCentre"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Mall"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Market"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Office"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Restaurant"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Shop"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TradeMission"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel"/>
                         </owl:unionOf>
                     </owl:Class>
                 </owl:allValuesFrom>
@@ -2584,13 +2584,13 @@
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Entertainment"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ExhibitionCentre"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FoodCentre"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Mall"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Market"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Office"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Restaurant"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Shop"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TradeMission"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel"/>
                         </owl:unionOf>
                     </owl:Class>
                 </owl:allValuesFrom>
@@ -4869,7 +4869,7 @@
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelAncillaryOffice -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelAncillaryOffice">
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel"/>
     </owl:Class>
     
 
@@ -4877,7 +4877,7 @@
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelBusinessCentre -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelBusinessCentre">
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel"/>
     </owl:Class>
     
 
@@ -4885,39 +4885,7 @@
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelLibrary -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelLibrary">
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme -->
-
-    <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme">
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
-        <rdfs:subClassOf>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#allowedInUse"/>
-                <owl:allValuesFrom>
-                    <owl:Class>
-                        <owl:unionOf rdf:parseType="Collection">
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialOrHotelUseCommercialAndResidential"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseWhite"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelUseCommercialOrInstitution"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelUseHotel"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelUseWhite"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusinessPark"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusinessParkWhite"/>
-                        </owl:unionOf>
-                    </owl:Class>
-                </owl:allValuesFrom>
-            </owl:Restriction>
-        </rdfs:subClassOf>
-        <rdfs:subClassOf>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasSource"/>
-                <owl:allValuesFrom rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#URA"/>
-            </owl:Restriction>
-        </rdfs:subClassOf>
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel"/>
     </owl:Class>
     
 
@@ -4925,7 +4893,7 @@
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelRecreationalFacility -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelRecreationalFacility">
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel"/>
     </owl:Class>
     
 
@@ -4933,7 +4901,7 @@
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelRooms -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelRooms">
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel"/>
     </owl:Class>
     
 
@@ -4945,7 +4913,7 @@
         <rdfs:subClassOf>
             <owl:Restriction>
                 <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#allowsProgramme"/>
-                <owl:allValuesFrom rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
+                <owl:allValuesFrom rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel"/>
             </owl:Restriction>
         </rdfs:subClassOf>
         <rdfs:subClassOf>
@@ -4965,7 +4933,7 @@
         <rdfs:subClassOf>
             <owl:Restriction>
                 <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#allowsProgramme"/>
-                <owl:allValuesFrom rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
+                <owl:allValuesFrom rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel"/>
             </owl:Restriction>
         </rdfs:subClassOf>
         <rdfs:subClassOf>
@@ -4998,7 +4966,7 @@
         <rdfs:subClassOf>
             <owl:Restriction>
                 <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#allowsProgramme"/>
-                <owl:allValuesFrom rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
+                <owl:allValuesFrom rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel"/>
             </owl:Restriction>
         </rdfs:subClassOf>
         <rdfs:subClassOf>
@@ -5055,7 +5023,7 @@
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HousekeepingRoom -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HousekeepingRoom">
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel"/>
     </owl:Class>
     
 
@@ -5698,7 +5666,7 @@
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LinenAndLaundryRoom -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LinenAndLaundryRoom">
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel"/>
     </owl:Class>
     
 
@@ -9916,7 +9884,7 @@
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StaffCanteen -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StaffCanteen">
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel"/>
     </owl:Class>
     
 
@@ -9924,7 +9892,7 @@
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StaffChangingRoom -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StaffChangingRoom">
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel"/>
     </owl:Class>
     
 
@@ -11280,7 +11248,6 @@
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ChildcareCentre"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialSchool"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FitnessCentre"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Kindergarten"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MotorVehicleRenting"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MotorVehicleTrading"/>
@@ -11290,6 +11257,7 @@
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Shop"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Showroom"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsAndRecreationFacility"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel"/>
                         </owl:unionOf>
                     </owl:Class>
                 </owl:allValuesFrom>
@@ -11359,7 +11327,6 @@
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ChildcareCentre"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialSchool"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FitnessCentre"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Kindergarten"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MotorVehicleTrading"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Office"/>
@@ -11368,6 +11335,7 @@
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Shop"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Showroom"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsAndRecreationFacility"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel"/>
                         </owl:unionOf>
                     </owl:Class>
                 </owl:allValuesFrom>
@@ -14046,6 +14014,38 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl/Programme#Hotel">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#allowedInUse"/>
+                <owl:allValuesFrom>
+                    <owl:Class>
+                        <owl:unionOf rdf:parseType="Collection">
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialOrHotelUseCommercialAndResidential"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseWhite"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelUseCommercialOrInstitution"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelUseHotel"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelUseWhite"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusinessPark"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusinessParkWhite"/>
+                        </owl:unionOf>
+                    </owl:Class>
+                </owl:allValuesFrom>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasSource"/>
+                <owl:allValuesFrom rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#URA"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
     <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -14321,46 +14321,22 @@
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DataFarmOrCentre SubClassOf Ebusiness and (allowedInUse only
-(MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PrototypeProduction SubClassOf ResearchAndDevelopment and (allowedInUse only
-(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BiotechLaboratory SubClassOf TestLaboratory and (allowedInUse only
-(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (maybeAllowedInUse only
+(CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">SupercomputingCentre SubClassOf DataProcessing and (allowedInUse only
+(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">TVNetworkProgramming SubClassOf CoreMedia and (allowedInUse only
 (MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">SupercomputingCentre SubClassOf DataProcessing and (allowedInUse only
-(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">SupercomputingCentre SubClassOf DataProcessing and (allowedInUse only
-(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PrototypeProduction SubClassOf ResearchAndDevelopment and (allowedInUse only
-(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
@@ -14369,17 +14345,13 @@
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">TVNetworkProgramming SubClassOf CoreMedia and (allowedInUse only
-(MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">SupercomputingCentre SubClassOf DataProcessing and (allowedInUse only
 (MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (maybeAllowedInUse only
+(CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
@@ -14388,18 +14360,8 @@
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (maybeAllowedInUse only
-(CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BiotechLaboratory SubClassOf TestLaboratory and (allowedInUse only
 (MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (maybeAllowedInUse only
-(CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
@@ -14413,8 +14375,46 @@
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">SupercomputingCentre SubClassOf DataProcessing and (allowedInUse only
+(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PrototypeProduction SubClassOf ResearchAndDevelopment and (allowedInUse only
+(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PrototypeProduction SubClassOf ResearchAndDevelopment and (allowedInUse only
+(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DataFarmOrCentre SubClassOf Ebusiness and (allowedInUse only
+(MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (maybeAllowedInUse only
 (CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BiotechLaboratory SubClassOf TestLaboratory and (allowedInUse only
+(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">TVNetworkProgramming SubClassOf CoreMedia and (allowedInUse only
+(MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
