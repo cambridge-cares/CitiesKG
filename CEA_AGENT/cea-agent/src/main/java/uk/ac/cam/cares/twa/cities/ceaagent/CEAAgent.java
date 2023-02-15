@@ -56,6 +56,9 @@ public class CEAAgent extends JPSAgent {
     public static final String KEY_REQ_URL = "requestUrl";
     public static final String KEY_TARGET_URL = "targetUrl";
     public static final String KEY_IRI = "iris";
+    public static final String KEY_GEOMETRY = "geometryEndpoint";
+    public static final String KEY_USAGE = "usageEndpoint";
+    public static final String KEY_CEA = "ceaEndpoint";
     public static final String CITY_OBJECT = "cityobject";
     public static final String CITY_OBJECT_GEN_ATT = "cityobjectgenericattrib";
     public static final String BUILDING = "building";
@@ -106,7 +109,7 @@ public class CEAAgent extends JPSAgent {
     private static String unitOntologyUri;
     private String requestUrl;
     private String targetUrl;
-    private String localRoute;
+    private String geometryRoute;
     private String usageRoute;
     private String ceaRoute;
 
@@ -149,8 +152,6 @@ public class CEAAgent extends JPSAgent {
                         scalars.put(scalar, getList(requestParams, scalar));
                     }
 
-                    String route = new String();
-
                     for (int i = 0; i < uriArray.length(); i++) {
                         LinkedHashMap<String,String> tsIris = new LinkedHashMap<>();
                         LinkedHashMap<String,String> scalarIris = new LinkedHashMap<>();
@@ -158,13 +159,8 @@ public class CEAAgent extends JPSAgent {
                         String uri = uriArray.getString(i);
                         setTimeSeriesProps(uri, getTimeSeriesPropsPath());
 
-                        // Only set routes once - assuming all iris passed have same namespace
-                        // Will not be necessary if namespace is passed in request params
-                        if(i==0) {
-                            route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
-                            ceaRoute = ceaRoute.isEmpty() ? route : ceaRoute;
-                        }
                         String building = checkBuildingInitialised(uri, ceaRoute);
+
                         if(building.equals("")){
                             // Check if DABGEO:Building IRI has already been created in another endpoint
                             building = checkBuildingInitialised(uri, usageRoute);
@@ -184,7 +180,6 @@ public class CEAAgent extends JPSAgent {
                     ArrayList<String> uriStringArray = new ArrayList<>();
                     List<String> uniqueSurrounding = new ArrayList<>();
                     String crs= new String();
-                    String route = new String();
 
                     for (int i = 0; i < uriArray.length(); i++) {
                         String uri = uriArray.getString(i);
@@ -194,30 +189,30 @@ public class CEAAgent extends JPSAgent {
                         // Only set route once - assuming all iris passed in same namespace
                         // Will not be necessary if namespace is passed in request params
                         if(i==0) {
-                            route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
-                            usageRoute = usageRoute.isEmpty() ? route : usageRoute;
-                            ceaRoute = ceaRoute.isEmpty() ? route : ceaRoute;
+                            geometryRoute = requestParams.has(KEY_GEOMETRY) ? requestParams.getString(KEY_GEOMETRY) : getRoute(uri);
+                            usageRoute = requestParams.has(KEY_USAGE) ? requestParams.getString(KEY_USAGE) : geometryRoute;
+                            ceaRoute = requestParams.has(KEY_CEA) ? requestParams.getString(KEY_CEA) : geometryRoute;
                         }
                         uriStringArray.add(uri);
                         // Set default value of 10m if height can not be obtained from knowledge graph
                         // Will only require one height query if height is represented in data consistently
-                        String height = getValue(uri, "HeightMeasuredHeigh", route);
-                        height = height.length() == 0 ? getValue(uri, "HeightMeasuredHeight", route): height;
-                        height = height.length() == 0 ? getValue(uri, "HeightGenAttr", route): height;
+                        String height = getValue(uri, "HeightMeasuredHeigh", geometryRoute);
+                        height = height.length() == 0 ? getValue(uri, "HeightMeasuredHeight", geometryRoute): height;
+                        height = height.length() == 0 ? getValue(uri, "HeightGenAttr", geometryRoute): height;
                         height = height.length() == 0 ? "10.0" : height;
                         // Get footprint from ground thematic surface or find from surface geometries depending on data
-                        String footprint = getValue(uri, "Lod0FootprintId", route);
-                        footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
-                        footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
+                        String footprint = getValue(uri, "Lod0FootprintId", geometryRoute);
+                        footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", geometryRoute) : footprint;
+                        footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", geometryRoute) : footprint;
                         // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
                         String usage = toCEAConvention(getValue(uri, "BuildingUsage", usageRoute));
 
-                        ArrayList<CEAInputData> surrounding = getSurroundings(uri, route, uniqueSurrounding);
+                        ArrayList<CEAInputData> surrounding = getSurroundings(uri, geometryRoute, uniqueSurrounding);
 
                         testData.add(new CEAInputData(footprint, height, usage, surrounding));
                         if (i==0) {
-                            crs = getValue(uri, "CRS", route);
-                            crs = crs == "" ? getValue(uri, "DatabasesrsCRS", route) : crs;
+                            crs = getValue(uri, "CRS", geometryRoute);
+                            crs = crs == "" ? getValue(uri, "DatabasesrsCRS", geometryRoute) : crs;
                             if (crs == ""){crs = getNamespace(uri).split("EPSG").length == 2 ? getNamespace(uri).split("EPSG")[1].split("/")[0] : "27700";}
                         } //just get crs once - assuming all iris in same namespace
                     }
@@ -234,8 +229,7 @@ public class CEAAgent extends JPSAgent {
 
                     // Only set route once - assuming all iris passed in same namespace
                     if(i==0) {
-                        route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
-                        ceaRoute = ceaRoute.isEmpty() ? route : ceaRoute;
+                        ceaRoute = requestParams.has(KEY_CEA) ? requestParams.getString(KEY_CEA) : getRoute(uri);
                     }
                     String building = checkBuildingInitialised(uri, ceaRoute);
                     if(building.equals("")){
@@ -389,6 +383,11 @@ public class CEAAgent extends JPSAgent {
      */
     private boolean validateActionInput(JSONObject requestParams) {
         boolean error = requestParams.get(KEY_TARGET_URL).toString().isEmpty() || requestParams.get(KEY_IRI).toString().isEmpty();
+
+        if (requestParams.has(KEY_GEOMETRY)) {error = error || requestParams.get(KEY_GEOMETRY).toString().isEmpty();}
+        if (requestParams.has(KEY_USAGE)) {error = error || requestParams.get(KEY_USAGE).toString().isEmpty();}
+        if (requestParams.has(KEY_CEA)) {error = error || requestParams.get(KEY_CEA).toString().isEmpty();}
+
         return error;
     }
 
@@ -426,9 +425,6 @@ public class CEAAgent extends JPSAgent {
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/", config.getString("kingslynnEPSG3857.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/", config.getString("kingslynnEPSG27700.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/", config.getString("pirmasensEPSG32633.targetresourceid"));
-        localRoute = config.getString("query.route.local");
-        usageRoute = config.getString("usage.query.route");
-        ceaRoute = config.getString("cea.store.route");
     }
 
     /**
