@@ -382,6 +382,11 @@ public class CEAAgent extends JPSAgent {
      */
     private boolean validateActionInput(JSONObject requestParams) {
         boolean error = requestParams.get(KEY_TARGET_URL).toString().isEmpty() || requestParams.get(KEY_IRI).toString().isEmpty();
+
+        if (requestParams.has(KEY_GEOMETRY)) {error = error || requestParams.get(KEY_GEOMETRY).toString().isEmpty();}
+        if (requestParams.has(KEY_USAGE)) {error = error || requestParams.get(KEY_USAGE).toString().isEmpty();}
+        if (requestParams.has(KEY_CEA)) {error = error || requestParams.get(KEY_CEA).toString().isEmpty();}
+
         return error;
     }
 
@@ -393,6 +398,9 @@ public class CEAAgent extends JPSAgent {
      */
     private boolean validateQueryInput(JSONObject requestParams) {
         boolean error = requestParams.get(KEY_IRI).toString().isEmpty();
+
+        if (requestParams.has(KEY_CEA)) {error = error || requestParams.get(KEY_CEA).toString().isEmpty();}
+
         return error;
     }
 
