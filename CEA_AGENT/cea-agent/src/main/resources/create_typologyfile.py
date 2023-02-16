@@ -77,7 +77,12 @@ def create_typologyfile(zone_geometry_path, usage, typologyfile):
     zone['3RD_USE_R'] = 0.0
     
     for i in range(len(usage)):
-        zone.at[i, '1ST_USE'] = usage[i]
+        j = 0
+
+        for use, weight in usage[i].items():
+            zone.at[i, COLUMNS_ZONE_TYPOLOGY[2*j+3]] = use
+            zone.at[i, COLUMNS_ZONE_TYPOLOGY[2*j+4]] = weight
+            j += 1
         
     dataframe_to_dbf(zone[COLUMNS_ZONE_TYPOLOGY], typologyfile)
     
