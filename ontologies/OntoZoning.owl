@@ -1065,6 +1065,25 @@
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BiotechLaboratory">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TestLaboratory"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#allowedInUse"/>
+                <owl:allValuesFrom>
+                    <owl:Class>
+                        <owl:unionOf rdf:parseType="Collection">
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusinessPark"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusinessParkWhite"/>
+                        </owl:unionOf>
+                    </owl:Class>
+                </owl:allValuesFrom>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasSource"/>
+                <owl:allValuesFrom rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#URA"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -1072,18 +1091,11 @@
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BookStore -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BookStore">
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
         <rdfs:subClassOf>
             <owl:Restriction>
                 <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#allowedInUse"/>
                 <owl:allValuesFrom rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EducationalInstitutionAncillaryUse"/>
-            </owl:Restriction>
-        </rdfs:subClassOf>
-        <rdfs:subClassOf>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasMaxUseQuantum"/>
-                <owl:allValuesFrom rdf:resource="http://www.theworldavatar.com/ontology/ontobuildablespace/OntoBuildableSpace.owl#AncillaryUseQuantum"/>
             </owl:Restriction>
         </rdfs:subClassOf>
         <rdfs:subClassOf>
@@ -1094,6 +1106,27 @@
                         <owl:unionOf rdf:parseType="Collection">
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Google"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#URA"/>
+                        </owl:unionOf>
+                    </owl:Class>
+                </owl:allValuesFrom>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#maybeAllowedInUse"/>
+                <owl:allValuesFrom>
+                    <owl:Class>
+                        <owl:unionOf rdf:parseType="Collection">
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialOrHotelUseCommercialAndResidential"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseCommercial"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseHealthAndMedicalCare"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseHotel"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseResidentialWithCommercialAtFirstStorey"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseWhite"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShopHouseUse"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusiness1White"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusiness2White"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusinessPark"/>
                         </owl:unionOf>
                     </owl:Class>
                 </owl:allValuesFrom>
@@ -2950,29 +2983,6 @@
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoreMedia">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
-        <rdfs:subClassOf>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#allowedInUse"/>
-                <owl:allValuesFrom>
-                    <owl:Class>
-                        <owl:unionOf rdf:parseType="Collection">
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusiness1"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusiness1White"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusiness2"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusiness2White"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusinessPark"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusinessParkWhite"/>
-                        </owl:unionOf>
-                    </owl:Class>
-                </owl:allValuesFrom>
-            </owl:Restriction>
-        </rdfs:subClassOf>
-        <rdfs:subClassOf>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasSource"/>
-                <owl:allValuesFrom rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#URA"/>
-            </owl:Restriction>
-        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -3900,9 +3910,9 @@
     
 
 
-    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryShopUseResidential -->
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseResidential -->
 
-    <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryShopUseResidential">
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseResidential">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandUse"/>
         <rdfs:subClassOf>
             <owl:Restriction>
@@ -3928,9 +3938,9 @@
     
 
 
-    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryShopUseWhite -->
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseResidentialOrInstitution -->
 
-    <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryShopUseWhite">
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseResidentialOrInstitution">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandUse"/>
         <rdfs:subClassOf>
             <owl:Restriction>
@@ -3956,9 +3966,9 @@
     
 
 
-    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseResidentialOrInstitution -->
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseWhite -->
 
-    <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseResidentialOrInstitution">
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseWhite">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandUse"/>
         <rdfs:subClassOf>
             <owl:Restriction>
@@ -5296,7 +5306,6 @@
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InternetServiceProvider">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Ebusiness"/>
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
     </owl:Class>
     
 
@@ -5581,9 +5590,9 @@
                 <owl:allValuesFrom>
                     <owl:Class>
                         <owl:unionOf rdf:parseType="Collection">
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryShopUseResidential"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryShopUseWhite"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseResidential"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseResidentialOrInstitution"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseWhite"/>
                         </owl:unionOf>
                     </owl:Class>
                 </owl:allValuesFrom>
@@ -6285,7 +6294,29 @@
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPostProductionAndDistribution">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoreMedia"/>
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#allowedInUse"/>
+                <owl:allValuesFrom>
+                    <owl:Class>
+                        <owl:unionOf rdf:parseType="Collection">
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusiness1"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusiness1White"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusiness2"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusiness2White"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusinessPark"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusinessParkWhite"/>
+                        </owl:unionOf>
+                    </owl:Class>
+                </owl:allValuesFrom>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasSource"/>
+                <owl:allValuesFrom rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#URA"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -6294,7 +6325,6 @@
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPreProduction">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoreMedia"/>
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
     </owl:Class>
     
 
@@ -6303,7 +6333,6 @@
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaProduction">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoreMedia"/>
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
     </owl:Class>
     
 
@@ -6463,9 +6492,9 @@
                         <owl:unionOf rdf:parseType="Collection">
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseBusiness1"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EducationalInstitutionAncillaryUse"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryShopUseResidential"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryShopUseWhite"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseResidential"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseResidentialOrInstitution"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseWhite"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PetrolStationCommercialUse"/>
                         </owl:unionOf>
                     </owl:Class>
@@ -7155,9 +7184,9 @@
                 <owl:allValuesFrom>
                     <owl:Class>
                         <owl:unionOf rdf:parseType="Collection">
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryShopUseResidential"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryShopUseWhite"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseResidential"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseResidentialOrInstitution"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseWhite"/>
                         </owl:unionOf>
                     </owl:Class>
                 </owl:allValuesFrom>
@@ -7280,7 +7309,6 @@
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Pharmacy -->
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Pharmacy">
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
         <rdfs:subClassOf>
             <owl:Restriction>
@@ -8579,25 +8607,6 @@
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResearchAndDevelopment">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
-        <rdfs:subClassOf>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#allowedInUse"/>
-                <owl:allValuesFrom>
-                    <owl:Class>
-                        <owl:unionOf rdf:parseType="Collection">
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusinessPark"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusinessParkWhite"/>
-                        </owl:unionOf>
-                    </owl:Class>
-                </owl:allValuesFrom>
-            </owl:Restriction>
-        </rdfs:subClassOf>
-        <rdfs:subClassOf>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasSource"/>
-                <owl:allValuesFrom rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#URA"/>
-            </owl:Restriction>
-        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -8653,7 +8662,7 @@
                 <owl:allValuesFrom>
                     <owl:Class>
                         <owl:unionOf rdf:parseType="Collection">
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryShopUseResidential"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseResidential"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumUseResidential"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HostelUseResidential"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandedHousingUse"/>
@@ -9968,33 +9977,6 @@
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
-        <rdfs:subClassOf>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasSource"/>
-                <owl:allValuesFrom rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Google"/>
-            </owl:Restriction>
-        </rdfs:subClassOf>
-        <rdfs:subClassOf>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#maybeAllowedInUse"/>
-                <owl:allValuesFrom>
-                    <owl:Class>
-                        <owl:unionOf rdf:parseType="Collection">
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialOrHotelUseCommercialAndResidential"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseCommercial"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseHealthAndMedicalCare"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseHotel"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseResidentialWithCommercialAtFirstStorey"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseWhite"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShopHouseUse"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusiness1White"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusiness2White"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WhiteUseBusinessPark"/>
-                        </owl:unionOf>
-                    </owl:Class>
-                </owl:allValuesFrom>
-            </owl:Restriction>
-        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -10107,7 +10089,6 @@
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TVNetworkProgramming">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoreMedia"/>
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
     </owl:Class>
     
 
@@ -10138,7 +10119,6 @@
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Telecommunications">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Ebusiness"/>
-        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
     </owl:Class>
     
 
@@ -10237,25 +10217,6 @@
 
     <owl:Class rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TestLaboratory">
         <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Programme"/>
-        <rdfs:subClassOf>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#allowedInUse"/>
-                <owl:allValuesFrom>
-                    <owl:Class>
-                        <owl:unionOf rdf:parseType="Collection">
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusinessPark"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MainUseBusinessParkWhite"/>
-                        </owl:unionOf>
-                    </owl:Class>
-                </owl:allValuesFrom>
-            </owl:Restriction>
-        </rdfs:subClassOf>
-        <rdfs:subClassOf>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#hasSource"/>
-                <owl:allValuesFrom rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#URA"/>
-            </owl:Restriction>
-        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -11099,7 +11060,7 @@
                     <owl:Class>
                         <owl:unionOf rdf:parseType="Collection">
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialUseWhite"/>
-                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryShopUseWhite"/>
+                            <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumAncillaryUseWhite"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FlatOrCondominiumUseWhite"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelUseWhite"/>
                             <rdf:Description rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrivateMedicalClinicUseWhite"/>
@@ -14065,10 +14026,186 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AirportFacility -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AirportFacility">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AirportFacility"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AirportTerminal -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AirportTerminal">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AirportTerminal"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryDisplayArea -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryDisplayArea">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryDisplayArea"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryOffice -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryOffice">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AncillaryOffice"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ArtGallery -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ArtGallery">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ArtGallery"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ArterialRoad -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ArterialRoad">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ArterialRoad"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ArtsCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ArtsCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ArtsCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Assembly -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Assembly">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Assembly"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Association -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Association">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Association"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AudioEngineering -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AudioEngineering">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AudioEngineering"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AudioRecording -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AudioRecording">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AudioRecording"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Bakery -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Bakery">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Bakery"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Bank -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Bank">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Bank"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Bar -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Bar">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Bar"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BeachArea -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BeachArea">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BeachArea"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BeautySalon -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BeautySalon">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BeautySalon"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BicycleStore -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BicycleStore">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BicycleStore"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BiotechLaboratory -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BiotechLaboratory">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BiotechLaboratory"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BookStore -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BookStore">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BookStore"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BotanicGarden -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BotanicGarden">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BotanicGarden"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BowlingAlley -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BowlingAlley">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BowlingAlley"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BroadcastingServices -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BroadcastingServices">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BroadcastingServices"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Bungalow -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Bungalow">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Bungalow"/>
     </owl:NamedIndividual>
     
 
@@ -14121,6 +14258,78 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Cafe -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Cafe">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Cafe"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CallCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CallCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CallCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CampingActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CampingActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CampingActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Canal -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Canal">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Canal"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarDealer -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarDealer">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarDealer"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarPark -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarPark">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarPark"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarRental -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarRental">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarRental"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarRepair -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarRepair">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarRepair"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarWash -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarWash">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CarWash"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Cemetery -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Cemetery">
@@ -14129,10 +14338,98 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CemeteryProgramme -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CemeteryProgramme">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CemeteryProgramme"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CentralDistributionCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CentralDistributionCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CentralDistributionCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Chalet -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Chalet">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Chalet"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ChildcareCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ChildcareCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ChildcareCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Cinema -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Cinema">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Cinema"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CivicAndCommunityInstitution -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CivicAndCommunityInstitution">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CivicAndCommunityInstitution"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Classroom-typeActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Classroom-typeActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Classroom-typeActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Clinic -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Clinic">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Clinic"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ClinicResearchFacility -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ClinicResearchFacility">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ClinicalResearchFacility"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ClothingStore -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ClothingStore">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ClothingStore"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ClubHouse -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ClubHouse">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ClubHouse"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Columbarium -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Columbarium">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Columbarium"/>
     </owl:NamedIndividual>
     
 
@@ -14161,10 +14458,594 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialSchool -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialSchool">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommercialSchool"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommunityCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommunityCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommunityCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommunityHall -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommunityHall">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommunityHall"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommunityPark -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommunityPark">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CommunityPark"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Composing -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Composing">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Composing"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ComputerReservationSystems -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ComputerReservationSystems">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ComputerReservationSystems"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConcertHall -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConcertHall">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConcertHall"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Condominium -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Condominium">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Condominium"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConferenceRoom -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConferenceRoom">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConferenceRoom"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConstructionActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConstructionActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConstructionActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConvenienceStore -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConvenienceStore">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConvenienceStore"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConventionCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConventionCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ConventionCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoreMedia -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoreMedia">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoreMedia"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Courts -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Courts">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Courts"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoveredAgriculture -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoveredAgriculture">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CoveredAgriculture"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CreativeConceptualisation -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CreativeConceptualisation">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CreativeConceptualisation"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Crematory -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Crematory">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Crematory"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CruiseCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CruiseCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#CruiseCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataFarmOrCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataFarmOrCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataFarmOrCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataOrInformationTransmission -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataOrInformationTransmission">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataOrInformationTransmission"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataProcessing -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataProcessing">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DataProcessing"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Dentist -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Dentist">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Dentist"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DepartmentStore -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DepartmentStore">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DepartmentStore"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DesalinationPlant -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DesalinationPlant">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DesalinationPlant"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DetachedHouse -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DetachedHouse">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DetachedHouse"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DiagnosticFacility -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DiagnosticFacility">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DiagnosticFacility"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DieselAndPumpPoint -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DieselAndPumpPoint">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DieselAndPumpPoint"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DigitalAuthoring -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DigitalAuthoring">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DigitalAuthoring"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Dispensary -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Dispensary">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Dispensary"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Doctor -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Doctor">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Doctor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DrivingRange -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DrivingRange">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DrivingRange"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DrivingTestCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DrivingTestCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DrivingTestCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DrugRehabilitationCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DrugRehabilitationCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#DrugRehabilitationCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Dubbing -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Dubbing">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Dubbing"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EarthSatalliteStation -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EarthSatalliteStation">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EarthSatelliteStation"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Ebusiness -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Ebusiness">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Ebusiness"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EditorialEditing -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EditorialEditing">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EditorialEditing"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EducationalInstitution -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EducationalInstitution">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EducationalInstitution"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ElectricalSubstation -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ElectricalSubstation">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ElectricalSubstation"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ElectronicMessageSending -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ElectronicMessageSending">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ElectronicMessageSending"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ElectronicsStore -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ElectronicsStore">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ElectronicsStore"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Embassy -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Embassy">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Embassy"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Entertainment -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Entertainment">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Entertainment"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ExhibitionCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ExhibitionCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ExhibitionCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Expressway -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Expressway">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Expressway"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FilmPrinting -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FilmPrinting">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FilmPrinting"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FinancialBackEndProcessingCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FinancialBackEndProcessingCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FinancialBackEndProcessingCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FireAndRescueActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FireAndRescueActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FireAndRescueActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FireStation -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FireStation">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FireStation"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FishingPort -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FishingPort">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FishingPort"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FitnessCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FitnessCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FitnessCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Flat -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Flat">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Flat"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Florist -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Florist">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Florist"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FoodCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FoodCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FoodCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FoodLaboratory -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FoodLaboratory">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FoodLaboratory"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FoodPacking -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FoodPacking">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FoodPacking"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ForeignSchool -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ForeignSchool">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ForeignSchool"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FormatConversion -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FormatConversion">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FormatConversion"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FuneralParlour -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FuneralParlour">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FuneralParlour"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FurnitureStore -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FurnitureStore">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FurnitureStore"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GasInstallation -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GasInstallation">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GasInstallation"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GasTakeoffStation -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GasTakeoffStation">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GasTakeoffStation"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GatheringsAtFairsAndExhibitions -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GatheringsAtFairsAndExhibitions">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GatheringsAtFairsAndExhibitions"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GeneralAdministrationSpace -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GeneralAdministrationSpace">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GeneralAdministrationSpace"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GeologyLaboratory -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GeologyLaboratory">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GeologyLaboratory"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Golf -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Golf">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Golf"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GolfCourse -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GolfCourse">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GolfCourse"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GoodClassBungalow -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GoodClassBungalow">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GoodClassBungalow"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GoodsOrientedShopping -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GoodsOrientedShopping">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GoodsOrientedShopping"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GroceryStore -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GroceryStore">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GroceryStore"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Guesthouse -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Guesthouse">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Guesthouse"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Gym -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Gym">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Gym"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HairCare -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HairCare">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HairCare"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HardwareStore -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HardwareStore">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HardwareStore"/>
     </owl:NamedIndividual>
     
 
@@ -14177,10 +15058,634 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HeavyVehicleCarPark -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HeavyVehicleCarPark">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HeavyVehicleCarPark"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HighTechManufacturing -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HighTechManufacturing">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HighTechManufacturing"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HomeForTheAged -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HomeForTheAged">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HomeForTheAged"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HomeForTheDisabled -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HomeForTheDisabled">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HomeForTheDisabled"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HomeGoodsStore -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HomeGoodsStore">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HomeGoodsStore"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HospitalVisitorsHostel -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HospitalVisitorsHostel">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HospitalVisitorsHostel"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Hotel -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Hotel">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Hotel"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelAncillaryOffice -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelAncillaryOffice">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelAncillaryOffice"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelBusinessCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelBusinessCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelBusinessCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelLibrary -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelLibrary">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelLibrary"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelProgramme"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelRecreationalFacility -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelRecreationalFacility">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelRecreationalFacility"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelRooms -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelRooms">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HotelRooms"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HouseholdActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HouseholdActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HouseholdActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HousekeepingRoom -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HousekeepingRoom">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HousekeepingRoom"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ImageAndAudioRestoration -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ImageAndAudioRestoration">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ImageAndAudioRestoration"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#IncinerationPlant -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#IncinerationPlant">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#IncinerationPlant"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#IndustrialCanteen -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#IndustrialCanteen">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#IndustrialCanteen"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#IndustrialTraining -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#IndustrialTraining">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#IndustrialTraining"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InpacientFacility -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InpacientFacility">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InpatientFacility"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InstituteOfTechnicalEducation -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InstituteOfTechnicalEducation">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InstituteOfTechnicalEducation"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InstitutionalLiving -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InstitutionalLiving">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InstitutionalLiving"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InterimProgramme -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InterimProgramme">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InterimProgramme"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InternetServiceProvider -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InternetServiceProvider">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#InternetServiceProvider"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#IrrigationWaterStorageAndDistributionActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#IrrigationWaterStorageAndDistributionActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#IrrigationWaterStorageAndDistributionActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#JewelryStore -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#JewelryStore">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#JewelryStore"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#JuniorCollege -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#JuniorCollege">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#JuniorCollege"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#KaraokeBar -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#KaraokeBar">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#KaraokeBar"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Kindergarten -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Kindergarten">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Kindergarten"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#KnittingMill -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#KnittingMill">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#KnittingMill"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LRTDepotOrMarchalingYard -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LRTDepotOrMarchalingYard">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LRTDepotOrMarshallingYard"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LaboratoryTesting -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LaboratoryTesting">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LaboratoryTesting"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandfillingOrDumping -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandfillingOrDumping">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandfillingOrDumping"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandingSite -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandingSite">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandingSite"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandscapedPlaza -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandscapedPlaza">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LandscapedPlaza"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Laundromat -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Laundromat">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Laundromat"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Laundry -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Laundry">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Laundry"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Library -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Library">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Library"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LightIndustry -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LightIndustry">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LightIndustry"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LinenAndLaundryRoom -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LinenAndLaundryRoom">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LinenAndLaundryRoom"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LiquorStore -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LiquorStore">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LiquorStore"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LocalAccessRoad -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LocalAccessRoad">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LocalAccessRoad"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LocationProduction -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LocationProduction">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#LocationProduction"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Locksmith -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Locksmith">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Locksmith"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Lodging -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Lodging">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Lodging"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Lounge -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Lounge">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Lounge"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MRTDepotOrMarshallingYard -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MRTDepotOrMarshallingYard">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MRTDepotOrMarshallingYard"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MajorArterialRoad -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MajorArterialRoad">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MajorArterialRoad"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MajorDrain -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MajorDrain">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MajorDrain"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Mall -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Mall">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Mall"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ManufacturingBackEndProcessingCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ManufacturingBackEndProcessingCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ManufacturingBackEndProcessingCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ManufacturingGeneral -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ManufacturingGeneral">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ManufacturingGeneral"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Marina -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Marina">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Marina"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Market -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Market">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Market"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaLibraryServices -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaLibraryServices">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaLibraryServices"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaMasteringAndReplication -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaMasteringAndReplication">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaMasteringAndReplication"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPostProductionAndDistribution -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPostProductionAndDistribution">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPostProductionAndDistribution"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPreProduction -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPreProduction">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaPreProduction"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaProduction -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaProduction">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MediaProduction"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MedicalAdministrationSpace -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MedicalAdministrationSpace">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MedicalAdministrationSpace"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MedicalStaffFacility -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MedicalStaffFacility">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MedicalStaffFacility"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MedicalSuite -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MedicalSuite">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MedicalSuite"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MeetingRoom -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MeetingRoom">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MeetingRoom"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MiniMart -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MiniMart">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MiniMart"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MotorVehicleRenting -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MotorVehicleRenting">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MotorVehicleRenting"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MotorVehicleTrading -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MotorVehicleTrading">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MotorVehicleTrading"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MovieRental -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MovieRental">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#MovieRental"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Museum -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Museum">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Museum"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NationalPark -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NationalPark">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NationalPark"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NaturalGasReceivingTerminal -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NaturalGasReceivingTerminal">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NaturalGasReceivingTerminal"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NaturalOpenSpace -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NaturalOpenSpace">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NaturalOpenSpace"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NeighbourhoodPark -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NeighbourhoodPark">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NeighbourhoodPark"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Nightclub -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Nightclub">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Nightclub"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NursingBedArea -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NursingBedArea">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NursingBedArea"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NursingHome -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NursingHome">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NursingHome"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Office -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Office">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Office"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OfficeActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OfficeActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OfficeActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OnlineDirectory -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OnlineDirectory">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OnlineDirectory"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OpenAirAgriculture -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OpenAirAgriculture">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OpenAirAgriculture"/>
     </owl:NamedIndividual>
     
 
@@ -14193,10 +15698,130 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OriginationPlayback -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OriginationPlayback">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OriginationPlayback"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OtherInstructionalActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OtherInstructionalActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OtherInstructionalActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OtherProgramme -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OtherProgramme">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OtherProgramme"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OutdoorPedestrianMall -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OutdoorPedestrianMall">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OutdoorPedestrianMall"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OutpatientFacility -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OutpatientFacility">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#OutpatientFacility"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Park -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Park">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Park"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ParkConnector -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ParkConnector">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ParkConnector"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PassengerAssembly -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PassengerAssembly">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PassengerAssembly"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PedestrianMovement -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PedestrianMovement">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PedestrianMovement"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PerformingArtsCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PerformingArtsCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PerformingArtsCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PersonalServiceTrade -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PersonalServiceTrade">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PersonalServiceTrade"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PetStore -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PetStore">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PetStore"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PetrolStation -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PetrolStation">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PetrolStation"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PharmaceuticalLaboratory -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PharmaceuticalLaboratory">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PharmaceuticalLaboratory"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Pharmacy -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Pharmacy">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Pharmacy"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Physiotherapist -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Physiotherapist">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Physiotherapist"/>
     </owl:NamedIndividual>
     
 
@@ -14209,10 +15834,210 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PoliceStation -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PoliceStation">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PoliceStation"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Polytechnic -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Polytechnic">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Polytechnic"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Pond -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Pond">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Pond"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PortFacility -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PortFacility">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PortFacility"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PortOrAirport -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PortOrAirport">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PortOrAirport"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PortTerminal -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PortTerminal">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PortTerminal"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PostOffice -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PostOffice">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PostOffice"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PowerStation -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PowerStation">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PowerStation"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PowerTransmissionLinesOrControlActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PowerTransmissionLinesOrControlActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PowerTransmissionLinesOrControlActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrayingArea -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrayingArea">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrayingArea"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PriestRoom -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PriestRoom">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PriestRoom"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrimaryAccessRoad -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrimaryAccessRoad">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrimaryAccessRoad"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrimaryGoodsStorageOrHandlingActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrimaryGoodsStorageOrHandlingActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrimarilyGoodsStorageOrHandlingActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrimaryPlantOrFactoryActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrimaryPlantOrFactoryActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrimarilyPlantOrFactoryActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrimarySchool -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrimarySchool">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrimarySchool"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrintMediaSortingAndPackaging -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrintMediaSortingAndPackaging">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrintMediaSortingAndPackaging"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrintingOrPublishing -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrintingOrPublishing">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrintingOrPublishing"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrintingPress -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrintingPress">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrintingPress"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Prison -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Prison">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Prison"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ProShop -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ProShop">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ProShop"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ProductDesignOrDevelopment -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ProductDesignOrDevelopment">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ProductDesignOrDevelopment"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Production -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Production">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Production"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ProgrammeManagement -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ProgrammeManagement">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ProgrammeManagement"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PromenadingAndOtherActivitiesInParks -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PromenadingAndOtherActivitiesInParks">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PromenadingAndOtherActivitiesInParks"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrototypeProduction -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrototypeProduction">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PrototypeProduction"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PublicPromenade -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PublicPromenade">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PublicPromenade"/>
     </owl:NamedIndividual>
     
 
@@ -14225,10 +16050,74 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RapidTransitStation -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RapidTransitStation">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RapidTransitStation"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RecreationClub -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RecreationClub">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RecreationClub"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RegionalMarketingCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RegionalMarketingCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RegionalMarketingCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RegionalPark -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RegionalPark">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RegionalPark"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ReligiousClassroom -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ReligiousClassroom">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ReligiousClassroom"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RepairAndServicing -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RepairAndServicing">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RepairAndServicing"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResearchAndDevelopment -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResearchAndDevelopment">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ResearchAndDevelopment"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ReserveSite -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ReserveSite">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ReserveSite"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Reservoir -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Reservoir">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Reservoir"/>
     </owl:NamedIndividual>
     
 
@@ -14257,10 +16146,282 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Resort -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Resort">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Resort"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Restaurant -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Restaurant">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Restaurant"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Restaurant-typeActivity -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Restaurant-typeActivity">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Restaurant-typeActivity"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RetirementHousing -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RetirementHousing">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#RetirementHousing"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#River -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#River">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#River"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Road -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Road">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Road"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Scheduling -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Scheduling">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Scheduling"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#School -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#School">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#School"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SchoolOrLibraryActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SchoolOrLibraryActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SchoolOrLibraryActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ScienceCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ScienceCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ScienceCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Scripting -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Scripting">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Scripting"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SecondarySchool -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SecondarySchool">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SecondarySchool"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SeismicDataAnalysisCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SeismicDataAnalysisCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SeismicDataAnalysisCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Semi-DetachedHouse -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Semi-DetachedHouse">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Semi-DetachedHouse"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Semi-Expressway -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Semi-Expressway">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Semi-Expressway"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServiceOrientedShopping -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServiceOrientedShopping">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServiceOrientedShopping"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServiceReservoir -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServiceReservoir">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServiceReservoir"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServiceRoadOrBacklane -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServiceRoadOrBacklane">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServiceRoadOrBacklane"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartment -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartment">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartment"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartmentMixedUseZone -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartmentMixedUseZone">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartmentMixedUseZone"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartmentResidentialZone -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartmentResidentialZone">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ServicedApartmentResidentialZone"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SewagePumpingStation -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SewagePumpingStation">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SewagePumpingStation"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SewerTreatmentAndProcessing -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SewerTreatmentAndProcessing">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SewerTreatmentAndProcessing"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShoeStore -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShoeStore">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ShoeStore"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Shop -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Shop">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Shop"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Shopping -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Shopping">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Shopping"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Showroom -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Showroom">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Showroom"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SickRoom -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SickRoom">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SickRoom"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SoftwareDevelopment -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SoftwareDevelopment">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SoftwareDevelopment"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SolidWasteCollectionAndStorage -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SolidWasteCollectionAndStorage">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SolidWasteCollectionAndStorage"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SolidWasteManagementActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SolidWasteManagementActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SolidWasteManagementActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Spa -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Spa">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Spa"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialEducationAmbulatorySchool -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialEducationAmbulatorySchool">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialEducationAmbulatorySchool"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialEducationNonAmbulatorySchool -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialEducationNonAmbulatorySchool">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialEducationNonAmbulatorySchool"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialProgramme -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialProgramme">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpecialProgramme"/>
     </owl:NamedIndividual>
     
 
@@ -14273,10 +16434,306 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpectatorSportsAssembly -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpectatorSportsAssembly">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SpectatorSportsAssembly"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsAndRecreation -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsAndRecreation">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsAndRecreation"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsAndRecreationFacility -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsAndRecreationFacility">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsAndRecreationFacility"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsComplex -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsComplex">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SportsComplex"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Stadium -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Stadium">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Stadium"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StaffCanteen -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StaffCanteen">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StaffCanteen"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StaffChangingRoom -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StaffChangingRoom">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StaffChangingRoom"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StandardConversion -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StandardConversion">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StandardConversion"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StorageOfChemicalOils -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StorageOfChemicalOils">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StorageOfChemicalsOils"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Store"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Strata-LandedHousing -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Strata-LandedHousing">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Strata-LandedHousing"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StudentHostel -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StudentHostel">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StudentHostel"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StudentRunBusiness -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StudentRunBusiness">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StudentRunBusiness"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StudioProduction -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StudioProduction">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StudioProduction"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SupercomputingCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SupercomputingCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SupercomputingCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Supermarket -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Supermarket">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Supermarket"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SwampArea -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SwampArea">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SwampArea"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TVNetworkProgramming -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TVNetworkProgramming">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TVNetworkProgramming"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TapeDuplication -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TapeDuplication">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TapeDuplication"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Telecommunications -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Telecommunications">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Telecommunications"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TelevisionOrFilmingStudioComplex -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TelevisionOrFilmingStudioComplex">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TelevisionOrFilmingStudioComplex"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Tennis -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Tennis">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Tennis"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TerraceHouse -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TerraceHouse">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TerraceHouse"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TerraceType1 -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TerraceType1">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TerraceType1"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TerraceType2 -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TerraceType2">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TerraceType2"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TestLaboratory -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TestLaboratory">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TestLaboratory"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TextLayout -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TextLayout">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TextLayout"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TextileLaboratory -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TextileLaboratory">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TextileLaboratory"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Townhouse -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Townhouse">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Townhouse"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TradeMission -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TradeMission">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TradeMission"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrailerPark -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrailerPark">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrailerPark"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrainingInstitute -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrainingInstitute">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrainingInstitute"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrainingOrInstructionalActivitiesOutsideClassrooms -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrainingOrInstructionalActivitiesOutsideClassrooms">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrainingOrInstructionalActivitiesOutsideClassrooms"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrainsOrOtherRailMovement -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrainsOrOtherRailMovement">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrainsOrOtherRailMovement"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransientLiving -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransientLiving">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransientLiving"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransmissionServices -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransmissionServices">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransmissionServices"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransmittingStation -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransmittingStation">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransmittingStation"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransportDepot -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransportDepot">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TransportDepot"/>
     </owl:NamedIndividual>
     
 
@@ -14289,10 +16746,154 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TravelAgency -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TravelAgency">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TravelAgency"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TreatmentFacility -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TreatmentFacility">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TreatmentFacility"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#UndeterminedProgramme -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#UndeterminedProgramme">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#UndeterminedProgramme"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#University -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#University">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#University"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Utility -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Utility">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Utility"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ValueAddedNetwork -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ValueAddedNetwork">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ValueAddedNetwork"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VehicularMovement -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VehicularMovement">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VehicularMovement"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VeterinaryCare -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VeterinaryCare">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VeterinaryCare"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VideoEditing -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VideoEditing">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VideoEditing"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VoiceCallServices -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VoiceCallServices">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VoiceCallServices"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WasteProcessingOrRecycling -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WasteProcessingOrRecycling">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WasteProcessingOrRecycling"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Water-skiing -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Water-skiing">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Water-skiing"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterPumpHouse -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterPumpHouse">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterPumpHouse"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterPurificationAndFiltrationActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterPurificationAndFiltrationActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterPurificationAndFiltrationActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterReclamationPlant -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterReclamationPlant">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterReclamationPlant"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterSportsAndRelatedLeisureActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterSportsAndRelatedLeisureActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterSportsAndRelatedLeisureActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterSportsCentre -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterSportsCentre">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterSportsCentre"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterStorage -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterStorage">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterStorage"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterTreatmentPlant -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterTreatmentPlant">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterTreatmentPlant"/>
     </owl:NamedIndividual>
     
 
@@ -14305,10 +16906,354 @@
     
 
 
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WebHosting -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WebHosting">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WebHosting"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WebSiteBuilding -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WebSiteBuilding">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WebSiteBuilding"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WellfareHome -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WellfareHome">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WelfareHome"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#White -->
 
     <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#White">
         <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#White"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WoodedArea -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WoodedArea">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WoodedArea"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WorkersDormitory -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WorkersDormitory">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WorkersDormitory"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WorkersQuarters -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WorkersQuarters">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WorkersQuarters"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ZoologicalGarden -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ZoologicalGarden">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ZoologicalGarden"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AircraftTakeoff,Landing,Taxing,Parking -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AircraftTakeoff,Landing,Taxing,Parking">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#AircraftTakeoff,Landing,Taxiing,Parking"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BoatMooring,Docking,Servicing -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BoatMooring,Docking,Servicing">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#BoatMooring,Docking,Servicing"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Boating,Sailing,Etc -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Boating,Sailing,Etc">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Boating,Sailing,Etc"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Canoeing,Kayaking,Etc -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Canoeing,Kayaking,Etc">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Canoeing,Kayaking,Etc"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Drive-in,DriveThrough,Stop-n-go,Etc -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Drive-in,DriveThrough,Stop-n-go,Etc">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Drive-in,DriveThrough,Stop-n-go,Etc"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Emergency,DisasterResponseActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Emergency,DisasterResponseActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Emergency,DisasterResponseActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EmergencyResponse,Public-safetyActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EmergencyResponse,Public-safetyActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#EmergencyResponse,Public-safetyActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Farming,Tilling,Plowing,Harvesting,RelatedActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Farming,Tilling,Plowing,Harvesting,RelatedActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Farming,Tilling,Plowing,Harvesting,RelatedActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Fishing,Angling,Etc -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Fishing,Angling,Etc">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Fishing,Angling,Etc"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FloodControl,Dams,OtherLargerIrrigationActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FloodControl,Dams,OtherLargerIrrigationActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#FloodControl,Dams,OtherLargeIrrigationActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Flying,Air-relatedSports -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Flying,Air-relatedSports">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Flying,Air-relatedSports"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GatheringsAtMuseums,Aquariums,ZoologicalParks,Etc -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GatheringsAtMuseums,Aquariums,ZoologicalParks,Etc">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#GatheringsAtMuseums,Aquariums,ZoologicalParks,Etc"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HealthCare,Medical,TreatmentActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HealthCare,Medical,TreatmentActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HealthCare,Medical,TreatmentActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HistoricalOrCulturalCelebrations,Parades,Etc -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HistoricalOrCulturalCelebrations,Parades,Etc">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#HistoricalOrCulturalCelebrations,Parades,Etc"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Hockey,IceSkating,Etc -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Hockey,IceSkating,Etc">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Hockey,IceSkating,Etc"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Interment,Cremation,GraveDiggingActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Interment,Cremation,GraveDiggingActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Interment,Cremation,GraveDiggingActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#M&amp;EServices -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#M&amp;EServices">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#M&amp;EServices"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Movies,Concerts,EntertainmentShows -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Movies,Concerts,EntertainmentShows">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Movies,Concerts,EntertainmentShows"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NationalGasOrFuelsControl,Monitor,DistributionActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NationalGasOrFuelsControl,Monitor,DistributionActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#NaturalGasOrFuelsControl,Monitor,DistributionActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Plant,Factory,HeavyGoodsStorageOrHandlingActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Plant,Factory,HeavyGoodsStorageOrHandlingActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Plant,Factory,HeavyGoodsStorageOrHandlingActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Police,Security,ProtectionActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Police,Security,ProtectionActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Police,Security,ProtectionActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Port,Ship-building,RelatedActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Port,Ship-building,RelatedActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Port,Ship-building,RelatedActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PowerGeneration,Control,Monitor,DistributionActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PowerGeneration,Control,Monitor,DistributionActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#PowerGeneration,Control,Monitor,DistributionActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Running,Jogging,Bicycling,Aerobics,Exercising,Etc -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Running,Jogging,Bicycling,Aerobics,Exercising,Etc">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Running,Jogging,Bicycling,Aerobics,Exercising,Etc"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Sailing,Boating,OtherPort,MarineAndWater-basedActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Sailing,Boating,OtherPort,MarineAndWater-basedActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Sailing,Boating,OtherPort,MarineAndWater-basedActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ScubaDiving,Snorkeling,Etc -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ScubaDiving,Snorkeling,Etc">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#ScubaDiving,Snorkeling,Etc"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SewageStoring,Pumping,Piping -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SewageStoring,Pumping,Piping">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#SewageStoring,Pumping,Piping"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Sewer-relatedControl,Monitor,DistributionActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Sewer-relatedControl,Monitor,DistributionActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Sewer-relatedControl,Monitor,DistributionActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Social,Cultural,ReligiousAssembly -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Social,Cultural,ReligiousAssembly">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Social,Cultural,ReligiousAssembly"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StorageOfChemical,Nuclear,OtherMaterials -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StorageOfChemical,Nuclear,OtherMaterials">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StorageOfChemical,Nuclear,OtherMaterials"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StorageOfNaturalGas,Fuels,Etc -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StorageOfNaturalGas,Fuels,Etc">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#StorageOfNaturalGas,Fuels,Etc"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Swimming,Diving,Etc -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Swimming,Diving,Etc">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#Swimming,Diving,Etc"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TelecommunicationsControl,Monitor,DistributionActivities -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TelecommunicationsControl,Monitor,DistributionActivities">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TelecommunicationsControl,Monitor,DistributionActivities"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrackAndField,TeamSports,OtherSports -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrackAndField,TeamSports,OtherSports">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#TrackAndField,TeamSports,OtherSports"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VehicularParking,Storage,Etc -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VehicularParking,Storage,Etc">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#VehicularParking,Storage,Etc"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterStoring,Pumping,Piping -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterStoring,Pumping,Piping">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#WaterStoring,Pumping,Piping"/>
     </owl:NamedIndividual>
     <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">HotelLibrary SubClassOf HotelProgramme and (allowedInUse only
@@ -14321,46 +17266,22 @@
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DataFarmOrCentre SubClassOf Ebusiness and (allowedInUse only
-(MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PrototypeProduction SubClassOf ResearchAndDevelopment and (allowedInUse only
-(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BiotechLaboratory SubClassOf TestLaboratory and (allowedInUse only
-(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (maybeAllowedInUse only
+(CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">SupercomputingCentre SubClassOf DataProcessing and (allowedInUse only
+(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">TVNetworkProgramming SubClassOf CoreMedia and (allowedInUse only
 (MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">SupercomputingCentre SubClassOf DataProcessing and (allowedInUse only
-(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">SupercomputingCentre SubClassOf DataProcessing and (allowedInUse only
-(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PrototypeProduction SubClassOf ResearchAndDevelopment and (allowedInUse only
-(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
@@ -14369,17 +17290,13 @@
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">TVNetworkProgramming SubClassOf CoreMedia and (allowedInUse only
-(MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">SupercomputingCentre SubClassOf DataProcessing and (allowedInUse only
 (MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (maybeAllowedInUse only
+(CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
@@ -14388,18 +17305,8 @@
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (maybeAllowedInUse only
-(CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BiotechLaboratory SubClassOf TestLaboratory and (allowedInUse only
 (MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (maybeAllowedInUse only
-(CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
@@ -14413,8 +17320,46 @@
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">SupercomputingCentre SubClassOf DataProcessing and (allowedInUse only
+(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PrototypeProduction SubClassOf ResearchAndDevelopment and (allowedInUse only
+(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PrototypeProduction SubClassOf ResearchAndDevelopment and (allowedInUse only
+(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DataFarmOrCentre SubClassOf Ebusiness and (allowedInUse only
+(MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DrivingRange SubClassOf Golf and (allowedInUse only GolfUse)</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Supermarket SubClassOf Store or (maybeAllowedInUse only
 (CommercialUseCommercialZone or CommercialUseHealthAndMedicalCareZone or CommercialUseHotelZone or CommercialUseWhiteZone or WhiteUseBusiness1White or WhiteUseBusiness2White or WhiteUseBusinessPark))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">BiotechLaboratory SubClassOf TestLaboratory and (allowedInUse only
+(MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">TVNetworkProgramming SubClassOf CoreMedia and (allowedInUse only
+(MainUseBusiness1 or MainUseBusiness1White or MainUseBusiness2 or MainUseBusiness2White or MainUseBusinessPark or MainUseBusinessParkWhite))</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     <rdf:Description>
