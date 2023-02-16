@@ -162,7 +162,7 @@ public class CEAAgent extends JPSAgent {
                         String building = checkBuildingInitialised(uri, ceaRoute);
                         if(building.equals("")){
                             // Check if DABGEO:Building IRI has already been created in another endpoint
-                            building = checkBuildingInitialised(uri, usageRoute);
+                            building = checkBuildingInitialised(uri, geometryRoute);
                             building = initialiseBuilding(uri, building, ceaRoute);
                         }
                         if(!checkDataInitialised(uri, building, tsIris, scalarIris, ceaRoute)) {
@@ -174,7 +174,8 @@ public class CEAAgent extends JPSAgent {
                         }
                         addDataToTimeSeries(timeSeries.get(i), times, tsIris);
                     }
-                } else if (requestUrl.contains(URI_ACTION)) {
+                }
+                else if (requestUrl.contains(URI_ACTION)) {
                     ArrayList<CEAInputData> testData = new ArrayList<>();
                     ArrayList<String> uriStringArray = new ArrayList<>();
                     List<String> uniqueSurrounding = new ArrayList<>();
@@ -220,7 +221,6 @@ public class CEAAgent extends JPSAgent {
                     runCEA(testData, uriStringArray, 0, crs);
                 }
             } else if (requestUrl.contains(URI_QUERY)) {
-                String route = new String();
 
                 for (int i = 0; i < uriArray.length(); i++) {
                     String uri = uriArray.getString(i);
