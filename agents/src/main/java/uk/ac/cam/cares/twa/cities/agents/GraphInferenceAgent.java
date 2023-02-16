@@ -38,57 +38,6 @@ import uk.ac.cam.cares.twa.cities.tasks.UninitialisedDataQueueTask;
 public class GraphInferenceAgent extends InferenceAgent {
   public static final String URI_ACTION = "/inference/graph";
 
-  private static final ExecutorService taskExecutor = Executors.newFixedThreadPool(5);
-
-  @Override //@todo refactor to remove repetition in OntologyInferenceAgent
-  public JSONObject processRequestParameters(JSONObject requestParams) {
-    JSONObject responseParams = new JSONObject();
-    if (validateInput(requestParams)) {
-      try {
-        // setup route for AccessAgent and check if targetIri has the trailing /
-        route = ResourceBundle.getBundle("config").getString("uri.route");
-        String targetIRI = requestParams.getString(KEY_TARGET_IRI).endsWith("/")
-                ? requestParams.getString(KEY_TARGET_IRI) :  requestParams.getString(KEY_TARGET_IRI).concat("/");
-
-        //(1) Choose task based on algorithm IRI
-        UninitialisedDataQueueTask task = chooseTask(IRI.create(requestParams.getString(KEY_ALGO_IRI)),
-            IRI.create(targetIRI));
-        String taskIRI = task.getTaskIri().toString();
-        //(2) Retrieve data from target IRI
-        JSONArray targetData = getAllTargetData(IRI.create(targetIRI));
-        //(3) Pass target data (2) to the task (1) and run the task
-        Map<String,JSONArray> taskData = new HashMap<>();
-        taskData.put(taskIRI, targetData);
-        if (requestParams.keySet().contains(KEY_SRC_IRI)) {
-          JSONArray srcIriArr = new JSONArray().put(requestParams.get(KEY_SRC_IRI));
-          taskData.put(KEY_SRC_IRI, srcIriArr);
-        }
-        if (requestParams.keySet().contains(KEY_DST_IRI)) {
-          JSONArray srcIriArr = new JSONArray().put(requestParams.get(KEY_DST_IRI));
-          taskData.put(KEY_DST_IRI, srcIriArr);
-        }
-        dataQueue.put(taskData);
-        taskExecutor.execute(task);
-        //(4) add task information to the response
-        if (task instanceof UninitialisedDataAndResultQueueTask) {
-          while (resultQueue.isEmpty()) {
-            if (!task.isRunning()) {
-              return responseParams.put(taskIRI, "failed");
-            }
-          }
-          responseParams.put(taskIRI, resultQueue.take().get(taskIRI));
-        } else {
-          responseParams.put(taskIRI, "started");
-        }
-
-      } catch (Exception e) {
-        throw new JPSRuntimeException(e);
-      }
-    }
-
-    return responseParams;
-  }
-
   @Override
   public boolean validateInput(JSONObject requestParams) throws BadRequestException {
     boolean error = true;
@@ -125,7 +74,27 @@ public class GraphInferenceAgent extends InferenceAgent {
     return true;
   }
 
+  @Override
+  protected Map<String,JSONArray> prepareTaskData(String targetIRI, String taskIRI,
+      JSONObject requestParams)
+      throws ParseException {
+      Map<String,JSONArray> taskData = new HashMap<>();
 
+      // Retrieve data from KG based on target IRI
+      JSONArray targetData = getAllTargetData(IRI.create(targetIRI));
+
+      taskData.put(taskIRI, targetData);
+      if (requestParams.keySet().contains(KEY_SRC_IRI)) {
+        JSONArray srcIriArr = new JSONArray().put(requestParams.get(KEY_SRC_IRI));
+        taskData.put(KEY_SRC_IRI, srcIriArr);
+      }
+      if (requestParams.keySet().contains(KEY_DST_IRI)) {
+        JSONArray srcIriArr = new JSONArray().put(requestParams.get(KEY_DST_IRI));
+        taskData.put(KEY_DST_IRI, srcIriArr);
+      }
+
+      return taskData;
+  }
 
   private JSONArray getAllTargetData(IRI sparqlEndpoint) throws ParseException {
     //retrieve data and replace empty string with it

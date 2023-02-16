@@ -1,13 +1,19 @@
 package uk.ac.cam.cares.twa.cities.agents;
 
 import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.semanticweb.owlapi.model.IRI;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
+import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.tasks.CardinalityRestrictionCheckingTask;
 import uk.ac.cam.cares.twa.cities.tasks.ClassDisjointnessCheckingTask;
@@ -64,11 +70,63 @@ public abstract class InferenceAgent extends JPSAgent {
       {IRI.create(ONINF_SCHEMA + TASK_CDC), new ClassDisjointnessCheckingTask()},
       {IRI.create(ONINF_SCHEMA + TASK_PC), new PropertyCheckingTask()},
       {IRI.create(ONINF_SCHEMA + TASK_VRC), new ValueRestrictionCheckingTask()},
-      {IRI.create(ONINF_SCHEMA + TASK_VRC), new CardinalityRestrictionCheckingTask()}
+      {IRI.create(ONINF_SCHEMA + TASK_CRC), new CardinalityRestrictionCheckingTask()}
   }).collect(Collectors.toMap(data -> (IRI) data[0], data -> (UninitialisedDataQueueTask) data[1]));
   protected static LinkedBlockingDeque<Map<String, JSONArray>> dataQueue = new LinkedBlockingDeque<>();
   protected static LinkedBlockingDeque<Map<String, JSONArray>> resultQueue = new LinkedBlockingDeque<>();
+  private static final ExecutorService taskExecutor = Executors.newFixedThreadPool(5);
 
+
+  public JSONObject processRequestParameters(JSONObject requestParams) {
+    JSONObject responseParams = new JSONObject();
+    if (validateInput(requestParams)) {
+      try {
+        // setup route for AccessAgent and check if targetIri has the trailing /
+        route = ResourceBundle.getBundle("config").getString("uri.route");
+        String targetIRI = requestParams.getString(KEY_TARGET_IRI).endsWith("/")
+            ? requestParams.getString(KEY_TARGET_IRI) :  requestParams.getString(KEY_TARGET_IRI).concat("/");
+
+        //(1) Choose task based on algorithm IRI
+        UninitialisedDataQueueTask task = chooseTask(IRI.create(requestParams.getString(KEY_ALGO_IRI)),
+            IRI.create(targetIRI));
+        String taskIRI = task.getTaskIri().toString();
+
+        //(2) Add data to the queue and execute task
+        dataQueue.put(prepareTaskData(targetIRI, taskIRI, requestParams));
+        taskExecutor.execute(task);
+
+        //(3) add task information to the response
+        if (task instanceof UninitialisedDataAndResultQueueTask) {
+          while (resultQueue.isEmpty()) {
+            if (!task.isRunning()) {
+              return responseParams.put(taskIRI, "failed");
+            }
+          }
+          responseParams.put(taskIRI, resultQueue.take().get(taskIRI));
+        } else {
+          responseParams.put(taskIRI, "started");
+        }
+
+      } catch (Exception e) {
+        throw new JPSRuntimeException(e);
+      }
+    }
+
+    return responseParams;
+  }
+
+  /**
+   * Stub method to override in subclasses
+   * @param targetIRI
+   * @param taskIRI
+   * @param requestParams
+   * @return
+   * @throws ParseException
+   */
+  protected Map<String,JSONArray> prepareTaskData(String targetIRI, String taskIRI, JSONObject requestParams)
+      throws ParseException {
+    return null;
+  }
 
   protected UninitialisedDataQueueTask chooseTask(IRI algorithmIRI, IRI sparqlEndpoint) {
 

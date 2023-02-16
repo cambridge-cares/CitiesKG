@@ -34,46 +34,7 @@ public class OntologyInferenceAgent extends InferenceAgent {
   public static final String URI_ACTION = "/inference/ontology";
   private static final ExecutorService taskExecutor = Executors.newFixedThreadPool(5);
 
-  @Override //@todo refactor to remove repetition in GraphInferenceAgent
-  public JSONObject processRequestParameters(JSONObject requestParams) {
-    JSONObject responseParams = new JSONObject();
-    if (validateInput(requestParams)) {
-      try {
-        // setup route for AccessAgent and check if targetIri has the trailing /
-        route = ResourceBundle.getBundle("config").getString("uri.route");
-        String targetIRI = requestParams.getString(KEY_TARGET_IRI).endsWith("/")
-            ? requestParams.getString(KEY_TARGET_IRI) :  requestParams.getString(KEY_TARGET_IRI).concat("/");
-        String tBoxGraph = requestParams.getString(KEY_ONTO_IRI).replace(targetIRI, "");
 
-        //(1) Choose task based on algorithm IRI
-        UninitialisedDataQueueTask task = chooseTask(IRI.create(requestParams.getString(KEY_ALGO_IRI)),
-            IRI.create(targetIRI));
-
-        String taskIRI = task.getTaskIri().toString();
-
-        //(2) Add data to the queue and execute task
-        dataQueue.put(prepareTaskData(targetIRI, tBoxGraph, taskIRI, requestParams));
-        taskExecutor.execute(task);
-
-        //(3) add task information to the response
-        if (task instanceof UninitialisedDataAndResultQueueTask) {
-          while (resultQueue.isEmpty()) {
-            if (!task.isRunning()) {
-              return responseParams.put(taskIRI, "failed");
-            }
-          }
-          responseParams.put(taskIRI, resultQueue.take().get(taskIRI));
-        } else {
-          responseParams.put(taskIRI, "started");
-        }
-
-      } catch (Exception e) {
-        throw new JPSRuntimeException(e);
-      }
-    }
-
-    return responseParams;
-  }
 
   @Override
   public boolean validateInput(JSONObject requestParams) throws BadRequestException {
@@ -105,11 +66,13 @@ public class OntologyInferenceAgent extends InferenceAgent {
     return true;
   }
 
-  private Map<String,JSONArray> prepareTaskData(String targetIRI, String tBoxGraph, String taskIRI, JSONObject requestParams)
+  @Override
+  protected Map<String,JSONArray> prepareTaskData(String targetIRI, String taskIRI, JSONObject requestParams)
       throws ParseException {
     Map<String,JSONArray> taskData = new HashMap<>();
 
     //(1) Retrieve data from KG based on target IRI
+    String tBoxGraph = requestParams.getString(KEY_ONTO_IRI).replace(targetIRI, "");
     JSONArray targetData = getAllTargetData(IRI.create(targetIRI), tBoxGraph);
     //add aBox data if needed
     if (requestParams.keySet().contains(KEY_ASRT_IRI)) {
