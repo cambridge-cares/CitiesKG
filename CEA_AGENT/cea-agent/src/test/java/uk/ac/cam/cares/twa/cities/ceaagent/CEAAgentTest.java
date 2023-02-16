@@ -257,7 +257,7 @@ public class CEAAgentTest {
     @Test
     public void testCEAAgentMethods() {
         CEAAgent agent = new CEAAgent();
-        assertEquals(66, agent.getClass().getDeclaredMethods().length);
+        assertEquals(65, agent.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -1009,7 +1009,6 @@ public class CEAAgentTest {
         String case6 = "HeightGenAttr";
         String case7 = "DatabasesrsCRS";
         String case8 = "CRS";
-        String case9 = "BuildingUsage";
         String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
         Method getQuery = agent.getClass().getDeclaredMethod("getQuery", String.class, String.class);
@@ -1033,8 +1032,6 @@ public class CEAAgentTest {
         assertTrue(q7.toString().contains("ocgml:srid"));
         Query q8 = (Query) getQuery.invoke(agent, uri, case8);
         assertTrue(q8.toString().contains("srid"));
-        Query q9 = (Query) getQuery.invoke(agent, uri, case9);
-        assertTrue(q9.toString().contains("hasPropertyUsage"));
     }
 
     @Test
@@ -2030,22 +2027,6 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testGetBuildingUsageQuery() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
-    {
-        CEAAgent agent = new CEAAgent();
-        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
-
-        Method getBuildingUsage = agent.getClass().getDeclaredMethod("getBuildingUsageQuery", String.class);
-        assertNotNull(getBuildingUsage);
-        getBuildingUsage.setAccessible(true);
-
-        // Ensure query contains correct predicate and object
-        Query q = (Query) getBuildingUsage.invoke(agent, uri);
-        assertTrue(q.toString().contains("hasOntoCityGMLRepresentation"));
-        assertTrue(q.toString().contains("BuildingUsage"));
-    }
-
-    @Test
     public void testToCEAConvention() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
     {
         CEAAgent agent = new CEAAgent();
@@ -2128,18 +2109,19 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testGetUsageShareQuery() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void testGetBuildingUsagesQuery() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = spy(new CEAAgent());
         String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
-        Method getUsageShareQuery = agent.getClass().getDeclaredMethod("getUsageShareQuery", String.class);
-        assertNotNull(getUsageShareQuery);
-        getUsageShareQuery.setAccessible(true);
+        Method getBuildingUsagesQuery = agent.getClass().getDeclaredMethod("getBuildingUsagesQuery", String.class);
+        assertNotNull(getBuildingUsagesQuery);
+        getBuildingUsagesQuery.setAccessible(true);
 
-        Query q = (Query) getUsageShareQuery.invoke(agent, uri);
+        Query q = (Query) getBuildingUsagesQuery.invoke(agent, uri);
 
         assertTrue(q.toString().contains("hasUsageShare"));
         assertTrue(q.toString().contains("hasPropertyUsage"));
+        assertTrue(q.toString().contains("OPTIONAL"));
     }
 
     @Test
@@ -2156,7 +2138,7 @@ public class CEAAgentTest {
 
         try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = mockStatic(AccessAgentCaller.class)) {
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
-                    .thenReturn(emptyArray).thenReturn(usageArray);
+                    .thenReturn(usageArray);
 
             Map<String, Double> result = (Map<String, Double>) getBuildingUsages.invoke(agent, uri, "");
             assertEquals(result.size(), 1);
