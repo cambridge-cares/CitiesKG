@@ -72,7 +72,7 @@ public abstract class InferenceAgent extends JPSAgent {
   private static final ExecutorService taskExecutor = Executors.newFixedThreadPool(5);
   protected static LinkedBlockingDeque<Map<String, JSONArray>> dataQueue = new LinkedBlockingDeque<>();
   protected static LinkedBlockingDeque<Map<String, JSONArray>> resultQueue = new LinkedBlockingDeque<>();
-  protected final Map<IRI, UninitialisedDataQueueTask> TASKS = Stream.of(new Object[][]{
+  protected static Map<IRI, UninitialisedDataQueueTask> TASKS = Stream.of(new Object[][]{
       {IRI.create(ONINF_SCHEMA + TASK_PR), new PageRankTask()},
       {IRI.create(ONINF_SCHEMA + TASK_EB), new EdgeBetweennessTask()},
       {IRI.create(ONINF_SCHEMA + TASK_USP), new UnweightedShortestPathTask()},
@@ -102,6 +102,12 @@ public abstract class InferenceAgent extends JPSAgent {
               IRI.create(requestParams.getString(KEY_TARGET_IRI));
               IRI.create(requestParams.getString(KEY_ALGO_IRI));
               IRI.create(requestParams.getString(KEY_ONTO_IRI));
+              if (keys.contains(KEY_SRC_IRI)) {
+                IRI.create(requestParams.getString(KEY_SRC_IRI));
+              }
+              if (keys.contains(KEY_DST_IRI)) {
+                IRI.create(requestParams.getString(KEY_DST_IRI));
+              }
               error = false;
             }
           } catch (Exception e) {
@@ -229,7 +235,8 @@ public abstract class InferenceAgent extends JPSAgent {
   protected SelectBuilder getSparqlBuilder(IRI sparqlEndpoint, String tBoxGraph)
       throws ParseException {
     SelectBuilder sb = new SelectBuilder();
-    sb.setBase(sparqlEndpoint.toString()).from(tBoxGraph)
+    sb.setBase(sparqlEndpoint.toString())
+        .from(tBoxGraph)
         .addVar("?s").addVar("?p").addVar("?o")
         .addWhere("?s", "?p", "?o")
         .addFilter("?p != " + IRI_ONDEB_AX)
@@ -238,9 +245,7 @@ public abstract class InferenceAgent extends JPSAgent {
     return sb;
   }
 
-  protected JSONArray getAllTargetData(IRI sparqlEndpoint, String tBoxGraph) throws ParseException{
-    return null;
-  }
+  protected abstract JSONArray getAllTargetData(IRI sparqlEndpoint, String tBoxGraph) throws ParseException;
 
   protected void getAllTargetData(IRI sparqlEndpoint, String aBoxGraph, JSONArray targetData) {
     SelectBuilder sb = new SelectBuilder();

@@ -1,5 +1,11 @@
 package uk.ac.cam.cares.twa.cities.agents;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import org.json.JSONArray;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
@@ -8,40 +14,35 @@ import org.mockito.Mockito;
 import org.semanticweb.owlapi.model.IRI;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-class GraphInferenceAgentTest {
+class OntologyInferenceAgentTest {
 
     @Test
-    public void testNewGraphInferenceAgent() {
-        GraphInferenceAgent agent = new GraphInferenceAgent();
+    public void testNewOntologyInferenceAgent() {
+        OntologyInferenceAgent agent = new OntologyInferenceAgent();
         assertNotNull(agent);
     }
 
     @Test
-    public void testNewGraphInferenceAgentFields() {
-        GraphInferenceAgent agent = new GraphInferenceAgent();
+    public void testNewOntologyInferenceAgentFields() {
+        OntologyInferenceAgent agent = new OntologyInferenceAgent();
         assertEquals(1, agent.getClass().getDeclaredFields().length);
 
         try {
-            assertEquals("/inference/graph", agent.getClass().getDeclaredField("URI_ACTION").get(agent));
+            assertEquals("/inference/ontology", agent.getClass().getDeclaredField("URI_ACTION").get(agent));
         } catch (NoSuchFieldException | IllegalAccessException e) {
             fail();
         }
     }
 
     @Test
-    public void testNewGraphInferenceAgentMethods() {
-        GraphInferenceAgent agent = new GraphInferenceAgent();
+    public void testNewOntologyInferenceAgentMethods() {
+        OntologyInferenceAgent agent = new OntologyInferenceAgent();
         assertEquals(1, agent.getClass().getDeclaredMethods().length);
     }
 
     @Test
     public void testGetAllTargetData() {
-        GraphInferenceAgent agent = new GraphInferenceAgent();
+        OntologyInferenceAgent agent = new OntologyInferenceAgent();
         JSONArray result = new JSONArray();
         try (MockedStatic<AccessAgentCaller> aacMock = Mockito.mockStatic(AccessAgentCaller.class)) {
             aacMock.when(() -> AccessAgentCaller.queryStore(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
