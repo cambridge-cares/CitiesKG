@@ -1,9 +1,66 @@
 # CEA Agent
 
+## Build Instructions
+
+### maven
+
+The docker image uses the world avatar maven repository ( https://maven.pkg.github.com/cambridge-cares/TheWorldAvatar/).
+You'll need to provide your credentials (github username/personal access token) in single-word text files located:
+```
+./credentials/
+    repo_username.txt
+    repo_password.txt
+```
+
+### postgreSQL
+
+The agent also requires a postgreSQL database for the time series client to save data in. The address of the database used need to be provided in:
+```
+./cea-agent/src/main/resources
+    timeseriesclient.properties
+```
+
+The username and password for the postgreSQL database need to be provided in single-word text files in:
+```
+./credentials/
+    postgres_username.txt
+    postgres_password.txt
+```
+
+### Access Agent
+
+The CEA agent also uses the [access agent](https://github.com/cambridge-cares/TheWorldAvatar/tree/main/JPS_ACCESS_AGENT).
+Check that a mapping to a targetresourceid to pass to the access agent exists for the namespace being used for building geometry query.
+Currently included are:
+
+- ```citieskg-berlin```
+- ```singaporeEPSG24500```
+- ```citieskg-singaporeEPSG4326```
+- ```citieskg-kingslynnEPSG3857```
+- ```citieskg-kingslynnEPSG27700```
+- ```citieskg-pirmasensEPSG32633```
+
+If not included, you will need to add a mapping to accessAgentRoutes in the CEA agent.
+
+#### For developers
+In order to use a local Blazegraph, you will need to run the access agent locally and set the accessagent.properties storerouter endpoint url to your local Blazegraph, as well as add triples for your namespace to a local ontokgrouter as is explained [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#install-and-build-local-accessagent-for-developers).
+
+
+### Running
+
+To build and start the agent, you simply need to spin up a container.
+In Visual Studio Code, ensure the Docker extension is installed, then right-click docker-compose.yml and select 'Compose Up'.
+Alternatively, from the command line, and in the same directory as this README, run
+```
+docker-compose up -d
+```
+The agent is reachable at "agents/cea/{option}" on localhost port 58085 where option can be run,update or query.
+
+
 
 ## Description
 
-The CEA agent can be used to interact with the [City Energy Analyst (CEA)](https://www.cityenergyanalyst.com/) and the data it produces on building energy demands and the electricity supply available if PV panels are placed on available surfaces.
+The CEA agent can be used to interact with the [City Energy Analyst (CEA)](https://www.cityenergyanalyst.com/) and the data it produces on building energy demands and the photovoltaic potentials if solar panels are placed on suitable surfaces.
 
 The agent currently queries for building geometry and building usage stored in the knowledge graph, and the resulting output data is added to the named graph 'energyprofile'.
 
@@ -12,16 +69,33 @@ The CEA Agent provides three endpoints:
 ### 1. Run
 Available at http://localhost:58085/agents/cea/run
 
-This requires JSON to be sent in the request body including an array of cityobject **iris** (in future will also optionally accept a namespace) and a **targetUrl** (to send the update request to).
-Example request:
+The run endpoint accepts the following request parameters:
+- ```iris```: array of cityobject IRIs
+- ```targetURL``` the update endpoint of the CEA agent 
+- ```geometryEndpoint```: (optional) endpoint where the geospatial information of the cityobjects from ```iris``` are stored; if not specified, agent will default to setting ```geometryEndpoint``` to TheWorldAvatar knowledge graph with the namespace retrieved from the cityobject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```
+- ```usageEndpoint```: (optional) endpoint where the building usage information of the cityobjects from ```iris``` are stored, if not specified, agent will default to setting default to setting ```usageEndpoint``` to be the same as ```geometryEndpoint```
+- ```ceaEndpoint```: (optional) endpoint where the CEA triples, i.e. energy profile information, instantiated by the agent are to be stored; if not specified, agent will default to setting ```ceaEndpoint``` to be the same as ```geometryEndpoint```
+
+If all three optional parameters are not specified in the post request, the three endpoints will all be defaulted to TheWorldAvatar knowledge graph.
+
+Example requests:
 ```
 { "iris" :
-["http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_b5a7b032-1877-4c2b-9e00-714b33a426f7/"],
+["http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/building/UUID_0595923a-3a83-4097-b39b-518fd23184cc/"],
+"targetUrl" :  "http://host.docker.internal:58085/agents/cea/update",
+"geometryEndpoint" : "http://host.docker.internal:48888/kingslynnEPSG27700"}
+```
+In the above request example, the CEA agent will be querying geometry and usage from the local Blazegraph that is pointed to, as well as instantiating CEA triples in the same Blazegraph.
+
+```
+{ "iris" :
+["http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/building/UUID_0595923a-3a83-4097-b39b-518fd23184cc/"],
 "targetUrl" :  "http://host.docker.internal:58085/agents/cea/update"}
 ```
+In the above request example, the CEA agent will be querying geometry and usage, as well as instantiating CEA triples, from the ```citieskg-kingslynnEPSG27700``` namespace in TheWorldAvatar knowledge graph.
 
 
-In order for the agent to run the CEA successfully, the queries below must return a result with an IRI of format `<{PREFIX}cityobject/{UUID}/>` where PREFIX is the prefix to IRIs in the namespace you are working with. 
+In order for the agent to run CEA successfully, the queries below must return a result with an IRI of format `<{PREFIX}cityobject/{UUID}/>` where PREFIX is the prefix to IRIs in the namespace you are working with. 
 
 For example:
  - `http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_b5a7b032-1877-4c2b-9e00-714b33a426f7/` - the PREFIX is: `http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/`
@@ -111,36 +185,44 @@ WHERE
 
 ```
 
-The agent queries for the building usage with the following query:
+The agent queries for the building usage, and the usage share if the building is a multi-usage building, with the following query:
 ```
 PREFIX ontobuiltenv: <https://www.theworldavatar.com/kg/ontobuiltenv/>
 
-SELECT  ?BuildingUsage
+SELECT  ?BuildingUsage ?UsageShare
 WHERE
-  { ?building  ontobuiltenv:hasOntoCityGMLRepresentation  {PREFIX}building/{UUID}/> ;
-             ontobuiltenv:hasUsageCategory  ?usage .
-    ?usage a ?BuildingUsage}
+  { ?building  ontobuilteng:hasOntoCityGMLRepresentation  <{PREFIX}cityobject/{UUID}/> ;
+              ontobuiltenv:ontobuiltenv/hasPropertyUsage  ?usage .
+    ?usage a ?BuildingUsage
+    OPTIONAL
+      { ?usage ontobuiltenv:hasUsageShare ?UsageShare}
+  }
+ORDER BY DESC(?UsageShare)
 ```
 
-If no building usage is returned from the query, the default value of ```MULTI_RES``` building usage is set, consistent with the default building use type set by the CEA.
-
+If no building usage is returned from the query, the default value of ```MULTI_RES``` building usage is set, consistent with the default building use type set by the CEA. In the case of multiple usages for one building, the OntoBuiltEnv usage concepts are first mapped to the CEA defined usage types according to the mapping at the bottom section of this README; then, since CEA only allows up to three usage types per building, the top three usages and their usage share are passed to CEA as input. 
 
 ### 2. Update
 
 Available at http://localhost:58085/agents/cea/update 
 
-Provide data from CEA to update KG with (request sent automatically by cea/run)
+Provide data from CEA to update KG with (request sent automatically by cea/run).
 
 ### 3. Query
 
 Available at http://localhost:58085/agents/cea/query
 
-Provide an array of cityobject IRIs in the request parameters to retrieve the energy profile for.
+The query endpoint accepts the following request parameters:
+- ```iris```: array of cityobject IRIs
+- ```ceaEndpoint```: (optional) endpoint to where the triples instantiated by the CEA agent is stored; if not specified, agent will attempt to query TheWorldAvatar Blazegraph for the CEA triples
+
+The agent will retrieve the energy profile information calculated by the CEA for the cityobject IRIs provided in ```iris```
+
 Example request:
 ```
-{"iris": 
-["http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_b5a7b032-1877-4c2b-9e00-714b33a426f7/"]
-}
+{ "iris" :
+["http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/building/UUID_0595923a-3a83-4097-b39b-518fd23184cc/"],
+"ceaEndpoint" : "http://host.docker.internal:48888/kingslynnEPSG27700"}
 ```
 
 Example response:
@@ -148,7 +230,7 @@ Example response:
 {
     "path": "/agents/cea/query",
     "iris": [
-        "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_b5a7b032-1877-4c2b-9e00-714b33a426f7/"
+        "http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/building/UUID_0595923a-3a83-4097-b39b-518fd23184cc/"
     ],
     "acceptHeaders": "*/*",
     "method": "POST",
@@ -166,11 +248,13 @@ Example response:
             "Annual PV_supply_roof": "6604.36 kWh"
         }
     ],
-    "body": "{\"iris\": \r\n[\"http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_b5a7b032-1877-4c2b-9e00-714b33a426f7/\"]\r\n}",
-    "contentType": "application/json"
+    "body": "{\"iris\": \r\n[\"http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/building/UUID_0595923a-3a83-4097-b39b-518fd23184cc/\"]\r\n}",
+    "contentType": "application/json",
+    "ceaEndpoint": "http://host.docker.internal:48888/kingslynnEPSG27700"
 }
-
 ```
+
+### Visualisation
 The 3dWebMapClient can be set up to visualise data produced by the CEA Agent (instructions to run are [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#3dcitydb-web-map-client)). The City Information Agent (CIA) is used when a building on the 3dWebMapClient is selected, to query data stored in the KG on the building. If the parameter "context=energy" is included in the url, the query endpoint of CEA will be contacted for energy data. eg `http://localhost:8000/3dwebclient/index.html?city=kingslynn&context=energy` (NB. this currently requires running web map client and CitiesKG/agents from [develop branch](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents))
 
 ### Building usage mapping
@@ -205,86 +289,3 @@ In the CEA, there are 19 defined building usage types. In the ```OntoBuiltEnv```
 |                           |      TransportFacility      |   |      TransportFacility      |        INDUSTRIAL        |
 |                           |        Non-Domestic         |   |        Non-Domestic         |        INDUSTRIAL        |
 
-## Build Instructions
-
-### maven
-
-The docker image uses the world avatar maven repository ( https://maven.pkg.github.com/cambridge-cares/TheWorldAvatar/). 
-You'll need to provide your credentials (github username/personal access token) in single-word text files located:
-```
-./credentials/
-    repo_username.txt
-    repo_password.txt
-```
-
-### postgreSQL
-
-The agent also requires a postgreSQL database for the time series client to save data in. The address of the database used, as well as the SPARQL query and update endpoints (eg. `http://host.docker.internal:9999/blazegraph/namespace/kings-lynn/sparql`), need to be provided in:
-```
-./cea-agent/src/main/resources
-    timeseriesclient.properties
-```
-
-The username and password for the postgreSQL database need to be provided in single-word text files in:
-```
-./credentials/
-    postgres_username.txt
-    postgres_password.txt
-```
-
-### Building usage query route
-Please provide the route to query for building usage type in ```usage.query.route``` in
-```
-./cea-agent/src/main/resources
-    CEAAgentConfig.properties
-```
-
-If ```usage.query.route``` is not provided, the agent will attempt to query for building usage from the same endpoint as the building geometry query.
-
-### ```cea.store.route```
-```cea.store.route``` in
-```
-./cea-agent/src/main/resources
-    CEAAgentConfig.properties
-```
-is intended for accessing endpoint where CEA triples will be stored. This endpoint has yet been set up. Leave ```cea.store.route``` empty for now.
-
-### Access Agent
-
-The CEA agent also uses the [access agent](https://github.com/cambridge-cares/TheWorldAvatar/tree/main/JPS_ACCESS_AGENT). 
-Check that a mapping to a targetresourceid to pass to the access agent exists for the namespace being used for building geometry query. 
-Currently included are:
-
-- citieskg-berlin
-- singaporeEPSG24500
-- citieskg-singaporeEPSG4326
-- citieskg-kingslynnEPSG3857
-- citieskg-kingslynnEPSG27700
-- citieskg-pirmasensEPSG32633
-
-If not included, you will need to add a mapping to accessAgentRoutes in CEAAgent. 
-
-#### For developers
-In order to use a local Blazegraph, you will need to run the access agent locally and set the acessagent.properties storerouter endpoint url to your local Blazegraph, as well as add triples for your namespace to a local ontokgrouter as is explained [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#install-and-build-local-accessagent-for-developers). 
-The route for building geometry queries to be passed to the access agent then needs to be provided in ```query.route.local``` in
-```
-./cea-agent/src/main/resources
-    CEAAgentConfig.properties
-```
-The route should contain the port number your access agent is running on (eg. 48080) and the label set in your ontokgrouter (eg docker-kings-lynn). host.docker.internal is required to access localhost from a docker container.
-
-eg. `uri.route.local=http://host.docker.internal:48080/docker-kings-lynn`
-
-If you no longer want to use a local route, ensure you leave ```query.route.local``` empty.
-
-Check [here](https://www.dropbox.com/s/z5dkdg5puqkfjtw/RunningCEAAgentLocallyGuide.pdf?dl=0) for a detailed guide on running CEA Agent locally.
-
-### Running
-
-To build and start the agent, you simply need to spin up a container.
-In Visual Studio Code, ensure the Docker extension is installed, then right-click docker-compose.yml and select 'Compose Up'. 
-Alternatively, from the command line, and in the same directory as this README, run
-```
-docker-compose up -d
-```
-The agent is reachable at "agents/cea/{option}" on localhost port 58085 where option can be run,update or query.
