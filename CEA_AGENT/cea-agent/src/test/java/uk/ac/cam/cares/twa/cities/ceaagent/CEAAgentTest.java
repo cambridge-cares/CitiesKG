@@ -60,7 +60,7 @@ public class CEAAgentTest {
         CEAAgent agent = new CEAAgent();
         ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
 
-        assertEquals(57, agent.getClass().getDeclaredFields().length);
+        assertEquals(60, agent.getClass().getDeclaredFields().length);
 
         Field URI_ACTION;
         Field URI_UPDATE;
@@ -111,9 +111,6 @@ public class CEAAgentTest {
         Field accessAgentRoutes;
         Field requestUrl;
         Field targetUrl;
-        Field localRoute;
-        Field usageRoute;
-        Field ceaRoute;
 
         try {
             URI_ACTION = agent.getClass().getDeclaredField("URI_ACTION");
@@ -240,15 +237,6 @@ public class CEAAgentTest {
             assertEquals(accessAgentMap.get("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/"), config.getString("singaporeEPSG4326.targetresourceid"));
             assertEquals(accessAgentMap.get("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/"), config.getString("kingslynnEPSG3857.targetresourceid"));
             assertEquals(accessAgentMap.get("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/"), config.getString("kingslynnEPSG27700.targetresourceid"));
-            localRoute = agent.getClass().getDeclaredField("localRoute");
-            localRoute.setAccessible(true);
-            assertEquals(localRoute.get(agent), config.getString("query.route.local"));
-            usageRoute = agent.getClass().getDeclaredField("usageRoute");
-            usageRoute.setAccessible(true);
-            assertEquals(usageRoute.get(agent), config.getString("usage.query.route"));
-            ceaRoute = agent.getClass().getDeclaredField("ceaRoute");
-            ceaRoute.setAccessible(true);
-            assertEquals(ceaRoute.get(agent), config.getString("cea.store.route"));
         } catch (NoSuchFieldException | IllegalAccessException e) {
             fail();
         }
@@ -269,9 +257,9 @@ public class CEAAgentTest {
         JSONObject requestParams = new JSONObject();
 
         // set route
-        Field localRoute = agent.getClass().getDeclaredField("localRoute");
-        localRoute.setAccessible(true);
-        localRoute.set(agent, "test_route");
+        Field geometryRoute = agent.getClass().getDeclaredField("geometryRoute");
+        geometryRoute.setAccessible(true);
+        geometryRoute.set(agent, "test_route");
 
         RemoteRDBStoreClient mockRDBClient = mock(RemoteRDBStoreClient.class);
         Connection mockConnection = mock(Connection.class);
@@ -321,12 +309,12 @@ public class CEAAgentTest {
         JSONArray expected_iri = new JSONArray().put(new JSONObject().put("measure", test_measure).put("unit", test_unit));
         JSONArray expected_value = new JSONArray().put(new JSONObject().put("value", testScalar));
         JSONArray expected_envelope = new JSONArray().put(new JSONObject().put("envelope", test_envelope));
-        JSONArray expected_buildings = new JSONArray().put(new JSONObject().put("cityObject", "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/")).put(new JSONObject().put("cityObject", "http://localhost/kings-lynn-open-data/cityobject/UUID_447787a5-1678-4246-8658-4036436c1052/"));
+        JSONArray expected_buildings = new JSONArray().put(new JSONObject().put("cityObject", "http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/cityobject/UUID_test/")).put(new JSONObject().put("cityObject", "http://localhost/kings-lynn-open-data/cityobject/UUID_447787a5-1678-4246-8658-4036436c1052/"));
 
 
         // Test the update endpoint
         requestParams.put(CEAAgent.KEY_REQ_URL, "http://localhost:8086/agents/cea/update");
-        requestParams.put(CEAAgent.KEY_IRI, "['http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/']");
+        requestParams.put(CEAAgent.KEY_IRI, "['http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/cityobject/UUID_test/']");
         requestParams.put(CEAAgent.KEY_TARGET_URL, "http://localhost:8086/agents/cea/update");
         requestParams.put(CEAAgent.KEY_REQ_METHOD, HttpMethod.POST);
 
@@ -371,6 +359,7 @@ public class CEAAgentTest {
             //Test the run endpoint
             requestParams.remove(CEAAgent.KEY_REQ_URL);
             requestParams.put(CEAAgent.KEY_REQ_URL, "http://localhost:8086/agents/cea/run");
+
 
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
                     .thenReturn(expected_height).thenReturn(expected_footprint).thenReturn(expected_usage)
