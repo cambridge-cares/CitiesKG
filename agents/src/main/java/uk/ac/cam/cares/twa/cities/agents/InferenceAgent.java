@@ -69,6 +69,7 @@ public abstract class InferenceAgent extends JPSAgent {
   public static final String IRI_RDF_TYP = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>";
   public static final String IRI_RDF_NIL = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>";
   public static final String IRI_OWL_THG = "<http://www.w3.org/2002/07/owl#Thing>";
+  public static final String URI_ACTION = "/";
   private static final ExecutorService taskExecutor = Executors.newFixedThreadPool(5);
   protected static LinkedBlockingDeque<Map<String, JSONArray>> dataQueue = new LinkedBlockingDeque<>();
   protected static LinkedBlockingDeque<Map<String, JSONArray>> resultQueue = new LinkedBlockingDeque<>();
@@ -85,7 +86,6 @@ public abstract class InferenceAgent extends JPSAgent {
       {IRI.create(ONINF_SCHEMA + TASK_CRC), new CardinalityRestrictionCheckingTask()}
   }).collect(Collectors.toMap(data -> (IRI) data[0], data -> (UninitialisedDataQueueTask) data[1]));
   public String route;
-  public static final String URI_ACTION = "/";
 
   @Override
   public boolean validateInput(JSONObject requestParams) throws BadRequestException {
@@ -168,8 +168,8 @@ public abstract class InferenceAgent extends JPSAgent {
   /**
    * Method to prepare task data.
    *
-   * @param targetIRI IRI of the target SPARQL endpoint
-   * @param taskIRI IRI of the task
+   * @param targetIRI     IRI of the target SPARQL endpoint
+   * @param taskIRI       IRI of the task
    * @param requestParams Extracted HTTP request parameters
    * @return Data for the task
    * @throws ParseException Thrown when SPARQL query to fetch data could not be built
@@ -245,7 +245,8 @@ public abstract class InferenceAgent extends JPSAgent {
     return sb;
   }
 
-  protected abstract JSONArray getAllTargetData(IRI sparqlEndpoint, String tBoxGraph) throws ParseException;
+  protected abstract JSONArray getAllTargetData(IRI sparqlEndpoint, String tBoxGraph)
+      throws ParseException;
 
   protected void getAllTargetData(IRI sparqlEndpoint, String aBoxGraph, JSONArray targetData) {
     SelectBuilder sb = new SelectBuilder();
