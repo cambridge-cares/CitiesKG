@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
@@ -264,21 +265,22 @@ public class InferenceAgentTest {
     }
   }
 
-  @Test //@ TODO: rewrite
+  @Test
   public void testChooseTask() {
-    GraphInferenceAgent agent = new GraphInferenceAgent();
+    InferenceAgent agent = Mockito.mock(
+        InferenceAgent.class,
+        Mockito.CALLS_REAL_METHODS);
+    agent.route = ResourceBundle.getBundle("config").getString("uri.route");
     JSONArray result = new JSONArray().put(new JSONObject().put("o", "http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankTask"));
     try (MockedStatic<AccessAgentCaller> aacMock = Mockito.mockStatic(AccessAgentCaller.class)) {
       aacMock.when(() -> AccessAgentCaller.queryStore(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
           .thenReturn(result);
-      agent.getClass().getDeclaredField("route").set(agent, "http://localhost:48080/test");
-      Method chooseTask = agent.getClass().getDeclaredMethod("chooseTask", IRI.class, IRI.class);
-      chooseTask.setAccessible(true);
-      UninitialisedDataQueueTask task = (UninitialisedDataQueueTask) chooseTask.invoke(agent, IRI.create("http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankAlgorithm"),
+
+      UninitialisedDataQueueTask task = agent.chooseTask(IRI.create("http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankAlgorithm"),
           IRI.create("http://127.0.0.1:9999/blazegraph/namespace/test/sparql/"));
       assertEquals(PageRankTask.class, task.getClass());
 
-      Field agentDataQueueField = agent.getClass().getDeclaredField("dataQueue");
+      Field agentDataQueueField = InferenceAgent.class.getDeclaredField("dataQueue");
       Field taskDataQueueField = task.getClass().getDeclaredField("dataQueue");
       taskDataQueueField.setAccessible(true);
       assertEquals(agentDataQueueField.get(agent), taskDataQueueField.get(task));
@@ -286,7 +288,7 @@ public class InferenceAgentTest {
       Field targetGraph = task.getClass().getDeclaredField("targetGraph");
       targetGraph.setAccessible(true);
       assertEquals("http://127.0.0.1:9999/blazegraph/namespace/test/sparql/OntoInfer/", targetGraph.get(task).toString());
-    } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+    } catch (NoSuchFieldException | IllegalAccessException  e) {
       fail();
     }
   }
@@ -325,8 +327,69 @@ public class InferenceAgentTest {
     try (MockedStatic<AccessAgentCaller> aacMock = Mockito.mockStatic(AccessAgentCaller.class)) {
       aacMock.when(() -> AccessAgentCaller.queryStore(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
           .thenReturn(result);
-      //@ TODO: implementation
+      agent.route = ResourceBundle.getBundle("config").getString("uri.route");
+      agent.getAllTargetData(IRI.create("http://127.0.0.1:9999/blazegraph/namespace/test/sparql/"),
+          "testgraph", result);
+      assertEquals(result.toList().size(), 0);
+    } catch (Exception e) {
+      fail();
     }
+  }
+
+  @Test
+  public void testAddRequestDataToTaskData() {
+    InferenceAgent agent = Mockito.mock(
+        InferenceAgent.class,
+        Mockito.CALLS_REAL_METHODS);
+    JSONObject requestParams = new JSONObject().put("sourceIRI", "http://www.test.com/srciri/")
+        .put("destinationIRI", "http://www.test.com/dstiri/");
+    Map<String, JSONArray> taskData = new HashMap<>();
+
+    taskData = agent.addRequestDataToTaskData(taskData, requestParams);
+
+    assertTrue(taskData.containsKey("sourceIRI"));
+    assertTrue(taskData.containsKey("destinationIRI"));
+    assertEquals(taskData.get("sourceIRI").get(0), "http://www.test.com/srciri/");
+    assertEquals(taskData.get("destinationIRI").get(0), "http://www.test.com/dstiri/");
+
+  }
+
+  @Test
+  public void testPrepareTaskData() {
+    InferenceAgent agent = Mockito.mock(
+        InferenceAgent.class,
+        Mockito.CALLS_REAL_METHODS);
+    agent.route = ResourceBundle.getBundle("config").getString("uri.route");
+
+    JSONObject requestParams = new JSONObject().put("sourceIRI", "http://www.test.com/srciri/")
+        .put("destinationIRI", "http://www.test.com/dstiri/")
+        .put("assertionsIRI", "http://www.test.com/assertionsiri/")
+        .put("ontologyIRI", "http://www.test.com/ontologyiri/");
+
+    JSONArray result = new JSONArray().put("s, p, o");
+
+    try (MockedStatic<AccessAgentCaller> aacMock = Mockito.mockStatic(AccessAgentCaller.class)) {
+      aacMock.when(() -> AccessAgentCaller.queryStore(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
+          .thenReturn(result);
+      Mockito.when(agent.getAllTargetData(ArgumentMatchers.any(IRI.class), ArgumentMatchers.anyString()))
+          .thenReturn(new JSONArray());
+
+      Map<String, JSONArray> taskData = agent.prepareTaskData("http://www.test.com/targetri/",
+          "http://www.test.com/taskiri/", requestParams);
+      assertTrue(taskData.containsKey("sourceIRI"));
+      assertTrue(taskData.containsKey("destinationIRI"));
+      assertTrue(taskData.containsKey("ontologyIRI"));
+      assertTrue(taskData.containsKey("http://www.test.com/taskiri/"));
+      assertEquals(taskData.get("sourceIRI").get(0), "http://www.test.com/srciri/");
+      assertEquals(taskData.get("destinationIRI").get(0), "http://www.test.com/dstiri/");
+      assertEquals(taskData.get("ontologyIRI").get(0), "http://www.test.com/ontologyiri/");
+      assertEquals(taskData.get("http://www.test.com/taskiri/").get(0), "s, p, o");
+    } catch (Exception e) {
+      fail();
+    }
+
+
+
   }
 
 }
