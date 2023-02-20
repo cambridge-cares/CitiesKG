@@ -64,7 +64,7 @@ The CEA agent can be used to interact with the [City Energy Analyst (CEA)](https
 
 The agent currently queries for building geometry and building usage stored in the knowledge graph, and the resulting output data is added to the named graph 'energyprofile'.
 
-The CEA Agent provides three endpoints:
+The CEA agent provides three endpoints:
 
 ### 1. Run
 Available at http://localhost:58085/agents/cea/run
@@ -72,11 +72,11 @@ Available at http://localhost:58085/agents/cea/run
 The run endpoint accepts the following request parameters:
 - ```iris```: array of cityobject IRIs
 - ```targetURL``` the update endpoint of the CEA agent 
-- ```geometryEndpoint```: (optional) endpoint where the geospatial information of the cityobjects from ```iris``` are stored; if not specified, agent will default to setting ```geometryEndpoint``` to TheWorldAvatar knowledge graph with the namespace retrieved from the cityobject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```
-- ```usageEndpoint```: (optional) endpoint where the building usage information of the cityobjects from ```iris``` are stored, if not specified, agent will default to setting default to setting ```usageEndpoint``` to be the same as ```geometryEndpoint```
+- ```geometryEndpoint```: (optional) endpoint where the geospatial information of the cityobjects from ```iris``` are stored; if not specified, agent will default to setting ```geometryEndpoint``` to TheWorldAvatar Blazegraph with the namespace retrieved from the cityobject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```
+- ```usageEndpoint```: (optional) endpoint where the building usage information of the cityobjects from ```iris``` are stored, if not specified, agent will default to setting ```usageEndpoint``` to be the same as ```geometryEndpoint```
 - ```ceaEndpoint```: (optional) endpoint where the CEA triples, i.e. energy profile information, instantiated by the agent are to be stored; if not specified, agent will default to setting ```ceaEndpoint``` to be the same as ```geometryEndpoint```
 
-If all three optional parameters are not specified in the post request, the three endpoints will all be defaulted to TheWorldAvatar knowledge graph.
+If all three optional parameters are not specified in the post request, the three endpoints will all be defaulted to TheWorldAvatar Blazegraph.
 
 Example requests:
 ```
@@ -85,14 +85,14 @@ Example requests:
 "targetUrl" :  "http://host.docker.internal:58085/agents/cea/update",
 "geometryEndpoint" : "http://host.docker.internal:48888/kingslynnEPSG27700"}
 ```
-In the above request example, the CEA agent will be querying geometry and usage from the local Blazegraph that is pointed to, as well as instantiating CEA triples in the same Blazegraph.
+In the above request example, the CEA agent will be querying geometry and usage from the local Blazegraph that ```http://host.docker.internal:48888/kingslynnEPSG27700``` is pointed to, as well as instantiating CEA triples in the same Blazegraph.
 
 ```
 { "iris" :
 ["http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/building/UUID_0595923a-3a83-4097-b39b-518fd23184cc/"],
 "targetUrl" :  "http://host.docker.internal:58085/agents/cea/update"}
 ```
-In the above request example, the CEA agent will be querying geometry and usage, as well as instantiating CEA triples, from the ```citieskg-kingslynnEPSG27700``` namespace in TheWorldAvatar knowledge graph.
+In the above request example, the CEA agent will be querying geometry and usage, as well as instantiating CEA triples, from the ```citieskg-kingslynnEPSG27700``` namespace in TheWorldAvatar Blazegraph.
 
 
 In order for the agent to run CEA successfully, the queries below must return a result with an IRI of format `<{PREFIX}cityobject/{UUID}/>` where PREFIX is the prefix to IRIs in the namespace you are working with. 
@@ -214,7 +214,7 @@ Available at http://localhost:58085/agents/cea/query
 
 The query endpoint accepts the following request parameters:
 - ```iris```: array of cityobject IRIs
-- ```ceaEndpoint```: (optional) endpoint to where the triples instantiated by the CEA agent is stored; if not specified, agent will attempt to query TheWorldAvatar Blazegraph for the CEA triples
+- ```ceaEndpoint```: (optional) endpoint to where the triples instantiated by the CEA agent are stored; if not specified, agent will attempt to query TheWorldAvatar Blazegraph for the CEA triples
 
 The agent will retrieve the energy profile information calculated by the CEA for the cityobject IRIs provided in ```iris```
 
