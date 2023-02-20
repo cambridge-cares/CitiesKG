@@ -19,6 +19,11 @@ import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 import java.util.concurrent.BlockingQueue;
 
+/**
+ * A graph inference task that calculates unweighted shortest paths between nodes on a graph.
+ *
+ * @author <a href="mailto:arkadiusz.chadzynski@cares.cam.ac.uk">Arkadiusz Chadzynski</a>
+ */
 public class UnweightedShortestPathTask implements UninitialisedDataAndResultQueueTask {
     private final IRI taskIri = IRI.create(GraphInferenceAgent.ONINF_SCHEMA + GraphInferenceAgent.TASK_USP);
     private boolean stop = false;

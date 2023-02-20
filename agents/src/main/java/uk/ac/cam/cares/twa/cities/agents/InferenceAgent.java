@@ -33,6 +33,12 @@ import uk.ac.cam.cares.twa.cities.tasks.UninitialisedDataQueueTask;
 import uk.ac.cam.cares.twa.cities.tasks.UnweightedShortestPathTask;
 import uk.ac.cam.cares.twa.cities.tasks.ValueRestrictionCheckingTask;
 
+/**
+ * A JPSAgent framework based abstract Inference Agent class grouping methods common
+ * to Ontology Inference Agent and Graph Inference Agent working with knowledge graphs.
+ *
+ * @author <a href="mailto:arkadiusz.chadzynski@cares.cam.ac.uk">Arkadiusz Chadzynski</a>
+ */
 public abstract class InferenceAgent extends JPSAgent {
 
   public static final String KEY_REQ_METHOD = "method";
@@ -166,7 +172,8 @@ public abstract class InferenceAgent extends JPSAgent {
   }
 
   /**
-   * Method to prepare task data.
+   * Method to prepare data for an inference task depending on the arguments specified
+   * in the request parameters.
    *
    * @param targetIRI     IRI of the target SPARQL endpoint
    * @param taskIRI       IRI of the task
@@ -195,6 +202,13 @@ public abstract class InferenceAgent extends JPSAgent {
     return addRequestDataToTaskData(taskData, requestParams);
   }
 
+  /**
+   * Adds request parameters data to the task data.
+   *
+   * @param taskData Task data without request parameters data included.
+   * @param requestParams Request parameters data.
+   * @return Task data with request parameters data included.
+   */
   protected Map<String, JSONArray> addRequestDataToTaskData(Map<String, JSONArray> taskData,
       JSONObject requestParams) {
     if (requestParams.keySet().contains(KEY_SRC_IRI)) {

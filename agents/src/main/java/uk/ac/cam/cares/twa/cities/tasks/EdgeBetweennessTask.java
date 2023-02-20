@@ -18,6 +18,11 @@ import uk.ac.cam.cares.twa.cities.agents.GraphInferenceAgent;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
+/**
+ * A graph inference task implements edge betweenness clustering algorithm.
+ *
+ * @author <a href="mailto:arkadiusz.chadzynski@cares.cam.ac.uk">Arkadiusz Chadzynski</a>
+ */
 public class EdgeBetweennessTask implements UninitialisedDataQueueTask {
 
     private final IRI taskIri = IRI.create(
