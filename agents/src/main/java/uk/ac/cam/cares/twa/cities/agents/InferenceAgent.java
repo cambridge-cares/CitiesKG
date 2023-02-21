@@ -223,6 +223,15 @@ public abstract class InferenceAgent extends JPSAgent {
     return taskData;
   }
 
+  /**
+   * Chooses inference task {@link UninitialisedDataQueueTask } based on the knowledge about tasks
+   * associated with inference algorithms described in terms of OntoInfer ontology that is assumed
+   * to be stored in a named graph OntoInfer in the given SQPARQL endpoint.
+   *
+   * @param algorithmIRI IRI of an inference algorithm.
+   * @param sparqlEndpoint Endpoint where the new data is going to be inferred from.
+   * @return Inference task
+   */
   protected UninitialisedDataQueueTask chooseTask(IRI algorithmIRI, IRI sparqlEndpoint) {
     //Retrieve task IRI by algorithm IRI from KG and assign to taskId
     SelectBuilder sb = new SelectBuilder();
@@ -246,6 +255,15 @@ public abstract class InferenceAgent extends JPSAgent {
     return task;
   }
 
+  /**
+   * Prepares an instance of SPARQL {@link SelectBuilder} with filters out irrelevant IRIs of an
+   * ontology.
+   *
+   * @param sparqlEndpoint An endpoint where all data is stored
+   * @param tBoxGraph Graph name where TBox is stored.
+   * @return SPARQL query builder
+   * @throws ParseException when arguments cannot be parsed.
+   */
   protected SelectBuilder getSparqlBuilder(IRI sparqlEndpoint, String tBoxGraph)
       throws ParseException {
     SelectBuilder sb = new SelectBuilder();
@@ -259,9 +277,25 @@ public abstract class InferenceAgent extends JPSAgent {
     return sb;
   }
 
+  /**
+   * To override in concrete classes with implementation of retrieving a TBox graph from
+   * the specified SPARQL endpoint with necessary filters.
+   *
+   * @param sparqlEndpoint An endpoint where all data is stored
+   * @param tBoxGraph Graph name where TBox is stored.
+   * @return An array of target data.
+   * @throws ParseException when arguments cannot be parsed.
+   */
   protected abstract JSONArray getAllTargetData(IRI sparqlEndpoint, String tBoxGraph)
       throws ParseException;
 
+  /**
+   * Retrieves ABox data from a given SPARQL endpoint and a named graph and adds it to the target data.
+   *
+   * @param sparqlEndpoint An endpoint where all data is stored
+   * @param aBoxGraph Graph name where ABox is stored.
+   * @param targetData Array of target data the ABox data is going to be added to.
+   */
   protected void getAllTargetData(IRI sparqlEndpoint, String aBoxGraph, JSONArray targetData) {
     SelectBuilder sb = new SelectBuilder();
     sb.setBase(sparqlEndpoint.toString()).from(aBoxGraph)
