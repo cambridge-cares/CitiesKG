@@ -1,4 +1,10 @@
 # CEA Agent
+## Agent Description
+
+The CEA agent can be used to interact with the [City Energy Analyst (CEA)](https://www.cityenergyanalyst.com/)  and the data it produces on building energy demands and the photovoltaic potentials if solar panels are placed on suitable surfaces.
+
+The agent currently queries for building geometry and building usage stored in the knowledge graph, and the resulting output data is added to the named graph 'energyprofile'.
+
 
 ## Build Instructions
 
@@ -94,13 +100,65 @@ In the above request example, the CEA agent will be querying geometry and usage 
 ```
 In the above request example, the CEA agent will be querying geometry and usage, as well as instantiating CEA triples, from the ```citieskg-kingslynnEPSG27700``` namespace in TheWorldAvatar Blazegraph.
 
+### 2. Update
 
-In order for the agent to run CEA successfully, the queries below must return a result with an IRI of format `<{PREFIX}cityobject/{UUID}/>` where PREFIX is the prefix to IRIs in the namespace you are working with. 
+Available at http://localhost:58085/agents/cea/update 
+
+Provide data from CEA to update KG with (request sent automatically by cea/run).
+
+### 3. Query
+
+Available at http://localhost:58085/agents/cea/query
+
+The query endpoint accepts the following request parameters:
+- ```iris```: array of cityobject IRIs
+- ```ceaEndpoint```: (optional) endpoint to where the triples instantiated by the CEA agent are stored; if not specified, agent will attempt to query TheWorldAvatar Blazegraph for the CEA triples
+
+The agent will retrieve the energy profile information calculated by the CEA for the cityobject IRIs provided in ```iris```
+
+Example request:
+```
+{ "iris" :
+["http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/building/UUID_0595923a-3a83-4097-b39b-518fd23184cc/"],
+"ceaEndpoint" : "http://host.docker.internal:48888/kingslynnEPSG27700"}
+```
+
+Example response:
+```
+{
+    "path": "/agents/cea/query",
+    "iris": [
+        "http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/building/UUID_0595923a-3a83-4097-b39b-518fd23184cc/"
+    ],
+    "acceptHeaders": "*/*",
+    "method": "POST",
+    "requestUrl": "http://localhost:58085/agents/cea/query",
+    "energyprofile": [
+        {
+            "Annual heating_demand": "46715.11 kWh",
+            "Annual PV_supply_wall_east": "1805.54 kWh",
+            "PV_area_wall_east": "40.14 m^2",
+            "Annual grid_demand": "4828.71 kWh",
+            "PV_area_wall_south": "89.36 m^2",
+            "PV_area_roof": "54.29 m^2",
+            "Annual PV_supply_wall_south": "3906.91 kWh",
+            "Annual electricity_demand": "4828.71 kWh",
+            "Annual PV_supply_roof": "6604.36 kWh"
+        }
+    ],
+    "body": "{\"iris\": \r\n[\"http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/building/UUID_0595923a-3a83-4097-b39b-518fd23184cc/\"]\r\n}",
+    "contentType": "application/json",
+    "ceaEndpoint": "http://host.docker.internal:48888/kingslynnEPSG27700"
+}
+```
+
+### Queries
+In order for the agent to run CEA successfully, the queries below must return a result with an IRI of format `<{PREFIX}cityobject/{UUID}/>` where PREFIX is the prefix to IRIs in the namespace you are working with.
 
 For example:
- - `http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_b5a7b032-1877-4c2b-9e00-714b33a426f7/` - the PREFIX is: `http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/`
+- `http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_b5a7b032-1877-4c2b-9e00-714b33a426f7/` - the PREFIX is: `http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/`
 
- - `http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/building/UUID_7cb00a09-528b-4016-b3d6-80c5a9442d95/` - the PREFIX is `http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/`.
+- `http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/building/UUID_7cb00a09-528b-4016-b3d6-80c5a9442d95/` - the PREFIX is `http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/`.
 
 Query for coordinate reference system (CRS) EPSG id of the namespace:
 
@@ -191,8 +249,8 @@ PREFIX ontobuiltenv: <https://www.theworldavatar.com/kg/ontobuiltenv/>
 
 SELECT  ?BuildingUsage ?UsageShare
 WHERE
-  { ?building  ontobuilteng:hasOntoCityGMLRepresentation  <{PREFIX}cityobject/{UUID}/> ;
-              ontobuiltenv:ontobuiltenv/hasPropertyUsage  ?usage .
+  { ?building  ontobuiltenv:hasOntoCityGMLRepresentation  <{PREFIX}cityobject/{UUID}/> ;
+              ontobuiltenv:hasPropertyUsage  ?usage .
     ?usage a ?BuildingUsage
     OPTIONAL
       { ?usage ontobuiltenv:hasUsageShare ?UsageShare}
@@ -200,59 +258,8 @@ WHERE
 ORDER BY DESC(?UsageShare)
 ```
 
-If no building usage is returned from the query, the default value of ```MULTI_RES``` building usage is set, consistent with the default building use type set by the CEA. In the case of multiple usages for one building, the OntoBuiltEnv usage concepts are first mapped to the CEA defined usage types according to the mapping at the bottom section of this README; then, since CEA only allows up to three usage types per building, the top three usages and their usage share are passed to CEA as input. 
+If no building usage is returned from the query, the default value of ```MULTI_RES``` building usage is set, consistent with the default building use type set by the CEA. In the case of multiple usages for one building, the OntoBuiltEnv usage concepts are first mapped to the CEA defined usage types according to the mapping at the bottom section of this README; then, since CEA only allows up to three usage types per building, the top three usages and their usage share are passed to CEA as input.
 
-### 2. Update
-
-Available at http://localhost:58085/agents/cea/update 
-
-Provide data from CEA to update KG with (request sent automatically by cea/run).
-
-### 3. Query
-
-Available at http://localhost:58085/agents/cea/query
-
-The query endpoint accepts the following request parameters:
-- ```iris```: array of cityobject IRIs
-- ```ceaEndpoint```: (optional) endpoint to where the triples instantiated by the CEA agent are stored; if not specified, agent will attempt to query TheWorldAvatar Blazegraph for the CEA triples
-
-The agent will retrieve the energy profile information calculated by the CEA for the cityobject IRIs provided in ```iris```
-
-Example request:
-```
-{ "iris" :
-["http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/building/UUID_0595923a-3a83-4097-b39b-518fd23184cc/"],
-"ceaEndpoint" : "http://host.docker.internal:48888/kingslynnEPSG27700"}
-```
-
-Example response:
-```
-{
-    "path": "/agents/cea/query",
-    "iris": [
-        "http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/building/UUID_0595923a-3a83-4097-b39b-518fd23184cc/"
-    ],
-    "acceptHeaders": "*/*",
-    "method": "POST",
-    "requestUrl": "http://localhost:58085/agents/cea/query",
-    "energyprofile": [
-        {
-            "Annual heating_demand": "46715.11 kWh",
-            "Annual PV_supply_wall_east": "1805.54 kWh",
-            "PV_area_wall_east": "40.14 m^2",
-            "Annual grid_demand": "4828.71 kWh",
-            "PV_area_wall_south": "89.36 m^2",
-            "PV_area_roof": "54.29 m^2",
-            "Annual PV_supply_wall_south": "3906.91 kWh",
-            "Annual electricity_demand": "4828.71 kWh",
-            "Annual PV_supply_roof": "6604.36 kWh"
-        }
-    ],
-    "body": "{\"iris\": \r\n[\"http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/building/UUID_0595923a-3a83-4097-b39b-518fd23184cc/\"]\r\n}",
-    "contentType": "application/json",
-    "ceaEndpoint": "http://host.docker.internal:48888/kingslynnEPSG27700"
-}
-```
 
 ### Visualisation
 The 3dWebMapClient can be set up to visualise data produced by the CEA Agent (instructions to run are [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#3dcitydb-web-map-client)). The City Information Agent (CIA) is used when a building on the 3dWebMapClient is selected, to query data stored in the KG on the building. If the parameter "context=energy" is included in the url, the query endpoint of CEA will be contacted for energy data. eg `http://localhost:8000/3dwebclient/index.html?city=kingslynn&context=energy` (NB. this currently requires running web map client and CitiesKG/agents from [develop branch](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents))
