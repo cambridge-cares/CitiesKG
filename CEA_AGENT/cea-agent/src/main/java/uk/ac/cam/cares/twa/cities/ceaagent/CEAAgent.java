@@ -1,6 +1,7 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
 import org.apache.jena.arq.querybuilder.handlers.WhereHandler;
+import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.syntax.ElementGroup;
@@ -59,6 +60,7 @@ public class CEAAgent extends JPSAgent {
     public static final String KEY_GEOMETRY = "geometryEndpoint";
     public static final String KEY_USAGE = "usageEndpoint";
     public static final String KEY_CEA = "ceaEndpoint";
+    public static final String KEY_GRAPH = "graphName";
     public static final String CITY_OBJECT = "cityobject";
     public static final String CITY_OBJECT_GEN_ATT = "cityobjectgenericattrib";
     public static final String BUILDING = "building";
@@ -112,6 +114,7 @@ public class CEAAgent extends JPSAgent {
     private String geometryRoute;
     private String usageRoute;
     private String ceaRoute;
+    private String namedGraph;
 
     private Map<String, String> accessAgentRoutes = new HashMap<>();
 
@@ -163,14 +166,14 @@ public class CEAAgent extends JPSAgent {
                         if(building.equals("")){
                             // Check if DABGEO:Building IRI has already been created in another endpoint
                             building = checkBuildingInitialised(uri, geometryRoute);
-                            building = initialiseBuilding(uri, building, ceaRoute);
+                            building = initialiseBuilding(uri, building, ceaRoute, namedGraph);
                         }
                         if(!checkDataInitialised(uri, building, tsIris, scalarIris, ceaRoute)) {
                             createTimeSeries(uri,tsIris);
-                            initialiseData(uri, i, scalars, building, tsIris, scalarIris, ceaRoute);
+                            initialiseData(uri, i, scalars, building, tsIris, scalarIris, ceaRoute, namedGraph);
                         }
                         else{
-                            updateScalars(uri, ceaRoute, scalarIris, scalars, i);
+                            updateScalars(uri, ceaRoute, scalarIris, scalars, i, namedGraph);
                         }
                         addDataToTimeSeries(timeSeries.get(i), times, tsIris);
                     }
@@ -191,7 +194,15 @@ public class CEAAgent extends JPSAgent {
                         if(i==0) {
                             geometryRoute = requestParams.has(KEY_GEOMETRY) ? requestParams.getString(KEY_GEOMETRY) : getRoute(uri);
                             usageRoute = requestParams.has(KEY_USAGE) ? requestParams.getString(KEY_USAGE) : geometryRoute;
-                            ceaRoute = requestParams.has(KEY_CEA) ? requestParams.getString(KEY_CEA) : geometryRoute;
+                            if (!requestParams.has(KEY_CEA)){
+                                // if ci
+                                namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : getGraph(uri,ENERGY_PROFILE);
+                                ceaRoute = geometryRoute;
+                            }
+                            else{
+                                namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : "";
+                                ceaRoute = requestParams.getString(KEY_CEA);
+                            }
                         }
                         uriStringArray.add(uri);
                         // Set default value of 10m if height can not be obtained from knowledge graph
@@ -229,6 +240,12 @@ public class CEAAgent extends JPSAgent {
                     // Only set route once - assuming all iris passed in same namespace
                     if(i==0) {
                         ceaRoute = requestParams.has(KEY_CEA) ? requestParams.getString(KEY_CEA) : getRoute(uri);
+                        if (!requestParams.has(KEY_CEA)){
+                            namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : getGraph(uri, ENERGY_PROFILE);
+                        }
+                        else{
+                            namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : "";
+                        }
                     }
                     String building = checkBuildingInitialised(uri, ceaRoute);
                     if(building.equals("")){
@@ -386,6 +403,7 @@ public class CEAAgent extends JPSAgent {
         if (requestParams.has(KEY_GEOMETRY)) {error = error || requestParams.get(KEY_GEOMETRY).toString().isEmpty();}
         if (requestParams.has(KEY_USAGE)) {error = error || requestParams.get(KEY_USAGE).toString().isEmpty();}
         if (requestParams.has(KEY_CEA)) {error = error || requestParams.get(KEY_CEA).toString().isEmpty();}
+        if (requestParams.has(KEY_GRAPH)) {error = error || requestParams.get(KEY_GRAPH).toString().isEmpty();}
 
         return error;
     }
@@ -400,7 +418,7 @@ public class CEAAgent extends JPSAgent {
         boolean error = requestParams.get(KEY_IRI).toString().isEmpty();
 
         if (requestParams.has(KEY_CEA)) {error = error || requestParams.get(KEY_CEA).toString().isEmpty();}
-
+        if (requestParams.has(KEY_GRAPH)) {error = error || requestParams.get(KEY_GRAPH).toString().isEmpty();}
         return error;
     }
 
@@ -1276,25 +1294,35 @@ public class CEAAgent extends JPSAgent {
      * @param route route to pass to access agent
      * @return building
      */
-    public String initialiseBuilding(String uriString, String buildingUri, String route){
+    public String initialiseBuilding(String uriString, String buildingUri, String route, String graph){
 
-        String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
+        UpdateBuilder ub = new UpdateBuilder();
 
         if (buildingUri.isEmpty()) {
-            buildingUri = outputGraphUri + "Building_" + UUID.randomUUID() + "/";
+            if (!graph.isEmpty()) {
+                buildingUri = graph + "Building_" + UUID.randomUUID() + "/";
+            }
+            else{
+                buildingUri = getNamespace(uriString) + "Building_" + UUID.randomUUID() + "/";
+            }
         }
 
-        UpdateBuilder ub =
-                new UpdateBuilder()
+        WhereBuilder wb =
+                new WhereBuilder()
                         .addPrefix("rdf", rdfUri)
                         .addPrefix("owl", owlUri)
                         .addPrefix("purlInf", purlInfrastructureUri)
                         .addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "rdf:type", "purlInf:Building")
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "rdf:type", "owl:NamedIndividual")
-                        .addInsert("?graph", NodeFactory.createURI(buildingUri), "ontoBuiltEnv:hasOntoCityGMLRepresentation", NodeFactory.createURI(getBuildingUri(uriString)));
+                        .addWhere(NodeFactory.createURI(buildingUri), "rdf:type", "purlInf:Building")
+                        .addWhere(NodeFactory.createURI(buildingUri), "rdf:type", "owl:NamedIndividual")
+                        .addWhere(NodeFactory.createURI(buildingUri), "ontoBuiltEnv:hasOntoCityGMLRepresentation", NodeFactory.createURI(getBuildingUri(uriString)));
 
-        ub.setVar(Var.alloc("graph"), NodeFactory.createURI(outputGraphUri));
+        if (!graph.isEmpty()){
+            ub.addInsert(NodeFactory.createURI(graph), wb);
+        }
+        else{
+            ub.addInsert(wb);
+        }
 
         UpdateRequest ur = ub.buildRequest();
 
@@ -1340,15 +1368,15 @@ public class CEAAgent extends JPSAgent {
      * @param quantity om:quantity iri
      * @param measure om:measure iri
      */
-    public void createConsumptionUpdate(UpdateBuilder builder, String consumer, String consumptionType, String quantity, String measure){
-        builder.addInsert("?graph", NodeFactory.createURI(quantity), "rdf:type", consumptionType)
-                .addInsert("?graph", NodeFactory.createURI(quantity), "rdf:type", "owl:NamedIndividual")
-                .addInsert("?graph", NodeFactory.createURI(quantity), "om:hasDimension", "om:energy-Dimension")
-                .addInsert("?graph", NodeFactory.createURI(quantity), "om:hasValue", NodeFactory.createURI(measure))
-                .addInsert("?graph", NodeFactory.createURI(measure), "rdf:type", "om:Measure")
-                .addInsert("?graph", NodeFactory.createURI(measure), "rdf:type", "owl:NamedIndividual")
-                .addInsert("?graph", NodeFactory.createURI(measure), "om:hasUnit", "om:kilowattHour")
-                .addInsert("?graph", NodeFactory.createURI(consumer), "purlEnaeq:consumesEnergy",NodeFactory.createURI(quantity));
+    public void createConsumptionUpdate(WhereBuilder builder, String consumer, String consumptionType, String quantity, String measure){
+        builder.addWhere(NodeFactory.createURI(quantity), "rdf:type", consumptionType)
+                .addWhere(NodeFactory.createURI(quantity), "rdf:type", "owl:NamedIndividual")
+                .addWhere(NodeFactory.createURI(quantity), "om:hasDimension", "om:energy-Dimension")
+                .addWhere(NodeFactory.createURI(quantity), "om:hasValue", NodeFactory.createURI(measure))
+                .addWhere(NodeFactory.createURI(measure), "rdf:type", "om:Measure")
+                .addWhere(NodeFactory.createURI(measure), "rdf:type", "owl:NamedIndividual")
+                .addWhere(NodeFactory.createURI(measure), "om:hasUnit", "om:kilowattHour")
+                .addWhere(NodeFactory.createURI(consumer), "purlEnaeq:consumesEnergy",NodeFactory.createURI(quantity));
     }
 
     /**
@@ -1361,10 +1389,10 @@ public class CEAAgent extends JPSAgent {
      * @param quantity om:quantity iri
      * @param measure om:measure iri
      */
-    public void createDeviceConsumptionUpdate(UpdateBuilder builder, String building, String device, String deviceType, String consumptionType, String quantity, String measure){
-          builder.addInsert("?graph", NodeFactory.createURI(building), "ontoubemmp:hasDevice", NodeFactory.createURI(device))
-                .addInsert("?graph", NodeFactory.createURI(device), "rdf:type", deviceType)
-                .addInsert("?graph", NodeFactory.createURI(device), "rdf:type", "owl:NamedIndividual");
+    public void createDeviceConsumptionUpdate(WhereBuilder builder, String building, String device, String deviceType, String consumptionType, String quantity, String measure){
+          builder.addWhere(NodeFactory.createURI(building), "ontoubemmp:hasDevice", NodeFactory.createURI(device))
+                .addWhere(NodeFactory.createURI(device), "rdf:type", deviceType)
+                .addWhere(NodeFactory.createURI(device), "rdf:type", "owl:NamedIndividual");
           createConsumptionUpdate(builder, device, consumptionType, quantity, measure);
     }
 
@@ -1375,15 +1403,15 @@ public class CEAAgent extends JPSAgent {
      * @param quantity om:quantity iri
      * @param measure om:measure iri
      */
-    public void createPVPanelSupplyUpdate(UpdateBuilder builder, String PVPanels, String quantity, String measure){
-        builder.addInsert("?graph", NodeFactory.createURI(PVPanels), "thinkhome:producesEnergy", NodeFactory.createURI(quantity))
-                .addInsert("?graph", NodeFactory.createURI(quantity), "rdf:type", "ontoubemmp:ElectricitySupply")
-                .addInsert("?graph", NodeFactory.createURI(quantity), "rdf:type", "owl:NamedIndividual")
-                .addInsert("?graph", NodeFactory.createURI(quantity), "om:hasDimension", "om:energy-Dimension")
-                .addInsert("?graph", NodeFactory.createURI(quantity), "om:hasValue", NodeFactory.createURI(measure))
-                .addInsert("?graph", NodeFactory.createURI(measure), "rdf:type", "om:Measure")
-                .addInsert("?graph", NodeFactory.createURI(measure), "rdf:type", "owl:NamedIndividual")
-                .addInsert("?graph", NodeFactory.createURI(measure), "om:hasUnit", "om:kilowattHour");
+    public void createPVPanelSupplyUpdate(WhereBuilder builder, String PVPanels, String quantity, String measure){
+        builder.addWhere(NodeFactory.createURI(PVPanels), "thinkhome:producesEnergy", NodeFactory.createURI(quantity))
+                .addWhere(NodeFactory.createURI(quantity), "rdf:type", "ontoubemmp:ElectricitySupply")
+                .addWhere(NodeFactory.createURI(quantity), "rdf:type", "owl:NamedIndividual")
+                .addWhere(NodeFactory.createURI(quantity), "om:hasDimension", "om:energy-Dimension")
+                .addWhere(NodeFactory.createURI(quantity), "om:hasValue", NodeFactory.createURI(measure))
+                .addWhere(NodeFactory.createURI(measure), "rdf:type", "om:Measure")
+                .addWhere(NodeFactory.createURI(measure), "rdf:type", "owl:NamedIndividual")
+                .addWhere(NodeFactory.createURI(measure), "om:hasUnit", "om:kilowattHour");
     }
 
     /**
@@ -1396,19 +1424,19 @@ public class CEAAgent extends JPSAgent {
      * @param measure om:measure iri
      * @param value numerical value
      */
-    public void createPVPanelAreaUpdate(UpdateBuilder builder, String building, String PVPanels, String panelType, String quantity, String measure, String value){
-        builder.addInsert("?graph", NodeFactory.createURI(building), "ontoubemmp:hasDevice", NodeFactory.createURI(PVPanels))
-                .addInsert("?graph", NodeFactory.createURI(PVPanels), "rdf:type", panelType)
-                .addInsert("?graph", NodeFactory.createURI(PVPanels), "rdf:type", "owl:NamedIndividual")
-                .addInsert("?graph", NodeFactory.createURI(PVPanels), "ontoubemmp:hasArea", NodeFactory.createURI(quantity))
-                .addInsert("?graph", NodeFactory.createURI(quantity), "rdf:type", "ontoubemmp:PVPanelsArea")
-                .addInsert("?graph", NodeFactory.createURI(quantity), "rdf:type", "owl:NamedIndividual")
-                .addInsert("?graph", NodeFactory.createURI(quantity), "om:hasDimension", "om:area-Dimension")
-                .addInsert("?graph", NodeFactory.createURI(quantity), "om:hasValue", NodeFactory.createURI(measure))
-                .addInsert("?graph", NodeFactory.createURI(measure), "rdf:type", "owl:NamedIndividual")
-                .addInsert("?graph", NodeFactory.createURI(measure), "rdf:type", "om:Measure")
-                .addInsert("?graph", NodeFactory.createURI(measure), "om:hasNumericalValue", value)
-                .addInsert("?graph", NodeFactory.createURI(measure), "om:hasUnit", "om:squareMetre");
+    public void createPVPanelAreaUpdate(WhereBuilder builder, String building, String PVPanels, String panelType, String quantity, String measure, String value){
+        builder.addWhere(NodeFactory.createURI(building), "ontoubemmp:hasDevice", NodeFactory.createURI(PVPanels))
+                .addWhere(NodeFactory.createURI(PVPanels), "rdf:type", panelType)
+                .addWhere(NodeFactory.createURI(PVPanels), "rdf:type", "owl:NamedIndividual")
+                .addWhere(NodeFactory.createURI(PVPanels), "ontoubemmp:hasArea", NodeFactory.createURI(quantity))
+                .addWhere(NodeFactory.createURI(quantity), "rdf:type", "ontoubemmp:PVPanelsArea")
+                .addWhere(NodeFactory.createURI(quantity), "rdf:type", "owl:NamedIndividual")
+                .addWhere(NodeFactory.createURI(quantity), "om:hasDimension", "om:area-Dimension")
+                .addWhere(NodeFactory.createURI(quantity), "om:hasValue", NodeFactory.createURI(measure))
+                .addWhere(NodeFactory.createURI(measure), "rdf:type", "owl:NamedIndividual")
+                .addWhere(NodeFactory.createURI(measure), "rdf:type", "om:Measure")
+                .addWhere(NodeFactory.createURI(measure), "om:hasNumericalValue", value)
+                .addWhere(NodeFactory.createURI(measure), "om:hasUnit", "om:squareMetre");
     }
 
     /**
@@ -1421,10 +1449,10 @@ public class CEAAgent extends JPSAgent {
      * @param scalarIris map of iris in kg to data types
      * @param route route to pass to access agent
      */
-    public void initialiseData(String uriString, Integer uriCounter, LinkedHashMap<String, List<String>> scalars, String buildingUri, LinkedHashMap<String,String> tsIris, LinkedHashMap<String,String> scalarIris, String route){
+    public void initialiseData(String uriString, Integer uriCounter, LinkedHashMap<String, List<String>> scalars, String buildingUri, LinkedHashMap<String,String> tsIris, LinkedHashMap<String,String> scalarIris, String route, String graph){
 
-        UpdateBuilder ub =
-                new UpdateBuilder()
+        WhereBuilder wb =
+                new WhereBuilder()
                         .addPrefix("ontoubemmp", ontoUBEMMPUri)
                         .addPrefix("rdf", rdfUri)
                         .addPrefix("owl", owlUri)
@@ -1433,72 +1461,106 @@ public class CEAAgent extends JPSAgent {
                         .addPrefix("thinkhome", thinkhomeUri)
                         .addPrefix("purlInf", purlInfrastructureUri);
 
-        String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
+        UpdateBuilder ub = new UpdateBuilder();
+        String prefix = getNamespace(uriString);
 
         //Device uris
-        String heatingUri = outputGraphUri + "HeatingSystem_" + UUID.randomUUID() + "/";
-        String coolingUri = outputGraphUri + "CoolingSystem_" + UUID.randomUUID() + "/";
-        String pvRoofPanelsUri = outputGraphUri + "PVRoofPanels_" + UUID.randomUUID() + "/";
-        String pvWallSouthPanelsUri = outputGraphUri + "PVWallSouthPanels_" + UUID.randomUUID() + "/";
-        String pvWallNorthPanelsUri = outputGraphUri + "PVWallNorthPanels_" + UUID.randomUUID() + "/";
-        String pvWallEastPanelsUri = outputGraphUri + "PVWallEastPanels_" + UUID.randomUUID() + "/";
-        String pvWallWestPanelsUri = outputGraphUri + "PVWallWestPanels_" + UUID.randomUUID() + "/";
+        String heatingUri = "HeatingSystem_" + UUID.randomUUID() + "/";
+        String coolingUri = "CoolingSystem_" + UUID.randomUUID() + "/";
+        String pvRoofPanelsUri = "PVRoofPanels_" + UUID.randomUUID() + "/";
+        String pvWallSouthPanelsUri = "PVWallSouthPanels_" + UUID.randomUUID() + "/";
+        String pvWallNorthPanelsUri = "PVWallNorthPanels_" + UUID.randomUUID() + "/";
+        String pvWallEastPanelsUri = "PVWallEastPanels_" + UUID.randomUUID() + "/";
+        String pvWallWestPanelsUri = "PVWallWestPanels_" + UUID.randomUUID() + "/";
+
+        if (!graph.isEmpty()){
+            heatingUri = graph + heatingUri;
+            coolingUri = graph + coolingUri;
+            pvRoofPanelsUri = graph + pvRoofPanelsUri;
+            pvWallSouthPanelsUri = graph + pvWallSouthPanelsUri;
+            pvWallNorthPanelsUri = graph + pvWallNorthPanelsUri;
+            pvWallEastPanelsUri = graph + pvWallEastPanelsUri;
+            pvWallWestPanelsUri = graph + pvWallWestPanelsUri;
+        }
+        else{
+            heatingUri = prefix + heatingUri;
+            coolingUri = prefix + coolingUri;
+            pvRoofPanelsUri = prefix + pvRoofPanelsUri;
+            pvWallSouthPanelsUri = prefix + pvWallSouthPanelsUri;
+            pvWallNorthPanelsUri = prefix + pvWallNorthPanelsUri;
+            pvWallEastPanelsUri = prefix + pvWallEastPanelsUri;
+            pvWallWestPanelsUri = prefix + pvWallWestPanelsUri;
+        }
 
         // save om:measure uris for scalars and create om:quantity uris for scalars and time series
         // (time series om:measure iris already created in createTimeSeries)
         for (String measurement: SCALARS) {
-            String measure = outputGraphUri + measurement+"Value_" + UUID.randomUUID() + "/";
+            String measure = measurement+"Value_" + UUID.randomUUID() + "/";
+            String quantity = measurement+"Quantity_" + UUID.randomUUID() + "/";
+            if (!graph.isEmpty()){
+                measure = graph + measure;
+                quantity = graph + quantity;
+            }
+            else{
+                measure = prefix + measure;
+                quantity = prefix + quantity;
+            }
             scalarIris.put(measurement, measure);
-            String quantity = outputGraphUri + measurement+"Quantity_" + UUID.randomUUID() + "/";
+
             switch(measurement){
                 case(KEY_PV_ROOF_AREA):
-                    createPVPanelAreaUpdate(ub, buildingUri, pvRoofPanelsUri, "ontoubemmp:RoofPVPanels", quantity, measure, scalars.get(KEY_PV_ROOF_AREA).get(uriCounter));
+                    createPVPanelAreaUpdate(wb, buildingUri, pvRoofPanelsUri, "ontoubemmp:RoofPVPanels", quantity, measure, scalars.get(KEY_PV_ROOF_AREA).get(uriCounter));
                     break;
                 case(KEY_PV_WALL_SOUTH_AREA):
-                    createPVPanelAreaUpdate(ub, buildingUri, pvWallSouthPanelsUri, "ontoubemmp:SouthWallPVPanels", quantity, measure, scalars.get(KEY_PV_WALL_SOUTH_AREA).get(uriCounter));
+                    createPVPanelAreaUpdate(wb, buildingUri, pvWallSouthPanelsUri, "ontoubemmp:SouthWallPVPanels", quantity, measure, scalars.get(KEY_PV_WALL_SOUTH_AREA).get(uriCounter));
                     break;
                 case(KEY_PV_WALL_NORTH_AREA):
-                    createPVPanelAreaUpdate(ub, buildingUri, pvWallNorthPanelsUri, "ontoubemmp:NorthWallPVPanels", quantity, measure, scalars.get(KEY_PV_WALL_NORTH_AREA).get(uriCounter));
+                    createPVPanelAreaUpdate(wb, buildingUri, pvWallNorthPanelsUri, "ontoubemmp:NorthWallPVPanels", quantity, measure, scalars.get(KEY_PV_WALL_NORTH_AREA).get(uriCounter));
                     break;
                 case(KEY_PV_WALL_EAST_AREA):
-                    createPVPanelAreaUpdate(ub, buildingUri, pvWallEastPanelsUri, "ontoubemmp:EastWallPVPanels", quantity, measure, scalars.get(KEY_PV_WALL_EAST_AREA).get(uriCounter));
+                    createPVPanelAreaUpdate(wb, buildingUri, pvWallEastPanelsUri, "ontoubemmp:EastWallPVPanels", quantity, measure, scalars.get(KEY_PV_WALL_EAST_AREA).get(uriCounter));
                     break;
                 case(KEY_PV_WALL_WEST_AREA):
-                    createPVPanelAreaUpdate(ub, buildingUri, pvWallWestPanelsUri, "ontoubemmp:WestWallPVPanels", quantity, measure, scalars.get(KEY_PV_WALL_WEST_AREA).get(uriCounter));
+                    createPVPanelAreaUpdate(wb, buildingUri, pvWallWestPanelsUri, "ontoubemmp:WestWallPVPanels", quantity, measure, scalars.get(KEY_PV_WALL_WEST_AREA).get(uriCounter));
                     break;
             }
         }
 
         for (String measurement: TIME_SERIES) {
-            String quantity = outputGraphUri + measurement+"Quantity_" + UUID.randomUUID() + "/";
+            String quantity = measurement+"Quantity_" + UUID.randomUUID() + "/";
             if (measurement.equals(KEY_GRID_CONSUMPTION) || measurement.equals(KEY_ELECTRICITY_CONSUMPTION)) {
-                createConsumptionUpdate(ub, buildingUri, "ontoubemmp:" + measurement, quantity, tsIris.get(measurement));
+                createConsumptionUpdate(wb, buildingUri, "ontoubemmp:" + measurement, quantity, tsIris.get(measurement));
             }
             else if (measurement.equals(KEY_COOLING_CONSUMPTION)) {
-                createDeviceConsumptionUpdate(ub, buildingUri, coolingUri, "ontoubemmp:CoolingSystem","ontoubemmp:ThermalConsumption" , quantity, tsIris.get(measurement));
+                createDeviceConsumptionUpdate(wb, buildingUri, coolingUri, "ontoubemmp:CoolingSystem","ontoubemmp:ThermalConsumption" , quantity, tsIris.get(measurement));
             }
             else if (measurement.equals(KEY_HEATING_CONSUMPTION)) {
-                createDeviceConsumptionUpdate(ub, buildingUri, heatingUri,"purlEnaeq:HeatingSystem","ontoubemmp:ThermalConsumption" , quantity, tsIris.get(measurement));
+                createDeviceConsumptionUpdate(wb, buildingUri, heatingUri,"purlEnaeq:HeatingSystem","ontoubemmp:ThermalConsumption" , quantity, tsIris.get(measurement));
             }
             else if (measurement.equals(KEY_PV_ROOF_SUPPLY)){
-                createPVPanelSupplyUpdate(ub, pvRoofPanelsUri, quantity, tsIris.get(measurement));
+                createPVPanelSupplyUpdate(wb, pvRoofPanelsUri, quantity, tsIris.get(measurement));
             }
             else if (measurement.equals(KEY_PV_WALL_SOUTH_SUPPLY)){
-                createPVPanelSupplyUpdate(ub, pvWallSouthPanelsUri, quantity, tsIris.get(measurement));
+                createPVPanelSupplyUpdate(wb, pvWallSouthPanelsUri, quantity, tsIris.get(measurement));
             }
             else if (measurement.equals(KEY_PV_WALL_NORTH_SUPPLY)){
-                createPVPanelSupplyUpdate(ub, pvWallNorthPanelsUri, quantity, tsIris.get(measurement));
+                createPVPanelSupplyUpdate(wb, pvWallNorthPanelsUri, quantity, tsIris.get(measurement));
             }
             else if (measurement.equals(KEY_PV_WALL_EAST_SUPPLY)){
-                createPVPanelSupplyUpdate(ub, pvWallEastPanelsUri, quantity, tsIris.get(measurement));
+                createPVPanelSupplyUpdate(wb, pvWallEastPanelsUri, quantity, tsIris.get(measurement));
             }
             else if (measurement.equals(KEY_PV_WALL_WEST_SUPPLY)){
-                createPVPanelSupplyUpdate(ub, pvWallWestPanelsUri, quantity, tsIris.get(measurement));
+                createPVPanelSupplyUpdate(wb, pvWallWestPanelsUri, quantity, tsIris.get(measurement));
             }
 
         }
 
-        ub.setVar(Var.alloc("graph"), NodeFactory.createURI(outputGraphUri));
+        if (graph.isEmpty()){
+            ub.addInsert(wb);
+        }
+        else{
+            ub.addInsert(NodeFactory.createURI(graph), wb);
+        }
 
         UpdateRequest ur = ub.buildRequest();
 
@@ -1513,17 +1575,26 @@ public class CEAAgent extends JPSAgent {
      * @param route route to pass to access agent
      * @param uriCounter keep track of uris
      */
-    public void updateScalars(String uriString, String route, LinkedHashMap<String,String> scalarIris, LinkedHashMap<String, List<String>> scalars, Integer uriCounter) {
+    public void updateScalars(String uriString, String route, LinkedHashMap<String,String> scalarIris, LinkedHashMap<String, List<String>> scalars, Integer uriCounter, String graph) {
 
         for (String measurement: SCALARS) {
-            UpdateBuilder ub1 = new UpdateBuilder().addPrefix("om", unitOntologyUri)
-                    .addDelete("?graph", NodeFactory.createURI(scalarIris.get(measurement)), "om:hasNumericalValue", "?s")
+            WhereBuilder wb1 = new WhereBuilder().addPrefix("om", unitOntologyUri)
                     .addWhere(NodeFactory.createURI(scalarIris.get(measurement)), "om:hasNumericalValue", "?s");
-            ub1.setVar(Var.alloc("graph"), NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)));
+            UpdateBuilder ub1 = new UpdateBuilder().addPrefix("om", unitOntologyUri)
+                    .addWhere(wb1);
 
-            UpdateBuilder ub2 = new UpdateBuilder().addPrefix("om", unitOntologyUri)
-                    .addInsert("?graph", NodeFactory.createURI(scalarIris.get(measurement)), "om:hasNumericalValue", scalars.get(measurement).get(uriCounter));
-            ub2.setVar(Var.alloc("graph"), NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)));
+            WhereBuilder wb2 = new WhereBuilder().addPrefix("om", unitOntologyUri)
+                    .addWhere(NodeFactory.createURI(scalarIris.get(measurement)), "om:hasNumericalValue", scalars.get(measurement).get(uriCounter));
+            UpdateBuilder ub2 = new UpdateBuilder().addPrefix("om", unitOntologyUri);
+
+            if (!graph.isEmpty()){
+                ub1.addDelete(NodeFactory.createURI(graph), wb1);
+                ub2.addInsert(NodeFactory.createURI(graph), wb2);
+            }
+            else{
+                ub1.addDelete(wb1);
+                ub2.addInsert(wb2);
+            }
 
             UpdateRequest ur1 = ub1.buildRequest();
             UpdateRequest ur2 = ub2.buildRequest();
