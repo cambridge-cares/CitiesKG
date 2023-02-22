@@ -168,7 +168,7 @@ public class CEAAgent extends JPSAgent {
                             building = checkBuildingInitialised(uri, geometryRoute);
                             building = initialiseBuilding(uri, building, ceaRoute, namedGraph);
                         }
-                        if(!checkDataInitialised(uri, building, tsIris, scalarIris, ceaRoute)) {
+                        if(!checkDataInitialised(uri, building, tsIris, scalarIris, ceaRoute, namedGraph)) {
                             createTimeSeries(uri,tsIris);
                             initialiseData(uri, i, scalars, building, tsIris, scalarIris, ceaRoute, namedGraph);
                         }
@@ -193,11 +193,11 @@ public class CEAAgent extends JPSAgent {
                         // Will not be necessary if namespace is passed in request params
                         if(i==0) {
                             geometryRoute = requestParams.has(KEY_GEOMETRY) ? requestParams.getString(KEY_GEOMETRY) : getRoute(uri);
-                            usageRoute = requestParams.has(KEY_USAGE) ? requestParams.getString(KEY_USAGE) : geometryRoute;
+                            usageRoute = requestParams.has(KEY_USAGE) ? requestParams.getString(KEY_USAGE) : getRoute(uri);
                             if (!requestParams.has(KEY_CEA)){
                                 // if ci
                                 namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : getGraph(uri,ENERGY_PROFILE);
-                                ceaRoute = geometryRoute;
+                                ceaRoute = getRoute(uri);
                             }
                             else{
                                 namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : "";
@@ -239,12 +239,13 @@ public class CEAAgent extends JPSAgent {
 
                     // Only set route once - assuming all iris passed in same namespace
                     if(i==0) {
-                        ceaRoute = requestParams.has(KEY_CEA) ? requestParams.getString(KEY_CEA) : getRoute(uri);
                         if (!requestParams.has(KEY_CEA)){
                             namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : getGraph(uri, ENERGY_PROFILE);
+                            ceaRoute = getRoute(uri);
                         }
                         else{
                             namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : "";
+                            ceaRoute = requestParams.getString(KEY_CEA);
                         }
                     }
                     String building = checkBuildingInitialised(uri, ceaRoute);
@@ -255,7 +256,7 @@ public class CEAAgent extends JPSAgent {
                     List<String> allMeasures = new ArrayList<>();
                     Stream.of(TIME_SERIES, SCALARS).forEach(allMeasures::addAll);
                     for (String measurement: allMeasures) {
-                        ArrayList<String> result = getDataIRI(uri, building, measurement, ceaRoute);
+                        ArrayList<String> result = getDataIRI(uri, building, measurement, ceaRoute, namedGraph);
                         if (!result.isEmpty()) {
                             String value;
                             if (TIME_SERIES.contains(measurement)) {
@@ -1152,7 +1153,7 @@ public class CEAAgent extends JPSAgent {
      * @param route route to pass to access agent
      * @return list of iris
      */
-    public ArrayList<String> getDataIRI(String uriString, String building, String value, String route) {
+    public ArrayList<String> getDataIRI(String uriString, String building, String value, String route, String graph) {
         ArrayList<String> result = new ArrayList<>();
 
         SelectBuilder sb = new SelectBuilder();
@@ -1218,8 +1219,15 @@ public class CEAAgent extends JPSAgent {
         }
 
         sb.addVar("?measure")
-                .addVar("?unit")
-                .addGraph(NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)), wb);
+                .addVar("?unit");
+
+        if (!graph.isEmpty()){
+            sb.addGraph(NodeFactory.createURI(graph), wb);
+        }
+        else{
+            sb.addWhere(wb);
+        }
+
 
         sb.setVar( Var.alloc( "building" ), NodeFactory.createURI(building));
 
@@ -1341,12 +1349,12 @@ public class CEAAgent extends JPSAgent {
      * @param route route to pass to access agent
      * @return if time series are initialised
      */
-    public Boolean checkDataInitialised(String uriString, String building, LinkedHashMap<String,String> tsIris, LinkedHashMap<String,String> scalarIris, String route){
+    public Boolean checkDataInitialised(String uriString, String building, LinkedHashMap<String,String> tsIris, LinkedHashMap<String,String> scalarIris, String route, String graph){
         ArrayList<String> result;
         List<String> allMeasures = new ArrayList<>();
         Stream.of(TIME_SERIES, SCALARS).forEach(allMeasures::addAll);
         for (String measurement: allMeasures) {
-            result = getDataIRI(uriString, building, measurement, route);
+            result = getDataIRI(uriString, building, measurement, route, graph);
             if (!result.isEmpty()) {
                 if (TIME_SERIES.contains(measurement)) {
                     tsIris.put(measurement, result.get(0));
