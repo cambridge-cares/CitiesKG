@@ -58,7 +58,7 @@ public class CEAAgentTest {
         CEAAgent agent = new CEAAgent();
         ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
 
-        assertEquals(62, agent.getClass().getDeclaredFields().length);
+        assertEquals(63, agent.getClass().getDeclaredFields().length);
 
         Field URI_ACTION;
         Field URI_UPDATE;
@@ -109,6 +109,11 @@ public class CEAAgentTest {
         Field accessAgentRoutes;
         Field requestUrl;
         Field targetUrl;
+        Field geometryRoute;
+        Field usageRoute;
+        Field ceaRoute;
+        Field namedGraph;
+        Field CEA_OUTPUTS;
 
         try {
             URI_ACTION = agent.getClass().getDeclaredField("URI_ACTION");
@@ -191,6 +196,20 @@ public class CEAAgentTest {
             storeClient = agent.getClass().getDeclaredField("storeClient");
             storeClient.setAccessible(true);
             assertNull(storeClient.get(agent));
+            geometryRoute = agent.getClass().getDeclaredField("geometryRoute");
+            geometryRoute.setAccessible(true);
+            assertTrue(geometryRoute.get(agent) == null);
+            usageRoute = agent.getClass().getDeclaredField("usageRoute");
+            usageRoute.setAccessible(true);
+            assertTrue(usageRoute.get(agent) == null);
+            ceaRoute = agent.getClass().getDeclaredField("ceaRoute");
+            ceaRoute.setAccessible(true);
+            assertTrue(ceaRoute.get(agent) == null);
+            namedGraph = agent.getClass().getDeclaredField("namedGraph");
+            namedGraph.setAccessible(true);
+            assertTrue(namedGraph.get(agent) == null);
+            CEA_OUTPUTS = agent.getClass().getDeclaredField("CEA_OUTPUTS");
+            assertEquals(CEA_OUTPUTS.get(agent), "ceaOutputs");
 
             // Test readConfig()
             ocgmlUri = agent.getClass().getDeclaredField("ocgmlUri");
@@ -406,7 +425,7 @@ public class CEAAgentTest {
                     .thenReturn(expected_building).thenReturn(expected_value);
 
             returnParams = (JSONObject) processRequestParameters.invoke(agent, requestParams);
-            String result = returnParams.get(CEAAgent.ENERGY_PROFILE).toString();
+            String result = returnParams.get(CEAAgent.CEA_OUTPUTS).toString();
             for (String scalar : scalar_strings) {
                 String expected = "\"" + scalar + "\"" + ":\"testScalar testUnit\"";
                 assertTrue(result.contains(expected));
@@ -1382,7 +1401,7 @@ public class CEAAgentTest {
         JSONArray expected = new JSONArray().put(new JSONObject().put(value, test_value));
         JSONArray expectedBlank = new JSONArray();
 
-        Method getNumericalValue = agent.getClass().getDeclaredMethod("getNumericalValue", String.class, String.class, String.class);
+        Method getNumericalValue = agent.getClass().getDeclaredMethod("getNumericalValue", String.class, String.class, String.class, String.class);
         assertNotNull(getNumericalValue);
         getNumericalValue.setAccessible(true);
 
@@ -1391,13 +1410,13 @@ public class CEAAgentTest {
             //test with mocked AccessAgentCaller when it returns data
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
                     .thenReturn(expected);
-            String result = (String) getNumericalValue.invoke(agent, uriString, test_measure, route);
+            String result = (String) getNumericalValue.invoke(agent, uriString, test_measure, route, "");
             assertTrue(result.contains(test_value));
 
             //test with mocked AccessAgentCaller when there is nothing returned
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
                     .thenReturn((expectedBlank));
-            result = (String) getNumericalValue.invoke(agent, uriString, test_measure, route);
+            result = (String) getNumericalValue.invoke(agent, uriString, test_measure, route, "");
 
             assertTrue(result.isEmpty());
         }
