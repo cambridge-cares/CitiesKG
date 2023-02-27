@@ -1,7 +1,6 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
 import org.apache.jena.arq.querybuilder.handlers.WhereHandler;
-import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.syntax.ElementGroup;
@@ -78,11 +77,12 @@ public class CEAAgent extends JPSAgent {
     public static final String KEY_PV_WALL_EAST_AREA = "PVWallEastArea";
     public static final String KEY_PV_WALL_WEST_AREA = "PVWallWestArea";
     public static final String KEY_PV_ROOF_SUPPLY= "PVRoofSupply";
-    public static final String KEY_PV_WALL_NORTH_SUPPLY= "PVWallNorthSupply";
-    public static final String KEY_PV_WALL_SOUTH_SUPPLY= "PVWallSouthSupply";
-    public static final String KEY_PV_WALL_EAST_SUPPLY= "PVWallEastSupply";
-    public static final String KEY_PV_WALL_WEST_SUPPLY= "PVWallWestSupply";
-    public static final String KEY_TIMES= "times";
+    public static final String KEY_PV_WALL_NORTH_SUPPLY = "PVWallNorthSupply";
+    public static final String KEY_PV_WALL_SOUTH_SUPPLY = "PVWallSouthSupply";
+    public static final String KEY_PV_WALL_EAST_SUPPLY = "PVWallEastSupply";
+    public static final String KEY_PV_WALL_WEST_SUPPLY = "PVWallWestSupply";
+    public static final String KEY_TIMES = "times";
+    public static final String CEA_OUTPUTS = "ceaOutputs";
     public String customDataType = "<http://localhost/blazegraph/literals/POLYGON-3-15>";
     public String customField = "X0#Y0#Z0#X1#Y1#Z1#X2#Y2#Z2#X3#Y3#Z3#X4#Y4#Z4";
 
@@ -206,7 +206,14 @@ public class CEAAgent extends JPSAgent {
                             else{
                                 ceaRoute = requestParams.getString(KEY_CEA);
                                 // if KEY_CEA is specified, assume no graph if KEY_GRAPH is not specified in requestParams
-                                namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : "";
+                                if (requestParams.has(KEY_GRAPH)){
+                                    namedGraph =  requestParams.getString(KEY_GRAPH);
+                                    // ensures that graph ends with /
+                                    if (!namedGraph.endsWith("/")) {namedGraph = namedGraph + "/";}
+                                }
+                                else{
+                                    namedGraph = "";
+                                }
                             }
                         }
                         uriStringArray.add(uri);
@@ -253,7 +260,14 @@ public class CEAAgent extends JPSAgent {
                         else{
                             ceaRoute = requestParams.getString(KEY_CEA);
                             // if KEY_CEA is specified, assume no graph if KEY_GRAPH is not specified in requestParams
-                            namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : "";
+                            if (requestParams.has(KEY_GRAPH)){
+                                namedGraph =  requestParams.getString(KEY_GRAPH);
+                                // ensures that graph ends with /
+                                if (!namedGraph.endsWith("/")) {namedGraph = namedGraph + "/";}
+                            }
+                            else{
+                                namedGraph = "";
+                            }
                         }
                     }
                     String building = checkBuildingInitialised(uri, ceaRoute);
@@ -271,7 +285,7 @@ public class CEAAgent extends JPSAgent {
                                 value = calculateAnnual(retrieveData(result.get(0)), result.get(0));
                                 measurement = "Annual "+ measurement;
                             } else {
-                                value = getNumericalValue(uri, result.get(0), ceaRoute);
+                                value = getNumericalValue(uri, result.get(0), ceaRoute, namedGraph);
                             }
                             // Return non-zero values
                             if(!(value.equals("0") || value.equals("0.0"))){
@@ -280,7 +294,7 @@ public class CEAAgent extends JPSAgent {
                             }
                         }
                     }
-                    requestParams.append(ENERGY_PROFILE, data);
+                    requestParams.append(CEA_OUTPUTS, data);
                 }
             }
 
@@ -1159,6 +1173,7 @@ public class CEAAgent extends JPSAgent {
      * @param building uri of building in energyprofile graph
      * @param value type of data from TIME_SERIES or SCALARS
      * @param route route to pass to access agent
+     * @param graph graph name
      * @return list of iris
      */
     public ArrayList<String> getDataIRI(String uriString, String building, String value, String route, String graph) {
@@ -1254,16 +1269,23 @@ public class CEAAgent extends JPSAgent {
      * @param uriString city object id
      * @param measureUri Uri of the measurement with numerical value in KG
      * @param route route to pass to access agent
+     * @param graph graph name
      * @return list of iris
      */
-    public String getNumericalValue(String uriString, String measureUri, String route) {
+    public String getNumericalValue(String uriString, String measureUri, String route, String graph) {
         String result = "";
 
         WhereBuilder wb = new WhereBuilder().addPrefix("om", unitOntologyUri)
             .addWhere("?measure", "om:hasNumericalValue", "?value");
 
-        SelectBuilder sb = new SelectBuilder().addVar("?value")
-                .addGraph(NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)), wb);
+        SelectBuilder sb = new SelectBuilder().addVar("?value");
+
+        if (!graph.isEmpty()){
+            sb.addGraph(NodeFactory.createURI(graph), wb);
+        }
+        else{
+            sb.addWhere(wb);
+        }
 
         sb.setVar( Var.alloc( "measure" ), NodeFactory.createURI(measureUri));
 
@@ -1308,6 +1330,7 @@ public class CEAAgent extends JPSAgent {
      * @param uriString city object id
      * @param buildingUri building IRI from other endpoints if exist
      * @param route route to pass to access agent
+     * @param graph graph name
      * @return building
      */
     public String initialiseBuilding(String uriString, String buildingUri, String route, String graph){
@@ -1355,6 +1378,7 @@ public class CEAAgent extends JPSAgent {
      * @param tsIris map of time series iris to data types
      * @param scalarIris map of iris in kg to data type
      * @param route route to pass to access agent
+     * @param graph graph name
      * @return if time series are initialised
      */
     public Boolean checkDataInitialised(String uriString, String building, LinkedHashMap<String,String> tsIris, LinkedHashMap<String,String> scalarIris, String route, String graph){
@@ -1464,6 +1488,7 @@ public class CEAAgent extends JPSAgent {
      * @param tsIris map of time series iris to data types
      * @param scalarIris map of iris in kg to data types
      * @param route route to pass to access agent
+     * @param graph graph name
      */
     public void initialiseData(String uriString, Integer uriCounter, LinkedHashMap<String, List<String>> scalars, String buildingUri, LinkedHashMap<String,String> tsIris, LinkedHashMap<String,String> scalarIris, String route, String graph){
 
@@ -1544,6 +1569,7 @@ public class CEAAgent extends JPSAgent {
 
         for (String measurement: TIME_SERIES) {
             String quantity = measurement+"Quantity_" + UUID.randomUUID() + "/";
+            quantity = !graph.isEmpty() ? graph + quantity : prefix + quantity;
             if (measurement.equals(KEY_GRID_CONSUMPTION) || measurement.equals(KEY_ELECTRICITY_CONSUMPTION)) {
                 createConsumptionUpdate(wb, buildingUri, "ontoubemmp:" + measurement, quantity, tsIris.get(measurement));
             }
@@ -1590,6 +1616,7 @@ public class CEAAgent extends JPSAgent {
      * @param scalarIris map of iris in kg to data types
      * @param route route to pass to access agent
      * @param uriCounter keep track of uris
+     * @param graph graph name
      */
     public void updateScalars(String uriString, String route, LinkedHashMap<String,String> scalarIris, LinkedHashMap<String, List<String>> scalars, Integer uriCounter, String graph) {
 
