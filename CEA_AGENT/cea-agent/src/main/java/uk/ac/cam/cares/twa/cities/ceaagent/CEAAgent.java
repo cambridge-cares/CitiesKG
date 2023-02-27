@@ -192,16 +192,21 @@ public class CEAAgent extends JPSAgent {
                         // Only set route once - assuming all iris passed in same namespace
                         // Will not be necessary if namespace is passed in request params
                         if(i==0) {
+                            // if KEY_GEOMETRY is not specified in requestParams, geometryRoute defaults to TheWorldAvatar Blazegraph
                             geometryRoute = requestParams.has(KEY_GEOMETRY) ? requestParams.getString(KEY_GEOMETRY) : getRoute(uri);
+                            // if KEY_USAGE is not specified in requestParams, geometryRoute defaults to TheWorldAvatar Blazegraph
                             usageRoute = requestParams.has(KEY_USAGE) ? requestParams.getString(KEY_USAGE) : getRoute(uri);
                             if (!requestParams.has(KEY_CEA)){
-                                // if ci
-                                namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : getGraph(uri,ENERGY_PROFILE);
+                                // if KEY_CEA is not specified in requestParams, set ceaRoute to TheWorldAvatar Blazegraph
                                 ceaRoute = getRoute(uri);
+                                // default graph in TheWorldAvatar Blazegraph is energyprofile if no KEY_GRAPH specified in requestParams
+                                namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : getGraph(uri,ENERGY_PROFILE);
+
                             }
                             else{
-                                namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : "";
                                 ceaRoute = requestParams.getString(KEY_CEA);
+                                // if KEY_CEA is specified, assume no graph if KEY_GRAPH is not specified in requestParams
+                                namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : "";
                             }
                         }
                         uriStringArray.add(uri);
@@ -240,12 +245,15 @@ public class CEAAgent extends JPSAgent {
                     // Only set route once - assuming all iris passed in same namespace
                     if(i==0) {
                         if (!requestParams.has(KEY_CEA)){
-                            namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : getGraph(uri, ENERGY_PROFILE);
+                            // if KEY_CEA is not specified in requestParams, set ceaRoute to TheWorldAvatar Blazegraph
                             ceaRoute = getRoute(uri);
+                            // default graph in TheWorldAvatar Blazegraph is energyprofile if no KEY_GRAPH specified in requestParams
+                            namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : getGraph(uri,ENERGY_PROFILE);
                         }
                         else{
-                            namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : "";
                             ceaRoute = requestParams.getString(KEY_CEA);
+                            // if KEY_CEA is specified, assume no graph if KEY_GRAPH is not specified in requestParams
+                            namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : "";
                         }
                     }
                     String building = checkBuildingInitialised(uri, ceaRoute);
