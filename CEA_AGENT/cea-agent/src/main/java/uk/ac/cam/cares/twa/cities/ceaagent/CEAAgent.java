@@ -169,7 +169,7 @@ public class CEAAgent extends JPSAgent {
                             building = initialiseBuilding(uri, building, ceaRoute, namedGraph);
                         }
                         if(!checkDataInitialised(uri, building, tsIris, scalarIris, ceaRoute, namedGraph)) {
-                            createTimeSeries(uri,tsIris);
+                            createTimeSeries(uri, tsIris, namedGraph);
                             initialiseData(uri, i, scalars, building, tsIris, scalarIris, ceaRoute, namedGraph);
                         }
                         else{
@@ -493,13 +493,16 @@ public class CEAAgent extends JPSAgent {
      * @param uriString input city object id
      * @param fixedIris map containing time series iris mapped to measurement type
      */
-    private void createTimeSeries(String uriString, LinkedHashMap<String,String> fixedIris ) {
+    private void createTimeSeries(String uriString, LinkedHashMap<String,String> fixedIris, String graph ) {
         tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
+
+        String prefix = getNamespace(uriString);
 
         // Create a iri for each measurement
         List<String> iris = new ArrayList<>();
         for(String measurement: TIME_SERIES){
-            String iri = getGraph(uriString,ENERGY_PROFILE)+measurement+"_"+UUID.randomUUID()+ "/";
+            String iri = measurement+"_"+UUID.randomUUID()+ "/";
+            iri = !graph.isEmpty() ? graph + iri : prefix + iri ;
             iris.add(iri);
             fixedIris.put(measurement, iri);
         }

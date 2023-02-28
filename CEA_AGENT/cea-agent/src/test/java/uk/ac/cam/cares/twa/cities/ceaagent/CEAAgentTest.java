@@ -735,7 +735,7 @@ public class CEAAgentTest {
         try (MockedConstruction<TimeSeriesClient> mockTs = mockConstruction(TimeSeriesClient.class)) {
 
             CEAAgent agent = new CEAAgent();
-            Method createTimeSeries = agent.getClass().getDeclaredMethod("createTimeSeries", String.class, LinkedHashMap.class);
+            Method createTimeSeries = agent.getClass().getDeclaredMethod("createTimeSeries", String.class, LinkedHashMap.class, String.class);
             assertNotNull(createTimeSeries);
             createTimeSeries.setAccessible(true);
 
@@ -752,16 +752,25 @@ public class CEAAgentTest {
 
             doReturn(mockConnection).when(mockRDBClient).getConnection();
 
-            createTimeSeries.invoke(agent, testUri, fixedIris);
+            createTimeSeries.invoke(agent, testUri, fixedIris, "");
 
             Field TIME_SERIES = agent.getClass().getDeclaredField("TIME_SERIES");
             List<String> time_series_strings = (List<String>) TIME_SERIES.get(agent);
 
             // Ensure iris created correctly and time series initialised
             for (String time_series : time_series_strings) {
-                assertTrue(fixedIris.get(time_series).contains(prefix + "energyprofile/" + time_series));
+                assertTrue(fixedIris.get(time_series).contains(prefix + time_series));
             }
             verify(mockTs.constructed().get(0), times(1)).initTimeSeries(anyList(), anyList(), anyString(), any(), any(), any(), any());
+
+            String testGraph = "testGraph";
+
+            createTimeSeries.invoke(agent, testUri, fixedIris, testGraph);
+
+            // Ensure iris created correctly and time series initialised
+            for (String time_series : time_series_strings) {
+                assertTrue(fixedIris.get(time_series).contains(testGraph + time_series));
+            }
         }
     }
 
