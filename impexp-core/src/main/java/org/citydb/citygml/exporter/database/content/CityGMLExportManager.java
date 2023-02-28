@@ -393,8 +393,8 @@ public class CityGMLExportManager implements CityGMLExportHelper {
 //			success = getExporter(DBWaterBody.class).doExport((WaterBody)object, objectId, (FeatureType)objectType);
 
 			// nested feature types
-//		else if (object instanceof AbstractBoundarySurface)
-//			success = getExporter(DBThematicSurface.class).doExport((AbstractBoundarySurface)object, objectId, (FeatureType)objectType);
+		else if (object instanceof AbstractBoundarySurface)
+			success = getExporter(DBThematicSurface.class).doExport((AbstractBoundarySurface)object, objectId, (FeatureType)objectType);
 //		else if (object instanceof AbstractOpening)
 //			success = getExporter(DBOpening.class).doExport((AbstractOpening)object, objectId, (FeatureType)objectType);
 //		else if (object instanceof BuildingInstallation)
@@ -573,6 +573,12 @@ public class CityGMLExportManager implements CityGMLExportHelper {
 	}
 
 	protected void delegateToADEExporter(List<String> adeHookTables, AbstractFeature parent, long parentId, FeatureType parentType, ProjectionFilter projectionFilter) throws CityGMLExportException, SQLException {
+		// delegate export of ADE generic application properties to an ADE exporter
+		for (String adeHookTable : adeHookTables)
+			getADEExportManager(adeHookTable).exportGenericApplicationProperties(adeHookTable, parent, parentId, parentType, projectionFilter);
+	}
+
+	protected void delegateToADEExporter(List<String> adeHookTables, AbstractFeature parent, String parentId, FeatureType parentType, ProjectionFilter projectionFilter) throws CityGMLExportException, SQLException {
 		// delegate export of ADE generic application properties to an ADE exporter
 		for (String adeHookTable : adeHookTables)
 			getADEExportManager(adeHookTable).exportGenericApplicationProperties(adeHookTable, parent, parentId, parentType, projectionFilter);

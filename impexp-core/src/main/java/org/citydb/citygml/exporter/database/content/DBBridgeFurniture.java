@@ -45,6 +45,7 @@ import org.citydb.query.filter.projection.CombinedProjectionFilter;
 import org.citydb.query.filter.projection.ProjectionFilter;
 import org.citygml4j.model.citygml.bridge.BridgeFurniture;
 import org.citygml4j.model.citygml.bridge.BridgeRoom;
+import org.citygml4j.model.citygml.building.AbstractBoundarySurface;
 import org.citygml4j.model.citygml.building.AbstractBuilding;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.core.ImplicitGeometry;
@@ -239,6 +240,11 @@ public class DBBridgeFurniture extends AbstractFeatureExporter<BridgeFurniture> 
 			
 			return bridgeFurnitures;
 		}
+	}
+
+	@Override
+	protected Collection<AbstractBoundarySurface> doExport(String id, AbstractBoundarySurface root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException {
+		return null;
 	}
 
 	@Override

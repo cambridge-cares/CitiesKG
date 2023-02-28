@@ -44,6 +44,7 @@ import org.citydb.database.schema.mapping.FeatureType;
 import org.citydb.database.schema.mapping.Join;
 import org.citydb.database.schema.mapping.JoinTable;
 import org.citydb.database.schema.mapping.MappingConstants;
+import org.citygml4j.model.citygml.building.AbstractBoundarySurface;
 import org.citygml4j.model.citygml.building.AbstractBuilding;
 import org.citygml4j.model.gml.feature.AbstractFeature;
 
@@ -181,5 +182,7 @@ public abstract class AbstractFeatureExporter<T extends AbstractFeature> extends
 			ps.close();
 	}
 
-	protected abstract Collection<AbstractBuilding> doExport(String id, AbstractBuilding root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException;
+    protected abstract Collection<AbstractBoundarySurface> doExport(String id, AbstractBoundarySurface root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException;
+
+    protected abstract Collection<AbstractBuilding> doExport(String id, AbstractBuilding root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException;
 }

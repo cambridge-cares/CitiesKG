@@ -168,7 +168,7 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 			if (addressADEHookTables != null) addJoinsToADEHookTables(addressADEHookTables, address);
 		}
 
-//		thematicSurfaceExporter = exporter.getExporter(DBThematicSurface.class);
+		thematicSurfaceExporter = exporter.getExporter(DBThematicSurface.class);
 //		buildingInstallationExporter = exporter.getExporter(DBBuildingInstallation.class);
 //		roomExporter = exporter.getExporter(DBRoom.class);
 		cityObjectExporter = exporter.getExporter(DBCityObject.class);
@@ -183,6 +183,11 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 		ProjectionFilter projectionFilter = exporter.getProjectionFilter(featureType);
 		String column = projectionFilter.containsProperty("consistsOfBuildingPart", buildingModule) ? "building_root_id" : "id";
 		return !doExport(id, object, featureType, getOrCreateStatement(column)).isEmpty();
+	}
+
+	@Override
+	protected Collection<AbstractBoundarySurface> doExport(String id, AbstractBoundarySurface root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException {
+		return null;
 	}
 
 	@Override
@@ -859,6 +864,12 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 						break;
 				}
 			}
+			// bldg:boundedBy
+			if (bNode.geometry == null) {
+				for (AbstractBoundarySurface boundarySurface : thematicSurfaceExporter.doExport(building, bNode.buildingId))
+					building.addBoundedBySurface(new BoundarySurfaceProperty(boundarySurface));
+
+			}
 			// bldg:lod0FootPrint and lod0RoofEdge
 			if (footPrintId != null && projectionFilter.containsProperty("lod0FootPrint", buildingModule))  {
 				SurfaceGeometry geometry = geometryExporter.doExport(footPrintId);
@@ -951,17 +962,13 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 //					}
 //				}
 //			}
+
 			building.setLocalProperty("parent", bNode.parentId);
 			building.setLocalProperty("projection", projectionFilter);
 			buildings.put(bNode.buildingId, building);
 
 
-							// bldg:boundedBy
-//						if (projectionFilter.containsProperty("boundedBy", buildingModule)
-//								&& lodFilter.containsLodGreaterThanOrEuqalTo(2)) {
-//							for (AbstractBoundarySurface boundarySurface : thematicSurfaceExporter.doExport(building, buildingId))
-//								building.addBoundedBySurface(new BoundarySurfaceProperty(boundarySurface));
-//						}
+
 
 //						// bldg:outerBuildingInstallation and bldg:interiorBuildingInstallation
 //						if (lodFilter.containsLodGreaterThanOrEuqalTo(2)) {
@@ -1126,6 +1133,7 @@ public class DBBuilding extends AbstractFeatureExporter<AbstractBuilding> {
 
 		protected String surfaceGeometryId;
 		protected SurfaceGeometry geometry;
+		protected Boolean thematicSurface;
 
 
 	}

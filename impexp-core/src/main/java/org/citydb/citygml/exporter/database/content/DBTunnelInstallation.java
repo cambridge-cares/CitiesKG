@@ -344,6 +344,11 @@ public class DBTunnelInstallation extends AbstractFeatureExporter<AbstractCityOb
 	}
 
 	@Override
+	protected Collection<org.citygml4j.model.citygml.building.AbstractBoundarySurface> doExport(String id, org.citygml4j.model.citygml.building.AbstractBoundarySurface root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException {
+		return null;
+	}
+
+	@Override
 	protected Collection<AbstractBuilding> doExport(String id, AbstractBuilding root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException {
 		return null;
 	}

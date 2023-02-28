@@ -442,7 +442,12 @@ public class DBCityObject implements DBExporter {
 				&& (exporter.getExportConfig().getCityGMLOptions().getGMLEnvelope().getFeatureMode() == FeatureEnvelopeMode.ALL
 				|| (exporter.getExportConfig().getCityGMLOptions().getGMLEnvelope().getFeatureMode() == FeatureEnvelopeMode.TOP_LEVEL && isTopLevel)));
 		boolean getEnvelope = isFeature && ((useTiling && isTopLevel) || setEnvelope);
-		objectId = objectId.replace("building", "cityobject");
+		if (objectId.contains("building")){
+			objectId = objectId.replace("building", "cityobject");
+		}
+		if (objectId.contains("thematicsurface")){
+			objectId = objectId.replace("thematicsurface", "cityobject");
+		}
 		URL url = null;
 		try {
 			url = new URL(objectId);

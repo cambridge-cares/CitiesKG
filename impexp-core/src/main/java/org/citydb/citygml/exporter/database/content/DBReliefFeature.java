@@ -39,6 +39,7 @@ import org.citydb.sqlbuilder.schema.Table;
 import org.citydb.sqlbuilder.select.Select;
 import org.citydb.sqlbuilder.select.join.JoinFactory;
 import org.citydb.sqlbuilder.select.operator.comparison.ComparisonName;
+import org.citygml4j.model.citygml.building.AbstractBoundarySurface;
 import org.citygml4j.model.citygml.building.AbstractBuilding;
 import org.citygml4j.model.citygml.core.AbstractCityObject;
 import org.citygml4j.model.citygml.relief.AbstractReliefComponent;
@@ -371,6 +372,11 @@ public class DBReliefFeature extends AbstractFeatureExporter<ReliefFeature> {
 
 			return reliefFeatures.values();
 		}
+	}
+
+	@Override
+	protected Collection<AbstractBoundarySurface> doExport(String id, AbstractBoundarySurface root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException {
+		return null;
 	}
 
 	@Override

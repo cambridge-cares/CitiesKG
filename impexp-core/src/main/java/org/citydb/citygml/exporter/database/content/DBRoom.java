@@ -255,6 +255,11 @@ public class DBRoom extends AbstractFeatureExporter<Room> {
 	}
 
 	@Override
+	protected Collection<AbstractBoundarySurface> doExport(String id, AbstractBoundarySurface root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException {
+		return null;
+	}
+
+	@Override
 	protected Collection<AbstractBuilding> doExport(String id, AbstractBuilding root, FeatureType rootType, PreparedStatement ps) throws CityGMLExportException, SQLException {
 		return null;
 	}
