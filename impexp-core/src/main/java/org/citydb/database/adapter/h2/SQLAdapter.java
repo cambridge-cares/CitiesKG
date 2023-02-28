@@ -186,7 +186,12 @@ public class SQLAdapter extends AbstractSQLAdapter {
 		// not required for cache tables
 		return null;
 	}
-	
+
+	@Override
+	public PreparedStatement transformStatement(SQLStatement statement, Connection connection) throws SQLException {
+		return null;
+	}
+
 	@Override
 	public PredicateToken getBinarySpatialPredicate(SpatialOperatorName operator, Column targetColumn, GeometryObject geometry, boolean negate) {
 		// not required for cache tables

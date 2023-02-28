@@ -155,7 +155,9 @@ public abstract class AbstractSQLAdapter {
 		return result;
 	}
 
-	public PreparedStatement prepareStatement(SQLStatement statement, Connection connection) throws SQLException {
+    public abstract PreparedStatement transformStatement(SQLStatement statement, Connection connection) throws SQLException;
+
+    public PreparedStatement prepareStatement(SQLStatement statement, Connection connection) throws SQLException {
 		PreparedStatement preparedStatement = connection.prepareStatement(statement.toString());
 		fillPlaceHolders(statement, preparedStatement, connection);
 		

@@ -41,5 +41,6 @@ public interface ADEExportManager {
 	public void init(Connection connection, CityGMLExportHelper helper) throws CityGMLExportException, SQLException;
 	public void exportObject(ADEModelObject object, long objectId, AbstractObjectType<?> objectType, ProjectionFilter projectionFilter) throws CityGMLExportException, SQLException;
 	public void exportGenericApplicationProperties(String adeHookTable, AbstractFeature parent, long parentId, FeatureType parentType, ProjectionFilter projectionFilter) throws CityGMLExportException, SQLException;
+	public void exportGenericApplicationProperties(String adeHookTable, AbstractFeature parent, String parentId, FeatureType parentType, ProjectionFilter projectionFilter) throws CityGMLExportException, SQLException;
 	public void close() throws CityGMLExportException, SQLException;
 }

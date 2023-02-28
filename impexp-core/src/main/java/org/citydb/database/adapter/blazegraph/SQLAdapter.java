@@ -5,13 +5,8 @@ import org.citydb.config.geometry.GeometryObject;
 import org.citydb.database.adapter.*;
 import org.citydb.query.filter.selection.operator.spatial.SpatialOperatorName;
 import org.citydb.sqlbuilder.SQLStatement;
-import org.citydb.sqlbuilder.expression.PlaceHolder;
-import org.citydb.sqlbuilder.expression.StringLiteral;
 import org.citydb.sqlbuilder.schema.Column;
 import org.citydb.sqlbuilder.select.PredicateToken;
-import org.citydb.sqlbuilder.select.operator.comparison.BinaryComparisonOperator;
-import org.citydb.sqlbuilder.select.operator.comparison.ComparisonFactory;
-import org.citydb.sqlbuilder.select.operator.logical.LogicalOperationFactory;
 import org.citydb.sqlbuilder.select.projection.Function;
 
 import java.sql.Connection;
@@ -142,30 +137,30 @@ public class SQLAdapter extends AbstractSQLAdapter {
 
     @Override
     public PredicateToken getBinarySpatialPredicate(SpatialOperatorName operator, Column targetColumn, GeometryObject geometry, boolean negate) {
-        PlaceHolder<GeometryObject> placeHolder = new PlaceHolder<>(geometry);
-        StringLiteral trueLiteral = new StringLiteral("TRUE");
-
-        switch (operator) {
-            case BBOX:
-                return !negate ? new BinaryComparisonOperator(targetColumn, "&&", placeHolder) :
-                        LogicalOperationFactory.NOT(new BinaryComparisonOperator(targetColumn, "&&", placeHolder));
-            case INTERSECTS:
-                return ComparisonFactory.equalTo(new Function("ST_Intersects", targetColumn, placeHolder), trueLiteral, negate);
-            case EQUALS:
-                return ComparisonFactory.equalTo(new Function("ST_Equals", targetColumn, placeHolder), trueLiteral, negate);
-            case DISJOINT:
-                return ComparisonFactory.equalTo(new Function("ST_Disjoint", targetColumn, placeHolder), trueLiteral, negate);
-            case TOUCHES:
-                return ComparisonFactory.equalTo(new Function("ST_Touches", targetColumn, placeHolder), trueLiteral, negate);
-            case WITHIN:
-                return ComparisonFactory.equalTo(new Function("ST_Within", targetColumn, placeHolder), trueLiteral, negate);
-            case OVERLAPS:
-                return ComparisonFactory.equalTo(new Function("ST_Overlaps", targetColumn, placeHolder), trueLiteral, negate);
-            case CONTAINS:
-                return ComparisonFactory.equalTo(new Function("ST_Contains", targetColumn, placeHolder), trueLiteral, negate);
-            default:
-                break;
-        }
+//        PlaceHolder<GeometryObject> placeHolder = new PlaceHolder<>(geometry);
+//        StringLiteral trueLiteral = new StringLiteral("TRUE");
+//
+//        switch (operator) {
+//            case BBOX:
+//                return !negate ? new BinaryComparisonOperator(targetColumn, "&&", placeHolder) :
+//                        LogicalOperationFactory.NOT(new BinaryComparisonOperator(targetColumn, "&&", placeHolder));
+////            case INTERSECTS:
+////                return ComparisonFactory.equalTo(new Function("ST_Intersects", targetColumn, placeHolder), trueLiteral, negate);
+////            case EQUALS:
+////                return ComparisonFactory.equalTo(new Function("ST_Equals", targetColumn, placeHolder), trueLiteral, negate);
+////            case DISJOINT:
+////                return ComparisonFactory.equalTo(new Function("ST_Disjoint", targetColumn, placeHolder), trueLiteral, negate);
+////            case TOUCHES:
+////                return ComparisonFactory.equalTo(new Function("ST_Touches", targetColumn, placeHolder), trueLiteral, negate);
+////            case WITHIN:
+////                return ComparisonFactory.equalTo(new Function("ST_Within", targetColumn, placeHolder), trueLiteral, negate);
+////            case OVERLAPS:
+////                return ComparisonFactory.equalTo(new Function("ST_Overlaps", targetColumn, placeHolder), trueLiteral, negate);
+////            case CONTAINS:
+////                return ComparisonFactory.equalTo(new Function("ST_Contains", targetColumn, placeHolder), trueLiteral, negate);
+//            default:
+//                break;
+//        }
 
         return null;
     }
@@ -189,6 +184,12 @@ public class SQLAdapter extends AbstractSQLAdapter {
     public BlobExportAdapter getBlobExportAdapter(Connection connection, BlobType type) {
         return null;
     }
+
+    @Override
+    public PreparedStatement transformStatement(SQLStatement statement, Connection connection) throws SQLException {
+        return null;
+    }
+
 
     public PreparedStatement prepareStatement(SQLStatement statement, Connection connection) throws SQLException{
         String sparqlQuery = null;

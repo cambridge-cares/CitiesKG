@@ -201,6 +201,11 @@ public class SQLAdapter extends AbstractSQLAdapter {
     }
 
     @Override
+    public PreparedStatement transformStatement(SQLStatement statement, Connection connection) throws SQLException {
+        return null;
+    }
+
+    @Override
     public PredicateToken getBinarySpatialPredicate(SpatialOperatorName operator, Column targetColumn, GeometryObject geometry, boolean negate) {
         PlaceHolder<GeometryObject> placeHolder = new PlaceHolder<>(geometry);
         StringLiteral trueLiteral = new StringLiteral("TRUE");
