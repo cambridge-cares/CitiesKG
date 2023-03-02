@@ -1,7 +1,7 @@
 # CEA Agent
 ## Agent Description
 
-The CEA agent can be used to interact with the [City Energy Analyst (CEA)](https://www.cityenergyanalyst.com/)  and the data it produces on building energy demands and the photovoltaic potentials.
+The CEA agent can be used to interact with the [City Energy Analyst (CEA)](https://www.cityenergyanalyst.com/)  and the data it produces on building energy demands and photovoltaic potentials.
 
 The agent currently queries for building geometry, surrounding buildings geometries and building usage stored in the knowledge graph, which are passed to CEA as inputs. The energy demands and photovoltaic potentials calculated by CEA are extracted by the agent and stored on the knowledge graph.
 
@@ -120,7 +120,8 @@ The query endpoint accepts the following request parameters:
 - ```ceaEndpoint```: (optional) endpoint where the CEA triples instantiated by the agent are stored; if not specified, agent will default to setting ```ceaEndpoint``` to TheWorldAvatar Blazegraph with the namespace retrieved from the cityobject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```.
 - ```graphName```: (optional) named graph to which the CEA triples belong to. In the scenario where ```ceaEndpoint``` is not specified, if ```graphName``` is not specified, the default graph is ```http://www.theworldavatar.com:83/citieskg/namespace/{namespace}/sparql/energyprofile/```, where {namespace} is a placeholder for the namespace of the cityobject IRI, e.g. kingslynnEPSG27700. If ```ceaEndpoint``` is specified, the agent will assume no graph usage if ```namedGraph``` is not specified.
 
-After receiving request sent to the query endpoint, the agent will retrieve energy demand and photovoltaic information calculated by CEA for the cityobject IRIs provided in ```iris```. The energy demand and photovoltaic information will only be returned if the cityobject IRIs provided in ```iris``` has already been passed to the run endpoint of the CEA agent.
+After receiving request sent to the query endpoint, the agent will retrieve energy demand and photovoltaic information calculated by CEA for the cityobject IRIs provided in ```iris```. The energy demand and photovoltaic information will only be returned if the cityobject IRIs provided in ```iris``` has already been passed to the run endpoint of the CEA agent beforehand
+.
 
 Example request:
 ```
