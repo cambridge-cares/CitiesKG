@@ -54,6 +54,7 @@ import org.citygml4j.model.gml.GMLClass;
 import org.citygml4j.model.gml.base.AbstractGML;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurface;
 import org.citygml4j.model.gml.geometry.aggregates.MultiSurfaceProperty;
+import org.citygml4j.model.gml.geometry.primitives.Polygon;
 import org.citygml4j.model.module.citygml.CityGMLModuleType;
 
 import java.net.MalformedURLException;
@@ -479,10 +480,10 @@ public class DBThematicSurface extends AbstractFeatureExporter<AbstractBoundaryS
 
 						SurfaceGeometry geometry = geometryExporter.doExport(lodMultiSurfaceId);
 						//thematic surface id --> MULTI_SURFACE, surfaceGeometry --> Polygon
-						if (geometry != null && geometry.getType() == GMLClass.MULTI_SURFACE) {
+						if (geometry != null ) {
 							MultiSurfaceProperty multiSurfaceProperty = new MultiSurfaceProperty();
 							if (geometry.isSetGeometry())
-								multiSurfaceProperty.setMultiSurface((MultiSurface)geometry.getGeometry());
+								multiSurfaceProperty.setMultiSurface(new MultiSurface((Polygon)geometry.getGeometry()));
 							else
 								multiSurfaceProperty.setHref(geometry.getReference());
 
