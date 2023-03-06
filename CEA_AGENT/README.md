@@ -68,7 +68,6 @@ Available at http://localhost:58085/agents/cea/run.
 
 The run endpoint accepts the following request parameters:
 - ```iris```: array of cityObject IRIs.
-- ```targetURL``` the update endpoint of the CEA agent.
 - ```geometryEndpoint```: (optional) endpoint where the geospatial information of the cityObjects from ```iris``` are stored; if not specified, agent will default to setting ```geometryEndpoint``` to TheWorldAvatar Blazegraph with the namespace retrieved from the cityObject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```.
 - ```usageEndpoint```: (optional) endpoint where the building usage information of the cityObjects from ```iris``` are stored, if not specified, agent will default to setting ```usageEndpoint``` to be the same as ```geometryEndpoint```.
 - ```ceaEndpoint```: (optional) endpoint where the CEA triples, i.e. energy demand and photovoltaic potential information, instantiated by the agent are to be stored; if not specified, agent will default to setting ```ceaEndpoint``` to TheWorldAvatar Blazegraph with the namespace retrieved from the cityObject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```.
@@ -80,7 +79,6 @@ Example request:
 ```
 { "iris" :
 ["http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/cityobject/UUID_0595923a-3a83-4097-b39b-518fd23184cc/"],
-"targetUrl" :  "http://host.docker.internal:58085/agents/cea/update",
 "geometryEndpoint" : "http://host.docker.internal:48888/kingslynnEPSG27700",
 "ceaEndpoint": "http://host.docker.internal:48888/cea"}
 ```
@@ -90,7 +88,6 @@ Example request:
 ```
 { "iris" :
 ["http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/cityobject/UUID_0595923a-3a83-4097-b39b-518fd23184cc/"],
-"targetUrl" :  "http://host.docker.internal:58085/agents/cea/update",
 "geometryEndpoint" : "http://host.docker.internal:48888/kingslynnEPSG27700",
 "ceaEndpoint": "http://host.docker.internal:48888/cea",
 "graphName": "http://127.0.0.1:9999/blazegraph/namespace/cea/cea"}
@@ -101,7 +98,6 @@ Example request:
 ```
 { "iris" :
 ["http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/cityobject/UUID_0595923a-3a83-4097-b39b-518fd23184cc/"],
-"targetUrl" :  "http://host.docker.internal:58085/agents/cea/update"}
 ```
 In the above request example, the CEA agent will be querying geometry and usage, as well as instantiating CEA triples, from the ```citieskg-kingslynnEPSG27700``` namespace in TheWorldAvatar Blazegraph. And the CEA triples will be instantiated under the ```http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/energyprofile/``` graph.
 
