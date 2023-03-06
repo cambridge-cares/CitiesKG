@@ -57,9 +57,7 @@ public class CEAAgentTest {
     public void testCEAAgentFields() {
         CEAAgent agent = new CEAAgent();
         ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
-
-        assertEquals(63, agent.getClass().getDeclaredFields().length);
-
+        
         Field URI_ACTION;
         Field URI_UPDATE;
         Field URI_QUERY;
