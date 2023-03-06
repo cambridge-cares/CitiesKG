@@ -1600,7 +1600,7 @@ function createInfoTable(res, citydbLayer) {
                 var iValue = kvp[key];
                 // check if this value is a valid URL
                 if (isValidUrl(iValue)) {
-                    iValue = '<a href="' + iValue + '" target="_blank">' + iValue + '</a>';
+                    iValue = '<a href="http://www.theworldavatar.com:83/citieskg/" target="_blank">' + iValue + '</a>';
                 }
                 html += '<tr><td>' + key + '</td><td>' + iValue + '</td></tr>';
             }
