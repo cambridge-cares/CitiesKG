@@ -132,7 +132,7 @@ public class CEAAgent extends JPSAgent {
             JSONArray uriArray = new JSONArray(uriArrayString);
 
             if (requestUrl.contains(URI_UPDATE) || requestUrl.contains(URI_ACTION)) {
-                targetUrl = requestParams.getString(KEY_TARGET_URL);
+                targetUrl = requestUrl.replace(URI_ACTION, URI_UPDATE);
 
                 if (requestUrl.contains(URI_UPDATE)) {
                     // parse times
