@@ -260,7 +260,7 @@ public class CEAAgentTest {
     @Test
     public void testCEAAgentMethods() {
         CEAAgent agent = new CEAAgent();
-        assertEquals(63, agent.getClass().getDeclaredMethods().length);
+        assertEquals(65, agent.getClass().getDeclaredMethods().length);
     }
 
     @Test
@@ -381,9 +381,9 @@ public class CEAAgentTest {
 
 
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
-                    .thenReturn(expected_height).thenReturn(expected_footprint).thenReturn(expected_usage)
-                    .thenReturn(expected_envelope).thenReturn(expected_buildings).thenReturn(expected_height).thenReturn(expected_footprint)
-                    .thenReturn(expected_crs);
+                    .thenReturn(new JSONArray()).thenReturn(new JSONArray()).thenReturn(expected_height).thenReturn(expected_footprint)
+                    .thenReturn(expected_usage).thenReturn(expected_envelope).thenReturn(expected_buildings).thenReturn(expected_height)
+                    .thenReturn(expected_footprint).thenReturn(expected_crs);
 
             try (MockedConstruction<RunCEATask> mockTask = mockConstruction(RunCEATask.class)) {
                 ThreadPoolExecutor executor = mock(ThreadPoolExecutor.class);
@@ -579,21 +579,14 @@ public class CEAAgentTest {
 
         JSONObject requestParams = new JSONObject();
         requestParams.put(CEAAgent.KEY_IRI, "");
-        requestParams.put(CEAAgent.KEY_TARGET_URL, "");
 
         // check failure with empty request params
         assertTrue((Boolean) validateActionInput.invoke(agent, requestParams));
 
         requestParams.put(CEAAgent.KEY_IRI, "test");
 
-        // check failure with only IRI
-        assertTrue((Boolean) validateActionInput.invoke(agent, requestParams));
-
-        requestParams.put(CEAAgent.KEY_TARGET_URL, "http://localhost:8086/agents/cea/update");
-
-        // should pass now
+        // should pass with only IRI
         assertFalse((Boolean) validateActionInput.invoke(agent, requestParams));
-
     }
 
     @Test
@@ -2132,5 +2125,38 @@ public class CEAAgentTest {
             assertNull(result.get(0).getUsage());
             assertNull(result.get(0).getSurrounding());
         }
+    }
+
+    @Test
+    public void testCheckQuadsEnabled() throws NoSuchMethodException {
+        CEAAgent agent = spy(new CEAAgent());
+
+        Method checkQuadsEnabled = agent.getClass().getDeclaredMethod("checkQuadsEnabled", String.class);
+        assertNotNull(checkQuadsEnabled);
+
+        doNothing().when(agent).checkEndpoint(anyString());
+
+        try {
+            checkQuadsEnabled.invoke(agent, "");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvocationTargetException);
+            assertTrue(((InvocationTargetException) e).getTargetException().getMessage().contains("ceaEndpoint does not support graph"));
+        }
+    }
+
+    @Test
+    public void testCheckEndpoint() throws NoSuchMethodException{
+        CEAAgent agent = new CEAAgent();
+
+        Method checkEndpoint = agent.getClass().getDeclaredMethod("checkEndpoint", String.class);
+        assertNotNull(checkEndpoint);
+
+        try {
+            checkEndpoint.invoke(agent, "");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvocationTargetException);
+            assertTrue(((InvocationTargetException) e).getTargetException().getMessage().contains("Failed to instantiate StoreClient"));
+        }
+
     }
 }
