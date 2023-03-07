@@ -215,6 +215,11 @@ public class CEAAgent extends JPSAgent {
                                     namedGraph = "";
                                 }
                             }
+
+                            // check if ceaRoute has quads enabled for querying and updating with graphs
+                            if (!namedGraph.isEmpty()){
+                                checkQuadsEnabled(ceaRoute);
+                            }
                         }
                         uriStringArray.add(uri);
                         // Set default value of 10m if height can not be obtained from knowledge graph
@@ -267,6 +272,10 @@ public class CEAAgent extends JPSAgent {
                             }
                             else{
                                 namedGraph = "";
+                            }
+                            // check if ceaRoute has quads enabled for querying and updating with graphs
+                            if (!namedGraph.isEmpty()){
+                                checkQuadsEnabled(ceaRoute);
                             }
                         }
                     }
@@ -421,7 +430,7 @@ public class CEAAgent extends JPSAgent {
      * @return boolean saying if request is valid or not
      */
     private boolean validateActionInput(JSONObject requestParams) {
-        boolean error = requestParams.get(KEY_TARGET_URL).toString().isEmpty() || requestParams.get(KEY_IRI).toString().isEmpty();
+        boolean error = requestParams.get(KEY_IRI).toString().isEmpty();
 
         if (requestParams.has(KEY_GEOMETRY)) {error = error || requestParams.get(KEY_GEOMETRY).toString().isEmpty();}
         if (requestParams.has(KEY_USAGE)) {error = error || requestParams.get(KEY_USAGE).toString().isEmpty();}
@@ -1860,7 +1869,6 @@ public class CEAAgent extends JPSAgent {
      * Sets a polygon's z coordinates to the values from zInput
      * @param geom polygon geometry
      * @param zInput ArrayList of values representing z coordinates
-     * @return geom with z coordinates from zInput
      */
     private void setPolygonZ(Geometry geom, ArrayList<Double> zInput){
         Double newZ = Double.NaN;
@@ -1985,8 +1993,8 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * @param path timeseriesclient.properties path as string
      * Sets rdbStoreClient with the database url, username, and password from the file at path
+     * @param path timeseriesclient.properties path as string
      */
     protected void setRDBClient(String path){
         try {
@@ -2061,4 +2069,49 @@ public class CEAAgent extends JPSAgent {
         }
     }
 
+    /**
+     * Checks if route is enabled to support quads
+     * @param route endpoint to check
+     */
+    public void checkQuadsEnabled(String route){
+        WhereBuilder wb = new WhereBuilder()
+                .addGraph("?g","?s", "?p", "?o");
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?g")
+                .addWhere(wb)
+                .setLimit(1);
+
+
+        // first check that querying from route works
+        checkEndpoint(route);
+        // check if query with graph works for route
+        try{
+            this.queryStore(route, sb.build().toString());
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            throw new JPSRuntimeException("ceaEndpoint does not support graph");
+        }
+    }
+
+    /**
+     * Basic query to check if route is queryable
+     * @param route endpoint to check
+     */
+    public void checkEndpoint(String route){
+        WhereBuilder wb = new WhereBuilder()
+                .addWhere("?s", "?p", "?o");
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?g")
+                .addWhere(wb)
+                .setLimit(1);
+
+        try{
+            this.queryStore(route, sb.build().toString());
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            throw new JPSRuntimeException(e);
+        }
+    }
 }
