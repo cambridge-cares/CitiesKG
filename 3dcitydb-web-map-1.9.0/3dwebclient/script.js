@@ -895,6 +895,7 @@ function processInfoContext(resultjson){
     }
     infoText.appendChild(document.createElement("br"));
     infoText.appendChild(docCount);
+
     return infoText;
 }
 
@@ -1600,7 +1601,8 @@ function createInfoTable(res, citydbLayer) {
                 var iValue = kvp[key];
                 // check if this value is a valid URL
                 if (isValidUrl(iValue)) {
-                    iValue = '<a href="http://www.theworldavatar.com:83/citieskg/" target="_blank">' + iValue + '</a>';
+                    let link = "http://www.theworldavatar.com:83/citieskg/#explore" + ":" + "singaporeEPSG4326" + ":" + iValue;
+                    iValue = '<a href=' + link + ' target="_blank">' + iValue + '</a>';
                 }
                 html += '<tr><td>' + key + '</td><td>' + iValue + '</td></tr>';
             }
