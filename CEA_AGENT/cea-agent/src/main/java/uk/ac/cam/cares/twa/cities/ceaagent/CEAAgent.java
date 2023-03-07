@@ -505,13 +505,11 @@ public class CEAAgent extends JPSAgent {
     private void createTimeSeries(String uriString, LinkedHashMap<String,String> fixedIris, String graph ) {
         tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
 
-        String prefix = getNamespace(uriString);
-
         // Create a iri for each measurement
         List<String> iris = new ArrayList<>();
         for(String measurement: TIME_SERIES){
             String iri = measurement+"_"+UUID.randomUUID()+ "/";
-            iri = !graph.isEmpty() ? graph + iri : prefix + iri ;
+            iri = !graph.isEmpty() ? graph + iri : ontoUBEMMPUri + iri ;
             iris.add(iri);
             fixedIris.put(measurement, iri);
         }
@@ -1354,7 +1352,7 @@ public class CEAAgent extends JPSAgent {
                 buildingUri = graph + "Building_" + UUID.randomUUID() + "/";
             }
             else{
-                buildingUri = getNamespace(uriString) + "Building_" + UUID.randomUUID() + "/";
+                buildingUri = ontoBuiltEnvUri + "Building_" + UUID.randomUUID() + "/";
             }
         }
 
@@ -1515,7 +1513,6 @@ public class CEAAgent extends JPSAgent {
                         .addPrefix("purlInf", purlInfrastructureUri);
 
         UpdateBuilder ub = new UpdateBuilder();
-        String prefix = getNamespace(uriString);
 
         //Device uris
         String heatingUri = "HeatingSystem_" + UUID.randomUUID() + "/";
@@ -1536,13 +1533,13 @@ public class CEAAgent extends JPSAgent {
             pvWallWestPanelsUri = graph + pvWallWestPanelsUri;
         }
         else{
-            heatingUri = prefix + heatingUri;
-            coolingUri = prefix + coolingUri;
-            pvRoofPanelsUri = prefix + pvRoofPanelsUri;
-            pvWallSouthPanelsUri = prefix + pvWallSouthPanelsUri;
-            pvWallNorthPanelsUri = prefix + pvWallNorthPanelsUri;
-            pvWallEastPanelsUri = prefix + pvWallEastPanelsUri;
-            pvWallWestPanelsUri = prefix + pvWallWestPanelsUri;
+            heatingUri = ontoUBEMMPUri + heatingUri;
+            coolingUri = ontoUBEMMPUri + coolingUri;
+            pvRoofPanelsUri = ontoUBEMMPUri + pvRoofPanelsUri;
+            pvWallSouthPanelsUri = ontoUBEMMPUri + pvWallSouthPanelsUri;
+            pvWallNorthPanelsUri = ontoUBEMMPUri + pvWallNorthPanelsUri;
+            pvWallEastPanelsUri = ontoUBEMMPUri + pvWallEastPanelsUri;
+            pvWallWestPanelsUri = ontoUBEMMPUri + pvWallWestPanelsUri;
         }
 
         // save om:measure uris for scalars and create om:quantity uris for scalars and time series
@@ -1555,8 +1552,8 @@ public class CEAAgent extends JPSAgent {
                 quantity = graph + quantity;
             }
             else{
-                measure = prefix + measure;
-                quantity = prefix + quantity;
+                measure = ontoUBEMMPUri + measure;
+                quantity = ontoUBEMMPUri + quantity;
             }
             scalarIris.put(measurement, measure);
 
@@ -1581,7 +1578,7 @@ public class CEAAgent extends JPSAgent {
 
         for (String measurement: TIME_SERIES) {
             String quantity = measurement+"Quantity_" + UUID.randomUUID() + "/";
-            quantity = !graph.isEmpty() ? graph + quantity : prefix + quantity;
+            quantity = !graph.isEmpty() ? graph + quantity : ontoUBEMMPUri + quantity;
             if (measurement.equals(KEY_GRID_CONSUMPTION) || measurement.equals(KEY_ELECTRICITY_CONSUMPTION)) {
                 createConsumptionUpdate(wb, buildingUri, "ontoubemmp:" + measurement, quantity, tsIris.get(measurement));
             }

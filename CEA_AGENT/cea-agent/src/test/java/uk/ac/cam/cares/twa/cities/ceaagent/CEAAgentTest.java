@@ -731,8 +731,7 @@ public class CEAAgentTest {
             createTimeSeries.setAccessible(true);
 
             LinkedHashMap<String, String> fixedIris = new LinkedHashMap<>();
-            String prefix = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/";
-            String testUri = prefix + "cityobject/UUID_test/";
+            String testUri = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
 
             RemoteRDBStoreClient mockRDBClient = mock(RemoteRDBStoreClient.class);
             Connection mockConnection = mock(Connection.class);
@@ -740,6 +739,9 @@ public class CEAAgentTest {
             Field rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
             rdbStoreClient.setAccessible(true);
             rdbStoreClient.set(agent, mockRDBClient);
+
+            Field ontoUBEMMPUri = agent.getClass().getDeclaredField("ontoUBEMMPUri");
+            ontoUBEMMPUri.setAccessible(true);
 
             doReturn(mockConnection).when(mockRDBClient).getConnection();
 
@@ -750,7 +752,7 @@ public class CEAAgentTest {
 
             // Ensure iris created correctly and time series initialised
             for (String time_series : time_series_strings) {
-                assertTrue(fixedIris.get(time_series).contains(prefix + time_series));
+                assertTrue(fixedIris.get(time_series).contains(ontoUBEMMPUri.get(agent) + time_series));
             }
             verify(mockTs.constructed().get(0), times(1)).initTimeSeries(anyList(), anyList(), anyString(), any(), any(), any(), any());
 
@@ -1453,7 +1455,7 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testInitialiseBuilding() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void testInitialiseBuilding() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
         CEAAgent agent = spy(new CEAAgent());
         Method initialiseBuilding = agent.getClass().getDeclaredMethod("initialiseBuilding", String.class, String.class, String.class, String.class);
         assertNotNull(initialiseBuilding);
@@ -1461,7 +1463,9 @@ public class CEAAgentTest {
         String route = "test_route";
 
         String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
-        String expected = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/Building";
+        Field ontoBuiltEnvUri = agent.getClass().getDeclaredField("ontoBuiltEnvUri");
+        ontoBuiltEnvUri.setAccessible(true);
+        String expected = ontoBuiltEnvUri.get(agent) + "Building";
 
         doNothing().when(agent).updateStore(anyString(), anyString());
         String result = (String) initialiseBuilding.invoke(agent,  uriString, "", route, "");
