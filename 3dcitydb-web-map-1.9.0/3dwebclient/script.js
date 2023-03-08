@@ -1601,7 +1601,7 @@ function createInfoTable(res, citydbLayer) {
                 var iValue = kvp[key];
                 // check if this value is a valid URL
                 if (isValidUrl(iValue)) {
-                    let link = "http://www.theworldavatar.com:83/citieskg/#explore" + ":" + "singaporeEPSG4326" + ":" + iValue;
+                    let link = "https://fcl.ethz.ch/research/research-projects/cities-knowledge-graph.html";
                     iValue = '<a href=' + link + ' target="_blank">' + iValue + '</a>';
                 }
                 html += '<tr><td>' + key + '</td><td>' + iValue + '</td></tr>';
