@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
+import uk.ac.cam.cares.jps.base.config.JPSConstants;
 import org.apache.jena.arq.querybuilder.handlers.WhereHandler;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
@@ -134,6 +135,10 @@ public class CEAAgent extends JPSAgent {
             if (requestUrl.contains(URI_UPDATE) || requestUrl.contains(URI_ACTION)) {
                 targetUrl = requestUrl.replace(URI_ACTION, URI_UPDATE);
 
+                if (isDockerized()) {
+                    targetUrl = targetUrl.replace("localhost", "host.docker.internal");
+                }
+
                 if (requestUrl.contains(URI_UPDATE)) {
                     // parse times
                     List<OffsetDateTime> times = getTimesList(requestParams, KEY_TIMES);
@@ -160,7 +165,6 @@ public class CEAAgent extends JPSAgent {
                         LinkedHashMap<String,String> scalarIris = new LinkedHashMap<>();
 
                         String uri = uriArray.getString(i);
-                        setTimeSeriesProps(uri, getTimeSeriesPropsPath());
 
                         String building = checkBuildingInitialised(uri, ceaRoute);
                         if(building.equals("")){
@@ -187,7 +191,6 @@ public class CEAAgent extends JPSAgent {
                     for (int i = 0; i < uriArray.length(); i++) {
                         String uri = uriArray.getString(i);
                         uniqueSurrounding.add(uri);
-                        setTimeSeriesProps(uri, getTimeSeriesPropsPath());
 
                         // Only set route once - assuming all iris passed in same namespace
                         // Will not be necessary if namespace is passed in request params
@@ -195,7 +198,7 @@ public class CEAAgent extends JPSAgent {
                             // if KEY_GEOMETRY is not specified in requestParams, geometryRoute defaults to TheWorldAvatar Blazegraph
                             geometryRoute = requestParams.has(KEY_GEOMETRY) ? requestParams.getString(KEY_GEOMETRY) : getRoute(uri);
                             // if KEY_USAGE is not specified in requestParams, geometryRoute defaults to TheWorldAvatar Blazegraph
-                            usageRoute = requestParams.has(KEY_USAGE) ? requestParams.getString(KEY_USAGE) : getRoute(uri);
+                            usageRoute = requestParams.has(KEY_USAGE) ? requestParams.getString(KEY_USAGE) : geometryRoute;
                             if (!requestParams.has(KEY_CEA)){
                                 // if KEY_CEA is not specified in requestParams, set ceaRoute to TheWorldAvatar Blazegraph
                                 ceaRoute = getRoute(uri);
@@ -220,6 +223,7 @@ public class CEAAgent extends JPSAgent {
                             if (!namedGraph.isEmpty()){
                                 checkQuadsEnabled(ceaRoute);
                             }
+                            setStoreClient(ceaRoute);
                         }
                         uriStringArray.add(uri);
                         // Set default value of 10m if height can not be obtained from knowledge graph
@@ -252,7 +256,6 @@ public class CEAAgent extends JPSAgent {
 
                 for (int i = 0; i < uriArray.length(); i++) {
                     String uri = uriArray.getString(i);
-                    setTimeSeriesProps(uri, getTimeSeriesPropsPath());
 
                     // Only set route once - assuming all iris passed in same namespace
                     if(i==0) {
@@ -278,6 +281,7 @@ public class CEAAgent extends JPSAgent {
                                 checkQuadsEnabled(ceaRoute);
                             }
                         }
+                        setStoreClient(ceaRoute);
                     }
                     String building = checkBuildingInitialised(uri, ceaRoute);
                     if(building.equals("")){
@@ -453,7 +457,6 @@ public class CEAAgent extends JPSAgent {
         if (requestParams.has(KEY_GRAPH)) {error = error || requestParams.get(KEY_GRAPH).toString().isEmpty();}
         return error;
     }
-
 
     /**
      * Gets variables from config
@@ -1934,43 +1937,6 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Sets the SPARQL update and query endpoint in the time series property file, according to the namespace information in uriString
-     * @param uriString input city object id
-     * @param path timeseriesclient.properties path as string
-     */
-    protected void setTimeSeriesProps(String uriString, String path){
-        try {
-            String queryEndpoint;
-            String updateEndpoint;
-
-            FileInputStream in = new FileInputStream(path);
-            Properties props = new Properties();
-            props.load(in);
-            in.close();
-
-            queryEndpoint = props.getProperty("sparql.query.endpoint").split("namespace")[0];
-            if (!queryEndpoint.endsWith("/")) {queryEndpoint = queryEndpoint + "/";}
-
-            updateEndpoint = props.getProperty("sparql.update.endpoint").split("namespace")[0];
-            if (!updateEndpoint.endsWith("/")) {updateEndpoint = updateEndpoint + "/";}
-
-            FileOutputStream out = new FileOutputStream(path);
-            String namespace = getNamespace(uriString).split("namespace/")[1].split("/")[0];
-            props.setProperty("sparql.query.endpoint", queryEndpoint + "namespace" + "/" + namespace + "/" + "sparql");
-            props.setProperty("sparql.update.endpoint", updateEndpoint + "namespace" + "/" + namespace + "/" + "sparql");
-
-            storeClient = new RemoteStoreClient(props.getProperty("sparql.query.endpoint"), props.getProperty("sparql.update.endpoint"));
-
-            props.store(out, null);
-            out.close();
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            throw new JPSRuntimeException(e);
-        }
-    }
-
-    /**
      * Returns timeseriesclient.properties path as string
      * @return timeseriesclient.properties path as string
      */
@@ -2006,6 +1972,24 @@ public class CEAAgent extends JPSAgent {
             e.printStackTrace();
             throw new JPSRuntimeException(e);
         }
+    }
+
+    /**
+     * Sets store client to the query and update endpoint of route, so that the time series client queries and updates from the same endpoint as route
+     * @param route access agent route
+     */
+    private void setStoreClient(String route){
+        JSONObject queryResult = this.getEndpoints(route);
+
+        String queryEndpoint = queryResult.getString(JPSConstants.QUERY_ENDPOINT);
+        String updateEndpoint = queryResult.getString(JPSConstants.UPDATE_ENDPOINT);
+
+        if (!isDockerized()){
+            queryEndpoint = queryEndpoint.replace("host.docker.internal", "localhost");
+            updateEndpoint = updateEndpoint.replace("host.docker.internal", "localhost");
+        }
+
+        storeClient = new RemoteStoreClient(queryEndpoint, updateEndpoint);
     }
 
     /**
@@ -2110,5 +2094,11 @@ public class CEAAgent extends JPSAgent {
             e.printStackTrace();
             throw new JPSRuntimeException(e);
         }
+    }
+
+    private boolean isDockerized(){
+        File f = new File("/.dockerenv");
+
+        return f.exists();
     }
 }

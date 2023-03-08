@@ -9,8 +9,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
+import uk.ac.cam.cares.jps.base.config.JPSConstants;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.jps.base.query.RemoteRDBStoreClient;
+import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeries;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeriesClient;
 import org.apache.jena.query.Query;
@@ -258,12 +260,6 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testCEAAgentMethods() {
-        CEAAgent agent = new CEAAgent();
-        assertEquals(65, agent.getClass().getDeclaredMethods().length);
-    }
-
-    @Test
     public void testProcessRequestParameters()
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException, SQLException {
 
@@ -285,7 +281,6 @@ public class CEAAgentTest {
 
         doReturn(mockConnection).when(mockRDBClient).getConnection();
 
-        doNothing().when(agent).setTimeSeriesProps(anyString(), anyString());
         doNothing().when(agent).setRDBClient(anyString());
 
         // Test empty request params
@@ -326,6 +321,7 @@ public class CEAAgentTest {
         JSONArray expected_envelope = new JSONArray().put(new JSONObject().put("envelope", test_envelope));
         JSONArray expected_buildings = new JSONArray().put(new JSONObject().put("cityObject", "http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/cityobject/UUID_test/")).put(new JSONObject().put("cityObject", "http://localhost/kings-lynn-open-data/cityobject/UUID_447787a5-1678-4246-8658-4036436c1052/"));
 
+        JSONObject expected_endpoints = new JSONObject().put(JPSConstants.QUERY_ENDPOINT, "test").put(JPSConstants.UPDATE_ENDPOINT, "test");
 
         // Test the update endpoint
         requestParams.put(CEAAgent.KEY_REQ_URL, "http://localhost:8086/agents/cea/update");
@@ -384,6 +380,8 @@ public class CEAAgentTest {
                     .thenReturn(new JSONArray()).thenReturn(new JSONArray()).thenReturn(expected_height).thenReturn(expected_footprint)
                     .thenReturn(expected_usage).thenReturn(expected_envelope).thenReturn(expected_buildings).thenReturn(expected_height)
                     .thenReturn(expected_footprint).thenReturn(expected_crs);
+
+            accessAgentCallerMock.when(() -> AccessAgentCaller.getEndpoints(anyString())).thenReturn(expected_endpoints);
 
             try (MockedConstruction<RunCEATask> mockTask = mockConstruction(RunCEATask.class)) {
                 ThreadPoolExecutor executor = mock(ThreadPoolExecutor.class);
@@ -1953,37 +1951,6 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testSetTimeSeriesProps(@TempDir Path tempDir) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException {
-        CEAAgent agent = new CEAAgent();
-        Method setTimeSeriesProps = agent.getClass().getDeclaredMethod("setTimeSeriesProps", String.class, String.class);
-
-        assertNotNull(setTimeSeriesProps);
-        setTimeSeriesProps.setAccessible(true);
-
-        String testFile = "test.properties";
-        String testEndpoint = "testEndpoint";
-        String testUri = "test/namespace/testNamespace/sparql/cityobject/testUUID/";
-        Path testPath = Files.createFile(tempDir.resolve(testFile));
-        Properties testProp = new Properties();
-
-        testProp.setProperty("sparql.query.endpoint", testEndpoint);
-        testProp.setProperty("sparql.update.endpoint", testEndpoint);
-
-        FileOutputStream testOut = new FileOutputStream(testPath.toString());
-        testProp.store(testOut, null);
-        testOut.close();
-
-        setTimeSeriesProps.invoke(agent, testUri, testPath.toString());
-
-        FileInputStream testIn = new FileInputStream(testPath.toString());
-        testProp.load(testIn);
-        testIn.close();
-
-        assertEquals(testProp.getProperty("sparql.query.endpoint"), "testEndpoint/namespace/testNamespace/sparql");
-        assertEquals(testProp.getProperty("sparql.update.endpoint"), "testEndpoint/namespace/testNamespace/sparql");
-    }
-
-    @Test
     public void testGetTimeSeriesPropsPath() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
         CEAAgent agent = new CEAAgent();
         Method getTimeSeriesPropsPath = agent.getClass().getDeclaredMethod("getTimeSeriesPropsPath");
@@ -2011,6 +1978,7 @@ public class CEAAgentTest {
 
         rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
         rdbStoreClient.setAccessible(true);
+        assertNull(rdbStoreClient.get(agent));
 
         String testFile = "test.properties";
         String url = "test_url";
@@ -2030,6 +1998,9 @@ public class CEAAgentTest {
         setRDBClient.invoke(agent, testPath.toString());
 
         assertNotNull(rdbStoreClient.get(agent));
+        assertEquals(url, ((RemoteRDBStoreClient) rdbStoreClient.get(agent)).getRdbURL());
+        assertEquals(user, ((RemoteRDBStoreClient) rdbStoreClient.get(agent)).getUser());
+        assertEquals(password, ((RemoteRDBStoreClient) rdbStoreClient.get(agent)).getPassword());
     }
 
     @Test
@@ -2159,8 +2130,36 @@ public class CEAAgentTest {
             checkEndpoint.invoke(agent, "");
         } catch (Exception e) {
             assertTrue(e instanceof InvocationTargetException);
-            assertTrue(((InvocationTargetException) e).getTargetException().getMessage().contains("Failed to instantiate StoreClient"));
         }
 
+    }
+
+    @Test
+    public void testSetStoreClient() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
+        CEAAgent agent = new CEAAgent();
+
+        Method setStoreClient = agent.getClass().getDeclaredMethod("setStoreClient", String.class);
+        assertNotNull(setStoreClient);
+        setStoreClient.setAccessible(true);
+
+        String expected_queryEndpoint = "queryEndpoint";
+        String expected_updateEndpoint = "updateEndpoint";
+        JSONObject expected_endpoints = new JSONObject().put(JPSConstants.QUERY_ENDPOINT, expected_queryEndpoint).put(JPSConstants.UPDATE_ENDPOINT, expected_updateEndpoint);
+
+        try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = mockStatic(AccessAgentCaller.class)) {
+
+            accessAgentCallerMock.when(() -> AccessAgentCaller.getEndpoints(anyString())).thenReturn(expected_endpoints);
+
+            Field storeClient = agent.getClass().getDeclaredField("storeClient");
+            storeClient.setAccessible(true);
+            assertNull(storeClient.get(agent));
+
+            setStoreClient.invoke(agent, "");
+
+
+            assertNotNull(storeClient.get(agent));
+            assertEquals(expected_queryEndpoint, ((RemoteStoreClient) storeClient.get(agent)).getQueryEndpoint());
+            assertEquals(expected_updateEndpoint, ((RemoteStoreClient) storeClient.get(agent)).getUpdateEndpoint());
+        }
     }
 }
