@@ -1,22 +1,14 @@
 package uk.ac.cam.cares.twa.cities.agents.geo.test;
 
-import com.google.gson.JsonArray;
-import it.unimi.dsi.fastutil.Hash;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map.Entry;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
-import org.jooq.JSON;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
-import org.mockito.stubbing.Answer;
 import uk.ac.cam.cares.jps.base.http.Http;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityInformationAgent;
@@ -29,7 +21,7 @@ import java.util.HashMap;
 import java.util.ResourceBundle;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import org.apache.jena.query.Query;
+
 
 public class CityInformationAgentTest {
 
@@ -49,7 +41,7 @@ public class CityInformationAgentTest {
     public void testNewCityInformationAgentFields() {
         CityInformationAgent agent = new CityInformationAgent();
 
-        assertEquals(11, agent.getClass().getDeclaredFields().length);
+        assertEquals(35, agent.getClass().getDeclaredFields().length);
 
         try {
             assertEquals("/cityobjectinformation", agent.getClass().getDeclaredField("URI_CITY_OBJECT_INFORMATION").get(agent));
@@ -266,10 +258,13 @@ public class CityInformationAgentTest {
             assertEquals(BadRequestException.class, e.getClass());
         }
 
-        // fails--> need to check what the problem.
-        // test case where request params with agent pass
-        agentIri.remove("test");
-        agentIri.put("http://localhost:9999/agent", "agent");
+        // test case where request params with context param will pass
+        HashMap<String, String> map = new HashMap<>();
+        map.put("key1", "value1");
+
+        agentIri = new JSONObject();
+        agentIri.put("http://localhost:9999/agent", map);
+        requestParams.put(CityInformationAgent.KEY_CONTEXT, agentIri);
         try {
             assertTrue(agent.validateInput(requestParams));
         } catch (Exception e) {
@@ -379,6 +374,7 @@ public class CityInformationAgentTest {
         query_result_Array.put(query_result_obj);
         JSONArray returnedCityObjects =  new JSONArray();
         returnRelevantGFAs.invoke(agent, query_result_Array, returnedCityObjects);
+
         // test if city object id is added to returned list of valid city objects.
         assertEquals(1, returnedCityObjects.length());
 
@@ -612,6 +608,7 @@ public class CityInformationAgentTest {
 
         try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = Mockito.mockStatic(
             AccessAgentCaller.class)) {
+
             //test with mocked AccessAgentCaller when gfaCase true.
             accessAgentCallerMock.when(
                     () -> AccessAgentCaller.queryStore(ArgumentMatchers.anyString(),
@@ -658,6 +655,7 @@ public class CityInformationAgentTest {
         throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         CityInformationAgent agent = new CityInformationAgent();
+
         //test that the method exists
         assertNotNull(agent.getClass().getDeclaredMethod("getOntoZoneFilterQuery", String.class, ArrayList.class, SelectBuilder.class, String.class));
         Method getOntoZoneFilterQuery = agent.getClass().getDeclaredMethod("getOntoZoneFilterQuery", String.class, ArrayList.class, SelectBuilder.class, String.class);
@@ -674,11 +672,14 @@ public class CityInformationAgentTest {
 
         SelectBuilder selectBuilder = new SelectBuilder();
         getOntoZoneFilterQuery.invoke(agent, usePredicate, useArray, selectBuilder, graphName);
+
         // test that prefixes constructed correctly.
         assertTrue(selectBuilder.buildString().contains(graphName));
+
         // test when use array passed.
         assertTrue(selectBuilder.buildString().contains("zo:allowsUse|zo:mayAllowUse"));
         assertTrue(selectBuilder.buildString().contains("zo:ParkUse"));
+
         // test when programme array passed.
         selectBuilder.clearWhereValues();
         getOntoZoneFilterQuery.invoke(agent, programmePrecidate, programmeArray, selectBuilder, graphName);
@@ -706,6 +707,7 @@ public class CityInformationAgentTest {
         String query = getFilterQuery.invoke(agent, "allowsProgramme", programmeArray, false).toString();
         assertFalse(query.contains(buildableSpaceGraph));
         assertTrue(query.contains(ontoZoneGraph));
+
         //test when gfa case
         String query2 = getFilterQuery.invoke(agent, "allowsProgramme", programmeArray, true).toString();
         assertTrue(query2.contains(buildableSpaceGraph));

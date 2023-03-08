@@ -143,7 +143,7 @@ public class CityInformationAgent extends JPSAgent {
                   gfas.put(onto_element, 0.);
                 }
               }
-            } // Shiying: gfas is never empty
+            }
             double total_gfa = 0.;
             if (filters.keySet().contains(TOTAL_GFA)) {
               try {
