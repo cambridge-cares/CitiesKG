@@ -25,6 +25,7 @@ import java.util.*;
 import javax.servlet.annotation.WebServlet;
 import java.util.concurrent.*;
 import java.net.URISyntaxException;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -237,7 +238,7 @@ public class CEAAgent extends JPSAgent {
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", geometryRoute) : footprint;
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", geometryRoute) : footprint;
                         // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
-                        String usage = toCEAConvention(getValue(uri, "BuildingUsage", usageRoute));
+                        Map<String, Double> usage = getBuildingUsages(uri, usageRoute);
 
                         ArrayList<CEAInputData> surrounding = getSurroundings(uri, geometryRoute, uniqueSurrounding);
 
@@ -499,6 +500,7 @@ public class CEAAgent extends JPSAgent {
             throw new JPSRuntimeException(e);
         }
     }
+
     /**
      * Creates and initialises a time series using the time series client
      *
@@ -679,9 +681,6 @@ public class CEAAgent extends JPSAgent {
             if (value == "Lod0FootprintId" || value == "FootprintThematicSurface"){
                 result = extractFootprint(queryResultArray);
             }
-            else if (value == "BuildingUsage") {
-                result = queryResultArray.getJSONObject(0).get(value).toString().split(ontoBuiltEnvUri)[1].split(">")[0].toUpperCase();
-            }
             else if (value == "FootprintSurfaceGeom") {
                 result = extractFootprint(getGroundGeometry(queryResultArray));
             }
@@ -787,8 +786,6 @@ public class CEAAgent extends JPSAgent {
                 return getDatabasesrsCrsQuery(uriString);
             case "CRS":
                 return getCrsQuery(uriString);
-            case "BuildingUsage":
-                return getBuildingUsageQuery(uriString);
             case "envelope":
                 return getEnvelopeQuery(uriString);
         }
@@ -973,22 +970,24 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve the building usage stored with OntoBuiltEnv concepts
+     * builds a SPARQL query for a specific URI to retrieve the building usages and the building usage share with OntoBuiltEnv concepts
      * @param uriString city object id
      * @return returns a query string
      */
-    private Query getBuildingUsageQuery(String uriString) {
+    private Query getBuildingUsagesQuery(String uriString) {
         WhereBuilder wb = new WhereBuilder();
         SelectBuilder sb = new SelectBuilder();
 
         wb.addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
                 .addPrefix("rdf", rdfUri)
                 .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s")
-                .addWhere("?building", "ontoBuiltEnv:hasUsageCategory", "?usage")
-                .addWhere("?usage", "rdf:type", "?BuildingUsage");
+                .addWhere("?building", "ontoBuiltEnv:hasPropertyUsage", "?usage")
+                .addWhere("?usage", "rdf:type", "?BuildingUsage")
+                .addOptional("?usage", "ontoBuiltEnv:hasUsageShare", "?UsageShare");
 
-        sb.addVar("?BuildingUsage")
-                .addWhere(wb);
+        sb.addVar("?BuildingUsage").addVar("?UsageShare")
+                .addWhere(wb)
+                .addOrderBy("UsageShare", Order.DESCENDING);
 
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
 
@@ -1123,6 +1122,62 @@ public class CEAAgent extends JPSAgent {
             e.printStackTrace();
             return null;
         }
+    }
+
+    /**
+     * retrieves the usages of a building and each usage's corresponding weight, and returns the usages and their weight as a map
+     * @param uriString city object id
+     * @param route route to pass to access agent
+     * @return the usages and their corresponding weighting
+     */
+    private Map<String, Double> getBuildingUsages(String uriString, String route) {
+        Map<String, Double> result = new HashMap<>();
+        Map<String, Double> temp = new HashMap<>();
+        String usage;
+        Query q = getBuildingUsagesQuery(uriString);
+
+        JSONArray queryResultArray = this.queryStore(route, q.toString());
+
+        // CEA only support up to three usages for each building
+        // convert all usages to CEA defined usages first
+
+        if (queryResultArray.length() == 1){
+            usage = queryResultArray.getJSONObject(0).get("BuildingUsage").toString().split(ontoBuiltEnvUri)[1].split(">")[0].toUpperCase();
+            usage = toCEAConvention(usage);
+            result.put(usage, 1.00);
+        }
+        else {
+            for (int i = 0; i < queryResultArray.length(); i++) {
+                usage = queryResultArray.getJSONObject(i).get("BuildingUsage").toString().split(ontoBuiltEnvUri)[1].split(">")[0].toUpperCase();
+                usage = toCEAConvention(usage);
+
+                if (temp.containsKey(usage)) {
+                    temp.put(usage, temp.get(usage) + queryResultArray.getJSONObject(i).getDouble("UsageShare"));
+                } else {
+                    temp.put(usage, queryResultArray.getJSONObject(i).getDouble("UsageShare"));
+                }
+            }
+
+            // get the top 3 usages
+            result = temp.entrySet().stream()
+                    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                    .limit(3)
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+
+            // normalise the usage weights in result so that they sum up to 1
+            Double sum = 0.00;
+
+            for (Double val : result.values()){
+                sum += val;
+            }
+
+            for (Map.Entry<String, Double> entry : result.entrySet()){
+                result.put(entry.getKey(), entry.getValue() / sum);
+            }
+        }
+
+        return result;
     }
 
     /**

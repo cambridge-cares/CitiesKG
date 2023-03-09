@@ -1,0 +1,5 @@
+POST http://localhost:8080/agents/inference/graph
+Content-Type: application/json
+
+{"targetIRI": "http://127.0.0.1:9999/blazegraph/namespace/singaporeEPSG4326/sparql/",
+"algorithmIRI":  "http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankAlgorithm"}

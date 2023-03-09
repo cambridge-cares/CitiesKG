@@ -1,14 +1,15 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 public class CEAInputData {
     public String geometry;
     public String height;
-    public String usage;
+    public Map<String, Double> usage;
     public ArrayList<CEAInputData> surrounding;
 
-    public CEAInputData(String geometry_value, String height_value, String usage_value, ArrayList<CEAInputData> surrounding_value) {
+    public CEAInputData(String geometry_value, String height_value, Map<String, Double> usage_value, ArrayList<CEAInputData> surrounding_value) {
         this.geometry = geometry_value;
         this.height = height_value;
         this.usage = usage_value;
@@ -23,7 +24,7 @@ public class CEAInputData {
         return this.height;
     }
 
-    public String getUsage() {
+    public Map<String, Double> getUsage() {
         return this.usage;
     }
 
@@ -39,7 +40,7 @@ public class CEAInputData {
         this.height = height_value;
     }
 
-    public void setUsage(String usage_value) {
+    public void setUsage(Map<String, Double> usage_value) {
         this.usage = usage_value;
     }
 

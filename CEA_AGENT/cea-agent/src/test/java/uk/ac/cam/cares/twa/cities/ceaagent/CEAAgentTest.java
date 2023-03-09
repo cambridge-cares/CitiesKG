@@ -304,7 +304,10 @@ public class CEAAgentTest {
         String measure_datatype = "datatype";
         String test_datatype = "<http://localhost/blazegraph/literals/POLYGON-3-15>";
         String measure_usage = "BuildingUsage";
-        String test_usage = "<https://www.theworldavatar.com/kg/ontobuiltenv/Office>";
+        String test_usage1 = "<https://www.theworldavatar.com/kg/ontobuiltenv/Office>";
+        String test_usage2 = "<https://www.theworldavatar.com/kg/ontobuiltenv/Office>";
+        String measure_share = "UsageShare";
+        String test_share = "0.5";
         String measure_crs = "CRS";
         String test_crs = "test_crs";
         String testScalar = "testScalar";
@@ -314,7 +317,7 @@ public class CEAAgentTest {
         JSONArray expected_building = new JSONArray().put(new JSONObject().put(measure_building, building));
         JSONArray expected_height = new JSONArray().put(new JSONObject().put(measure_height, test_height));
         JSONArray expected_footprint = new JSONArray().put(new JSONObject().put(measure_footprint, test_footprint).put(measure_datatype, test_datatype));
-        JSONArray expected_usage = new JSONArray().put(new JSONObject().put(measure_usage, test_usage));
+        JSONArray expected_usage = new JSONArray().put(new JSONObject().put(measure_usage, test_usage1).put(measure_share, test_share)).put(new JSONObject().put(measure_usage, test_usage2).put(measure_share, test_share));
         JSONArray expected_crs = new JSONArray().put(new JSONObject().put(measure_crs, test_crs));
         JSONArray expected_iri = new JSONArray().put(new JSONObject().put("measure", test_measure).put("unit", test_unit));
         JSONArray expected_value = new JSONArray().put(new JSONObject().put("value", testScalar));
@@ -707,7 +710,7 @@ public class CEAAgentTest {
             targetUrl.set(agent, "test");
 
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", "test", null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -1016,7 +1019,6 @@ public class CEAAgentTest {
         String case6 = "HeightGenAttr";
         String case7 = "DatabasesrsCRS";
         String case8 = "CRS";
-        String case9 = "BuildingUsage";
         String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
         Method getQuery = agent.getClass().getDeclaredMethod("getQuery", String.class, String.class);
@@ -1040,8 +1042,6 @@ public class CEAAgentTest {
         assertTrue(q7.toString().contains("ocgml:srid"));
         Query q8 = (Query) getQuery.invoke(agent, uri, case8);
         assertTrue(q8.toString().contains("srid"));
-        Query q9 = (Query) getQuery.invoke(agent, uri, case9);
-        assertTrue(q9.toString().contains("hasUsageCategory"));
     }
 
     @Test
@@ -2001,23 +2001,6 @@ public class CEAAgentTest {
         assertEquals(url, ((RemoteRDBStoreClient) rdbStoreClient.get(agent)).getRdbURL());
         assertEquals(user, ((RemoteRDBStoreClient) rdbStoreClient.get(agent)).getUser());
         assertEquals(password, ((RemoteRDBStoreClient) rdbStoreClient.get(agent)).getPassword());
-    }
-
-    @Test
-    public void testGetBuildingUsageQuery() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
-    {
-        CEAAgent agent = new CEAAgent();
-        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
-
-        Method getBuildingUsage = agent.getClass().getDeclaredMethod("getBuildingUsageQuery", String.class);
-        assertNotNull(getBuildingUsage);
-        getBuildingUsage.setAccessible(true);
-
-        // Ensure query contains correct predicate and object
-        Query q = (Query) getBuildingUsage.invoke(agent, uri);
-        assertTrue(q.toString().contains("hasUsageCategory"));
-        assertTrue(q.toString().contains("hasOntoCityGMLRepresentation"));
-        assertTrue(q.toString().contains("BuildingUsage"));
     }
 
     @Test
