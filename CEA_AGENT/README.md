@@ -19,7 +19,7 @@ You'll need to provide your credentials (github username/personal access token) 
 
 ### postgreSQL
 
-The agent also requires a postgreSQL database for the time series client to save data in. The address of the database used need to be provided in:
+The agent also requires a postgreSQL database for the time series client to save data in. The address of the database used need to be provided as ```db.url``` in:
 ```
 ./cea-agent/src/main/resources
     timeseriesclient.properties
@@ -48,7 +48,7 @@ Currently included are:
 If not included, you will need to add the targetResourceID in ```./cea-agent/src/main/resources/CEAAgentConfig.properties``` and add the corresponding mapping from cityObject IRI to targetResourceID in accessAgentRoutes in the ```readConfig``` method of ```./cea-agent/src/main/java/uk/ac/cam/cares/twa/cities/ceaagent/CEAAgent.java```.
 
 ### For Developers
-In order to use a local Blazegraph, you will need to run the access agent locally and set the accessagent.properties storerouter endpoint url to your local Blazegraph, as well as add triples for your namespace to a local ontokgrouter as is explained [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#install-and-build-local-accessagent-for-developers). In order fo the time series client to use the local PostgreSQL and the local Blazegraph, in ```/cea-agent/src/main/resources/timeseriesclient.properties```, change ```db.url``` to the local PostgreSQL database, and change ```sparql.query.endpint``` and ```sparql.update.endpoint``` to the local Blazegraph.
+In order to use a local Blazegraph, you will need to run the access agent locally and set the accessagent.properties storerouter endpoint url to your local Blazegraph, as well as add triples for your namespace to a local ontokgrouter as is explained [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#install-and-build-local-accessagent-for-developers). In order fo the time series client to use the local PostgreSQL and the local Blazegraph, in ```/cea-agent/src/main/resources/timeseriesclient.properties```, change ```db.url``` to the local PostgreSQL database.
 
 ### Running
 
@@ -116,8 +116,7 @@ The query endpoint accepts the following request parameters:
 - ```ceaEndpoint```: (optional) endpoint where the CEA triples instantiated by the agent are stored; if not specified, agent will default to setting ```ceaEndpoint``` to TheWorldAvatar Blazegraph with the namespace retrieved from the cityObject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```.
 - ```graphName```: (optional) named graph to which the CEA triples belong to. In the scenario where ```ceaEndpoint``` is not specified, if ```graphName``` is not specified, the default graph is ```http://www.theworldavatar.com:83/citieskg/namespace/{namespace}/sparql/energyprofile/```, where {namespace} is a placeholder for the namespace of the cityObject IRI, e.g. kingslynnEPSG27700. If ```ceaEndpoint``` is specified, the agent will assume no graph usage if ```namedGraph``` is not specified.
 
-After receiving request sent to the query endpoint, the agent will retrieve energy demand and photovoltaic information calculated by CEA for the cityObject IRIs provided in ```iris```. The energy demand and photovoltaic information will only be returned if the cityObject IRIs provided in ```iris``` has already been passed to the run endpoint of the CEA agent beforehand
-.
+After receiving request sent to the query endpoint, the agent will retrieve energy demand and photovoltaic information calculated by CEA for the cityObject IRIs provided in ```iris```. The energy demand and photovoltaic information will only be returned if the cityObject IRIs provided in ```iris``` has already been passed to the run endpoint of the CEA agent beforehand.
 
 Example request:
 ```
