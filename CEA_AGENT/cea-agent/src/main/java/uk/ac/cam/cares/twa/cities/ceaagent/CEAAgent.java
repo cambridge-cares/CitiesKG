@@ -1,13 +1,12 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
-import uk.ac.cam.cares.jps.base.config.JPSConstants;
-import org.apache.jena.arq.querybuilder.handlers.WhereHandler;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementService;
 import org.jooq.exception.DataAccessException;
 import org.locationtech.jts.geom.util.GeometryFixer;
+import uk.ac.cam.cares.jps.base.config.JPSConstants;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeries;
@@ -33,6 +32,7 @@ import java.sql.SQLException;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
+import org.apache.jena.arq.querybuilder.handlers.WhereHandler;
 import org.apache.jena.update.UpdateRequest;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
