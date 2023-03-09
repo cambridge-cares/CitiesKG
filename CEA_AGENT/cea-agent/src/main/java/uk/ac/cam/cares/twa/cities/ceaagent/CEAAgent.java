@@ -34,6 +34,7 @@ import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.arq.querybuilder.handlers.WhereHandler;
+import org.apache.jena.arq.querybuilder.Order;
 import org.apache.jena.update.UpdateRequest;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
