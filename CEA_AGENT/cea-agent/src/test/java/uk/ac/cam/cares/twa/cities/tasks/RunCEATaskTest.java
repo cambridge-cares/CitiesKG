@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.tasks;
 
 import kong.unirest.*;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
 import org.mockito.MockedConstruction;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -12,6 +13,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 
 import static org.mockito.Mockito.*;
@@ -26,7 +29,7 @@ public class RunCEATaskTest {
         try {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test","test"));
+            testData.add(new CEAInputData("test", "test", "test", null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -42,7 +45,7 @@ public class RunCEATaskTest {
     public void testRunCEATaskFields() {
         try {
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test","test"));
+            testData.add(new CEAInputData("test", "test", "test", null));
             URI testURI = new URI("http://localhost/test");
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
@@ -50,7 +53,7 @@ public class RunCEATaskTest {
             String test_CRS = "27700";
             RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
 
-            assertEquals(11, task.getClass().getDeclaredFields().length);
+            assertEquals(15, task.getClass().getDeclaredFields().length);
 
             Field inputs;
             Field uris;
@@ -59,6 +62,7 @@ public class RunCEATaskTest {
             Field crs;
             Field CTYPE_JSON;
             Field stop;
+            Field DATA_FILE;
             Field SHAPEFILE_SCRIPT;
             Field WORKFLOW_SCRIPT;
             Field CREATE_WORKFLOW_SCRIPT;
@@ -84,6 +88,9 @@ public class RunCEATaskTest {
             stop = task.getClass().getDeclaredField("stop");
             stop.setAccessible(true);
             assertFalse((boolean) stop.get(task));
+            DATA_FILE = task.getClass().getDeclaredField("DATA_FILE");
+            DATA_FILE.setAccessible(true);
+            assertEquals(DATA_FILE.get(task), "datafile.txt");
             SHAPEFILE_SCRIPT = task.getClass().getDeclaredField("SHAPEFILE_SCRIPT");
             SHAPEFILE_SCRIPT.setAccessible(true);
             assertEquals(SHAPEFILE_SCRIPT.get(task), "create_shapefile.py");
@@ -107,14 +114,14 @@ public class RunCEATaskTest {
         try{
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test","test"));
+            testData.add(new CEAInputData("test", "test", "test", null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
             String test_CRS = "27700";
             RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
 
-            assertEquals(7, task.getClass().getDeclaredMethods().length);
+            assertEquals(9, task.getClass().getDeclaredMethods().length);
 
         } catch (URISyntaxException e) {
             fail();
@@ -127,7 +134,7 @@ public class RunCEATaskTest {
         try {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test","test"));
+            testData.add(new CEAInputData("test", "test", "test", null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -150,7 +157,7 @@ public class RunCEATaskTest {
     public void testRunProcess() throws Exception {
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test","test"));
+        testData.add(new CEAInputData("test", "test", "test", null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -191,7 +198,7 @@ public class RunCEATaskTest {
         try {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test","test"));
+            testData.add(new CEAInputData("test", "test", "test", null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -225,7 +232,7 @@ public class RunCEATaskTest {
 
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test","test"));
+        testData.add(new CEAInputData("test", "test", "test", null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -267,7 +274,7 @@ public class RunCEATaskTest {
 
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test","test"));
+        testData.add(new CEAInputData("test", "test", "test", null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -325,7 +332,7 @@ public class RunCEATaskTest {
         try {
             testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test"));
+            testData.add(new CEAInputData("test", "test", "test", null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -372,7 +379,7 @@ public class RunCEATaskTest {
     public void testRun() throws NoSuchMethodException, URISyntaxException, InvocationTargetException, IllegalAccessException {
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test", "test"));
+        testData.add(new CEAInputData("test", "test", "test", null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -391,9 +398,40 @@ public class RunCEATaskTest {
 
         run.invoke(task);
 
-        verify(task, times(3)).runProcess(any());
+        verify(task, times(4)).runProcess(any());
         verify(task, times(1)).extractTimeSeriesOutputs(anyString());
         verify(task, times(1)).extractArea(anyString(), any());
         verify(task, times(1)).returnOutputs(any());
     }
+
+    @Test
+    public void testDataToFile(@TempDir Path tempDir) throws URISyntaxException, NoSuchMethodException, NoSuchFieldException, InvocationTargetException, IllegalAccessException, IOException {
+        URI testURI = new URI("http://localhost/test");
+        ArrayList<CEAInputData> testData = new ArrayList<>();
+        testData.add(new CEAInputData("test", "test", "test", null));
+        ArrayList<String> testArray = new ArrayList<>();
+        testArray.add("testUri");
+        Integer test_thread = 0;
+        String test_CRS = "27700";
+        String fs = System.getProperty("file.separator");
+        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS));
+
+        ArrayList<CEAInputData> surroundings = new ArrayList<>();
+        surroundings.add(new CEAInputData("test", "test", "test", null));
+        testData.get(0).setSurrounding(surroundings);
+
+        Method dataToFile = task.getClass().getDeclaredMethod("dataToFile", ArrayList.class, String.class, String.class, String.class);
+        assertNotNull(dataToFile);
+        dataToFile.setAccessible(true);
+
+        Field noSurroundings = task.getClass().getDeclaredField("noSurroundings");
+        noSurroundings.setAccessible(true);
+
+        Path testPath = Files.createFile(tempDir.resolve("test.txt"));
+        Path testPath2 = Files.createFile(tempDir.resolve("test2.txt"));
+
+        dataToFile.invoke(task, testData, tempDir.toString(), testPath.toString(), testPath2.toString());
+
+        assertFalse((Boolean) noSurroundings.get(task));
+        }
 }

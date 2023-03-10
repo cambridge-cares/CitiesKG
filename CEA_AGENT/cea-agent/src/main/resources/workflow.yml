@@ -6,14 +6,11 @@
     zone: filepath_zone
     terrain:
     streets:
+    typology: filepath_typology
 - script: weather-helper
   parameters:
     scenario: scenario_path
     weather: Zuerich-ETHZ_1990-2010_TMY
-- script: surroundings-helper
-  parameters:
-    scenario: scenario_path
-    buffer: 200.
 - script: terrain-helper
   parameters:
     scenario: scenario_path
@@ -39,3 +36,4 @@
 - script: photovoltaic
   parameters:
     scenario: scenario_path
+    annual-radiation-threshold: 0.

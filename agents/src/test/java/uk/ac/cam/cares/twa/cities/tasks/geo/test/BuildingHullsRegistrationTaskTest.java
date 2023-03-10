@@ -4,9 +4,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import uk.ac.cam.cares.twa.cities.agents.geo.ThematicSurfaceDiscoveryAgent;
 import uk.ac.cam.cares.ogm.models.ModelContext;
-import uk.ac.cam.cares.ogm.models.geo.Building;
-import uk.ac.cam.cares.ogm.models.geo.SurfaceGeometry;
-import uk.ac.cam.cares.ogm.models.geo.ThematicSurface;
+import uk.ac.cam.cares.twa.cities.model.geo.Building;
+import uk.ac.cam.cares.twa.cities.model.geo.SurfaceGeometry;
+import uk.ac.cam.cares.twa.cities.model.geo.ThematicSurface;
 import uk.ac.cam.cares.twa.cities.tasks.geo.BuildingHullsRegistrationTask;
 import uk.ac.cam.cares.twa.cities.tasks.geo.MultiSurfaceThematicisationTask;
 

@@ -5,7 +5,7 @@
 
 The CEA agent can be used to interact with the [City Energy Analyst (CEA)](https://www.cityenergyanalyst.com/) and the data it produces on building energy demands and the electricity supply available if PV panels are placed on available surfaces.
 
-The agent reads data from quads stored in a namespace in a Blazegraph workbench. Geometry data is currently queried from OntoCityGml graphs and the resulting output data is added to the named graph 'energyprofile'.
+The agent currently queries for building geometry and building usage stored in the knowledge graph, and the resulting output data is added to the named graph 'energyprofile'.
 
 The CEA Agent provides three endpoints:
 
@@ -66,7 +66,7 @@ WHERE
    FILTER(?groundSurfId = 35) 
    }}
 ```
-If unsuccessful, the agent will query all building surface geometries with the following query, which the footprint is selected from by searching for the surface with the minimum constant height:
+If unsuccessful, the agent will query all building surface geometries with the following query, where the ground surface geometries are selected by searching for the surface with the minimum constant height:
 ```
 PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
 
@@ -79,7 +79,9 @@ WHERE
       }}
 ```
 
-For building height, the three different following queries are possible. Each are tried in this order until a result is retrieved. If all unsuccessful, a default value for height of 10.0m is set.
+After getting the ground surface geometries of the building, the footprint geometry of the building is extracted by merging the ground surface geometries.
+
+For building height, the following three different following queries are possible. Each are tried in this order until a result is retrieved. If all unsuccessful, a default value for height of 10.0m is set.
 ```
 PREFIX  ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
 
@@ -109,6 +111,18 @@ WHERE
 
 ```
 
+The agent queries for the building usage with the following query:
+```
+PREFIX ontobuiltenv: <https://www.theworldavatar.com/kg/ontobuiltenv/>
+
+SELECT  ?BuildingUsage
+WHERE
+  { ?building  ontobuiltenv:hasOntoCityGMLRepresentation  {PREFIX}building/{UUID}/> ;
+             ontobuiltenv:hasUsageCategory  ?usage .
+    ?usage a ?BuildingUsage}
+```
+
+If no building usage is returned from the query, the default value of ```MULTI_RES``` building usage is set, consistent with the default building use type set by the CEA.
 
 
 ### 2. Update
@@ -159,6 +173,38 @@ Example response:
 ```
 The 3dWebMapClient can be set up to visualise data produced by the CEA Agent (instructions to run are [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#3dcitydb-web-map-client)). The City Information Agent (CIA) is used when a building on the 3dWebMapClient is selected, to query data stored in the KG on the building. If the parameter "context=energy" is included in the url, the query endpoint of CEA will be contacted for energy data. eg `http://localhost:8000/3dwebclient/index.html?city=kingslynn&context=energy` (NB. this currently requires running web map client and CitiesKG/agents from [develop branch](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents))
 
+### Building usage mapping
+The agent queries for the building usage type, which are stored with ```OntoBuiltEnv``` concepts, to pass to CEA as input.
+
+In the CEA, there are 19 defined building usage types. In the ```OntoBuiltEnv``` ontology, there are 23 classes for building usage type (see left 2 columns of table below). After querying for the ```OntoBuiltEnv``` concepts, the agent will map the concepts to the CEA defined usage types as shown in the right 2 columns of the following mapping table:
+
+
+| CEA available usage types | ```OntoBuiltEnv``` concepts |   | ```OntoBuiltEnv``` concepts | Mapped to CEA usage type |
+|:-------------------------:|:---------------------------:|:-:|:---------------------------:|:------------------------:|
+|         COOLROOM          |          Domestic           |   |          Domestic           |        MULTI_RES         |
+|         FOODSTORE         |      SingleResidential      |   |      SingleResidential      |        SINGLE_RES        |
+|            GYM            |      MultiResidential       |   |      MultiResidential       |        MULTI_RES         |
+|         HOSPITAL          |      EmergencyService       |   |      EmergencyService       |         HOSPITAL         |
+|           HOTEL           |         FireStation         |   |         FireStation         |         HOSPITAL         |
+|        INDUSTRIAL         |        PoliceStation        |   |        PoliceStation        |         HOSPITAL         |
+|            LAB            |         MedicalCare         |   |         MedicalCare         |         HOSPITAL         |
+|          LIBRARY          |          Hospital           |   |          Hospital           |         HOSPITAL         |
+|         MULTI_RES         |           Clinic            |   |           Clinic            |         HOSPITAL         |
+|          MUSEUM           |          Education          |   |          Education          |        UNIVERSITY        |
+|          OFFICE           |           School            |   |           School            |          SCHOOL          |
+|          PARKING          |     UniversityFacility      |   |     UniversityFacility      |        UNIVERSITY        |
+|        RESTAURANT         |           Office            |   |           Office            |          OFFICE          |
+|          RETAIL           |     RetailEstablishment     |   |     RetailEstablishment     |          RETAIL          |
+|          SCHOOL           |      ReligiousFacility      |   |      ReligiousFacility      |          MUSEUM          |
+|        SERVERROOM         |     IndustrialFacility      |   |     IndustrialFacility      |        INDUSTRIAL        |
+|        SINGLE_RES         |     EatingEstablishment     |   |     EatingEstablishment     |        RESTAURANT        |
+|         SWIMMING          |    DrinkingEstablishment    |   |    DrinkingEstablishment    |        RESTAURANT        |
+|        UNIVERSITY         |            Hotel            |   |            Hotel            |          HOTEL           |
+|                           |       SportsFacility        |   |       SportsFacility        |           GYM            |
+|                           |      CulturalFacility       |   |      CulturalFacility       |          MUSEUM          |
+|                           |      TransportFacility      |   |      TransportFacility      |        INDUSTRIAL        |
+|                           |        Non-Domestic         |   |        Non-Domestic         |        INDUSTRIAL        |
+
 ## Build Instructions
 
 ### maven
@@ -186,10 +232,27 @@ The username and password for the postgreSQL database need to be provided in sin
     postgres_password.txt
 ```
 
+### Building usage query route
+Please provide the route to query for building usage type in ```usage.query.route``` in
+```
+./cea-agent/src/main/resources
+    CEAAgentConfig.properties
+```
+
+If ```usage.query.route``` is not provided, the agent will attempt to query for building usage from the same endpoint as the building geometry query.
+
+### ```cea.store.route```
+```cea.store.route``` in
+```
+./cea-agent/src/main/resources
+    CEAAgentConfig.properties
+```
+is intended for accessing endpoint where CEA triples will be stored. This endpoint has yet been set up. Leave ```cea.store.route``` empty for now.
+
 ### Access Agent
 
 The CEA agent also uses the [access agent](https://github.com/cambridge-cares/TheWorldAvatar/tree/main/JPS_ACCESS_AGENT). 
-Check that a mapping to a targetresourceid to pass to the access agent exists for the namespace being used. 
+Check that a mapping to a targetresourceid to pass to the access agent exists for the namespace being used for building geometry query. 
 Currently included are:
 
 - citieskg-berlin
@@ -197,12 +260,13 @@ Currently included are:
 - citieskg-singaporeEPSG4326
 - citieskg-kingslynnEPSG3857
 - citieskg-kingslynnEPSG27700
+- citieskg-pirmasensEPSG32633
 
 If not included, you will need to add a mapping to accessAgentRoutes in CEAAgent. 
 
 #### For developers
 In order to use a local Blazegraph, you will need to run the access agent locally and set the acessagent.properties storerouter endpoint url to your local Blazegraph, as well as add triples for your namespace to a local ontokgrouter as is explained [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#install-and-build-local-accessagent-for-developers). 
-The route to be passed to the access agent then needs to be provided in uri.route.local in:
+The route for building geometry queries to be passed to the access agent then needs to be provided in ```query.route.local``` in
 ```
 ./cea-agent/src/main/resources
     CEAAgentConfig.properties
@@ -211,7 +275,7 @@ The route should contain the port number your access agent is running on (eg. 48
 
 eg. `uri.route.local=http://host.docker.internal:48080/docker-kings-lynn`
 
-If you no longer want to use a local route, ensure you leave uri.route.local empty.
+If you no longer want to use a local route, ensure you leave ```query.route.local``` empty.
 
 Check [here](https://www.dropbox.com/s/z5dkdg5puqkfjtw/RunningCEAAgentLocallyGuide.pdf?dl=0) for a detailed guide on running CEA Agent locally.
 

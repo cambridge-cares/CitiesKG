@@ -5,7 +5,6 @@ import kong.unirest.Unirest;
 import kong.unirest.UnirestException;
 import org.apache.http.HttpException;
 import org.apache.http.protocol.HTTP;
-import org.json.JSONArray;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import com.google.gson.Gson;
 
@@ -13,8 +12,6 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.sql.Timestamp;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.lang.Process;
 import java.util.List;
@@ -28,7 +25,11 @@ public class RunCEATask implements Runnable {
     private final String crs;
     public static final String CTYPE_JSON = "application/json";
     private Boolean stop = false;
+    private Boolean noSurroundings = false;
+    private static final String DATA_FILE = "datafile.txt";
+    private static final String SURROUNDINGS_FILE = "surroundingdata.txt";
     private static final String SHAPEFILE_SCRIPT = "create_shapefile.py";
+    private static final String TYPOLOGY_SCRIPT = "create_typologyfile.py";
     private static final String WORKFLOW_SCRIPT = "workflow.yml";
     private static final String CREATE_WORKFLOW_SCRIPT = "create_cea_workflow.py";
     private static final String FS = System.getProperty("file.separator");
@@ -301,77 +302,159 @@ public class RunCEATask implements Runnable {
         }
     }
 
+    private void dataToFile(ArrayList<CEAInputData> dataInputs, String directory_path, String file_path, String surrounding_path) {
+        //Parse input data to JSON
+        String dataString = "[";
+        ArrayList<CEAInputData> surroundings = new ArrayList<>();
+
+        for(int i = 0; i < dataInputs.size(); i++) {
+            if (!(dataInputs.get(i).getSurrounding() == null)) {surroundings.addAll(dataInputs.get(i).getSurrounding());}
+            dataInputs.get(i).setSurrounding(null);
+            dataString += new Gson().toJson(dataInputs.get(i));
+            if(i!=dataInputs.size()-1) dataString += ", ";
+        }
+        dataString+="]";
+
+        File dir = new File(directory_path);
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new JPSRuntimeException(new FileNotFoundException(directory_path));
+        }
+
+        try {
+            BufferedWriter f_writer = new BufferedWriter(new FileWriter(file_path));
+            f_writer.write(dataString);
+            f_writer.close();
+        } catch (IOException e) {
+            throw new JPSRuntimeException(e);
+        }
+
+        if (surroundings.isEmpty()){
+            noSurroundings = true;
+        }
+        else{
+            dataToFile(surroundings, directory_path, surrounding_path);
+        }
+    }
+
+    private void dataToFile(ArrayList<CEAInputData> dataInputs, String directory_path, String file_path) {
+        //Parse input data to JSON
+        String dataString = "[";
+
+        for(int i = 0; i < dataInputs.size(); i++) {
+            dataInputs.get(i).setSurrounding(null);
+            dataString += new Gson().toJson(dataInputs.get(i));
+            if(i!=dataInputs.size()-1) dataString += ", ";
+        }
+        dataString+="]";
+
+        File dir = new File(directory_path);
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new JPSRuntimeException(new FileNotFoundException(directory_path));
+        }
+
+        try {
+            BufferedWriter f_writer = new BufferedWriter(new FileWriter(file_path));
+            f_writer.write(dataString);
+            f_writer.close();
+        } catch (IOException e) {
+            throw new JPSRuntimeException(e);
+        }
+    }
+
     @Override
     public void run() {
         while (!stop) {
 
             try {
-                //Parse input data to JSON
-                String dataString="[";
-                for(int i=0; i<inputs.size(); i++) {
-                    dataString += new Gson().toJson(inputs.get(i));
-                    if(i!=inputs.size()-1) dataString += ", ";
-                }
-                dataString+="]";
                 String strTmp = System.getProperty("java.io.tmpdir")+FS+"thread_"+threadNumber;
-
-                File dir = new File(strTmp);
-                if (!dir.exists() && !dir.mkdirs()) {
-                    throw new JPSRuntimeException(new FileNotFoundException(strTmp));
-                }
 
                 String OS = System.getProperty("os.name").toLowerCase();
                 ArrayList<String> args = new ArrayList<>();
                 ArrayList<String> args2 = new ArrayList<>();
                 ArrayList<String> args3 = new ArrayList<>();
-                String workflowPath = strTmp+FS+"workflow.yml";
+                ArrayList<String> args4 = new ArrayList<>();
+                ArrayList<String> args5 = new ArrayList<>();
+                String workflowPath = strTmp + FS + "workflow.yml";
+                String data_path = strTmp + FS + DATA_FILE;
+                String surroundings_path = strTmp + FS + SURROUNDINGS_FILE;
+
+                dataToFile(this.inputs, strTmp, data_path, surroundings_path);
+
+                String flag = noSurroundings ? "1" : "0";
+
 
                 if(OS.contains("win")){
-                    args.add("python");
-                    args.add(new File(
-                            Objects.requireNonNull(getClass().getClassLoader().getResource(SHAPEFILE_SCRIPT)).toURI()).getAbsolutePath());
-                    args.add(dataString.replace("\"", "\\\""));
-                    args.add(strTmp);
-                    args.add(crs);
+                    String f_path;
 
-                    args2.add("python");
-                    args2.add(new File(
-                            Objects.requireNonNull(getClass().getClassLoader().getResource(CREATE_WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
-                    args2.add(new File(
-                            Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
-                    args2.add(strTmp);
+                    args.add("cmd.exe");
+                    args.add("/C");
+                    f_path = new File(Objects.requireNonNull(getClass().getClassLoader().getResource(SHAPEFILE_SCRIPT)).toURI()).getAbsolutePath();
+                    args.add("conda activate cea && python " + f_path + " " + data_path + " " + strTmp + " " + crs+" zone.shp");
 
+                    args2.add("cmd.exe");
+                    args2.add("/C");
+                    f_path = new File(Objects.requireNonNull(getClass().getClassLoader().getResource(SHAPEFILE_SCRIPT)).toURI()).getAbsolutePath();
+                    args2.add("conda activate cea && python " + f_path + " " + surroundings_path + " " + strTmp + " " + crs+" surroundings.shp");
 
                     args3.add("cmd.exe");
                     args3.add("/C");
-                    args3.add("conda activate cea && cea workflow --workflow " + workflowPath);
+                    f_path = new File(Objects.requireNonNull(getClass().getClassLoader().getResource(TYPOLOGY_SCRIPT)).toURI()).getAbsolutePath();
+                    args3.add("conda activate cea && python " + f_path + " " + data_path + " " + strTmp);
+
+                    args4.add("cmd.exe");
+                    args4.add("/C");
+                    args4.add("conda activate cea && ");
+                    args4.add("python");
+                    args4.add(new File(
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(CREATE_WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
+                    args4.add(new File(
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
+                    args4.add(strTmp);
+                    args4.add(flag);
+
+                    args5.add("cmd.exe");
+                    args5.add("/C");
+                    args5.add("conda activate cea && cea workflow --workflow " + workflowPath);
                 }
                 else {
                     String shapefile = FS+"target"+FS+"classes"+FS+SHAPEFILE_SCRIPT;
+                    String typologyfile = FS+"target"+FS+"classes"+FS+TYPOLOGY_SCRIPT;
                     String createWorkflowFile = FS+"target"+FS+"classes"+FS+CREATE_WORKFLOW_SCRIPT;
                     String workflowFile = FS+"target"+FS+"classes"+FS+WORKFLOW_SCRIPT;
 
                     args.add("/bin/bash");
                     args.add("-c");
-                    args.add("export PROJ_LIB=/venv/share/lib && python " + shapefile +" '"+ dataString +"' " +strTmp+" "+crs);
+                    args.add("export PROJ_LIB=/venv/share/lib && python " + shapefile +" "+ data_path +" " +strTmp+" "+crs+" zone.shp");
 
                     args2.add("/bin/bash");
                     args2.add("-c");
-                    args2.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile + " " + strTmp);
-
+                    args2.add("export PROJ_LIB=/venv/share/lib && python " + shapefile +" "+ surroundings_path +" " +strTmp+" "+crs+" surroundings.shp");
 
                     args3.add("/bin/bash");
                     args3.add("-c");
-                    args3.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath);
+                    args3.add("export PROJ_LIB=/venv/share/lib && python " + typologyfile +" '"+ data_path +"' " + strTmp);
+
+                    args4.add("/bin/bash");
+                    args4.add("-c");
+                    args4.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile + " " + strTmp + " " + flag);
+
+
+                    args5.add("/bin/bash");
+                    args5.add("-c");
+                    args5.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath);
 
                 }
 
                 // create the shapefile process and run
                 runProcess(args);
-                // create the workflow process and run
-                runProcess(args2);
-                // Run workflow that runs all CEA scripts
+
+                if (!noSurroundings){runProcess(args2);}
+                // create the typologyfile process and run
                 runProcess(args3);
+                // create the workflow process and run
+                runProcess(args4);
+                // Run workflow that runs all CEA scripts
+                runProcess(args5);
 
                 CEAOutputData result = extractTimeSeriesOutputs(strTmp);
                 returnOutputs(extractArea(strTmp,result));

@@ -11,9 +11,9 @@ import org.mockito.stubbing.Answer;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.agents.geo.DistanceAgent;
 import uk.ac.cam.cares.ogm.models.ModelContext;
-import uk.ac.cam.cares.ogm.models.geo.CityObject;
-import uk.ac.cam.cares.ogm.models.geo.EnvelopeType;
-import uk.ac.cam.cares.ogm.models.geo.GeometryType;
+import uk.ac.cam.cares.twa.cities.model.geo.CityObject;
+import uk.ac.cam.cares.twa.cities.model.geo.EnvelopeType;
+import uk.ac.cam.cares.twa.cities.model.geo.GeometryType;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;

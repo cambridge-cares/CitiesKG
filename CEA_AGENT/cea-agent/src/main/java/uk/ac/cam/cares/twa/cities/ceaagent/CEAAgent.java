@@ -1,12 +1,18 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
+import org.apache.jena.arq.querybuilder.handlers.WhereHandler;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementService;
 import org.jooq.exception.DataAccessException;
+import org.locationtech.jts.geom.util.GeometryFixer;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeries;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeriesClient;
+import uk.ac.cam.cares.jps.base.query.RemoteRDBStoreClient;
+import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.twa.cities.tasks.*;
 import org.json.JSONObject;
 import javax.ws.rs.BadRequestException;
@@ -20,6 +26,8 @@ import javax.servlet.annotation.WebServlet;
 import java.util.concurrent.*;
 import java.net.URISyntaxException;
 import java.util.stream.Stream;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
@@ -28,6 +36,11 @@ import org.apache.jena.update.UpdateRequest;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.json.JSONArray;
+
+import org.locationtech.jts.geom.*;
+
+import org.locationtech.jts.operation.buffer.BufferOp;
+import org.locationtech.jts.operation.buffer.BufferParameters;
 
 @WebServlet(
         urlPatterns = {
@@ -65,6 +78,8 @@ public class CEAAgent extends JPSAgent {
     public static final String KEY_PV_WALL_EAST_SUPPLY= "PVWallEastSupply";
     public static final String KEY_PV_WALL_WEST_SUPPLY= "PVWallWestSupply";
     public static final String KEY_TIMES= "times";
+    public String customDataType = "<http://localhost/blazegraph/literals/POLYGON-3-15>";
+    public String customField = "X0#Y0#Z0#X1#Y1#Z1#X2#Y2#Z2#X3#Y3#Z3#X4#Y4#Z4";
 
     public List<String> TIME_SERIES = Arrays.asList(KEY_GRID_CONSUMPTION,KEY_ELECTRICITY_CONSUMPTION,KEY_HEATING_CONSUMPTION,KEY_COOLING_CONSUMPTION, KEY_PV_ROOF_SUPPLY,KEY_PV_WALL_SOUTH_SUPPLY, KEY_PV_WALL_NORTH_SUPPLY,KEY_PV_WALL_EAST_SUPPLY, KEY_PV_WALL_WEST_SUPPLY);
     public List<String> SCALARS = Arrays.asList(KEY_PV_ROOF_AREA,KEY_PV_WALL_NORTH_AREA,KEY_PV_WALL_SOUTH_AREA,KEY_PV_WALL_EAST_AREA, KEY_PV_WALL_WEST_AREA);
@@ -76,7 +91,8 @@ public class CEAAgent extends JPSAgent {
     private TimeSeriesClient<OffsetDateTime> tsClient;
     public static final String timeUnit = OffsetDateTime.class.getSimpleName();
     private static final String FS = System.getProperty("file.separator");
-
+    private RemoteRDBStoreClient rdbStoreClient;
+    private RemoteStoreClient storeClient;
     // Variables fetched from CEAAgentConfig.properties file.
     private String ocgmlUri;
     private String ontoUBEMMPUri;
@@ -84,13 +100,15 @@ public class CEAAgent extends JPSAgent {
     private String owlUri;
     private String purlEnaeqUri;
     private String purlInfrastructureUri;
-    private String timeSeriesUri;
     private String thinkhomeUri;
     private String ontoBuiltEnvUri;
+    private String geoUri;
     private static String unitOntologyUri;
     private String requestUrl;
     private String targetUrl;
     private String localRoute;
+    private String usageRoute;
+    private String ceaRoute;
 
     private Map<String, String> accessAgentRoutes = new HashMap<>();
 
@@ -101,6 +119,8 @@ public class CEAAgent extends JPSAgent {
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
         if (validateInput(requestParams)) {
+            setRDBClient(getTimeSeriesPropsPath());
+
             requestUrl = requestParams.getString(KEY_REQ_URL);
             String uriArrayString = requestParams.get(KEY_IRI).toString();
             JSONArray uriArray = new JSONArray(uriArrayString);
@@ -130,40 +150,54 @@ public class CEAAgent extends JPSAgent {
                     }
 
                     String route = new String();
+
                     for (int i = 0; i < uriArray.length(); i++) {
                         LinkedHashMap<String,String> tsIris = new LinkedHashMap<>();
                         LinkedHashMap<String,String> scalarIris = new LinkedHashMap<>();
 
                         String uri = uriArray.getString(i);
+                        setTimeSeriesProps(uri, getTimeSeriesPropsPath());
+
                         // Only set routes once - assuming all iris passed have same namespace
                         // Will not be necessary if namespace is passed in request params
                         if(i==0) {
                             route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
+                            ceaRoute = ceaRoute.isEmpty() ? route : ceaRoute;
                         }
-                        String building = checkBuildingInitialised(uri, route);
+                        String building = checkBuildingInitialised(uri, ceaRoute);
                         if(building.equals("")){
-                            building = initialiseBuilding(uri, route);
+                            // Check if DABGEO:Building IRI has already been created in another endpoint
+                            building = checkBuildingInitialised(uri, usageRoute);
+                            building = initialiseBuilding(uri, building, ceaRoute);
                         }
-                        if(!checkDataInitialised(uri, building, tsIris, scalarIris, route)) {
+                        if(!checkDataInitialised(uri, building, tsIris, scalarIris, ceaRoute)) {
                             createTimeSeries(uri,tsIris);
-                            initialiseData(uri, i, scalars, building, tsIris, scalarIris, route);
+                            initialiseData(uri, i, scalars, building, tsIris, scalarIris, ceaRoute);
                         }
                         else{
-                            updateScalars(uri, route, scalarIris, scalars, i);
+                            updateScalars(uri, ceaRoute, scalarIris, scalars, i);
                         }
                         addDataToTimeSeries(timeSeries.get(i), times, tsIris);
                     }
                 } else if (requestUrl.contains(URI_ACTION)) {
                     ArrayList<CEAInputData> testData = new ArrayList<>();
                     ArrayList<String> uriStringArray = new ArrayList<>();
+                    List<String> uniqueSurrounding = new ArrayList<>();
                     String crs= new String();
                     String route = new String();
 
                     for (int i = 0; i < uriArray.length(); i++) {
                         String uri = uriArray.getString(i);
+                        uniqueSurrounding.add(uri);
+                        setTimeSeriesProps(uri, getTimeSeriesPropsPath());
+
                         // Only set route once - assuming all iris passed in same namespace
                         // Will not be necessary if namespace is passed in request params
-                        if(i==0) route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
+                        if(i==0) {
+                            route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
+                            usageRoute = usageRoute.isEmpty() ? route : usageRoute;
+                            ceaRoute = ceaRoute.isEmpty() ? route : ceaRoute;
+                        }
                         uriStringArray.add(uri);
                         // Set default value of 10m if height can not be obtained from knowledge graph
                         // Will only require one height query if height is represented in data consistently
@@ -172,10 +206,20 @@ public class CEAAgent extends JPSAgent {
                         height = height.length() == 0 ? getValue(uri, "HeightGenAttr", route): height;
                         height = height.length() == 0 ? "10.0" : height;
                         // Get footprint from ground thematic surface or find from surface geometries depending on data
-                        String footprint = getValue(uri, "FootprintThematicSurface", route);
+                        String footprint = getValue(uri, "Lod0FootprintId", route);
+                        footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
-                        testData.add(new CEAInputData(footprint, height));
-                        if(i==0) crs = getValue(uri, "CRS", route); //just get crs once - assuming all iris in same namespace
+                        // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
+                        String usage = toCEAConvention(getValue(uri, "BuildingUsage", usageRoute));
+
+                        ArrayList<CEAInputData> surrounding = getSurroundings(uri, route, uniqueSurrounding);
+
+                        testData.add(new CEAInputData(footprint, height, usage, surrounding));
+                        if (i==0) {
+                            crs = getValue(uri, "CRS", route);
+                            crs = crs == "" ? getValue(uri, "DatabasesrsCRS", route) : crs;
+                            if (crs == ""){crs = getNamespace(uri).split("EPSG").length == 2 ? getNamespace(uri).split("EPSG")[1].split("/")[0] : "27700";}
+                        } //just get crs once - assuming all iris in same namespace
                     }
                     // Manually set thread number to 0 - multiple threads not working so needs investigating
                     // Potentially issue is CEA is already multi-threaded
@@ -183,13 +227,17 @@ public class CEAAgent extends JPSAgent {
                 }
             } else if (requestUrl.contains(URI_QUERY)) {
                 String route = new String();
+
                 for (int i = 0; i < uriArray.length(); i++) {
                     String uri = uriArray.getString(i);
+                    setTimeSeriesProps(uri, getTimeSeriesPropsPath());
+
                     // Only set route once - assuming all iris passed in same namespace
                     if(i==0) {
                         route = localRoute.isEmpty() ? getRoute(uri) : localRoute;
+                        ceaRoute = ceaRoute.isEmpty() ? route : ceaRoute;
                     }
-                    String building = checkBuildingInitialised(uri, route);
+                    String building = checkBuildingInitialised(uri, ceaRoute);
                     if(building.equals("")){
                         return requestParams;
                     }
@@ -197,14 +245,14 @@ public class CEAAgent extends JPSAgent {
                     List<String> allMeasures = new ArrayList<>();
                     Stream.of(TIME_SERIES, SCALARS).forEach(allMeasures::addAll);
                     for (String measurement: allMeasures) {
-                        ArrayList<String> result = getDataIRI(uri, building, measurement, route);
+                        ArrayList<String> result = getDataIRI(uri, building, measurement, ceaRoute);
                         if (!result.isEmpty()) {
                             String value;
                             if (TIME_SERIES.contains(measurement)) {
                                 value = calculateAnnual(retrieveData(result.get(0)), result.get(0));
                                 measurement = "Annual "+ measurement;
                             } else {
-                                value = getNumericalValue(uri, result.get(0), route);
+                                value = getNumericalValue(uri, result.get(0), ceaRoute);
                             }
                             // Return non-zero values
                             if(!(value.equals("0") || value.equals("0.0"))){
@@ -370,14 +418,17 @@ public class CEAAgent extends JPSAgent {
         purlEnaeqUri=config.getString("uri.ontology.purl.enaeq");
         thinkhomeUri=config.getString("uri.ontology.thinkhome");
         purlInfrastructureUri=config.getString("uri.ontology.purl.infrastructure");
-        timeSeriesUri=config.getString("uri.ontology.ts");
         ontoBuiltEnvUri=config.getString("uri.ontology.ontobuiltenv");
+        geoUri=config.getString("uri.service.geo");
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/", config.getString("berlin.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/", config.getString("singaporeEPSG24500.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/", config.getString("singaporeEPSG4326.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/", config.getString("kingslynnEPSG3857.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/", config.getString("kingslynnEPSG27700.targetresourceid"));
-        localRoute = config.getString("uri.route.local");
+        accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/", config.getString("pirmasensEPSG32633.targetresourceid"));
+        localRoute = config.getString("query.route.local");
+        usageRoute = config.getString("usage.query.route");
+        ceaRoute = config.getString("cea.store.route");
     }
 
     /**
@@ -404,44 +455,32 @@ public class CEAAgent extends JPSAgent {
      * @param fixedIris map containing time series iris mapped to measurement type
      */
     private void createTimeSeries(String uriString, LinkedHashMap<String,String> fixedIris ) {
-        try{
-            String timeseries_props;
-            if(System.getProperty("os.name").toLowerCase().contains("win")){
-                timeseries_props = new File(
-                        Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
-            }
-            else{
-                timeseries_props = FS+"target"+FS+"classes"+FS+TIME_SERIES_CLIENT_PROPS;
-            }
-            tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, timeseries_props);
+        tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
 
-            // Create a iri for each measurement
-            List<String> iris = new ArrayList<>();
-            for(String measurement: TIME_SERIES){
-                String iri = getGraph(uriString,ENERGY_PROFILE)+measurement+"_"+UUID.randomUUID()+ "/";
-                iris.add(iri);
-                fixedIris.put(measurement, iri);
-            }
-
-            // Check whether IRIs have a time series linked and if not initialize the corresponding time series
-            if(!timeSeriesExist(iris)) {
-                // All values are doubles
-                List<Class<?>> classes =  new ArrayList<>();
-                for(int i=0; i<iris.size(); i++){
-                    classes.add(Double.class);
-                }
-                // Initialize the time series
-                tsClient.initTimeSeries(iris, classes, timeUnit);
-                //LOGGER.info(String.format("Initialized time series with the following IRIs: %s", String.join(", ", iris)));
-            }
-
-
-        } catch (URISyntaxException | IOException e)
-        {
-            e.printStackTrace();
-            throw new JPSRuntimeException(e);
+        // Create a iri for each measurement
+        List<String> iris = new ArrayList<>();
+        for(String measurement: TIME_SERIES){
+            String iri = ontoUBEMMPUri+measurement+"_"+UUID.randomUUID()+ "/";
+            iris.add(iri);
+            fixedIris.put(measurement, iri);
         }
 
+        // Check whether IRIs have a time series linked and if not initialize the corresponding time series
+        if(!timeSeriesExist(iris)) {
+            // All values are doubles
+            List<Class<?>> classes =  new ArrayList<>();
+            for(int i=0; i<iris.size(); i++){
+                classes.add(Double.class);
+            }
+            try (Connection conn = rdbStoreClient.getConnection()) {
+                // Initialize the time series
+                tsClient.initTimeSeries(iris, classes, timeUnit, conn, TimeSeriesClient.Type.STEPWISECUMULATIVE, null, null);
+                //LOGGER.info(String.format("Initialized time series with the following IRIs: %s", String.join(", ", iris)));
+            }
+            catch (SQLException e) {
+                throw new JPSRuntimeException(e);
+            }
+        }
     }
 
     /**
@@ -458,34 +497,26 @@ public class CEAAgent extends JPSAgent {
         }
         // If CreateTimeSeries has not been run, get time series client
         if(tsClient==null){
-            try{
-                String timeseries_props;
-                if(System.getProperty("os.name").toLowerCase().contains("win")){
-                    timeseries_props = new File(
-                            Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
-                }
-                else{
-                    timeseries_props = FS+"target"+FS+"classes"+FS+TIME_SERIES_CLIENT_PROPS;
-                }
-                tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, timeseries_props);
-            } catch (URISyntaxException | IOException e)
-            {
-                e.printStackTrace();
-                throw new JPSRuntimeException(e);
-            }
+            tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
         }
         TimeSeries<OffsetDateTime> currentTimeSeries = new TimeSeries<>(times, iris, values);
-        OffsetDateTime endDataTime = tsClient.getMaxTime(currentTimeSeries.getDataIRIs().get(0));
-        OffsetDateTime beginDataTime = tsClient.getMinTime(currentTimeSeries.getDataIRIs().get(0));
 
-        // Delete old data if exists
-        if (endDataTime != null) {
-            for(Integer i=0; i<currentTimeSeries.getDataIRIs().size(); i++){
-                tsClient.deleteTimeSeriesHistory(currentTimeSeries.getDataIRIs().get(i), beginDataTime, endDataTime);
+        try (Connection conn = rdbStoreClient.getConnection()) {
+            OffsetDateTime endDataTime = tsClient.getMaxTime(currentTimeSeries.getDataIRIs().get(0), conn);
+            OffsetDateTime beginDataTime = tsClient.getMinTime(currentTimeSeries.getDataIRIs().get(0), conn);
+
+            // Delete old data if exists
+            if (endDataTime != null) {
+                for (Integer i = 0; i < currentTimeSeries.getDataIRIs().size(); i++) {
+                    tsClient.deleteTimeSeriesHistory(currentTimeSeries.getDataIRIs().get(i), beginDataTime, endDataTime, conn);
+                }
             }
+            // Add New data
+            tsClient.addTimeSeriesData(currentTimeSeries, conn);
         }
-        // Add New data
-        tsClient.addTimeSeriesData(currentTimeSeries);
+        catch (SQLException e) {
+            throw new JPSRuntimeException(e);
+        }
     }
 
     /**
@@ -499,8 +530,13 @@ public class CEAAgent extends JPSAgent {
         // If any of the IRIs does not have a time series the time series does not exist
         for(String iri: iris) {
             try {
-                if (!tsClient.checkDataHasTimeSeries(iri)) {
-                    return false;
+                try (Connection conn = rdbStoreClient.getConnection()) {
+                    if (!tsClient.checkDataHasTimeSeries(iri, conn)) {
+                        return false;
+                    }
+                }
+                catch (SQLException e) {
+                    throw new JPSRuntimeException(e);
                 }
                 // If central RDB lookup table ("dbTable") has not been initialised, the time series does not exist
             } catch (DataAccessException e) {
@@ -588,11 +624,17 @@ public class CEAAgent extends JPSAgent {
         JSONArray queryResultArray = this.queryStore(route, q.toString());
 
         if(!queryResultArray.isEmpty()){
-            if(value!="FootprintSurfaceGeom") {
-                result = queryResultArray.getJSONObject(0).get(value).toString();
+            if (value == "Lod0FootprintId" || value == "FootprintThematicSurface"){
+                result = extractFootprint(queryResultArray);
+            }
+            else if (value == "BuildingUsage") {
+                result = queryResultArray.getJSONObject(0).get(value).toString().split(ontoBuiltEnvUri)[1].split(">")[0].toUpperCase();
+            }
+            else if (value == "FootprintSurfaceGeom") {
+                result = extractFootprint(getGroundGeometry(queryResultArray));
             }
             else{
-                result=getFootprint(queryResultArray);
+                result = queryResultArray.getJSONObject(0).get(value).toString();
             }
         }
         return result;
@@ -604,35 +646,69 @@ public class CEAAgent extends JPSAgent {
      * @param results array of building surfaces
      * @return footprint geometry as string
      */
-    private String getFootprint(JSONArray results){
-        String footprint="";
-        ArrayList<String> z_values = new ArrayList<>();
-        Double minimum=Double.MAX_VALUE;
+    private JSONArray getGroundGeometry(JSONArray results){
+        ArrayList<Integer> ind = new ArrayList<>();
+        ArrayList<Double> z;
+        Double minZ = Double.MAX_VALUE;
+        double eps = 0.5;
+        boolean flag;
+        String geom;
+        String[] split;
 
-        for(Integer i=0; i<results.length(); i++){
-            String geom = results.getJSONObject(i).get("FootprintSurfaceGeom").toString();
-            String[] split = geom.split("#");
-            // store z values of surface
-            for(Integer j=1; j<=split.length; j++) {
-                if(j%3==0){
-                    z_values.add(split[j-1]);
+        for (int i = 0; i < results.length(); i++){
+            geom = results.getJSONObject(i).get("geometry").toString();
+            split = geom.split("#");
+
+            z = new ArrayList<>();
+            z.add(Double.parseDouble(split[2]));
+
+            flag = true;
+
+            for (int j = 5; j < split.length; j += 3){
+                for (int ji = 0;  ji < z.size(); ji++){
+                    if (Math.abs(Double.parseDouble(split[j]) - z.get(ji)) > eps){
+                        flag = false;
+                        break;
+                    }
+                }
+
+                if (flag){
+                    z.add(Double.parseDouble(split[j]));
+                }
+                else{
+                    break;
                 }
             }
-            // find surfaces with constant z value
-            Boolean zIsConstant = true;
-            for(Integer k=1; k<z_values.size(); k++) {
-                if (!z_values.get(k).equals(z_values.get(k - 1))) {
-                    zIsConstant = false;
-                }
+
+            if (!flag){
+                ind.add(i);
             }
-            // store geometry with the minimum constant z as footprint
-            if (zIsConstant && Double.valueOf(z_values.get(0)) < minimum) {
-                minimum = Double.valueOf(z_values.get(0));
-                footprint=geom;
+            else{
+                if (z.get(0) < minZ){minZ = z.get(0);}
             }
-            z_values.clear();
         }
-        return footprint;
+
+        // gets rid of geometry without constant z (up to eps tolerance)
+        for (int i = ind.size() - 1; i >= 0; i--){
+            results.remove(ind.get(i));
+        }
+
+        int i = 0;
+
+        // gets rid of geometry without minimum z value (up to eps tolerance)
+        while (i < results.length()){
+            geom = results.getJSONObject(i).get("geometry").toString();
+            split = geom.split("#");
+
+            if (Double.parseDouble(split[2]) > minZ + eps){
+                results.remove(i);
+            }
+            else{
+                i++;
+            }
+        }
+
+        return results;
     }
 
     /**
@@ -643,6 +719,8 @@ public class CEAAgent extends JPSAgent {
      */
     private Query getQuery(String uriString, String value) {
         switch(value) {
+            case "Lod0FootprintId":
+                return getLod0FootprintIdQuery(uriString);
             case "FootprintSurfaceGeom":
                 return getGeometryQuerySurfaceGeom(uriString);
             case "FootprintThematicSurface":
@@ -653,14 +731,20 @@ public class CEAAgent extends JPSAgent {
                 return getHeightQueryMeasuredHeight(uriString);
             case "HeightGenAttr":
                 return getHeightQueryGenAttr(uriString);
+            case "DatabasesrsCRS":
+                return getDatabasesrsCrsQuery(uriString);
             case "CRS":
                 return getCrsQuery(uriString);
+            case "BuildingUsage":
+                return getBuildingUsageQuery(uriString);
+            case "envelope":
+                return getEnvelopeQuery(uriString);
         }
         return null;
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve a footprint for building linked to surface geometries.
+     * builds a SPARQL query for a specific URI to retrieve all surface geometries to a building
      * @param uriString city object id
      * @return returns a query string
      */
@@ -669,10 +753,11 @@ public class CEAAgent extends JPSAgent {
             WhereBuilder wb = new WhereBuilder()
                     .addPrefix("ocgml", ocgmlUri)
                     .addWhere("?surf", "ocgml:cityObjectId", "?s")
-                    .addWhere("?surf", "ocgml:GeometryType", "?FootprintSurfaceGeom")
-                    .addFilter("!isBlank(?FootprintSurfaceGeom)");
+                    .addWhere("?surf", "ocgml:GeometryType", "?geometry")
+                    .addFilter("!isBlank(?geometry)");
             SelectBuilder sb = new SelectBuilder()
-                    .addVar("?FootprintSurfaceGeom")
+                    .addVar("?geometry")
+                    .addVar("datatype(?geometry)", "?datatype")
                     .addGraph(NodeFactory.createURI(getGraph(uriString,SURFACE_GEOMETRY)), wb);
             sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
             return sb.build();
@@ -684,7 +769,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve a footprint for building linked to thematic surfaces.
+     * builds a SPARQL query for a specific URI to retrieve ground surface geometries for building linked to thematic surfaces with ocgml:objectClassId 35
      * @param uriString city object id
      * @return returns a query string
      */
@@ -693,15 +778,16 @@ public class CEAAgent extends JPSAgent {
             WhereBuilder wb1 = new WhereBuilder()
                     .addPrefix("ocgml", ocgmlUri)
                     .addWhere("?surf", "ocgml:cityObjectId", "?s")
-                    .addWhere("?surf", "ocgml:GeometryType", "?FootprintThematicSurface")
-                    .addFilter("!isBlank(?FootprintThematicSurface)");
+                    .addWhere("?surf", "ocgml:GeometryType", "?geometry")
+                    .addFilter("!isBlank(?geometry)");
             WhereBuilder wb2 = new WhereBuilder()
                     .addPrefix("ocgml", ocgmlUri)
                     .addWhere("?s", "ocgml:buildingId", "?building")
                     .addWhere("?s", "ocgml:objectClassId", "?groundSurfId")
                     .addFilter("?groundSurfId = 35"); //Thematic Surface Ids are 33:roof, 34:wall and 35:ground
             SelectBuilder sb = new SelectBuilder()
-                    .addVar("?FootprintThematicSurface")
+                    .addVar("?geometry")
+                    .addVar("datatype(?geometry)", "?datatype")
                     .addGraph(NodeFactory.createURI(getGraph(uriString,SURFACE_GEOMETRY)), wb1)
                     .addGraph(NodeFactory.createURI(getGraph(uriString,THEMATIC_SURFACE)), wb2);
             sb.setVar( Var.alloc( "building" ), NodeFactory.createURI(getBuildingUri(uriString)));
@@ -720,16 +806,20 @@ public class CEAAgent extends JPSAgent {
      * @return returns a query string
      */
     private Query getHeightQueryMeasuredHeight(String uriString) {
-        WhereBuilder wb = new WhereBuilder();
-        SelectBuilder sb = new SelectBuilder();
-
-        wb.addPrefix("ocgml", ocgmlUri)
-                .addWhere("?s", "ocgml:measuredHeight", "?HeightMeasuredHeight");
-        sb.addVar("?HeightMeasuredHeight")
-                .addGraph(NodeFactory.createURI(getGraph(uriString,BUILDING)), wb);
-        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
-
-        return sb.build();
+        try {
+            WhereBuilder wb = new WhereBuilder()
+                    .addPrefix("ocgml", ocgmlUri)
+                    .addWhere("?s", "ocgml:measuredHeight", "?HeightMeasuredHeight")
+                    .addFilter("!isBlank(?HeightMeasuredHeight)");
+            SelectBuilder sb = new SelectBuilder()
+                    .addVar("?HeightMeasuredHeight")
+                    .addGraph(NodeFactory.createURI(getGraph(uriString,BUILDING)), wb);
+            sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
+            return sb.build();
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -738,15 +828,20 @@ public class CEAAgent extends JPSAgent {
      * @return returns a query string
      */
     private Query getHeightQueryMeasuredHeigh(String uriString) {
-        WhereBuilder wb = new WhereBuilder();
-        SelectBuilder sb = new SelectBuilder();
-        wb.addPrefix("ocgml", ocgmlUri)
-                .addWhere("?s", "ocgml:measuredHeigh", "?HeightMeasuredHeigh");
-        sb.addVar("?HeightMeasuredHeigh")
-                .addGraph(NodeFactory.createURI(getGraph(uriString,BUILDING)), wb);
-        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
-
-        return sb.build();
+        try {
+            WhereBuilder wb = new WhereBuilder()
+                    .addPrefix("ocgml", ocgmlUri)
+                    .addWhere("?s", "ocgml:measuredHeigh", "?HeightMeasuredHeigh")
+                    .addFilter("!isBlank(?HeightMeasuredHeigh)");
+            SelectBuilder sb = new SelectBuilder()
+                    .addVar("?HeightMeasuredHeigh")
+                    .addGraph(NodeFactory.createURI(getGraph(uriString, BUILDING)), wb);
+            sb.setVar(Var.alloc("s"), NodeFactory.createURI(getBuildingUri(uriString)));
+            return sb.build();
+        }catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -770,7 +865,47 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a CRS using namespace from uri
+     * builds a SPARQL query for a CRS in the DatabaseSRS graph using namespace from uri
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getDatabasesrsCrsQuery(String uriString) {
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ocgml", ocgmlUri)
+                .addWhere("?s", "ocgml:srid", "?CRS");
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?CRS")
+                .addGraph(NodeFactory.createURI(getGraph(uriString,DATABASE_SRS)), wb);
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getNamespace(uriString)));
+        return sb.build();
+    }
+
+    /**
+     * builds a SPARQL query for a specific URI to retrieve ground surface geometry from lod0FootprintId
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getLod0FootprintIdQuery(String uriString) {
+        try {
+            WhereBuilder wb = new WhereBuilder()
+                    .addPrefix("ocgml", ocgmlUri)
+                    .addWhere("?building", "ocgml:lod0FootprintId", "?footprintSurface")
+                    .addWhere("?surface", "ocgml:parentId", "?footprintSurface")
+                    .addWhere("?surface", "ocgml:GeometryType", "?geometry");
+            SelectBuilder sb = new SelectBuilder()
+                    .addVar("?geometry")
+                    .addVar("datatype(?geometry)", "?datatype")
+                    .addWhere(wb);
+            sb.setVar(Var.alloc("building"), NodeFactory.createURI(getBuildingUri(uriString)));
+            return sb.build();
+        }catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * builds a SPARQL query for a CRS not in the DatabaseSRS graph using namespace from uri
      * @param uriString city object id
      * @return returns a query string
      */
@@ -780,9 +915,162 @@ public class CEAAgent extends JPSAgent {
                 .addWhere("?s", "ocgml:srid", "?CRS");
         SelectBuilder sb = new SelectBuilder()
                 .addVar("?CRS")
-                .addGraph(NodeFactory.createURI(getGraph(uriString,DATABASE_SRS)), wb);
+                .addWhere(wb);
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getNamespace(uriString)));
         return sb.build();
+    }
+
+    /**
+     * builds a SPARQL query for a specific URI to retrieve the building usage stored with OntoBuiltEnv concepts
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getBuildingUsageQuery(String uriString) {
+        WhereBuilder wb = new WhereBuilder();
+        SelectBuilder sb = new SelectBuilder();
+
+        wb.addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
+                .addPrefix("rdf", rdfUri)
+                .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s")
+                .addWhere("?building", "ontoBuiltEnv:hasUsageCategory", "?usage")
+                .addWhere("?usage", "rdf:type", "?BuildingUsage");
+
+        sb.addVar("?BuildingUsage")
+                .addWhere(wb);
+
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
+
+        return sb.build();
+    }
+
+    /**
+     * builds a SPARQL query for the envelope of uriString
+     * @param uriString city object id
+     * @return returns a query string
+     */
+    private Query getEnvelopeQuery(String uriString){
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ocgml", ocgmlUri)
+                .addWhere("?s", "ocgml:EnvelopeType", "?envelope");
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?envelope")
+                .addWhere(wb);
+        sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(uriString));
+        return sb.build();
+    }
+
+    /**
+     * builds a SPARQL geospatial query for city object id of buildings whose envelope are within lowerBounds and upperBounds
+     * @param uriString city object id of the target building
+     * @param lowerBounds coordinates of customFieldsLowerBounds as a string
+     * @param upperBounds coordinates of customFieldsUpperBounds as a string
+     * @return returns a query string
+     */
+    private Query getBuildingsWithinBoundsQuery(String uriString, String lowerBounds, String upperBounds) throws ParseException {
+        // where clause for geospatial search
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ocgml", ocgmlUri)
+                .addPrefix("geo", geoUri)
+                .addWhere("?cityObject", "geo:predicate", "ocgml:EnvelopeType")
+                .addWhere("?cityObject", "geo:searchDatatype", customDataType)
+                .addWhere("?cityObject", "geo:customFields", customField)
+                // PLACEHOLDER because lowerBounds and upperBounds would be otherwise added as doubles, not strings
+                .addWhere("?cityObject", "geo:customFieldsLowerBounds", "PLACEHOLDER" + lowerBounds)
+                .addWhere("?cityObject", "geo:customFieldsUpperBounds", "PLACEHOLDER" + upperBounds);
+
+        // where clause to check that the city object is a building
+        WhereBuilder wb2 = new WhereBuilder()
+                .addPrefix("ocgml", ocgmlUri)
+                .addWhere("?cityObject", "ocgml:objectClassId", "?id")
+                .addFilter("?id=26");
+
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?cityObject");
+
+        Query query = sb.build();
+        // add geospatial service
+        ElementGroup body = new ElementGroup();
+        body.addElement(new ElementService(geoUri + "search", wb.build().getQueryPattern()));
+        body.addElement(wb2.build().getQueryPattern());
+        query.setQueryPattern(body);
+
+        WhereHandler wh = new WhereHandler(query.cloneQuery());
+
+        // add city object graph
+        WhereHandler wh2 = new WhereHandler(sb.build());
+        wh2.addGraph(NodeFactory.createURI(getGraph(uriString,CITY_OBJECT)), wh);
+
+        return wh2.getQuery();
+    }
+
+    /**
+     * retrieves the surrounding buildings
+     * @param uriString city object id
+     * @param route route to pass to access agent
+     * @param unique array list of unique surrounding buildings
+     * @return the surrounding buildings as an ArrayList of CEAInputData
+     */
+    private ArrayList<CEAInputData> getSurroundings(String uriString, String route, List<String> unique) {
+        try {
+            CEAInputData temp;
+            String uri;
+            ArrayList<CEAInputData> surroundings = new ArrayList<>();
+            String envelopeCoordinates = getValue(uriString, "envelope", route);
+
+            Double buffer = 200.00;
+
+            Polygon envelopePolygon = (Polygon) toPolygon(envelopeCoordinates);
+
+            Geometry surroundingRing = ((Polygon) inflatePolygon(envelopePolygon, buffer)).getExteriorRing();
+
+            Coordinate[] surroundingCoordinates = surroundingRing.getCoordinates();
+
+            String boundingBox = coordinatesToString(surroundingCoordinates);
+
+            String[] points = boundingBox.split("#");
+
+            String lowerPoints= points[0] + "#" + points[1] + "#" + 0 + "#";
+
+            String lowerBounds = lowerPoints + lowerPoints + lowerPoints + lowerPoints + lowerPoints;
+            lowerBounds = lowerBounds.substring(0, lowerBounds.length() - 1 );
+
+            String upperPoints = points[6] + "#" + points[7] + "#" + String.valueOf(Double.parseDouble(points[8])+100) + "#";
+
+            String upperBounds = upperPoints + upperPoints + upperPoints + upperPoints + upperPoints;
+            upperBounds = upperBounds.substring(0, upperBounds.length() - 1);
+
+            Query query = getBuildingsWithinBoundsQuery(uriString, lowerBounds, upperBounds);
+
+            String queryString = query.toString().replace("PLACEHOLDER", "");
+
+            JSONArray queryResultArray = this.queryStore(route, queryString);
+
+            for (int i = 0; i < queryResultArray.length(); i++) {
+                uri = queryResultArray.getJSONObject(i).get("cityObject").toString();
+
+                if (!unique.contains(uri)) {
+                    // Set default value of 10m if height can not be obtained from knowledge graph
+                    // Will only require one height query if height is represented in data consistently
+                    String height = getValue(uri, "HeightMeasuredHeigh", route);
+                    height = height.length() == 0 ? getValue(uri, "HeightMeasuredHeight", route) : height;
+                    height = height.length() == 0 ? getValue(uri, "HeightGenAttr", route) : height;
+                    height = height.length() == 0 ? "10.0" : height;
+                    // Get footprint from ground thematic surface or find from surface geometries depending on data
+                    String footprint = getValue(uri, "Lod0FootprintId", route);
+                    footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
+                    footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
+
+                    temp = new CEAInputData(footprint, height, null, null);
+                    unique.add(uri);
+                    surroundings.add(temp);
+                }
+            }
+            return surroundings;
+        }
+        catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -956,7 +1244,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Check building linked to ontoCityGML is initialised in KG
+     * Check building linked to ontoCityGML is initialised in KG and is a DABGEO:Building instance
      * @param uriString city object id
      * @param route route to pass to access agent
      * @return building
@@ -965,10 +1253,13 @@ public class CEAAgent extends JPSAgent {
         WhereBuilder wb = new WhereBuilder();
         SelectBuilder sb = new SelectBuilder();
 
-        wb.addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
-                .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s");
+        wb.addPrefix("rdf", rdfUri)
+                .addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
+                .addPrefix("DABGEO", purlInfrastructureUri)
+                .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s")
+                .addWhere("?building", "rdf:type", "DABGEO:Building");
 
-        sb.addVar("?building").addGraph(NodeFactory.createURI(getGraph(uriString,ENERGY_PROFILE)), wb);
+        sb.addVar("?building").addWhere(wb);
 
         sb.setVar( Var.alloc( "s" ), NodeFactory.createURI(getBuildingUri(uriString)));
 
@@ -981,16 +1272,19 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Initialise building in KG and link to ontoCityGMLRepresentation
+     * Initialise building in KG with buildingUri as the DABGEO:Building IRI, and link to ontoCityGMLRepresentation
      * @param uriString city object id
+     * @param buildingUri building IRI from other endpoints if exist
      * @param route route to pass to access agent
      * @return building
      */
-    public String initialiseBuilding(String uriString, String route){
+    public String initialiseBuilding(String uriString, String buildingUri, String route){
 
         String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
 
-        String buildingUri = outputGraphUri + "Building_" + UUID.randomUUID() + "/";
+        if (buildingUri.isEmpty()) {
+            buildingUri = ontoBuiltEnvUri + "Building_" + UUID.randomUUID() + "/";
+        }
 
         UpdateBuilder ub =
                 new UpdateBuilder()
@@ -1144,20 +1438,20 @@ public class CEAAgent extends JPSAgent {
         String outputGraphUri = getGraph(uriString,ENERGY_PROFILE);
 
         //Device uris
-        String heatingUri = outputGraphUri + "HeatingSystem_" + UUID.randomUUID() + "/";
-        String coolingUri = outputGraphUri + "CoolingSystem_" + UUID.randomUUID() + "/";
-        String pvRoofPanelsUri = outputGraphUri + "PVRoofPanels_" + UUID.randomUUID() + "/";
-        String pvWallSouthPanelsUri = outputGraphUri + "PVWallSouthPanels_" + UUID.randomUUID() + "/";
-        String pvWallNorthPanelsUri = outputGraphUri + "PVWallNorthPanels_" + UUID.randomUUID() + "/";
-        String pvWallEastPanelsUri = outputGraphUri + "PVWallEastPanels_" + UUID.randomUUID() + "/";
-        String pvWallWestPanelsUri = outputGraphUri + "PVWallWestPanels_" + UUID.randomUUID() + "/";
+        String heatingUri = ontoUBEMMPUri + "HeatingSystem_" + UUID.randomUUID() + "/";
+        String coolingUri = ontoUBEMMPUri + "CoolingSystem_" + UUID.randomUUID() + "/";
+        String pvRoofPanelsUri = ontoUBEMMPUri + "PVRoofPanels_" + UUID.randomUUID() + "/";
+        String pvWallSouthPanelsUri = ontoUBEMMPUri + "PVWallSouthPanels_" + UUID.randomUUID() + "/";
+        String pvWallNorthPanelsUri = ontoUBEMMPUri + "PVWallNorthPanels_" + UUID.randomUUID() + "/";
+        String pvWallEastPanelsUri = ontoUBEMMPUri + "PVWallEastPanels_" + UUID.randomUUID() + "/";
+        String pvWallWestPanelsUri = ontoUBEMMPUri + "PVWallWestPanels_" + UUID.randomUUID() + "/";
 
         // save om:measure uris for scalars and create om:quantity uris for scalars and time series
         // (time series om:measure iris already created in createTimeSeries)
         for (String measurement: SCALARS) {
-            String measure = outputGraphUri + measurement+"Value_" + UUID.randomUUID() + "/";
+            String measure = ontoUBEMMPUri + measurement+"Value_" + UUID.randomUUID() + "/";
             scalarIris.put(measurement, measure);
-            String quantity = outputGraphUri + measurement+"Quantity_" + UUID.randomUUID() + "/";
+            String quantity = ontoUBEMMPUri + measurement+"Quantity_" + UUID.randomUUID() + "/";
             switch(measurement){
                 case(KEY_PV_ROOF_AREA):
                     createPVPanelAreaUpdate(ub, buildingUri, pvRoofPanelsUri, "ontoubemmp:RoofPVPanels", quantity, measure, scalars.get(KEY_PV_ROOF_AREA).get(uriCounter));
@@ -1178,7 +1472,7 @@ public class CEAAgent extends JPSAgent {
         }
 
         for (String measurement: TIME_SERIES) {
-            String quantity = outputGraphUri + measurement + "Quantity_" + UUID.randomUUID() + "/";
+            String quantity = ontoUBEMMPUri + measurement + "Quantity_" + UUID.randomUUID() + "/";
             if (measurement.equals(KEY_GRID_CONSUMPTION) || measurement.equals(KEY_ELECTRICITY_CONSUMPTION)) {
                 createConsumptionUpdate(ub, buildingUri, "ontoubemmp:" + measurement, quantity, tsIris.get(measurement));
             }
@@ -1265,23 +1559,14 @@ public class CEAAgent extends JPSAgent {
      * @return time series data
      */
     public TimeSeries<OffsetDateTime> retrieveData(String dataIri){
-        try {
-            String timeseries_props;
-            if(System.getProperty("os.name").toLowerCase().contains("win")){
-                timeseries_props = new File(
-                        Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
-            }
-            else{
-                timeseries_props = FS+"target"+FS+"classes"+FS+TIME_SERIES_CLIENT_PROPS;
-            }
-            tsClient =  new TimeSeriesClient<>(OffsetDateTime.class, timeseries_props);
-            List<String> iris = new ArrayList<>();
-            iris.add(dataIri);
-            TimeSeries<OffsetDateTime> data = tsClient.getTimeSeries(iris);
+        tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
+        List<String> iris = new ArrayList<>();
+        iris.add(dataIri);
+        try (Connection conn = rdbStoreClient.getConnection()) {
+            TimeSeries<OffsetDateTime> data = tsClient.getTimeSeries(iris, conn);
             return data;
-
-        } catch(URISyntaxException | IOException e){
-            e.printStackTrace();
+        }
+        catch (SQLException e) {
             throw new JPSRuntimeException(e);
         }
     }
@@ -1301,6 +1586,364 @@ public class CEAAgent extends JPSAgent {
         annualValue = Math.round(annualValue*Math.pow(10,2))/Math.pow(10,2);
         return annualValue.toString();
 
+    }
+
+    /**
+     * Extracts the footprint of the building from its ground surface geometries
+     * @param results JSONArray of the query results for ground surface geometries
+     * @return footprint as a string
+     */
+    private String extractFootprint(JSONArray results){
+        double distance = 0.00001;
+        double increment = 0.00001;
+
+        Polygon footprintPolygon;
+        Geometry footprintRing;
+        Coordinate[] footprintCoordinates;
+        ArrayList<Geometry> geometries = new ArrayList<>();
+        GeometryFactory geoFac = new GeometryFactory();
+        GeometryCollection geoCol;
+        Geometry merged;
+        Geometry temp;
+        String geoType;
+
+        if (results.length() == 1){
+            footprintPolygon = (Polygon) toPolygon(ignoreHole(results.getJSONObject(0).get("geometry").toString(), results.getJSONObject(0).get("datatype").toString()));
+        }
+
+        else {
+            for (int i = 0; i < results.length(); i++) {
+                temp = toPolygon(ignoreHole(results.getJSONObject(i).get("geometry").toString(), results.getJSONObject(i).get("datatype").toString()));
+                if (!temp.isValid()){
+                    temp = GeometryFixer.fix(temp);
+                }
+                geometries.add(temp);
+            }
+
+            geoCol = (GeometryCollection) geoFac.buildGeometry(geometries);
+
+            merged = geoCol.union();
+
+            geoType = merged.getGeometryType();
+
+            while (geoType != "Polygon" || deflatePolygon(merged, distance).getGeometryType() != "Polygon"){
+                distance += increment;
+
+                for (int i = 0; i < geometries.size(); i++){
+                    temp = inflatePolygon(geometries.get(i), distance);
+                    if (!temp.isValid()){
+                        temp = GeometryFixer.fix(temp);
+                    }
+                    geometries.set(i, temp);
+                }
+
+                geoCol = (GeometryCollection) geoFac.buildGeometry(geometries);
+                merged = geoCol.union();
+                geoType = merged.getGeometryType();
+            }
+
+            footprintPolygon = (Polygon) deflatePolygon(merged, distance);
+
+            if (!footprintPolygon.isValid()){
+                footprintPolygon = (Polygon) GeometryFixer.fix(footprintPolygon);
+            }
+        }
+
+        footprintRing = footprintPolygon.getExteriorRing();
+
+        footprintCoordinates = footprintRing.getCoordinates();
+
+        return coordinatesToString(footprintCoordinates);
+    }
+    /**
+     * Create a polygon with the given points
+     * @param points points of the polygon as a string
+     * @return a polygon
+     */
+    private Geometry toPolygon(String points){
+        int ind = 0;
+        GeometryFactory gF = new GeometryFactory();
+
+        String[] arr = points.split("#");
+
+        Coordinate[] coordinates = new Coordinate[(arr.length) / 3];
+
+        for (int i = 0; i < arr.length; i += 3){
+            coordinates[ind] = new Coordinate(Double.valueOf(arr[i]), Double.valueOf(arr[i+1]), Double.valueOf(arr[i+2]));
+            ind++;
+        }
+
+        return gF.createPolygon(coordinates);
+    }
+
+    /**
+     * Converts an array of coordinates into a string
+     * @param coordinates array of footprint coordinates
+     * @return coordinates as a string
+     */
+    private String coordinatesToString(Coordinate[] coordinates){
+        String output = "";
+
+        for (int i = 0; i < coordinates.length; i++){
+            output = output + "#" + Double.toString(coordinates[i].getX()) + "#" + Double.toString(coordinates[i].getY()) + "#" + Double.toString(coordinates[i].getZ());
+        }
+
+        return output.substring(1, output.length());
+    }
+
+    /**
+     * Inflates a polygon
+     * @param geom polygon geometry
+     * @param distance buffer distance
+     * @return inflated polygon
+     */
+    private Geometry inflatePolygon(Geometry geom, Double distance){
+        ArrayList<Double> zCoordinate = getPolygonZ(geom);
+        BufferParameters bufferParameters = new BufferParameters();
+        bufferParameters.setEndCapStyle(BufferParameters.CAP_ROUND);
+        bufferParameters.setJoinStyle(BufferParameters.JOIN_MITRE);
+        Geometry buffered = BufferOp.bufferOp(geom, distance, bufferParameters);
+        buffered.setUserData(geom.getUserData());
+        setPolygonZ(buffered, zCoordinate);
+        return buffered;
+    }
+
+    /**
+     * Deflates a polygon
+     * @param geom polygon geometry
+     * @param distance buffer distance
+     * @return deflated polygon
+     */
+    private Geometry deflatePolygon(Geometry geom, Double distance){
+        ArrayList<Double> zCoordinate = getPolygonZ(geom);
+        BufferParameters bufferParameters = new BufferParameters();
+        bufferParameters.setEndCapStyle(BufferParameters.CAP_ROUND);
+        bufferParameters.setJoinStyle(BufferParameters.JOIN_MITRE);
+        Geometry buffered = BufferOp.bufferOp(geom, distance * -1, bufferParameters);
+        buffered.setUserData(geom.getUserData());
+        setPolygonZ(buffered, zCoordinate);
+        return buffered;
+    }
+
+    /**
+     * Extract the z coordinates of the polygon vertices
+     * @param geom polygon geometry
+     * @return the z coordinates of the polygon vertices
+     */
+    private static ArrayList<Double> getPolygonZ(Geometry geom){
+        Coordinate[] coordinates = geom.getCoordinates();
+        ArrayList<Double> output = new ArrayList<>();
+
+        for (int i = 0; i < coordinates.length; i++){
+            output.add(coordinates[i].getZ());
+        }
+
+        return output;
+    }
+
+    /**
+     * Sets a polygon's z coordinates to the values from zInput
+     * @param geom polygon geometry
+     * @param zInput ArrayList of values representing z coordinates
+     * @return geom with z coordinates from zInput
+     */
+    private void setPolygonZ(Geometry geom, ArrayList<Double> zInput){
+        Double newZ = Double.NaN;
+
+        for (int i = 0; i < zInput.size(); i++){
+            if (!zInput.get(i).isNaN()){
+                newZ = zInput.get(i);
+                break;
+            }
+        }
+
+        if(newZ.isNaN()){newZ = 10.0;}
+
+        if (geom.getNumPoints() < zInput.size()) {
+            while (geom.getNumPoints() != zInput.size()) {
+                zInput.remove(zInput.size()-1);
+            }
+        }
+        else {
+            while (geom.getNumPoints() != zInput.size()) {
+                zInput.add(1, newZ);
+            }
+        }
+
+        Collections.replaceAll(zInput, Double.NaN, newZ);
+        geom.apply(new CoordinateSequenceFilter() {
+            @Override
+            public void filter(CoordinateSequence cSeq, int i) {
+                cSeq.getCoordinate(i).setZ(zInput.get(i));
+            }
+            @Override
+            public boolean isDone() {
+                return false;
+            }
+            @Override
+            public boolean isGeometryChanged() {
+                return false;
+            }
+        });
+    }
+
+    /**
+     * Returns the ground geometry's exterior ring
+     * @param geometry ground geometry
+     * @param polygonType polygon datatype, such as "<...\POLYGON-3-45-15>"
+     * @return ground geometry with no holes
+     */
+    private String ignoreHole(String geometry, String polygonType){
+        int num;
+        int ind;
+        int count = 1;
+
+        String[] split = polygonType.split("-");
+
+        if (split.length < 4){return geometry;}
+
+        num = Integer.parseInt(split[2]);
+
+        ind = geometry.indexOf("#");
+
+        while (count != num){
+            ind = geometry.indexOf("#", ind + 1);
+            count++;
+        }
+        return geometry.substring(0, ind);
+    }
+
+    /**
+     * Sets the SPARQL update and query endpoint in the time series property file, according to the namespace information in uriString
+     * @param uriString input city object id
+     * @param path timeseriesclient.properties path as string
+     */
+    protected void setTimeSeriesProps(String uriString, String path){
+        try {
+            String queryEndpoint;
+            String updateEndpoint;
+
+            FileInputStream in = new FileInputStream(path);
+            Properties props = new Properties();
+            props.load(in);
+            in.close();
+
+            queryEndpoint = props.getProperty("sparql.query.endpoint").split("namespace")[0];
+            if (!queryEndpoint.endsWith("/")) {queryEndpoint = queryEndpoint + "/";}
+
+            updateEndpoint = props.getProperty("sparql.update.endpoint").split("namespace")[0];
+            if (!updateEndpoint.endsWith("/")) {updateEndpoint = updateEndpoint + "/";}
+
+            FileOutputStream out = new FileOutputStream(path);
+            String namespace = getNamespace(uriString).split("namespace/")[1].split("/")[0];
+            props.setProperty("sparql.query.endpoint", queryEndpoint + "namespace" + "/" + namespace + "/" + "sparql");
+            props.setProperty("sparql.update.endpoint", updateEndpoint + "namespace" + "/" + namespace + "/" + "sparql");
+
+            storeClient = new RemoteStoreClient(props.getProperty("sparql.query.endpoint"), props.getProperty("sparql.update.endpoint"));
+
+            props.store(out, null);
+            out.close();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            throw new JPSRuntimeException(e);
+        }
+    }
+
+    /**
+     * Returns timeseriesclient.properties path as string
+     * @return timeseriesclient.properties path as string
+     */
+    private String getTimeSeriesPropsPath(){
+        try {
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                return new File(
+                        Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
+            } else {
+                return FS + "target" + FS + "classes" + FS + TIME_SERIES_CLIENT_PROPS;
+            }
+        }
+        catch (URISyntaxException e) {
+            e.printStackTrace();
+            throw new JPSRuntimeException(e);
+        }
+    }
+
+    /**
+     * @param path timeseriesclient.properties path as string
+     * Sets rdbStoreClient with the database url, username, and password from the file at path
+     */
+    protected void setRDBClient(String path){
+        try {
+            FileInputStream in = new FileInputStream(path);
+            Properties props = new Properties();
+            props.load(in);
+            in.close();
+
+            rdbStoreClient = new RemoteRDBStoreClient(props.getProperty("db.url"), props.getProperty("db.user"), props.getProperty("db.password"));
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            throw new JPSRuntimeException(e);
+        }
+    }
+
+    /**
+     * Convert OntoBuiltEnv building usage type to convention used by CEA
+     * @param usage OntoBuiltEnv building usage type
+     * @return building usage per CEA convention
+     */
+    public String toCEAConvention(String usage){
+        switch(usage){
+            case("DOMESTIC"):
+                return "MULTI_RES";
+            case("SINGLERESIDENTIAL"):
+                return "SINGLE_RES";
+            case("MULTIRESIDENTIAL"):
+                return "MULTI_RES";
+            case("EMERGENCYSERVICE"):
+                return "HOSPITAL";
+            case("FIRESTATION"):
+                return "HOSPITAL";
+            case("POLICESTATION"):
+                return "HOSPITAL";
+            case("MEDICALCARE"):
+                return "HOSPITAL";
+            case("HOSPITAL"):
+                return usage;
+            case("CLINIC"):
+                return "HOSPITAL";
+            case("EDUCATION"):
+                return "UNIVERSITY";
+            case("SCHOOL"):
+                return usage;
+            case("UNIVERSITYFACILITY"):
+                return "UNIVERSITY";
+            case("OFFICE"):
+                return usage;
+            case("RETAILESTABLISHMENT"):
+                return "RETAIL";
+            case("RELIGIOUSFACILITY"):
+                return "MUSEUM";
+            case("INDUSTRIALFACILITY"):
+                return "INDUSTRIAL";
+            case("EATINGESTABLISHMENT"):
+                return "RESTAURANT";
+            case("DRINKINGESTABLISHMENT"):
+                return "RESTAURANT";
+            case("HOTEL"):
+                return usage;
+            case("SPORTSFACILITY"):
+                return "GYM";
+            case("CULTURALFACILITY"):
+                return "MUSEUM";
+            case("TRANSPORTFACILITY"):
+                return "INDUSTRIAL";
+            case("NON-DOMESTIC"):
+                return "INDUSTRIAL";
+            default:
+                return "MULTI_RES";
+        }
     }
 
 }

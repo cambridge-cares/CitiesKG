@@ -1,0 +1,528 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.theworldavatar.com/ontologies/OntoInfer.owl#"
+     xml:base="http://www.theworldavatar.com/ontologies/OntoInfer.owl"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+    <owl:Ontology rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#applicableTo -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#applicableTo">
+        <rdfs:domain rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Algorithm"/>
+        <rdfs:range rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Namespace"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#appliedBy -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#appliedBy">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Algorithm"/>
+        <rdfs:range rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#hasInferenceAlgorithm -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#hasInferenceAlgorithm"/>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#hasInferenceObject -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#hasInferenceObject"/>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#performedBy -->
+
+    <owl:ObjectProperty rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#performedBy">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <rdfs:range rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Agent"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#hasInferredValue -->
+
+    <owl:DatatypeProperty rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#hasInferredValue">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#double"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#Agent -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Agent">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#KnowledgeGraph"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#Algorithm -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Algorithm">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Inference"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#CardinalityConsraint -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#CardinalityConsraint">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#TaxonomicReasoning"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#CentralityDetection -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#CentralityDetection">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphBased"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassDefinition -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassDefinition">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#TaxonomicReasoning"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassDisjointness -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassDisjointness">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#TaxonomicReasoning"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembership -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembership">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#TaxonomicReasoning"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassSpecialization -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassSpecialization">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#TaxonomicReasoning"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#CommunityDetection -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#CommunityDetection">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphBased"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#Evaluation -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Evaluation">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyBased"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#Graph -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Graph">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphStore"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphBased -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphBased">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Algorithm"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphStore -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphStore">
+        <owl:equivalentClass rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Namespace"/>
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#KnowledgeGraph"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#Inference -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Inference">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#KnowledgeGraph"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#Inheritance -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Inheritance">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#TaxonomicReasoning"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#KnowledgeGraph -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#KnowledgeGraph"/>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#Namespace -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Namespace">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#KnowledgeGraph"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#NumberConstraint -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#NumberConstraint">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#TaxonomicReasoning"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#Object -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Object">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Triple"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyBased -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyBased">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Algorithm"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#PathFinding -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#PathFinding">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphBased"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#Predicate -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Predicate">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Triple"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#RuleBased -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#RuleBased">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyBased"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#Subject -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Subject">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Triple"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Agent"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#TaxonomicReasoning -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#TaxonomicReasoning">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyBased"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#Triple -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Triple">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Graph"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestriction -->
+
+    <owl:Class rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestriction">
+        <rdfs:subClassOf rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#TaxonomicReasoning"/>
+    </owl:Class>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassDisjointnessCheckingAlgorithm -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassDisjointnessCheckingAlgorithm">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassDisjointness"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassDisjointnessCheckingTask"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassDisjointnessCheckingTask -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassDisjointnessCheckingTask">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingAlgorithm -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingAlgorithm">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembership"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingTask"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingTask -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingTask">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassSpecialisationCheckingAlgorithm -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassSpecialisationCheckingAlgorithm">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassSpecialization"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassSpecialisationCheckingTask"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassSpecialisationCheckingTask -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassSpecialisationCheckingTask">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ConsistencyCheckingAlgorithm -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ConsistencyCheckingAlgorithm">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Evaluation"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ConsistencyCheckingTask"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ConsistencyCheckingTask -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ConsistencyCheckingTask">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#EdgeBetweennessAlgorithm -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#EdgeBetweennessAlgorithm">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#CommunityDetection"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#EdgeBetweennessTask"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#EdgeBetweennessTask -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#EdgeBetweennessTask">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphInferenceAgent"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphInferenceAgent -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphInferenceAgent">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Agent"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#InheritanceChckingAlgorithm -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#InheritanceChckingAlgorithm">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Inheritance"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ClassMembershipCheckingTask"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#PropertyCheckingTask"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Agent"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankAlgorithm -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankAlgorithm">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#CentralityDetection"/>
+        <applicableTo rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#singaporeEPSG4326"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankTask"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankTask -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankTask">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphInferenceAgent"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#PropertyCheckingAlgorithm -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#PropertyCheckingAlgorithm">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#TaxonomicReasoning"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#PropertyCheckingTask"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#PropertyCheckingTask -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#PropertyCheckingTask">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#UnweightedShortestPathAlgorithm -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#UnweightedShortestPathAlgorithm">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#PathFinding"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#UnweightedShortestPathTask"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#UnweightedShortestPathTask -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#UnweightedShortestPathTask">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#GraphInferenceAgent"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestrictionCheckingAlgorithm -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestrictionCheckingAlgorithm">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestriction"/>
+        <appliedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestrictionCheckingTask"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestrictionCheckingTask -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#ValueRestrictionCheckingTask">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Task"/>
+        <performedBy rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#OntologyInferenceAgent"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.theworldavatar.com/ontologies/OntoInfer.owl#singaporeEPSG4326 -->
+
+    <owl:NamedIndividual rdf:about="http://www.theworldavatar.com/ontologies/OntoInfer.owl#singaporeEPSG4326">
+        <rdf:type rdf:resource="http://www.theworldavatar.com/ontologies/OntoInfer.owl#Namespace"/>
+    </owl:NamedIndividual>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi -->
+

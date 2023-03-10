@@ -20,6 +20,8 @@ class AccessAgentMappingTest {
                 AccessAgentMapping.getTargetResourceID("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/cityobject/UUID_123/"));
         assertEquals("citieskg-pirmasensEPSG32633",
                 AccessAgentMapping.getTargetResourceID("http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/cityobject/UUID_123/"));
+        assertEquals("jriEPSG24500",
+                AccessAgentMapping.getTargetResourceID("http://www.theworldavatar.com:83/citieskg/namespace/jriEPSG24500/sparql/cityobject/UUID_123/"));
         assertNull(AccessAgentMapping.getTargetResourceID("http://www.theworldavatar.com:83/citieskg/namespace/test/sparql/cityobject/UUID_123/"));
     }
 

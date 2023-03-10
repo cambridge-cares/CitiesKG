@@ -13,7 +13,9 @@ import uk.ac.cam.cares.jps.base.http.Http;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.agents.geo.CityInformationAgent;
 import uk.ac.cam.cares.ogm.models.ModelContext;
-import uk.ac.cam.cares.ogm.models.geo.CityObject;
+import uk.ac.cam.cares.twa.cities.model.geo.CityObject;
+
+
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.lang.reflect.Field;

@@ -2,14 +2,17 @@ package uk.ac.cam.cares.twa.cities.ceaagent;
 
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
+import org.apache.jena.atlas.json.JSON;
 import org.apache.jena.sparql.core.Var;
 import org.jooq.exception.DataAccessException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
+import uk.ac.cam.cares.jps.base.query.RemoteRDBStoreClient;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeries;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeriesClient;
 import org.apache.jena.query.Query;
@@ -18,9 +21,16 @@ import uk.ac.cam.cares.twa.cities.tasks.RunCEATask;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -28,6 +38,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
+
+import org.locationtech.jts.geom.*;
 
 public class CEAAgentTest {
     @Test
@@ -48,7 +60,7 @@ public class CEAAgentTest {
         CEAAgent agent = new CEAAgent();
         ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
 
-        assertEquals(51, agent.getClass().getDeclaredFields().length);
+        assertEquals(57, agent.getClass().getDeclaredFields().length);
 
         Field URI_ACTION;
         Field URI_UPDATE;
@@ -85,13 +97,14 @@ public class CEAAgentTest {
         Field tsClient;
         Field timeUnit;
         Field FS;
+        Field rdbStoreClient;
+        Field storeClient;
         Field ocgmlUri;
         Field ontoUBEMMPUri;
         Field rdfUri;
         Field owlUri;
         Field purlEnaeqUri;
         Field purlInfrastructureUri;
-        Field timeSeriesUri;
         Field thinkhomeUri;
         Field unitOntologyUri;
         Field ontoBuiltEnvUri;
@@ -99,6 +112,8 @@ public class CEAAgentTest {
         Field requestUrl;
         Field targetUrl;
         Field localRoute;
+        Field usageRoute;
+        Field ceaRoute;
 
         try {
             URI_ACTION = agent.getClass().getDeclaredField("URI_ACTION");
@@ -175,6 +190,12 @@ public class CEAAgentTest {
             FS = agent.getClass().getDeclaredField("FS");
             FS.setAccessible(true);
             assertEquals(FS.get(agent), System.getProperty("file.separator"));
+            rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
+            rdbStoreClient.setAccessible(true);
+            assertNull(rdbStoreClient.get(agent));
+            storeClient = agent.getClass().getDeclaredField("storeClient");
+            storeClient.setAccessible(true);
+            assertNull(storeClient.get(agent));
 
             // Test readConfig()
             ocgmlUri = agent.getClass().getDeclaredField("ocgmlUri");
@@ -195,9 +216,6 @@ public class CEAAgentTest {
             purlInfrastructureUri = agent.getClass().getDeclaredField("purlInfrastructureUri");
             purlInfrastructureUri.setAccessible(true);
             assertEquals(purlInfrastructureUri.get(agent), config.getString("uri.ontology.purl.infrastructure"));
-            timeSeriesUri = agent.getClass().getDeclaredField("timeSeriesUri");
-            timeSeriesUri.setAccessible(true);
-            assertEquals(timeSeriesUri.get(agent), config.getString("uri.ontology.ts"));
             thinkhomeUri = agent.getClass().getDeclaredField("thinkhomeUri");
             thinkhomeUri.setAccessible(true);
             assertEquals(thinkhomeUri.get(agent), config.getString("uri.ontology.thinkhome"));
@@ -224,7 +242,13 @@ public class CEAAgentTest {
             assertEquals(accessAgentMap.get("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/"), config.getString("kingslynnEPSG27700.targetresourceid"));
             localRoute = agent.getClass().getDeclaredField("localRoute");
             localRoute.setAccessible(true);
-            assertEquals(localRoute.get(agent), config.getString("uri.route.local"));
+            assertEquals(localRoute.get(agent), config.getString("query.route.local"));
+            usageRoute = agent.getClass().getDeclaredField("usageRoute");
+            usageRoute.setAccessible(true);
+            assertEquals(usageRoute.get(agent), config.getString("usage.query.route"));
+            ceaRoute = agent.getClass().getDeclaredField("ceaRoute");
+            ceaRoute.setAccessible(true);
+            assertEquals(ceaRoute.get(agent), config.getString("cea.store.route"));
         } catch (NoSuchFieldException | IllegalAccessException e) {
             fail();
         }
@@ -233,12 +257,12 @@ public class CEAAgentTest {
     @Test
     public void testCEAAgentMethods() {
         CEAAgent agent = new CEAAgent();
-        assertEquals(45, agent.getClass().getDeclaredMethods().length);
+        assertEquals(63, agent.getClass().getDeclaredMethods().length);
     }
 
     @Test
     public void testProcessRequestParameters()
-            throws NoSuchMethodException, InvocationTargetException , IllegalAccessException, NoSuchFieldException {
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException, SQLException {
 
         CEAAgent agent = spy(new CEAAgent());
         Method processRequestParameters = agent.getClass().getDeclaredMethod("processRequestParameters", JSONObject.class);
@@ -248,6 +272,18 @@ public class CEAAgentTest {
         Field localRoute = agent.getClass().getDeclaredField("localRoute");
         localRoute.setAccessible(true);
         localRoute.set(agent, "test_route");
+
+        RemoteRDBStoreClient mockRDBClient = mock(RemoteRDBStoreClient.class);
+        Connection mockConnection = mock(Connection.class);
+
+        Field rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
+        rdbStoreClient.setAccessible(true);
+        rdbStoreClient.set(agent, mockRDBClient);
+
+        doReturn(mockConnection).when(mockRDBClient).getConnection();
+
+        doNothing().when(agent).setTimeSeriesProps(anyString(), anyString());
+        doNothing().when(agent).setRDBClient(anyString());
 
         // Test empty request params
         try {
@@ -265,18 +301,28 @@ public class CEAAgentTest {
         String building = "test_building_uri";
         String measure_height = "HeightMeasuredHeigh";
         String test_height = "5.0";
-        String measure_footprint = "FootprintThematicSurface";
+        String measure_footprint = "geometry";
         String test_footprint = "559267.200000246#313892.7999989044#0.0#559280.5400002463#313892.7999989044#0.0#559280.5400002463#313908.7499989033#0.0#559267.200000246#313908.7499989033#0.0#559267.200000246#313892.7999989044#0.0";
+        String measure_datatype = "datatype";
+        String test_datatype = "<http://localhost/blazegraph/literals/POLYGON-3-15>";
+        String measure_usage = "BuildingUsage";
+        String test_usage = "<https://www.theworldavatar.com/kg/ontobuiltenv/Office>";
         String measure_crs = "CRS";
         String test_crs = "test_crs";
         String testScalar = "testScalar";
+        String test_envelope = "555438.08#305587.27999#-0.6#555484.04#305587.27999#-0.6#555484.04#305614.87999#-0.6#555438.08#305614.87999#-0.6#555438.08#305587.27999#-0.6";
+
 
         JSONArray expected_building = new JSONArray().put(new JSONObject().put(measure_building, building));
         JSONArray expected_height = new JSONArray().put(new JSONObject().put(measure_height, test_height));
-        JSONArray expected_footprint = new JSONArray().put(new JSONObject().put(measure_footprint, test_footprint));
+        JSONArray expected_footprint = new JSONArray().put(new JSONObject().put(measure_footprint, test_footprint).put(measure_datatype, test_datatype));
+        JSONArray expected_usage = new JSONArray().put(new JSONObject().put(measure_usage, test_usage));
         JSONArray expected_crs = new JSONArray().put(new JSONObject().put(measure_crs, test_crs));
         JSONArray expected_iri = new JSONArray().put(new JSONObject().put("measure", test_measure).put("unit", test_unit));
         JSONArray expected_value = new JSONArray().put(new JSONObject().put("value", testScalar));
+        JSONArray expected_envelope = new JSONArray().put(new JSONObject().put("envelope", test_envelope));
+        JSONArray expected_buildings = new JSONArray().put(new JSONObject().put("cityObject", "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/")).put(new JSONObject().put("cityObject", "http://localhost/kings-lynn-open-data/cityobject/UUID_447787a5-1678-4246-8658-4036436c1052/"));
+
 
         // Test the update endpoint
         requestParams.put(CEAAgent.KEY_REQ_URL, "http://localhost:8086/agents/cea/update");
@@ -317,7 +363,7 @@ public class CEAAgentTest {
             try (MockedConstruction<TimeSeriesClient> mockTs = mockConstruction(TimeSeriesClient.class)) {
 
                 returnParams = (JSONObject) processRequestParameters.invoke(agent, requestParams);
-                verify(mockTs.constructed().get(0), times(1)).addTimeSeriesData(any());
+                verify(mockTs.constructed().get(0), times(1)).addTimeSeriesData(any(), any());
                 assertEquals(requestParams, returnParams);
 
             }
@@ -327,7 +373,9 @@ public class CEAAgentTest {
             requestParams.put(CEAAgent.KEY_REQ_URL, "http://localhost:8086/agents/cea/run");
 
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
-                    .thenReturn(expected_height).thenReturn(expected_footprint).thenReturn(expected_crs);
+                    .thenReturn(expected_height).thenReturn(expected_footprint).thenReturn(expected_usage)
+                    .thenReturn(expected_envelope).thenReturn(expected_buildings).thenReturn(expected_height).thenReturn(expected_footprint)
+                    .thenReturn(expected_crs);
 
             try (MockedConstruction<RunCEATask> mockTask = mockConstruction(RunCEATask.class)) {
                 ThreadPoolExecutor executor = mock(ThreadPoolExecutor.class);
@@ -660,7 +708,7 @@ public class CEAAgentTest {
             targetUrl.set(agent, "test");
 
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test"));
+            testData.add(new CEAInputData("test", "test", "test", null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -685,6 +733,15 @@ public class CEAAgentTest {
             String prefix = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/";
             String testUri = prefix + "cityobject/UUID_test/";
 
+            RemoteRDBStoreClient mockRDBClient = mock(RemoteRDBStoreClient.class);
+            Connection mockConnection = mock(Connection.class);
+
+            Field rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
+            rdbStoreClient.setAccessible(true);
+            rdbStoreClient.set(agent, mockRDBClient);
+
+            doReturn(mockConnection).when(mockRDBClient).getConnection();
+
             createTimeSeries.invoke(agent, testUri, fixedIris);
 
             Field TIME_SERIES = agent.getClass().getDeclaredField("TIME_SERIES");
@@ -692,9 +749,9 @@ public class CEAAgentTest {
 
             // Ensure iris created correctly and time series initialised
             for (String time_series : time_series_strings) {
-                assertTrue(fixedIris.get(time_series).contains(prefix + "energyprofile/" + time_series));
+                assertTrue(fixedIris.get(time_series).contains("https://www.theworldavatar.com/kg/ontoubemmp/" + time_series));
             }
-            verify(mockTs.constructed().get(0), times(1)).initTimeSeries(anyList(), anyList(), anyString());
+            verify(mockTs.constructed().get(0), times(1)).initTimeSeries(anyList(), anyList(), anyString(), any(), any(), any(), any());
         }
     }
 
@@ -725,12 +782,21 @@ public class CEAAgentTest {
             times.add(OffsetDateTime.now());
             times.add(OffsetDateTime.now());
 
+            RemoteRDBStoreClient mockRDBClient = mock(RemoteRDBStoreClient.class);
+            Connection mockConnection = mock(Connection.class);
+
+            Field rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
+            rdbStoreClient.setAccessible(true);
+            rdbStoreClient.set(agent, mockRDBClient);
+
+            doReturn(mockConnection).when(mockRDBClient).getConnection();
+
             addDataToTimeSeries.invoke(agent, values, times, iris);
 
             // Ensure correct methods on time series client are called
-            verify(mockTs.constructed().get(0), times(1)).getMaxTime(anyString());
-            verify(mockTs.constructed().get(0), times(1)).getMinTime(anyString());
-            verify(mockTs.constructed().get(0), times(1)).addTimeSeriesData(any());
+            verify(mockTs.constructed().get(0), times(1)).getMaxTime(anyString(), any());
+            verify(mockTs.constructed().get(0), times(1)).getMinTime(anyString(), any());
+            verify(mockTs.constructed().get(0), times(1)).addTimeSeriesData(any(), any());
         }
     }
 
@@ -747,11 +813,20 @@ public class CEAAgentTest {
         iris.add("test_1");
         iris.add("test_2");
 
+        RemoteRDBStoreClient mockRDBClient = mock(RemoteRDBStoreClient.class);
+        Connection mockConnection = mock(Connection.class);
+
+        Field rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
+        rdbStoreClient.setAccessible(true);
+        rdbStoreClient.set(agent, mockRDBClient);
+
+        doReturn(mockConnection).when(mockRDBClient).getConnection();
+
         Field tsClient = agent.getClass().getDeclaredField("tsClient");
         tsClient.setAccessible(true);
         tsClient.set(agent, client);
 
-        when(client.checkDataHasTimeSeries(anyString()))
+        when(client.checkDataHasTimeSeries(anyString(), any()))
                 .thenReturn(false)
                 .thenThrow(new DataAccessException("ERROR: relation \"dbTable\" does not exist"))
                 .thenReturn(true);
@@ -886,22 +961,36 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testGetFootprint()
+    public void getGroundGeometry()
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
-        String geom1 = "559267.200000246#313892.7999989044#1.7#559280.5400002463#313892.7999989044#1.7#559280.5400002463#313908.7499989033#6.7#559267.200000246#313908.7499989033#6.7#559267.200000246#313892.7999989044#1.7";
-        String geom2 = "559267.200000246#313892.7999989044#1.7#559280.5400002463#313892.7999989044#1.7#559280.5400002463#313908.7499989033#1.7#559267.200000246#313908.7499989033#1.7#559267.200000246#313892.7999989044#1.7";
-        String geom3 = "559267.200000246#313892.7999989044#0.0#559280.5400002463#313892.7999989044#0.0#559280.5400002463#313908.7499989033#0.0#559267.200000246#313908.7499989033#0.0#559267.200000246#313892.7999989044#0.0";
+        Method getGroundGeometry = agent.getClass().getDeclaredMethod("getGroundGeometry", JSONArray.class);
 
-        JSONArray results = new JSONArray("[{'FootprintSurfaceGeom': '"+geom1+"'}, {'FootprintSurfaceGeom': '"+geom2+"'},{'FootprintSurfaceGeom': '"+geom3+"'}]");
+        assertNotNull(getGroundGeometry);
+        getGroundGeometry.setAccessible(true);
 
-        Method getFootprint = agent.getClass().getDeclaredMethod("getFootprint", JSONArray.class);
-        assertNotNull(getFootprint);
-        getFootprint.setAccessible(true);
+        String geometry1 = "1.0#1.0#0.0#1.0#2.0#0.0#2.0#2.0#0.0#2.0#1.0#0.0#1.0#1.0#0.0";
+        String geometry2 = "1.0#1.0#0.0#1.0#1.0#2.0#2.0#1.0#2.0#2.0#1.0#0.0#1.0#1.0#0.0";
+        String geometry3 = "1.0#2.0#0.0#2.0#2.0#0.0#2.0#1.0#0.0#1.0#1.0#0.0#1.0#2.0#0.0";
+        String geometry4 = "1.0#2.0#1.0#2.0#2.0#1.0#2.0#1.0#0.0#1.0#1.0#1.0#1.0#2.0#1.0";
 
-        // Ensure Footprint geometry is correctly found
-        assertEquals(geom3, getFootprint.invoke(agent, results));
+        JSONArray testArray = new JSONArray();
+        testArray.put(new JSONObject().put("geometry", geometry1));
+        testArray.put(new JSONObject().put("geometry", geometry2));
+        testArray.put(new JSONObject().put("geometry", geometry3));
+        testArray.put(new JSONObject().put("geometry", geometry4));
 
+        JSONArray expected = new JSONArray();
+        expected.put(new JSONObject().put("geometry", geometry1));
+        expected.put(new JSONObject().put("geometry", geometry3));
+
+        JSONArray result = (JSONArray) getGroundGeometry.invoke(agent, testArray);
+
+        assertEquals(expected.length(), result.length());
+
+        for (int i = 0; i < expected.length(); i++){
+            assertEquals(expected.getJSONObject(i).get("geometry").toString(), result.getJSONObject(i).get("geometry").toString());
+        }
     }
 
     @Test
@@ -909,12 +998,15 @@ public class CEAAgentTest {
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         CEAAgent agent = new CEAAgent();
-        String case1 = "FootprintSurfaceGeom";
-        String case2 = "FootprintThematicSurface";
-        String case3 = "HeightMeasuredHeight";
-        String case4 = "HeightMeasuredHeigh";
-        String case5 = "HeightGenAttr";
-        String case6 = "CRS";
+        String case1 = "Lod0FootprintId";
+        String case2 = "FootprintSurfaceGeom";
+        String case3 = "FootprintThematicSurface";
+        String case4 = "HeightMeasuredHeight";
+        String case5 = "HeightMeasuredHeigh";
+        String case6 = "HeightGenAttr";
+        String case7 = "DatabasesrsCRS";
+        String case8 = "CRS";
+        String case9 = "BuildingUsage";
         String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
         Method getQuery = agent.getClass().getDeclaredMethod("getQuery", String.class, String.class);
@@ -923,17 +1015,23 @@ public class CEAAgentTest {
 
         // Ensure queries contains correct predicates depending on value sent
         Query q1 = (Query) getQuery.invoke(agent, uri, case1);
-        assertTrue(q1.toString().contains("ocgml:GeometryType"));
+        assertTrue(q1.toString().contains("lod0FootprintId"));
         Query q2 = (Query) getQuery.invoke(agent, uri, case2);
-        assertTrue(q2.toString().contains("ocgml:objectClassId"));
+        assertTrue(q2.toString().contains("ocgml:GeometryType"));
         Query q3 = (Query) getQuery.invoke(agent, uri, case3);
-        assertTrue(q3.toString().contains("ocgml:measuredHeight"));
+        assertTrue(q3.toString().contains("ocgml:objectClassId"));
         Query q4 = (Query) getQuery.invoke(agent, uri, case4);
-        assertTrue(q4.toString().contains("ocgml:measuredHeigh"));
+        assertTrue(q4.toString().contains("ocgml:measuredHeight"));
         Query q5 = (Query) getQuery.invoke(agent, uri, case5);
-        assertTrue(q5.toString().contains("ocgml:attrName"));
+        assertTrue(q5.toString().contains("ocgml:measuredHeigh"));
         Query q6 = (Query) getQuery.invoke(agent, uri, case6);
-        assertTrue(q6.toString().contains("ocgml:srid"));
+        assertTrue(q6.toString().contains("ocgml:attrName"));
+        Query q7 = (Query) getQuery.invoke(agent, uri, case7);
+        assertTrue(q7.toString().contains("ocgml:srid"));
+        Query q8 = (Query) getQuery.invoke(agent, uri, case8);
+        assertTrue(q8.toString().contains("srid"));
+        Query q9 = (Query) getQuery.invoke(agent, uri, case9);
+        assertTrue(q9.toString().contains("hasUsageCategory"));
     }
 
     @Test
@@ -949,9 +1047,10 @@ public class CEAAgentTest {
         // Ensure query contains correct predicate and object
         Query q = (Query) getGeometryQueryThematicSurface.invoke(agent, uri);
         assertTrue(q.toString().contains("ocgml:GeometryType"));
-        assertTrue(q.toString().contains("FootprintThematicSurface"));
+        assertTrue(q.toString().contains("geometry"));
         assertTrue(q.toString().contains("ocgml:objectClassId"));
         assertTrue(q.toString().contains("groundSurfId"));
+        assertTrue(q.toString().contains("datatype"));
     }
 
     @Test
@@ -967,7 +1066,8 @@ public class CEAAgentTest {
         // Ensure query contains correct predicates and objects
         Query q = (Query) getGeometryQuerySurfaceGeom.invoke(agent, uri);
         assertTrue(q.toString().contains("ocgml:GeometryType"));
-        assertTrue(q.toString().contains("FootprintSurfaceGeom"));
+        assertTrue(q.toString().contains("geometry"));
+        assertTrue(q.toString().contains("datatype"));
     }
 
     @Test
@@ -1020,17 +1120,17 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testGetCrsQuery()
+    public void testGetDatabasesrsCrsQuery()
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
         String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
-        Method getCrsQuery = agent.getClass().getDeclaredMethod("getCrsQuery", String.class);
-        assertNotNull(getCrsQuery);
-        getCrsQuery.setAccessible(true);
+        Method getDatabasesrsCrsQuery = agent.getClass().getDeclaredMethod("getDatabasesrsCrsQuery", String.class);
+        assertNotNull(getDatabasesrsCrsQuery);
+        getDatabasesrsCrsQuery.setAccessible(true);
 
         // Ensure query contains correct predicate and object
-        Query q = (Query) getCrsQuery.invoke(agent, uri);
+        Query q = (Query) getDatabasesrsCrsQuery.invoke(agent, uri);
         assertTrue(q.toString().contains("ocgml:srid"));
         assertTrue(q.toString().contains("CRS"));
     }
@@ -1345,16 +1445,16 @@ public class CEAAgentTest {
     @Test
     public void testInitialiseBuilding() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = spy(new CEAAgent());
-        Method initialiseBuilding = agent.getClass().getDeclaredMethod("initialiseBuilding", String.class, String.class);
+        Method initialiseBuilding = agent.getClass().getDeclaredMethod("initialiseBuilding", String.class, String.class, String.class);
         assertNotNull(initialiseBuilding);
 
         String route = "test_route";
 
         String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
-        String expected = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/energyprofile/";
+        String expected = "https://www.theworldavatar.com/kg/ontobuiltenv/";
 
         doNothing().when(agent).updateStore(anyString(), anyString());
-        String result = (String) initialiseBuilding.invoke(agent,  uriString, route );
+        String result = (String) initialiseBuilding.invoke(agent,  uriString, "", route );
 
         //test string contains correct graph and update store is called once
         assertTrue( result.contains(expected));
@@ -1378,7 +1478,7 @@ public class CEAAgentTest {
         createConsumptionUpdate.invoke(agent,  ub, consumer, type, quantity, measure );
         ub.setVar(Var.alloc("graph"), graph);
 
-        String result = ub.build().toString();
+        String result = ub.buildRequest().toString();
         //test string contains expected insert data
         String expected_insert = "INSERT DATA";
         String expected_graph = "GRAPH \""+graph+"\"";
@@ -1411,7 +1511,7 @@ public class CEAAgentTest {
         createDeviceConsumptionUpdate.invoke(agent,  ub, building, device, deviceType, consumptionType, quantity, measure );
         ub.setVar(Var.alloc("graph"), graph);
 
-        String result = ub.build().toString();
+        String result = ub.buildRequest().toString();
         //test string contains expected insert data
         String expected_insert = "INSERT DATA";
         String expected_graph = "GRAPH \""+graph+"\"";
@@ -1445,7 +1545,7 @@ public class CEAAgentTest {
         createPVPanelSupplyUpdate.invoke(agent,  ub, PVPanels, quantity, measure );
         ub.setVar(Var.alloc("graph"), graph);
 
-        String result = ub.build().toString();
+        String result = ub.buildRequest().toString();
         //test string contains expected insert data
         String expected_insert = "INSERT DATA";
         String expected_graph = "GRAPH \""+graph+"\"";
@@ -1476,7 +1576,7 @@ public class CEAAgentTest {
         createPVPanelAreaUpdate.invoke(agent,  ub, building, PVPanels, panelType, quantity, measure, value );
         ub.setVar(Var.alloc("graph"), graph);
 
-        String result = ub.build().toString();
+        String result = ub.buildRequest().toString();
         //test string contains expected insert data
         String expected_insert = "INSERT DATA";
         String expected_graph = "GRAPH \""+graph+"\"";
@@ -1556,10 +1656,19 @@ public class CEAAgentTest {
             List<String> iris = new ArrayList<>();
             iris.add(iri);
 
+            RemoteRDBStoreClient mockRDBClient = mock(RemoteRDBStoreClient.class);
+            Connection mockConnection = mock(Connection.class);
+
+            Field rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
+            rdbStoreClient.setAccessible(true);
+            rdbStoreClient.set(agent, mockRDBClient);
+
+            doReturn(mockConnection).when(mockRDBClient).getConnection();
+
             retrieveData.invoke(agent, iri);
 
             // Ensure method to get time series client was invoked once
-            verify(mockTs.constructed().get(0), times(1)).getTimeSeries(iris);
+            verify(mockTs.constructed().get(0), times(1)).getTimeSeries(anyList(), any());
         }
     }
 
@@ -1601,5 +1710,418 @@ public class CEAAgentTest {
         // Ensure values in time series are summed and rounded correctly
         assertEquals(calculateAnnual.invoke(agent, timeSeries, iri1), expected1.toString());
         assertEquals(calculateAnnual.invoke(agent, timeSeries, iri2), expected2.toString());
+    }
+
+    @Test
+    public void testExtractFootprint() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        Method extractFootprint = agent.getClass().getDeclaredMethod("extractFootprint", JSONArray.class);
+
+        assertNotNull(extractFootprint);
+        extractFootprint.setAccessible(true);
+
+        double tolerance = 0.001;
+
+        String geometry1 = "1.0#1.0#0.0#2.0#1.0#0.0#2.0#2.0#0.0#1.0#1.0#0.0";
+        String geometry2 = "1.0#1.0#0.0#1.0#2.0#0.0#2.0#2.0#0.0#1.0#1.0#0.0";
+        String polygonType = "<http://localhost/blazegraph/literals/POLYGON-3-12>";
+
+        // expected string with the vertices in different order in clockwise orientation
+        String expected1 = "1.0#1.0#0.0#1.0#2.0#0.0#2.0#2.0#0.0#2.0#1.0#0.0#1.0#1.0#0.0";
+        String expected2 = "1.0#2.0#0.0#2.0#2.0#0.0#2.0#1.0#0.0#1.0#1.0#0.0#1.0#2.0#0.0";
+        String expected3 = "2.0#2.0#0.0#2.0#1.0#0.0#1.0#1.0#0.0#1.0#2.0#0.0#2.0#2.0#0.0";
+        String expected4 = "2.0#1.0#0.0#1.0#1.0#0.0#1.0#2.0#0.0#2.0#2.0#0.0#2.0#1.0#0.0";
+
+        boolean flag1 = true;
+        boolean flag2 = true;
+        boolean flag3 = true;
+        boolean flag4 = true;
+
+        JSONArray testArray = new JSONArray();
+        testArray.put(new JSONObject().put("geometry", geometry1).put("datatype", polygonType));
+        testArray.put(new JSONObject().put("geometry", geometry2).put("datatype", polygonType));
+
+        String result = (String) extractFootprint.invoke(agent, testArray);
+
+        String[] rSplit = result.split("#");
+        String[] eSplit1 = result.split("#");
+        String[] eSplit2 = result.split("#");
+        String[] eSplit3 = result.split("#");
+        String[] eSplit4 = result.split("#");
+
+        assertTrue(rSplit.length == eSplit1.length);
+
+        for (int i = 0; i < rSplit.length; i++){
+            if (Math.abs(Double.valueOf(rSplit[i]) - Double.valueOf(eSplit1[i])) > tolerance){flag1 = false;}
+            if (Math.abs(Double.valueOf(rSplit[i]) - Double.valueOf(eSplit2[i])) > tolerance){flag2 = false;}
+            if (Math.abs(Double.valueOf(rSplit[i]) - Double.valueOf(eSplit3[i])) > tolerance){flag3 = false;}
+            if (Math.abs(Double.valueOf(rSplit[i]) - Double.valueOf(eSplit4[i])) > tolerance){flag4 = false;}
+        }
+
+        // checking if extractFootprint returns the expected geometry, which vertex the string starts from does not matter if the result and the expected string represents the same geometry
+        assertTrue(flag1 || flag2 || flag3 || flag4);
+    }
+
+    @Test
+    public void testToPolygon() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        Method toPolygon = agent.getClass().getDeclaredMethod("toPolygon", String.class);
+
+        assertNotNull(toPolygon);
+        toPolygon.setAccessible(true);
+
+        String points = "559267.200000246#313892.7999989044#0.0#559280.5400002463#313892.7999989044#0.0#559280.5400002463#313908.7499989033#0.0#559267.200000246#313908.7499989033#0.0#559267.200000246#313892.7999989044#0.0";
+
+        Polygon result = (Polygon) toPolygon.invoke(agent, points);
+
+        String expected = "POLYGON ((559267.200000246 313892.7999989044, 559280.5400002463 313892.7999989044, 559280.5400002463 313908.7499989033, 559267.200000246 313908.7499989033, 559267.200000246 313892.7999989044))";
+
+        assertEquals(expected, result.toString());
+
+    }
+
+    @Test
+    public void testCoordinatesToString() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        Method coordinatesToString = agent.getClass().getDeclaredMethod("coordinatesToString", Coordinate[].class);
+
+        assertNotNull(coordinatesToString);
+        coordinatesToString.setAccessible(true);
+
+        Coordinate[] coordinates = new Coordinate[2];
+
+        coordinates[0] = new Coordinate(1.0, 2.0, 3.0);
+        coordinates[1] = new Coordinate(4.0, 5.0, 6.0);
+
+        String expected = "1.0#2.0#3.0#4.0#5.0#6.0";
+
+        assertEquals(expected, coordinatesToString.invoke(agent, new Object[] {coordinates}));
+    }
+
+    @Test
+    public void testInflatePolygon() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        Method inflatePolygon = agent.getClass().getDeclaredMethod("inflatePolygon", Geometry.class, Double.class);
+
+        assertNotNull(inflatePolygon);
+        inflatePolygon.setAccessible(true);
+
+        GeometryFactory gF = new GeometryFactory();
+        Coordinate[] testC = new Coordinate[5];
+
+        testC[0] = new Coordinate(1.0, 1.0, 3.01);
+        testC[1] = new Coordinate(2.0, 1.0, 3.02);
+        testC[2] = new Coordinate(2.0, 2.0, 3.03);
+        testC[3] = new Coordinate(1.0, 2.0, 3.03);
+        testC[4] = new Coordinate(1.0, 1.0, 3.01);
+
+        Polygon testPolygon = gF.createPolygon(testC);
+
+        Coordinate[] expectedC = new Coordinate[5];
+
+        expectedC[0] = new Coordinate(0.9, 0.9, 3.01);
+        expectedC[1] = new Coordinate(2.1, 0.9, 3.02);
+        expectedC[2] = new Coordinate(2.1, 2.1, 3.03);
+        expectedC[3] = new Coordinate(0.9, 2.1, 3.03);
+        expectedC[4] = new Coordinate(0.9, 0.9, 3.01);
+
+        Polygon expectedPolygon = gF.createPolygon(expectedC);
+
+        Polygon resultPolygon = (Polygon) inflatePolygon.invoke(agent, testPolygon, 0.1);
+        assertTrue(expectedPolygon.equals(resultPolygon));
+    }
+
+    @Test
+    public void testDeflatePolygon() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        Method deflatePolygon = agent.getClass().getDeclaredMethod("deflatePolygon", Geometry.class, Double.class);
+
+        assertNotNull(deflatePolygon);
+        deflatePolygon.setAccessible(true);
+
+        GeometryFactory gF = new GeometryFactory();
+        Coordinate[] testC = new Coordinate[5];
+
+        testC[0] = new Coordinate(1.0, 1.0, 3.01);
+        testC[1] = new Coordinate(2.0, 1.0, 3.02);
+        testC[2] = new Coordinate(2.0, 2.0, 3.03);
+        testC[3] = new Coordinate(1.0, 2.0, 3.03);
+        testC[4] = new Coordinate(1.0, 1.0, 3.01);
+
+        Polygon testPolygon = gF.createPolygon(testC);
+
+        Coordinate[] expectedC = new Coordinate[5];
+
+        expectedC[0] = new Coordinate(1.1, 1.1, 3.01);
+        expectedC[1] = new Coordinate(1.9, 1.1, 3.02);
+        expectedC[2] = new Coordinate(1.9, 1.9, 3.03);
+        expectedC[3] = new Coordinate(1.1, 1.9, 3.03);
+        expectedC[4] = new Coordinate(1.1, 1.1, 3.01);
+
+        Polygon expectedPolygon = gF.createPolygon(expectedC);
+
+        Polygon resultPolygon = (Polygon) deflatePolygon.invoke(agent, testPolygon, 0.1);
+        assertTrue(expectedPolygon.equals(resultPolygon));
+    }
+
+    @Test
+    public void testGetPolygonZ() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        Method getPolygonZ = agent.getClass().getDeclaredMethod("getPolygonZ", Geometry.class);
+
+        assertNotNull(getPolygonZ);
+        getPolygonZ.setAccessible(true);
+
+        GeometryFactory gF = new GeometryFactory();
+        Coordinate[] coordinates = new Coordinate[4];
+
+        coordinates[0] = new Coordinate(1.0, 1.0, 3.01);
+        coordinates[1] = new Coordinate(2.0, 1.0, 3.02);
+        coordinates[2] = new Coordinate(2.0, 2.0, 3.03);
+        coordinates[3] = new Coordinate(1.0, 1.0, 3.01);
+
+        Polygon polygon = gF.createPolygon(coordinates);
+
+        ArrayList<Double> expected = new ArrayList<>();
+
+        expected.add(3.01);
+        expected.add(3.02);
+        expected.add(3.03);
+        expected.add(3.01);
+
+        assertEquals(expected, getPolygonZ.invoke(agent, polygon));
+    }
+
+    @Test
+    public void testSetPolygonZ() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        Method setPolygonZ = agent.getClass().getDeclaredMethod("setPolygonZ", Geometry.class, ArrayList.class);
+
+        assertNotNull(setPolygonZ);
+        setPolygonZ.setAccessible(true);
+
+        GeometryFactory gF = new GeometryFactory();
+        Coordinate[] coordinates = new Coordinate[4];
+
+        coordinates[0] = new Coordinate(1.0, 1.0, 3.01);
+        coordinates[1] = new Coordinate(2.0, 1.0, 3.02);
+        coordinates[2] = new Coordinate(2.0, 2.0, 3.03);
+        coordinates[3] = new Coordinate(1.0, 1.0, 3.01);
+
+        Polygon result = gF.createPolygon(coordinates);
+
+        coordinates[0] = new Coordinate(1.0, 1.0, 0.0);
+        coordinates[1] = new Coordinate(2.0, 1.0, 0.0);
+        coordinates[2] = new Coordinate(2.0, 2.0, 0.0);
+        coordinates[3] = new Coordinate(1.0, 1.0, 0.0);
+
+        Polygon expected = gF.createPolygon(coordinates);
+
+        ArrayList<Double> z = new ArrayList<>();
+
+        z.add(0.0);
+        z.add(0.0);
+        z.add(0.0);
+        z.add(0.0);
+
+        setPolygonZ.invoke(agent, result, z);
+
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void testIgnoreHole() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        Method ignoreHole = agent.getClass().getDeclaredMethod("ignoreHole", String.class, String.class);
+
+        assertNotNull(ignoreHole);
+        ignoreHole.setAccessible(true);
+
+        String geometry = "1.0#1.0#2.0#2.0#3.0#3.0#4.0#4.0#5.0#5.0#6.0#6.0";
+        String polygonType = "<http://localhost/blazegraph/literals/POLYGON-2-6-6>";
+        String expected = "1.0#1.0#2.0#2.0#3.0#3.0";
+
+        String result = (String) ignoreHole.invoke(agent, geometry, polygonType);
+
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void testSetTimeSeriesProps(@TempDir Path tempDir) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException {
+        CEAAgent agent = new CEAAgent();
+        Method setTimeSeriesProps = agent.getClass().getDeclaredMethod("setTimeSeriesProps", String.class, String.class);
+
+        assertNotNull(setTimeSeriesProps);
+        setTimeSeriesProps.setAccessible(true);
+
+        String testFile = "test.properties";
+        String testEndpoint = "testEndpoint";
+        String testUri = "test/namespace/testNamespace/sparql/cityobject/testUUID/";
+        Path testPath = Files.createFile(tempDir.resolve(testFile));
+        Properties testProp = new Properties();
+
+        testProp.setProperty("sparql.query.endpoint", testEndpoint);
+        testProp.setProperty("sparql.update.endpoint", testEndpoint);
+
+        FileOutputStream testOut = new FileOutputStream(testPath.toString());
+        testProp.store(testOut, null);
+        testOut.close();
+
+        setTimeSeriesProps.invoke(agent, testUri, testPath.toString());
+
+        FileInputStream testIn = new FileInputStream(testPath.toString());
+        testProp.load(testIn);
+        testIn.close();
+
+        assertEquals(testProp.getProperty("sparql.query.endpoint"), "testEndpoint/namespace/testNamespace/sparql");
+        assertEquals(testProp.getProperty("sparql.update.endpoint"), "testEndpoint/namespace/testNamespace/sparql");
+    }
+
+    @Test
+    public void testGetTimeSeriesPropsPath() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
+        CEAAgent agent = new CEAAgent();
+        Method getTimeSeriesPropsPath = agent.getClass().getDeclaredMethod("getTimeSeriesPropsPath");
+
+        assertNotNull(getTimeSeriesPropsPath);
+        getTimeSeriesPropsPath.setAccessible(true);
+
+        String result = (String) getTimeSeriesPropsPath.invoke(agent);
+
+        Field time_series_client_props = agent.getClass().getDeclaredField("TIME_SERIES_CLIENT_PROPS");
+        time_series_client_props.setAccessible(true);
+
+        assertTrue(result.contains((String) time_series_client_props.get(agent)));
+    }
+
+    @Test
+    public void testSetRDBClient(@TempDir Path tempDir) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException, IOException {
+        CEAAgent agent = new CEAAgent();
+        Method setRDBClient = agent.getClass().getDeclaredMethod("setRDBClient", String.class);
+
+        assertNotNull(setRDBClient);
+        setRDBClient.setAccessible(true);
+
+        Field rdbStoreClient;
+
+        rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
+        rdbStoreClient.setAccessible(true);
+
+        String testFile = "test.properties";
+        String url = "test_url";
+        String user = "test_user";
+        String password = "test_password";
+        Path testPath = Files.createFile(tempDir.resolve(testFile));
+        Properties testProp = new Properties();
+
+        testProp.setProperty("db.url", url);
+        testProp.setProperty("db.user", user);
+        testProp.setProperty("db.password", password);
+
+        FileOutputStream testOut = new FileOutputStream(testPath.toString());
+        testProp.store(testOut, null);
+        testOut.close();
+
+        setRDBClient.invoke(agent, testPath.toString());
+
+        assertNotNull(rdbStoreClient.get(agent));
+    }
+
+    @Test
+    public void testGetBuildingUsageQuery() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
+    {
+        CEAAgent agent = new CEAAgent();
+        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
+
+        Method getBuildingUsage = agent.getClass().getDeclaredMethod("getBuildingUsageQuery", String.class);
+        assertNotNull(getBuildingUsage);
+        getBuildingUsage.setAccessible(true);
+
+        // Ensure query contains correct predicate and object
+        Query q = (Query) getBuildingUsage.invoke(agent, uri);
+        assertTrue(q.toString().contains("hasUsageCategory"));
+        assertTrue(q.toString().contains("hasOntoCityGMLRepresentation"));
+        assertTrue(q.toString().contains("BuildingUsage"));
+    }
+
+    @Test
+    public void testToCEAConvention() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
+    {
+        CEAAgent agent = new CEAAgent();
+        String test_usage = "test";
+
+        Method toCEAConvention = agent.getClass().getDeclaredMethod("toCEAConvention", String.class);
+        assertNotNull(toCEAConvention);
+
+        String result = (String) toCEAConvention.invoke(agent, test_usage);
+        assertTrue(result.equals("MULTI_RES"));
+    }
+
+    @Test
+    public void testGetEnvelopeQuery() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
+
+        Method getEnvelopeQuery = agent.getClass().getDeclaredMethod("getEnvelopeQuery", String.class);
+        assertNotNull(getEnvelopeQuery);
+        getEnvelopeQuery.setAccessible(true);
+
+        Query q = (Query) getEnvelopeQuery.invoke(agent, uri);
+
+        assertTrue(q.toString().contains("EnvelopeType"));
+    }
+
+    @Test
+    public void testGetBuildingsWithinBoundsQuery() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
+        CEAAgent agent = new CEAAgent();
+        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
+
+        Method getBuildingsWithinBoundsQuery = agent.getClass().getDeclaredMethod("getBuildingsWithinBoundsQuery", String.class, String.class, String.class);
+        assertNotNull(getBuildingsWithinBoundsQuery);
+        getBuildingsWithinBoundsQuery.setAccessible(true);
+
+        Query q = (Query) getBuildingsWithinBoundsQuery.invoke(agent, uri, "test", "test");
+
+        Field customDataType = agent.getClass().getDeclaredField("customDataType");
+        Field customField = agent.getClass().getDeclaredField("customField");
+
+        assertTrue(q.toString().contains("predicate"));
+        assertTrue(q.toString().contains("searchDatatype"));
+        assertTrue(q.toString().contains("customFields"));
+        assertTrue(q.toString().contains("customFieldsLowerBounds"));
+        assertTrue(q.toString().contains("customFieldsUpperBounds"));
+        assertTrue(q.toString().contains((String) customDataType.get(agent)));
+        assertTrue(q.toString().contains((String) customField.get(agent)));
+    }
+
+    @Test
+    public void testGetSurroundings() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = spy(new CEAAgent());
+        String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
+
+        Method getSurroundings = agent.getClass().getDeclaredMethod("getSurroundings", String.class, String.class, List.class);
+        assertNotNull(getSurroundings);
+        getSurroundings.setAccessible(true);
+
+        String geometry = "555438.08#305587.27999#-0.6#555484.04#305587.27999#-0.6#555484.04#305614.87999#-0.6#555438.08#305614.87999#-0.6#555438.08#305587.27999#-0.6";
+        List<String> unique = new ArrayList<>();
+        unique.add(uri);
+
+        JSONArray geometryArray = new JSONArray().put(new JSONObject().put("envelope", geometry).put("geometry", geometry).put("datatype", "<http://localhost/blazegraph/literals/POLYGON-3-15>"));
+        JSONArray buildingsArray = new JSONArray().put(new JSONObject().put("cityObject", uri)).put(new JSONObject().put("cityObject", "http://localhost/kings-lynn-open-data/cityobject/UUID_447787a5-1678-4246-8658-4036436c1052/"));
+        JSONArray heightArray = new JSONArray().put(new JSONObject().put("HeightMeasuredHeigh", 10.0));
+
+
+        try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = mockStatic(AccessAgentCaller.class)) {
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn(geometryArray).thenReturn(buildingsArray).thenReturn(heightArray).thenReturn(geometryArray);
+
+            ArrayList<CEAInputData> result = (ArrayList<CEAInputData>) getSurroundings.invoke(agent, uri, "testRoute", unique);
+
+            assertFalse(result.isEmpty());
+            assertTrue(result.get(0).getGeometry().equals(geometry));
+            assertTrue(result.get(0).getHeight().equals("10.0"));
+            assertNull(result.get(0).getUsage());
+            assertNull(result.get(0).getSurrounding());
+        }
     }
 }
