@@ -682,7 +682,7 @@ function showResultWindow(resultJson, colorStr){
     resultBoxContent.style.display = "block";
     var listItem = document.createElement("li");
     listItem.id = dataSourcePrefix + _customDataSourceCounter;
-    listItem.title = colorStr;
+    //listItem.title = colorStr;
 
     listItem.appendChild(processInfoContext(resultJson));
     // <input type='checkbox' onchange='updateGfaRows()'>
@@ -700,14 +700,15 @@ function showResultWindow(resultJson, colorStr){
     colorbox.className = "colorbox";
     colorbox.style = "width: 10px; height: 10px; display: inline-block;";
     colorbox.style.backgroundColor = colorStr;
+    colorbox.title = colorStr;
     listItem.appendChild(colorbox);
     var closeButton = document.createElement("span");
     closeButton.className = "close";
     closeButton.textContent = "x";
     closeButton.onclick = function (event){
         var targetId = event.currentTarget.parentNode.id;
-        var targetUnusedColor = event.currentTarget.parentNode.title;
-        //var targetUnusedColor = event.currentTarget.parentNode.getElementsByClassName("colorbox")[0].style.backgroundColor;  // can store the color in the title of li item. which is the description of the corresponding color
+        //var targetUnusedColor = event.currentTarget.parentNode.title;
+        var targetUnusedColor = event.currentTarget.parentNode.getElementsByClassName("colorbox")[0].title;  // can store the color in the title of li item. which is the description of the corresponding color
         removeDataSourceById(targetId, targetUnusedColor);
     }
     listItem.appendChild(closeButton);
@@ -762,7 +763,6 @@ function pickColorFromArray(){
         var j = Math.floor(Math.random() * (colorsArr.length));
         pickedColor = colorsArr[j];
         colorsArr.splice(j, 1);
-        console.log("The used color is ", pickedColor);
     }
     return pickedColor;
 }
@@ -895,11 +895,16 @@ function processInfoContext(resultjson){
     }
     infoText.appendChild(document.createElement("br"));
     infoText.appendChild(docCount);
+    var testURL = document.createElement("a");
+    testURL.href = "http://www.theworldavatar.com:83/citieskg/#explore";
+    testURL.target = "_blank";
+    testURL.text = "http://www.theworldavatar.com:83/citieskg/#explore";
+    testURL.onclick
+    infoText.appendChild(testURL);
     return infoText;
 }
 
 function pinHighlightObjects(cityObjectsArray, hexColorString){
-
     var gmlidArray = [];
 
     for (let i = 0; i < cityObjectsArray.length; i++) {
