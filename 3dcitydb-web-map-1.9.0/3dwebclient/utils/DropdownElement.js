@@ -3,25 +3,29 @@ const CITY = (new URL(window.location.href).searchParams.get('city'));
 const TOTAL_GFA_KEY = 'TotalGFA';
 const MAX_CAP = 'max_cap';
 const MIN_CAP = 'min_cap';
-var input_parameters;
-var selectedDevType;
-var click_counter = 0;
-var area_counter = 0;
-var current_zoom_area;
-var cameraPositions = {
+let input_parameters;
+let selectedDevType;
+let click_counter = 0;
+let area_counter = 0;
+let current_zoom_area;
+const cameraPositions = {
 	'Singapore_River_Valley': {latitude:  1.275, longitude: 103.84, height: 3000, heading: 360, pitch: -60, roll: 356 },
 	'Punggol_Digital_District' : {latitude: 1.400, longitude: 103.911385, height: 3000, heading: 360, pitch: -60, roll: 356},
 	'Paya_Lebar_Air_Base': {latitude: 1.325, longitude: 103.906240, height: 3000, heading: 360, pitch: -60, roll: 356},
 	'Woodlands_Centre': {latitude:  1.425, longitude: 103.789, height: 3000, heading: 360, pitch: -60, roll: 356 }}
 
-/**Added by Shiying**/
-var requestCounter = 0;
+let requestCounter = 0;
 
-function buildQuery(predicate, may_predicate){
-	query = "PREFIX zo:<http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#> "
+/**
+ * Build SPARQL to retrieve the dropdown list for given predicate
+ * @param {String} predicate - 'allowsUse' or 'allowsProgramme'
+ * @param {String} may_predicate - 'mayAllowUse' or 'mayAllowProgramme'
+ * @return {String} SPARQL string
+ */
+function buildDropdownQuery(predicate, may_predicate){
+	return "PREFIX zo:<http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#> "
 			+ "SELECT DISTINCT ?g WHERE { GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/> "
 			+ "{ ?zone zo:" + predicate + " | zo:" + may_predicate+ " ?g . } }"
-	return query
 }
 
 /**
@@ -36,11 +40,11 @@ function ifDropdownElementExists(predicate){
 /**
  * Process and Store the results retrieved from the TWA into localStorage when it does not exist yet
  * @param {String} predicate - 'allowsUse' or 'allowsProgramme'
- * @param {JsonObject} results - JsonObject from CIA
+ * @param {JSON} results - JsonObject from CIA
  */
 function storeDropdownElements(predicate, results){
-	var resultsLength = results.length;
-	var localData = results[0]["g"];
+	let resultsLength = results.length;
+	let localData = results[0]["g"];
 	for (let index = 1; index < resultsLength; ++index) {
 		localData = localData.concat('\r',results[index]["g"]);
 	}
@@ -48,7 +52,7 @@ function storeDropdownElements(predicate, results){
 }
 
 /**
- * Retrieves the dropdownElements either from localStorage or TWA via access agent
+ * Retrieves the dropdownElements either from localStorage or TWA via access agent by sending a SPARQL
  * @param {String} predicate - 'allowsUse' or 'allowsProgramme'
  * @param {String} may_predicate - 'mayAllowUse' or 'mayAllowProgramme'
  * @param {String} element_type - 'use_element' or 'programme_element'
@@ -59,11 +63,11 @@ function getDropdownElements(predicate, may_predicate, element_type, dropdown_ty
 	// check if the dropdownElement list already exists in the LocalStorage
 	// Warning: In order to get any update in TWA effective on WMC, the local storage need to be deleted.
 	if (ifDropdownElementExists(dropdown_type)){
-		var dropdownData = localStorage.getItem(dropdown_type);
-		var checkbox_lines = [];
-		var results = dropdownData.split('\r');
+		let dropdownData = localStorage.getItem(dropdown_type);
+		let checkbox_lines = [];
+		let results = dropdownData.split('\r');
 		for (let index in results) {
-			var checkbox_line = removePrefix(results[index]);
+			let checkbox_line = removePrefix(results[index]);
 			checkbox_lines.push(checkbox_line);
 		}
 		checkbox_lines.sort();
@@ -75,17 +79,17 @@ function getDropdownElements(predicate, may_predicate, element_type, dropdown_ty
 			url:"http://www.theworldavatar.com:83/access-agent/access",
 			//url:"http://localhost:48888/access-agent/access",
 			type: 'POST',
-			data: JSON.stringify({targetresourceiri:CONTEXT + "-" + CITY , sparqlquery: buildQuery(predicate, may_predicate)}),
-			//data: JSON.stringify({targetresourceiri:"http://localhost:48888/test" , sparqlquery: buildQuery(predicate, may_predicate)}),
+			data: JSON.stringify({targetresourceiri:CONTEXT + "-" + CITY , sparqlquery: buildDropdownQuery(predicate, may_predicate)}),
+			//data: JSON.stringify({targetresourceiri:"http://localhost:48888/test" , sparqlquery: buildDropdownQuery(predicate, may_predicate)}),
 			dataType: 'json',
 			contentType: 'application/json',
-			success: function(data, status_message, xhr){  //function(data, status_message, xhr)
+			success: function(data, status_message, xhr){
 				console.log(data["result"])
-				var results = JSON.parse(data["result"]);
-				var checkbox_lines = [];
+				let results = JSON.parse(data["result"]);
+				let checkbox_lines = [];
 				storeDropdownElements(dropdown_type, results);
 				for (let index in results) {
-					var checkbox_line = removePrefix(results[index]["g"]);
+					let checkbox_line = removePrefix(results[index]["g"]);
 					checkbox_lines.push(checkbox_line);
 				}
 				checkbox_lines.sort();
@@ -100,8 +104,15 @@ function getDropdownElements(predicate, may_predicate, element_type, dropdown_ty
 	}
 }
 
+/**
+ * Create the checkbox for dropdown list and checkboxes
+ * @param {String} line - checkbox name
+ * @param {String} predicate - 'allowsUse' or 'allowsProgramme'
+ * @param {String} element_type - 'use_element' or 'programme_element'
+ * @param {String} dropdown_type - '#choose_uses' or '#choose_programmes', jQuery identifier of HTML elements
+ */
 function appendElement(line, predicate, element_type, dropdown_type){
-	var some_element =
+	let some_element =
 			"<div class='" + predicate + "'>" +
 			"<div id='" + line + "' class='checkbox'>" +
 			"<input type='checkbox' onchange='updateGfaRows()'></div>" +
@@ -110,10 +121,26 @@ function appendElement(line, predicate, element_type, dropdown_type){
 	$(dropdown_type).append(some_element)
 }
 
+/**
+ * Modify the human readable sentence for the input selection
+ * @param {Boolean} programme_bool -
+ * @param {Boolean} use_bool -
+ * @param {Boolean} programmeGFA_bool -
+ * @param {Boolean} useGFA_bool -
+ * @param {String} sqm -
+ * @param {String} sentence -
+ * @param {Object} programmes -
+ * @param {Object} uses -
+ * @param {String} final_sentence - input final_sentence
+ * @return {String} Modified final_sentence
+ */
 function processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm, sentence, programmes, uses, final_sentence) {
 	if(programme_bool) {
-		for (const [programme, programmeGFAvalue] of Object.entries(programmes)) {
+		for (let [programme, programmeGFAvalue] of Object.entries(programmes)) {
 			if (programmeGFA_bool) {
+				if (programmeGFAvalue === ""){
+					programmeGFAvalue = "any";
+				}
 				sentence += programmeGFAvalue + sqm + " of " + "<b>" + programme + "</b>" + " (or more) and ";
 			}
 			else {
@@ -124,8 +151,11 @@ function processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGF
 
 	}
 	else if (use_bool) {
-		for (const [use, useGFAvalue] of Object.entries(uses)) {
+		for (let [use, useGFAvalue] of Object.entries(uses)) {
 			if (useGFA_bool) {
+				if (useGFAvalue === ""){
+					useGFAvalue = "any";
+				}
 				sentence += useGFAvalue + sqm + " of " + "<b>" + use + "</b>"+ " (or more) and ";
 			}
 			else {
@@ -140,8 +170,12 @@ function processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGF
 	return final_sentence;
 }
 
+/**
+ * Validate the GFA-related inputs. For NAN or negative numbers, it throws error
+ * @return {Boolean} True or False
+ */
 function validateGFAInputs(){
-	var inputs = document.getElementsByClassName('text_input');
+	let inputs = document.getElementsByClassName('text_input');
 
 	for (let index in inputs){
 		let inputNumber = Number(inputs[index].firstChild.value);  // if letters, the conversion will return NaN
@@ -153,27 +187,31 @@ function validateGFAInputs(){
 	return true;
 }
 
+/**
+ * Create human readable QuerySentence from all explicit inputs
+ *
+ */
 function getQuerySentence(){
-	var sentence = "Find plots that could allow...";
-	var final_sentence = 'Find plots that could allow...';
-	var sentence_ormore = "Find plots that could allow ";
-	var sqm = " sqm";
+	let sentence = "Find plots that could allow...";
+	let final_sentence = 'Find plots that could allow...';
+	let sentence_ormore = "Find plots that could allow ";
+	const sqm = " sqm";
 	document.getElementsByClassName('querySentence')[0].textContent = final_sentence;
 
-	var inputs = document.getElementsByClassName('text_gfa');
+	let inputs = document.getElementsByClassName('text_gfa');
 
-	var uses = {};
-	var programmes = {};
-	var totalGFA_input;
-	var programmeGFA_bool = false;
-	var useGFA_bool = false;
+	let uses = {};
+	let programmes = {};
+	let totalGFA_input;
+	let programmeGFA_bool = false;
+	let useGFA_bool = false;
 
 	for (let i = 0; i < inputs.length; i++) {
-		var inputs_item = inputs.item(i).firstChild;
-		var sibling = inputs.item(i).nextElementSibling.firstChild;
-		var checkbox = document.getElementById(inputs.item(i).firstChild.textContent);
+		let inputs_item = inputs.item(i).firstChild;
+		let sibling = inputs.item(i).nextElementSibling.firstChild;
+		let checkbox = document.getElementById(inputs.item(i).firstChild.textContent);
 		if (checkbox !== null) {
-			var inputs_item_onto_class = inputs_item.textContent;
+			let inputs_item_onto_class = inputs_item.textContent;
 			if (checkbox.parentElement.className === USE_PREDICATE) {
 				uses[inputs_item_onto_class] = sibling.value;
 				if (!useGFA_bool && !(sibling.value === "")) {
@@ -189,19 +227,13 @@ function getQuerySentence(){
 			totalGFA_input = sibling.value;
 		}
 	}
-	var programme_bool = Object.keys(programmes).length > 0;
-	var use_bool = Object.keys(uses).length > 0;
+	let programme_bool = Object.keys(programmes).length > 0;
+	let use_bool = Object.keys(uses).length > 0;
 
 	if (!(totalGFA_input === '')) {
 		if (programme_bool || use_bool) {
-			if(programmeGFA_bool || useGFA_bool) {
-				sentence = sentence_ormore + totalGFA_input + sqm + " development, combining ";
-				final_sentence = processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm, sentence, programmes, uses, final_sentence);
-			}
-			else {
-				sentence = sentence_ormore + totalGFA_input + sqm + " development, combining ";
-				final_sentence = processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm, sentence, programmes, uses, final_sentence);
-			}
+			sentence = sentence_ormore + totalGFA_input + sqm + " development, combining ";
+			final_sentence = processQuerySentence(programme_bool, use_bool, programmeGFA_bool, useGFA_bool, sqm, sentence, programmes, uses, final_sentence);
 		} else {
 			final_sentence = sentence_ormore + totalGFA_input + sqm + " (or more) of something?";
 		}
@@ -232,27 +264,31 @@ function restrictInput(input){
 	input.value = input.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
 }
 
+/**
+ * Update the GFA selection rows based on the selection of the checkboxes
+ *
+ */
 function updateGfaRows(){
-	var parent = document.getElementById("assignGFA");
-	var children = Array.from(parent.children);
-	for (var i = 0; i < children.length; i++) {
-		var child = children[i];
+	let parent = document.getElementById("assignGFA");
+	let children = Array.from(parent.children);
+	for (let i = 0; i < children.length; i++) {
+		let child = children[i];
 		if (child.className === 'gfa') {
-			var checkbox_id = child.firstChild.textContent;
-			var checkbox = document.getElementById(checkbox_id).firstChild;
-			var text_input = child.childNodes[1].firstChild;
+			let checkbox_id = child.firstChild.textContent;
+			let checkbox = document.getElementById(checkbox_id).firstChild;
+			let text_input = child.childNodes[1].firstChild;
 			if (!checkbox.checked || (text_input.value === "")) {
 				parent.removeChild(child);
 			}
 		}
 	}
-	var checkboxes = document.getElementsByClassName('checkbox')
-	var text_inputs = Array.from(document.getElementsByClassName('text_gfa'));
+	let checkboxes = document.getElementsByClassName('checkbox')
+	let text_inputs = Array.from(document.getElementsByClassName('text_gfa'));
 	for (let i = 0; i < checkboxes.length; i++) {
 		checkbox = checkboxes.item(i).firstChild;
 		if (checkbox.checked) {
 			checkbox_id = checkboxes.item(i).id.toString();
-			var exists = false;
+			let exists = false;
 			for (let i = 0; i < text_inputs.length; i++) {
 				var checkbox_label = text_inputs[i].firstChild.textContent.toString();
 				if (checkbox_label === checkbox_id) {
@@ -261,7 +297,7 @@ function updateGfaRows(){
 				}
 			}
 			if (!exists) {
-				var clicked_element =
+				let clicked_element =
 						"<div class='gfa'>" +
 						"<div class='text_gfa' style='width: 180px'>" + checkboxes.item(i).id + "</div>" +
 						"<div class='text_input' title='Only positive integer is allowed'>" +
@@ -276,12 +312,21 @@ function updateGfaRows(){
 	getQuerySentence();
 }
 
+/**
+ * Remove IRI Prefix from the result
+ *
+ */
 function removePrefix(result){
-	var element = result.split("#")[1]
+	let element = result.split("#")[1]
 	element = element.replace(/([A-Z])/g, " $1").trim();
 	return element
 }
 
+
+/**
+ * Get Example Query for button "Try Example Query"
+ *
+ */
 function getExampleParams() {
 	resetAllInputs();
 	if(click_counter === 6) {
@@ -334,6 +379,11 @@ function getExampleParams() {
 	getValidPlots();
 }
 
+
+/**
+ * Get pre-defined example query for button "Try Example Query"
+ *
+ */
 function addFiltering(input_parameters){
 	var  filteringType = document.getElementById("CapType").value;
 	//console.log(filteringType);
@@ -353,16 +403,20 @@ function addFiltering(input_parameters){
 	}
 }
 
+/**
+ * Get all input parameters, triggered by the submit button "Search now"
+ *
+ */
 function getInputParams() {
-	var parameters = {};
-	var text_inputs = document.getElementsByClassName('text_gfa');
-	var onto_use = {};
-	var onto_programme = {};
+	let parameters = {};
+	let text_inputs = document.getElementsByClassName('text_gfa');
+	let onto_use = {};
+	let onto_programme = {};
 
 	for (let i = 0; i < text_inputs.length; i++) {
-		var text_item = text_inputs.item(i).firstChild;
-		var sibling = text_inputs.item(i).nextElementSibling.firstChild;
-		var checkbox = document.getElementById(text_inputs.item(i).firstChild.textContent);
+		let text_item = text_inputs.item(i).firstChild;
+		let sibling = text_inputs.item(i).nextElementSibling.firstChild;
+		let checkbox = document.getElementById(text_inputs.item(i).firstChild.textContent);
 		if (checkbox !== null) {
 			var text_item_onto_class = text_item.textContent.replaceAll(" ", "");
 			if (checkbox.parentElement.className === USE_PREDICATE) {
@@ -390,8 +444,12 @@ function getInputParams() {
 	resetAllInputs();
 }
 
+/**
+ * Get all input parameters, triggered by the submit button "Search now"
+ *
+ */
 function getValidPlots(){
-	var iri = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/";
+	const iri = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/";
 	$.ajax({
 		url: "http://localhost:8080/agents/cityobjectinformation",
 		type: 'POST',
@@ -407,16 +465,19 @@ function getValidPlots(){
 }
 
 
-
+/**
+ * Throw error notification if the inputs or input combinations are wrong
+ *
+ */
 function throwNotification() {
-	var popup = document.createElement('div');
+	let popup = document.createElement('div');
 	popup.className = 'pop_up_box';
 
-	var mark = document.createElement('div');
+	let mark = document.createElement('div');
 	mark.className = 'mark';
 	mark.innerHTML = "!";
 
-	var explanation =  document.createElement('div');
+	let explanation =  document.createElement('div');
 	explanation.className = 'alert';
 	explanation.innerText = "Some of the inputs are wrong. Suggestions how to fix: "
 			+ "\n 1) choose uses or programmes but not both.\n "
@@ -429,11 +490,13 @@ function throwNotification() {
 		$('.pop_up_box').hide() }, 6000);
 }
 
+/**
+ * Define the UI behavior based on the selected development type
+ *
+ */
 function showChooseDevType(){
-	var developmentType = document.getElementById("DevelopmentType");
-	// Shiying: Add a cleaning function, clean the gfa dropdown and unselect everything
+	let developmentType = document.getElementById("DevelopmentType");
 	resetAllInputs();
-	//console.log(event.target.id + "is clicked");
 
 	switch (developmentType.value){
 		case "OntozoningUses":
@@ -470,15 +533,18 @@ function showChooseDevType(){
 	document.getElementById('searchButton').style.display='block';
 }
 
-
+/**
+ * Sidebar for the demonstrator selection
+ *
+ */
 function chooseDemoType(obj) {
 	// reset all nav links color
-	var navLinks = document.getElementsByClassName("navLink");
-	for (var i = 0; i < navLinks.length; i++){
+	let navLinks = document.getElementsByClassName("navLink");
+	for (let i = 0; i < navLinks.length; i++){
 		navLinks[i].style.color = "#818181";
 	}
 
-	var selectedDemo = obj.id;
+	let selectedDemo = obj.id;
 	obj.style.color = "white";
 	document.getElementById("demoTitle").innerText = obj.innerText;
 
@@ -496,15 +562,18 @@ function chooseDemoType(obj) {
 }
 
 
-// special case: as example query will preserve the querySentence after the submission. for the explicit case we want to keep it the same way
-// doc: example query and query sentence does not affect the checkbox. but uncheck the checkboxes will reset the querysentence
+/**
+ * Reset all input selection
+ * Note: The querySentence should be preserved and visible after the submission.
+ * Example query will not affect the checkboxes but the checkboxes will affect the querySentence
+ */
 function resetAllInputs(){
 
 	// Save a copy of the last selected querySentence before cleaning the checkboxes
-	var lastQuerySentence = document.getElementsByClassName('querySentence')[0].innerHTML;
+	let lastQuerySentence = document.getElementsByClassName('querySentence')[0].innerHTML;
 
 	// Clear all the existing checkboxes
-	var demoToolbox = document.getElementById("demo");
+	let demoToolbox = document.getElementById("demo");
 	//var checkboxes = toolbox.getElementsByClassName('checkbox');
 	let checkedCheckboxes = demoToolbox.querySelectorAll('input[type="checkbox"]:checked');
 	checkedCheckboxes.forEach((checkbox) => {
@@ -512,11 +581,10 @@ function resetAllInputs(){
 		updateGfaRows();
 	});
 
-	var totalGfaInput = document.getElementById("totalGFA");
-	//totalGfaInput.innerHTML = "";
+	let totalGfaInput = document.getElementById("totalGFA");
 	totalGfaInput.value = '';
 
-	var capInput = document.getElementById('CapType');
+	let capInput = document.getElementById('CapType');
 	capInput.value = 'no_cap';
 
 	document.getElementById('choose_programmes').style.display="None";
@@ -527,12 +595,14 @@ function resetAllInputs(){
 	document.getElementsByClassName('querySentence')[0].innerHTML = lastQuerySentence;
 }
 
-/** Shiying: Added disclaimerbutton to the cesium-viewer-toolbar*/
-
+/**
+ * Define disclaimer button
+ *
+ */
 function addDisclaimerButton(){
-	var toolbar = document.getElementsByClassName('cesium-viewer-toolbar');  // HTMLCollection; has to use item(0) to add an additional icon
+	let toolbar = document.getElementsByClassName('cesium-viewer-toolbar');  // HTMLCollection; has to use item(0) to add an additional icon
 
-	var wrapper = document.createElement('span');
+	let wrapper = document.createElement('span');
 	wrapper.className = 'cesium-navigationHelpButton-wrapper';
 	toolbar.item(0).appendChild(wrapper);
 
@@ -549,8 +619,6 @@ function addDisclaimerButton(){
 	wrapper.appendChild(disclaimerButton);
 
 	createTapMenu();
-	//var instructionContainer = createTapMenu();
-	//wrapper.appendChild(instructionContainer);
 
 	disclaimerButton.onclick = function(){
 		//instructionContainer.classList.add('cesium-navigation-help-visible');
@@ -563,6 +631,10 @@ function addDisclaimerButton(){
 
 }
 
+/**
+ * Define Tap menu for the introduction box on the right-hand side
+ *
+ */
 function createTapMenu(){
 	// Define the instruction DIV
 	var instructionContainer = document.getElementById('instructionContainer');
@@ -571,18 +643,18 @@ function createTapMenu(){
 	instructionContainer.style = 'width: 25%; max-width: 430px; height: auto; top: 43px; right: 8px; filter:none; z-index:99999; display: block';
 
 	// By default: descriptionTap is selected
-	var descriptionTap = createTapButton("Description");
+	let descriptionTap = createTapButton("Description");
 	descriptionTap.onclick = function (event) {
 		activeTap(event, 'Description');
 	}
 	descriptionTap.className = descriptionTap.className.replace("cesium-navigation-button-unselected", "cesium-navigation-button-selected");
 
-	var terminologyTap = createTapButton("Terminology");
+	let terminologyTap = createTapButton("Terminology");
 	terminologyTap.onclick = function(event){
 		activeTap(event, 'Terminology');
 	};
 
-	var disclaimerTap = createTapButton("Disclaimer");
+	let disclaimerTap = createTapButton("Disclaimer");
 	disclaimerTap.onclick = function(event){
 		activeTap(event, 'Disclaimer');
 	};
@@ -592,7 +664,7 @@ function createTapMenu(){
 	instructionContainer.appendChild(disclaimerTap);
 
 	// add Description content
-	var descriptionContent = document.createElement("div");
+	let descriptionContent = document.createElement("div");
 	descriptionContent.id = "Description";
 	descriptionContent.className = 'cesium-navigation-help-instructions tabcontent';
 	descriptionContent.style.display = "block";
@@ -617,7 +689,7 @@ function createTapMenu(){
 	instructionContainer.appendChild(descriptionContent);
 
 	// add Terminology content
-	var terminologyContent = document.createElement("div");
+	let terminologyContent = document.createElement("div");
 	terminologyContent.id = "Terminology";
 	terminologyContent.className = 'cesium-navigation-help-instructions tabcontent';
 	terminologyContent.style.display = "none";
@@ -643,7 +715,7 @@ function createTapMenu(){
 	instructionContainer.appendChild(terminologyContent);
 
 	// add Disclaimer content
-	var disclaimerContent = document.createElement("div");
+	let disclaimerContent = document.createElement("div");
 	disclaimerContent.id = "Disclaimer";
 	disclaimerContent.className = 'cesium-navigation-help-instructions tabcontent';
 	disclaimerContent.style.display = "none";
@@ -662,8 +734,13 @@ function createTapMenu(){
 	return instructionContainer;
 }
 
+/**
+ * Create Tap Button based on the given button name
+ * @param {String} buttonName - the name of the tab button
+ *
+ */
 function createTapButton(buttonName){
-	var menuTapButton = document.createElement('button');
+	let menuTapButton = document.createElement('button');
 	//menuTapButton.id = buttonName;
 	menuTapButton.type = 'button';
 	menuTapButton.className = 'cesium-navigation-button cesium-navigation-button-unselected tablinks';
@@ -673,9 +750,14 @@ function createTapButton(buttonName){
 	return menuTapButton;
 }
 
-//
+/**
+ * Create Tap Button based on the given button name
+ * @param {MouseEvent} evt - mouse click event
+ * @param {String} tapName - the name of the tap
+ *
+ */
 function activeTap(evt, tapName) {
-	var i, tabcontent, tablinks;
+	let i, tabcontent, tablinks;
 	tabcontent = document.getElementsByClassName("tabcontent");
 	for (i = 0; i < tabcontent.length; i++) {
 		tabcontent[i].style.display = "none";
@@ -688,9 +770,13 @@ function activeTap(evt, tapName) {
 	document.getElementById(tapName).style.display = "block";
 	evt.currentTarget.className += " active";
 	evt.currentTarget.className = evt.currentTarget.className.replace("cesium-navigation-button-unselected", "cesium-navigation-button-selected");
-
 }
 
+/**
+ * Set Area Counter
+ * @param {String} direction - "backward" or "forward"
+ *
+ */
 function setAreaCounter(direction){
 	switch (direction) {
 		case "backward":
@@ -714,13 +800,19 @@ function setAreaCounter(direction){
 	console.log(current_zoom_area);
 }
 
+
+/**
+ * Zoom to the key growth areas
+ * @param {String} direction - "backward" or "forward"
+ *
+ */
 function zoomToKeyGrowthAreas(direction) {
 	resetAllInputs();
 	setAreaCounter(direction);
-	var zoomed_area = document.getElementById('area');
-	var zoomed_area_name = Object.keys(cameraPositions)[area_counter];
-	var zoomed_camera_position = cameraPositions[zoomed_area_name]
-	var current_url = new URL(window.location.href);
+	let zoomed_area = document.getElementById('area');
+	let zoomed_area_name = Object.keys(cameraPositions)[area_counter];
+	let zoomed_camera_position = cameraPositions[zoomed_area_name]
+	let current_url = new URL(window.location.href);
 
 	for (const coord of ['longitude', 'latitude']) {
 		if (current_url.searchParams.has(coord)) {
@@ -743,6 +835,10 @@ function zoomToKeyGrowthAreas(direction) {
 	flyToCameraPosition(zoomed_camera_position);
 }
 
+/**
+ * Open the side bar
+ *
+ */
 function openSidebar() {
 	if (document.getElementById("mySidebar").style.width === "150px"){
 		document.getElementById("mySidebar").style.width = "0";
@@ -753,6 +849,10 @@ function openSidebar() {
 	}
 }
 
+/**
+ * Close the side bar
+ *
+ */
 function closeSidebar() {
 	document.getElementById("mySidebar").style.width = "0";
 	document.getElementById("ProgrammaticPlotFinder").style.marginLeft= "0";
