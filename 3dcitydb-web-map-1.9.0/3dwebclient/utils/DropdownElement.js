@@ -495,7 +495,15 @@ function chooseDemoType(obj) {
 	}
 }
 
+
+// special case: as example query will preserve the querySentence after the submission. for the explicit case we want to keep it the same way
+// doc: example query and query sentence does not affect the checkbox. but uncheck the checkboxes will reset the querysentence
 function resetAllInputs(){
+
+	// Save a copy of the last selected querySentence before cleaning the checkboxes
+	var lastQuerySentence = document.getElementsByClassName('querySentence')[0].innerHTML;
+
+	// Clear all the existing checkboxes
 	var demoToolbox = document.getElementById("demo");
 	//var checkboxes = toolbox.getElementsByClassName('checkbox');
 	let checkedCheckboxes = demoToolbox.querySelectorAll('input[type="checkbox"]:checked');
@@ -511,12 +519,12 @@ function resetAllInputs(){
 	var capInput = document.getElementById('CapType');
 	capInput.value = 'no_cap';
 
-	var query_sentence = document.getElementById('querySentence');
-	query_sentence.innerText = 'Find plots that could allow...';
-
 	document.getElementById('choose_programmes').style.display="None";
 	document.getElementById('choose_uses').style.display="None";
 	document.getElementById('assignGFA').style.display="None";
+
+	// Keep the lastQuerySentence till new inputs are used
+	document.getElementsByClassName('querySentence')[0].innerHTML = lastQuerySentence;
 }
 
 /** Shiying: Added disclaimerbutton to the cesium-viewer-toolbar*/
