@@ -755,8 +755,8 @@ function processCIAResult(CIAdata){
 }
 
 /** generate color for the pin point **/
-var initColorsArr = ["#0096FF", "#FFA500", "#00FFC8", "#FF1694", "#E5DE00", "#009F30", "#964B00"];
-var colorsArr = initColorsArr;
+let initColorsArr = ["#0096FF", "#FFA500", "#00FFC8", "#FF1694", "#E5DE00", "#009F30", "#964B00"];
+let colorsArr = initColorsArr;
 function pickColorFromArray(){
     var pickedColor;
     if(colorsArr.length > 0){
