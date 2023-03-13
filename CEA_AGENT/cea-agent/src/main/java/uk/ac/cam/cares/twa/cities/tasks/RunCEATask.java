@@ -137,7 +137,11 @@ public class RunCEATask implements Runnable {
             PV_file.close();
             PV.close();
         } catch ( IOException e) {
-
+            File file = new File(tmpDir);
+            deleteDirectoryContents(file);
+            file.delete();
+            e.printStackTrace();
+            throw new JPSRuntimeException("CEA encountered an error");
         }
         result.targetUrl=endpointUri.toString();
         result.iris=uris;
@@ -273,7 +277,11 @@ public class RunCEATask implements Runnable {
                 if(i==0) result.times = timestamps; //only add times once
             }
         } catch ( IOException e) {
-
+            File file = new File(tmpDir);
+            deleteDirectoryContents(file);
+            file.delete();
+            e.printStackTrace();
+            throw new JPSRuntimeException("CEA encountered an error");
         }
         return result;
     }
