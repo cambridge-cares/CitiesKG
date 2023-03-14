@@ -312,6 +312,7 @@ function updateGfaRows(){
 	getQuerySentence();
 }
 
+
 /**
  * Remove IRI Prefix from the result
  *
@@ -594,4 +595,3 @@ function resetAllInputs(){
 	// Keep the lastQuerySentence till new inputs are used
 	document.getElementsByClassName('querySentence')[0].innerHTML = lastQuerySentence;
 }
-

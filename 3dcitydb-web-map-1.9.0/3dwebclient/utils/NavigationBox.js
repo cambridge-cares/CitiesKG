@@ -68,16 +68,6 @@ function zoomToKeyGrowthAreas(direction) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
 /*************************************************** Side Bar for Demo ****************************************/
 
 /**
@@ -243,8 +233,6 @@ function createTapMenu(){
 
     return instructionContainer;
 }
-
-
 
 
 /**
