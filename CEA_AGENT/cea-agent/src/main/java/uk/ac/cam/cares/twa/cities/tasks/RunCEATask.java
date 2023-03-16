@@ -141,7 +141,7 @@ public class RunCEATask implements Runnable {
             deleteDirectoryContents(file);
             file.delete();
             e.printStackTrace();
-            throw new JPSRuntimeException("CEA encountered an error");
+            throw new JPSRuntimeException("There are no CEA outputs, CEA encountered an error");
         }
         result.targetUrl=endpointUri.toString();
         result.iris=uris;
@@ -281,7 +281,7 @@ public class RunCEATask implements Runnable {
             deleteDirectoryContents(file);
             file.delete();
             e.printStackTrace();
-            throw new JPSRuntimeException("CEA encountered an error");
+            throw new JPSRuntimeException("There are no CEA outputs, CEA encountered an error");
         }
         return result;
     }
