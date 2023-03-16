@@ -2152,6 +2152,10 @@ public class CEAAgent extends JPSAgent {
         }
     }
 
+    /**
+     * Checks if the agent is running in Docker
+     * @return true if running in Docker, false otherwise
+     */
     private boolean isDockerized(){
         File f = new File("/.dockerenv");
 
