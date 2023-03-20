@@ -207,12 +207,7 @@ function processInfoContext(resultjson){
     }
     infoText.appendChild(document.createElement("br"));
     infoText.appendChild(docCount);
-    var testURL = document.createElement("a");
-    testURL.href = "http://www.theworldavatar.com:83/citieskg/#explore";
-    testURL.target = "_blank";
-    testURL.text = "http://www.theworldavatar.com:83/citieskg/#explore";
-    testURL.onclick
-    infoText.appendChild(testURL);
+
     return infoText;
 }
 
