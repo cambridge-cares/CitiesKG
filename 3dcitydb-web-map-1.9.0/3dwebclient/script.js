@@ -143,7 +143,7 @@ var splashController = new SplashController(addSplashWindowModel);
 splashController.setCookie("ignoreSplashWindow", "true")
 
 
-// added by Shiying
+// Added by Shiying
 var filteredObjects = {};
 var _customDataSourceCounter = 0;
 const dataSourcePrefix = "ciaResult_";
@@ -274,6 +274,12 @@ function initClient() {
     }
 }
 
+
+/**
+ * Added by CKG:
+ * Loading different kml datasets for different cities
+ * @param {String} city - input value for the field
+ */
 function loadCity(city) {
     if (city === 'pirmasens') {
         loadPirmasens();
@@ -405,7 +411,11 @@ function loadSingapore() {
     getAndLoadLayers('exported_singapore');
 }
 
-// send get request to server to discover files in specified folder, create and load layers
+/**
+ * modified by CKG:
+ * send get request to server to discover files in specified folder, create and load layers
+ * @param {String} folder - relative path to directory which contains cities model
+ */
 function getAndLoadLayers(folder) {
     var url = this.location.origin;
     var _layers = new Array();
@@ -424,8 +434,8 @@ function getAndLoadLayers(folder) {
         cityobjectsJsonUrl: '',
         minLodPixels: '',
         maxLodPixels: '',
-        maxSizeOfCachedTiles: 1000,  //200
-        maxCountOfVisibleTiles: 1000 //200
+        maxSizeOfCachedTiles: 1000,  //initial value: 200
+        maxCountOfVisibleTiles: 1000 //initial value: 200
     }
 
     var reqUrl = url + '/files/';
