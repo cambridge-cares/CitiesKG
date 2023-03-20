@@ -137,7 +137,11 @@ public class RunCEATask implements Runnable {
             PV_file.close();
             PV.close();
         } catch ( IOException e) {
-
+            File file = new File(tmpDir);
+            deleteDirectoryContents(file);
+            file.delete();
+            e.printStackTrace();
+            throw new JPSRuntimeException("There are no CEA outputs, CEA encountered an error");
         }
         result.targetUrl=endpointUri.toString();
         result.iris=uris;
@@ -273,7 +277,11 @@ public class RunCEATask implements Runnable {
                 if(i==0) result.times = timestamps; //only add times once
             }
         } catch ( IOException e) {
-
+            File file = new File(tmpDir);
+            deleteDirectoryContents(file);
+            file.delete();
+            e.printStackTrace();
+            throw new JPSRuntimeException("There are no CEA outputs, CEA encountered an error");
         }
         return result;
     }
@@ -302,6 +310,13 @@ public class RunCEATask implements Runnable {
         }
     }
 
+    /**
+     * Converts input data (except for surrounding) to CEA into text file to be read by the Python scripts
+     * @param dataInputs ArrayList of the CEA input data
+     * @param directory_path directory path
+     * @param file_path path to store data file, excluding surrounding data
+     * @param surrounding_path path to store surrounding data file
+     */
     private void dataToFile(ArrayList<CEAInputData> dataInputs, String directory_path, String file_path, String surrounding_path) {
         //Parse input data to JSON
         String dataString = "[";
@@ -328,6 +343,7 @@ public class RunCEATask implements Runnable {
             throw new JPSRuntimeException(e);
         }
 
+        // if there is surrounding data, call dataToFile to store surrounding data as a temporary text file
         if (surroundings.isEmpty()){
             noSurroundings = true;
         }
@@ -336,6 +352,12 @@ public class RunCEATask implements Runnable {
         }
     }
 
+    /**
+     * Converts surrounding data into text file to be read by the Python scripts
+     * @param dataInputs ArrayList of the CEA input data
+     * @param directory_path directory path
+     * @param file_path path to store data file, excluding surrounding data
+     */
     private void dataToFile(ArrayList<CEAInputData> dataInputs, String directory_path, String file_path) {
         //Parse input data to JSON
         String dataString = "[";
@@ -447,7 +469,7 @@ public class RunCEATask implements Runnable {
 
                 // create the shapefile process and run
                 runProcess(args);
-
+                // if there are surrounding data, create the shapefile process for surroundings and run
                 if (!noSurroundings){runProcess(args2);}
                 // create the typologyfile process and run
                 runProcess(args3);
