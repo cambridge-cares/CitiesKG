@@ -1,3 +1,30 @@
+/*
+ * The implementation is part of the development of
+ * Cities Knowledge Graph
+ * https://fcl.ethz.ch/research/research-projects/cities-knowledge-graph.html
+ * of Singapore ETH center
+ *
+ * Credit to 3DCityDB-Web-Map: http://www.3dcitydb.org/
+ *
+ *
+ * This work is jointly developed by the following research partners:
+ * Singapore ETH Center
+ * and
+ * Cambridge centre for Advanced Research and Education in Singapore LTD.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 const CONTEXT = "citieskg";
 const CITY = (new URL(window.location.href).searchParams.get('city'));
 const TOTAL_GFA_KEY = 'TotalGFA';
