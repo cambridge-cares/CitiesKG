@@ -1,4 +1,4 @@
 
 [submodule "webprotege"]
 	path = webprotege
-	url = https://github.com/achCARES/webprotege.git
+	url = ssh://git@github.com:achCARES/webprotege.git
