@@ -246,7 +246,7 @@ public class DBSplitter {
 		boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value());
 		Select select = builder.buildQuery(query);
 
-		if(is_Blazegraph){//temp for only one gmlid
+		if(is_Blazegraph){//only one gmlid
 			List<PlaceHolder<?>> placeHolders = select.getInvolvedPlaceHolders();
 			writeDocumentHeader();
 			long hits = 0;
@@ -271,7 +271,7 @@ public class DBSplitter {
 				if (rs.next()) {
 					if (calculateNumberMatched) {
 						log.debug("Calculating the number of matching top-level features...");
-						hits = getNumberMatched(query, connection);
+						hits = getNumberMatched(gmlidUri, connection);
 						log.info("Found " + hits + " top-level feature(s) matching the request.");
 
 						eventDispatcher.triggerEvent(new StatusDialogProgressBar(ProgressBarEventType.INIT, (int)hits, this));
@@ -600,14 +600,25 @@ public class DBSplitter {
 
 	private long getNumberMatched(Select select, Connection connection) throws SQLException, ParseException {
 		boolean is_Blazegraph = databaseAdapter.getDatabaseType().value().equals(DatabaseType.BLAZE.value());
+		long count = 0;
 		if(is_Blazegraph){
-
-			String sparqlQuery = StatementTransformer.getCountTopFeature(select);
-			PreparedStatement stmt = connection.prepareStatement(sparqlQuery);
-			try (
-					ResultSet rs = stmt.executeQuery()) {
-						return rs.next() ? rs.getLong("count") : 0;
+			List<PlaceHolder<?>> placeHolders = select.getInvolvedPlaceHolders();
+			for (int i  = 0; i < placeHolders.size(); ++i) {
+				String sparqlQuery = StatementTransformer.getCountTopFeature(select);
+				PreparedStatement stmt = connection.prepareStatement(sparqlQuery);
+				Object gmlidUri = placeHolders.get(i).getValue();
+				// Assign one gmlid, the predicateTokens
+				if (((String) gmlidUri).contains("*")) { // Query with * will refer to the whole database. No need to set parameters
+					// @TODO: as the preparedstatement will create different query for particular gmlid or *
+				} else {
+					stmt.setString(1, (String) gmlidUri);
+				}
+				try (
+						ResultSet rs = stmt.executeQuery()) {
+					count += rs.next() ? rs.getLong("count") : 0;
+				}
 			}
+			return count;
 		}else {
 			Select hitsQuery = new Select(select)
 					.unsetOrderBy()
@@ -619,6 +630,25 @@ public class DBSplitter {
 				return rs.next() ? rs.getLong(1) : 0;
 			}
 		}
+	}
+
+	private long getNumberMatched(Object gmlid, Connection connection) throws SQLException, ParseException, QueryBuildException {
+		long count = 0;
+		String sparqlQuery = StatementTransformer.getCountTopFeature(builder.buildQuery(query));
+		PreparedStatement stmt = connection.prepareStatement(sparqlQuery);
+//		Object gmlidUri = query.getTargetSrs().getId();
+		// Assign one gmlid, the predicateTokens
+		if (((String) gmlid).contains("*")) { // Query with * will refer to the whole database. No need to set parameters
+			// @TODO: as the preparedstatement will create different query for particular gmlid or *
+		} else {
+			stmt.setString(1, (String) gmlid);
+		}
+		try (
+			ResultSet rs = stmt.executeQuery()) {
+			count += rs.next() ? rs.getLong("count") : 0;
+		}
+
+		return count;
 	}
 
 	private BoundingBox getSpatialExtent(GeometryObject extentObj) throws SQLException {

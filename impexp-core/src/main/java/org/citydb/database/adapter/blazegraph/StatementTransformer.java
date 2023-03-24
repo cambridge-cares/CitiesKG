@@ -248,7 +248,7 @@ public class StatementTransformer {
         } else {
             // for single object also multiple objects
             sparqlString.append("PREFIX ocgml: <" + PREFIX_ONTOCITYGML + "> \n" +
-                    "SELECT (COUNT(DISTINCT ?id as ?count) \n" +
+                    "SELECT (COUNT(DISTINCT ?id) as ?count) \n" +
                     "FROM <" + IRI_GRAPH_BASE + "cityobject/> \n" +
                     "\nWHERE\n " +
                     "{ ?id ocgml:objectClassId  ?objectclass_id ;\n ocgml:gmlId " + QST_MARK + "\n" +
