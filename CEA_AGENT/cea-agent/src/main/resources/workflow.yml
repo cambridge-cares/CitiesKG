@@ -37,3 +37,18 @@
   parameters:
     scenario: scenario_path
     annual-radiation-threshold: 0.
+- script: photovoltaic-thermal
+  parameters:
+    scenario: scenario_path
+    type-scpanel: FP
+    annual-radiation-threshold: 0.
+- script: solar-collector
+  parameters:
+    scenario: scenario_path
+    type-scpanel: FP
+    annual-radiation-threshold: 0.
+- script: solar-collector
+  parameters:
+    scenario: scenario_path
+    type-scpanel: ET
+    annual-radiation-threshold: 0.
