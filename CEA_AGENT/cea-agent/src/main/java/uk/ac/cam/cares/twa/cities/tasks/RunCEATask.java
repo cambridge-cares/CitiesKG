@@ -30,6 +30,7 @@ public class RunCEATask implements Runnable {
     private static final String SHAPEFILE_SCRIPT = "create_shapefile.py";
     private static final String TYPOLOGY_SCRIPT = "create_typologyfile.py";
     private static final String WORKFLOW_SCRIPT = "workflow.yml";
+    private static final String WORKFLOW_SCRIPT2 = "workflow2.yml";
     private static final String CREATE_WORKFLOW_SCRIPT = "create_cea_workflow.py";
     private static final String FS = System.getProperty("file.separator");
     private Map<String, ArrayList<String>> solarSupply = new HashMap<>();
@@ -223,7 +224,7 @@ public class RunCEATask implements Runnable {
                 }
 
                 for (Map.Entry<String, ArrayList<String>> entry: solarSupply.entrySet()){
-                    extractSolar(result, entry.getKey(), entry.getValue(), splitBy, solar + "_" + entry.getValue(), tmpDir, getTimes);
+                    extractSolar(result, entry.getKey(), entry.getValue(), splitBy, solar + "_" + entry.getKey().toString() + ".csv", tmpDir, getTimes);
                     getTimes = false;
                 }
 
@@ -308,11 +309,11 @@ public class RunCEATask implements Runnable {
                     }
                 }
 
-                addSolarSupply(result, generator, "roof", supply, roof_results);
-                addSolarSupply(result, generator, "wall_north", supply, wall_north_results);
-                addSolarSupply(result, generator, "wall_south", supply, wall_south_results);
-                addSolarSupply(result, generator, "wall_west", supply, wall_west_results);
-                addSolarSupply(result, generator, "wall_east", supply, wall_east_results);
+                addSolarSupply(result, generatorType, "roof", supply, roof_results);
+                addSolarSupply(result, generatorType, "wall_north", supply, wall_north_results);
+                addSolarSupply(result, generatorType, "wall_south", supply, wall_south_results);
+                addSolarSupply(result, generatorType, "wall_west", supply, wall_west_results);
+                addSolarSupply(result, generatorType, "wall_east", supply, wall_east_results);
 
                 if (getTimes) {
                     result.times = timestamps;
@@ -557,7 +558,7 @@ public class RunCEATask implements Runnable {
         File dir = new File(solarDir);
 
         for (final File f : dir.listFiles()) {
-            if (f.getAbsolutePath().contains("PVT")) {
+            if (f.getAbsolutePath().contains("PVT") && !f.getAbsolutePath().contains("FP") && !f.getAbsolutePath().contains("ET")) {
                 File newFile = new File(f.getAbsolutePath().replace("PVT", "PVT_" + PVTType));
                 f.renameTo(newFile);
             }
@@ -578,7 +579,10 @@ public class RunCEATask implements Runnable {
                 ArrayList<String> args3 = new ArrayList<>();
                 ArrayList<String> args4 = new ArrayList<>();
                 ArrayList<String> args5 = new ArrayList<>();
+                ArrayList<String> args6 = new ArrayList<>();
+                ArrayList<String> args7 = new ArrayList<>();
                 String workflowPath = strTmp + FS + "workflow.yml";
+                String workflowPath2 = strTmp + FS + "workflow2.yml";
                 String data_path = strTmp + FS + DATA_FILE;
                 String surroundings_path = strTmp + FS + SURROUNDINGS_FILE;
 
@@ -613,18 +617,36 @@ public class RunCEATask implements Runnable {
                             Objects.requireNonNull(getClass().getClassLoader().getResource(CREATE_WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
                     args4.add(new File(
                             Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
+                    args4.add("workflow.yml");
                     args4.add(strTmp);
                     args4.add(flag);
 
                     args5.add("cmd.exe");
                     args5.add("/C");
                     args5.add("conda activate cea && cea workflow --workflow " + workflowPath);
+
+                    args6.add("cmd.exe");
+                    args6.add("/C");
+                    args6.add("conda activate cea && ");
+                    args6.add("python");
+                    args6.add(new File(
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(CREATE_WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
+                    args6.add(new File(
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_SCRIPT2)).toURI()).getAbsolutePath());
+                    args6.add("workflow2.yml");
+                    args6.add(strTmp);
+                    args6.add("null");
+
+                    args7.add("cmd.exe");
+                    args7.add("/C");
+                    args7.add("conda activate cea && cea workflow --workflow " + workflowPath2);
                 }
                 else {
                     String shapefile = FS+"target"+FS+"classes"+FS+SHAPEFILE_SCRIPT;
                     String typologyfile = FS+"target"+FS+"classes"+FS+TYPOLOGY_SCRIPT;
                     String createWorkflowFile = FS+"target"+FS+"classes"+FS+CREATE_WORKFLOW_SCRIPT;
                     String workflowFile = FS+"target"+FS+"classes"+FS+WORKFLOW_SCRIPT;
+                    String workflowFile2 = FS+"target"+FS+"classes"+FS+WORKFLOW_SCRIPT2;
 
                     args.add("/bin/bash");
                     args.add("-c");
@@ -640,13 +662,19 @@ public class RunCEATask implements Runnable {
 
                     args4.add("/bin/bash");
                     args4.add("-c");
-                    args4.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile + " " + strTmp + " " + flag);
-
+                    args4.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile + " " + "workflow.yml" + " " + strTmp + " " + flag);
 
                     args5.add("/bin/bash");
                     args5.add("-c");
                     args5.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath);
 
+                    args6.add("/bin/bash");
+                    args6.add("-c");
+                    args6.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile2 + " " + "workflow2.yml" + " " + strTmp + " " + "null");
+
+                    args7.add("/bin/bash");
+                    args7.add("-c");
+                    args7.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath2);
                 }
 
                 // create the shapefile process and run
@@ -657,10 +685,21 @@ public class RunCEATask implements Runnable {
                 runProcess(args3);
                 // create the workflow process and run
                 runProcess(args4);
-                // Run workflow that runs all CEA scripts
+
+                // CEA output file names for PVT plate collectors and PVT tube collectors are the same, so one PVT collector type has to be run first then the output files renamed before running the other PVT collector type
+                // run workflow that runs all CEA scripts with PVT plate collectors
                 runProcess(args5);
 
+                // rename PVT output files to PVT plate
                 renamePVT(strTmp+FS+"testProject"+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"potentials"+FS+"solar", "FP");
+
+                // create workflow process for PVT tube collectors
+                runProcess(args6);
+                // run CEA for PVT tube collectors
+                runProcess(args7);
+
+                // rename PVT output files to PVT tube
+                renamePVT(strTmp+FS+"testProject"+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"potentials"+FS+"solar", "ET");
 
                 CEAOutputData result = extractTimeSeriesOutputs(strTmp);
                 returnOutputs(extractArea(strTmp,result));
