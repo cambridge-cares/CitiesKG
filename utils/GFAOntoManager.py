@@ -12,7 +12,7 @@ class GFAOntoManager:
     OM_URI_PREFIX = "http://www.ontology-of-units-of-measure.org/resource/om-2/"
     GEOSPARQL_URI_PREFIX = "http://www.opengis.net/ont/geosparql#"
     ONTO_ZONING_URI_PREFIX = "http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#"
-    ONTO_PLANNING_REG_PREFIX = "http://www.theworldavatar.com/ontology/ontoplanningreg/OntoPlanningReg.owl#"
+    ONTO_PLANNING_REG_PREFIX = "http://www.theworldavatar.com/ontology/ontoplanningregulations/OntoPlanningRegulations.owl#"
 
     # OntoPlanningReg classes
     URA_REGULATION = URIRef(ONTO_PLANNING_REG_PREFIX + "URAPlanningRegulation")

@@ -609,9 +609,9 @@ def get_plot_information(plots, endpoint, road_list):
 
     plots = plots.drop(columns=['zone'])
     plots = get_plot_properties(plots, endpoint)
+    plots = get_neighbours(plots, endpoint)
     plots = get_plot_neighbour_types(plots, endpoint)
     plots = get_plot_allowed_programmes(plots, endpoint)
-    plots = get_neighbours(plots, endpoint)
     plots = find_allowed_residential_types(plots, road_list)
 
     return plots
@@ -713,6 +713,23 @@ def set_partywall_plots(plots, reg_links, sbp, udg):
     plots.loc[plots["plots"].isin(partywall_plots), 'partywall'] = True
 
     return plots
+
+
+def get_unclear_plots(reg_links, hcp, udg):
+    """
+    The function generates a list with plot ids which do not qualify for gfa calculation.
+    :param reg_links: a DataFrame containing plot ids, regulation ids, and regulation type.
+    :param hcp: a GeoDataFrame containing HeightControlPlan planning regulations.
+    :param udg: a GeoDataFrame containing UrbanDesignGuideline planning regulations.
+    :return: a list with plot ids.
+    """
+
+    con_plots = list(reg_links[reg_links['reg_type'].isin(['ConservationArea', 'Monument'])]['plots'])
+    hcp_plots = list(reg_links[reg_links['reg'].isin(list(hcp[~pd.isna(hcp['additional_type'])]['reg']))]['plots'])
+    udg_plots = list(reg_links[reg_links['reg'].isin(list(udg[~pd.isna(udg['additional_type'])]['reg']))]['plots'])
+    unclear_plots = list(set(con_plots + hcp_plots + udg_plots))
+
+    return unclear_plots
 
 
 def get_edges(polygon):
@@ -946,24 +963,6 @@ def get_udg_edge_setbacks(udg, reg_links, edges):
 
 
 '<-------------------GFA Calculation Functions------------------>'
-
-
-def get_unclear_plots(reg_links, hcp, udg):
-    """
-    The function generates a list with plot ids which do not qualify for gfa calculation.
-    :param reg_links: a DataFrame containing plot ids, regulation ids, and regulation type.
-    :param hcp: a GeoDataFrame containing HeightControlPlan planning regulations.
-    :param udg: a GeoDataFrame containing UrbanDesignGuideline planning regulations.
-    :return: a list with plot ids.
-    """
-
-    con_plots = list(reg_links[reg_links['reg_type'].isin(['ConservationArea', 'Monument'])]['plots'])
-    hcp_plots = list(reg_links[reg_links['reg'].isin(list(hcp[~pd.isna(hcp['additional_type'])]['reg']))]['plots'])
-    udg_plots = list(reg_links[reg_links['reg'].isin(list(udg[~pd.isna(udg['additional_type'])]['reg']))]['plots'])
-    unclear_plots = con_plots + hcp_plots + udg_plots
-    unclear_plots = list(set(unclear_plots))
-
-    return unclear_plots
 
 
 def set_plot_edge_setbacks(gfa_plots, reg_links, dcp, sbp, road_cats, udg_edges):
@@ -1436,7 +1435,7 @@ if __name__ == "__main__":
     out_dir = 'C://Users/AydaGrisiute/Desktop'
     twa_endpoint = "http://theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql"
     # in case regulation data is stored locally.
-    local_endpoint = "http://10.100.0.172:9999/blazegraph/namespace/regulationcontent/sparql"
+    local_endpoint = "http://192.168.104.137:9999/blazegraph/namespace/regulationcontent/sparql"
     road_list = ['Expressway', 'Semi Expressway', 'Major Arterials/Minor Arterials']
     non_gfa_zones = ['Road', 'Waterbody', 'Utility', 'OpenSpace', 'ReserveSite', 'Park', 'Agriculture',
                      'RapidTransit', 'PortOrAirport', 'SpecialUseZone', 'Cemetery', 'BeachArea']
