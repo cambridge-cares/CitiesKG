@@ -5,7 +5,6 @@ import kong.unirest.Unirest;
 import kong.unirest.UnirestException;
 import org.apache.http.HttpException;
 import org.apache.http.protocol.HTTP;
-import org.checkerframework.checker.units.qual.A;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import com.google.gson.Gson;
 
@@ -95,48 +94,150 @@ public class RunCEATask implements Runnable {
     public CEAOutputData extractArea(String tmpDir, CEAOutputData result) {
         String line = "";
         String splitBy = ",";
-        String projectDir = tmpDir+FS+"testProject";
+        String solarDir = tmpDir + FS + "testProject" + FS + "testScenario" + FS + "outputs" + FS + "data" + FS + "potentials" + FS + "solar" + FS;
+
 
         try{
-            //parsing a CSV file into BufferedReader class constructor
-            FileReader PV = new FileReader(projectDir+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"potentials"+FS+"solar"+FS+"PV_total_buildings.csv");
-            BufferedReader PV_file = new BufferedReader(PV);
-            ArrayList<String[] > PV_columns = new ArrayList<>();
+            for (String generatorType : solarSupply.keySet()) {
+                String generator = generatorType;
 
-            while ((line = PV_file.readLine()) != null)   //returns a Boolean value
-            {
-                String[] rows = line.split(splitBy);    // use comma as separator
-                PV_columns.add(rows);
+                if (generatorType.contains("PVT")) {generator = "PVT";}
+                
+                //parsing a CSV file into BufferedReader class constructor
+                FileReader solar = new FileReader(solarDir + generatorType + "_total_buildings.csv");
+                BufferedReader solarFile = new BufferedReader(solar);
+                ArrayList<String[]> solarColumns = new ArrayList<>();
+
+                while ((line = solarFile.readLine()) != null)   //returns a Boolean value
+                {
+                    String[] rows = line.split(splitBy);    // use comma as separator
+                    solarColumns.add(rows);
+                }
+                
+                if (generatorType.equals("PVT_FP")) {
+                    for (int n = 0; n < solarColumns.get(0).length; n++) {
+                        if (solarColumns.get(0)[n].equals(generator + "_roofs_top_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.PVTPlateRoofArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_south_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.PVTPlateWallSouthArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_north_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.PVTPlateWallNorthArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_east_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.PVTPlateWallEastArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_west_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.PVTPlateWallWestArea.add(solarColumns.get(m)[n]);
+                            }
+                        }
+                    }
+                } else if (generatorType.equals("PVT_ET")) {
+                    for (int n = 0; n < solarColumns.get(0).length; n++) {
+                        if (solarColumns.get(0)[n].equals(generator + "_roofs_top_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.PVTTubeRoofArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_south_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.PVTTubeWallSouthArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_north_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.PVTTubeWallNorthArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_east_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.PVTTubeWallEastArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_west_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.PVTTubeWallWestArea.add(solarColumns.get(m)[n]);
+                            }
+                        }
+                    }
+                } else if (generatorType.equals("PV")) {
+                    for (int n = 0; n < solarColumns.get(0).length; n++) {
+                        if (solarColumns.get(0)[n].equals(generator + "_roofs_top_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.PVRoofArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_south_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.PVWallSouthArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_north_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.PVWallNorthArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_east_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.PVWallEastArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_west_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.PVWallWestArea.add(solarColumns.get(m)[n]);
+                            }
+                        }
+                    }
+                } else if (generatorType.equals("SC_FP")) {
+                    for (int n = 0; n < solarColumns.get(0).length; n++) {
+                        if (solarColumns.get(0)[n].equals(generator + "_roofs_top_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.ThermalPlateRoofArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_south_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.ThermalPlateWallSouthArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_north_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.ThermalPlateWallNorthArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_east_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.ThermalPlateWallEastArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_west_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.ThermalPlateWallWestArea.add(solarColumns.get(m)[n]);
+                            }
+                        }
+                    }
+                } else if (generatorType.equals("SC_ET")) {
+                    for (int n = 0; n < solarColumns.get(0).length; n++) {
+                        if (solarColumns.get(0)[n].equals(generator + "_roofs_top_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.ThermalTubeRoofArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_south_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.ThermalTubeWallSouthArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_north_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.ThermalTubeWallNorthArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_east_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.ThermalTubeWallEastArea.add(solarColumns.get(m)[n]);
+                            }
+                        } else if (solarColumns.get(0)[n].equals(generator + "_walls_west_m2")) {
+                            for (int m = 1; m < solarColumns.size(); m++) {
+                                result.ThermalTubeWallWestArea.add(solarColumns.get(m)[n]);
+                            }
+                        }
+                    }
+                }
+                solarFile.close();
+                solar.close();
             }
-            for(int n=0; n<PV_columns.get(0).length; n++) {
-                if(PV_columns.get(0)[n].equals("PV_roofs_top_m2")) {
-                    for(int m=1; m<PV_columns.size(); m++) {
-                        result.PVRoofArea.add(PV_columns.get(m)[n]);
-                    }
-                }
-                else if(PV_columns.get(0)[n].equals("PV_walls_south_m2")) {
-                    for(int m=1; m<PV_columns.size(); m++) {
-                        result.PVWallSouthArea.add(PV_columns.get(m)[n]);
-                    }
-                }
-                else if(PV_columns.get(0)[n].equals("PV_walls_north_m2")) {
-                    for(int m=1; m<PV_columns.size(); m++) {
-                        result.PVWallNorthArea.add(PV_columns.get(m)[n]);
-                    }
-                }
-                else if(PV_columns.get(0)[n].equals("PV_walls_east_m2")) {
-                    for(int m=1; m<PV_columns.size(); m++) {
-                        result.PVWallEastArea.add(PV_columns.get(m)[n]);
-                    }
-                }
-                else if(PV_columns.get(0)[n].equals("PV_walls_west_m2")) {
-                    for(int m=1; m<PV_columns.size(); m++) {
-                        result.PVWallWestArea.add(PV_columns.get(m)[n]);
-                    }
-                }
-            }
-            PV_file.close();
-            PV.close();
         } catch ( IOException e) {
             File file = new File(tmpDir);
             deleteDirectoryContents(file);
@@ -144,6 +245,7 @@ public class RunCEATask implements Runnable {
             e.printStackTrace();
             throw new JPSRuntimeException("There are no CEA outputs, CEA encountered an error");
         }
+
         result.targetUrl=endpointUri.toString();
         result.iris=uris;
         File file = new File(tmpDir);
@@ -224,7 +326,7 @@ public class RunCEATask implements Runnable {
                 }
 
                 for (Map.Entry<String, ArrayList<String>> entry: solarSupply.entrySet()){
-                    extractSolar(result, entry.getKey(), entry.getValue(), splitBy, solar + "_" + entry.getKey().toString() + ".csv", tmpDir, getTimes);
+                    result = extractSolarSupply(result, entry.getKey(), entry.getValue(), splitBy, solar + "_" + entry.getKey().toString() + ".csv", tmpDir, getTimes);
                     getTimes = false;
                 }
 
@@ -253,13 +355,14 @@ public class RunCEATask implements Runnable {
      * @param tmpDir root directory of CEA files
      * @param getTimes whether to extract timestamps
      */
-    public void extractSolar(CEAOutputData result, String generatorType, List<String> supplyTypes, String dataSeparator, String solarFile, String tmpDir, Boolean getTimes) {
+    public CEAOutputData extractSolarSupply(CEAOutputData result, String generatorType, List<String> supplyTypes, String dataSeparator, String solarFile, String tmpDir, Boolean getTimes) {
         String line;
         String supply;
         String generator = generatorType;
         List<String> timestamps = new ArrayList();
 
         if (generatorType.contains("PVT")) {generator = "PVT";}
+        
         try {
             FileReader solar = new FileReader(solarFile);
 
@@ -309,11 +412,11 @@ public class RunCEATask implements Runnable {
                     }
                 }
 
-                addSolarSupply(result, generatorType, "roof", supply, roof_results);
-                addSolarSupply(result, generatorType, "wall_north", supply, wall_north_results);
-                addSolarSupply(result, generatorType, "wall_south", supply, wall_south_results);
-                addSolarSupply(result, generatorType, "wall_west", supply, wall_west_results);
-                addSolarSupply(result, generatorType, "wall_east", supply, wall_east_results);
+                result = addSolarSupply(result, generatorType, "roof", supply, roof_results);
+                result = addSolarSupply(result, generatorType, "wall_north", supply, wall_north_results);
+                result = addSolarSupply(result, generatorType, "wall_south", supply, wall_south_results);
+                result = addSolarSupply(result, generatorType, "wall_west", supply, wall_west_results);
+                result = addSolarSupply(result, generatorType, "wall_east", supply, wall_east_results);
 
                 if (getTimes) {
                     result.times = timestamps;
@@ -322,6 +425,8 @@ public class RunCEATask implements Runnable {
 
             solar_file.close();
             solar.close();
+
+            return result;
         }
         catch ( IOException e) {
             File file = new File(tmpDir);
@@ -437,7 +542,7 @@ public class RunCEATask implements Runnable {
      * @param supplyType type of potential energy of data
      * @param data time series data of the potential energy for the solar generator
      */
-    public void addSolarSupply(CEAOutputData result, String generatorType, String generatorLocation, String supplyType, ArrayList<String> data) {
+    public CEAOutputData addSolarSupply(CEAOutputData result, String generatorType, String generatorLocation, String supplyType, ArrayList<String> data) {
         if (generatorType.equals("PVT_FP")) {
             if (supplyType.equals("E")) {
                 if (generatorLocation.contains("roof")) {
@@ -527,6 +632,8 @@ public class RunCEATask implements Runnable {
                 result.ThermalTubeWallEastSupply.add(data);
             }
         }
+
+        return result;
     }
 
     /**
