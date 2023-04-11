@@ -1780,26 +1780,26 @@ public class CEAAgent extends JPSAgent {
         String pvWallNorthPanelsUri = "PVWallNorthPanels_" + UUID.randomUUID() + "/";
         String pvWallEastPanelsUri = "PVWallEastPanels_" + UUID.randomUUID() + "/";
         String pvWallWestPanelsUri = "PVWallWestPanels_" + UUID.randomUUID() + "/";
-        String pvtPlateRoofPanelsUri = "PVTPlateRoofPanels_" + UUID.randomUUID() + "/";
-        String pvtPlateWallSouthPanelsUri = "PVTPlateWallSouthPanels_" + UUID.randomUUID() + "/";
-        String pvtPlateWallNorthPanelsUri = "PVTPlateWallNorthPanels_" + UUID.randomUUID() + "/";
-        String pvtPlateWallEastPanelsUri = "PVTPlateWallEastPanels_" + UUID.randomUUID() + "/";
-        String pvtPlateWallWestPanelsUri = "PVTPlateWallWestPanels_" + UUID.randomUUID() + "/";
-        String pvtTubeRoofPanelsUri = "PVTTubeRoofPanels_" + UUID.randomUUID() + "/";
-        String pvtTubeWallSouthPanelsUri = "PVTTubeWallSouthPanels_" + UUID.randomUUID() + "/";
-        String pvtTubeWallNorthPanelsUri = "PVTTubeWallNorthPanels_" + UUID.randomUUID() + "/";
-        String pvtTubeWallEastPanelsUri = "PVTTubeWallEastPanels_" + UUID.randomUUID() + "/";
-        String pvtTubeWallWestPanelsUri = "PVTTubeWallWestPanels_" + UUID.randomUUID() + "/";
-        String thermalPlateRoofPanelsUri = "ThermalPlateRoofPanels_" + UUID.randomUUID() + "/";
-        String thermalPlateWallSouthPanelsUri = "ThermalPlateWallSouthPanels_" + UUID.randomUUID() + "/";
-        String thermalPlateWallNorthPanelsUri = "ThermalPlateWallNorthPanels_" + UUID.randomUUID() + "/";
-        String thermalPlateWallEastPanelsUri = "ThermalPlateWallEastPanels_" + UUID.randomUUID() + "/";
-        String thermalPlateWallWestPanelsUri = "ThermalPlateWallWestPanels_" + UUID.randomUUID() + "/";
-        String thermalTubeRoofPanelsUri = "ThermalTubeRoofPanels_" + UUID.randomUUID() + "/";
-        String thermalTubeWallSouthPanelsUri = "ThermalTubeWallSouthPanels_" + UUID.randomUUID() + "/";
-        String thermalTubeWallNorthPanelsUri = "ThermalTubeWallNorthPanels_" + UUID.randomUUID() + "/";
-        String thermalTubeWallEastPanelsUri = "ThermalTubeWallEastPanels_" + UUID.randomUUID() + "/";
-        String thermalTubeWallWestPanelsUri = "ThermalTubeWallWestPanels_" + UUID.randomUUID() + "/";
+        String pvtPlateRoofPanelsUri = "PVTPlateRoofCollectors_" + UUID.randomUUID() + "/";
+        String pvtPlateWallSouthPanelsUri = "PVTPlateWallSouthCollectors_" + UUID.randomUUID() + "/";
+        String pvtPlateWallNorthPanelsUri = "PVTPlateWallNorthCollectors_" + UUID.randomUUID() + "/";
+        String pvtPlateWallEastPanelsUri = "PVTPlateWallEastCollectors_" + UUID.randomUUID() + "/";
+        String pvtPlateWallWestPanelsUri = "PVTPlateWallWestCollectors_" + UUID.randomUUID() + "/";
+        String pvtTubeRoofPanelsUri = "PVTTubeRoofCollectors_" + UUID.randomUUID() + "/";
+        String pvtTubeWallSouthPanelsUri = "PVTTubeWallSouthCollectors_" + UUID.randomUUID() + "/";
+        String pvtTubeWallNorthPanelsUri = "PVTTubeWallNorthCollectors_" + UUID.randomUUID() + "/";
+        String pvtTubeWallEastPanelsUri = "PVTTubeWallEastCollectors_" + UUID.randomUUID() + "/";
+        String pvtTubeWallWestPanelsUri = "PVTTubeWallWestCollectors_" + UUID.randomUUID() + "/";
+        String thermalPlateRoofPanelsUri = "ThermalPlateRoofCollectors_" + UUID.randomUUID() + "/";
+        String thermalPlateWallSouthPanelsUri = "ThermalPlateWallSouthCollectors_" + UUID.randomUUID() + "/";
+        String thermalPlateWallNorthPanelsUri = "ThermalPlateWallNorthCollectors_" + UUID.randomUUID() + "/";
+        String thermalPlateWallEastPanelsUri = "ThermalPlateWallEastCollectors_" + UUID.randomUUID() + "/";
+        String thermalPlateWallWestPanelsUri = "ThermalPlateWallWestCollectors_" + UUID.randomUUID() + "/";
+        String thermalTubeRoofPanelsUri = "ThermalTubeRoofCollectors_" + UUID.randomUUID() + "/";
+        String thermalTubeWallSouthPanelsUri = "ThermalTubeWallSouthCollectors_" + UUID.randomUUID() + "/";
+        String thermalTubeWallNorthPanelsUri = "ThermalTubeWallNorthCollectors_" + UUID.randomUUID() + "/";
+        String thermalTubeWallEastPanelsUri = "ThermalTubeWallEastCollectors_" + UUID.randomUUID() + "/";
+        String thermalTubeWallWestPanelsUri = "ThermalTubeWallWestCollectors_" + UUID.randomUUID() + "/";
 
 
         if (!graph.isEmpty()){
