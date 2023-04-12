@@ -433,8 +433,7 @@ public class RunCEATaskTest {
         testArray.add("testUri");
         Integer test_thread = 0;
         String test_CRS = "27700";
-        String fs = System.getProperty("file.separator");
-        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS));
+        RunCEATask task = new RunCEATask(testData, testURI, testArray, test_thread, test_CRS);
 
         ArrayList<CEAInputData> surroundings = new ArrayList<>();
         surroundings.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
@@ -456,7 +455,45 @@ public class RunCEATaskTest {
     }
 
     @Test
-    public void testExtractSolarSupply() {
+    public void testExtractSolarSupply() throws URISyntaxException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        URI testURI = new URI("http://localhost/test");
+        ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+        ArrayList<String> testArray = new ArrayList<>();
+        testArray.add("testUri");
+        Integer test_thread = 0;
+        String test_CRS = "27700";
+        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS));
 
+        String PVTitleRow = "Date,PV_roofs_top_E_kWh,PV_walls_south_E_kWh,Other,PV_walls_north_E_kWh,PV_walls_west_E_kWh,PV_walls_east_E_kWh";
+        String PVValuesRow1 = "2005-01-01 00:00:00+00:00,20.0,30.0,40.0,50.0,60.0,70.0";
+        String PVValuesRow2 = "2005-01-01 01:00:00+00:00,21.0,31.0,41.0,51.0,61.0,71.0";
+
+        String generatorType = "PV";
+        List<String> supplyTypes = Arrays.asList("E");
+        String dataSeparator = ",";
+        String solarFile = "test";
+        String tmpDir = "test";
+
+        try (MockedConstruction<FileReader> fReader = mockConstruction(FileReader.class)) {
+            try (MockedConstruction<BufferedReader> bReader = mockConstruction(BufferedReader.class, (mock, context) -> {
+                when(mock.readLine()).thenReturn(PVTitleRow, PVValuesRow1, PVValuesRow2, null);
+            })) {
+                Method extractSolarSupply = task.getClass().getDeclaredMethod("extractSolarSupply", CEAOutputData.class, String.class, List.class, String.class, String.class, String.class, Boolean.class);
+                CEAOutputData result = (CEAOutputData) extractSolarSupply.invoke(task, new CEAOutputData(), generatorType, supplyTypes, dataSeparator, solarFile, tmpDir, false);
+
+                assertTrue(result.PVRoofSupply.get(0).get(0).contains("20.0"));
+                assertTrue(result.PVRoofSupply.get(0).get(1).contains("21.0"));
+                assertTrue(result.PVWallSouthSupply.get(0).get(0).contains("30.0"));
+                assertTrue(result.PVWallSouthSupply.get(0).get(1).contains("31.0"));
+                assertTrue(result.PVWallNorthSupply.get(0).get(0).contains("50.0"));
+                assertTrue(result.PVWallNorthSupply.get(0).get(1).contains("51.0"));
+                assertTrue(result.PVWallEastSupply.get(0).get(0).contains("70.0"));
+                assertTrue(result.PVWallEastSupply.get(0).get(1).contains("71.0"));
+                assertTrue(result.PVWallWestSupply.get(0).get(0).contains("60.0"));
+                assertTrue(result.PVWallWestSupply.get(0).get(1).contains("61.0"));
+                verify(task, times(5)).addSolarSupply(any(), anyString(), anyString(), anyString(), any());
+            }
+        }
     }
 }
