@@ -1,6 +1,5 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
-import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.jooq.exception.DataAccessException;
 import org.json.JSONArray;
@@ -21,7 +20,6 @@ import uk.ac.cam.cares.twa.cities.tasks.RunCEATask;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -351,6 +349,56 @@ public class CEAAgentTest {
         requestParams.put(CEAAgent.KEY_PV_WALL_EAST_SUPPLY, arrayMock);
         requestParams.put(CEAAgent.KEY_PV_WALL_WEST_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_PV_WALL_WEST_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_ROOF_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_ROOF_E_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_ROOF_Q_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_SOUTH_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_SOUTH_E_SUPPLY,arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_SOUTH_Q_SUPPLY,arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_NORTH_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_NORTH_E_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_NORTH_Q_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_EAST_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_EAST_E_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_EAST_Q_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_WEST_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_WEST_E_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_WEST_Q_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_ROOF_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_ROOF_E_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_ROOF_Q_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_SOUTH_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_SOUTH_E_SUPPLY,arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_SOUTH_Q_SUPPLY,arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_NORTH_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_NORTH_E_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_NORTH_Q_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_EAST_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_EAST_E_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_EAST_Q_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_WEST_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_WEST_E_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_WEST_Q_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_ROOF_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_ROOF_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_SOUTH_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_SOUTH_SUPPLY,arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_NORTH_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_NORTH_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_EAST_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_EAST_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_WEST_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_WEST_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_ROOF_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_ROOF_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_SOUTH_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_SOUTH_SUPPLY,arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_NORTH_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_NORTH_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_EAST_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_EAST_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_WEST_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_WEST_SUPPLY, arrayMock);
         requestParams.put(CEAAgent.KEY_TIMES, arrayMock);
 
         Field namedGraph = agent.getClass().getDeclaredField("namedGraph");
@@ -410,7 +458,7 @@ public class CEAAgentTest {
             String testReturnValue = "testAnnual";
             TimeSeries<OffsetDateTime> timeSeries = mock(TimeSeries.class);
 
-            doReturn(testList).when(agent).getDataIRI(anyString(), anyString(), anyString(), anyString(), anyString());
+            doReturn(testList).when(agent).getDataIRI(anyString(), anyString(), anyString(), anyString());
             doReturn(testReturnValue).when(agent).calculateAnnual(any(), anyString());
             doReturn(timeSeries).when(agent).retrieveData(anyString());
             doReturn(testUnit).when(agent).getUnit(anyString());
@@ -430,7 +478,29 @@ public class CEAAgentTest {
                 assertTrue(result.contains(expected));
             }
             for (String ts : time_series_strings) {
-                String expected = "\"Annual " + ts + "\"" + ":\"testAnnual testUnit\"";
+                String expected;
+                if (ts.contains("Consumption")){
+                    expected = "\"Annual " + ts + "\"" + ":\"testAnnual testUnit\"";
+                }
+                else {
+                    expected = "\"Annual ";
+                    if (ts.contains("ESupply")) {
+                        // PVT annual electricity supply
+                        expected = expected + ts.split("ESupply")[0] + " Electricity Supply";
+                    } else if (ts.contains("QSupply")) {
+                        // PVT annual heat supply
+                        expected = expected + ts.split("QSupply")[0] + " Heat Supply";
+                    } else {
+                        if (ts.contains("Thermal")) {
+                            // solar collector annual heat supply
+                            expected = expected + ts.split("Supply")[0] + " Heat Supply";
+                        } else if (ts.contains("PV")) {
+                            // PV annual electricity supply
+                            expected = expected + ts.split("Supply")[0] + " Electricity Supply";
+                        }
+                    }
+                    expected = expected + "\"" + ":\"testAnnual testUnit\"";
+                }
                 assertTrue(result.contains(expected));
             }
         }
@@ -727,12 +797,11 @@ public class CEAAgentTest {
         try (MockedConstruction<TimeSeriesClient> mockTs = mockConstruction(TimeSeriesClient.class)) {
 
             CEAAgent agent = new CEAAgent();
-            Method createTimeSeries = agent.getClass().getDeclaredMethod("createTimeSeries", String.class, LinkedHashMap.class, String.class);
+            Method createTimeSeries = agent.getClass().getDeclaredMethod("createTimeSeries", LinkedHashMap.class, String.class);
             assertNotNull(createTimeSeries);
             createTimeSeries.setAccessible(true);
 
             LinkedHashMap<String, String> fixedIris = new LinkedHashMap<>();
-            String testUri = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
 
             RemoteRDBStoreClient mockRDBClient = mock(RemoteRDBStoreClient.class);
             Connection mockConnection = mock(Connection.class);
@@ -746,7 +815,7 @@ public class CEAAgentTest {
 
             doReturn(mockConnection).when(mockRDBClient).getConnection();
 
-            createTimeSeries.invoke(agent, testUri, fixedIris, "");
+            createTimeSeries.invoke(agent, fixedIris, "");
 
             Field TIME_SERIES = agent.getClass().getDeclaredField("TIME_SERIES");
             List<String> time_series_strings = (List<String>) TIME_SERIES.get(agent);
@@ -759,7 +828,7 @@ public class CEAAgentTest {
 
             String testGraph = "testGraph";
 
-            createTimeSeries.invoke(agent, testUri, fixedIris, testGraph);
+            createTimeSeries.invoke(agent, fixedIris, testGraph);
 
             // Ensure iris created correctly and time series initialised
             for (String time_series : time_series_strings) {
@@ -1221,10 +1290,11 @@ public class CEAAgentTest {
     @Test
     public void testAddSupplyDeviceWhere() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
         CEAAgent agent = new CEAAgent();
-        Method addSupplyDeviceWhere = agent.getClass().getDeclaredMethod("addSupplyDeviceWhere", WhereBuilder.class, String.class);
+        Method addSupplyDeviceWhere = agent.getClass().getDeclaredMethod("addSupplyDeviceWhere", WhereBuilder.class, String.class, String.class);
         assertNotNull(addSupplyDeviceWhere);
 
         String panelType = "test_type";
+        String energyType = "test_energy";
 
         WhereBuilder wb = new WhereBuilder();
         Field rdf = agent.getClass().getDeclaredField("rdfUri");
@@ -1245,24 +1315,27 @@ public class CEAAgentTest {
                 .addPrefix("ontoubemmp", ontoUBEMMPUri)
                 .addPrefix("thinkhome", thinkhomeUri);
 
-        addSupplyDeviceWhere.invoke(agent,  wb, panelType );
+        addSupplyDeviceWhere.invoke(agent, wb, panelType, energyType);
 
         String result = wb.build().toString().replaceAll("\\s", "");
 
         //test string contains expected where data
         String expected_where = "WHERE";
-        String expected_triple = "?PVPanels" + "rdf:type\"" + panelType +"\"";
-        assertTrue( result.contains(expected_where));
-        assertTrue( result.contains(expected_triple));
+        String expected_panel = "?SolarGenerators" + "rdf:type\"" + panelType +"\"";
+        String expected_energy = "?supply" + "rdf:type\"" + energyType +"\"";
+        assertTrue(result.contains(expected_where));
+        assertTrue(result.contains(expected_panel));
+        assertTrue(result.contains(expected_energy));
     }
 
     @Test
     public void testAddSupplyDeviceAreaWhere() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
         CEAAgent agent = new CEAAgent();
-        Method addSupplyDeviceAreaWhere = agent.getClass().getDeclaredMethod("addSupplyDeviceAreaWhere", WhereBuilder.class, String.class);
+        Method addSupplyDeviceAreaWhere = agent.getClass().getDeclaredMethod("addSupplyDeviceAreaWhere", WhereBuilder.class, String.class, String.class);
         assertNotNull(addSupplyDeviceAreaWhere);
 
-        String panelType = "test_type";
+        String generatorType = "test_type";
+        String areaType = "test_area";
 
         WhereBuilder wb = new WhereBuilder();
 
@@ -1280,21 +1353,23 @@ public class CEAAgentTest {
                 .addPrefix("om", unitOntologyUri)
                 .addPrefix("ontoubemmp", ontoUBEMMPUri);
 
-        addSupplyDeviceAreaWhere.invoke(agent,  wb, panelType );
+        addSupplyDeviceAreaWhere.invoke(agent,  wb, generatorType, areaType);
 
         String result = wb.build().toString().replaceAll("\\s", "");
 
         //test string contains expected where data
         String expected_where = "WHERE";
-        String expected_triple = "?PVPanels" + "rdf:type\"" + panelType +"\"";
+        String expected_generator = "?SolarGenerators" + "rdf:type\"" + generatorType +"\"";
+        String expected_area = "?area" + "rdf:type\"" + areaType +"\"";
         assertTrue( result.contains(expected_where));
-        assertTrue( result.contains(expected_triple));
+        assertTrue( result.contains(expected_generator));
+        assertTrue( result.contains(expected_area));
     }
 
     @Test
     public void testInitialiseData() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = spy(new CEAAgent());
-        Method initialiseData = agent.getClass().getDeclaredMethod("initialiseData", String.class, Integer.class, LinkedHashMap.class, String.class, LinkedHashMap.class, LinkedHashMap.class, String.class, String.class);
+        Method initialiseData = agent.getClass().getDeclaredMethod("initialiseData", Integer.class, LinkedHashMap.class, String.class, LinkedHashMap.class, LinkedHashMap.class, String.class, String.class);
         assertNotNull(initialiseData);
 
         LinkedHashMap<String,String> ts_iris_mock = mock(LinkedHashMap.class);
@@ -1311,11 +1386,10 @@ public class CEAAgentTest {
         String route = "test_route";
 
         Integer testCounter = 0;
-        String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
         String building = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/energyprofile/Building_UUID_test/";
 
         doNothing().when(agent).updateStore(anyString(), anyString());
-        initialiseData.invoke(agent, uriString, testCounter, scalars_mock, building, ts_iris_mock, scalar_iris_mock, route, "");
+        initialiseData.invoke(agent, testCounter, scalars_mock, building, ts_iris_mock, scalar_iris_mock, route, "");
 
         //test update store is called once
         verify(agent, times(1)).updateStore(anyString(), anyString());
@@ -1324,7 +1398,7 @@ public class CEAAgentTest {
     @Test
     public void testUpdateScalars() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
         CEAAgent agent = spy(new CEAAgent());
-        Method updateScalars = agent.getClass().getDeclaredMethod("updateScalars", String.class, String.class, LinkedHashMap.class, LinkedHashMap.class, Integer.class, String.class);
+        Method updateScalars = agent.getClass().getDeclaredMethod("updateScalars", String.class, LinkedHashMap.class, LinkedHashMap.class, Integer.class, String.class);
         assertNotNull(updateScalars);
 
         LinkedHashMap<String,String> scalar_iris_mock = mock(LinkedHashMap.class);
@@ -1338,10 +1412,9 @@ public class CEAAgentTest {
         String route = "test_route";
 
         Integer testCounter = 0;
-        String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
-
+        
         doNothing().when(agent).updateStore(anyString(), anyString());
-        updateScalars.invoke(agent, uriString, route,scalar_iris_mock, scalars_mock, testCounter, "");
+        updateScalars.invoke(agent, route,scalar_iris_mock, scalars_mock, testCounter, "");
 
         //test update store is called twice for each scalar
         Field SCALARS = agent.getClass().getDeclaredField("SCALARS");
@@ -1354,7 +1427,6 @@ public class CEAAgentTest {
     public void testGetDataIri() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
 
-        String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
         String test_value = "PVRoofArea";
         String measure = "measure";
         String test_measure = "testUri";
@@ -1366,7 +1438,7 @@ public class CEAAgentTest {
         JSONArray expected = new JSONArray().put(new JSONObject().put(measure, test_measure).put(unit, test_unit));
         JSONArray expectedBlank = new JSONArray();
 
-        Method getDataIRI = agent.getClass().getDeclaredMethod("getDataIRI", String.class, String.class, String.class, String.class, String.class);
+        Method getDataIRI = agent.getClass().getDeclaredMethod("getDataIRI", String.class, String.class, String.class, String.class);
         assertNotNull(getDataIRI);
         getDataIRI.setAccessible(true);
 
@@ -1375,14 +1447,14 @@ public class CEAAgentTest {
             //test with mocked AccessAgentCaller when it returns data
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
                     .thenReturn(expected);
-            ArrayList<String> result = (ArrayList<String>) getDataIRI.invoke(agent, uriString, building, test_value, route, "");
+            ArrayList<String> result = (ArrayList<String>) getDataIRI.invoke(agent, building, test_value, route, "");
             assertTrue(result.contains(test_measure));
             assertTrue(result.contains(test_unit));
 
             //test with mocked AccessAgentCaller when there is nothing returned
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
                     .thenReturn((expectedBlank));
-            result = (ArrayList<String>) getDataIRI.invoke(agent, uriString, building, test_value, route, "");
+            result = (ArrayList<String>) getDataIRI.invoke(agent, building, test_value, route, "");
 
             assertTrue(result.isEmpty());
         }
@@ -1537,8 +1609,8 @@ public class CEAAgentTest {
     @Test
     public void testCreatePVPanelSupplyUpdate() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
-        Method createPVPanelSupplyUpdate = agent.getClass().getDeclaredMethod("createPVPanelSupplyUpdate", WhereBuilder.class, String.class, String.class, String.class);
-        assertNotNull(createPVPanelSupplyUpdate);
+        Method createSolarGeneratorSupplyUpdate = agent.getClass().getDeclaredMethod("createSolarGeneratorSupplyUpdate", WhereBuilder.class, String.class, String.class, String.class, String.class);
+        assertNotNull(createSolarGeneratorSupplyUpdate);
 
         String PVPanels = "panels_IRI";
         String quantity = "quantity_IRI";
@@ -1549,7 +1621,7 @@ public class CEAAgentTest {
                         .addPrefix("om", "unitOntologyUri")
                         .addPrefix("thinkhome", "thinkhomeUri");
 
-        createPVPanelSupplyUpdate.invoke(agent,  wb, PVPanels, quantity, measure);
+        createSolarGeneratorSupplyUpdate.invoke(agent,  wb, PVPanels, quantity, measure, "test_energy");
 
         String result = wb.build().toString();
 
@@ -1558,13 +1630,14 @@ public class CEAAgentTest {
         assertTrue(result.contains(PVPanels));
         assertTrue(result.contains(quantity));
         assertTrue(result.contains(measure));
+        assertTrue(result.contains("test_energy"));
     }
 
     @Test
-    public void testCreatePVPanelAreaUpdate() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void testCreateSolarGeneratorAreaUpdate() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
-        Method createPVPanelAreaUpdate = agent.getClass().getDeclaredMethod("createPVPanelAreaUpdate", WhereBuilder.class, String.class, String.class, String.class, String.class, String.class, String.class);
-        assertNotNull(createPVPanelAreaUpdate);
+        Method createSolarGeneratorAreaUpdate = agent.getClass().getDeclaredMethod("createSolarGeneratorAreaUpdate", WhereBuilder.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class);
+        assertNotNull(createSolarGeneratorAreaUpdate);
 
         String building = "building_IRI";
         String panelType = "test_type";
@@ -1572,13 +1645,14 @@ public class CEAAgentTest {
         String PVPanels = "panels_IRI";
         String quantity = "quantity_IRI";
         String measure = "measure_IRI";
+        String area = "test_area";
 
         WhereBuilder wb = new WhereBuilder()
                 .addPrefix("ontoubemmp", "ontoUBEMMPUri")
                 .addPrefix("rdf", "rdfUri")
                 .addPrefix("om", "unitOntologyUri");
 
-        createPVPanelAreaUpdate.invoke(agent,  wb, building, PVPanels, panelType, quantity, measure, value );
+        createSolarGeneratorAreaUpdate.invoke(agent,  wb, building, PVPanels, panelType, quantity, measure, value, area);
 
         String result = wb.build().toString();
 
@@ -1595,13 +1669,13 @@ public class CEAAgentTest {
         assertTrue(result.contains(building));
         assertTrue(result.contains(quantity));
         assertTrue(result.contains(measure));
-
+        assertTrue(result.contains(area));
     }
 
     @Test
     public void testCheckDataInitialised() throws NoSuchFieldException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = spy(new CEAAgent());
-        Method checkDataInitialised = agent.getClass().getDeclaredMethod("checkDataInitialised", String.class, String.class, LinkedHashMap.class, LinkedHashMap.class, String.class, String.class);
+        Method checkDataInitialised = agent.getClass().getDeclaredMethod("checkDataInitialised", String.class, LinkedHashMap.class, LinkedHashMap.class, String.class, String.class);
         assertNotNull(checkDataInitialised);
 
         //Test time series data
@@ -1609,11 +1683,10 @@ public class CEAAgentTest {
         String testIri = "testIri";
         String testBuilding = "testBuilding";
         String route = "test_route";
-        String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
         ArrayList<String> testList = mock(ArrayList.class);
         when(testList.get(0)).thenReturn(testIri);
         when(testList.get(1)).thenReturn(testUnit);
-        doReturn(testList).when(agent).getDataIRI(anyString(), anyString(), anyString(), anyString(), anyString());
+        doReturn(testList).when(agent).getDataIRI(anyString(), anyString(), anyString(), anyString());
 
         LinkedHashMap<String, String> tsIris = new LinkedHashMap();
         LinkedHashMap<String, String> scalarIris = new LinkedHashMap();
@@ -1623,7 +1696,7 @@ public class CEAAgentTest {
         Field SCALARS = agent.getClass().getDeclaredField("SCALARS");
         List<String> scalar_strings = (List<String>) SCALARS.get(agent);
 
-        Boolean result = (Boolean) checkDataInitialised.invoke(agent,  uriString, testBuilding, tsIris, scalarIris, route, "");
+        Boolean result = (Boolean) checkDataInitialised.invoke(agent, testBuilding, tsIris, scalarIris, route, "");
         assertTrue(result);
         for (String scalar : scalar_strings) {
             assertTrue(scalarIris.get(scalar).contains(testIri));
