@@ -348,7 +348,24 @@ public class CEAAgent extends JPSAgent {
                             String value;
                             if (TIME_SERIES.contains(measurement)) {
                                 value = calculateAnnual(retrieveData(result.get(0)), result.get(0));
-                                measurement = "Annual "+ measurement;
+                                if (measurement.contains("ESupply")) {
+                                    // PVT annual electricity supply
+                                    measurement = "Annual "+ measurement.split("ESupply")[0] + " Electricity Supply";
+                                }
+                                else if (measurement.contains("QSupply")) {
+                                    // PVT annual heat supply
+                                    measurement = "Annual "+ measurement.split("QSupply")[0] + " Heat Supply";
+                                }
+                                else {
+                                    if (measurement.contains("Thermal")) {
+                                        // solar collector annual heat supply
+                                        measurement = "Annual "+ measurement.split("Supply")[0] + " Heat Supply";
+                                    }
+                                    else if (measurement.contains("PV")) {
+                                        // PV annual electricity supply
+                                        measurement = "Annual "+ measurement.split("Supply")[0] + " Electricity Supply";
+                                    }
+                                }
                             } else {
                                 value = getNumericalValue(uri, result.get(0), ceaRoute, namedGraph);
                             }
