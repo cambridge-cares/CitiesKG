@@ -1405,19 +1405,19 @@ public class CEAAgent extends JPSAgent {
                 addSupplyDeviceWhere(wb,"ontoubemmp:WestWallPVTPlateCollectors", "ontoubemmp:HeatSupply");
                 break;
             case KEY_PVT_PLATE_ROOF_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:RoofPVTPlateCollectors", "ontoubemmp:PVTPlateCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:RoofPVTPlateCollectors", "ontoubemmp:PVTPlateCollectorsArea");
                 break;
             case KEY_PVT_PLATE_WALL_SOUTH_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:SouthWallPVTPlateCollectors", "ontoubemmp:PVTPlateCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:SouthWallPVTPlateCollectors", "ontoubemmp:PVTPlateCollectorsArea");
                 break;
             case KEY_PVT_PLATE_WALL_NORTH_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:NorthWallPVTPlateCollectors", "ontoubemmp:PVTPlateCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:NorthWallPVTPlateCollectors", "ontoubemmp:PVTPlateCollectorsArea");
                 break;
             case KEY_PVT_PLATE_WALL_EAST_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:EastWallPVTPlateCollectors", "ontoubemmp:PVTPlateCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:EastWallPVTPlateCollectors", "ontoubemmp:PVTPlateCollectorsArea");
                 break;
             case KEY_PVT_PLATE_WALL_WEST_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:WestWallPVTPlateCollectors", "ontoubemmp:PVTPlateCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:WestWallPVTPlateCollectors", "ontoubemmp:PVTPlateCollectorsArea");
                 break;
             case KEY_PVT_TUBE_ROOF_E_SUPPLY:
                 addSupplyDeviceWhere(wb,"ontoubemmp:RoofPVTTubeCollectors", "ontoubemmp:ElectricitySupply");
@@ -1450,79 +1450,79 @@ public class CEAAgent extends JPSAgent {
                 addSupplyDeviceWhere(wb,"ontoubemmp:WestWallPVTTubeCollectors", "ontoubemmp:HeatSupply");
                 break;
             case KEY_PVT_TUBE_ROOF_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:RoofPVTTubeCollectors", "ontoubemmp:PVTTubeCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:RoofPVTTubeCollectors", "ontoubemmp:PVTTubeCollectorsArea");
                 break;
             case KEY_PVT_TUBE_WALL_SOUTH_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:SouthWallPVTTubeCollectors", "ontoubemmp:PVTTubeCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:SouthWallPVTTubeCollectors", "ontoubemmp:PVTTubeCollectorsArea");
                 break;
             case KEY_PVT_TUBE_WALL_NORTH_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:NorthWallPVTTubeCollectors", "ontoubemmp:PVTTubeCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:NorthWallPVTTubeCollectors", "ontoubemmp:PVTTubeCollectorsArea");
                 break;
             case KEY_PVT_TUBE_WALL_EAST_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:EastWallPVTTubeCollectors", "ontoubemmp:PVTTubeCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:EastWallPVTTubeCollectors", "ontoubemmp:PVTTubeCollectorsArea");
                 break;
             case KEY_PVT_TUBE_WALL_WEST_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:WestWallPVTTubeCollectors", "ontoubemmp:PVTTubeCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:WestWallPVTTubeCollectors", "ontoubemmp:PVTTubeCollectorsArea");
                 break;
             case KEY_THERMAL_PLATE_ROOF_SUPPLY:
-                addSupplyDeviceWhere(wb,"ontoubemmp:RoofThermalPlateCollectors", "ontoubemmp:ElectricitySupply");
+                addSupplyDeviceWhere(wb,"ontoubemmp:RoofThermalPlateCollectors", "ontoubemmp:HeatSupply");
                 break;
             case KEY_THERMAL_PLATE_WALL_SOUTH_SUPPLY:
-                addSupplyDeviceWhere(wb,"ontoubemmp:SouthWallThermalPlateCollectors", "ontoubemmp:ElectricitySupply");
+                addSupplyDeviceWhere(wb,"ontoubemmp:SouthWallThermalPlateCollectors", "ontoubemmp:HeatSupply");
                 break;
             case KEY_THERMAL_PLATE_WALL_NORTH_SUPPLY:
-                addSupplyDeviceWhere(wb,"ontoubemmp:NorthWallThermalPlateCollectors", "ontoubemmp:ElectricitySupply");
+                addSupplyDeviceWhere(wb,"ontoubemmp:NorthWallThermalPlateCollectors", "ontoubemmp:HeatSupply");
                 break;
             case KEY_THERMAL_PLATE_WALL_EAST_SUPPLY:
-                addSupplyDeviceWhere(wb,"ontoubemmp:EastWallThermalPlateCollectors", "ontoubemmp:ElectricitySupply");
+                addSupplyDeviceWhere(wb,"ontoubemmp:EastWallThermalPlateCollectors", "ontoubemmp:HeatSupply");
                 break;
             case KEY_THERMAL_PLATE_WALL_WEST_SUPPLY:
-                addSupplyDeviceWhere(wb,"ontoubemmp:WestWallThermalPlateCollectors", "ontoubemmp:ElectricitySupply");
+                addSupplyDeviceWhere(wb,"ontoubemmp:WestWallThermalPlateCollectors", "ontoubemmp:HeatSupply");
                 break;
             case KEY_THERMAL_PLATE_ROOF_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:RoofThermalPlateCollectors", "ontoubemmp:ThermalPlateCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:RoofThermalPlateCollectors", "ontoubemmp:ThermalPlateCollectorsArea");
                 break;
             case KEY_THERMAL_PLATE_WALL_SOUTH_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:SouthWallThermalPlateCollectors", "ontoubemmp:ThermalPlateCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:SouthWallThermalPlateCollectors", "ontoubemmp:ThermalPlateCollectorsArea");
                 break;
             case KEY_THERMAL_PLATE_WALL_NORTH_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:NorthWallThermalPlateCollectors", "ontoubemmp:ThermalPlateCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:NorthWallThermalPlateCollectors", "ontoubemmp:ThermalPlateCollectorsArea");
                 break;
             case KEY_THERMAL_PLATE_WALL_EAST_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:EastWallThermalPlateCollectors", "ontoubemmp:ThermalPlateCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:EastWallThermalPlateCollectors", "ontoubemmp:ThermalPlateCollectorsArea");
                 break;
             case KEY_THERMAL_PLATE_WALL_WEST_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:WestWallThermalPlateCollectors", "ontoubemmp:ThermalPlateCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:WestWallThermalPlateCollectors", "ontoubemmp:ThermalPlateCollectorsArea");
                 break;
             case KEY_THERMAL_TUBE_ROOF_SUPPLY:
-                addSupplyDeviceWhere(wb,"ontoubemmp:RoofThermalTubeCollectors", "ontoubemmp:ElectricitySupply");
+                addSupplyDeviceWhere(wb,"ontoubemmp:RoofThermalTubeCollectors", "ontoubemmp:HeatSupply");
                 break;
             case KEY_THERMAL_TUBE_WALL_SOUTH_SUPPLY:
-                addSupplyDeviceWhere(wb,"ontoubemmp:SouthWallThermalTubeCollectors", "ontoubemmp:ElectricitySupply");
+                addSupplyDeviceWhere(wb,"ontoubemmp:SouthWallThermalTubeCollectors", "ontoubemmp:HeatSupply");
                 break;
             case KEY_THERMAL_TUBE_WALL_NORTH_SUPPLY:
-                addSupplyDeviceWhere(wb,"ontoubemmp:NorthWallThermalTubeCollectors", "ontoubemmp:ElectricitySupply");
+                addSupplyDeviceWhere(wb,"ontoubemmp:NorthWallThermalTubeCollectors", "ontoubemmp:HeatSupply");
                 break;
             case KEY_THERMAL_TUBE_WALL_EAST_SUPPLY:
-                addSupplyDeviceWhere(wb,"ontoubemmp:EastWallThermalTubeCollectors", "ontoubemmp:ElectricitySupply");
+                addSupplyDeviceWhere(wb,"ontoubemmp:EastWallThermalTubeCollectors", "ontoubemmp:HeatSupply");
                 break;
             case KEY_THERMAL_TUBE_WALL_WEST_SUPPLY:
-                addSupplyDeviceWhere(wb,"ontoubemmp:WestWallThermalTubeCollectors", "ontoubemmp:ElectricitySupply");
+                addSupplyDeviceWhere(wb,"ontoubemmp:WestWallThermalTubeCollectors", "ontoubemmp:HeatSupply");
                 break;
             case KEY_THERMAL_TUBE_ROOF_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:RoofThermalTubeCollectors", "ontoubemmp:ThermalTubeCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:RoofThermalTubeCollectors", "ontoubemmp:ThermalTubeCollectorsArea");
                 break;
             case KEY_THERMAL_TUBE_WALL_SOUTH_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:SouthWallThermalTubeCollectors", "ontoubemmp:ThermalTubeCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:SouthWallThermalTubeCollectors", "ontoubemmp:ThermalTubeCollectorsArea");
                 break;
             case KEY_THERMAL_TUBE_WALL_NORTH_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:NorthWallThermalTubeCollectors", "ontoubemmp:ThermalTubeCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:NorthWallThermalTubeCollectors", "ontoubemmp:ThermalTubeCollectorsArea");
                 break;
             case KEY_THERMAL_TUBE_WALL_EAST_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:EastWallThermalTubeCollectors", "ontoubemmp:ThermalTubeCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:EastWallThermalTubeCollectors", "ontoubemmp:ThermalTubeCollectorsArea");
                 break;
             case KEY_THERMAL_TUBE_WALL_WEST_AREA:
-                addSupplyDeviceAreaWhere(wb, "ontoubemmp:WestWallThermalTubeCollectors", "ontoubemmp:ThermalTubeCollectosArea");
+                addSupplyDeviceAreaWhere(wb, "ontoubemmp:WestWallThermalTubeCollectors", "ontoubemmp:ThermalTubeCollectorsArea");
                 break;
             default:
                 return result;
@@ -1548,7 +1548,6 @@ public class CEAAgent extends JPSAgent {
             result.add(queryResultArray.getJSONObject(0).get("unit").toString());
         }
         return result;
-
     }
 
     /**
