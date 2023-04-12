@@ -40,6 +40,7 @@ public class RunCEATask implements Runnable {
         this.uris = uris;
         this.threadNumber = thread;
         this.crs = crs;
+        setSolarSupply();
     }
 
     public void stop() {
@@ -661,7 +662,7 @@ public class RunCEATask implements Runnable {
      * @param solarDir directory that stores CEA output files on solar generators
      * @param PVTType the type of PVT used, FP for plate, and ET for tube
      */
-    private void renamePVT(String solarDir, String PVTType) {
+    protected void renamePVT(String solarDir, String PVTType) {
         File dir = new File(solarDir);
 
         for (final File f : dir.listFiles()) {
@@ -674,7 +675,6 @@ public class RunCEATask implements Runnable {
 
     @Override
     public void run() {
-        setSolarSupply();
         while (!stop) {
 
             try {
