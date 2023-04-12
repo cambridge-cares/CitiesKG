@@ -224,12 +224,12 @@ public class CEAAgent extends JPSAgent {
                             building = checkBuildingInitialised(uri, geometryRoute);
                             building = initialiseBuilding(uri, building, ceaRoute, namedGraph);
                         }
-                        if(!checkDataInitialised(uri, building, tsIris, scalarIris, ceaRoute, namedGraph)) {
-                            createTimeSeries(uri, tsIris, namedGraph);
-                            initialiseData(uri, i, scalars, building, tsIris, scalarIris, ceaRoute, namedGraph);
+                        if(!checkDataInitialised(building, tsIris, scalarIris, ceaRoute, namedGraph)) {
+                            createTimeSeries(tsIris, namedGraph);
+                            initialiseData(i, scalars, building, tsIris, scalarIris, ceaRoute, namedGraph);
                         }
                         else{
-                            updateScalars(uri, ceaRoute, scalarIris, scalars, i, namedGraph);
+                            updateScalars(ceaRoute, scalarIris, scalars, i, namedGraph);
                         }
                         addDataToTimeSeries(timeSeries.get(i), times, tsIris);
                     }
@@ -343,7 +343,7 @@ public class CEAAgent extends JPSAgent {
                     List<String> allMeasures = new ArrayList<>();
                     Stream.of(TIME_SERIES, SCALARS).forEach(allMeasures::addAll);
                     for (String measurement: allMeasures) {
-                        ArrayList<String> result = getDataIRI(uri, building, measurement, ceaRoute, namedGraph);
+                        ArrayList<String> result = getDataIRI(building, measurement, ceaRoute, namedGraph);
                         if (!result.isEmpty()) {
                             String value;
                             if (TIME_SERIES.contains(measurement)) {
@@ -364,6 +364,10 @@ public class CEAAgent extends JPSAgent {
                                     else if (measurement.contains("PV")) {
                                         // PV annual electricity supply
                                         measurement = "Annual "+ measurement.split("Supply")[0] + " Electricity Supply";
+                                    }
+                                    else {
+                                        // annual energy consumption
+                                        measurement = "Annual " + measurement;
                                     }
                                 }
                             } else {
@@ -572,10 +576,9 @@ public class CEAAgent extends JPSAgent {
     /**
      * Creates and initialises a time series using the time series client
      *
-     * @param uriString input city object id
      * @param fixedIris map containing time series iris mapped to measurement type
      */
-    private void createTimeSeries(String uriString, LinkedHashMap<String,String> fixedIris, String graph ) {
+    private void createTimeSeries(LinkedHashMap<String,String> fixedIris, String graph) {
         tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
 
         // Create a iri for each measurement
@@ -1277,12 +1280,12 @@ public class CEAAgent extends JPSAgent {
     /**
      * Add Where for Device Supply
      * @param builder update builder
-     * @param panelType type of panels
+     * @param generatorType type of generator
      */
-    public void addSupplyDeviceWhere(WhereBuilder builder, String panelType, String energyType){
-        builder.addWhere("?building", "ontoubemmp:hasDevice", "?PVPanels")
-                .addWhere("?PVPanels", "rdf:type", panelType)
-                .addWhere("?PVPanels", "thinkhome:producesEnergy", "?supply")
+    public void addSupplyDeviceWhere(WhereBuilder builder, String generatorType, String energyType){
+        builder.addWhere("?building", "ontoubemmp:hasDevice", "?SolarGenerators")
+                .addWhere("?SolarGenerators", "rdf:type", generatorType)
+                .addWhere("?SolarGenerators", "thinkhome:producesEnergy", "?supply")
                 .addWhere("?supply", "rdf:type", energyType)
                 .addWhere("?supply", "om:hasValue", "?measure")
                 .addWhere("?measure", "om:hasUnit", "?unit");
@@ -1291,12 +1294,12 @@ public class CEAAgent extends JPSAgent {
     /**
      * Add Where for Device Area
      * @param builder update builder
-     * @param panelType type of panels
+     * @param generatorType type of generator
      */
-    public void addSupplyDeviceAreaWhere(WhereBuilder builder, String panelType, String areaType){
-        builder.addWhere("?building", "ontoubemmp:hasDevice", "?PVPanels")
-                .addWhere("?PVPanels", "rdf:type", panelType)
-                .addWhere("?PVPanels", "ontoubemmp:hasArea", "?area")
+    public void addSupplyDeviceAreaWhere(WhereBuilder builder, String generatorType, String areaType){
+        builder.addWhere("?building", "ontoubemmp:hasDevice", "?SolarGenerators")
+                .addWhere("?SolarGenerators", "rdf:type", generatorType)
+                .addWhere("?SolarGenerators", "ontoubemmp:hasArea", "?area")
                 .addWhere("?area", "rdf:type", areaType)
                 .addWhere("?area", "om:hasValue", "?measure")
                 .addWhere("?measure", "om:hasNumericalValue", "?value")
@@ -1305,14 +1308,13 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * Retrieves iris from KG for the data type requested
-     * @param uriString city object id
      * @param building uri of building in energyprofile graph
      * @param value type of data from TIME_SERIES or SCALARS
      * @param route route to pass to access agent
      * @param graph graph name
      * @return list of iris
      */
-    public ArrayList<String> getDataIRI(String uriString, String building, String value, String route, String graph) {
+    public ArrayList<String> getDataIRI(String building, String value, String route, String graph) {
         ArrayList<String> result = new ArrayList<>();
 
         SelectBuilder sb = new SelectBuilder();
@@ -1658,7 +1660,6 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * Check if energy profile data already exist in KG and get IRIs if they do
-     * @param uriString city object uri
      * @param building building uri in energy profile graph
      * @param tsIris map of time series iris to data types
      * @param scalarIris map of iris in kg to data type
@@ -1666,12 +1667,12 @@ public class CEAAgent extends JPSAgent {
      * @param graph graph name
      * @return if time series are initialised
      */
-    public Boolean checkDataInitialised(String uriString, String building, LinkedHashMap<String,String> tsIris, LinkedHashMap<String,String> scalarIris, String route, String graph){
+    public Boolean checkDataInitialised(String building, LinkedHashMap<String,String> tsIris, LinkedHashMap<String,String> scalarIris, String route, String graph){
         ArrayList<String> result;
         List<String> allMeasures = new ArrayList<>();
         Stream.of(TIME_SERIES, SCALARS).forEach(allMeasures::addAll);
         for (String measurement: allMeasures) {
-            result = getDataIRI(uriString, building, measurement, route, graph);
+            result = getDataIRI(building, measurement, route, graph);
             if (!result.isEmpty()) {
                 if (TIME_SERIES.contains(measurement)) {
                     tsIris.put(measurement, result.get(0));
@@ -1722,14 +1723,14 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Create update for PV Panel Supply
+     * Create update for solar generators supply
      * @param builder update builder
-     * @param PVPanels iri of PV panels
+     * @param SolarGenerators iri of Solar generators
      * @param quantity om:quantity iri
      * @param measure om:measure iri
      */
-    public void createSolarGeneratorSupplyUpdate(WhereBuilder builder, String PVPanels, String quantity, String measure, String energySupply){
-        builder.addWhere(NodeFactory.createURI(PVPanels), "thinkhome:producesEnergy", NodeFactory.createURI(quantity))
+    public void createSolarGeneratorSupplyUpdate(WhereBuilder builder, String SolarGenerators, String quantity, String measure, String energySupply){
+        builder.addWhere(NodeFactory.createURI(SolarGenerators), "thinkhome:producesEnergy", NodeFactory.createURI(quantity))
                 .addWhere(NodeFactory.createURI(quantity), "rdf:type", energySupply)
                 .addWhere(NodeFactory.createURI(quantity), "rdf:type", "owl:NamedIndividual")
                 .addWhere(NodeFactory.createURI(quantity), "om:hasDimension", "om:energy-Dimension")
@@ -1740,16 +1741,16 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Create update for PV Panel areas
+     * Create update for solar generator areas
      * @param builder update builder
      * @param building iri of building
-     * @param generator iri of PV panels
-     * @param generatorType panel type in ontology
+     * @param generator iri of solar generator
+     * @param generatorType type of generator
      * @param quantity om:quantity iri
      * @param measure om:measure iri
      * @param value numerical value
      */
-    public void createSolarGeneratorAreaUpdate(WhereBuilder builder, String building, String generator, String generatorType, String quantity, String measure, String value, String areaType){
+    public void createSolarGeneratorAreaUpdate(WhereBuilder builder, String building, String generator, String generatorType, String quantity, String measure, String value, String areaType) {
         builder.addWhere(NodeFactory.createURI(building), "ontoubemmp:hasDevice", NodeFactory.createURI(generator))
                 .addWhere(NodeFactory.createURI(generator), "rdf:type", generatorType)
                 .addWhere(NodeFactory.createURI(generator), "rdf:type", "owl:NamedIndividual")
@@ -1766,7 +1767,6 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * Initialise energy profile data in KG
-     * @param uriString city object uri
      * @param uriCounter keep track of uris
      * @param scalars map of scalar measurements
      * @param buildingUri building uri
@@ -1775,7 +1775,7 @@ public class CEAAgent extends JPSAgent {
      * @param route route to pass to access agent
      * @param graph graph name
      */
-    public void initialiseData(String uriString, Integer uriCounter, LinkedHashMap<String, List<String>> scalars, String buildingUri, LinkedHashMap<String,String> tsIris, LinkedHashMap<String,String> scalarIris, String route, String graph){
+    public void initialiseData(Integer uriCounter, LinkedHashMap<String, List<String>> scalars, String buildingUri, LinkedHashMap<String,String> tsIris, LinkedHashMap<String,String> scalarIris, String route, String graph){
 
         WhereBuilder wb =
                 new WhereBuilder()
@@ -2112,7 +2112,7 @@ public class CEAAgent extends JPSAgent {
      * @param uriCounter keep track of uris
      * @param graph graph name
      */
-    public void updateScalars(String uriString, String route, LinkedHashMap<String,String> scalarIris, LinkedHashMap<String, List<String>> scalars, Integer uriCounter, String graph) {
+    public void updateScalars(String route, LinkedHashMap<String,String> scalarIris, LinkedHashMap<String, List<String>> scalars, Integer uriCounter, String graph) {
 
         for (String measurement: SCALARS) {
             WhereBuilder wb1 = new WhereBuilder().addPrefix("om", unitOntologyUri)
@@ -2546,6 +2546,7 @@ public class CEAAgent extends JPSAgent {
         
         // first check that querying from route works
         checkEndpoint(route);
+
         // check if query with graph works for route
         try{
             this.queryStore(route, sb.build().toString());
@@ -2564,7 +2565,7 @@ public class CEAAgent extends JPSAgent {
         WhereBuilder wb = new WhereBuilder()
                 .addWhere("?s", "?p", "?o");
         SelectBuilder sb = new SelectBuilder()
-                .addVar("?g")
+                .addVar("?s")
                 .addWhere(wb)
                 .setLimit(1);
 
