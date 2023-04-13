@@ -20,8 +20,9 @@ from shapely.ops import unary_union
 def get_plots(endpoint):
     """
     The function queries the KG and retrieves Singapore's Masterplan 2019 plot data.
+
     :param endpoint: KG endpoint url to which method query is sent.
-    :return: plots GeoDataFrame
+    :return: plots GeoDataFrame with main attributes 'zone', 'gpr' and 'geom'.
     """
     sparql = SPARQLWrapper(endpoint)
     sparql.setQuery("""PREFIX ocgml:<http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>
@@ -44,18 +45,20 @@ def get_plots(endpoint):
     results = sparql.query().convert()
     qr = pd.DataFrame(results['results']['bindings'])
     qr = qr.applymap(lambda cell: cell['value'])
-    geometries = gpd.GeoSeries(qr['geom'].map(lambda geo: envelope_string_to_polygon(geo, geodetic=True)), crs='EPSG:4326')
-    geometries = geometries.to_crs(epsg=3857)
-    plots = gpd.GeoDataFrame(qr, geometry=geometries).drop(columns=['geom'])
+    geoms = gpd.GeoSeries(qr['geom'].map(lambda geo: envelope_string_to_polygon(geo, geodetic=True)), crs='EPSG:4326')
+    geoms = geoms.to_crs(epsg=3857)
+    plots = gpd.GeoDataFrame(qr, geometry=geoms).drop(columns=['geom'])
 
     return plots
 
 
 def get_development_control_plans(endpoint):
     """
-    The function queries the KG and returns development control plan regulations.
+    The function queries the KG and returns development control plan (dcp) regulations.
+    dcp can have 'programme' value - it means that dcp would be used when calculating gfa for that specific programme.
+
     :param endpoint: KG endpoint url to which method query is sent.
-    :return: a DataFrame containing DevelopmentControlPlan regulation content.
+    :return: a DataFrame containing DevelopmentControlPlan regulation content: 'gpr', 'storeys', 'setback', 'site_coverage', etc.
     """
 
     sparql = SPARQLWrapper(endpoint)
@@ -106,9 +109,10 @@ def get_development_control_plans(endpoint):
 
 def get_street_block_plans(endpoint):
     """
-    The function queries the KG and retrieves street block plan regulations.
+    The function queries the KG and retrieves street block plan (sbp) regulations.
+
     :param endpoint: KG endpoint url to which method query is sent.
-    :return: a GeoDataFrame containing StreetBlockPlan regulation content.
+    :return: a GeoDataFrame containing StreetBlockPlan regulation content: 'gpr', 'storeys', 'setback', 'seback_type', etc.
     """
 
     sparql = SPARQLWrapper(endpoint)
@@ -138,7 +142,7 @@ def get_street_block_plans(endpoint):
     qr = qr.applymap(lambda cell: cell['value'], na_action='ignore')
 
     geoms = gpd.GeoSeries(qr['geom'].map(lambda geo: envelope_string_to_polygon(geo, geodetic=True)),
-                               crs='EPSG:4326')
+                          crs='EPSG:4326')
     geoms = geoms.to_crs(epsg=3857)
     sbp = gpd.GeoDataFrame(qr, geometry=geoms).drop(columns=['geom'])
     sbp['storeys'] = pd.to_numeric(sbp['storeys'], errors='coerce')
@@ -151,9 +155,11 @@ def get_street_block_plans(endpoint):
 
 def get_height_control_plans(endpoint):
     """
-    The function queries the KG and retrieves height control plan regulations.
+    The function queries the KG and retrieves height control plan (hcp) regulations.
+    'additional_type' column refers whether hcp has additional types such as 'DetailControl' or 'Conservation'.
+
     :param endpoint: KG endpoint url to which method query is sent.
-    :return: a GeoDataFrame contaning HeightControlPlan regulation content.
+    :return: a GeoDataFrame contaning HeightControlPlan regulation content: 'abs_height', 'storeys', 'additional_type'.
     """
 
     sparql = SPARQLWrapper(endpoint)
@@ -187,7 +193,7 @@ def get_height_control_plans(endpoint):
     qr = qr.applymap(lambda cell: cell['value'], na_action='ignore')
 
     geoms = gpd.GeoSeries(qr['geom'].map(lambda geo: envelope_string_to_polygon(geo, geodetic=True)),
-                               crs='EPSG:4326')
+                          crs='EPSG:4326')
     geoms = geoms.to_crs(epsg=3857)
     hcp = gpd.GeoDataFrame(qr, geometry=geoms).drop(columns=['geom'])
     hcp['abs_height'] = pd.to_numeric(hcp['abs_height'], errors='coerce')
@@ -198,9 +204,10 @@ def get_height_control_plans(endpoint):
 
 def get_urban_design_guidelines(endpoint):
     """
-    The function queries the KG and retrieves urban design regulations.
+    The function queries the KG and retrieves urban design guidelines (udg) regulations.
+
     :param endpoint: KG endpoint url to which method query is sent.
-    :return: a GeoDataFrame containing UrbanDesignGuideline regulation content.
+    :return: a GeoDataFrame containing UrbanDesignGuideline regulation content: 'setback', 'storeys', 'partywall'.
     """
 
     sparql = SPARQLWrapper(endpoint)
@@ -235,8 +242,7 @@ def get_urban_design_guidelines(endpoint):
     qr = pd.DataFrame(results['results']['bindings'])
     qr = qr.applymap(lambda cell: cell['value'], na_action='ignore')
 
-    geoms = gpd.GeoSeries(qr['geom'].map(lambda geo: envelope_string_to_polygon(geo, geodetic=True)),
-                               crs='EPSG:4326')
+    geoms = gpd.GeoSeries(qr['geom'].map(lambda geo: envelope_string_to_polygon(geo, geodetic=True)), crs='EPSG:4326')
     geoms = geoms.to_crs(epsg=3857)
     udg = gpd.GeoDataFrame(qr, geometry=geoms).drop(columns=['geom'])
     udg['storeys'] = pd.to_numeric(udg['storeys'], errors='coerce')
@@ -247,9 +253,10 @@ def get_urban_design_guidelines(endpoint):
 
 def get_landed_housing_areas(endpoint):
     """
-    The function queries the KG and retrieves landed housing area regulations.
+    The function queries the KG and retrieves landed housing area (lha) regulations.
+
     :param endpoint: KG endpoint url to which method query is sent.
-    :return: a DataFrame containing LandedHousingArea regulation content.
+    :return: a DataFrame containing LandedHousingArea regulation content: 'storeys'.
     """
 
     sparql = SPARQLWrapper(endpoint)
@@ -271,6 +278,7 @@ def get_landed_housing_areas(endpoint):
 def get_regulation_links(endpoint):
     """
     The function queries the KG and retrieves planning regulation and plot links.
+
     :param endpoint: KG endpoint url to which method query is sent.
     :return: a DataFrame containing plot ids, regulation ids, and regulation type.
     """
@@ -292,9 +300,12 @@ def get_regulation_links(endpoint):
 
 def get_road_categories(endpoint):
     """
-    The function queries the KG and returns road category regulations as a dataframe.
+    The function queries the KG and returns road category regulations.
+    Look up: https://miro.com/app/board/uXjVPNZe6Qk=/
+    There are more instances than 5 or road category regulations because certain zoning types will have specific rules for road buffers.
+
     :param endpoint: KG endpoint url to which method query is sent.
-    :return: a DataFrame containing road category regulation content.
+    :return: a DataFrame containing road category regulation content: 'category' and 'buffer'.
     """
 
     sparql = SPARQLWrapper(endpoint)
@@ -321,9 +332,11 @@ def get_road_categories(endpoint):
 def get_plot_properties(plots, endpoint):
     """
     The function queries the KG and retrieves various plot properties and appends it to plot GeoDataFrame.
+    'road_type' property only exist for plots with zoning type 'road'.
+
     :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
     :param endpoint: KG endpoint url to which method query is sent.
-    :return: a modified plots GeoDataFrame contaning columns with plot attributes.
+    :return: a modified plots GeoDataFrame contaning columns with plot attributes: 'avg_width', 'avg_depth', 'corner_plot', 'fringe_plot', 'road_type'
     """
 
     sparql = SPARQLWrapper(endpoint)
@@ -374,16 +387,17 @@ def get_plot_properties(plots, endpoint):
 def get_neighbours(plots, endpoint):
     """
     The method queries the KG and retrieves plot neighbour ids and appends to plot GeoDataFrame.
+
     :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
     :param endpoint: KG endpoint url to which method query is sent.
-    :return: a modified plots GeoDataFrame
+    :return: a modified plots GeoDataFrame with 'neighbour' column containing neighbour id list.
     """
 
     sparql = SPARQLWrapper(endpoint)
     sparql.setQuery("""
-        PREFIX obs: <http://www.theworldavatar.com/ontology/ontobuildablespace/OntoBuildableSpace.owl#>
-        SELECT ?plots ?neighbour
-        WHERE { ?plots obs:hasNeighbour ?neighbour . } """)
+    PREFIX obs: <http://www.theworldavatar.com/ontology/ontobuildablespace/OntoBuildableSpace.owl#>
+    SELECT ?plots ?neighbour
+    WHERE { ?plots obs:hasNeighbour ?neighbour . } """)
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
     plot_neighbours = pd.DataFrame(results['results']['bindings'])
@@ -397,9 +411,11 @@ def get_neighbours(plots, endpoint):
 def get_plot_neighbour_types(plots, endpoint):
     """
     The function queries the KG and retrieves plot neighbour information and appends to plot GeoDataFrame.
+
     :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
     :param endpoint: KG endpoint url to which method query is sent.
-    :return: a modified plots GeoDataFrame
+    :return: a modified plots GeoDataFrame with added columns 'neighbour_road_type', 'zone',
+    'neighbour_zones', 'abuts_gcba, 'in_central_area'.
     """
 
     sparql = SPARQLWrapper(endpoint)
@@ -421,8 +437,12 @@ def get_plot_neighbour_types(plots, endpoint):
     neighbours = pd.DataFrame(results['results']['bindings'])
     neighbours = neighbours.applymap(lambda cell: cell['value'], na_action='ignore')
     plots = plots.merge(neighbours, how='left', on='plots')
-    plots['neighbour_road_type'] = [plots.loc[i, 'neighbour_road_type'].split(',') if not pd.isnull(plots.loc[i, 'neighbour_road_type']) else [] for i in plots.index]
-    plots['neighbour_zones'] = [plots.loc[i, 'neighbour_zones'].split(',') if not pd.isnull(plots.loc[i, 'neighbour_zones']) else [] for i in plots.index]
+    plots['neighbour_road_type'] = [
+        plots.loc[i, 'neighbour_road_type'].split(',') if not pd.isnull(plots.loc[i, 'neighbour_road_type']) else [] for
+        i in plots.index]
+    plots['neighbour_zones'] = [
+        plots.loc[i, 'neighbour_zones'].split(',') if not pd.isnull(plots.loc[i, 'neighbour_zones']) else [] for i in
+        plots.index]
     plots['abuts_gcba'] = pd.to_numeric(plots['abuts_gcba'], errors='ignore')
     plots['in_central_area'] = pd.to_numeric(plots['in_central_area'], errors='ignore')
 
@@ -432,6 +452,9 @@ def get_plot_neighbour_types(plots, endpoint):
 def get_plot_allowed_programmes(plots, endpoint):
     """
     The function queries the KG and retrieves allowed programmes on a plot and appends it to plots GeoDataFrame.
+    Allowed programmes refer to allowed programmes by street block plan and landed housing area regulations and not ontozoning.
+    GoodClassBungallowArea allows only GoodClassBungalows.
+
     :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
     :param endpoint: KG endpoint url to which method query is sent.
     :return: a modified plots GeoDataFrame with a column containing allowed residential development types.
@@ -462,10 +485,16 @@ def get_plot_allowed_programmes(plots, endpoint):
     applicable_regs = pd.DataFrame(results['results']['bindings'])
     applicable_regs = applicable_regs.applymap(lambda cell: cell['value'])
     plots = plots.merge(applicable_regs, how='left', on='plots')
-    plots['sbp_programmes'] = [plots.loc[i, 'sbp_programmes'].split(',') if not pd.isnull(plots.loc[i, 'sbp_programmes']) else [] for i in plots.index]
-    plots['lha_programmes'] = [plots.loc[i, 'lha_programmes'].split(',') if not pd.isnull(plots.loc[i, 'lha_programmes']) else [] for i in plots.index]
-    plots['in_pb'] = [plots.loc[i, 'in_pb'].split(',') if not pd.isnull(plots.loc[i, 'in_pb']) else [] for i in plots.index]
-    plots['in_lha'] = [plots.loc[i, 'in_lha'].split(',') if not pd.isnull(plots.loc[i, 'in_lha']) else [] for i in plots.index]
+    plots['sbp_programmes'] = [
+        plots.loc[i, 'sbp_programmes'].split(',') if not pd.isnull(plots.loc[i, 'sbp_programmes']) else [] for i in
+        plots.index]
+    plots['lha_programmes'] = [
+        plots.loc[i, 'lha_programmes'].split(',') if not pd.isnull(plots.loc[i, 'lha_programmes']) else [] for i in
+        plots.index]
+    plots['in_pb'] = [plots.loc[i, 'in_pb'].split(',') if not pd.isnull(plots.loc[i, 'in_pb']) else [] for i in
+                      plots.index]
+    plots['in_lha'] = [plots.loc[i, 'in_lha'].split(',') if not pd.isnull(plots.loc[i, 'in_lha']) else [] for i in
+                       plots.index]
     plots['in_gcba'] = pd.to_numeric(plots['in_gcba'], errors='ignore')
 
     return plots
@@ -476,7 +505,8 @@ def get_plot_allowed_programmes(plots, endpoint):
 
 def process_plots(plots):
     """
-    The function process plot dataframe geometry and attributes.
+    The function process plot dataframe geometry and attributes: removes multipolygons, drawing artefacts.
+
     :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
     :return: plots GeoDataFrame
     """
@@ -493,6 +523,7 @@ def process_plots(plots):
 def envelope_string_to_polygon(geom_string, geodetic=False, flip=True):
     """
     The function process queried geometries in the KG datatype and transformes it into WKT.
+
     :param geom_string: geometry string as stored in the KG.
     :param geodetic: boolean indicating whether the coordinate reference system is in degrees or metres.
     :param flip: boolean indicating whether original x and y coordinates are in wrong order.
@@ -505,7 +536,7 @@ def envelope_string_to_polygon(geom_string, geodetic=False, flip=True):
 
     for i in range(num_of_points):
         start_index = i * 3
-        x,y,z = float(points_str[start_index]), float(points_str[start_index + 1]), float(points_str[start_index + 2])
+        x, y, z = float(points_str[start_index]), float(points_str[start_index + 1]), float(points_str[start_index + 2])
         if geodetic:
             if flip:
                 points.append((y, x))
@@ -520,9 +551,13 @@ def envelope_string_to_polygon(geom_string, geodetic=False, flip=True):
 def find_allowed_residential_types(plots, road_list):
     """
     The function determines the allowed residential development types on a plot based on a set of criteria.
+    It takes into account oz, sbp and lha as well as geometric criteria.
+    Look up residential regulations: https://www.ura.gov.sg/Corporate/Guidelines/Development-Control/Residential
+
     :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
     :param road_list: a list with road type names that affect the allowed residential developments on a plot.
-    :return: a modified plots GeoDataFrame with a new column containing a list with allowed residential programmes.
+    :return: a modified plots GeoDataFrame with a new column 'allowed_residential_types'
+    containing a final list with allowed residential programmes.
     """
 
     zone_list = ['Residential', 'ResidentialWithCommercialAtFirstStorey', 'CommercialAndResidential',
@@ -530,6 +565,7 @@ def find_allowed_residential_types(plots, road_list):
     mixed_zone_list = ['ResidentialWithCommercialAtFirstStorey', 'CommercialAndResidential', 'White',
                        'BusinesParkWhite', 'Business1White', 'Business2White']
     allowed_types = []
+
     for i in plots.index:
         zone = plots.loc[i, 'zone']
         cur_allowed_types = []
@@ -548,22 +584,23 @@ def find_allowed_residential_types(plots, road_list):
 
             # filter for Bungalow
             b_geo_condition = (area >= 400) and (width >= 10)
-            if b_geo_condition and ((zone == 'Residential') or ('Bungalow' in (sbp_programmes or lha_programmes))) and (
-            not in_gcba):
+            if (b_geo_condition and (
+                    (zone == 'Residential') or ('Bungalow' in (sbp_programmes or lha_programmes))) and (
+                    not in_gcba)):
                 cur_allowed_types.append('Bungalow')
 
             # filter for Semi-Detached House
             sdh_geo_condition = (area >= 200) and (width >= 8)
-            if sdh_geo_condition and ((zone == 'Residential') or ('Semi-DetachedHouse' in allowed_programmes)) and (
-            not in_gcba):
+            if (sdh_geo_condition and ((zone == 'Residential') or ('Semi-DetachedHouse' in allowed_programmes)) and (
+                    not in_gcba)):
                 cur_allowed_types.append('Semi-DetachedHouse')
 
             # filter for Terrace Type 1
             t1_geo_condition_inner = (area >= 150) and (width >= 6) and (not is_corner)
             t1_geo_condition_corner = (area >= 200) and (width >= 8) and is_corner
-            if (t1_geo_condition_inner or t1_geo_condition_corner) and (
+            if ((t1_geo_condition_inner or t1_geo_condition_corner) and (
                     (zone == 'Residential') or (('TerraceHouse' or 'TerraceType1') in allowed_programmes)) and (
-            not in_gcba):
+                    not in_gcba)):
                 cur_allowed_types.append('TerraceType1')
 
             # filter for Terrace Type 2
@@ -571,7 +608,7 @@ def find_allowed_residential_types(plots, road_list):
             t2_geo_condition_corner = area >= 80 and width >= 8 and is_corner
             if (t2_geo_condition_inner or t2_geo_condition_corner) and (
                     (zone == 'Residential') or (('TerraceHouse' or 'TerraceType2') in allowed_programmes)) and (
-            not in_gcba):
+                    not in_gcba):
                 cur_allowed_types.append('TerraceType2')
 
             # filter for Good Class Bungalow type
@@ -581,10 +618,10 @@ def find_allowed_residential_types(plots, road_list):
 
             # filter for Flats, Condominiums and Serviced Apartments type
             if (area >= 1000) and ((zone in zone_list) or ('Flat' in sbp_programmes)) and (not in_gcba) and (
-            not in_lha):
+                    not in_lha):
                 cur_allowed_types.append('Flat')
-            if (area >= 4000) and (zone in ['Residential', 'ResidentialOrInstitution']) and (not in_gcba) and (
-            not in_lha):
+            if ((area >= 4000) and (zone in ['Residential', 'ResidentialOrInstitution']) and (not in_gcba) and (
+                    not in_lha)):
                 cur_allowed_types.append('Condominium')
             if (zone == 'Residential') and (not in_gcba) and (not in_lha) and at_fringe and road_condition:
                 cur_allowed_types.append('ServicedApartmentResidentialZone')
@@ -600,7 +637,8 @@ def find_allowed_residential_types(plots, road_list):
 
 def get_plot_information(plots, endpoint, road_list):
     """
-    The function adds query results with plot information to plot dataframe.
+    The function calls other functions the query KG for various plot information.
+
     :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
     :param endpoint: KG endpoint url to which queries are sent.
     :param road_list: a list with road type names that affect the allowed residential developments on a plot.
@@ -609,9 +647,9 @@ def get_plot_information(plots, endpoint, road_list):
 
     plots = plots.drop(columns=['zone'])
     plots = get_plot_properties(plots, endpoint)
-    plots = get_neighbours(plots, endpoint)
     plots = get_plot_neighbour_types(plots, endpoint)
     plots = get_plot_allowed_programmes(plots, endpoint)
+    plots = get_neighbours(plots, endpoint)
     plots = find_allowed_residential_types(plots, road_list)
 
     return plots
@@ -621,6 +659,8 @@ def assign_gpr(plots, zone_type, lha, reg_links, in_lha_gpr, fringe_gpr, in_cont
                context_storeys):
     """
     The function writes missing GPR values for educational, religious and civic plots.
+    Look up: https://www.ura.gov.sg/Corporate/Guidelines/Development-Control/Non-Residential/EI/GPR-Building-Height
+
     :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
     :param zone_type: plot zoning type for which GPRs are reset.
     :param lha: a GeoDataFrame with LandedHousingArea planning regulations.
@@ -630,7 +670,7 @@ def assign_gpr(plots, zone_type, lha, reg_links, in_lha_gpr, fringe_gpr, in_cont
     :param in_context_gpr: a GPR value for case when plot is in relevant to the zone type context.
     :param fringe_storeys: number of storeys for the case when plot is at residential fringe.
     :param context_storeys: number of storeys for the case when plot is in relevant to the zone type context.
-    :return: a modified plots GeoDataFrame with GPR values added for the relevant plots
+    :return: a modified plots GeoDataFrame with GPR values added for the plots with relevant zoning type.
     """
 
     lha_names = ['LandedHousingArea', 'GoodClassBungalowArea']
@@ -645,6 +685,7 @@ def assign_gpr(plots, zone_type, lha, reg_links, in_lha_gpr, fringe_gpr, in_cont
         in_lha = any(cur_regs['reg_type'].isin(lha_names))
         in_fringe = any(cur_neighbour_regs['reg_type'].isin(lha_names))
 
+        # these are the rules interpreted from the online text.
         if in_lha and (not context_gpr > 1.4):
             lha_id = cur_regs.loc[cur_regs['reg_type'].isin(lha_names), 'reg']
             plots.loc[i, 'gpr'] = in_lha_gpr
@@ -664,12 +705,14 @@ def assign_gpr(plots, zone_type, lha, reg_links, in_lha_gpr, fringe_gpr, in_cont
 def assign_sbp_gpr(plots, sbp, reg_links):
     """
     The function writes missing or updates existing GPR values for plots contained in street block plans.
+
     :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
     :param sbp: a GeoDataFrame containing StreetBlockPlans planning regulations.
     :param reg_links: a DataFrame containing plot ids, regulation ids, and regulation type.
-    :return: a modified plots GeoDataFrame with GPR values added or modified for the relevant plots.
+    :return: a modified plots GeoDataFrame with GPR values added or modified for relevant plots.
     """
 
+    # this method is relevant only for plots in sbp because only sbp regulates setbacks as front, side and rear.
     for i in plots[plots['plots'].isin(reg_links[reg_links['reg_type'] == 'StreetBlockPlan']['plots'])].index:
         cur_gpr = float(plots.loc[i, 'gpr'])
         cur_regs = reg_links[reg_links['plots'] == plots.loc[i, 'plots']]
@@ -687,11 +730,12 @@ def assign_sbp_gpr(plots, sbp, reg_links):
 def set_partywall_plots(plots, reg_links, sbp, udg):
     """
     The function adds a boolean value for partywall plots based on applicable planning regulations.
+
     :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
     :param reg_links: DataFrame containing plot ids, regulation ids, and regulation type.
     :param sbp: a GeoDataFrame containing StreetBlockPlans planning regulations.
     :param udg: a GeoDataFrame containing UrbanDesignGuideline planning regulations.
-    :return: a modified plots GeoDataFrame
+    :return: a modified plots GeoDataFrame with a column 'partywall'.
     """
 
     def intersect_party_wall_types(allowed_residential_types):
@@ -708,33 +752,18 @@ def set_partywall_plots(plots, reg_links, sbp, udg):
     sbp_plots = reg_links.loc[
         reg_links['reg'].isin(sbp.loc[sbp['setback_type'] == 'PartyWall', 'reg']), 'plots'].unique()
     udg_plots = reg_links.loc[reg_links['reg'].isin(udg.loc[udg['partywall'] == 'true', 'reg']), 'plots'].unique()
-    partywall_res_plots = plots.loc[plots['allowed_residential_types'].apply(intersect_party_wall_types), 'plots']
-    partywall_plots = list(set(partywall_res_plots).union(set(sbp_plots).union(udg_plots)))
+    res_plots = plots.loc[plots['allowed_residential_types'].apply(intersect_party_wall_types), 'plots'].unique()
+
+    partywall_plots = list(set(res_plots).union(set(sbp_plots).union(udg_plots)))
     plots.loc[plots["plots"].isin(partywall_plots), 'partywall'] = True
 
     return plots
 
 
-def get_unclear_plots(reg_links, hcp, udg):
-    """
-    The function generates a list with plot ids which do not qualify for gfa calculation.
-    :param reg_links: a DataFrame containing plot ids, regulation ids, and regulation type.
-    :param hcp: a GeoDataFrame containing HeightControlPlan planning regulations.
-    :param udg: a GeoDataFrame containing UrbanDesignGuideline planning regulations.
-    :return: a list with plot ids.
-    """
-
-    con_plots = list(reg_links[reg_links['reg_type'].isin(['ConservationArea', 'Monument'])]['plots'])
-    hcp_plots = list(reg_links[reg_links['reg'].isin(list(hcp[~pd.isna(hcp['additional_type'])]['reg']))]['plots'])
-    udg_plots = list(reg_links[reg_links['reg'].isin(list(udg[~pd.isna(udg['additional_type'])]['reg']))]['plots'])
-    unclear_plots = list(set(con_plots + hcp_plots + udg_plots))
-
-    return unclear_plots
-
-
 def get_edges(polygon):
     """
     The function explodes polygon into edges.
+
     :param polygon: a geometry stored in KG geometry datatype 3-15 - ((x,y,z)*5)
     :return: a list of polygon's LineStrings
     """
@@ -743,49 +772,36 @@ def get_edges(polygon):
     return list(map(LineString, zip(curve.coords[:-1], curve.coords[1:])))
 
 
-def get_plot_edges(plots):
+def get_min_rect_edges(sbp_plots):
     """
-    The function modifies plot dataframe with new column and generates dataframe with all plot edges.
-    :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
-    :return: a modified plots GeoDataFrame and a GeoDataFrame with all plots' edges.
-    """
+    The function modified plots dataset and generates all plots minimum bounding rectangle edge dataframe.
 
-    plots['edges'] = [get_edges(i) for i in plots['geometry']]
-
-    edges = plots.loc[:, ['partywall', 'plots', 'edges', 'geometry']].explode(column='edges').drop(['geometry'], axis=1)
-    edges = edges.set_geometry(edges['edges'], crs=3857)
-    edges.geometry = edges.buffer(1, single_sided=True)
-    edges['buffered_edge_area'] = edges.area
-    edges['edge_index'] = edges.groupby(level=0).cumcount()
-
-    return plots, edges
-
-
-def get_min_rect_edges(plots):
-    """
-    The function returns modified plots dataset and all plots minimum bounding rectangle edge dataframe.
     :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
     :return: a modified plots GeoDataFrame and a GeoDataFrame with every plot's minimum bounding rectangle edges.
     """
 
-    plots['min_rect_edges'] = [get_edges(x) for x in [y.minimum_rotated_rectangle for y in plots.geometry]]
+    sbp_plots['min_rect_edges'] = [get_edges(x) for x in [y.minimum_rotated_rectangle for y in sbp_plots.geometry]]
 
-    edges = plots.loc[:, ['plots', 'min_rect_edges']].explode(column='min_rect_edges')
+    edges = sbp_plots.loc[:, ['plots', 'min_rect_edges']].explode(column='min_rect_edges')
     edges = edges.set_geometry(edges['min_rect_edges'], crs=3857)
     edges.geometry = edges.buffer(-3, single_sided=True)
     edges['length'] = edges.length.round(decimals=3)
     edges['min_rect_edge_index'] = edges.groupby(level=0).cumcount()
 
-    return plots, edges
+    return sbp_plots, edges
 
 
 def classify_min_rect_edges(edges, plots, roads):
     """
-    The function clasified minimum bounding rectangle edges into front, side and rear based on its overlap with road plots.
+    The function clasifies minimum bounding rectangle edges into front, side and rear based on its overlap with road plots.
+    The function first identifies the front edge - an edge that verlap mpst with the road.
+    Other edges can be interpolated from there on.
+    Applicable only to min_rect_edges of plots that are in StreetBlockPlans.
+
     :param edges: a GeoDataFrame containing every plots every edge.
     :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
     :param roads: plots GeoDataFrame which has zoning type 'Road'.
-    :return: a modified plots GeoDataFrame.
+    :return: a modified plots GeoDataFrame with columns storing indexes of categorised minimum bounding rectangle edges.
     """
 
     intersection = gpd.overlay(edges, roads, how='intersection', keep_geom_type=True)
@@ -794,15 +810,18 @@ def classify_min_rect_edges(edges, plots, roads):
     edges = edges.sort_values('plots')
 
     # define a front edge indice based on largest intersection with the longest edge.
-    front_edge = intersection.sort_values(by=['plots_1', 'intersection_area', 'length'], ascending=False).groupby(['plots_1'])[
+    front_edge = \
+    intersection.sort_values(by=['plots_1', 'intersection_area', 'length'], ascending=False).groupby(['plots_1'])[
         'min_rect_edge_index'].first()
     front_edge.name = 'min_rect_front_edge'
     plots = plots.merge(front_edge, left_on='plots', right_index=True, how='left')
 
-    not_front_edge = edges["min_rect_edge_index"] != plots.sort_values('plots')['min_rect_front_edge'].repeat(4).to_numpy()
+    not_front_edge = edges["min_rect_edge_index"] != plots.sort_values('plots')['min_rect_front_edge'].repeat(
+        4).to_numpy()
     front_edge_length = edges.loc[~not_front_edge, ["plots", 'length']].set_index("plots")['length']
     front_edge_length_missing = list(set(plots["plots"].unique()).difference(front_edge_length.index))
-    front_edge_length = pd.concat([front_edge_length, pd.Series([0] * len(front_edge_length_missing), index=front_edge_length_missing)])
+    front_edge_length = pd.concat(
+        [front_edge_length, pd.Series([0] * len(front_edge_length_missing), index=front_edge_length_missing)])
     front_edge_length = front_edge_length.sort_index().repeat(4)
 
     # define a rear edge indice which is not a front edge indice but the same length.
@@ -812,95 +831,130 @@ def classify_min_rect_edges(edges, plots, roads):
     plots = plots.merge(rear_edge, left_on='plots', right_index=True, how='left')
 
     # define side edge indices which are the remaining indices that are not front or rear edge indices.
-    edge_indices = [list({0.0, 1.0, 2.0, 3.0}.difference([plots.loc[x, 'min_rect_front_edge'], plots.loc[x, 'min_rect_rear_edge']])) for x in plots.index]
+    edge_indices = [
+        list({0.0, 1.0, 2.0, 3.0}.difference([plots.loc[x, 'min_rect_front_edge'], plots.loc[x, 'min_rect_rear_edge']]))
+        for x in plots.index]
     plots['min_rect_side_edges'] = [edge_indices[i] for i in range(len(edge_indices))]
     plots.loc[plots['min_rect_front_edge'].isna(), 'min_rect_side_edges'] = np.nan
 
     return plots
 
 
-def classify_neighbours(gfa_plots, plots, reg_links, min_rect_edge_df):
+def classify_neighbours(sbp_plots, plots, reg_links, min_rect_edge_df):
     """
     The function classifies neighbours based on overlap with corresponding classified minimum bounding rectangle edges.
+    Applicable only to plots that are in StreetBlockPlans.
+
     :param gfa_plots: filtered plots GeoDataFrame for which gfa should be estimated.
     :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
     :param reg_links: a DataFrame containing plot ids, regulation ids, and regulation type.
-    :return: a modified plots GeoDataFrame.
+    :return: a modified plots GeoDataFrame with neighbour ids categorised and stored in new relevant columns.
     """
 
-    gfa_plots['side_neighbours'] = [[] for t in gfa_plots.index]
-    gfa_plots['front_neighbours'] = [[] for t in gfa_plots.index]
-    gfa_plots['rear_neighbours'] = [[] for t in gfa_plots.index]
-
-    sbp_plots = gfa_plots[gfa_plots['plots'].isin(list(reg_links[reg_links['reg_type'] == 'StreetBlockPlan']['plots'].unique()))]
+    sbp_plots['side_neighbours'] = [[] for t in sbp_plots.index]
+    sbp_plots['front_neighbours'] = [[] for t in sbp_plots.index]
+    sbp_plots['rear_neighbours'] = [[] for t in sbp_plots.index]
 
     for i in sbp_plots.index:
-        if not pd.isnull(gfa_plots.loc[i, 'min_rect_front_edge']):
-            cur_neighbours = plots.loc[plots['plots'].isin(gfa_plots.loc[i, 'neighbour']), ['plots', 'geometry']]
-            cur_min_rect_edges = min_rect_edge_df.loc[min_rect_edge_df['plots'] == gfa_plots.loc[i, 'plots'],
-                                                      ['geometry', 'min_rect_edge_index']].set_index('min_rect_edge_index')
+        if not pd.isnull(sbp_plots.loc[i, 'min_rect_front_edge']):
+            cur_neighbours = plots.loc[plots['plots'].isin(sbp_plots.loc[i, 'neighbour']), ['plots', 'geometry']]
+            cur_min_rect_edges = min_rect_edge_df.loc[min_rect_edge_df['plots'] == sbp_plots.loc[i, 'plots'],
+                                                      ['geometry', 'min_rect_edge_index']].set_index(
+                'min_rect_edge_index')
             cur_min_rect_edges['edge_type'] = 'side'
-            cur_min_rect_edges.loc[int(gfa_plots.loc[i, 'min_rect_front_edge']), 'edge_type'] = 'front'
-            cur_min_rect_edges.loc[int(gfa_plots.loc[i, 'min_rect_rear_edge']), 'edge_type'] = 'rear'
+            cur_min_rect_edges.loc[int(sbp_plots.loc[i, 'min_rect_front_edge']), 'edge_type'] = 'front'
+            cur_min_rect_edges.loc[int(sbp_plots.loc[i, 'min_rect_rear_edge']), 'edge_type'] = 'rear'
 
-            neighbour_intersection = gpd.overlay(cur_neighbours, cur_min_rect_edges, how='intersection', keep_geom_type=True)
+            neighbour_intersection = gpd.overlay(cur_neighbours, cur_min_rect_edges, how='intersection',
+                                                 keep_geom_type=True)
             neighbour_intersection['intersection_area'] = neighbour_intersection.area
-            neighbour_types = neighbour_intersection.sort_values(by=['plots', 'intersection_area'], ascending=False).groupby(['plots'])['edge_type'].first().reset_index()
+            neighbour_types = \
+            neighbour_intersection.sort_values(by=['plots', 'intersection_area'], ascending=False).groupby(['plots'])[
+                'edge_type'].first().reset_index()
 
-            gfa_plots.loc[i, 'side_neighbours'].extend(list(neighbour_types[neighbour_types['edge_type'] == 'side']['plots']))
-            gfa_plots.loc[i, 'front_neighbours'].extend(list(neighbour_types[neighbour_types['edge_type'] == 'front']['plots']))
-            gfa_plots.loc[i, 'rear_neighbours'].extend(list(neighbour_types[neighbour_types['edge_type'] == 'rear']['plots']))
+            sbp_plots.loc[i, 'side_neighbours'].extend(
+                list(neighbour_types[neighbour_types['edge_type'] == 'side']['plots']))
+            sbp_plots.loc[i, 'front_neighbours'].extend(
+                list(neighbour_types[neighbour_types['edge_type'] == 'front']['plots']))
+            sbp_plots.loc[i, 'rear_neighbours'].extend(
+                list(neighbour_types[neighbour_types['edge_type'] == 'rear']['plots']))
 
-    return gfa_plots
+    return sbp_plots
 
 
-def classify_plot_edges(gfa_plots, plots, edges):
+def get_plot_edges(plots):
+    """
+    The function modifies plot dataframe with new column and generates dataframe with all plot edges.
+
+    :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
+    :return: a modified plots GeoDataFrame and a GeoDataFrame with all plots' edges.
+    """
+
+    plots['edges'] = [get_edges(i) for i in plots['geometry']]
+
+    # The column 'geometry' is a buffered 'edge' string because overlay can be checked only across polygons.
+    edges = plots.loc[:, ['partywall', 'plots', 'edges', 'geometry']].explode(column='edges').drop(['geometry'], axis=1)
+    edges = edges.set_geometry(edges['edges'], crs=3857)
+    edges.geometry = edges.buffer(1, single_sided=True)
+    edges['buffered_edge_area'] = edges.area
+    edges['edge_index'] = edges.groupby(level=0).cumcount()
+
+    return plots, edges
+
+
+def classify_plot_edges(gfa_plots, sbp_plots, plots, edges):
     """
     The function classifies plot edges into front, side and rear based on overlap with classified neighbours.
+    Applicable only to plots that are in StreetBlockPlans.
+
     :param gfa_plots: filtered plots GeoDataFrame for which gfa should be estimated.
     :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
     :param edges: a GeoDataFrame containing every plots every edge.
-    :return: a modified plots GeoDataFrame.
+    :return: a modified plots GeoDataFrame with plot edges classified and edge indexes stored in relevant columns.
     """
 
     gfa_plots['side_edges'] = [[] for i in gfa_plots.index]
     gfa_plots['front_edges'] = [[] for i in gfa_plots.index]
     gfa_plots['rear_edges'] = [[] for i in gfa_plots.index]
 
-    sbp_plots = gfa_plots[gfa_plots['plots'].isin(list(reg_links[reg_links['reg_type'] == 'StreetBlockPlan']['plots'].unique()))]
-
     for i in sbp_plots.index:
-        cur_neighbours = plots.loc[plots['plots'].isin(gfa_plots.loc[i, 'neighbour']), ['plots', 'geometry']].rename(columns={'plots': 'neighbours'})
+        cur_neighbours = plots.loc[plots['plots'].isin(gfa_plots.loc[i, 'neighbour']), ['plots', 'geometry']].rename(
+            columns={'plots': 'neighbours'})
         cur_plot_edges = edges[edges['plots'] == gfa_plots.loc[i, 'plots']]
 
         edge_int = gpd.overlay(cur_plot_edges, cur_neighbours, how='intersection', keep_geom_type=True)
         edge_int['intersection_area'] = edge_int.area
-        edge_int = edge_int.sort_values(by=['plots', 'intersection_area'], ascending=False).groupby(['edge_index']).first()
+        edge_int = edge_int.sort_values(by=['plots', 'intersection_area'], ascending=False).groupby(
+            ['edge_index']).first()
         edge_int = edge_int.reset_index()
 
-        gfa_plots.loc[i, 'side_edges'].extend(edge_int.loc[edge_int['neighbours'].isin(gfa_plots.loc[i, 'side_neighbours']), 'edge_index'])
-        gfa_plots.loc[i, 'front_edges'].extend( edge_int.loc[edge_int['neighbours'].isin(gfa_plots.loc[i, 'front_neighbours']), 'edge_index'])
-        gfa_plots.loc[i, 'rear_edges'].extend(edge_int.loc[edge_int['neighbours'].isin(gfa_plots.loc[i, 'rear_neighbours']), 'edge_index'])
+        gfa_plots.loc[i, 'side_edges'].extend(
+            edge_int.loc[edge_int['neighbours'].isin(sbp_plots.loc[i, 'side_neighbours']), 'edge_index'])
+        gfa_plots.loc[i, 'front_edges'].extend(
+            edge_int.loc[edge_int['neighbours'].isin(sbp_plots.loc[i, 'front_neighbours']), 'edge_index'])
+        gfa_plots.loc[i, 'rear_edges'].extend(
+            edge_int.loc[edge_int['neighbours'].isin(sbp_plots.loc[i, 'rear_neighbours']), 'edge_index'])
 
     return gfa_plots
 
 
 def set_road_buffer_edges(edges, plots, gfa_plots):
     """
-    The function specifies plot edge indexes that will be subject to relevant road buffers. .
+    The function identifies plot edge indexes that will be subject to relevant road buffers.
+
     :param edges: a GeoDataFrame containing every plots every edge.
     :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
     :param gfa_plots: filtered plots GeoDataFrame for which gfa should be estimated.
-    :return: a modified plots GeoDataFrame.
+    :return: a modified plots GeoDataFrame with new columns 'cat_1_edges', 'cat_2_edges and 'cat_3_5_edges',
+    containing classified plot edge indexes.
     """
 
-    road_buffer_edges = edges[~edges['partywall']]
-
-    edges_int = gpd.overlay(road_buffer_edges, plots.loc[plots['zone'] == 'Road', ['geometry', 'road_type']],
-                            how='intersection', keep_geom_type=True)
+    edges_int = gpd.overlay(edges, plots.loc[plots['zone'] == 'Road', ['geometry', 'road_type']], how='intersection',
+                            keep_geom_type=False)
     edges_int['intersection_area'] = edges_int.area
-    edges_int = edges_int[(edges_int['intersection_area'] / edges_int['buffered_edge_area']) > 0.5]
+    edges_int = edges_int[(edges_int['intersection_area'] / edges_int['buffered_edge_area']) > 0.2]
 
+    # this mapping is our interpretation of the regulations. There are no explicit mapping by the agencies.
     road_cats = {'cat_1_edges': ['Expressway', 'Semi Expressway'],
                  'cat_2_edges': ['Major Arterials/Minor Arterials'],
                  'cat_3_5_edges': ['Local Access', 'Local Collector/Primary Access', 'Slip Road', 'Service Road'],
@@ -917,44 +971,56 @@ def set_road_buffer_edges(edges, plots, gfa_plots):
 
 def set_partywall_edges(edges, plots, gfa_plots):
     """
-    The function specifies plot edge indexes that are partywalls (0m buffer) based on buffered partywall intersections.
+    The function specifies plot edge indexes that are partywall edges (0m buffer)
+    based on buffered partywall plot edge and neighbouring partywall plot intersections.
+
     :param edges: a GeoDataFrame containing every plots every edge.
     :param plots: Singapore's Masterplan 2019 plots GeoDataFrame queried from the KG.
     :param gfa_plots: filtered plots GeoDataFrame for which gfa should be estimated.
-    :return: a modified plots GeoDataFrame.
+    :return: a modified plots GeoDataFrame with a new column 'partywall_edges', containing a list of edge indexes.
     """
 
+    # filter edges that belong to partywall plots.
     partywall_edges_df = edges[edges['partywall']]
-    edges_int = gpd.overlay(partywall_edges_df, plots.loc[plots['partywall'], ['geometry']], how='intersection', keep_geom_type=True)
-    edges_int = edges_int[(edges_int.area / edges_int['buffered_edge_area']) > 0.3]
+
+    # check id buffered edge polygons overlap with other partywall plots.
+    edges_int = gpd.overlay(partywall_edges_df, plots.loc[plots['partywall'], ['geometry']], how='intersection',
+                            keep_geom_type=False)
+    edges_int = edges_int[(edges_int.area / edges_int['buffered_edge_area']) > 0.5]
     partywall_edges = edges_int.groupby(by='plots')['edge_index'].apply(lambda edges: list(set(edges))).rename(
         'partywall_edges')
 
     gfa_plots = gfa_plots.merge(partywall_edges, left_on='plots', right_index=True, how='left')
     gfa_plots['partywall_edges'] = gfa_plots['partywall_edges'].fillna("").apply(list)
-    gfa_plots['partywall_edges'] = gfa_plots.apply(lambda row: list(set(row['partywall_edges']) - set(row['rear_edges'])), axis=1)
+    gfa_plots['partywall_edges'] = gfa_plots.apply(
+        lambda row: list(set(row['partywall_edges']) - set(row['rear_edges'])), axis=1)
 
     return gfa_plots
 
 
 def get_udg_edge_setbacks(udg, reg_links, edges):
     """
-    The function returns dataframe with plot edges to which urban design setback guideline applies.
+    The function generates a DataFrame with plot ids and edge indexes to which urban design guideline for setbacks apply.
+
     :param udg: a GeoDataFrame containing UrbanDesignGuideline regulation content
     :param reg_links: a DataFrame containing plot ids, regulation ids, and regulation type.
     :param edges: a GeoDataFrame containing every plots every edge.
     :return: a DataFrame containing plot edge indexes and applicable udg setbacks.
     """
 
+    # udgs may have regulations not only for setbacks, hence need to filter out those.
     udg_with_setback = udg.loc[~udg['setback'].isna(), ['reg', 'setback', 'geometry']]
     udg_with_setback = udg_with_setback.loc[udg_with_setback['reg'].isin(reg_links['reg'].unique())]
 
-    edges_int = gpd.overlay(edges, udg_with_setback, how='intersection', keep_geom_type=True)
+    edges_int = gpd.overlay(edges, udg_with_setback, how='intersection', keep_geom_type=False)
     edges_int['intersection_area'] = edges_int.area
-    edges_int = edges_int[(edges_int['intersection_area'] / edges_int['buffered_edge_area']) > 0.3]
-    edges_int = edges_int.merge(reg_links.loc[reg_links['reg'].isin(udg_with_setback['reg'].unique()), :],left_on='plots', right_on='plots', how='left', suffixes=(None, '_links'))
-    edges_int = edges_int.loc[(~edges_int['reg_links'].isna()) & (edges_int['reg_links'] == edges_int['reg']), :].drop(columns=['reg_type'])
+    edges_int = edges_int[(edges_int['intersection_area'] / edges_int['buffered_edge_area']) > 0.5]
+    edges_int = edges_int.merge(reg_links.loc[reg_links['reg'].isin(udg_with_setback['reg'].unique()), :],
+                                left_on='plots', right_on='plots', how='left', suffixes=(None, '_links'))
+    edges_int = edges_int.loc[(~edges_int['reg_links'].isna()) & (edges_int['reg_links'] == edges_int['reg']), :].drop(
+        columns=['reg_type'])
 
+    # edge indexes get assigned a setback based on largest overlap with udg.
     udg_edges = (edges_int.sort_values(by=['plots', 'edge_index', 'intersection_area'], ascending=False)
                  .groupby(by=['plots', 'edge_index']).first().reset_index()
                  .drop(columns=['partywall', 'buffered_edge_area', 'intersection_area', 'reg_links']))
@@ -965,20 +1031,41 @@ def get_udg_edge_setbacks(udg, reg_links, edges):
 '<-------------------GFA Calculation Functions------------------>'
 
 
+def get_unclear_plots(reg_links, hcp, udg):
+    """
+    The function generates a list with plot ids which do not qualify for gfa calculation.
+    That includes plots that fall in 'ConservationArea' or 'Monument' regulations or
+    are linked to other regulations that has additional_type 'DetailControl' or 'ConservationArea', or
+    plots that has invalid zoning types, like 'BeachArea', 'Utility', 'Cemetery', etc.
+
+    :param reg_links: a DataFrame containing plot ids, regulation ids, and regulation type.
+    :param hcp: a GeoDataFrame containing HeightControlPlan planning regulations.
+    :param udg: a GeoDataFrame containing UrbanDesignGuideline planning regulations.
+    :return: a list with plot ids.
+    """
+
+    con_plots = list(reg_links[reg_links['reg_type'].isin(['ConservationArea', 'Monument'])]['plots'])
+    hcp_plots = list(reg_links[reg_links['reg'].isin(list(hcp[~pd.isna(hcp['additional_type'])]['reg']))]['plots'])
+    udg_plots = list(reg_links[reg_links['reg'].isin(list(udg[~pd.isna(udg['additional_type'])]['reg']))]['plots'])
+    unclear_plots = list(set(con_plots + hcp_plots + udg_plots))
+
+    return unclear_plots
+
+
 def set_plot_edge_setbacks(gfa_plots, reg_links, dcp, sbp, road_cats, udg_edges):
     """
     The function updates every plot edge setback value based on applicable regulations and write edge setbacks as a list.
+
     :param gfa_plots: filtered plots GeoDataFrame for which gfa should be estimated.
     :param reg_links: a DataFrame containing plot ids, regulation ids, and regulation type.
     :param dcp: a DataFrame containing DevelopmentControlPlan regulation content.
     :param sbp: a GeoDataFrame containing StreetBlockPlan regulation content.
     :param road_cats: a DataFrame containing road category regulation content.
     :param udg_edges: a DataFrame containing plot edge indexes and applicable udg setbacks.
-    :return: a modified plot GeoDataFrame with a column containing a setback list for plot edges.
+    :return: a modified plot GeoDataFrame with a list of plot edge setbacks stored in a column 'edge_setbacks'.
     """
     all_setbacks = []
     for count, i in enumerate(gfa_plots.index):
-
         plot_setbacks = {}
         plot_id = gfa_plots.loc[i, 'plots']
 
@@ -987,43 +1074,52 @@ def set_plot_edge_setbacks(gfa_plots, reg_links, dcp, sbp, road_cats, udg_edges)
             num_of_edges = len(gfa_plots.loc[i, 'edges'])
             cur_regs = reg_links[reg_links['plots'] == plot_id]
             cur_dcp = dcp[dcp['reg'].isin(cur_regs[cur_regs['reg_type'] == 'DevelopmentControlPlan']['reg'])]
-
             plot_zone = gfa_plots.loc[i, 'zone']
 
             if plot_zone in ['Residential', 'ResidentialWithCommercialAtFirstStorey', 'CommercialAndResidential']:
                 allowed_res_programmes = gfa_plots.loc[i, 'allowed_residential_types'] + ['Clinic']
-                cur_dcp = cur_dcp[cur_dcp['programme'].isin(set(cur_dcp['programme']).intersection(set(allowed_res_programmes)))]
+                cur_dcp = cur_dcp[
+                    cur_dcp['programme'].isin(set(cur_dcp['programme']).intersection(set(allowed_res_programmes)))]
 
             cur_road_cats = cur_dcp['road_categories'].explode().unique()
             cur_road_cats = road_cats.loc[road_cats['road_reg'].isin(cur_road_cats), :]
             udg_setbacks = udg_edges.loc[udg_edges['plots'] == plot_id, ['edge_index', 'setback']]
-            partywall_edges = list(set(gfa_plots.loc[i, 'partywall_edges'])) if gfa_plots.loc[i, 'partywall'] else []
-            front_setback, side_setback, rear_setback = [], [], []
+
+            front_sbp_setback, side_sbp_setback, rear_sbp_setback = [], [], []
 
             if 'StreetBlockPlan' in list(cur_regs['reg_type'].unique()):
                 cur_sbp = sbp[sbp['reg'].isin(cur_regs[cur_regs['reg_type'] == 'StreetBlockPlan']['reg'])]
-                front_setback = list(cur_sbp[cur_sbp['setback_type'] == 'FrontSetback'].sort_values(by=['level'])['setback'])
-                side_setback = list(cur_sbp[cur_sbp['setback_type'] == 'SideSetback'].sort_values(by=['level'])['setback'])
-                rear_setback = list(cur_sbp[cur_sbp['setback_type'] == 'RearSetback'].sort_values(by=['level'])['setback'])
+
+                front_sbp_setback = list(
+                    cur_sbp[cur_sbp['setback_type'] == 'FrontSetback'].sort_values(by=['level'])['setback'])
+                side_sbp_setback = list(
+                    cur_sbp[cur_sbp['setback_type'] == 'SideSetback'].sort_values(by=['level'])['setback'])
+                rear_sbp_setback = list(
+                    cur_sbp[cur_sbp['setback_type'] == 'RearSetback'].sort_values(by=['level'])['setback'])
 
             for reg in cur_dcp.index:
+
+                partywall_edges = list(gfa_plots.loc[i, 'partywall_edges']) if gfa_plots.loc[i, 'partywall'] else []
                 programme = cur_dcp.loc[reg, 'programme']
                 programme_road_cats = cur_road_cats[cur_road_cats['road_reg'].isin(
                     set(cur_road_cats['road_reg']).union(cur_dcp.loc[reg, 'road_categories']))]
                 setback_list = [float(cur_dcp.loc[reg, 'setback'])] * num_of_edges
 
+                # adjust the initial setback list based on known regulation setbacks.
                 if not udg_setbacks.empty:
                     for udg_edge in udg_setbacks['edge_index']:
                         setback_list[udg_edge] = udg_setbacks[udg_setbacks['edge_index'] == udg_edge]['setback']
-                if front_setback:
+
+                if front_sbp_setback:
                     for front_edge in gfa_plots.loc[i, 'front_edges']:
-                        setback_list[front_edge] = front_setback
-                if side_setback:
+                        setback_list[front_edge] = front_sbp_setback
+                if side_sbp_setback:
                     for side_edge in gfa_plots.loc[i, 'side_edges']:
-                        setback_list[side_edge] = side_setback
-                if rear_setback:
+                        setback_list[side_edge] = side_sbp_setback
+                if rear_sbp_setback:
                     for rear_edge in gfa_plots.loc[i, 'rear_edges']:
-                        setback_list[rear_edge] = rear_setback
+                        setback_list[rear_edge] = rear_sbp_setback
+
                 if gfa_plots.loc[i, 'cat_1_edges']:
                     for cat_1 in gfa_plots.loc[i, 'cat_1_edges']:
                         setback_list[cat_1] = float(
@@ -1037,17 +1133,19 @@ def set_plot_edge_setbacks(gfa_plots, reg_links, dcp, sbp, road_cats, udg_edges)
                         setback_list[cat_3] = float(
                             programme_road_cats.loc[programme_road_cats['category'] == 3, 'buffer'].max())
 
-                if programme == 'Semi-DetachedHouse' and (not partywall_edges) and gfa_plots.loc[i, 'side_edges']:
+                # some residential typologies by definition are partywall developments.
+                if programme == 'Semi-DetachedHouse' and gfa_plots.loc[i, 'side_edges']:
                     partywall_edges = list(set(partywall_edges + [gfa_plots.loc[i, 'side_edges'][0]]))
                 if (programme == 'TerraceType1') or (programme == 'TerraceType2'):
                     partywall_edges = list(set(partywall_edges + gfa_plots.loc[i, 'side_edges']))
+                if (programme == 'Bungalow') or (programme == 'GoodClassBungalow'):
+                    partywall_edges = []
+
                 if partywall_edges:
                     for partywall_edge in partywall_edges:
                         setback_list[partywall_edge] = 0.
-
                 plot_setbacks[programme] = setback_list
         all_setbacks.append(plot_setbacks)
-
         sys.stdout.write("{:d}/{:d} plots processed\r".format(count + 1, gfa_plots.shape[0]))
     sys.stdout.write("{:d}/{:d} plots processed\n".format(count + 1, gfa_plots.shape[0]))
 
@@ -1059,6 +1157,7 @@ def set_plot_edge_setbacks(gfa_plots, reg_links, dcp, sbp, road_cats, udg_edges)
 def create_setback_area(edges, edge_setbacks, plot_geom):
     """
     The function buffers every edge with associated setback, merges resulting polygons and subtract it from plot geometry.
+
     :param edges: a GeoDataFrame containing every plots every edge.
     :param edge_setbacks: a list with buffer values for every edge of a plot geometry.
     :param plot_geom: plot geometry polygon.
@@ -1079,9 +1178,11 @@ def create_setback_area(edges, edge_setbacks, plot_geom):
 
 def get_buildable_footprints(gfa_plots):
     """
-    The function generates buildable footprints for every unique/known form setbacks storey.
+    The function generates a list of buildable footprints for every unique/known from the setbacks storey.
+    Position in the list indicates at which floor that footprint exist.
+
     :param gfa_plots: filtered plots GeoDataFrame for which gfa should be estimated.
-    :return: a modified plots GeoDataFrame.
+    :return: a modified plots GeoDataFrame with list of footprints.
     """
     all_setbacked_geom = []
     for count, plot in enumerate(gfa_plots.index):
@@ -1092,8 +1193,12 @@ def get_buildable_footprints(gfa_plots):
 
         if plot_setbacks:
             for programme, cur_setback in plot_setbacks.items():
+                # setback can be simply a value or a list of values which indicates
+                # that the edge at different storeys will have different setback.
                 setback_type = [type(setback) for setback in cur_setback]
-                cur_setback = [[setback] if not setback_type[j] is list else setback for j, setback in enumerate(cur_setback)]
+                cur_setback = [[setback] if not setback_type[j] is list else setback for j, setback in
+                               enumerate(cur_setback)]
+
                 num_of_levels = max(map(len, cur_setback))
                 setbacked_geom[programme] = []
 
@@ -1116,24 +1221,26 @@ def get_buildable_footprints(gfa_plots):
     return gfa_plots
 
 
-def get_plot_parts(plot, cur_reg_type, storey_regs, gfa_plots):
+def get_plot_parts(plot, cur_reg_type, storey_regs, plots):
     """
-    The function generates a list of plot parts with number of storeys.
+    The function generates a list of plot parts that are based on planning regulations that apply only to a part of a plot.
+    The function splits plot into the maximum number of parts of udg or hcp.
+    Only hcp and udg may govern plot only partially.
+    By default, whole plot is one part.
+
     :param plot: plot index for which plot parts are generated.
     :param cur_reg_type: regulation tpe for which current parts are retrieved.
     :param storey_regs: a list of regulations applicable to specific floor.
-    :param gfa_plots: filtered plots GeoDataFrame for which gfa should be estimated.
-    :return: a modified
+    :param plots: filtered plots GeoDataFrame for which gfa should be estimated.
+    :return: plots part geometries as a list and corresponding number of storeys for every part as a list.
     """
-
     cur_reg = gpd.GeoDataFrame(storey_regs.loc[storey_regs['reg_type'] == cur_reg_type, ['reg', 'storeys', 'geometry']],
                                geometry='geometry', crs=3857)
 
     used_regs = list(cur_reg['reg'])
-
     reg_parts = gpd.overlay(cur_reg, gpd.GeoDataFrame(
-        pd.DataFrame(gfa_plots.loc[plot, :].to_numpy().reshape(1, -1), columns=gfa_plots.columns, index=[plot]),
-        geometry='geometry', crs=3857), how='intersection', keep_geom_type=True)
+        pd.DataFrame(plots.loc[plot, :].to_numpy().reshape(1, -1), columns=plots.columns, index=[plot]),
+        geometry='geometry', crs=3857), how='intersection', keep_geom_type=False)
     storeys = list(reg_parts['storeys'])
     reg_part = reg_parts['geometry'].iloc[0]
 
@@ -1141,20 +1248,22 @@ def get_plot_parts(plot, cur_reg_type, storey_regs, gfa_plots):
     for part in range(1, reg_parts.shape[0]):
         reg_part = reg_part.union(reg_parts['geometry'].iloc[part])
 
-    # refining the remaining plot part.
-    remaining_part = gfa_plots.loc[plot, 'geometry'].difference(reg_part).buffer(-1, join_style=2).buffer(1, join_style=2)
+        # buffering to clean the resulting part geometry.
+    remaining_part = plots.loc[plot, 'geometry'].difference(reg_part).buffer(-1, join_style=2).buffer(1, join_style=2)
     parts = list(reg_parts['geometry'])
 
-    if remaining_part.area / gfa_plots.loc[plot, 'geometry'].area > 0.05:
+    if remaining_part.area / plots.loc[plot, 'geometry'].area > 0.1:
         parts.append(remaining_part)
         storeys.append(float('inf'))
 
     return used_regs, storeys, parts
 
 
-def get_storeys_and_parts(gfa_plots, udg, hcp, dcp, lha, sbp, reg_links):
+def get_buildable_storeys(gfa_plots, udg, hcp, dcp, lha, sbp, reg_links):
     """
-    The function estimates allowed number of storeys on a plot or plot parts.
+    The function estimates allowed number of storeys on a plot or plot part.
+    Plot parts are defined only by hcp or udg regulations.
+
     :param gfa_plots: filtered plots GeoDataFrame for which gfa should be estimated.
     :param udg: a GeoDataFrame containing UrbanDesignGuideline regulation content.
     :param hcp: a GeoDataFrame containing HeightControlPlan regulation content.
@@ -1162,7 +1271,7 @@ def get_storeys_and_parts(gfa_plots, udg, hcp, dcp, lha, sbp, reg_links):
     :param lha: a GeoDataFrame containing LandedHousingArea regulation content.
     :param sbp: a GeoDataFrame containing StreetBlockPlan regulation content.
     :param reg_links: a DataFrame containing plot ids, regulation ids, and regulation type.
-    :return: a modified plots GeoDataFrame with new columns containing number of storeys and plot parts.
+    :return: a modified plots GeoDataFrame with new columns containing number of storeys for every plot parts.
     """
 
     combined_storeys = []
@@ -1170,7 +1279,7 @@ def get_storeys_and_parts(gfa_plots, udg, hcp, dcp, lha, sbp, reg_links):
     residential_zones = ['Residential', 'CommercialAndResidential', 'ResidentialOrInstitution',
                          'ResidentialWithCommercialAtFirstStorey']
 
-    # Get hcp or udg regulations that has a height value.
+    # get hcp or udg regulations that has a height value and regulates buildable space height.
     hcp_udg = pd.concat(
         [hcp.loc[:, ['reg', 'storeys', 'abs_height', 'geometry']], udg.loc[:, ['reg', 'storeys', 'geometry']]])
     height_regs = reg_links.merge(hcp_udg, on='reg', how='left')
@@ -1181,61 +1290,52 @@ def get_storeys_and_parts(gfa_plots, udg, hcp, dcp, lha, sbp, reg_links):
         plot_id = gfa_plots.loc[plot, 'plots']
         plot_zone = gfa_plots.loc[plot, 'zone']
         storey_height = 3.6 if plot_zone in residential_zones else 5.0
-
-        # Divide plot into parts based on udg or hcp
         cur_height_regs = height_regs[height_regs['plots'] == plot_id].copy()
+        cur_lha, cur_sbp = float('inf'), float('inf')
+
+        # by default is only one part for the plot with regulated height - the whole plot area.
         parts = [gfa_plots.loc[plot, 'geometry']]
         part_storeys = [float('inf')]
         used_regs = []
 
+        # Divide plot into parts based on udg or hcp. Contains storeys from hcp and udg.
         if cur_height_regs.shape[0] > 0:
             if 'UrbanDesignGuideline' in cur_height_regs['reg_type'].unique():
-                used_regs, part_storeys, parts = get_plot_parts(plot, 'UrbanDesignGuideline', cur_height_regs, gfa_plots)
+                used_regs, part_storeys, parts = get_plot_parts(plot, 'UrbanDesignGuideline', cur_height_regs,
+                                                                gfa_plots)
             else:
-                height_regs_metres = cur_height_regs['storeys'].isna()
-                height_metres = np.floor(cur_height_regs.loc[height_regs_metres, 'abs_height'])
-                # overwrite absolute height in metres with number of storeys.
-                cur_height_regs.loc[height_regs_metres, 'storeys'] = (height_metres / storey_height).to_numpy()
+                # This is the case when HeightControlPlan regulatons apply to the plot.
+                height_regs_metres = pd.isna(cur_height_regs['storeys'])
+                height_metres = cur_height_regs.loc[height_regs_metres, 'abs_height'].to_numpy()
+                # Overwrite absolute height in metres with number of storeys.
+                cur_height_regs.loc[height_regs_metres, 'storeys'] = np.floor(height_metres / storey_height)
                 used_regs, part_storeys, parts = get_plot_parts(plot, 'HeightControlPlan', cur_height_regs, gfa_plots)
 
-        #  we asume otherwise there is only one part for the plot with regulated height -  the whole plot area.
         cur_regs = reg_links[reg_links['plots'] == plot_id]
         cur_regs = cur_regs[~cur_regs['reg'].isin(used_regs)]
-        cur_dcp = dcp.loc[dcp['reg'].isin(cur_regs[cur_regs['reg_type'] == 'DevelopmentControlPlan']['reg']), :]
-
-        if plot_zone in ['Residential', 'ResidentialWithCommercialAtFirstStorey', 'CommercialAndResidential']:
-            allowed_res_programmes = gfa_plots.loc[plot, 'allowed_residential_types'] + ['Clinic']
-            cur_dcp = cur_dcp[
-                cur_dcp['programme'].isin(set(cur_dcp['programme']).intersection(set(allowed_res_programmes)))]
-
-        cur_lha, cur_sbp, cur_udg, cur_hcp = float('inf'), float('inf'), float('inf'), float('inf')
 
         if 'LandedHousingArea' in list(cur_regs['reg_type']):
             cur_lha = lha[lha['reg'].isin(cur_regs[cur_regs['reg_type'] == 'LandedHousingArea']['reg'])][
                 'storeys'].min()
         if 'StreetBlockPlan' in list(cur_regs['reg_type']):
             cur_sbp = sbp[sbp['reg'].isin(cur_regs[cur_regs['reg_type'] == 'StreetBlockPlan']['reg'])]['storeys'].min()
-        if 'UrbanDesignGuideline' in list(cur_regs['reg_type']):
-            cur_udg = udg[udg['reg'].isin(cur_regs[cur_regs['reg_type'] == 'UrbanDesignGuideline']['reg'])][
-                'storeys'].min()
-        if 'HeightControlPlan' in list(cur_regs['reg_type']):
-            cur_hcp = hcp.loc[hcp['reg'].isin(cur_regs.loc[cur_regs['reg_type'] == 'HeightControlPlan', 'reg']),
-                      :].min()
-            hcp_metres = cur_hcp['storeys'].isna()
-            cur_hcp.loc[hcp_metres, 'storeys'] = np.floor(cur_hcp.loc[hcp_metres, 'abs_height'] / storey_height).to_numpy()
-            cur_hcp = cur_hcp['storeys'].min()
+
+        cur_dcp = dcp.loc[dcp['reg'].isin(cur_regs[cur_regs['reg_type'] == 'DevelopmentControlPlan']['reg']), :]
+        # this fixes an issue that there are more dcp regulations linked to a some plots than there should be.
+        if plot_zone in ['Residential', 'ResidentialWithCommercialAtFirstStorey', 'CommercialAndResidential']:
+            allowed_res_programmes = gfa_plots.loc[plot, 'allowed_residential_types'] + ['Clinic']
+            cur_dcp = cur_dcp[
+                cur_dcp['programme'].isin(set(cur_dcp['programme']).intersection(set(allowed_res_programmes)))]
 
         storey = {}
 
         for programme in cur_dcp['programme'].unique():
-            storey[programme] = np.nanmin(np.concatenate(([float('inf'), cur_lha, cur_sbp, cur_udg, cur_hcp],
-                                                          cur_dcp.loc[
-                                                              cur_dcp['programme'] == programme, 'storeys'].to_numpy(
-                                                              dtype=object))))
+            # contains storeys from lha and sbp.
+            storey[programme] = np.nanmin(np.concatenate(([float('inf'), cur_lha, cur_sbp], cur_dcp.loc[
+                cur_dcp['programme'] == programme, 'storeys'].to_numpy(dtype=object))))
 
         storeys = {programme: [min(storey[programme], part_storey) for part_storey in part_storeys] for programme in
                    storey.keys()}
-
         combined_storeys.append(storeys)
         combined_parts.append(parts)
 
@@ -1250,7 +1350,8 @@ def get_storeys_and_parts(gfa_plots, udg, hcp, dcp, lha, sbp, reg_links):
 
 def compute_part_gfa(allowed_storeys, footprint_areas, plot_area, site_coverage):
     """
-    The function estimates allowed plot gfa by adding known footprint areas for all allowed storeys.
+    The function estimates allowed plot gfa by adding known footprint areas in plot parts for all allowed storeys.
+
     :param allowed_storeys: number of allowed storeys.
     :param footprint_areas: footprints allowed on a plot.
     :param plot_area: area of the whole plot.
@@ -1258,16 +1359,18 @@ def compute_part_gfa(allowed_storeys, footprint_areas, plot_area, site_coverage)
     :return: estimated plot part gfa. By default, plot has one part - whole plot.
     """
     part_gfa = 0
+
     # Go through storey footprints' areas as long as the storey is still allowed
     for storey in range(len(footprint_areas)):
-        # Check whether storey is allowed and append it to part gfa if area dos not exceed allowed site coverage.
+        # Check whether storey is allowed (less than number of storeys)
+        # and append it to part gfa if area do not exceed allowed site coverage.
         if storey < allowed_storeys:
             storey_area = footprint_areas[storey]
             if storey_area / plot_area > site_coverage:
                 storey_area = plot_area * site_coverage
             part_gfa += storey_area
 
-    # Use the last storey area (based on last footprint) for the remaining storeys
+    # Use the last known storey footprint for the remaining storeys.
     if allowed_storeys > len(footprint_areas):
         part_gfa += storey_area * (allowed_storeys - len(footprint_areas))
 
@@ -1276,15 +1379,18 @@ def compute_part_gfa(allowed_storeys, footprint_areas, plot_area, site_coverage)
 
 def compute_plot_gfa(gfa_plots, reg_links, sbp, dcp):
     """
-    The function estimates gfa for all plots and plot programmes.
+    The function estimates gfa value for every allowed programme on a plot
+    or a general gfa if there are no regulation sceptions for specific programmes.
+    Gfa can only be estimated if plota has generated allowed footprints and derived storeys and plot parts
+    or a known gpr value.
+
     :param gfa_plots: filtered plots GeoDataFrame for which gfa should be estimated.
     :param reg_links: a DataFrame containing plot ids, regulation ids, and regulation type.
     :param sbp: a GeoDataFrame containing StreetBlockPlan regulation content.
     :param dcp: a DataFrame containing DevelopmentControlPlan regulation content.
-    :return: a modified plots GeoDataFrame with stored gfa values in a column.
+    :return: estimated plot gfa for every allowed programme
     """
 
-    gfas_json = {plot_id: {} for plot_id in gfa_plots['plots'].unique()}
     all_gfas = []
 
     for count, plot in enumerate(gfa_plots.index):
@@ -1292,13 +1398,15 @@ def compute_plot_gfa(gfa_plots, reg_links, sbp, dcp):
         plot_id = gfa_plots.loc[plot, 'plots']
         plot_zone = gfa_plots.loc[plot, 'zone']
         plot_area = gfa_plots.loc[plot, 'geometry'].area
-        plot_gpr = gfa_plots.loc[plot, 'gpr']
-        residential_zones = ['Residential', 'ResidentialWithCommercialAtFirstStorey', 'CommercialAndResidential']
+        plot_mp_gpr = gfa_plots.loc[plot, 'gpr']
 
         cur_regs = list(reg_links[reg_links['plots'] == plot_id]['reg'])
         cur_sbp = sbp[sbp['reg'].isin(cur_regs)]
         cur_dcp = dcp[dcp['reg'].isin(cur_regs)]
 
+        # this fixes an issue that there are more dcp regulations linked to a some plots than there should be.
+        # TODO: script that links regulations to plots should be inspected.
+        residential_zones = ['Residential', 'ResidentialWithCommercialAtFirstStorey', 'CommercialAndResidential']
         if plot_zone in residential_zones:
             allowed_res_programmes = gfa_plots_test.loc[plot, 'allowed_residential_types'] + ['Clinic']
             cur_dcp = cur_dcp[
@@ -1315,18 +1423,19 @@ def compute_plot_gfa(gfa_plots, reg_links, sbp, dcp):
 
                 programme_gfa = 0.0
                 programme_storeys = cur_storeys[programme]
+
+                # get the list of all linked gprs and set the smallest.
                 gpr_list = list(cur_dcp[cur_dcp['programme'] == programme]['gpr'].dropna()) + list(
                     cur_sbp['gpr'].dropna())
-
-                if not pd.isnull(plot_gpr):
-                    gpr_list.append(plot_gpr)
+                if not pd.isnull(plot_mp_gpr):
+                    gpr_list.append(plot_mp_gpr)
                 cur_gpr = min(gpr_list) if gpr_list else None
 
                 if not np.any(np.isinf(programme_storeys)) and footprints:
                     site_coverage_list = list(cur_dcp[cur_dcp['programme'] == programme]['site_coverage'])
                     cur_site_coverage = min(site_coverage_list) if site_coverage_list else 1.0
 
-                    # Only one part -> no intersection with footpint(s) required
+                    # Only one part -> no intersection with footprint(s) required.
                     if len(cur_parts) == 1:
                         # One storey restriction since there is only one part
                         part_programme_storeys = programme_storeys[0]
@@ -1350,31 +1459,25 @@ def compute_plot_gfa(gfa_plots, reg_links, sbp, dcp):
                     gfa[programme] = min(programme_gfa, (plot_area * cur_gpr))
                 else:
                     gfa[programme] = programme_gfa
-                    # Only default programme (nan)
+
+        # Only default programme (NaN) and no available storeys or footprints.
         else:
             programme = np.nan
-            gpr_list = list(cur_dcp[cur_dcp['programme'] == programme]['gpr'].dropna()) + list(cur_sbp['gpr'].dropna())
+            gpr_list = list(cur_dcp['gpr'].dropna()) + list(cur_sbp['gpr'].dropna())
 
-            if not pd.isnull(plot_gpr):
-                gpr_list.append(plot_gpr)
+            if not pd.isnull(plot_mp_gpr):
+                gpr_list.append(plot_mp_gpr)
             cur_gpr = min(gpr_list) if gpr_list else None
 
         gfa[programme] = (plot_area * cur_gpr) if cur_gpr is not None else np.nan
 
         all_gfas.append(gfa)
-
-        gfas_json[plot_id] = gfa
         sys.stdout.write("{:d}/{:d} plots processed\r".format(count + 1, gfa_plots.shape[0]))
     sys.stdout.write("{:d}/{:d} plots processed\n".format(count + 1, gfa_plots.shape[0]))
-
-    # for quick gfa values inspection.
-    with open(out_dir + 'estimate_GFA.json', 'w') as f:
-        json.dump(gfas_json, f, indent=4)
 
     gfa_plots['gfa'] = all_gfas
 
     return gfa_plots
-
 
 def write_gfa_triples(gfa_plots, out_dir):
     """
@@ -1420,22 +1523,23 @@ class TripleDataset:
             self.dataset.add((GFAOntoManager.SQUARE_PREFIXED_METRE, RDF.type, GFAOntoManager.AREA_UNIT, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
             self.dataset.add((measure, GFAOntoManager.HAS_NUMERIC_VALUE, gfa_value, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
 
-            if not pd.isna(programme):
+            # we add programme link only if it is not the general gfa for whole zoning type.
+            if not pd.isnull(programme):
                 programme_uri = URIRef(GFAOntoManager.ONTO_ZONING_URI_PREFIX + programme)
                 self.dataset.add((buildable_space_uri, GFAOntoManager.FOR_ZONING_CASE, programme_uri, GFAOntoManager.BUILDABLE_SPACE_GRAPH))
 
     # writes the aggregated triples into a text file.
     def write_triples(self, triple_type, cur_dir):
-        with open(cur_dir + "/quads_" + triple_type + ".nq", mode="wb") as file:
+        with open(cur_dir + "quads_" + triple_type + ".nq", mode="wb") as file:
             file.write(self.dataset.serialize(format='nquads'))
 
 
 if __name__ == "__main__":
 
-    out_dir = 'C://Users/AydaGrisiute/Desktop'
+    out_dir = 'C://Users/AydaGrisiute/Desktop/'
     twa_endpoint = "http://theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql"
     # in case regulation data is stored locally.
-    local_endpoint = "http://192.168.104.137:9999/blazegraph/namespace/regulationcontent/sparql"
+    local_endpoint = "http://192.168.0.143:9999/blazegraph/namespace/regulationcontent/sparql"
     road_list = ['Expressway', 'Semi Expressway', 'Major Arterials/Minor Arterials']
     non_gfa_zones = ['Road', 'Waterbody', 'Utility', 'OpenSpace', 'ReserveSite', 'Park', 'Agriculture',
                      'RapidTransit', 'PortOrAirport', 'SpecialUseZone', 'Cemetery', 'BeachArea']
@@ -1472,16 +1576,18 @@ if __name__ == "__main__":
 
     # GFA should be calculated only for plots that has suitable zoning types and don't fall in conservation regulations.
     unclear_reg_plots = get_unclear_plots(reg_links, hcp, udg)
-    non_gfa_plots = list(plots.loc[plots['zone'].isin(non_gfa_zones), 'plots']) + unclear_reg_plots
-
+    non_gfa_plots = list(set(list(plots.loc[plots['zone'].isin(non_gfa_zones), 'plots']) + unclear_reg_plots))
     road_plots = plots.loc[plots['zone'] == 'Road', ['plots', 'geometry']]
-
     gfa_plots = plots[(~plots['plots'].isin(non_gfa_plots))].copy()
     gfa_plots, edges = get_plot_edges(gfa_plots)
-    gfa_plots, min_rect_edge_df = get_min_rect_edges(gfa_plots)
-    gfa_plots = classify_min_rect_edges(min_rect_edge_df, gfa_plots, road_plots)
-    gfa_plots = classify_neighbours(gfa_plots, plots, reg_links, min_rect_edge_df)
-    gfa_plots = classify_plot_edges(gfa_plots, plots, edges)
+
+    # TODO: instead of sbp_plots should be whole gfa_plots df. To be fixed.
+    sbp_plots = gfa_plots[gfa_plots['plots'].isin(list(reg_links[reg_links['reg_type'] == 'StreetBlockPlan']['plots'].unique()))]
+    sbp_plots, min_rect_edge_df = get_min_rect_edges(sbp_plots)
+
+    sbp_plots = classify_min_rect_edges(min_rect_edge_df, sbp_plots.copy(), road_plots)
+    sbp_plots = classify_neighbours(sbp_plots.copy(), plots, reg_links, min_rect_edge_df)
+    gfa_plots = classify_plot_edges(gfa_plots, sbp_plots, plots, edges)
 
     print("Plot edges classified")
 
@@ -1489,16 +1595,27 @@ if __name__ == "__main__":
     gfa_plots = set_partywall_edges(edges, plots, gfa_plots.copy())
     udg_edges = get_udg_edge_setbacks(udg, reg_links, edges)
 
-    print("Plot edges classified and setbacks set.")
+    print("Plot edge setbacks set.")
 
     '<----------------------------Test Start------------------------------>'
 
-    gfa_plots_test = gfa_plots.sample(n=100, random_state=10)
-
+    # Here you can define the scope of gfa calculation: a copy of a whole gfa_plots df, single plot or a sample.
+    gfa_plots_test = gfa_plots.copy()
     gfa_plots_test = set_plot_edge_setbacks(gfa_plots_test, reg_links, dcp, sbp, road_cats, udg_edges)
+
+    print('Plot every edge setbacks retrieved.')
+
     gfa_plots_test = get_buildable_footprints(gfa_plots_test)
-    gfa_plots_test = get_storeys_and_parts(gfa_plots_test, udg, hcp, dcp, lha, sbp, reg_links)
+    gfa_plots_test = get_buildable_storeys(gfa_plots_test, udg, hcp, dcp, lha, sbp, reg_links)
+
+    print('Plot allowed footprints and storeys retrieved.')
+
     gfa_plots_test = compute_plot_gfa(gfa_plots_test, reg_links, sbp, dcp)
+
+    # for quick gfa values inspection one can check this file.
+    gfas_json = {gfa_plots_test.loc[i, 'plots']: gfa_plots_test.loc[i, 'gfa'] for i in gfa_plots_test.index}
+    with open(out_dir + 'gfa.json', 'w') as f:
+        json.dump(gfas_json, f, indent=4)
 
     '<-----------------------------Test End------------------------------->'
 
