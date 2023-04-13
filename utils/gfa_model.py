@@ -1423,6 +1423,7 @@ def compute_plot_gfa(gfa_plots, reg_links, sbp, dcp):
 
                 programme_gfa = 0.0
                 programme_storeys = cur_storeys[programme]
+                footprints = [unary_union(footprint) if type(footprint) == MultiPolygon else footprint for footprint in footprints]
 
                 # get the list of all linked gprs and set the smallest.
                 gpr_list = list(cur_dcp[cur_dcp['programme'] == programme]['gpr'].dropna()) + list(
