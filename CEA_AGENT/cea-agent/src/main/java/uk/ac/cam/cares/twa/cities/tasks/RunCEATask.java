@@ -72,7 +72,7 @@ public class RunCEATask implements Runnable {
     }
 
     /**
-     * Recursively delete contents of a directory
+     * Recursively deletes contents of a directory
      * @param file given directory
      */
     public void deleteDirectoryContents(File file)
@@ -87,7 +87,7 @@ public class RunCEATask implements Runnable {
     }
 
     /**
-     * Extract areas from excel files and add to output data, then delete excel files
+     * Extracts areas from excel files and add to output data, then delete excel files
      * @param tmpDir temporary directory path
      * @param result output data
      * @return output data
@@ -257,7 +257,7 @@ public class RunCEATask implements Runnable {
     }
 
     /**
-     * Extract time series data from excel files and add to output data
+     * Extracts time series data from excel files and add to output data
      * @param tmpDir temporary directory path
      * @return output data
      */
@@ -347,14 +347,15 @@ public class RunCEATask implements Runnable {
     }
 
     /**
-     * Extract potential energy data of solar generators
+     * Extracts potential energy data of solar energy generators
      * @param result CEAOutputData to store the CEA outputs
-     * @param generatorType type of solar generator
+     * @param generatorType type of solar energy generator
      * @param supplyTypes types of potential energy that generatorType can generate
      * @param dataSeparator separator of the CEA output csv files
      * @param solarFile file name of the csv storing the output data for generatorType
      * @param tmpDir root directory of CEA files
      * @param getTimes whether to extract timestamps
+     * @return CEAOutputData with the potential energy data of solar energy generators
      */
     public CEAOutputData extractSolarSupply(CEAOutputData result, String generatorType, List<String> supplyTypes, String dataSeparator, String solarFile, String tmpDir, Boolean getTimes) {
         String line;
@@ -439,7 +440,7 @@ public class RunCEATask implements Runnable {
     }
 
     /**
-     * Return output data to CEA Agent via http POST request
+     * Returns output data to CEA Agent via http POST request
      * @param output output data
      */
     public void returnOutputs(CEAOutputData output) {
@@ -536,12 +537,13 @@ public class RunCEATask implements Runnable {
     }
 
     /**
-     * Add time series data on solar generator potential energy to CEAOutputData
+     * Add time series data on solar energy generator potential energy to CEAOutputData
      * @param result CEAOutputData to store the CEA outputs
-     * @param generatorType type of solar generator
-     * @param generatorLocation location of the solar generator
+     * @param generatorType type of solar energy generator
+     * @param generatorLocation location of the solar energy generator
      * @param supplyType type of potential energy of data
-     * @param data time series data of the potential energy for the solar generator
+     * @param data time series data of the potential energy for the solar energy generator
+     * @return CEAOutputData with the specified potential energy added
      */
     public CEAOutputData addSolarSupply(CEAOutputData result, String generatorType, String generatorLocation, String supplyType, ArrayList<String> data) {
         if (generatorType.equals("PVT_FP")) {
@@ -638,7 +640,7 @@ public class RunCEATask implements Runnable {
     }
 
     /**
-     * Sets solarSupply with the keys being the type of solar generator, and the values being the type of energy that the generator can generate
+     * Sets solarSupply with the keys being the type of solar energy generator, and the values being the type of energy that the generator can generate
      */
     private void setSolarSupply() {
         ArrayList<String> EQ = new ArrayList<>();
@@ -659,7 +661,7 @@ public class RunCEATask implements Runnable {
 
     /**
      * Renames CEA outputs files on PVT since CEA uses the same file names for both plate PVT and tube PVT
-     * @param solarDir directory that stores CEA output files on solar generators
+     * @param solarDir directory that stores CEA output files on solar energy generators
      * @param PVTType the type of PVT used, FP for plate, and ET for tube
      */
     protected void renamePVT(String solarDir, String PVTType) {

@@ -421,7 +421,6 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * Parses input JSONObject into a list of strings
-     *
      * @param requestParams - request body in JSON format
      * @param key - requested data
      * @return List of data
@@ -437,7 +436,6 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * Parses input JSONObject into a list of time series data
-     *
      * @param requestParams - request body in JSON format
      * @param key - requested data
      * @return List of data
@@ -458,7 +456,6 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * Parses input JSONObject into a list of times
-     *
      * @param requestParams - request body in JSON format
      * @param key - requested data
      * @return List of times
@@ -475,7 +472,6 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * Validates input specific to requests coming to URI_UPDATE
-     *
      * @param requestParams - request body in JSON format
      * @return boolean saying if request is valid or not
      */
@@ -502,7 +498,6 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * Validates input specific to requests coming to URI_ACTION
-     *
      * @param requestParams - request body in JSON format
      * @return boolean saying if request is valid or not
      */
@@ -519,7 +514,6 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * Validates input specific to requests coming to URI_QUERY
-     *
      * @param requestParams - request body in JSON format
      * @return boolean saying if request is valid or not
      */
@@ -533,7 +527,6 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * Gets variables from config
-     *
      */
     private void readConfig() {
         ResourceBundle config = ResourceBundle.getBundle("CEAAgentConfig");
@@ -556,8 +549,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * runs CEATask on CEAInputData and returns CEAOutputData
-     *
+     * Runs CEATask on CEAInputData and returns CEAOutputData
      * @param buildingData input data on building footprint and height
      * @param uris list of input uris
      * @param threadNumber int tracking thread that is running
@@ -575,7 +567,6 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * Creates and initialises a time series using the time series client
-     *
      * @param fixedIris map containing time series iris mapped to measurement type
      */
     private void createTimeSeries(LinkedHashMap<String,String> fixedIris, String graph) {
@@ -609,8 +600,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     *  Adds new data to time series
-     *
+     * Adds new data to time series
      * @param values output CEA data
      * @param times times for output time series data
      * @param iriMap iri map containing time series iris
@@ -647,7 +637,6 @@ public class CEAAgent extends JPSAgent {
     /**
      * Checks whether a time series exists by checking whether any of the IRIs that should be attached to
      * the time series is not initialised in the central RDB lookup table using the time series client.
-     *
      * @param iris The IRIs that should be attached to the same time series provided as list of strings.
      * @return True if all IRIs have a time series attached, false otherwise.
      */
@@ -677,8 +666,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * gets namespace uri from input city object uri.
-     *
+     * Gets namespace uri from input city object uri.
      * @param uriString input city object id
      * @return Object's namespace
      */
@@ -688,8 +676,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * creates graph uri from input city object uri and graph name tag.
-     *
+     * Creates graph uri from input city object uri and graph name tag
      * @param uriString input city object id
      * @param graph name tag of graph wanted
      * @return Requested graph with correct namespace
@@ -700,8 +687,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * gets UUID from input city object uri
-     *
+     * Gets UUID from input city object uri
      * @param uriString input city object id
      * @return Requested UUID
      */
@@ -711,8 +697,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * gets building uri from input city object uri
-     *
+     * Gets building uri from input city object uri
      * @param uriString input city object id
      * @return Building uri
      */
@@ -722,7 +707,6 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * Returns route for use with AccessAgent
-     *
      * @param iriString iri of object to be queried
      * @return route of endpoint that iri belongs to
      */
@@ -733,7 +717,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * executes query on SPARQL endpoint and retrieves requested value of building
+     * Executes query on SPARQL endpoint and retrieves requested value of building
      * @param uriString city object id
      * @param value building value requested
      * @param route route to pass to access agent
@@ -763,10 +747,10 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * finds footprint of building from array of building surfaces by searching for constant minimum z in geometries
+     * Finds footprint of building from array of building surfaces by searching for constant minimum z in geometries
      * NB. On data TSDA has run on, the thematic surface is labelled with a ground surface id so this is not required
      * @param results array of building surfaces
-     * @return footprint geometry as string
+     * @return ground geometry in a JSONArray
      */
     private JSONArray getGroundGeometry(JSONArray results){
         ArrayList<Integer> ind = new ArrayList<>();
@@ -834,7 +818,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * calls a SPARQL query for a specific URI for height or geometry.
+     * Calls a SPARQL query for a specific URI for height or geometry.
      * @param uriString city object id
      * @param value building value requested
      * @return returns a query string
@@ -864,7 +848,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve all surface geometries to a building
+     * Builds a SPARQL query for a specific URI to retrieve all surface geometries to a building
      * @param uriString city object id
      * @return returns a query string
      */
@@ -889,7 +873,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve ground surface geometries for building linked to thematic surfaces with ocgml:objectClassId 35
+     * Builds a SPARQL query for a specific URI to retrieve ground surface geometries for building linked to thematic surfaces with ocgml:objectClassId 35
      * @param uriString city object id
      * @return returns a query string
      */
@@ -921,7 +905,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve the building height for data with ocgml:measuredHeight attribute
+     * Builds a SPARQL query for a specific URI to retrieve the building height for data with ocgml:measuredHeight attribute
      * @param uriString city object id
      * @return returns a query string
      */
@@ -943,7 +927,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve the building height for data with ocgml:measuredHeigh attribute
+     * Builds a SPARQL query for a specific URI to retrieve the building height for data with ocgml:measuredHeigh attribute
      * @param uriString city object id
      * @return returns a query string
      */
@@ -965,7 +949,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve the building height for data with generic attribute with ocgml:attrName 'height'
+     * Builds a SPARQL query for a specific URI to retrieve the building height for data with generic attribute with ocgml:attrName 'height'
      * @param uriString city object id
      * @return returns a query string
      */
@@ -985,7 +969,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a CRS in the DatabaseSRS graph using namespace from uri
+     * Builds a SPARQL query for a CRS in the DatabaseSRS graph using namespace from uri
      * @param uriString city object id
      * @return returns a query string
      */
@@ -1001,7 +985,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve ground surface geometry from lod0FootprintId
+     * Builds a SPARQL query for a specific URI to retrieve ground surface geometry from lod0FootprintId
      * @param uriString city object id
      * @return returns a query string
      */
@@ -1025,7 +1009,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a CRS not in the DatabaseSRS graph using namespace from uri
+     * Builds a SPARQL query for a CRS not in the DatabaseSRS graph using namespace from uri
      * @param uriString city object id
      * @return returns a query string
      */
@@ -1041,7 +1025,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for a specific URI to retrieve the building usages and the building usage share with OntoBuiltEnv concepts
+     * Builds a SPARQL query for a specific URI to retrieve the building usages and the building usage share with OntoBuiltEnv concepts
      * @param uriString city object id
      * @return returns a query string
      */
@@ -1066,7 +1050,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL query for the envelope of uriString
+     * Builds a SPARQL query for the envelope of uriString
      * @param uriString city object id
      * @return returns a query string
      */
@@ -1082,7 +1066,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * builds a SPARQL geospatial query for city object id of buildings whose envelope are within lowerBounds and upperBounds
+     * Builds a SPARQL geospatial query for city object id of buildings whose envelope are within lowerBounds and upperBounds
      * @param uriString city object id of the target building
      * @param lowerBounds coordinates of customFieldsLowerBounds as a string
      * @param upperBounds coordinates of customFieldsUpperBounds as a string
@@ -1126,7 +1110,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * retrieves the surrounding buildings
+     * Retrieves the surrounding buildings
      * @param uriString city object id
      * @param route route to pass to access agent
      * @param unique array list of unique surrounding buildings
@@ -1196,7 +1180,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * retrieves the usages of a building and each usage's corresponding weight, and returns the usages and their weight as a map
+     * Retrieves the usages of a building and each usage's corresponding weight, and returns the usages and their weight as a map
      * @param uriString city object id
      * @param route route to pass to access agent
      * @return the usages and their corresponding weighting
@@ -1252,7 +1236,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Add Where for Building Consumption
+     * Add where for Building Consumption
      * @param builder update builder
      * @param type energy type in ontology
      */
@@ -1264,7 +1248,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Add Where for Device Consumption
+     * Add where for Device Consumption
      * @param builder update builder
      * @param system type of device
      */
@@ -1278,7 +1262,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Add Where for Device Supply
+     * Add where for Device Supply
      * @param builder update builder
      * @param generatorType type of generator
      */
@@ -1292,7 +1276,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Add Where for Device Area
+     * Add where for Device Area
      * @param builder update builder
      * @param generatorType type of generator
      */
@@ -1584,7 +1568,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Check building linked to ontoCityGML is initialised in KG and is a DABGEO:Building instance
+     * Checks building linked to ontoCityGML is initialised in KG and is a DABGEO:Building instance
      * @param uriString city object id
      * @param route route to pass to access agent
      * @return building
@@ -1612,7 +1596,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Initialise building in KG with buildingUri as the DABGEO:Building IRI, and link to ontoCityGMLRepresentation
+     * Initialises building in KG with buildingUri as the DABGEO:Building IRI, and link to ontoCityGMLRepresentation
      * @param uriString city object id
      * @param buildingUri building IRI from other endpoints if exist
      * @param route route to pass to access agent
@@ -1658,7 +1642,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Check if energy profile data already exist in KG and get IRIs if they do
+     * Checks if energy profile data already exist in KG and get IRIs if they do
      * @param building building uri in energy profile graph
      * @param tsIris map of time series iris to data types
      * @param scalarIris map of iris in kg to data type
@@ -1686,7 +1670,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Create update for energy consumption
+     * Creates update for energy consumption
      * @param builder update builder
      * @param consumer iri of building/device
      * @param consumptionType type in ontology
@@ -1705,7 +1689,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Create update for device energy consumption
+     * Creates update for device energy consumption
      * @param builder update builder
      * @param building iri of building
      * @param device iri of device
@@ -1722,14 +1706,14 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Create update for solar generators supply
+     * Creates update for solar energy generators supply
      * @param builder update builder
-     * @param SolarGenerators iri of Solar generators
+     * @param solarGenerators iri of solar energy generators
      * @param quantity om:quantity iri
      * @param measure om:measure iri
      */
-    public void createSolarGeneratorSupplyUpdate(WhereBuilder builder, String SolarGenerators, String quantity, String measure, String energySupply){
-        builder.addWhere(NodeFactory.createURI(SolarGenerators), "thinkhome:producesEnergy", NodeFactory.createURI(quantity))
+    public void createSolarGeneratorSupplyUpdate(WhereBuilder builder, String solarGenerators, String quantity, String measure, String energySupply){
+        builder.addWhere(NodeFactory.createURI(solarGenerators), "thinkhome:producesEnergy", NodeFactory.createURI(quantity))
                 .addWhere(NodeFactory.createURI(quantity), "rdf:type", energySupply)
                 .addWhere(NodeFactory.createURI(quantity), "rdf:type", "owl:NamedIndividual")
                 .addWhere(NodeFactory.createURI(quantity), "om:hasDimension", "om:energy-Dimension")
@@ -1740,10 +1724,10 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Create update for solar generator areas
+     * Creates update for solar energy generator areas
      * @param builder update builder
      * @param building iri of building
-     * @param generator iri of solar generator
+     * @param generator iri of solar energy generator
      * @param generatorType type of generator
      * @param quantity om:quantity iri
      * @param measure om:measure iri
@@ -1765,7 +1749,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Initialise energy profile data in KG
+     * Initialises energy profile data in KG
      * @param uriCounter keep track of uris
      * @param scalars map of scalar measurements
      * @param buildingUri building uri
@@ -2104,7 +2088,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Update numerical value of scalars in KG
+     * Updates numerical value of scalars in KG
      * @param scalars map of scalar measurements
      * @param scalarIris map of iris in kg to data types
      * @param route route to pass to access agent
@@ -2143,7 +2127,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Return readable unit from ontology iri
+     * Returns readable unit from ontology iri
      * @param ontologyUnit unit iri in ontology
      * @return unit as a String
      */
@@ -2159,7 +2143,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Return data using time series client for given data iri
+     * Returns data using time series client for given data iri
      * @param dataIri iri in time series database
      * @return time series data
      */
@@ -2177,7 +2161,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Calculate annual value by summing all data in column in time series and rounding to 2dp
+     * Calculates annual value by summing all data in column in time series and rounding to 2dp
      * @param timeSeries time series data
      * @param dataIri iri in time series database
      * @return annualValue as a String
@@ -2260,8 +2244,9 @@ public class CEAAgent extends JPSAgent {
 
         return coordinatesToString(footprintCoordinates);
     }
+
     /**
-     * Create a polygon with the given points
+     * Creates a polygon with the given points
      * @param points points of the polygon as a string
      * @return a polygon
      */
@@ -2331,7 +2316,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Extract the z coordinates of the polygon vertices
+     * Extracts the z coordinates of the polygon vertices
      * @param geom polygon geometry
      * @return the z coordinates of the polygon vertices
      */
@@ -2474,7 +2459,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Convert OntoBuiltEnv building usage type to convention used by CEA
+     * Converts OntoBuiltEnv building usage type to convention used by CEA
      * @param usage OntoBuiltEnv building usage type
      * @return building usage per CEA convention
      */
@@ -2557,7 +2542,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Basic query to check if route is queryable
+     * Run basic SPARQL query to check if route is queryable
      * @param route endpoint to check
      */
     public void checkEndpoint(String route){
