@@ -1,9 +1,9 @@
 # CEA Agent
 ## Agent Description
 
-The CEA agent can be used to interact with the [City Energy Analyst (CEA)](https://www.cityenergyanalyst.com/)  and the data it produces on building energy demands and photovoltaic potentials.
+The CEA Agent can be used to interact with the [City Energy Analyst (CEA)](https://www.cityenergyanalyst.com/)  and the data it produces on building energy demands and installable solar energy generators.
 
-The agent currently queries for building geometry, surrounding buildings geometries and building usage stored in the knowledge graph, which are passed to CEA as inputs. The energy demands and photovoltaic potentials calculated by CEA are extracted by the agent and stored on the knowledge graph.
+The agent currently queries for building geometry, surrounding buildings geometries and building usage stored in the knowledge graph, which are passed to CEA as inputs. The energy demands and solar energy generation calculated by CEA are extracted by the agent and stored on the knowledge graph.
 
 ## Build Instructions
 
@@ -34,7 +34,7 @@ The username and password for the postgreSQL database need to be provided in sin
 
 ### Access Agent
 
-The CEA agent also uses the [access agent](https://github.com/cambridge-cares/TheWorldAvatar/tree/main/JPS_ACCESS_AGENT).
+The CEA Agent also uses the [access agent](https://github.com/cambridge-cares/TheWorldAvatar/tree/main/JPS_ACCESS_AGENT).
 The targetResourceIDs in ```./cea-agent/src/main/resources/CEAAgentConfig.properties``` provides mappings to namespaces in TheWorldAvatar Blazegraph (http://www.theworldavatar.com:83/citieskg/). The targetResourceID are passed to the access agent in order to query from TheWorldAvatar Blazegraph. Check that a targetResourceID to pass to the access agent exists for the namespace being used for SPARQL queries.
 Currently included are:
 
@@ -61,7 +61,7 @@ docker-compose up -d
 
 
 ## Agent Endpoints
-The CEA agent provides three endpoints: run endpoint (http://localhost:58085/agents/cea/run), where the agent runs CEA; update endpoint (http://localhost:58085/agents/cea/update), where the agent updates the knowledge graph with triples on CEA outputs; query endpoint (http://localhost:58085/agents/cea/query), where the agent returns CEA outputs. 
+The CEA Agent provides three endpoints: run endpoint (http://localhost:58085/agents/cea/run), where the agent runs CEA; update endpoint (http://localhost:58085/agents/cea/update), where the agent updates the knowledge graph with triples on CEA outputs; query endpoint (http://localhost:58085/agents/cea/query), where the agent returns CEA outputs. 
 
 ### 1. Run Endpoint
 Available at http://localhost:58085/agents/cea/run.
@@ -70,7 +70,7 @@ The run endpoint accepts the following request parameters:
 - ```iris```: array of cityObject IRIs.
 - ```geometryEndpoint```: (optional) endpoint where the geospatial information of the cityObjects from ```iris``` are stored; if not specified, agent will default to setting ```geometryEndpoint``` to TheWorldAvatar Blazegraph with the namespace retrieved from the cityObject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```.
 - ```usageEndpoint```: (optional) endpoint where the building usage information of the cityObjects from ```iris``` are stored, if not specified, agent will default to setting ```usageEndpoint``` to be the same as ```geometryEndpoint```.
-- ```ceaEndpoint```: (optional) endpoint where the CEA triples, i.e. energy demand and photovoltaic potential information, instantiated by the agent are to be stored; if not specified, agent will default to setting ```ceaEndpoint``` to TheWorldAvatar Blazegraph with the namespace retrieved from the cityObject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```.
+- ```ceaEndpoint```: (optional) endpoint where the CEA triples, i.e. energy demand and solar energy generation information, instantiated by the agent are to be stored; if not specified, agent will default to setting ```ceaEndpoint``` to TheWorldAvatar Blazegraph with the namespace retrieved from the cityObject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```.
 - ```graphName```: (optional) named graph to which the CEA triples belong to. In the scenario where ```ceaEndpoint``` is not specified, if ```graphName``` is not specified, the default graph is ```http://www.theworldavatar.com:83/citieskg/namespace/{namespace}/sparql/energyprofile/```, where {namespace} is a placeholder for the namespace of the cityObject IRI, e.g. kingslynnEPSG27700. If ```ceaEndpoint``` is specified, the agent will assume no graph usage if ```namedGraph``` is not specified.
 
 After receiving request to the run endpoint, the agent will query for the building geometry, surrounding buildings' geometry and building usage from the endpoints specified in the request parameters. The agent will then run CEA with the queried information as inputs, and send request with the CEA output data to the update endpoint afterwards.
@@ -82,7 +82,7 @@ Example request:
 "geometryEndpoint" : "http://host.docker.internal:48888/kingslynnEPSG27700",
 "ceaEndpoint": "http://host.docker.internal:48888/cea"}
 ```
-In the above request example, the CEA agent will be querying geometry and usage from the Blazegraph that ```http://host.docker.internal:48888/kingslynnEPSG27700``` is pointed to. The CEA triples will be instantiated, with no graph reference, in the Blazegraph where ```http://host.docker.internal:48888/cea``` is pointed to.
+In the above request example, the CEA Agent will be querying geometry and usage from the Blazegraph that ```http://host.docker.internal:48888/kingslynnEPSG27700``` is pointed to. The CEA triples will be instantiated, with no graph reference, in the Blazegraph where ```http://host.docker.internal:48888/cea``` is pointed to.
 
 Example request:
 ```
@@ -92,20 +92,20 @@ Example request:
 "ceaEndpoint": "http://host.docker.internal:48888/cea",
 "graphName": "http://127.0.0.1:9999/blazegraph/namespace/cea/cea"}
 ```
-In the above request example, the CEA agent will be querying geometry and usage from the Blazegraph that ```http://host.docker.internal:48888/kingslynnEPSG27700``` is pointed to. The CEA triples will be instantiated under the ```http://127.0.0.1:9999/blazegraph/namespace/cea/cea``` graph in the Blazegraph where ```http://host.docker.internal:48888/cea``` is pointed to.
+In the above request example, the CEA Agent will be querying geometry and usage from the Blazegraph that ```http://host.docker.internal:48888/kingslynnEPSG27700``` is pointed to. The CEA triples will be instantiated under the ```http://127.0.0.1:9999/blazegraph/namespace/cea/cea``` graph in the Blazegraph where ```http://host.docker.internal:48888/cea``` is pointed to.
 
 Example request:
 ```
 { "iris" :
 ["http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/cityobject/UUID_0595923a-3a83-4097-b39b-518fd23184cc/"],
 ```
-In the above request example, the CEA agent will be querying geometry and usage, as well as instantiating CEA triples, from the ```citieskg-kingslynnEPSG27700``` namespace in TheWorldAvatar Blazegraph. And the CEA triples will be instantiated under the ```http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/energyprofile/``` graph.
+In the above request example, the CEA Agent will be querying geometry and usage, as well as instantiating CEA triples, from the ```citieskg-kingslynnEPSG27700``` namespace in TheWorldAvatar Blazegraph. And the CEA triples will be instantiated under the ```http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/energyprofile/``` graph.
 
 ### 2. Update
 
 Available at http://localhost:58085/agents/cea/update.
 
-Requests to the update endpoint is automatically sent by the CEA agent after running and receiving requests to the run endpoint. The update endpoint updates the knowledge graph with CEA outputs.
+Requests to the update endpoint is automatically sent by the CEA Agent after running and receiving requests to the run endpoint. The update endpoint updates the knowledge graph with CEA outputs.
 
 ### 3. Query
 
@@ -116,7 +116,7 @@ The query endpoint accepts the following request parameters:
 - ```ceaEndpoint```: (optional) endpoint where the CEA triples instantiated by the agent are stored; if not specified, agent will default to setting ```ceaEndpoint``` to TheWorldAvatar Blazegraph with the namespace retrieved from the cityObject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```.
 - ```graphName```: (optional) named graph to which the CEA triples belong to. In the scenario where ```ceaEndpoint``` is not specified, if ```graphName``` is not specified, the default graph is ```http://www.theworldavatar.com:83/citieskg/namespace/{namespace}/sparql/energyprofile/```, where {namespace} is a placeholder for the namespace of the cityObject IRI, e.g. kingslynnEPSG27700. If ```ceaEndpoint``` is specified, the agent will assume no graph usage if ```namedGraph``` is not specified.
 
-After receiving request sent to the query endpoint, the agent will retrieve energy demand and photovoltaic information calculated by CEA for the cityObject IRIs provided in ```iris```. The energy demand and photovoltaic information will only be returned if the cityObject IRIs provided in ```iris``` has already been passed to the run endpoint of the CEA agent beforehand.
+After receiving request sent to the query endpoint, the agent will retrieve energy demand and solar energy generation information calculated by CEA for the cityObject IRIs provided in ```iris```. The energy demand and solar energy generation information will only be returned if the cityObject IRIs provided in ```iris``` has already been passed to the run endpoint of the CEA Agent beforehand.
 
 Example request:
 ```
