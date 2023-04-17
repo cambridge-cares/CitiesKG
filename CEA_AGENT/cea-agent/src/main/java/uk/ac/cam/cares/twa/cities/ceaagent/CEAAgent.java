@@ -61,6 +61,7 @@ public class CEAAgent extends JPSAgent {
     public static final String KEY_IRI = "iris";
     public static final String KEY_GEOMETRY = "geometryEndpoint";
     public static final String KEY_USAGE = "usageEndpoint";
+    public static final String KEY_WEATHER = "weatherEndpoint";
     public static final String KEY_CEA = "ceaEndpoint";
     public static final String KEY_GRAPH = "graphName";
     public static final String CITY_OBJECT = "cityobject";
@@ -166,6 +167,7 @@ public class CEAAgent extends JPSAgent {
     private String targetUrl;
     private String geometryRoute;
     private String usageRoute;
+    private String weatherRoute;
     private String ceaRoute;
     private String namedGraph;
 
@@ -251,6 +253,7 @@ public class CEAAgent extends JPSAgent {
                             geometryRoute = requestParams.has(KEY_GEOMETRY) ? requestParams.getString(KEY_GEOMETRY) : getRoute(uri);
                             // if KEY_USAGE is not specified in requestParams, geometryRoute defaults to TheWorldAvatar Blazegraph
                             usageRoute = requestParams.has(KEY_USAGE) ? requestParams.getString(KEY_USAGE) : geometryRoute;
+                            weatherRoute = requestParams.has(KEY_WEATHER) ? requestParams.getString(KEY_WEATHER) : weatherRoute;
                             if (!requestParams.has(KEY_CEA)){
                                 // if KEY_CEA is not specified in requestParams, set ceaRoute to TheWorldAvatar Blazegraph
                                 ceaRoute = getRoute(uri);
@@ -546,6 +549,7 @@ public class CEAAgent extends JPSAgent {
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/", config.getString("kingslynnEPSG3857.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/", config.getString("kingslynnEPSG27700.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/", config.getString("pirmasensEPSG32633.targetresourceid"));
+        weatherRoute = config.getString("weather.targetresourceid");
     }
 
     /**
