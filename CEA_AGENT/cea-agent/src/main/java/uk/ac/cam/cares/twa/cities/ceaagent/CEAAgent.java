@@ -1,11 +1,19 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementService;
 import org.jooq.exception.DataAccessException;
 import org.locationtech.jts.geom.util.GeometryFixer;
+import org.locationtech.jts.geom.*;
+import org.geotools.geometry.jts.JTS;
+import org.geotools.referencing.CRS;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.config.JPSConstants;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -40,7 +48,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.json.JSONArray;
 
-import org.locationtech.jts.geom.*;
+
 
 import org.locationtech.jts.operation.buffer.BufferOp;
 import org.locationtech.jts.operation.buffer.BufferParameters;
@@ -137,6 +145,7 @@ public class CEAAgent extends JPSAgent {
     public static final String KEY_THERMAL_TUBE_WALL_WEST_SUPPLY = "ThermalTubeWallWestSupply";
     public static final String KEY_TIMES = "times";
     public static final String CEA_OUTPUTS = "ceaOutputs";
+    private static final String CRS_4326 = "EPSG:4326";
     public String customDataType = "<http://localhost/blazegraph/literals/POLYGON-3-15>";
     public String customField = "X0#Y0#Z0#X1#Y1#Z1#X2#Y2#Z2#X3#Y3#Z3#X4#Y4#Z4";
 
@@ -161,6 +170,8 @@ public class CEAAgent extends JPSAgent {
     private String purlInfrastructureUri;
     private String thinkhomeUri;
     private String ontoBuiltEnvUri;
+    private String ontoemsUri;
+    private String geoliteralUri;
     private String geoUri;
     private static String unitOntologyUri;
     private String requestUrl;
@@ -296,12 +307,16 @@ public class CEAAgent extends JPSAgent {
 
                         ArrayList<CEAInputData> surrounding = getSurroundings(uri, geometryRoute, uniqueSurrounding);
 
-                        testData.add(new CEAInputData(footprint, height, usage, surrounding));
+                        //just get crs once - assuming all iris in same namespace
                         if (i==0) {
                             crs = getValue(uri, "CRS", geometryRoute);
                             crs = crs == "" ? getValue(uri, "DatabasesrsCRS", geometryRoute) : crs;
                             if (crs == ""){crs = getNamespace(uri).split("EPSG").length == 2 ? getNamespace(uri).split("EPSG")[1].split("/")[0] : "27700";}
-                        } //just get crs once - assuming all iris in same namespace
+                        } 
+
+                        getWeather(uri, geometryRoute, weatherRoute, crs);
+                        
+                        testData.add(new CEAInputData(footprint, height, usage, surrounding));
                     }
                     // Manually set thread number to 0 - multiple threads not working so needs investigating
                     // Potentially issue is CEA is already multi-threaded
@@ -542,6 +557,8 @@ public class CEAAgent extends JPSAgent {
         thinkhomeUri=config.getString("uri.ontology.thinkhome");
         purlInfrastructureUri=config.getString("uri.ontology.purl.infrastructure");
         ontoBuiltEnvUri=config.getString("uri.ontology.ontobuiltenv");
+        ontoemsUri=config.getString("uri.ontology.ontoems");
+        geoliteralUri=config.getString("uri.ontology.geoliteral");
         geoUri=config.getString("uri.service.geo");
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/", config.getString("berlin.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/", config.getString("singaporeEPSG24500.targetresourceid"));
@@ -1234,6 +1251,74 @@ public class CEAAgent extends JPSAgent {
             for (Map.Entry<String, Double> entry : result.entrySet()){
                 result.put(entry.getKey(), entry.getValue() / sum);
             }
+        }
+
+        return result;
+    }
+
+    private void getWeather(String uriString, String route, String weatherRoute, String crs) {
+        String envelopeCoordinates = getValue(uriString, "envelope", route);
+
+        Polygon envelopePolygon = (Polygon) toPolygon(envelopeCoordinates);
+
+        Point center = envelopePolygon.getCentroid();
+
+        Coordinate centerCoordinate = center.getCoordinate();
+
+        crs = StringUtils.isNumeric(crs) ? "EPSG:" + crs : crs;
+
+        try {
+            CoordinateReferenceSystem sourceCRS = CRS.decode(crs);
+            CoordinateReferenceSystem targetCRS = CRS.decode(CRS_4326);
+
+            MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
+
+            Coordinate coordinate = JTS.transform(centerCoordinate, null, transform);
+
+            String stationIRI = getWeatherStation(coordinate, 5.0, weatherRoute);
+
+        } catch (FactoryException | TransformException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Queries for and returns the IRI of weather station located within {radius} kilometers of center
+     * @param center center of the search circle
+     * @param radius radius of the search circle
+     * @param route endpoint of the weather station query
+     * @return
+     */
+    private String getWeatherStation(Coordinate center, Double radius, String route) {
+        String result = "";
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("geo", geoUri)
+                .addPrefix("geoliteral", geoliteralUri)
+                .addPrefix("ontoems", ontoemsUri);
+
+        wb.addWhere("?station", "geo:search", "inCircle")
+                .addWhere("?station", "geo:searchDatatype", "geoliteral:lat-lon")
+                .addWhere("?station", "geo:predicate", "ontoems:hasObservationLocation")
+                // PLACEHOLDER because the coordinate will be treated as doubles instead of string otherwise
+                .addWhere("?station", "geo:spatialCircleCenter", center.getX() + "PLACEHOLDER" + center.getY())
+                .addWhere("?station", "geo:spatialCircleRadius", radius);
+
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?station");
+
+        Query query = sb.build();
+
+        // add geospatial service
+        ElementGroup body = new ElementGroup();
+        body.addElement(new ElementService(geoUri + "search", wb.build().getQueryPattern()));
+        query.setQueryPattern(body);
+
+        String queryString = query.toString().replace("PLACEHOLDER", "#");
+
+        JSONArray queryResultArray = this.queryStore(route, queryString);
+
+        if (!queryResultArray.isEmpty()) {
+            result = queryResultArray.getJSONObject(0).getString("station");
         }
 
         return result;
