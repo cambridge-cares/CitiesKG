@@ -566,7 +566,8 @@ public class CEAAgent extends JPSAgent {
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/", config.getString("kingslynnEPSG3857.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/", config.getString("kingslynnEPSG27700.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/", config.getString("pirmasensEPSG32633.targetresourceid"));
-        weatherRoute = config.getString("weather.targetresourceid");
+//        weatherRoute = config.getString("weather.targetresourceid");
+        weatherRoute = "http://localhost:48888/openmeteo";
     }
 
     /**
@@ -1277,6 +1278,8 @@ public class CEAAgent extends JPSAgent {
 
             String stationIRI = getWeatherStation(coordinate, 5.0, weatherRoute);
 
+            Map<String, String> weatherIRI = getWeatherIRI(stationIRI, weatherRoute);
+
         } catch (FactoryException | TransformException e) {
             throw new RuntimeException(e);
         }
@@ -1287,7 +1290,7 @@ public class CEAAgent extends JPSAgent {
      * @param center center of the search circle
      * @param radius radius of the search circle
      * @param route endpoint of the weather station query
-     * @return
+     * @return IRI of a weather station located within {radius} kilometers of center
      */
     private String getWeatherStation(Coordinate center, Double radius, String route) {
         String result = "";
@@ -1319,6 +1322,42 @@ public class CEAAgent extends JPSAgent {
 
         if (!queryResultArray.isEmpty()) {
             result = queryResultArray.getJSONObject(0).getString("station");
+        }
+
+        return result;
+    }
+
+    /**
+     * Queries for and returns the weather data IRI and their weather data type
+     * @param stationIRI IRI of weather station
+     * @param route endpoint for weather query
+     * @return weather data IRI and their weather data type as a map
+     */
+    private Map<String, String> getWeatherIRI(String stationIRI, String route) {
+        Map<String, String> result = new HashMap<>();
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ontoems", ontoemsUri)
+                .addPrefix("om", unitOntologyUri)
+                .addPrefix("rdf", rdfUri);
+
+        wb.addWhere("?station", "ontoems:reports", "?quantity")
+                .addWhere("?quantity", "rdf:type", "?weatherParameter")
+                .addWhere("?quantity", "om:hasValue", "?measure");
+
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?weatherParameter")
+                .addVar("?measure");
+
+        sb.addWhere(wb);
+
+        sb.setVar(Var.alloc( "station" ), NodeFactory.createURI(stationIRI));
+
+        JSONArray queryResultArray = this.queryStore(route, sb.build().toString());
+
+        if (!queryResultArray.isEmpty()) {
+            for (int i = 0; i < queryResultArray.length(); i++) {
+                result.put(queryResultArray.getJSONObject(i).getString("weatherParameter").split(ontoemsUri)[1], queryResultArray.getJSONObject(i).getString("measure"));
+            }
         }
 
         return result;
