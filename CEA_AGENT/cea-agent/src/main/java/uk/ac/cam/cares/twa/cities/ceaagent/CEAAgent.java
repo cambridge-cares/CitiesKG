@@ -170,6 +170,7 @@ public class CEAAgent extends JPSAgent {
     private String purlInfrastructureUri;
     private String thinkhomeUri;
     private String ontoBuiltEnvUri;
+    private String ontotimeseriesUri;
     private String ontoemsUri;
     private String geoliteralUri;
     private String geoUri;
@@ -557,6 +558,7 @@ public class CEAAgent extends JPSAgent {
         thinkhomeUri=config.getString("uri.ontology.thinkhome");
         purlInfrastructureUri=config.getString("uri.ontology.purl.infrastructure");
         ontoBuiltEnvUri=config.getString("uri.ontology.ontobuiltenv");
+        ontotimeseriesUri=config.getString("uri.ontology.ontotimeseries");
         ontoemsUri=config.getString("uri.ontology.ontoems");
         geoliteralUri=config.getString("uri.ontology.geoliteral");
         geoUri=config.getString("uri.service.geo");
@@ -566,8 +568,7 @@ public class CEAAgent extends JPSAgent {
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/", config.getString("kingslynnEPSG3857.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/", config.getString("kingslynnEPSG27700.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/", config.getString("pirmasensEPSG32633.targetresourceid"));
-//        weatherRoute = config.getString("weather.targetresourceid");
-        weatherRoute = "http://localhost:48888/openmeteo";
+        weatherRoute = config.getString("weather.targetresourceid");
     }
 
     /**
@@ -1278,7 +1279,7 @@ public class CEAAgent extends JPSAgent {
 
             String stationIRI = getWeatherStation(coordinate, 5.0, weatherRoute);
 
-            Map<String, String> weatherIRI = getWeatherIRI(stationIRI, weatherRoute);
+            Map<String, List<String>> weatherIRI = getWeatherIRI(stationIRI, weatherRoute);
 
         } catch (FactoryException | TransformException e) {
             throw new RuntimeException(e);
@@ -1328,25 +1329,29 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Queries for and returns the weather data IRI and their weather data type
+     * Queries for and returns the weather data IRI, their weather data type, and the time series database URL of the corresponding weather time series
      * @param stationIRI IRI of weather station
      * @param route endpoint for weather query
-     * @return weather data IRI and their weather data type as a map
+     * @return map with weather data type as key, weather data IRI and time series database URL as a list for the map value
      */
-    private Map<String, String> getWeatherIRI(String stationIRI, String route) {
-        Map<String, String> result = new HashMap<>();
+    private Map<String, List<String>> getWeatherIRI(String stationIRI, String route) {
+        Map<String, List<String>> result = new HashMap<>();
         WhereBuilder wb = new WhereBuilder()
                 .addPrefix("ontoems", ontoemsUri)
                 .addPrefix("om", unitOntologyUri)
-                .addPrefix("rdf", rdfUri);
+                .addPrefix("rdf", rdfUri)
+                .addPrefix("ontotimeseries", ontotimeseriesUri);
 
         wb.addWhere("?station", "ontoems:reports", "?quantity")
                 .addWhere("?quantity", "rdf:type", "?weatherParameter")
-                .addWhere("?quantity", "om:hasValue", "?measure");
+                .addWhere("?quantity", "om:hasValue", "?measure")
+                .addWhere("?measure", "ontotimeseries:hasTimeSeries", "?timeseries")
+                .addWhere("?timeseries", "ontotimeseries:hasRDB", "?rdb");
 
         SelectBuilder sb = new SelectBuilder()
                 .addVar("?weatherParameter")
-                .addVar("?measure");
+                .addVar("?measure")
+                .addVar("?rdb");
 
         sb.addWhere(wb);
 
@@ -1356,7 +1361,7 @@ public class CEAAgent extends JPSAgent {
 
         if (!queryResultArray.isEmpty()) {
             for (int i = 0; i < queryResultArray.length(); i++) {
-                result.put(queryResultArray.getJSONObject(i).getString("weatherParameter").split(ontoemsUri)[1], queryResultArray.getJSONObject(i).getString("measure"));
+                result.put(queryResultArray.getJSONObject(i).getString("weatherParameter").split(ontoemsUri)[1], Arrays.asList(queryResultArray.getJSONObject(i).getString("measure"), queryResultArray.getJSONObject(i).getString("rdb")));
             }
         }
 
