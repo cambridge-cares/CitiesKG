@@ -159,6 +159,9 @@ public class CEAAgent extends JPSAgent {
     private TimeSeriesClient<OffsetDateTime> tsClient;
     public static final String timeUnit = OffsetDateTime.class.getSimpleName();
     private static final String FS = System.getProperty("file.separator");
+
+    private String dbUser;
+    private String dbPassword;
     private RemoteRDBStoreClient rdbStoreClient;
     private RemoteStoreClient storeClient;
     // Variables fetched from CEAAgentConfig.properties file.
@@ -290,7 +293,8 @@ public class CEAAgent extends JPSAgent {
                             if (!namedGraph.isEmpty()){
                                 checkQuadsEnabled(ceaRoute);
                             }
-                            setStoreClient(ceaRoute);
+                            List<String> routeEndpoints = getRouteEndpoints(ceaRoute);
+                            storeClient = new RemoteStoreClient(routeEndpoints.get(0), routeEndpoints.get(1));
                         }
                         uriStringArray.add(uri);
                         // Set default value of 10m if height can not be obtained from knowledge graph
@@ -315,9 +319,9 @@ public class CEAAgent extends JPSAgent {
                             if (crs == ""){crs = getNamespace(uri).split("EPSG").length == 2 ? getNamespace(uri).split("EPSG")[1].split("/")[0] : "27700";}
                         } 
 
-                        getWeather(uri, geometryRoute, weatherRoute, crs);
+                        List<Object> weather = getWeather(uri, geometryRoute, weatherRoute, crs);
                         
-                        testData.add(new CEAInputData(footprint, height, usage, surrounding));
+                        testData.add(new CEAInputData(footprint, height, usage, surrounding, (List<OffsetDateTime>) weather.get(0), (Map<String, List<Double>>) weather.get(1)));
                     }
                     // Manually set thread number to 0 - multiple threads not working so needs investigating
                     // Potentially issue is CEA is already multi-threaded
@@ -352,7 +356,8 @@ public class CEAAgent extends JPSAgent {
                                 checkQuadsEnabled(ceaRoute);
                             }
                         }
-                        setStoreClient(ceaRoute);
+                        List<String> routeEndpoints = getRouteEndpoints(ceaRoute);
+                        storeClient = new RemoteStoreClient(routeEndpoints.get(0), routeEndpoints.get(1));
                     }
                     String building = checkBuildingInitialised(uri, ceaRoute);
                     if(building.equals("")){
@@ -366,7 +371,7 @@ public class CEAAgent extends JPSAgent {
                         if (!result.isEmpty()) {
                             String value;
                             if (TIME_SERIES.contains(measurement)) {
-                                value = calculateAnnual(retrieveData(result.get(0)), result.get(0));
+                                value = calculateAnnual(retrieveData(result.get(0), storeClient, rdbStoreClient), result.get(0));
                                 if (measurement.contains("ESupply")) {
                                     // PVT annual electricity supply
                                     measurement = "Annual "+ measurement.split("ESupply")[0] + " Electricity Supply";
@@ -1189,7 +1194,7 @@ public class CEAAgent extends JPSAgent {
                     footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                     footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
 
-                    temp = new CEAInputData(footprint, height, null, null);
+                    temp = new CEAInputData(footprint, height, null, null, null, null);
                     unique.add(uri);
                     surroundings.add(temp);
                 }
@@ -1258,7 +1263,9 @@ public class CEAAgent extends JPSAgent {
         return result;
     }
 
-    private void getWeather(String uriString, String route, String weatherRoute, String crs) {
+    private List<Object> getWeather(String uriString, String route, String weatherRoute, String crs) {
+        List<Object> result = new ArrayList<>();
+
         String envelopeCoordinates = getValue(uriString, "envelope", route);
 
         Polygon envelopePolygon = (Polygon) toPolygon(envelopeCoordinates);
@@ -1279,8 +1286,34 @@ public class CEAAgent extends JPSAgent {
 
             String stationIRI = getWeatherStation(coordinate, 5.0, weatherRoute);
 
-            Map<String, List<String>> weatherIRI = getWeatherIRI(stationIRI, weatherRoute);
+            Map<String, List<String>> weatherMap = getWeatherIRI(stationIRI, weatherRoute);
 
+            Map<String, List<Double>> weather = new HashMap<>();
+
+            boolean getTimes = true;
+
+            for (Map.Entry entry : weatherMap.entrySet()) {
+                List<String> value = (List<String>) entry.getValue();
+                String weatherIRI = value.get(0);
+                String weatherDB = isDockerized() ? value.get(1).replace("localhost", "host.docker.internal") : value.get(1).replace("host.docker.internal", "localhost");
+                RemoteRDBStoreClient weatherRDBClient = new RemoteRDBStoreClient(weatherDB, dbUser, dbPassword);
+                List<String> weatherEndpoints = getRouteEndpoints(weatherRoute);
+                RemoteStoreClient weatherStoreClient = new RemoteStoreClient(weatherEndpoints.get(0), weatherEndpoints.get(1));
+                TimeSeries<OffsetDateTime> weatherTS = retrieveData(weatherIRI, weatherStoreClient, weatherRDBClient);
+                List<Double> weatherData = weatherTS.getValuesAsDouble(weatherIRI);
+                if (getTimes) {
+                    // want hourly data over a year
+                    if (weatherTS.getTimes().size() < 8760) {
+                        break;
+                    }
+                    result.add(weatherTS.getTimes());
+                    getTimes = false;
+                }
+                weather.put((String) entry.getKey(), weatherData);
+            }
+
+            result.add(weather);
+            return result;
         } catch (FactoryException | TransformException e) {
             throw new RuntimeException(e);
         }
@@ -2280,12 +2313,13 @@ public class CEAAgent extends JPSAgent {
      * @param dataIri iri in time series database
      * @return time series data
      */
-    public TimeSeries<OffsetDateTime> retrieveData(String dataIri){
-        tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
+    public TimeSeries<OffsetDateTime> retrieveData(String dataIri, RemoteStoreClient store, RemoteRDBStoreClient rdbStore){
+        TimeSeriesClient<OffsetDateTime> client = new TimeSeriesClient<>(store, OffsetDateTime.class);
+
         List<String> iris = new ArrayList<>();
         iris.add(dataIri);
-        try (Connection conn = rdbStoreClient.getConnection()) {
-            TimeSeries<OffsetDateTime> data = tsClient.getTimeSeries(iris, conn);
+        try (Connection conn = rdbStore.getConnection()) {
+            TimeSeries<OffsetDateTime> data = client.getTimeSeries(iris, conn);
             return data;
         }
         catch (SQLException e) {
@@ -2558,7 +2592,7 @@ public class CEAAgent extends JPSAgent {
      * Sets rdbStoreClient with the database url, username, and password from the file at path
      * @param path timeseriesclient.properties path as string
      */
-    protected void setRDBClient(String path){
+    protected void setRDBClient(String path) {
         try {
             FileInputStream in = new FileInputStream(path);
             Properties props = new Properties();
@@ -2566,6 +2600,8 @@ public class CEAAgent extends JPSAgent {
             in.close();
 
             rdbStoreClient = new RemoteRDBStoreClient(props.getProperty("db.url"), props.getProperty("db.user"), props.getProperty("db.password"));
+            dbUser = props.getProperty("db.user");
+            dbPassword = props.getProperty("db.password");
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -2577,7 +2613,7 @@ public class CEAAgent extends JPSAgent {
      * Sets store client to the query and update endpoint of route, so that the time series client queries and updates from the same endpoint as route
      * @param route access agent route
      */
-    private void setStoreClient(String route){
+    private List<String> getRouteEndpoints(String route) {
         JSONObject queryResult = this.getEndpoints(route);
 
         String queryEndpoint = queryResult.getString(JPSConstants.QUERY_ENDPOINT);
@@ -2588,7 +2624,7 @@ public class CEAAgent extends JPSAgent {
             updateEndpoint = updateEndpoint.replace("host.docker.internal", "localhost");
         }
 
-        storeClient = new RemoteStoreClient(queryEndpoint, updateEndpoint);
+        return Arrays.asList(queryEndpoint, updateEndpoint);
     }
 
     /**
