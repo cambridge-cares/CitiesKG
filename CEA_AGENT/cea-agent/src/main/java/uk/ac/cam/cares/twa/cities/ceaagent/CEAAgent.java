@@ -315,8 +315,8 @@ public class CEAAgent extends JPSAgent {
                         //just get crs once - assuming all iris in same namespace
                         if (i==0) {
                             crs = getValue(uri, "CRS", geometryRoute);
-                            crs = crs == "" ? getValue(uri, "DatabasesrsCRS", geometryRoute) : crs;
-                            if (crs == ""){crs = getNamespace(uri).split("EPSG").length == 2 ? getNamespace(uri).split("EPSG")[1].split("/")[0] : "27700";}
+                            crs = crs.isEmpty() ? getValue(uri, "DatabasesrsCRS", geometryRoute) : crs;
+                            if (crs.isEmpty()){crs = getNamespace(uri).split("EPSG").length == 2 ? getNamespace(uri).split("EPSG")[1].split("/")[0] : "27700";}
                         } 
 
                         List<Object> weather = getWeather(uri, geometryRoute, weatherRoute, crs);
@@ -395,7 +395,7 @@ public class CEAAgent extends JPSAgent {
                                     }
                                 }
                             } else {
-                                value = getNumericalValue(uri, result.get(0), ceaRoute, namedGraph);
+                                value = getNumericalValue(result.get(0), ceaRoute, namedGraph);
                             }
                             // Return non-zero values
                             if(!(value.equals("0") || value.equals("0.0"))){
@@ -761,10 +761,10 @@ public class CEAAgent extends JPSAgent {
         JSONArray queryResultArray = this.queryStore(route, q.toString());
 
         if(!queryResultArray.isEmpty()){
-            if (value == "Lod0FootprintId" || value == "FootprintThematicSurface"){
+            if (value.equals("Lod0FootprintId") || value.equals("FootprintThematicSurface")) {
                 result = extractFootprint(queryResultArray);
             }
-            else if (value == "FootprintSurfaceGeom") {
+            else if (value.equals("FootprintSurfaceGeom")) {
                 result = extractFootprint(getGroundGeometry(queryResultArray));
             }
             else{
@@ -798,8 +798,8 @@ public class CEAAgent extends JPSAgent {
 
             flag = true;
 
-            for (int j = 5; j < split.length; j += 3){
-                for (int ji = 0;  ji < z.size(); ji++){
+            for (int j = 5; j < split.length; j += 3) {
+                for (int ji = 0;  ji < z.size(); ji++) {
                     if (Math.abs(Double.parseDouble(split[j]) - z.get(ji)) > eps){
                         flag = false;
                         break;
@@ -1292,8 +1292,8 @@ public class CEAAgent extends JPSAgent {
 
             boolean getTimes = true;
 
-            for (Map.Entry entry : weatherMap.entrySet()) {
-                List<String> value = (List<String>) entry.getValue();
+            for (Map.Entry<String, List<String>> entry : weatherMap.entrySet()) {
+                List<String> value = entry.getValue();
                 String weatherIRI = value.get(0);
                 String weatherDB = isDockerized() ? value.get(1).replace("localhost", "host.docker.internal") : value.get(1).replace("host.docker.internal", "localhost");
                 RemoteRDBStoreClient weatherRDBClient = new RemoteRDBStoreClient(weatherDB, dbUser, dbPassword);
@@ -1309,7 +1309,7 @@ public class CEAAgent extends JPSAgent {
                     result.add(weatherTS.getTimes());
                     getTimes = false;
                 }
-                weather.put((String) entry.getKey(), weatherData);
+                weather.put(entry.getKey(), weatherData);
             }
 
             result.add(weather);
@@ -1702,13 +1702,12 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * Gets numerical value of specified measurement
-     * @param uriString city object id
      * @param measureUri Uri of the measurement with numerical value in KG
      * @param route route to pass to access agent
      * @param graph graph name
      * @return list of iris
      */
-    public String getNumericalValue(String uriString, String measureUri, String route, String graph) {
+    public String getNumericalValue(String measureUri, String route, String graph) {
         String result = "";
 
         WhereBuilder wb = new WhereBuilder().addPrefix("om", unitOntologyUri)
@@ -2382,7 +2381,7 @@ public class CEAAgent extends JPSAgent {
 
             geoType = merged.getGeometryType();
 
-            while (geoType != "Polygon" || deflatePolygon(merged, distance).getGeometryType() != "Polygon"){
+            while (!geoType.equals("Polygon") || !deflatePolygon(merged, distance).getGeometryType().equals("Polygon")) {
                 distance += increment;
 
                 for (int i = 0; i < geometries.size(); i++){
