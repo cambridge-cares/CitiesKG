@@ -80,6 +80,11 @@
         <script src="utils/mashup-data-source-service/application/DataSourceController.js"></script>
         <!-- URL controller -->
         <script src="utils/UrlController.js"></script>
+        <!-- demo UI queries -->
+        <script src="utils/DropdownElement.js"></script>
+        <script src="utils/NavigationBox.js"></script>
+        <script src="utils/ProcessAgentResult.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 
         <style>
             @import url(../ThirdParty/Cesium/Widgets/widgets.css);
@@ -88,8 +93,8 @@
             @import url(css/SplashWindow.css);
 
             html, body, #cesiumContainer {
-                top: 0px;
-                left: 0px;
+                top: 0;
+                left: 0;
                 position: absolute;
                 width: 100%;
                 height: 100%;
@@ -101,13 +106,12 @@
 
             #uiMenu {
                 border-radius: 5px;
-                padding: 5px;
                 position: absolute;
-                left: 5px;
+                bottom: 5px;
+                right: 160px;
                 font-family: "Arial";
                 z-index: 99980;
             }
-
             .loadingIndicator {
                 display: block;
                 position: absolute;
@@ -121,7 +125,6 @@
                 background-repeat: no-repeat;
                 background-image: url(../theme/img/ajax-loader.gif);
             }
-
             #loadingScreen {
                 display: block;
                 position: absolute;
@@ -135,23 +138,19 @@
                 background-repeat: no-repeat;
                 background-position: center;
             }
-
             .citydb_overSelect {
                 position: absolute;
                 left: 0; right: 0; top: 0; bottom: 0;
             }
-
             .citydb_short_container {
                 display: inline-block;
                 position: relative;
                 width: 48.5%;
             }
-
             .citydb_long_container {
-                margin-left: 0px;
+                margin-left: 0;
                 margin-right: 2%;
             }
-
             .citydb_dynamic_box {
                 display: none;
                 margin: 3px;
@@ -164,49 +163,355 @@
                 font-family: sans-serif;
                 font-size: 9pt;
             }
-
             .citydb_dynamic_box input {
                 vertical-align: middle;
                 padding-top: 1px;
                 padding-bottom: 1px;
             }
-
             .citydb_inputtable {
                 width: 100%;
             }
-
             .citydb_inputtable th, td {
                 padding: 5px;
             }
-
             .citydb_inputtable select {
                 width: 100%;
                 padding: 3px;
                 margin: 1px;
             }
-
             .citydb_inputtable input {
                 width: 100%;
                 padding: 0px;
                 margin: 0px;
             }
-
             #citydb_layerlistpanel {
                 width: 97.5%;
                 background: rgba(42, 42, 42, 0.8);
                 text-align: left;
             }
-
             #citydb_layerlistpanel label:hover {
                 background-color: #1e90ff;
             }
-
             #citydb_toolbox {
                 width: 400px;
                 display: none;
                 background: rgba(42, 42, 42, 0.5);
                 border: 3px #505050 solid;
             }
+            #ProgrammaticPlotFinder {
+                border-radius: 5px;
+                padding: 5px;
+                position: absolute;
+                font-family: "Arial";
+                z-index: 99980;
+                transition: 1s ease;
+            }
+            .programmeFinder_toolbox {
+                width: max-content;
+                height: 70px;
+                position: absolute;
+                left:7px;
+                top:40px;
+                background: rgba(42, 42, 42, 0.5);
+                border: 2px #505050 solid;
+                border-radius: 5px;
+                transition: 1s ease;
+            }
+
+            .infobox_content {
+                padding: 5px 10px;
+                text-align: left;
+                color: #ffffff;
+                font-size: 14px;
+            }
+
+            .infobox_content p {
+                margin: 5px;
+            }
+            .use_element, .programme_element{
+                display:inline-block;
+                padding-top: 2px;
+                line-height: 14px;
+                width: 220px;
+                vertical-align: top;
+            }
+            .checkbox{
+                display:inline-block;
+                cursor: pointer;
+                line-height: 14px;
+                width: 20px;
+                vertical-align: top;
+            }
+            .text_gfa{
+                display:inline-block;
+                line-height: 14px;
+                width: 200px;
+                vertical-align: top;
+            }
+            .text_input{
+                display:inline-block;
+                line-height: 14px;
+                width: 50px;
+                vertical-align: top;
+                alignment: right;
+            }
+            .finder_dynamic_box {
+                display: none;
+                width: 260px;
+                height: 300px;
+                margin: 2px;
+                padding: 2px 2px;
+                position: relative;
+                border: 2px #505050 solid;
+                background: rgba(42, 42, 42, 0.6);
+                border-radius: 4px;
+                color: #fff;
+                font-family: sans-serif;
+                font-size: 13px;
+                overflow-y: scroll;
+                vertical-align: top;
+                scrollbar-gutter: stable;
+            }
+            .arrow {
+                float: right;
+                border: solid white;
+                border-width: 0 2px 2px 0;
+                display: inline-block;
+                padding: 3px;
+                transform: rotate(45deg);
+                transform-origin:70% 70%;
+            }
+            .pop_up_box {
+                top: 42%;
+                left: 42%;
+                width: 400px;
+                margin: 5px;
+                height: 50px;
+                padding: 4px 4px;
+                position: absolute;
+                border: 2px #505050 solid;
+                background: rgba(42, 42, 42, 0.6);
+                border-radius: 4px;
+                color: #fff;
+            }
+            .querySentence {
+                float: left;
+                height:24px;
+                line-height: 28px;
+                width: max-content;
+                margin: 2px;
+                padding: 2px;
+                vertical-align: middle;
+                background: rgb(255, 255, 255);
+                border-radius: 4px;
+                color: rgb(42, 42, 42);
+            }
+            .mark{
+                display:inline-block;
+                padding: 5px;
+                line-height: 32px;
+                width: 20px;
+                vertical-align: top;
+                alignment: right;
+                font-family: sans-serif;
+                font-weight: bold;
+                font-size: 24pt;
+            }
+            .alert{
+                display:inline-block;
+                padding: 5px;
+                line-height: 16px;
+                width: 360px;
+                vertical-align: top;
+                alignment: right;
+                font-family: sans-serif;
+                font-size: 10pt;
+            }
+            .demo_elements {
+                float: left;
+            }
+            .keyGrowthAreas{
+                width: 300px;
+                height: max-content;
+                position: absolute;
+                left:5px;
+                bottom:5px;
+                background: rgba(42, 42, 42, 0.5);
+                border: 2px #505050 solid;
+                border-radius: 25px;
+                cursor: pointer;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .area-name{
+                height:30px;
+                font-size: 18px;
+                color:white;
+                line-height:30px;
+                width:200px;
+                margin:2px;
+                padding:2px;
+                text-align:center;
+                vertical-align: center;
+            }
+            .area:hover{
+                color: #1E90FFFF;
+            }
+            .arrow_kga {
+                border: solid white;
+                border-radius: 3px;
+                background-color: rgba(42, 42, 42, 0.0);
+                border-width: 0 3px 3px 0;
+                height: 12px;
+                width: 12px;
+                margin: 8px;
+                padding: 2px;
+            }
+            .arrow_kga:hover{
+                border-color: #1E90FFFF;
+            }
+            .right {
+                transform: rotate(-45deg);
+                -webkit-transform: rotate(-45deg);
+            }
+            .left {
+                transform: rotate(135deg);
+                -webkit-transform: rotate(135deg);
+            }
+            .ProgrammaticPlotFinder-submitButton{
+                float: left;
+                height: 30px;
+                background: #303336;
+                color: #edffff;
+                fill: #edffff;
+                cursor: pointer;
+                margin: 2px;
+                border: 2px solid #1E90FFFF;
+                border-radius: 5px;
+                white-space: nowrap;
+                font-size: 15px;
+            }
+            .ProgrammaticPlotFinder-submitButton:hover {
+                background: #1E90FFFF;
+            }
+            .ProgrammaticPlotFinder-resultBox{
+                display: block;
+                position: absolute;
+                min-width: 230px;
+                top: 120px;
+                left: 5px;
+                background: #303336;
+                color: #edffff;
+                border: 1px solid #444;
+                visibility: hidden;
+                opacity: 1;
+            }
+            .ProgrammaticPlotFinder-resultBox-title{
+                display: block;
+                height: 20px;
+                padding: 5px 30px 5px 25px;
+                background: #303336;
+                border-top-left-radius: 5px;
+                border-top-right-radius: 5px;
+                text-align: center;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                overflow: hidden;
+                box-sizing: content-box;
+            }
+            .ProgrammaticPlotFinder-resultBox-iframe{
+                border: none;
+                width: 100%; /* Fallback */
+                width: calc(100% - 2px);
+            }
+            li {
+                border: 1px solid #ddd;
+                margin-top: -1px; /* Prevent double borders */
+                background-color: #f6f6f6;
+                padding: 6px;
+                text-decoration: none;
+                font-size: 12px;
+                color: black;
+                display: block;
+                position: relative;
+            }
+            .close {
+                cursor: pointer;
+                position: absolute;
+                top: 50%;
+                right: 0%;
+                padding: 5px 10px;
+                transform: translate(0%, -50%);
+            }
+            .close:hover {background: #bbb;}
+
+            #exampleGFA {
+                font-family: arial, sans-serif;
+                border-collapse: collapse;
+                margin: auto;
+            }
+
+            #exampleGFA td, #exampleGFA th {
+                border: 1px solid #dddddd;
+                text-align: center;
+            }
+
+            .test {
+                height: 30px;
+            }
+
+            .sidebar {
+                height: 100%;
+                width: 0;
+                position: fixed;
+                z-index: 1;
+                top: 0;
+                left: 0;
+                background-color: #111;
+                overflow-x: hidden;
+                padding-top: 60px;
+                transition: 1s ease;
+            }
+
+            .sidebar a {
+                padding: 8px;
+                text-decoration: none;
+                font-size: 18px;
+                color: #818181;
+                display: block;
+                transition: 0.3s;
+            }
+
+            .sidebar a:hover {
+                color: #f1f1f1;
+            }
+
+            .sidebar a:target{
+                color: #f1f1f1;
+            }
+
+            .sidebar .closebtn {
+                position: absolute;
+                top: 0;
+                right: 25px;
+                font-size: 30px;
+                margin-left: 50px;
+            }
+
+            .openbtn {
+                font-size: 20px;
+                cursor: pointer;
+                background-color: #111;
+                color: white;
+                padding: 10px 15px;
+                border: none;
+            }
+
+            .openbtn:hover {
+                background-color: #444;
+            }
+
 
         </style>
     </head>
@@ -214,13 +519,91 @@
     <body>
         <div id="cesiumContainer"></div>
         <div id="loadingIndicator" class="loadingIndicator"></div>
+        <!-- Ayda: disabled for PPF demo
         <div id = "citydb_cachedTilesInspector" class="cesium-cesiumInspector" style="display: block; position: absolute; bottom: 5px; right: 5px; width: 130px" data-bind="html: dataSourcesText"></div>
         <div id = "citydb_showedTilesInspector" class="cesium-cesiumInspector" style="display: block; position: absolute; bottom: 5px; right: 170px; width: 130px" data-bind="html: dataSourcesText"></div>
-        <img id = "citydb_loadingTilesInspector" src="../theme/img/ajax-loader.gif" style="display: none; position: absolute; bottom: 56px; right: 7px; width:30px;height:30px;">
+        -->
+        <img id = "citydb_loadingTilesInspector" src="../theme/img/ajax-loader.gif" style="display: none; position: absolute; bottom: 6px; right: 7px; width:30px;height:30px;">
+
+        <div id="mySidebar" class="sidebar">
+            <a href="javascript:void(0)" class="closebtn" onclick="closeSidebar()">×</a>
+            <a href="#" class="navLink" id="PPF" onclick="chooseDemoType(this)" style="color:white;">Programmatic Plot Finder</a>
+            <a href="#" class="navLink" id="demo2" onclick="chooseDemoType(this)">Demonstrator 2</a>
+            <a href="#" class="navLink" id="demo3" onclick="chooseDemoType(this)">Demonstrator 3</a>
+        </div>
+
+        <div id="ProgrammaticPlotFinder">
+            <button class="ProgrammaticPlotFinder-submitButton" onclick="openSidebar()">☰ <span id="demoTitle">Programmatic Plot Finder</span></button>
+            <div id="demo" class="programmeFinder_toolbox">
+                <div id="programmeFinder_toolbox_upper" style="height: 50%">
+                    <button id="exampleQuery" class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams()">Try Example Query</button>
+                    <div id="querySentence" class="querySentence">Find plots that could allow...</div>
+                </div>
+                <div id="programmeFinder_toolbox_bottom" style="height: 50%">
+                    <div id="QueryBox" style="float: left; ">
+                        <select id="DevelopmentType" class="cesium-button" onchange="showChooseDevType()" style="height:30px; font-size: 15px; padding:3px" title="Choose the type of query scenario to explore, the selection boxes will be adjusted">
+                            <option value="" selected disabled>Search plots...</option>
+                            <option value="OntozoningUses">by allowable land uses</option>
+                            <option value="OntozoingProgrammes">by allowable programmes</option>
+                            <option value="GfaUses">by allowable GFA (per land use)</option>
+                            <option value="GfaProgrammes">by allowable GFA (per programme)</option>
+                            <option value="ViewAll">show all search types (*)</option>
+                        </select>
+                    </div>
+                    <div id="UsesBox" style="float: left; display:none;">
+                        <div id="use_dropdown" class="citydb_long_container" onclick="showChooseUses()">
+                            <div style="width:240px" class="cesium-button" title ="Land use is a high-level term for the set of activities &#010;and developments that are allowed in a certain zoning type">Choose Land Use ...<div id='use_arrow' class="arrow down"></div></div>
+                        </div>
+                        <div id="choose_uses" class="finder_dynamic_box" ></div>
+                    </div>
+                    <div id="ProgrammesBox" style="float: left; display:none;">
+                        <div id="programme_dropdown" class="citydb_long_container" onclick="showChooseProgrammes()">
+                            <div style="width:240px" class="cesium-button" title="Programme is a term for specific activities and developments &#010;that may be allowed across many zoning types">Choose Programme ...<div id='programme_arrow' class="arrow down"></div></div>
+                        </div>
+                        <div id="choose_programmes" class="finder_dynamic_box" onblur="showChooseProgrammes()"></div>
+                    </div>
+                    <div id="GfaBox" style="float: left; display:none;">
+                        <div id="gfa_dropdown" class="citydb_long_container" onclick="showAssignGFAValues()">
+                            <div style="width:240px" class="cesium-button" title="Gross Floor Area is a term defining the total floor area contained within &#010; a building’s outer edges that excludes empty spaces">Assign Gross Floor Area (GFA) ...<div id='gfa_arrow' class="arrow down"></div></div>
+                        </div>
+                        <div id="assignGFA" class="finder_dynamic_box" onchange="getQuerySentence()">
+                            <div class='text_gfa'>Total Gross Floor Area (GFA)</div>
+                            <div class='text_input' style="width: 80px" title='Only positive integer is allowed. If the particular GFAs are specified, the totalGFA should be empty or larger than the sum of particular GFAs.'><input id="totalGFA" type='text' maxlength="10" size="3" oninput="restrictInput(this)"></div>
+                            <hr size="1">
+                        </div>
+                    </div>
+                    <div id='CapBox' style="float: left; display:none;">
+                        <select id="CapType" class="cesium-button" onchange="getQuerySentence()" style="height: 30px; font-size: 15px; padding: 3px" title="chooses the amount of plots to show">
+                            <option selected disabled>Show ...</option>
+                            <option value="max_cap">only the 10 largest plots (by GFA)</option>
+                            <option value="min_cap">only the 10 smallest plots (by GFA)</option>
+                            <option value="no_cap">all results (*)</option>
+                        </select>
+                    </div>
+                    <button id="searchButton" class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getInputParams()" style="display: none;">Search Now</button>
+                </div>
+            </div>
+            <div id="uiProgrammeFinder-result" class="ProgrammaticPlotFinder-resultBox">
+                <div id="resultBox-title" class="ProgrammaticPlotFinder-resultBox-title">
+                    <label>Search History</label>
+                </div>
+                <div id="resultBox-iframe" class="ProgrammaticPlotFinder-resultBox-iframe"></div>
+            </div>
+        </div>
+
+
+        <div class="keyGrowthAreas">
+            <div style="float: left" class="arrow_kga left" onclick="zoomToKeyGrowthAreas('backward')"></div>
+            <div id="area" class="area-name" onclick="zoomToKeyGrowthAreas('same')"></div>
+            <div style="float: right" class="arrow_kga right" onclick="zoomToKeyGrowthAreas('forward')"></div>
+        </div>
+
+        <div id="instructionContainer"></div>
+
         <div id="uiMenu">
             <div onclick="showToolbox()">
                 <select class="cesium-button">
-                    <option>Show / Hide Toolbox</option>
+                    <option>Expert Settings</option>
                 </select>
                 <div class="citydb_overSelect"></div>
             </div>
@@ -243,119 +626,101 @@
                         <div id="citydb_addlayerpanel" class="citydb_dynamic_box">
                             <table class="citydb_inputtable">
                                 <tbody>
-                                    <tr>
-                                        <td WIDTH="25%">URL(*)</td>
-                                        <td WIDTH="75%">
-                                            <input type="text" data-bind="value: url">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Name(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: name">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Layer data type</td>
-                                        <td>
-                                            <select id="layerDataTypeDropdown" data-bind="value: layerDataType" onchange="layerDataTypeDropdownOnchange()">
-                                                <option value="COLLADA/KML/glTF" selected="selected">COLLADA/KML/glTF</option>
-                                                <option value="Cesium 3D Tiles">Cesium 3D Tiles</option>
-                                                <option value="Others">Others</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <tr id="layerProxyAndClampToGround" style="display: none;">
-                                        <td>
-                                            <label><input type="checkbox" id="layerProxyCheckbox" style="width:auto;" data-bind="checked: layerProxy"/> Load via proxy</label>
-                                        </td>
-                                        <td>
-                                            <label><input type="checkbox" id="layerClampToGroundCheckbox" style="width:auto;" data-bind="checked: layerClampToGround"/> KML clamp to ground</label>
-                                        </td>
-                                    </tr>
-                                    <tr id="gltfVersionDropdownRow" style="display: none;">
-                                        <td>glTF version</td>
-                                        <td>
-                                            <select id="gltfVersionDropdown" data-bind="value: gltfVersion">
-                                                <option value="0.8">0.8</option>
-                                                <option value="1.0">1.0</option>
-                                                <option value="2.0" selected="selected">2.0</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>thematicDataUrl</td>
-                                        <td>
-                                            <input type="text" data-bind="value: thematicDataUrl">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>> Thematic Data Source</td>
-                                        <td>
-                                            <select id="thematicDataSourceDropdown" data-bind="value: thematicDataSource" onchange="thematicDataSourceAndTableTypeDropdownOnchange()">
-                                                <option value="GoogleSheets" selected="selected">Google Sheets API</option>
-                                                <option value="PostgreSQL">PostgreSQL REST API</option>
-                                                <option value="KML">KML Documents</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>> Table type</td>
-                                        <td>
-                                            <select id="tableTypeDropdown" data-bind="value: tableType" onchange="thematicDataSourceAndTableTypeDropdownOnchange()">
-                                                <option value="Horizontal" selected="selected">All object attributes in one row</option>
-                                                <option value="Vertical">One row per object attribute</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-<!--                                    <tr id="rowGoogleSheetsApiKey" style="display: none;">-->
-<!--                                        <td>> Google Sheets API Key</td>-->
-<!--                                        <td>-->
-<!--                                            <input type="text" data-bind="value: googleSheetsApiKey">-->
-<!--                                        </td>-->
-<!--                                    </tr>-->
-<!--                                    <tr id="rowGoogleSheetsRanges" style="display: none;">-->
-<!--                                        <td>> Google Sheets Ranges </td>-->
-<!--                                        <td>-->
-<!--                                            <input type="text" data-bind="value: googleSheetsRanges" placeholder="'Sheet1'!A1:C2;'Sheet2'!A1:D2">-->
-<!--                                        </td>-->
-<!--                                    </tr>-->
-<!--                                    <tr id="rowGoogleSheetsClientId" style="display: none;">-->
-<!--                                        <td>> Google Sheets Client ID</td>-->
-<!--                                        <td>-->
-<!--                                            <input type="text" data-bind="value: googleSheetsClientId" placeholder="Only for OAuth2">-->
-<!--                                        </td>-->
-<!--                                    </tr>-->
-                                    <tr>
-                                        <td>cityobjectsJsonUrl</td>
-                                        <td>
-                                            <input type="text" data-bind="value: cityobjectsJsonUrl">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>minLodPixels</td>
-                                        <td>
-                                            <input type="text" data-bind="value: minLodPixels">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>maxLodPixels</td>
-                                        <td>
-                                            <input type="text" data-bind="value: maxLodPixels">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>MaxCountOfVisibleTiles(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: maxCountOfVisibleTiles">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>MaxSizeOfCachedTiles(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: maxSizeOfCachedTiles">
-                                        </td>
-                                    </tr>
+                                <tr>
+                                    <td WIDTH="25%">URL(*)</td>
+                                    <td WIDTH="75%">
+                                        <input type="text" data-bind="value: url">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Name(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: name">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Layer data type</td>
+                                    <td>
+                                        <select id="layerDataTypeDropdown" data-bind="value: layerDataType" onchange="layerDataTypeDropdownOnchange()">
+                                            <option value="COLLADA/KML/glTF" selected="selected">COLLADA/KML/glTF</option>
+                                            <option value="Cesium 3D Tiles">Cesium 3D Tiles</option>
+                                            <option value="Others">Others</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr id="layerProxyAndClampToGround" style="display: none;">
+                                    <td>
+                                        <label><input type="checkbox" id="layerProxyCheckbox" style="width:auto;" data-bind="checked: layerProxy"/> Load via proxy</label>
+                                    </td>
+                                    <td>
+                                        <label><input type="checkbox" id="layerClampToGroundCheckbox" style="width:auto;" data-bind="checked: layerClampToGround"/> KML clamp to ground</label>
+                                    </td>
+                                </tr>
+                                <tr id="gltfVersionDropdownRow" style="display: none;">
+                                    <td>glTF version</td>
+                                    <td>
+                                        <select id="gltfVersionDropdown" data-bind="value: gltfVersion">
+                                            <option value="0.8">0.8</option>
+                                            <option value="1.0">1.0</option>
+                                            <option value="2.0" selected="selected">2.0</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>thematicDataUrl</td>
+                                    <td>
+                                        <input type="text" data-bind="value: thematicDataUrl">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>> Thematic Data Source</td>
+                                    <td>
+                                        <select id="thematicDataSourceDropdown" data-bind="value: thematicDataSource" onchange="thematicDataSourceAndTableTypeDropdownOnchange()">
+                                            <option value="GoogleSheets" selected="selected">Google Sheets API</option>
+                                            <option value="PostgreSQL">PostgreSQL REST API</option>
+                                            <option value="KML">KML Documents</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>> Table type</td>
+                                    <td>
+                                        <select id="tableTypeDropdown" data-bind="value: tableType" onchange="thematicDataSourceAndTableTypeDropdownOnchange()">
+                                            <option value="Horizontal" selected="selected">All object attributes in one row</option>
+                                            <option value="Vertical">One row per object attribute</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>cityobjectsJsonUrl</td>
+                                    <td>
+                                        <input type="text" data-bind="value: cityobjectsJsonUrl">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>minLodPixels</td>
+                                    <td>
+                                        <input type="text" data-bind="value: minLodPixels">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>maxLodPixels</td>
+                                    <td>
+                                        <input type="text" data-bind="value: maxLodPixels">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>MaxCountOfVisibleTiles(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: maxCountOfVisibleTiles">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>MaxSizeOfCachedTiles(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: maxSizeOfCachedTiles">
+                                    </td>
+                                </tr>
                                 </tbody>
                             </table>
                             <div class="citydb_short_container">
@@ -381,48 +746,48 @@
                         <div id="citydb_addwmspanel" class="citydb_dynamic_box">
                             <table class="citydb_inputtable">
                                 <tbody>
-                                    <tr>
-                                        <td WIDTH="25%">name(*)</td>
-                                        <td WIDTH="75%">
-                                            <input type="text" data-bind="value: name">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>iconUrl(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: iconUrl">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>tooltip(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: tooltip">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>url(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: url">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>layers(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: layers">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>additionalParameters</td>
-                                        <td>
-                                            <input type="text" data-bind="value: additionalParameters">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>proxyUrl</td>
-                                        <td>
-                                            <input type="text" data-bind="value: proxyUrl">
-                                        </td>
-                                    </tr>
+                                <tr>
+                                    <td WIDTH="25%">name(*)</td>
+                                    <td WIDTH="75%">
+                                        <input type="text" data-bind="value: name">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>iconUrl(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: iconUrl">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>tooltip(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: tooltip">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>url(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: url">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>layers(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: layers">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>additionalParameters</td>
+                                    <td>
+                                        <input type="text" data-bind="value: additionalParameters">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>proxyUrl</td>
+                                    <td>
+                                        <input type="text" data-bind="value: proxyUrl">
+                                    </td>
+                                </tr>
                                 </tbody>
                             </table>
                             <div class="citydb_long_container">
@@ -445,30 +810,30 @@
                         <div id="citydb_addterrainpanel" class="citydb_dynamic_box">
                             <table class="citydb_inputtable">
                                 <tbody>
-                                    <tr>
-                                        <td WIDTH="25%">name(*)</td>
-                                        <td WIDTH="75%">
-                                            <input type="text" data-bind="value: name">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>iconUrl(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: iconUrl">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>tooltip(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: tooltip">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>url(*)</td>
-                                        <td>
-                                            <input type="text" data-bind="value: url">
-                                        </td>
-                                    </tr>
+                                <tr>
+                                    <td WIDTH="25%">name(*)</td>
+                                    <td WIDTH="75%">
+                                        <input type="text" data-bind="value: name">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>iconUrl(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: iconUrl">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>tooltip(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: tooltip">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>url(*)</td>
+                                    <td>
+                                        <input type="text" data-bind="value: url">
+                                    </td>
+                                </tr>
                                 </tbody>
                             </table>
                             <div class="citydb_long_container">
@@ -516,9 +881,9 @@
                             <option selected="selected" disabled="disabled">Choose highlighted Object</option>
                         </select>
                     </div>
-					<div class="citydb_long_container">
-                            <button type="button" style="width: 100%;" class="cesium-button" onclick="computeDistance()">Compute distance</button>
-                        </div>
+                    <div class="citydb_long_container">
+                        <button type="button" style="width: 100%;" class="cesium-button" onclick="computeDistance()">Compute distance</button>
+                    </div>
                     <div class="citydb_long_container" onmouseover="listHiddenObjects()">
                         <select id = "citydb_hiddenlist" style="width: 100%;" class="cesium-button" onchange="flyToClickedObject(this)">
                             <option selected="selected" disabled="disabled">Choose hidden Object</option>
@@ -568,7 +933,6 @@
                 </div>
             </div>
         </div>
-
         <!-- GPS button -->
         <button id="gpsButton" type="button" class="cesium-button"></button>
 
@@ -579,12 +943,12 @@
         </div>
         <div id="splashwindow_iframe" class="splash-wrapper">
             <div class="splash-iframe-container">
-                <iframe id="splashwindow_iframe_content" src="" frameborder="0"></iframe>
+                <iframe id="splashwindow_iframe_content" src=""></iframe>
             </div>
         </div>
 
-
         <script>
+            /** 3dcitydb WMC */
             var expanded = false;
             function showToolbox() {
                 var citydb_toolbox = document.getElementById("citydb_toolbox");
@@ -644,7 +1008,93 @@
                     expanded5 = false;
                 }
             }
+
+            var expanded7 = false;
+            function showChooseUses() {
+                var programme_window = document.getElementById("choose_programmes");
+                document.getElementById('programme_arrow').style.transform = "rotate(45deg)";
+                programme_window.style.display = "none";
+                expanded8 = false;
+
+                var gfa_window = document.getElementById("assignGFA");
+                document.getElementById('gfa_arrow').style.transform = "rotate(45deg)";
+                gfa_window.style.display = "none";
+                expanded10 = false;
+
+                var use_window = document.getElementById("choose_uses");
+                if (!expanded7) {
+                    document.getElementById('use_arrow').style.transform = "rotate(225deg)";
+                    use_window.style.display = "block";
+                    expanded7 = true;
+                } else {
+                    use_window.style.display = "none";
+                    document.getElementById('use_arrow').style.transform = "rotate(45deg)";
+                    expanded7 = false;
+                }
+            }
+
+            var expanded8 = false
+            function showChooseProgrammes() {
+                var use_window = document.getElementById("choose_uses");
+                use_window.style.display = "none";
+                document.getElementById('use_arrow').style.transform = "rotate(45deg)";
+                expanded7 = false;
+
+                var gfa_window = document.getElementById("assignGFA");
+                document.getElementById('gfa_arrow').style.transform = "rotate(45deg)";
+                gfa_window.style.display = "none";
+                expanded10 = false;
+
+                var programme_window = document.getElementById("choose_programmes");
+                if (!expanded8) {
+                    document.getElementById('programme_arrow').style.transform = "rotate(225deg)";
+                    programme_window.style.display = "block";
+                    expanded8 = true;
+                } else {
+                    document.getElementById('programme_arrow').style.transform = "rotate(45deg)";
+                    programme_window.style.display = "none";
+                    expanded8 = false;
+                }
+
+            }
+
+            var expanded10 =  false
+            function showAssignGFAValues() {
+                var use_window = document.getElementById("choose_uses");
+                use_window.style.display = "none";
+                document.getElementById('use_arrow').style.transform = "rotate(45deg)";
+                expanded7 = false;
+
+                var programme_window = document.getElementById("choose_programmes");
+                document.getElementById('programme_arrow').style.transform = "rotate(45deg)";
+                programme_window.style.display = "none";
+                expanded8 = false;
+
+                var gfa_window = document.getElementById("assignGFA");
+                if (!expanded10) {
+                    document.getElementById('gfa_arrow').style.transform = "rotate(225deg)";
+                    gfa_window.style.display = "block";
+                    expanded10 = true;
+
+                } else {
+                    document.getElementById('gfa_arrow').style.transform = "rotate(45deg)";
+                    gfa_window.style.display = "none";
+                    expanded10 = false;
+                }
+            }
+
+           /** citiesKG **/
+            var USE_PREDICATE = 'allowsUse';
+            var USE_PREDICATE_MAY = 'mayAllowUse';
+            var PROGRAMME_PREDICATE = 'allowsProgramme';
+            var PROGRAMME_PREDICATE_MAY = 'mayAllowProgramme'
+
+            getDropdownElements(USE_PREDICATE, USE_PREDICATE_MAY, 'use_element', '#choose_uses');
+            getDropdownElements(PROGRAMME_PREDICATE, PROGRAMME_PREDICATE_MAY, 'programme_element', '#choose_programmes');
         </script>
         <script src="script.js"></script>
+        <script>
+            addDisclaimerButton();
+        </script>
     </body>
 </html>
