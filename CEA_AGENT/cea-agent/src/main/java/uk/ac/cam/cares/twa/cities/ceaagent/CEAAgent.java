@@ -1336,8 +1336,8 @@ public class CEAAgent extends JPSAgent {
 
         DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate currentDate = LocalDate.now();
-        String startDate = currentDate.minusYears(1).minusDays(1).format(format);
-        String endDate = currentDate.minusDays(1).format(format);
+        String startDate = currentDate.minusYears(1).minusDays(3).format(format);
+        String endDate = currentDate.minusDays(3).format(format);
 
         json.put(OPENMETEO_START, startDate)
                 .put(OPENMETEO_END, endDate);

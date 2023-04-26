@@ -24,8 +24,11 @@ public class RunCEATask implements Runnable {
     public static final String CTYPE_JSON = "application/json";
     private Boolean stop = false;
     private Boolean noSurroundings = false;
+    private Boolean noWeather = true;
     private static final String DATA_FILE = "datafile.txt";
     private static final String SURROUNDINGS_FILE = "surroundingdata.txt";
+    private static final String WEATHERTIMES_FILE = "weathertimes.txt";
+    private static final String WEATHERDATA_FILE = "weatherdata.txt";
     private static final String SHAPEFILE_SCRIPT = "create_shapefile.py";
     private static final String TYPOLOGY_SCRIPT = "create_typologyfile.py";
     private static final String WORKFLOW_SCRIPT = "workflow.yml";
@@ -469,14 +472,24 @@ public class RunCEATask implements Runnable {
      * @param directory_path directory path
      * @param file_path path to store data file, excluding surrounding data
      * @param surrounding_path path to store surrounding data file
+     * @param weather_path path to store weather data file
      */
-    private void dataToFile(ArrayList<CEAInputData> dataInputs, String directory_path, String file_path, String surrounding_path) {
-        //Parse input data to JSON
+    private void dataToFile(ArrayList<CEAInputData> dataInputs, String directory_path, String file_path, String surrounding_path, String weatherTimes_path, String weather_path) {
+        // parse input data to JSON
         String dataString = "[";
+        String weatherTimes = "";
+        String weatherData = "";
         ArrayList<CEAInputData> surroundings = new ArrayList<>();
 
         for(int i = 0; i < dataInputs.size(); i++) {
             if (!(dataInputs.get(i).getSurrounding() == null)) {surroundings.addAll(dataInputs.get(i).getSurrounding());}
+            if (noWeather && !(dataInputs.get(i).getWeather() == null) && !(dataInputs.get(i).getWeatherTimes() == null)) {
+                noWeather = false;
+                weatherTimes += new Gson().toJson(dataInputs.get(i).getWeatherTimes());
+                weatherData += new Gson().toJson(dataInputs.get(i).getWeather());
+            }
+            dataInputs.get(i).setWeatherTimes(null);
+            dataInputs.get(i).setWeather(null);
             dataInputs.get(i).setSurrounding(null);
             dataString += new Gson().toJson(dataInputs.get(i));
             if(i!=dataInputs.size()-1) dataString += ", ";
@@ -488,9 +501,28 @@ public class RunCEATask implements Runnable {
             throw new JPSRuntimeException(new FileNotFoundException(directory_path));
         }
 
+        // write building geometry data to file_path
         try {
             BufferedWriter f_writer = new BufferedWriter(new FileWriter(file_path));
             f_writer.write(dataString);
+            f_writer.close();
+        } catch (IOException e) {
+            throw new JPSRuntimeException(e);
+        }
+
+        // write timestamps of weather data to weatherTimes_path
+        try {
+            BufferedWriter f_writer = new BufferedWriter(new FileWriter(weatherTimes_path));
+            f_writer.write(weatherTimes);
+            f_writer.close();
+        } catch (IOException e) {
+            throw new JPSRuntimeException(e);
+        }
+
+        // write weather data to weather_path
+        try {
+            BufferedWriter f_writer = new BufferedWriter(new FileWriter(weather_path));
+            f_writer.write(weatherData);
             f_writer.close();
         } catch (IOException e) {
             throw new JPSRuntimeException(e);
@@ -694,8 +726,10 @@ public class RunCEATask implements Runnable {
                 String workflowPath2 = strTmp + FS + "workflow2.yml";
                 String data_path = strTmp + FS + DATA_FILE;
                 String surroundings_path = strTmp + FS + SURROUNDINGS_FILE;
+                String weatherTimes_path = strTmp + FS + WEATHERTIMES_FILE;
+                String weather_path = strTmp + FS + WEATHERDATA_FILE;
 
-                dataToFile(this.inputs, strTmp, data_path, surroundings_path);
+                dataToFile(this.inputs, strTmp, data_path, surroundings_path, weatherTimes_path, weather_path);
 
                 String flag = noSurroundings ? "1" : "0";
 
