@@ -21,6 +21,8 @@ public class RunCEATask implements Runnable {
     private final URI endpointUri;
     private final int threadNumber;
     private final String crs;
+    private Double weather_lat;
+    private Double weather_lon;
     public static final String CTYPE_JSON = "application/json";
     private Boolean stop = false;
     private Boolean noSurroundings = false;
@@ -487,9 +489,12 @@ public class RunCEATask implements Runnable {
                 noWeather = false;
                 weatherTimes += new Gson().toJson(dataInputs.get(i).getWeatherTimes());
                 weatherData += new Gson().toJson(dataInputs.get(i).getWeather());
+                weather_lat = dataInputs.get(i).getWeatherCoordinate().get(0);
+                weather_lon = dataInputs.get(i).getWeatherCoordinate().get(1);
             }
             dataInputs.get(i).setWeatherTimes(null);
             dataInputs.get(i).setWeather(null);
+            dataInputs.get(i).setWeatherCoordinate(null);
             dataInputs.get(i).setSurrounding(null);
             dataString += new Gson().toJson(dataInputs.get(i));
             if(i!=dataInputs.size()-1) dataString += ", ";

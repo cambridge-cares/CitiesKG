@@ -334,10 +334,10 @@ public class CEAAgent extends JPSAgent {
                         List<Object> weather = new ArrayList<>();
 
                         if (getWeather(uri, geometryRoute, weatherRoute, crs, weather)) {
-                            testData.add(new CEAInputData(footprint, height, usage, surrounding, (List<OffsetDateTime>) weather.get(0), (Map<String, List<Double>>) weather.get(1)));
+                            testData.add(new CEAInputData(footprint, height, usage, surrounding, (List<OffsetDateTime>) weather.get(0), (Map<String, List<Double>>) weather.get(1), (List<Double>) weather.get(2)));
                         }
                         else{
-                            testData.add(new CEAInputData(footprint, height, usage, surrounding, (List<OffsetDateTime>) weather.get(0), null));
+                            testData.add(new CEAInputData(footprint, height, usage, surrounding, (List<OffsetDateTime>) weather.get(0), null, null));
                         }
                     }
                     // Manually set thread number to 0 - multiple threads not working so needs investigating
@@ -1212,7 +1212,7 @@ public class CEAAgent extends JPSAgent {
                     footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                     footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
 
-                    temp = new CEAInputData(footprint, height, null, null, null, null);
+                    temp = new CEAInputData(footprint, height, null, null, null, null, null);
                     unique.add(uri);
                     surroundings.add(temp);
                 }
@@ -1320,6 +1320,8 @@ public class CEAAgent extends JPSAgent {
 
                 parseWeather(weatherMap, result);
             }
+
+            result.add(Arrays.asList(coordinate.getX(), coordinate.getY()));
 
             return true;
         } catch (FactoryException | TransformException e) {

@@ -14,14 +14,16 @@ public class CEAInputData {
     public List<OffsetDateTime> weatherTimes;
 
     public Map<String, List<Double>> weather;
+    public List<Double> weatherCoordinate;
 
-    public CEAInputData(String geometry_value, String height_value, Map<String, Double> usage_value, ArrayList<CEAInputData> surrounding_value, List<OffsetDateTime> weatherTimes_value, Map<String, List<Double>> weather_value) {
+    public CEAInputData(String geometry_value, String height_value, Map<String, Double> usage_value, ArrayList<CEAInputData> surrounding_value, List<OffsetDateTime> weatherTimes_value, Map<String, List<Double>> weather_value, List<Double> weatherCoordinate_value) {
         this.geometry = geometry_value;
         this.height = height_value;
         this.usage = usage_value;
         this.surrounding = surrounding_value;
         this.weatherTimes = weatherTimes_value;
         this.weather = weather_value;
+        this.weatherCoordinate = weatherCoordinate_value;
     }
 
     public String getGeometry() {
@@ -42,6 +44,7 @@ public class CEAInputData {
 
     public List<OffsetDateTime> getWeatherTimes() {return this.weatherTimes;}
     public Map<String, List<Double>> getWeather() {return this.weather;}
+    public List<Double> getWeatherCoordinate() {return this.weatherCoordinate;}
 
     public void setGeometry(String geometry_value) {
         this.geometry = geometry_value;
@@ -62,4 +65,5 @@ public class CEAInputData {
     public void setWeatherTimes(List<OffsetDateTime> weatherTimes_value) {this.weatherTimes = weatherTimes_value;}
 
     public void setWeather(Map<String, List<Double>> weather_value) {this.weather = weather_value;}
+    public void setWeatherCoordinate(List<Double> weatherCoordinate_value) {this.weatherCoordinate = weatherCoordinate_value;}
 }
