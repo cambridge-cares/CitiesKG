@@ -30,18 +30,14 @@ def write_workflow_file(workflow_file, workflow_name, filepath, noSurroundings, 
     with open(workflow_file) as stream:
         data = yaml.safe_load(stream)
 
-    if noSurroundings == '1': # if no surroundings data from knowledge graph, get CEA to query surroundings data from OpenStreetMap
+    if noSurroundings == '0': # CEA to use surroundings.shp, which is created from surroundings data from knowledge graph
+        data[0]['parameters']['surroundings'] = filepath+os.sep+"surroundings.shp"
+    elif noSurroundings == '1': # if no surroundings data from knowledge graph, get CEA to query surroundings data from OpenStreetMap
         dic = {'script':'surroundings-helper', 'parameters':{'scenario':'scenario_path', 'buffer':200.}}
         data.insert(2, dic)
-    elif noSurroundings == 'null': # if there is no need for surroundings
-        pass
-    else: # CEA to use surroundings.shp, which is created from surroundings data from knowledge graph
-        data[0]['parameters']['surroundings'] = filepath+os.sep+"surroundings.shp"
 
-    if noWeather == '1': # if no weather data from knowledge graph, get CEA to use its default EPW
-        data[1]['parameters']['weather'] = "Zuerich-ETHZ_1990-2010_TMY"
-    else: # CEA to use weather.epw, which is created from weather data from knowledge graph
-        data[1]['parameters']['weather'] = filepath+os.sep+"weather.epw"
+    if noWeather == '0': # CEA to use weather.epw, which is created from weather data from knowledge graph
+        data[0]['parameters']['weather'] = filepath+os.sep+"weather.epw"
 
 
     for i in data:
