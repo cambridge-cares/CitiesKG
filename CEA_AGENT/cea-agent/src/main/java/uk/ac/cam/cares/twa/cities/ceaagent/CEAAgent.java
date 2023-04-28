@@ -1464,12 +1464,11 @@ public class CEAAgent extends JPSAgent {
                 result.clear();
                 return false;
             }
-            List<Double> weatherData = weatherTS.getValuesAsDouble(weatherIRI);
             if (getTimes) {
-                result.add(weatherTS.getTimes());
+                result.add(weatherTS.getTimes().subList(0, 8760));
                 getTimes = false;
             }
-            weather.put(entry.getKey(), weatherData);
+            weather.put(entry.getKey(),  weatherTS.getValuesAsDouble(weatherIRI).subList(0, 8760));
         }
 
         result.add(weather);
