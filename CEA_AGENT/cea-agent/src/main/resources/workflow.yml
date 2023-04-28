@@ -10,7 +10,6 @@
 - script: weather-helper
   parameters:
     scenario: scenario_path
-    weather: Zuerich-ETHZ_1990-2010_TMY
 - script: terrain-helper
   parameters:
     scenario: scenario_path
