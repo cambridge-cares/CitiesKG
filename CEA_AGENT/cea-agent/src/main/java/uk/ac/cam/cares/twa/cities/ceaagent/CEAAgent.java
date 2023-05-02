@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.ceaagent;
 
 import kong.unirest.Unirest;
 import kong.unirest.HttpResponse;
+import kong.unirest.UnirestException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.protocol.HTTP;
 import org.apache.jena.sparql.core.Var;
@@ -337,7 +338,7 @@ public class CEAAgent extends JPSAgent {
                             testData.add(new CEAInputData(footprint, height, usage, surrounding, (List<OffsetDateTime>) weather.get(0), (Map<String, List<Double>>) weather.get(1), (List<Double>) weather.get(2)));
                         }
                         else{
-                            testData.add(new CEAInputData(footprint, height, usage, surrounding, (List<OffsetDateTime>) weather.get(0), null, null));
+                            testData.add(new CEAInputData(footprint, height, usage, surrounding, null, null, null));
                         }
                     }
                     // Manually set thread number to 0 - multiple threads not working so needs investigating
@@ -1338,26 +1339,29 @@ public class CEAAgent extends JPSAgent {
 
         DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate currentDate = LocalDate.now();
-        String startDate = currentDate.minusYears(1).minusDays(3).format(format);
-        String endDate = currentDate.minusDays(3).format(format);
+        String startDate = currentDate.minusYears(1).minusDays(7).format(format);
+        String endDate = currentDate.minusDays(7).format(format);
 
         json.put(OPENMETEO_START, startDate)
                 .put(OPENMETEO_END, endDate);
 
-        HttpResponse<String> response = Unirest.post(url)
-                .header(HTTP.CONTENT_TYPE, CTYPE_JSON)
-                .body(json.toString())
-                .socketTimeout(300000)
-                .asString();
+        try {
+            HttpResponse<String> response = Unirest.post(url)
+                    .header(HTTP.CONTENT_TYPE, CTYPE_JSON)
+                    .body(json.toString())
+                    .socketTimeout(300000)
+                    .asString();
+            int responseStatus = response.getStatus();
 
-        int responseStatus = response.getStatus();
+            if (responseStatus == HttpURLConnection.HTTP_OK) {
+                JSONObject responseBody = new JSONObject(response.getBody());
 
-        if (responseStatus == HttpURLConnection.HTTP_OK) {
-            JSONObject responseBody = new JSONObject(response.getBody());
-
-            return responseBody.getJSONArray(OPENMETEO_STATION).getString(0);
+                return responseBody.getJSONArray(OPENMETEO_STATION).getString(0);
+            } else {
+                return "";
+            }
         }
-        else{
+        catch (UnirestException e) {
             return "";
         }
 
@@ -1781,7 +1785,7 @@ public class CEAAgent extends JPSAgent {
      * @param graph graph name
      * @return list of iris
      */
-    public String getNumericalValue(String measureUri, String route, String graph) {
+    public String getNumericalValue(String measureUri, String route, String graph){
         String result = "";
 
         WhereBuilder wb = new WhereBuilder().addPrefix("om", unitOntologyUri)
