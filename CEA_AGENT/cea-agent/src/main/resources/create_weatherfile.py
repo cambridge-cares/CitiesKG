@@ -1,8 +1,10 @@
 import argparse
 import json
-import numpy as np
 import pandas as pd
 import os
+
+import datetime
+import pytz
 
 epw_labels = ['year', 'month', 'day', 'hour', 'minute', 'datasource', 'drybulb_C', 'dewpoint_C', 'relhum_percent',
                   'atmos_Pa', 'exthorrad_Whm2', 'extdirrad_Whm2', 'horirsky_Whm2', 'glohorrad_Whm2',
@@ -56,7 +58,6 @@ mi_ma = {'drybulb_C': [-70, 70],
          'liq_precip_rate_Hour': ["", ""]
          }
 
-
 # missing values for EPW parameters
 epw_missing = {'year': 'None', 
                'month': 'None',
@@ -93,7 +94,6 @@ epw_missing = {'year': 'None',
                'Albedo': 99,
                'liq_precip_depth_mm': 999,
                'liq_precip_rate_Hour': 99}
-               
 
 def create_epw(times, data, weather_file, latitude, longitude, default_epw):
     """
@@ -122,15 +122,16 @@ def create_epw(times, data, weather_file, latitude, longitude, default_epw):
     for k, v in epw_missing.items():
         if k in retrieved_weather:
             df[k] = retrieved_weather[k]
-            
+
         else:
             df[k] = default_epw[k]
-        
+
+        # ensure that the weather values are within the allowed range for EPW parameters
+        if k in mi_ma:
+            df = fix(df, k)
+
         # replace any NaN values with the missing values defined by EPW
         df[k].fillna(value = v, inplace = True)
-            
-    # ensure that the weather values are within the allowed range for EPW parameters
-    df = fix(df)
     
     # concat to get the whole EPW including other non-weather, miscellaneous information
     epw = pd.concat([default_others, df], ignore_index = True)
@@ -139,10 +140,9 @@ def create_epw(times, data, weather_file, latitude, longitude, default_epw):
     epw.loc[0, 'dewpoint_C'] = longitude
     epw.loc[0, 'relhum_percent'] = offset
     
-    
     epw.to_csv(weather_file, header = False, index = False)
        
-def fix(df):
+def fix(df, p):
     """
     Ensures that the weather values are within the allowed range of EPW by replacing values
     over the maxiumum or under the minimum by the allowed maximum or the allowed minimum 
@@ -157,17 +157,15 @@ def fix(df):
     df : pandas dataframe with the weather values within the allowed range of EPW
 
     """
-    for i in np.arange(6, len(epw_labels)):
-        p = epw_labels[i]
-        
-        mi = mi_ma[p][0]
-        ma = mi_ma[p][1]
 
-        if mi != "":
-            df[p] = df[p].apply(lambda x : mi if x < mi else x)
-            
-        if ma != "":
-            df[p] = df[p].apply(lambda x : ma if x > ma else x)
+    mi = mi_ma[p][0]
+    ma = mi_ma[p][1]
+
+    if mi != "":
+        df[p] = df[p].apply(lambda x : mi if x < mi else x)
+
+    if ma != "":
+        df[p] = df[p].apply(lambda x : ma if x > ma else x)
             
     return df
             
@@ -188,14 +186,34 @@ def parse_weather(times, data):
     """
     
     results = {}
-    
-    offset = times[0]['offset']['totalSeconds']/60/60
-    
-    results['year'] = [t['dateTime']['date']['year'] for t in times]
-    results['month'] = [t['dateTime']['date']['month'] for t in times]
-    results['day'] = [t['dateTime']['date']['day'] for t in times]
-    results['hour'] = [t['dateTime']['time']['hour'] for t in times]
-    results['minute'] = [t['dateTime']['time']['minute'] for t in times]
+
+    # time series client always changes the timestamp offset to +8 regardless of the actual offset of the input
+    # OpenMeteoAgent always retrieves and instantiates historical weather data with the starting hour as 00
+    # use the two aforementioned postulates to derive the actual offset
+    offset = times[0]['offset']['totalSeconds']/60/60 - times[0]['dateTime']['time']['hour']
+
+    year = []
+    month = []
+    day = []
+    hour = []
+    minute = []
+
+    # parsing time stamp with correct offset
+    for t in times:
+        dt = datetime.datetime(t['dateTime']['date']['year'], t['dateTime']['date']['month'], t['dateTime']['date']['day'], t['dateTime']['time']['hour'], t['dateTime']['time']['minute'], tzinfo = pytz.FixedOffset(t['offset']['totalSeconds']/60))
+        dt = dt.astimezone(pytz.FixedOffset(offset*60))
+        year.append(dt.strftime("%Y"))
+        month.append(dt.strftime("%m"))
+        day.append(dt.strftime("%d"))
+        hour.append(dt.strftime("%H"))
+        minute.append(dt.strftime("%M"))
+
+
+    results['year'] = year
+    results['month'] = month
+    results['day'] = day
+    results['hour'] = hour
+    results['minute'] = minute
     
     for key, val in data.items():
         if key in ontoems_concepts:
