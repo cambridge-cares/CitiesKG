@@ -37,7 +37,10 @@ def write_workflow_file(workflow_file, workflow_name, filepath, noSurroundings, 
         data.insert(2, dic)
 
     if noWeather == '0': # CEA to use weather.epw, which is created from weather data from knowledge graph
-        data[0]['parameters']['weather'] = filepath+os.sep+"weather.epw"
+        data[1]['parameters']['weather'] = filepath+os.sep+"weather.epw"
+    elif noWeather == '1':
+        data[1]['parameters']['weather'] = "Zuerich-ETHZ_1990-2010_TMY"
+
 
 
     for i in data:

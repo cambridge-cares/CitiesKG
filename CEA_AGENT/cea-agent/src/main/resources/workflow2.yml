@@ -8,7 +8,6 @@
     streets:
     typology: filepath_typology
 - script: weather-helper
-- script: weather-helper
   parameters:
     scenario: scenario_path
 - script: terrain-helper

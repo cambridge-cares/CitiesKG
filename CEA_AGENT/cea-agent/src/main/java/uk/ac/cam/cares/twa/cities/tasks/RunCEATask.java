@@ -517,22 +517,24 @@ public class RunCEATask implements Runnable {
             throw new JPSRuntimeException(e);
         }
 
-        // write timestamps of weather data to weatherTimes_path
-        try {
-            BufferedWriter f_writer = new BufferedWriter(new FileWriter(weatherTimes_path));
-            f_writer.write(weatherTimes);
-            f_writer.close();
-        } catch (IOException e) {
-            throw new JPSRuntimeException(e);
-        }
+        if (!noWeather) {
+            // write timestamps of weather data to weatherTimes_path
+            try {
+                BufferedWriter f_writer = new BufferedWriter(new FileWriter(weatherTimes_path));
+                f_writer.write(weatherTimes);
+                f_writer.close();
+            } catch (IOException e) {
+                throw new JPSRuntimeException(e);
+            }
 
-        // write weather data to weather_path
-        try {
-            BufferedWriter f_writer = new BufferedWriter(new FileWriter(weather_path));
-            f_writer.write(weatherData);
-            f_writer.close();
-        } catch (IOException e) {
-            throw new JPSRuntimeException(e);
+            // write weather data to weather_path
+            try {
+                BufferedWriter f_writer = new BufferedWriter(new FileWriter(weather_path));
+                f_writer.write(weatherData);
+                f_writer.close();
+            } catch (IOException e) {
+                throw new JPSRuntimeException(e);
+            }
         }
 
         // if there is surrounding data, call dataToFile to store surrounding data as a temporary text file
@@ -882,18 +884,22 @@ public class RunCEATask implements Runnable {
                 if (!noSurroundings){runProcess(args2);}
                 // create the typologyfile process and run
                 runProcess(args3);
-                // create the workflow process to get CEA default weather
-                runProcess(args4);
-                // run workflow.yml for CEA to get default weather file
-                runProcess(args5);
 
-                // if there are weather data, create the weatherfile process and run
-                if (!noWeather){runProcess(args6);}
+                // if there are weather data retrieved, create EPW file from the retrieved weather data
+                if (!noWeather) {
+                    // create the workflow process to get CEA default weather
+                    runProcess(args4);
+                    // run workflow.yml for CEA to get default weather file
+                    runProcess(args5);
 
-                // delete the temporary CEA files that were used to create weather file
-                File file = new File(strTmp + FS + "testProject");
-                deleteDirectoryContents(file);
-                file.delete();
+                    // create the weatherfile process and run
+                    runProcess(args6);
+
+                    // delete the temporary CEA files that were used to create weather file
+                    File file = new File(strTmp + FS + "testProject");
+                    deleteDirectoryContents(file);
+                    file.delete();
+                }
 
                 // create the workflow process and run
                 runProcess(args7);
