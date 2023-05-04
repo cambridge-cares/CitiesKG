@@ -626,3 +626,49 @@ function resetAllInputs(){
 	// Keep the lastQuerySentence till new inputs are used
 	document.getElementsByClassName('querySentence')[0].innerHTML = lastQuerySentence;
 }
+
+// Show the mouse position (Test)
+function showMousePosition() {
+	console.log("showMousePosition");
+	const entity = cesiumViewer.entities.add({
+		label: {
+			show: false,
+			showBackground: true,
+			font: "14px monospace",
+			horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+			verticalOrigin: Cesium.VerticalOrigin.TOP,
+			pixelOffset: new Cesium.Cartesian2(15, 0),
+			backgroundColor: Cesium.Color.BLACK.withAlpha(1)
+		},
+	});
+
+	// Mouse over the globe to see the cartographic position
+	handler = new Cesium.ScreenSpaceEventHandler(cesiumScene.canvas);
+	handler.setInputAction(function (movement) {
+		const cartesian = cesiumViewer.camera.pickEllipsoid(
+				movement.endPosition,
+				cesiumScene.globe.ellipsoid
+		);
+		if (cartesian) {
+			const cartographic = Cesium.Cartographic.fromCartesian(
+					cartesian
+			);
+			//console.log(Cesium.Math.toDegrees(cartographic.longitude), " " ,Cesium.Math.toDegrees(cartographic.latitude));
+			const longitudeString = Cesium.Math.toDegrees(
+					cartographic.longitude
+			);
+			const latitudeString = Cesium.Math.toDegrees(
+					cartographic.latitude
+			);
+
+			entity.position = cartesian;
+			entity.label.show = true;
+			entity.label.text =
+					`Lon: ${`   ${longitudeString}`}\u00B0` +
+					`\nLat: ${`   ${latitudeString}`}\u00B0`;  // removed the .slice(-7)
+		} else {
+			entity.label.show = false;
+		}
+	}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+}
+
