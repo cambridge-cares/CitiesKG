@@ -670,6 +670,5 @@ function showMousePosition() {
 			entity.label.show = false;
 		}
 	}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
-
 }
 
