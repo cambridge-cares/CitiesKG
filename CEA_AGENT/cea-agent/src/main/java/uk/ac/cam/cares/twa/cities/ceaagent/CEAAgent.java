@@ -151,6 +151,9 @@ public class CEAAgent extends JPSAgent {
     public String customDataType = "<http://localhost/blazegraph/literals/POLYGON-3-15>";
     public String customField = "X0#Y0#Z0#X1#Y1#Z1#X2#Y2#Z2#X3#Y3#Z3#X4#Y4#Z4";
 
+    public static final String STORE_CLIENT = "RemoteStoreClient";
+    public static final String RDB_CLIENT = "RemoteRDBStoreClient";
+
     public static final String CTYPE_JSON = "application/json";
     public static final String OPENMETEO_LAT = "latitude";
     public static final String OPENMETEO_LON = "longitude";
@@ -1243,7 +1246,11 @@ public class CEAAgent extends JPSAgent {
         // CEA only support up to three usages for each building
         // convert all usages to CEA defined usages first
 
-        if (queryResultArray.length() == 1){
+        if (queryResultArray.isEmpty()) {
+            usage = toCEAConvention("default");
+            result.put(usage, 1.00);
+        }
+        else if (queryResultArray.length() == 1){
             usage = queryResultArray.getJSONObject(0).get("BuildingUsage").toString().split(ontoBuiltEnvUri)[1].split(">")[0].toUpperCase();
             usage = toCEAConvention(usage);
             result.put(usage, 1.00);
@@ -1282,6 +1289,15 @@ public class CEAAgent extends JPSAgent {
         return result;
     }
 
+    /**
+     * Retrieves weather data
+     * @param uriString city object id
+     * @param route route to city object geometry data
+     * @param weatherRoute route to weather data
+     * @param crs CRS of city object geometry
+     * @param result list to add the retrieved weather data to
+     * @return true if weather data retrieved, false otherwise
+     */
     private boolean getWeather(String uriString, String route, String weatherRoute, String crs, List<Object> result) {
         String envelopeCoordinates = getValue(uriString, "envelope", route);
 
@@ -1330,6 +1346,12 @@ public class CEAAgent extends JPSAgent {
         }
     }
 
+    /**
+     * Send request to OpenMeteoAgent to instantiate historical weather data over a year
+     * @param latitude latitude of the weather station
+     * @param longitude longitude of the weather station
+     * @return the instantiated weather station IRI
+     */
     public String runOpenMeteoAgent(String latitude, String longitude) {
         String url = openmeteagentURL + OPENMETEO_ENDPOINT_RUN;
 
@@ -1364,7 +1386,6 @@ public class CEAAgent extends JPSAgent {
         catch (UnirestException e) {
             return "";
         }
-
     }
 
     /**
@@ -1449,7 +1470,13 @@ public class CEAAgent extends JPSAgent {
         return result;
     }
 
-    private boolean parseWeather(Map<String, List<String >> weatherMap, List<Object> result) {
+    /**
+     * Parses weather data into a list
+     * @param weatherMap map with the weather parameter IRIs
+     * @param result empty list to add the parsed weather data
+     * @return true if the number of data entries is sufficient for CEA requirement (8760 hourly entires), false otherwise
+     */
+    private boolean parseWeather(Map<String, List<String>> weatherMap, List<Object> result) {
         Map<String, List<Double>> weather = new HashMap<>();
 
         boolean getTimes = true;
@@ -1457,11 +1484,8 @@ public class CEAAgent extends JPSAgent {
         for (Map.Entry<String, List<String>> entry : weatherMap.entrySet()) {
             List<String> value = entry.getValue();
             String weatherIRI = value.get(0);
-            String weatherDB = isDockerized() ? value.get(1).replace("localhost", "host.docker.internal") : value.get(1).replace("host.docker.internal", "localhost");
-            RemoteRDBStoreClient weatherRDBClient = new RemoteRDBStoreClient(weatherDB, dbUser, dbPassword);
-            List<String> weatherEndpoints = getRouteEndpoints(weatherRoute);
-            RemoteStoreClient weatherStoreClient = new RemoteStoreClient(weatherEndpoints.get(0), weatherEndpoints.get(1));
-            TimeSeries<OffsetDateTime> weatherTS = retrieveData(weatherIRI, weatherStoreClient, weatherRDBClient);
+            Map<String, Object> weatherClients = getWeatherClients(value.get(1));
+            TimeSeries<OffsetDateTime> weatherTS = retrieveData(weatherIRI, (RemoteStoreClient) weatherClients.get(STORE_CLIENT), (RemoteRDBStoreClient) weatherClients.get(RDB_CLIENT));
 
             // want hourly data over a year
             if (weatherTS.getTimes().size() < 8760) {
@@ -1477,6 +1501,22 @@ public class CEAAgent extends JPSAgent {
 
         result.add(weather);
         return true;
+    }
+
+    /**
+     * Gets the RemoteStoreClient and RemoteRDBStoreClient objects for querying weather data
+     * @param db database storing the weather data
+     * @return a map containing a RemoteStoreClient object and RemoteRDBStoreClient object that will allow for the querying of weather data
+     */
+    public Map<String, Object> getWeatherClients(String db) {
+        String weatherDB = isDockerized() ? db.replace("localhost", "host.docker.internal") : db.replace("host.docker.internal", "localhost");
+        RemoteRDBStoreClient weatherRDBClient = new RemoteRDBStoreClient(weatherDB, dbUser, dbPassword);
+        List<String> weatherEndpoints = getRouteEndpoints(weatherRoute);
+        RemoteStoreClient weatherStoreClient = new RemoteStoreClient(weatherEndpoints.get(0), weatherEndpoints.get(1));
+        Map<String, Object> result = new HashMap<>();
+        result.put(RDB_CLIENT, weatherRDBClient);
+        result.put(STORE_CLIENT, weatherStoreClient);
+        return result;
     }
 
     /**

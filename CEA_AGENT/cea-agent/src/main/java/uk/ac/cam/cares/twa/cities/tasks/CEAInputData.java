@@ -43,7 +43,9 @@ public class CEAInputData {
     }
 
     public List<OffsetDateTime> getWeatherTimes() {return this.weatherTimes;}
+
     public Map<String, List<Double>> getWeather() {return this.weather;}
+
     public List<Double> getWeatherCoordinate() {return this.weatherCoordinate;}
 
     public void setGeometry(String geometry_value) {
