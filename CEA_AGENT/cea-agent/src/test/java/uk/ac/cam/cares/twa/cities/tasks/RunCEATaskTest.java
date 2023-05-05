@@ -15,6 +15,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.OffsetDateTime;
 import java.util.*;
 
 import static org.mockito.Mockito.*;
@@ -29,7 +30,7 @@ public class RunCEATaskTest {
         try {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -42,79 +43,11 @@ public class RunCEATaskTest {
     }
 
     @Test
-    public void testRunCEATaskFields() {
-        try {
-            ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
-            URI testURI = new URI("http://localhost/test");
-            ArrayList<String> testArray = new ArrayList<>();
-            testArray.add("testUri");
-            Integer test_thread = 0;
-            String test_CRS = "27700";
-            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
-
-            assertEquals(17, task.getClass().getDeclaredFields().length);
-
-            Field inputs;
-            Field uris;
-            Field endpointUri;
-            Field threadNumber;
-            Field crs;
-            Field CTYPE_JSON;
-            Field stop;
-            Field DATA_FILE;
-            Field SHAPEFILE_SCRIPT;
-            Field WORKFLOW_SCRIPT;
-            Field CREATE_WORKFLOW_SCRIPT;
-            Field FS;
-
-            inputs = task.getClass().getDeclaredField("inputs");
-            inputs.setAccessible(true);
-            assertEquals(inputs.get(task), testData);
-            uris = task.getClass().getDeclaredField("uris");
-            uris.setAccessible(true);
-            assertEquals(uris.get(task), testArray);
-            endpointUri = task.getClass().getDeclaredField("endpointUri");
-            endpointUri.setAccessible(true);
-            assertEquals(endpointUri.get(task), testURI);
-            threadNumber = task.getClass().getDeclaredField("threadNumber");
-            threadNumber.setAccessible(true);
-            assertEquals(threadNumber.get(task), test_thread);
-            crs = task.getClass().getDeclaredField("crs");
-            crs.setAccessible(true);
-            assertEquals(crs.get(task), test_CRS);
-            CTYPE_JSON = task.getClass().getDeclaredField("CTYPE_JSON");
-            assertEquals(CTYPE_JSON.get(task), "application/json");
-            stop = task.getClass().getDeclaredField("stop");
-            stop.setAccessible(true);
-            assertFalse((boolean) stop.get(task));
-            DATA_FILE = task.getClass().getDeclaredField("DATA_FILE");
-            DATA_FILE.setAccessible(true);
-            assertEquals(DATA_FILE.get(task), "datafile.txt");
-            SHAPEFILE_SCRIPT = task.getClass().getDeclaredField("SHAPEFILE_SCRIPT");
-            SHAPEFILE_SCRIPT.setAccessible(true);
-            assertEquals(SHAPEFILE_SCRIPT.get(task), "create_shapefile.py");
-            WORKFLOW_SCRIPT = task.getClass().getDeclaredField("WORKFLOW_SCRIPT");
-            WORKFLOW_SCRIPT.setAccessible(true);
-            assertEquals(WORKFLOW_SCRIPT.get(task), "workflow.yml");
-            CREATE_WORKFLOW_SCRIPT = task.getClass().getDeclaredField("CREATE_WORKFLOW_SCRIPT");
-            CREATE_WORKFLOW_SCRIPT.setAccessible(true);
-            assertEquals(CREATE_WORKFLOW_SCRIPT.get(task), "create_cea_workflow.py");
-            FS = task.getClass().getDeclaredField("FS");
-            FS.setAccessible(true);
-            assertEquals(FS.get(task), System.getProperty("file.separator"));
-
-        } catch (NoSuchFieldException | IllegalAccessException | URISyntaxException e) {
-            fail();
-        }
-    }
-
-    @Test
     public void testStop() {
         try {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -137,7 +70,7 @@ public class RunCEATaskTest {
     public void testRunProcess() throws Exception {
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -178,7 +111,7 @@ public class RunCEATaskTest {
         try {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -224,7 +157,7 @@ public class RunCEATaskTest {
 
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -293,7 +226,7 @@ public class RunCEATaskTest {
 
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -351,7 +284,7 @@ public class RunCEATaskTest {
         try {
             testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -398,7 +331,7 @@ public class RunCEATaskTest {
     public void testRun() throws NoSuchMethodException, URISyntaxException, InvocationTargetException, IllegalAccessException {
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -428,7 +361,10 @@ public class RunCEATaskTest {
     public void testDataToFile(@TempDir Path tempDir) throws URISyntaxException, NoSuchMethodException, NoSuchFieldException, InvocationTargetException, IllegalAccessException, IOException {
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<>();
-        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+        List<OffsetDateTime> testTimes = Collections.nCopies(8760, OffsetDateTime.now());
+        Map<String, List<Double>> testWeather = new HashMap<>();
+        testWeather.put("testWeather", Collections.nCopies(8760, 0.00));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, testTimes, testWeather, Arrays.asList(0.00, 0.00)));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -436,29 +372,34 @@ public class RunCEATaskTest {
         RunCEATask task = new RunCEATask(testData, testURI, testArray, test_thread, test_CRS);
 
         ArrayList<CEAInputData> surroundings = new ArrayList<>();
-        surroundings.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+        surroundings.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
         testData.get(0).setSurrounding(surroundings);
 
-        Method dataToFile = task.getClass().getDeclaredMethod("dataToFile", ArrayList.class, String.class, String.class, String.class);
+        Method dataToFile = task.getClass().getDeclaredMethod("dataToFile", ArrayList.class, String.class, String.class, String.class, String.class, String.class);
         assertNotNull(dataToFile);
         dataToFile.setAccessible(true);
 
         Field noSurroundings = task.getClass().getDeclaredField("noSurroundings");
         noSurroundings.setAccessible(true);
+        Field noWeather = task.getClass().getDeclaredField("noWeather");
+        noWeather.setAccessible(true);
 
         Path testPath = Files.createFile(tempDir.resolve("test.txt"));
         Path testPath2 = Files.createFile(tempDir.resolve("test2.txt"));
+        Path testPath3 = Files.createFile(tempDir.resolve("test3.txt"));
+        Path testPath4 = Files.createFile(tempDir.resolve("test4.txt"));
 
-        dataToFile.invoke(task, testData, tempDir.toString(), testPath.toString(), testPath2.toString());
+        dataToFile.invoke(task, testData, tempDir.toString(), testPath.toString(), testPath2.toString(), testPath3.toString(), testPath4.toString());
 
         assertFalse((Boolean) noSurroundings.get(task));
+        assertFalse((Boolean) noWeather.get(task));
     }
 
     @Test
     public void testExtractSolarSupply() throws URISyntaxException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;

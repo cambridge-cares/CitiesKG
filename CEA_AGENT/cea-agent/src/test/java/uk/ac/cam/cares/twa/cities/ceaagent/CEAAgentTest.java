@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
+import kong.unirest.*;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.jooq.exception.DataAccessException;
 import org.json.JSONArray;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Field;
+import java.net.HttpURLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -410,7 +412,6 @@ public class CEAAgentTest {
         JSONObject returnParams;
 
         try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = mockStatic(AccessAgentCaller.class)) {
-
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
                     .thenReturn(expected_building).thenReturn(expected_iri);
 
@@ -430,7 +431,7 @@ public class CEAAgentTest {
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
                     .thenReturn(new JSONArray()).thenReturn(new JSONArray()).thenReturn(expected_height).thenReturn(expected_footprint)
                     .thenReturn(expected_usage).thenReturn(expected_envelope).thenReturn(expected_buildings).thenReturn(expected_height)
-                    .thenReturn(expected_footprint).thenReturn(expected_crs);
+                    .thenReturn(expected_footprint).thenReturn(expected_crs).thenReturn(expected_envelope);
 
             accessAgentCallerMock.when(() -> AccessAgentCaller.getEndpoints(anyString())).thenReturn(expected_endpoints);
 
@@ -460,7 +461,7 @@ public class CEAAgentTest {
 
             doReturn(testList).when(agent).getDataIRI(anyString(), anyString(), anyString(), anyString());
             doReturn(testReturnValue).when(agent).calculateAnnual(any(), anyString());
-            doReturn(timeSeries).when(agent).retrieveData(anyString());
+            doReturn(timeSeries).when(agent).retrieveData(anyString(), any(), any());
             doReturn(testUnit).when(agent).getUnit(anyString());
 
             Field TIME_SERIES = agent.getClass().getDeclaredField("TIME_SERIES");
@@ -780,7 +781,7 @@ public class CEAAgentTest {
             targetUrl.set(agent, "test");
 
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
@@ -1464,7 +1465,6 @@ public class CEAAgentTest {
     public void testGetNumericalValue() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
 
-        String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
         String test_measure = "testUri";
         String value = "value";
         String test_value = "35.2";
@@ -1473,7 +1473,7 @@ public class CEAAgentTest {
         JSONArray expected = new JSONArray().put(new JSONObject().put(value, test_value));
         JSONArray expectedBlank = new JSONArray();
 
-        Method getNumericalValue = agent.getClass().getDeclaredMethod("getNumericalValue", String.class, String.class, String.class, String.class);
+        Method getNumericalValue = agent.getClass().getDeclaredMethod("getNumericalValue", String.class, String.class, String.class);
         assertNotNull(getNumericalValue);
         getNumericalValue.setAccessible(true);
 
@@ -1482,13 +1482,13 @@ public class CEAAgentTest {
             //test with mocked AccessAgentCaller when it returns data
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
                     .thenReturn(expected);
-            String result = (String) getNumericalValue.invoke(agent, uriString, test_measure, route, "");
+            String result = (String) getNumericalValue.invoke(agent, test_measure, route, "");
             assertTrue(result.contains(test_value));
 
             //test with mocked AccessAgentCaller when there is nothing returned
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
                     .thenReturn((expectedBlank));
-            result = (String) getNumericalValue.invoke(agent, uriString, test_measure, route, "");
+            result = (String) getNumericalValue.invoke(agent, test_measure, route, "");
 
             assertTrue(result.isEmpty());
         }
@@ -1726,23 +1726,21 @@ public class CEAAgentTest {
     public void testRetrieveData() throws Exception {
         try(MockedConstruction<TimeSeriesClient> mockTs = mockConstruction(TimeSeriesClient.class)) {
             CEAAgent agent = new CEAAgent();
-            Method retrieveData = agent.getClass().getDeclaredMethod("retrieveData", String.class);
+            Method retrieveData = agent.getClass().getDeclaredMethod("retrieveData", String.class, RemoteStoreClient.class, RemoteRDBStoreClient.class);
             assertNotNull(retrieveData);
 
             String iri = "test";
             List<String> iris = new ArrayList<>();
             iris.add(iri);
 
+            RemoteStoreClient mockStoreClient = mock(RemoteStoreClient.class);
+
             RemoteRDBStoreClient mockRDBClient = mock(RemoteRDBStoreClient.class);
             Connection mockConnection = mock(Connection.class);
 
-            Field rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
-            rdbStoreClient.setAccessible(true);
-            rdbStoreClient.set(agent, mockRDBClient);
-
             doReturn(mockConnection).when(mockRDBClient).getConnection();
 
-            retrieveData.invoke(agent, iri);
+            retrieveData.invoke(agent, iri, mockStoreClient, mockRDBClient);
 
             // Ensure method to get time series client was invoked once
             verify(mockTs.constructed().get(0), times(1)).getTimeSeries(anyList(), any());
@@ -2040,43 +2038,6 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testSetRDBClient(@TempDir Path tempDir) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException, IOException {
-        CEAAgent agent = new CEAAgent();
-        Method setRDBClient = agent.getClass().getDeclaredMethod("setRDBClient", String.class);
-
-        assertNotNull(setRDBClient);
-        setRDBClient.setAccessible(true);
-
-        Field rdbStoreClient;
-
-        rdbStoreClient = agent.getClass().getDeclaredField("rdbStoreClient");
-        rdbStoreClient.setAccessible(true);
-        assertNull(rdbStoreClient.get(agent));
-
-        String testFile = "test.properties";
-        String url = "test_url";
-        String user = "test_user";
-        String password = "test_password";
-        Path testPath = Files.createFile(tempDir.resolve(testFile));
-        Properties testProp = new Properties();
-
-        testProp.setProperty("db.url", url);
-        testProp.setProperty("db.user", user);
-        testProp.setProperty("db.password", password);
-
-        FileOutputStream testOut = new FileOutputStream(testPath.toString());
-        testProp.store(testOut, null);
-        testOut.close();
-
-        setRDBClient.invoke(agent, testPath.toString());
-
-        assertNotNull(rdbStoreClient.get(agent));
-        assertEquals(url, ((RemoteRDBStoreClient) rdbStoreClient.get(agent)).getRdbURL());
-        assertEquals(user, ((RemoteRDBStoreClient) rdbStoreClient.get(agent)).getUser());
-        assertEquals(password, ((RemoteRDBStoreClient) rdbStoreClient.get(agent)).getPassword());
-    }
-
-    @Test
     public void testToCEAConvention() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
     {
         CEAAgent agent = new CEAAgent();
@@ -2191,31 +2152,199 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testSetStoreClient() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
+    public void testGetWeather() throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException, InvocationTargetException {
+        CEAAgent agent = spy(new CEAAgent());
+
+        Method getWeather = agent.getClass().getDeclaredMethod("getWeather", String.class, String.class, String.class, String.class, List.class);
+        assertNotNull(getWeather);
+        getWeather.setAccessible(true);
+
+        Field ontoemsUri = agent.getClass().getDeclaredField("ontoemsUri");
+        assertNotNull(ontoemsUri);
+        ontoemsUri.setAccessible(true);
+
+        doReturn("").when(agent).runOpenMeteoAgent(anyString(), anyString());
+
+        String testCRS = "32633";
+
+        try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = mockStatic(AccessAgentCaller.class)) {
+            // test when there are no retrievable weather data
+            accessAgentCallerMock.when(() -> AccessAgentCaller.getEndpoints(anyString()))
+                    .thenReturn(new JSONObject().put(JPSConstants.QUERY_ENDPOINT, "testQueryEndpoint").put(JPSConstants.UPDATE_ENDPOINT, "testUpdateEndpoint"));
+
+            JSONArray envelope = new JSONArray();
+            envelope.put(new JSONObject().put("envelope", "555438.08#305587.27999#-0.6#555484.04#305587.27999#-0.6#555484.04#305614.87999#-0.6#555438.08#305614.87999#-0.6#555438.08#305587.27999#-0.6"));
+
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn(envelope).thenReturn(new JSONArray());
+
+            List<Object> testList = new ArrayList<>();
+
+            assertFalse((Boolean) getWeather.invoke(agent, "", "", "", testCRS, testList));
+            assertEquals(testList.size(), 0);
+
+            // test when there are retrievable weather data
+            JSONArray station = new JSONArray();
+            station.put(new JSONObject().put("station", "testStation"));
+            JSONArray weatherIRIs = new JSONArray();
+            weatherIRIs.put(new JSONObject().put("weatherParameter", ontoemsUri.get(agent) + "testWeather").put("measure", "testMeasure").put("rdb", "testRDB"));
+
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn(envelope).thenReturn(station).thenReturn(weatherIRIs);
+
+
+            TimeSeries<OffsetDateTime> mockTS = mock(TimeSeries.class);
+
+            List<OffsetDateTime> testTimesList = Collections.nCopies(8760, OffsetDateTime.now());
+            List<Double> testWeatherData = Collections.nCopies(8760, 0.00);
+
+            doReturn(testTimesList).when(mockTS).getTimes();
+            doReturn(testWeatherData).when(mockTS).getValuesAsDouble(anyString());
+
+            doReturn(mockTS).when(agent).retrieveData(anyString(), any(), any());
+
+            assertTrue((Boolean) getWeather.invoke(agent, "", "", "", testCRS, testList));
+
+            verify(agent, times(1)).retrieveData(anyString(), any(), any());
+            assertEquals(testList.size(), 3);
+            assertEquals(((Map<String, List<String>>) testList.get(1)).size(), 1);
+            assertTrue(((Map<String, List<String>>) testList.get(1)).containsKey("testWeather"));
+            assertEquals(((Map<String, List<String>>) testList.get(1)).get("testWeather").size(), ((List<OffsetDateTime>) testList.get(0)).size());
+            assertEquals(((List<OffsetDateTime>) testList.get(0)).size(), 8760);
+        }
+    }
+
+    @Test
+    public void testRunOpenMeteoAgent() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
 
-        Method setStoreClient = agent.getClass().getDeclaredMethod("setStoreClient", String.class);
-        assertNotNull(setStoreClient);
-        setStoreClient.setAccessible(true);
+        Method runOpenMeteoAgent = agent.getClass().getDeclaredMethod("runOpenMeteoAgent", String.class, String.class);
+        assertNotNull(runOpenMeteoAgent);
+        runOpenMeteoAgent.setAccessible(true);
 
-        String expected_queryEndpoint = "queryEndpoint";
-        String expected_updateEndpoint = "updateEndpoint";
-        JSONObject expected_endpoints = new JSONObject().put(JPSConstants.QUERY_ENDPOINT, expected_queryEndpoint).put(JPSConstants.UPDATE_ENDPOINT, expected_updateEndpoint);
+        try (MockedStatic<Unirest> unirestMock = mockStatic(Unirest.class, RETURNS_MOCKS)) {
+
+            HttpResponse<String> mockResponse = mock(HttpResponse.class);
+
+            when(mockResponse.getStatus()).thenReturn(HttpURLConnection.HTTP_OK);
+
+            unirestMock.when(() -> Unirest.post(anyString())
+                            .header(anyString(), anyString())
+                            .body(anyString())
+                            .socketTimeout(anyInt())
+                            .asString())
+                    .thenReturn(mockResponse);
+
+            String result = (String) runOpenMeteoAgent.invoke(agent, "", "");
+
+            assertEquals(result, "");
+        }
+    }
+
+    @Test
+    public void testGetWeatherIRI() throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException, InvocationTargetException {
+        CEAAgent agent = new CEAAgent();
+
+        Method getWeatherIRI = agent.getClass().getDeclaredMethod("getWeatherIRI", String.class, String.class);
+        assertNotNull(getWeatherIRI);
+        getWeatherIRI.setAccessible(true);
+
+        Field ontoemsUri = agent.getClass().getDeclaredField("ontoemsUri");
+        assertNotNull(ontoemsUri);
+        ontoemsUri.setAccessible(true);
+
+        String testWeatherParamter = ontoemsUri.get(agent) + "TestWeather";
+        JSONArray testJSONArray = new JSONArray();
+        testJSONArray.put(new JSONObject().put("weatherParameter", testWeatherParamter).put("measure", "testMeasure").put("rdb", "testRDB"));
 
         try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = mockStatic(AccessAgentCaller.class)) {
 
-            accessAgentCallerMock.when(() -> AccessAgentCaller.getEndpoints(anyString())).thenReturn(expected_endpoints);
+            accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
+                    .thenReturn(testJSONArray);
 
-            Field storeClient = agent.getClass().getDeclaredField("storeClient");
-            storeClient.setAccessible(true);
-            assertNull(storeClient.get(agent));
+            Map<String, List<String>> result = (Map<String, List<String>>) getWeatherIRI.invoke(agent, "", "");
 
-            setStoreClient.invoke(agent, "");
-
-
-            assertNotNull(storeClient.get(agent));
-            assertEquals(expected_queryEndpoint, ((RemoteStoreClient) storeClient.get(agent)).getQueryEndpoint());
-            assertEquals(expected_updateEndpoint, ((RemoteStoreClient) storeClient.get(agent)).getUpdateEndpoint());
+            assertTrue(result.containsKey("TestWeather"));
+            assertEquals(result.get("TestWeather").get(0), "testMeasure");
+            assertEquals(result.get("TestWeather").get(1), "testRDB");
         }
+    }
+
+    @Test
+    public void testParseWeather() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
+        CEAAgent agent = spy(new CEAAgent());
+
+        Method parseWeather = agent.getClass().getDeclaredMethod("parseWeather", Map.class, List.class);
+        assertNotNull(parseWeather);
+        parseWeather.setAccessible(true);
+
+        Map<String, List<String>> testMap = new HashMap<>();
+        List<Object> testList = new ArrayList<>();
+
+        testMap.put("testWeather", Arrays.asList("testWeatherIRI", "testRDB"));
+
+        // test for when the weather data do not have enough datapoints (<8760)
+        List<OffsetDateTime> testTimesList = Collections.nCopies(2, OffsetDateTime.now());
+        List<Double> testWeatherData = Collections.nCopies(2, 0.00);
+
+        Field rdb_client = agent.getClass().getDeclaredField("RDB_CLIENT");
+        assertNotNull(rdb_client);
+        rdb_client.setAccessible(true);
+
+        Field store_client = agent.getClass().getDeclaredField("STORE_CLIENT");
+        assertNotNull(store_client);
+        store_client.setAccessible(true);
+
+        RemoteRDBStoreClient mockRDBClient = mock(RemoteRDBStoreClient.class);
+        RemoteStoreClient mockStoreClient = mock(RemoteStoreClient.class);
+
+        Map<String, Object> mockWeatherClients = new HashMap<>();
+        mockWeatherClients.put(rdb_client.get(agent).toString(), mockRDBClient);
+        mockWeatherClients.put(store_client.get(agent).toString(), mockStoreClient);
+
+        doReturn(mockWeatherClients).when(agent).getWeatherClients(anyString());
+
+        TimeSeries<OffsetDateTime> mockTS = mock(TimeSeries.class);
+        doReturn(testTimesList).when(mockTS).getTimes();
+        doReturn(testWeatherData).when(mockTS).getValuesAsDouble(anyString());
+
+        doReturn(mockTS).when(agent).retrieveData(anyString(), any(), any());
+
+        // check that the data is not parsed to testList if weather data do not have enough datapoints
+        assertFalse((Boolean) parseWeather.invoke(agent, testMap, testList));
+        assertEquals(testList.size(), 0);
+
+        // test for when the weather data have enough datapoints (>=8760)
+        testTimesList = Collections.nCopies(8765, OffsetDateTime.now());
+        testWeatherData = Collections.nCopies(8765, 0.00);
+
+        doReturn(testTimesList).when(mockTS).getTimes();
+        doReturn(testWeatherData).when(mockTS).getValuesAsDouble(anyString());
+
+        // test that weather data is correctly parsed, with exactly 8760 data points
+        assertTrue((Boolean) parseWeather.invoke(agent, testMap, testList));
+
+        assertEquals(testList.size(), 2);
+        assertEquals(((Map<String, List<String>>) testList.get(1)).size(), 1);
+        assertTrue(((Map<String, List<String>>) testList.get(1)).containsKey("testWeather"));
+        assertEquals(((Map<String, List<String>>) testList.get(1)).get("testWeather").size(), ((List<OffsetDateTime>) testList.get(0)).size());
+        assertEquals(((List<OffsetDateTime>) testList.get(0)).size(), 8760);
+
+        testList = new ArrayList<>();
+
+        testTimesList = Collections.nCopies(8760, OffsetDateTime.now());
+        testWeatherData = Collections.nCopies(8760, 0.00);
+
+        doReturn(testTimesList).when(mockTS).getTimes();
+        doReturn(testWeatherData).when(mockTS).getValuesAsDouble(anyString());
+
+        // test that weather data is correctly parsed, with exactly 8760 data points
+        assertTrue((Boolean) parseWeather.invoke(agent, testMap, testList));
+
+        assertEquals(testList.size(), 2);
+        assertEquals(((Map<String, List<String>>) testList.get(1)).size(), 1);
+        assertTrue(((Map<String, List<String>>) testList.get(1)).containsKey("testWeather"));
+        assertEquals(((Map<String, List<String>>) testList.get(1)).get("testWeather").size(), ((List<OffsetDateTime>) testList.get(0)).size());
+        assertEquals(((List<OffsetDateTime>) testList.get(0)).size(), 8760);
     }
 }
