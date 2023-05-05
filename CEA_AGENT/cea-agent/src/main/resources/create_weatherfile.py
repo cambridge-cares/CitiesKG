@@ -190,7 +190,7 @@ def parse_weather(times, data):
     # time series client always changes the timestamp offset to +8 regardless of the actual offset of the input
     # OpenMeteoAgent always retrieves and instantiates historical weather data with the starting hour as 00
     # use the two aforementioned postulates to derive the actual offset
-    offset = times[0]['offset']['totalSeconds']/60/60 - times[0]['dateTime']['time']['hour']
+    offset = times[0]['offset']/60/60 - times[0]['hour']
 
     year = []
     month = []
@@ -200,7 +200,7 @@ def parse_weather(times, data):
 
     # parsing time stamp with correct offset
     for t in times:
-        dt = datetime.datetime(t['dateTime']['date']['year'], t['dateTime']['date']['month'], t['dateTime']['date']['day'], t['dateTime']['time']['hour'], t['dateTime']['time']['minute'], tzinfo = pytz.FixedOffset(t['offset']['totalSeconds']/60))
+        dt = datetime.datetime(t['year'], t['month'], t['day'], t['hour'], t['minute'], tzinfo = pytz.FixedOffset(t['offset']/60))
         dt = dt.astimezone(pytz.FixedOffset(offset*60))
         year.append(dt.strftime("%Y"))
         month.append(dt.strftime("%m"))

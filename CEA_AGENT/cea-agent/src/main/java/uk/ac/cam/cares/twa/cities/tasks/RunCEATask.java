@@ -14,6 +14,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.lang.Process;
+import java.util.stream.Collectors;
 
 public class RunCEATask implements Runnable {
     private final ArrayList<CEAInputData> inputs;
@@ -489,16 +490,28 @@ public class RunCEATask implements Runnable {
             if (!(dataInputs.get(i).getSurrounding() == null)) {surroundings.addAll(dataInputs.get(i).getSurrounding());}
             if (noWeather && !(dataInputs.get(i).getWeather() == null) && !(dataInputs.get(i).getWeatherTimes() == null)) {
                 noWeather = false;
-                weatherTimes += new Gson().toJson(dataInputs.get(i).getWeatherTimes());
+                List<Map<String, Integer>> timeMap = dataInputs.get(i).getWeatherTimes().stream()
+                        .map(offsetDateTime -> {
+                            Map<String, Integer> map = new HashMap<>();
+                            map.put("year", offsetDateTime.getYear());
+                            map.put("month", offsetDateTime.getMonthValue());
+                            map.put("day", offsetDateTime.getDayOfMonth());
+                            map.put("hour", offsetDateTime.getHour());
+                            map.put("minute", offsetDateTime.getMinute());
+                            map.put("offset", offsetDateTime.getOffset().getTotalSeconds());
+                            return map;
+                        })
+                        .collect(Collectors.toList());
+                weatherTimes += new Gson().toJson(timeMap);
                 weatherData += new Gson().toJson(dataInputs.get(i).getWeather());
                 weather_lat = dataInputs.get(i).getWeatherCoordinate().get(0);
                 weather_lon = dataInputs.get(i).getWeatherCoordinate().get(1);
             }
-            dataInputs.get(i).setWeatherTimes(null);
-            dataInputs.get(i).setWeather(null);
-            dataInputs.get(i).setWeatherCoordinate(null);
-            dataInputs.get(i).setSurrounding(null);
-            dataString += new Gson().toJson(dataInputs.get(i));
+            Map<String, Object> tempMap = new HashMap<>();
+            tempMap.put("geometry", dataInputs.get(i).getGeometry());
+            tempMap.put("height", dataInputs.get(i).getHeight());
+            tempMap.put("usage", dataInputs.get(i).getUsage());
+            dataString += new Gson().toJson(tempMap);
             if(i!=dataInputs.size()-1) dataString += ", ";
         }
         dataString+="]";
@@ -557,8 +570,10 @@ public class RunCEATask implements Runnable {
         String dataString = "[";
 
         for(int i = 0; i < dataInputs.size(); i++) {
-            dataInputs.get(i).setSurrounding(null);
-            dataString += new Gson().toJson(dataInputs.get(i));
+            Map<String, String> tempMap = new HashMap<>();
+            tempMap.put("geometry", dataInputs.get(i).getGeometry());
+            tempMap.put("height", dataInputs.get(i).getHeight());
+            dataString += new Gson().toJson(tempMap);
             if(i!=dataInputs.size()-1) dataString += ", ";
         }
         dataString+="]";
@@ -869,7 +884,7 @@ public class RunCEATask implements Runnable {
                     args8.add("-c");
                     args8.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath2);
 
-                    args8.add("/bin/bash");
+                    args9.add("/bin/bash");
                     args9.add("-c");
                     args9.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile3 + " " + WORKFLOW_YML3 + " " + strTmp + " " + "null" + " " + "null");
 
