@@ -14,13 +14,6 @@
         <tomcat.version>8.5.47</tomcat.version>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>osgeo-repo</id>
-            <url>https://repo.osgeo.org/repository/release/</url>
-        </repository>
-    </repositories>
-
     <dependencies>
         <dependency>
             <groupId>uk.ac.cam.cares.jps</groupId>
@@ -102,21 +95,6 @@
             <groupId>org.locationtech.jts</groupId>
             <artifactId>jts-core</artifactId>
             <version>1.18.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-epsg-extension</artifactId>
-            <version>27.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-epsg-hsql</artifactId>
-            <version>27.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-main</artifactId>
-            <version>27.2</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>

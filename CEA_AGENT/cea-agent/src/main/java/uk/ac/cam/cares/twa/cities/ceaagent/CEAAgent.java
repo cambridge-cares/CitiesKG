@@ -12,12 +12,6 @@ import org.apache.jena.sparql.syntax.ElementService;
 import org.jooq.exception.DataAccessException;
 import org.locationtech.jts.geom.util.GeometryFixer;
 import org.locationtech.jts.geom.*;
-import org.geotools.geometry.jts.JTS;
-import org.geotools.referencing.CRS;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.config.JPSConstants;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -54,6 +48,14 @@ import org.json.JSONArray;
 
 import org.locationtech.jts.operation.buffer.BufferOp;
 import org.locationtech.jts.operation.buffer.BufferParameters;
+
+import org.cts.op.CoordinateOperation;
+import org.cts.op.CoordinateOperationFactory;
+import org.cts.registry.EPSGRegistry;
+import org.cts.registry.RegistryManager;
+import org.cts.CRSFactory;
+import org.cts.crs.CoordinateReferenceSystem;
+import org.cts.crs.GeodeticCRS;
 
 @WebServlet(
         urlPatterns = {
@@ -1310,12 +1312,26 @@ public class CEAAgent extends JPSAgent {
         crs = StringUtils.isNumeric(crs) ? "EPSG:" + crs : crs;
 
         try {
-            CoordinateReferenceSystem sourceCRS = CRS.decode(crs);
-            CoordinateReferenceSystem targetCRS = CRS.decode(CRS_4326);
+            CRSFactory crsFactory = new CRSFactory();
+            RegistryManager registryManager = crsFactory.getRegistryManager();
+            registryManager.addRegistry(new EPSGRegistry());
 
-            MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
+            CoordinateReferenceSystem sourceCRS = crsFactory.getCRS(crs);
+            CoordinateReferenceSystem targetCRS = crsFactory.getCRS(CRS_4326);
 
-            Coordinate coordinate = JTS.transform(centerCoordinate, null, transform);
+            Set<CoordinateOperation> operations = CoordinateOperationFactory
+                    .createCoordinateOperations((GeodeticCRS) sourceCRS, (GeodeticCRS) targetCRS);
+            double[] transform = new double[3];
+            if (operations.size() != 0) {
+                // Test each transformation method (generally, only one method is available)
+                for (CoordinateOperation op : operations) {
+                    // Transform coord using the op CoordinateOperation from sourceCRS to targetCRS
+                    transform  = op.transform(new double[] {centerCoordinate.getX(), centerCoordinate.getY(), centerCoordinate.getZ()});
+                }
+            }
+
+            // coordinate in (latitude, longitude) format
+            Coordinate coordinate = new Coordinate(transform[1], transform[0], transform[2]);
 
             String stationIRI = getWeatherStation(coordinate, 5.0, weatherRoute);
 
@@ -1341,7 +1357,7 @@ public class CEAAgent extends JPSAgent {
             result.add(Arrays.asList(coordinate.getX(), coordinate.getY()));
 
             return true;
-        } catch (FactoryException | TransformException e) {
+        } catch (Exception e) {
             return false;
         }
     }
