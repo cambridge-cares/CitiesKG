@@ -95,7 +95,7 @@ epw_missing = {'year': 'None',
                'liq_precip_depth_mm': 999,
                'liq_precip_rate_Hour': 99}
 
-def create_epw(times, data, weather_file, latitude, longitude, default_epw):
+def create_epw(times, data, weather_file, latitude, longitude, elevation, default_epw):
     """
     Creates an EPW file based on the retrieved historical weather data 
 
@@ -139,6 +139,7 @@ def create_epw(times, data, weather_file, latitude, longitude, default_epw):
     epw.loc[0, 'drybulb_C'] = latitude
     epw.loc[0, 'dewpoint_C'] = longitude
     epw.loc[0, 'relhum_percent'] = offset
+    epw.loc[0, 'atmos_Pa'] = elevation
     
     epw.to_csv(weather_file, header = False, index = False)
        
@@ -254,7 +255,7 @@ def main(argv):
     weather_data = json.loads(dataString)
 
     try:
-        create_epw(weather_times, weather_data, weather_file, argv.latitude, argv.longitude, argv.default_epw)
+        create_epw(weather_times, weather_data, weather_file, argv.latitude, argv.longitude, argv.elevation, argv.default_epw)
     except IOError:
         print('Error while processing file: ' + argv.file_name)
 
@@ -265,6 +266,7 @@ if __name__ == '__main__':
     parser.add_argument("weather_data")
     parser.add_argument("latitude")
     parser.add_argument("longitude")
+    parser.add_argument("elevation")
     parser.add_argument("file_location")
     parser.add_argument("file_name")
     parser.add_argument("default_epw")

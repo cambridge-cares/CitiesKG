@@ -1305,6 +1305,8 @@ public class CEAAgent extends JPSAgent {
 
         Polygon envelopePolygon = (Polygon) toPolygon(envelopeCoordinates);
 
+        Double elevation = envelopePolygon.getCoordinate().getZ();
+
         Point center = envelopePolygon.getCentroid();
 
         Coordinate centerCoordinate = center.getCoordinate();
@@ -1354,7 +1356,13 @@ public class CEAAgent extends JPSAgent {
                 parseWeather(weatherMap, result);
             }
 
-            result.add(Arrays.asList(coordinate.getX(), coordinate.getY()));
+            String stationElevation = getStationElevation(stationIRI, weatherRoute);
+
+            if (!stationElevation.isEmpty()) {
+                elevation = Double.parseDouble(stationElevation);
+            }
+
+            result.add(Arrays.asList(coordinate.getX(), coordinate.getY(), elevation));
 
             return true;
         } catch (Exception e) {
@@ -1444,6 +1452,34 @@ public class CEAAgent extends JPSAgent {
         }
 
         return result;
+    }
+
+    /**
+     *
+     * @param stationIRI
+     * @param route
+     * @return
+     */
+    private String getStationElevation(String stationIRI, String route) {
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ontoEMS", ontoemsUri)
+                .addPrefix("rdf", rdfUri);
+
+        wb.addWhere(NodeFactory.createURI(stationIRI), "ontoEMS:hasObservationElevation", "?elevation");
+
+        SelectBuilder sb = new SelectBuilder()
+                .addWhere(wb);
+
+        sb.addVar("?elevation");
+
+        JSONArray queryResultArray = this.queryStore(route, sb.build().toString());
+
+        if (!queryResultArray.isEmpty()) {
+            return queryResultArray.getJSONObject(0).getString("elevation");
+        }
+        else{
+            return "";
+        }
     }
 
     /**

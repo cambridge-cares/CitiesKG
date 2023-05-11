@@ -2188,9 +2188,11 @@ public class CEAAgentTest {
             station.put(new JSONObject().put("station", "testStation"));
             JSONArray weatherIRIs = new JSONArray();
             weatherIRIs.put(new JSONObject().put("weatherParameter", ontoemsUri.get(agent) + "testWeather").put("measure", "testMeasure").put("rdb", "testRDB"));
+            JSONArray elevation = new JSONArray();
+            elevation.put(new JSONObject().put("elevation", "1.0"));
 
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
-                    .thenReturn(envelope).thenReturn(station).thenReturn(weatherIRIs);
+                    .thenReturn(envelope).thenReturn(station).thenReturn(weatherIRIs).thenReturn(elevation);
 
 
             TimeSeries<OffsetDateTime> mockTS = mock(TimeSeries.class);

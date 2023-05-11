@@ -24,6 +24,7 @@ public class RunCEATask implements Runnable {
     private final String crs;
     private Double weather_lat;
     private Double weather_lon;
+    private Double weather_elevation;
     public static final String CTYPE_JSON = "application/json";
     private Boolean stop = false;
     private Boolean noSurroundings = false;
@@ -506,6 +507,7 @@ public class RunCEATask implements Runnable {
                 weatherData += new Gson().toJson(dataInputs.get(i).getWeather());
                 weather_lat = dataInputs.get(i).getWeatherCoordinate().get(0);
                 weather_lon = dataInputs.get(i).getWeatherCoordinate().get(1);
+                weather_elevation = dataInputs.get(i).getWeatherCoordinate().get(2);
             }
             Map<String, Object> tempMap = new HashMap<>();
             tempMap.put("geometry", dataInputs.get(i).getGeometry());
@@ -803,7 +805,7 @@ public class RunCEATask implements Runnable {
                         args6.add("/C");
                         f_path = new File(Objects.requireNonNull(getClass().getClassLoader().getResource(WEATHER_SCRIPT)).toURI()).getAbsolutePath();
                         String defaultEPW_path = strTmp + FS + "testProject" + FS + "testScenario" + FS + "inputs" + FS + "weather" + FS + "weather.epw";
-                        args6.add("conda activate cea && python " + f_path + " " + weatherTimes_path + " " + weatherData_path + " " + weather_lat + " " + weather_lon + " " + strTmp + " " + "weather.epw" + " " + defaultEPW_path);
+                        args6.add("conda activate cea && python " + f_path + " " + weatherTimes_path + " " + weatherData_path + " " + weather_lat + " " + weather_lon + " " + weather_elevation + " " + strTmp + " " + "weather.epw" + " " + defaultEPW_path);
                     }
                     
                     args7.add("cmd.exe");
@@ -873,7 +875,7 @@ public class RunCEATask implements Runnable {
                     if (!noWeather) {
                         args6.add("/bin/bash");
                         args6.add("-c");
-                        args6.add("export PROJ_LIB=/venv/share/lib && python " + weatherfile + " " + weatherTimes_path + " " + weatherData_path + " " + weather_lat + " " + weather_lon + " " + strTmp + " " + "weather.epw" + " " + defaultEPW);
+                        args6.add("export PROJ_LIB=/venv/share/lib && python " + weatherfile + " " + weatherTimes_path + " " + weatherData_path + " " + weather_lat + " " + weather_lon + " " + weather_elevation + " " + strTmp + " " + "weather.epw" + " " + defaultEPW);
                     }
                     
                     args7.add("/bin/bash");
