@@ -25,8 +25,10 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.io.*;
 import java.net.*;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import javax.servlet.annotation.WebServlet;
@@ -163,6 +165,14 @@ public class CEAAgent extends JPSAgent {
     public static final String OPENMETEO_END = "end_date";
     public static final String OPENMETEO_ENDPOINT_RUN = "run";
     public static final String OPENMETEO_STATION = "stationIRI";
+
+    public static final String API_URL = "https://archive-api.open-meteo.com/v1/archive";
+    public static final String API_LAT = "latitude";
+    public static final String API_LON = "longitude";
+    public static final String API_START = "start_date";
+    public static final String API_END = "end_date";
+    public static final String API_TIMEZONE = "timezone";
+    public static final String API_OFFSET = "utc_offset_seconds";
 
     public List<String> TIME_SERIES = Arrays.asList(KEY_GRID_CONSUMPTION,KEY_ELECTRICITY_CONSUMPTION,KEY_HEATING_CONSUMPTION,KEY_COOLING_CONSUMPTION, KEY_PV_ROOF_SUPPLY, KEY_PV_WALL_NORTH_SUPPLY, KEY_PV_WALL_SOUTH_SUPPLY, KEY_PV_WALL_EAST_SUPPLY, KEY_PV_WALL_WEST_SUPPLY, KEY_PVT_PLATE_ROOF_E_SUPPLY, KEY_PVT_PLATE_WALL_NORTH_E_SUPPLY, KEY_PVT_PLATE_WALL_SOUTH_E_SUPPLY, KEY_PVT_PLATE_WALL_EAST_E_SUPPLY, KEY_PVT_PLATE_WALL_WEST_E_SUPPLY, KEY_PVT_PLATE_ROOF_Q_SUPPLY, KEY_PVT_PLATE_WALL_NORTH_Q_SUPPLY, KEY_PVT_PLATE_WALL_SOUTH_Q_SUPPLY, KEY_PVT_PLATE_WALL_EAST_Q_SUPPLY, KEY_PVT_PLATE_WALL_WEST_Q_SUPPLY, KEY_PVT_TUBE_ROOF_E_SUPPLY, KEY_PVT_TUBE_WALL_NORTH_E_SUPPLY, KEY_PVT_TUBE_WALL_SOUTH_E_SUPPLY, KEY_PVT_TUBE_WALL_EAST_E_SUPPLY, KEY_PVT_TUBE_WALL_WEST_E_SUPPLY, KEY_PVT_TUBE_ROOF_Q_SUPPLY, KEY_PVT_TUBE_WALL_NORTH_Q_SUPPLY, KEY_PVT_TUBE_WALL_SOUTH_Q_SUPPLY, KEY_PVT_TUBE_WALL_EAST_Q_SUPPLY, KEY_PVT_TUBE_WALL_WEST_Q_SUPPLY, KEY_THERMAL_PLATE_ROOF_SUPPLY, KEY_THERMAL_PLATE_WALL_NORTH_SUPPLY, KEY_THERMAL_PLATE_WALL_SOUTH_SUPPLY, KEY_THERMAL_PLATE_WALL_EAST_SUPPLY, KEY_THERMAL_PLATE_WALL_WEST_SUPPLY, KEY_THERMAL_TUBE_ROOF_SUPPLY, KEY_THERMAL_TUBE_WALL_NORTH_SUPPLY, KEY_THERMAL_TUBE_WALL_SOUTH_SUPPLY, KEY_THERMAL_TUBE_WALL_EAST_SUPPLY, KEY_THERMAL_TUBE_WALL_WEST_SUPPLY);
     public List<String> SCALARS = Arrays.asList(KEY_PV_ROOF_AREA, KEY_PV_WALL_NORTH_AREA, KEY_PV_WALL_SOUTH_AREA, KEY_PV_WALL_EAST_AREA, KEY_PV_WALL_WEST_AREA, KEY_PVT_PLATE_ROOF_AREA, KEY_PVT_PLATE_WALL_NORTH_AREA, KEY_PVT_PLATE_WALL_SOUTH_AREA, KEY_PVT_PLATE_WALL_EAST_AREA, KEY_PVT_PLATE_WALL_WEST_AREA, KEY_PVT_TUBE_ROOF_AREA, KEY_PVT_TUBE_WALL_NORTH_AREA, KEY_PVT_TUBE_WALL_SOUTH_AREA, KEY_PVT_TUBE_WALL_EAST_AREA, KEY_PVT_TUBE_WALL_WEST_AREA, KEY_THERMAL_PLATE_ROOF_AREA, KEY_THERMAL_PLATE_WALL_NORTH_AREA, KEY_THERMAL_PLATE_WALL_SOUTH_AREA, KEY_THERMAL_PLATE_WALL_EAST_AREA, KEY_THERMAL_PLATE_WALL_WEST_AREA, KEY_THERMAL_TUBE_ROOF_AREA, KEY_THERMAL_TUBE_WALL_NORTH_AREA, KEY_THERMAL_TUBE_WALL_SOUTH_AREA, KEY_THERMAL_TUBE_WALL_EAST_AREA, KEY_THERMAL_TUBE_WALL_WEST_AREA);
@@ -340,7 +350,7 @@ public class CEAAgent extends JPSAgent {
                         List<Object> weather = new ArrayList<>();
 
                         if (getWeather(uri, geometryRoute, weatherRoute, crs, weather)) {
-                            testData.add(new CEAInputData(footprint, height, usage, surrounding, (List<OffsetDateTime>) weather.get(0), (Map<String, List<Double>>) weather.get(1), (List<Double>) weather.get(2)));
+                            testData.add(new CEAInputData(footprint, height, usage, surrounding, (List<Instant>) weather.get(0), (Map<String, List<Double>>) weather.get(1), (List<Double>) weather.get(2)));
                         }
                         else{
                             testData.add(new CEAInputData(footprint, height, usage, surrounding, null, null, null));
@@ -394,7 +404,7 @@ public class CEAAgent extends JPSAgent {
                         if (!result.isEmpty()) {
                             String value;
                             if (TIME_SERIES.contains(measurement)) {
-                                value = calculateAnnual(retrieveData(result.get(0), storeClient, rdbStoreClient), result.get(0));
+                                value = calculateAnnual(retrieveData(result.get(0), storeClient, rdbStoreClient, OffsetDateTime.class), result.get(0));
                                 if (measurement.contains("ESupply")) {
                                     // PVT annual electricity supply
                                     measurement = "Annual "+ measurement.split("ESupply")[0] + " Electricity Supply";
@@ -1362,7 +1372,11 @@ public class CEAAgent extends JPSAgent {
                 elevation = Double.parseDouble(stationElevation);
             }
 
-            result.add(Arrays.asList(coordinate.getX(), coordinate.getY(), elevation));
+            List<Instant> times = (List<Instant>) result.get(0);
+
+            Double offset = getStationOffset(coordinate.getX(), coordinate.getY(), times.get(0), times.get(times.size()-1));
+
+            result.add(Arrays.asList(coordinate.getX(), coordinate.getY(), elevation, offset));
 
             return true;
         } catch (Exception e) {
@@ -1483,6 +1497,53 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
+     * Returns the UTC offset of the timestamps of the retrieved historical weather data
+     * @param latitude latitude of the retrieved historical weather data
+     * @param longitude longitude of the retrieved historical weather data
+     * @param startDate start date of the retrieved historical weather data as an Instant object
+     * @param endDate end date of the retrieved historical weather data as an Instant object
+     * @return UTC offset of the timestamps of the retrieved historical weather data in hours
+     */
+    public Double getStationOffset(Double latitude, Double longitude, Instant startDate, Instant endDate) {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+            ZoneId localZone = ZoneId.systemDefault();
+            LocalDate localStart = startDate.atZone(localZone).toLocalDate();
+            LocalDate localEnd = endDate.atZone(localZone).toLocalDate();
+
+            String start = formatter.format(localStart);
+            String end = formatter.format(localEnd);
+
+            String query = API_LAT + "=" + latitude + "&";
+            query = query + API_LON + "=" + longitude + "&";
+            query = query + API_START + "=" + start + "&";
+            query = query + API_END + "=" + end + "&" + API_TIMEZONE + "=auto";
+
+
+            URLConnection connection = new URL(API_URL + "?" + query).openConnection();
+
+            InputStream is = connection.getInputStream();
+            BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+            StringBuffer response = new StringBuffer();
+            String line;
+            while ((line = rd.readLine()) != null && !line.isEmpty()){
+                response.append(line);
+            }
+            rd.close();
+            JSONObject result = new JSONObject(response.toString());
+
+            // return offset in hours
+            return result.getDouble(API_OFFSET) / 60 / 60;
+        }
+        catch (IOException e){
+            // if failed to get the offset from API, return an approximation based on the longitude
+            // approximation assumes Earth is rough divided into 24 time zones equally over the globe
+            return longitude / 15;
+        }
+    }
+
+    /**
      * Queries for and returns the weather data IRI, their weather data type, and the time series database URL of the corresponding weather time series
      * @param stationIRI IRI of weather station
      * @param route endpoint for weather query
@@ -1537,17 +1598,20 @@ public class CEAAgent extends JPSAgent {
             List<String> value = entry.getValue();
             String weatherIRI = value.get(0);
             Map<String, Object> weatherClients = getWeatherClients(value.get(1));
-            TimeSeries<OffsetDateTime> weatherTS = retrieveData(weatherIRI, (RemoteStoreClient) weatherClients.get(STORE_CLIENT), (RemoteRDBStoreClient) weatherClients.get(RDB_CLIENT));
+            TimeSeries<Instant> weatherTS = retrieveData(weatherIRI, (RemoteStoreClient) weatherClients.get(STORE_CLIENT), (RemoteRDBStoreClient) weatherClients.get(RDB_CLIENT), Instant.class);
 
             // want hourly data over a year
             if (weatherTS.getTimes().size() < 8760) {
                 result.clear();
                 return false;
             }
+
             if (getTimes) {
-                result.add(weatherTS.getTimes().subList(0, 8760));
+                List<Instant> times = weatherTS.getTimes().subList(0, 8760);
+                result.add(times);
                 getTimes = false;
             }
+
             weather.put(entry.getKey(),  weatherTS.getValuesAsDouble(weatherIRI).subList(0, 8760));
         }
 
@@ -2466,7 +2530,7 @@ public class CEAAgent extends JPSAgent {
      * @param ontologyUnit unit iri in ontology
      * @return unit as a String
      */
-    public String getUnit(String ontologyUnit){
+    public String getUnit(String ontologyUnit) {
         switch(ontologyUnit) {
             case("http://www.ontology-of-units-of-measure.org/resource/om-2/kilowattHour"):
                 return "kWh";
@@ -2482,13 +2546,13 @@ public class CEAAgent extends JPSAgent {
      * @param dataIri iri in time series database
      * @return time series data
      */
-    public TimeSeries<OffsetDateTime> retrieveData(String dataIri, RemoteStoreClient store, RemoteRDBStoreClient rdbStore){
-        TimeSeriesClient<OffsetDateTime> client = new TimeSeriesClient<>(store, OffsetDateTime.class);
+    public <T> TimeSeries<T> retrieveData(String dataIri, RemoteStoreClient store, RemoteRDBStoreClient rdbStore, Class<T> timeClass) {
+        TimeSeriesClient<T> client = new TimeSeriesClient<>(store, timeClass);
 
         List<String> iris = new ArrayList<>();
         iris.add(dataIri);
         try (Connection conn = rdbStore.getConnection()) {
-            TimeSeries<OffsetDateTime> data = client.getTimeSeries(iris, conn);
+            TimeSeries<T> data = client.getTimeSeries(iris, conn);
             return data;
         }
         catch (SQLException e) {

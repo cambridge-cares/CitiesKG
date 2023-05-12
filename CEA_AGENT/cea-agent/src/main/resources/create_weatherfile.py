@@ -95,7 +95,7 @@ epw_missing = {'year': 'None',
                'liq_precip_depth_mm': 999,
                'liq_precip_rate_Hour': 99}
 
-def create_epw(times, data, weather_file, latitude, longitude, elevation, default_epw):
+def create_epw(times, data, weather_file, latitude, longitude, elevation, offset, default_epw):
     """
     Creates an EPW file based on the retrieved historical weather data 
 
@@ -113,7 +113,7 @@ def create_epw(times, data, weather_file, latitude, longitude, elevation, defaul
     df = pd.DataFrame()
     
     # parse weather data
-    retrieved_weather, offset = parse_weather(times, data)
+    retrieved_weather = parse_weather(times, data, offset)
     
     # get default EPW used by CEA
     default_epw, default_others = read_epw(default_epw)
@@ -170,7 +170,7 @@ def fix(df, p):
             
     return df
             
-def parse_weather(times, data):
+def parse_weather(times, data, offset):
     """
     Parses the retrieved weather data 
 
@@ -178,20 +178,15 @@ def parse_weather(times, data):
     ----------
     times : time stamps of the weather data as a list
     data : weather data as a dictionary with the OntoEMS concepts names as the keys
+    offset : timezone offset
 
     Returns
     -------
     results : dictionary of the weather data including timestamps
-    offset : timezone offset
 
     """
     
     results = {}
-
-    # time series client always changes the timestamp offset to +8 regardless of the actual offset of the input
-    # OpenMeteoAgent always retrieves and instantiates historical weather data with the starting hour as 00
-    # use the two aforementioned postulates to derive the actual offset
-    offset = times[0]['offset']/60/60 - times[0]['hour']
 
     year = []
     month = []
@@ -199,16 +194,17 @@ def parse_weather(times, data):
     hour = []
     minute = []
 
-    # parsing time stamp with correct offset
+    # time series is retrieve with offset with 0
+    # parse time stamp to correct offset
     for t in times:
-        dt = datetime.datetime(t['year'], t['month'], t['day'], t['hour'], t['minute'], tzinfo = pytz.FixedOffset(t['offset']/60))
-        dt = dt.astimezone(pytz.FixedOffset(offset*60))
+        dt = datetime.datetime(t['year'], t['month'], t['day'], t['hour'], t['minute'], tzinfo = pytz.FixedOffset(0))
+        # offset is in hours
+        dt = dt.astimezone(pytz.FixedOffset(float(offset) * 60))
         year.append(dt.strftime("%Y"))
         month.append(dt.strftime("%m"))
         day.append(dt.strftime("%d"))
         hour.append(dt.strftime("%H"))
         minute.append(dt.strftime("%M"))
-
 
     results['year'] = year
     results['month'] = month
@@ -220,7 +216,7 @@ def parse_weather(times, data):
         if key in ontoems_concepts:
             results[ontoems_concepts[key]] = val
     
-    return results, offset
+    return results
 
 def read_epw(file_path):
     """
@@ -255,7 +251,7 @@ def main(argv):
     weather_data = json.loads(dataString)
 
     try:
-        create_epw(weather_times, weather_data, weather_file, argv.latitude, argv.longitude, argv.elevation, argv.default_epw)
+        create_epw(weather_times, weather_data, weather_file, argv.latitude, argv.longitude, argv.elevation, argv.offset, argv.default_epw)
     except IOError:
         print('Error while processing file: ' + argv.file_name)
 
@@ -267,6 +263,7 @@ if __name__ == '__main__':
     parser.add_argument("latitude")
     parser.add_argument("longitude")
     parser.add_argument("elevation")
+    parser.add_argument("offset")
     parser.add_argument("file_location")
     parser.add_argument("file_name")
     parser.add_argument("default_epw")

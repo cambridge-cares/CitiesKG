@@ -6,7 +6,6 @@ import org.jooq.exception.DataAccessException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import uk.ac.cam.cares.jps.base.config.JPSConstants;
@@ -21,16 +20,13 @@ import uk.ac.cam.cares.twa.cities.tasks.RunCEATask;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -408,6 +404,7 @@ public class CEAAgentTest {
         namedGraph.set(agent, "testGraph");
 
         doNothing().when(agent).updateStore(anyString(), anyString());
+        doReturn(0.00).when(agent).getStationOffset(anyDouble(), anyDouble(), any(), any());
 
         JSONObject returnParams;
 
@@ -461,7 +458,7 @@ public class CEAAgentTest {
 
             doReturn(testList).when(agent).getDataIRI(anyString(), anyString(), anyString(), anyString());
             doReturn(testReturnValue).when(agent).calculateAnnual(any(), anyString());
-            doReturn(timeSeries).when(agent).retrieveData(anyString(), any(), any());
+            doReturn(timeSeries).when(agent).retrieveData(anyString(), any(), any(), any());
             doReturn(testUnit).when(agent).getUnit(anyString());
 
             Field TIME_SERIES = agent.getClass().getDeclaredField("TIME_SERIES");
@@ -1726,12 +1723,14 @@ public class CEAAgentTest {
     public void testRetrieveData() throws Exception {
         try(MockedConstruction<TimeSeriesClient> mockTs = mockConstruction(TimeSeriesClient.class)) {
             CEAAgent agent = new CEAAgent();
-            Method retrieveData = agent.getClass().getDeclaredMethod("retrieveData", String.class, RemoteStoreClient.class, RemoteRDBStoreClient.class);
+            Method retrieveData = agent.getClass().getDeclaredMethod("retrieveData", String.class, RemoteStoreClient.class, RemoteRDBStoreClient.class, Class.class);
             assertNotNull(retrieveData);
 
             String iri = "test";
             List<String> iris = new ArrayList<>();
             iris.add(iri);
+
+            TimeSeries<Instant> mockT = mock(TimeSeries.class);
 
             RemoteStoreClient mockStoreClient = mock(RemoteStoreClient.class);
 
@@ -1740,7 +1739,7 @@ public class CEAAgentTest {
 
             doReturn(mockConnection).when(mockRDBClient).getConnection();
 
-            retrieveData.invoke(agent, iri, mockStoreClient, mockRDBClient);
+            retrieveData.invoke(agent, iri, mockStoreClient, mockRDBClient, Instant.class);
 
             // Ensure method to get time series client was invoked once
             verify(mockTs.constructed().get(0), times(1)).getTimeSeries(anyList(), any());
@@ -2195,19 +2194,20 @@ public class CEAAgentTest {
                     .thenReturn(envelope).thenReturn(station).thenReturn(weatherIRIs).thenReturn(elevation);
 
 
-            TimeSeries<OffsetDateTime> mockTS = mock(TimeSeries.class);
+            TimeSeries<Instant> mockTS = mock(TimeSeries.class);
 
-            List<OffsetDateTime> testTimesList = Collections.nCopies(8760, OffsetDateTime.now());
+            List<Instant> testTimesList = Collections.nCopies(8760, Instant.now());
             List<Double> testWeatherData = Collections.nCopies(8760, 0.00);
 
             doReturn(testTimesList).when(mockTS).getTimes();
             doReturn(testWeatherData).when(mockTS).getValuesAsDouble(anyString());
 
-            doReturn(mockTS).when(agent).retrieveData(anyString(), any(), any());
+            doReturn(mockTS).when(agent).retrieveData(anyString(), any(), any(), any());
+            doReturn(0.00).when(agent).getStationOffset(anyDouble(), anyDouble(), any(), any());
 
             assertTrue((Boolean) getWeather.invoke(agent, "", "", "", testCRS, testList));
 
-            verify(agent, times(1)).retrieveData(anyString(), any(), any());
+            verify(agent, times(1)).retrieveData(anyString(), any(), any(), any());
             assertEquals(testList.size(), 3);
             assertEquals(((Map<String, List<String>>) testList.get(1)).size(), 1);
             assertTrue(((Map<String, List<String>>) testList.get(1)).containsKey("testWeather"));
@@ -2310,7 +2310,7 @@ public class CEAAgentTest {
         doReturn(testTimesList).when(mockTS).getTimes();
         doReturn(testWeatherData).when(mockTS).getValuesAsDouble(anyString());
 
-        doReturn(mockTS).when(agent).retrieveData(anyString(), any(), any());
+        doReturn(mockTS).when(agent).retrieveData(anyString(), any(), any(), any());
 
         // check that the data is not parsed to testList if weather data do not have enough datapoints
         assertFalse((Boolean) parseWeather.invoke(agent, testMap, testList));

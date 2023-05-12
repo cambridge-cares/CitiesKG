@@ -15,6 +15,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -361,10 +362,10 @@ public class RunCEATaskTest {
     public void testDataToFile(@TempDir Path tempDir) throws URISyntaxException, NoSuchMethodException, NoSuchFieldException, InvocationTargetException, IllegalAccessException, IOException {
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<>();
-        List<OffsetDateTime> testTimes = Collections.nCopies(8760, OffsetDateTime.now());
+        List<Instant> testTimes = Collections.nCopies(8760, Instant.now());
         Map<String, List<Double>> testWeather = new HashMap<>();
         testWeather.put("testWeather", Collections.nCopies(8760, 0.00));
-        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, testTimes, testWeather, Arrays.asList(0.00, 0.00)));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, testTimes, testWeather, Arrays.asList(0.00, 0.00, 0.00, 0.00)));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;

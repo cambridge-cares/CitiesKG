@@ -12,9 +12,11 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.lang.Process;
-import java.util.stream.Collectors;
 
 public class RunCEATask implements Runnable {
     private final ArrayList<CEAInputData> inputs;
@@ -25,6 +27,7 @@ public class RunCEATask implements Runnable {
     private Double weather_lat;
     private Double weather_lon;
     private Double weather_elevation;
+    private Double weather_offset;
     public static final String CTYPE_JSON = "application/json";
     private Boolean stop = false;
     private Boolean noSurroundings = false;
@@ -491,23 +494,26 @@ public class RunCEATask implements Runnable {
             if (!(dataInputs.get(i).getSurrounding() == null)) {surroundings.addAll(dataInputs.get(i).getSurrounding());}
             if (noWeather && !(dataInputs.get(i).getWeather() == null) && !(dataInputs.get(i).getWeatherTimes() == null)) {
                 noWeather = false;
-                List<Map<String, Integer>> timeMap = dataInputs.get(i).getWeatherTimes().stream()
-                        .map(offsetDateTime -> {
-                            Map<String, Integer> map = new HashMap<>();
-                            map.put("year", offsetDateTime.getYear());
-                            map.put("month", offsetDateTime.getMonthValue());
-                            map.put("day", offsetDateTime.getDayOfMonth());
-                            map.put("hour", offsetDateTime.getHour());
-                            map.put("minute", offsetDateTime.getMinute());
-                            map.put("offset", offsetDateTime.getOffset().getTotalSeconds());
-                            return map;
-                        })
-                        .collect(Collectors.toList());
+                List<Instant> times = dataInputs.get(i).getWeatherTimes();
+                List<Map<String, Integer>> timeMap = new ArrayList<>();
+
+                for (int j = 0; j < times.size(); j++){
+                    OffsetDateTime offsetDateTime = times.get(j).atOffset(ZoneOffset.UTC);
+                    Map<String, Integer> map = new HashMap<>();
+                    map.put("year", offsetDateTime.getYear());
+                    map.put("month", offsetDateTime.getMonthValue());
+                    map.put("day", offsetDateTime.getDayOfMonth());
+                    map.put("hour", offsetDateTime.getHour());
+                    map.put("minute", offsetDateTime.getMinute());
+                    timeMap.add(map);
+                }
+
                 weatherTimes += new Gson().toJson(timeMap);
                 weatherData += new Gson().toJson(dataInputs.get(i).getWeather());
-                weather_lat = dataInputs.get(i).getWeatherCoordinate().get(0);
-                weather_lon = dataInputs.get(i).getWeatherCoordinate().get(1);
-                weather_elevation = dataInputs.get(i).getWeatherCoordinate().get(2);
+                weather_lat = dataInputs.get(i).getWeatherMetaData().get(0);
+                weather_lon = dataInputs.get(i).getWeatherMetaData().get(1);
+                weather_elevation = dataInputs.get(i).getWeatherMetaData().get(2);
+                weather_offset = dataInputs.get(i).getWeatherMetaData().get(3);
             }
             Map<String, Object> tempMap = new HashMap<>();
             tempMap.put("geometry", dataInputs.get(i).getGeometry());
@@ -805,7 +811,7 @@ public class RunCEATask implements Runnable {
                         args6.add("/C");
                         f_path = new File(Objects.requireNonNull(getClass().getClassLoader().getResource(WEATHER_SCRIPT)).toURI()).getAbsolutePath();
                         String defaultEPW_path = strTmp + FS + "testProject" + FS + "testScenario" + FS + "inputs" + FS + "weather" + FS + "weather.epw";
-                        args6.add("conda activate cea && python " + f_path + " " + weatherTimes_path + " " + weatherData_path + " " + weather_lat + " " + weather_lon + " " + weather_elevation + " " + strTmp + " " + "weather.epw" + " " + defaultEPW_path);
+                        args6.add("conda activate cea && python " + f_path + " " + weatherTimes_path + " " + weatherData_path + " " + weather_lat + " " + weather_lon + " " + weather_elevation + " " + weather_offset  + " " + strTmp + " " + "weather.epw" + " " + defaultEPW_path);
                     }
                     
                     args7.add("cmd.exe");
@@ -875,7 +881,7 @@ public class RunCEATask implements Runnable {
                     if (!noWeather) {
                         args6.add("/bin/bash");
                         args6.add("-c");
-                        args6.add("export PROJ_LIB=/venv/share/lib && python " + weatherfile + " " + weatherTimes_path + " " + weatherData_path + " " + weather_lat + " " + weather_lon + " " + weather_elevation + " " + strTmp + " " + "weather.epw" + " " + defaultEPW);
+                        args6.add("export PROJ_LIB=/venv/share/lib && python " + weatherfile + " " + weatherTimes_path + " " + weatherData_path + " " + weather_lat + " " + weather_lon + " " + weather_elevation + " " + weather_offset  + " " + strTmp + " " + "weather.epw" + " " + defaultEPW);
                     }
                     
                     args7.add("/bin/bash");
