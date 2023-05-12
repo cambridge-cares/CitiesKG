@@ -1455,10 +1455,10 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     *
-     * @param stationIRI
-     * @param route
-     * @return
+     * Queries for and returns the elevation of a weather station
+     * @param stationIRI IRI of weather station
+     * @param route endpoint of the weather station query
+     * @return elevation of the weather station
      */
     private String getStationElevation(String stationIRI, String route) {
         WhereBuilder wb = new WhereBuilder()
