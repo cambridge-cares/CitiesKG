@@ -326,10 +326,10 @@ If no building usage is returned from the query, the default value of ```MULTI_R
 ### Visualisation
 The 3dWebMapClient can be set up to visualise data produced by the CEA Agent (instructions to run are [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#3dcitydb-web-map-client)). The City Information Agent (CIA) is used when a building on the 3dWebMapClient is selected, to query data stored in the KG on the building. If the parameter "context=energy" is included in the url, the query endpoint of CEA will be contacted for energy data. eg `http://localhost:8000/3dwebclient/index.html?city=kingslynn&context=energy` (NB. this currently requires running web map client and CitiesKG/agents from [develop branch](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents))
 
-### Weather Input
-The agent will attempt to retrieve historical weather data, of at least a duration of 1 year in hourly format, for the location of the building in the request received. Then, the agent will create a EPW file based on the retrieved historical data, which will be passed to CEA as the weather input. In the attempt that the retrieval of historical weather data fails, the agent will run CEA with the default EPW file defined by CEA's own database as the weather input. 
+### Historical Weather Data
+The agent will attempt to retrieve historical weather data for the location of the building in the request received, to use as input to CEA. Then, the agent will create a EPW file based on the retrieved historical data, which will be passed to CEA as the weather input. The historical weather data need to be at least 1 year duration in hourly format for CEA to run successfully. In the event where the retrieved historical weather data do not satisfy the aforementioned requirement by CEA or where the agent fails to retrieve historical weather data, the agent will run CEA with the default EPW file defined by CEA's own database as the weather input. 
 
-WARNING: Please note that the CEA Agent assumes that the historical weather data is stored in a Postgres database that  uses the same username and password provided in
+WARNING: Please note that the CEA Agent assumes that the historical weather data is stored in a Postgres database that uses the username and password provided in
 ```
 ./credentials/
     postgres_username.txt
