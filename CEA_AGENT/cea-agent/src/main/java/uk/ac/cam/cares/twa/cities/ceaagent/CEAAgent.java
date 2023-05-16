@@ -25,10 +25,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.io.*;
 import java.net.*;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import javax.servlet.annotation.WebServlet;
@@ -1345,7 +1342,7 @@ public class CEAAgent extends JPSAgent {
             // coordinate in (latitude, longitude) format
             Coordinate coordinate = new Coordinate(transform[1], transform[0], transform[2]);
 
-            String stationIRI = getWeatherStation(coordinate, 5.0, weatherRoute);
+            String stationIRI = getWeatherStation(coordinate, 2.0, weatherRoute);
 
             // if no nearby weather station, send request to OpenMeteoAgent to instantiate weather data
             if (stationIRI.isEmpty()) {
@@ -1357,13 +1354,26 @@ public class CEAAgent extends JPSAgent {
 
             Map<String, List<String>> weatherMap = getWeatherIRI(stationIRI, weatherRoute);
 
-            // if the duration of already instantiated historical weather data is not at least for 1 year (8760 hours),
-            // send request to OpenMeteoAgent to update duration to 1 year
-            if (!parseWeather(weatherMap, result)) {
-                // if request fails
-                if (runOpenMeteoAgent(String.valueOf(coordinate.getX()), String.valueOf(coordinate.getY())).isEmpty()) {return false;}
+            List<Double> lat_lon = getStationCoordinate(stationIRI, weatherRoute);
+            Double latitude;
+            Double longitude;
 
-                parseWeather(weatherMap, result);
+            if (!lat_lon.isEmpty()) {
+                latitude = lat_lon.get(0);
+                longitude = lat_lon.get(1);
+            }
+            else {
+                latitude = coordinate.getX();
+                longitude = coordinate.getY();
+            }
+
+            // if the timestamps of the instantiated weather data does not meet CEA requirements,
+            // send request to OpenMeteoAgent to update weather data with timestamps that meet CEA requirements
+            if (!parseWeather(weatherMap, result, latitude, longitude)) {
+                // if request fails
+                if (runOpenMeteoAgent(String.valueOf(latitude), String.valueOf(longitude)).isEmpty()) {return false;}
+
+                parseWeather(weatherMap, result, latitude, longitude);
             }
 
             String stationElevation = getStationElevation(stationIRI, weatherRoute);
@@ -1374,9 +1384,9 @@ public class CEAAgent extends JPSAgent {
 
             List<Instant> times = (List<Instant>) result.get(0);
 
-            Double offset = getStationOffset(coordinate.getX(), coordinate.getY(), times.get(0), times.get(times.size()-1));
+            Double offset = getStationOffset(latitude, longitude, times.get(0), times.get(times.size()-1));
 
-            result.add(Arrays.asList(coordinate.getX(), coordinate.getY(), elevation, offset));
+            result.add(Arrays.asList(latitude, longitude, elevation, offset));
 
             return true;
         } catch (Exception e) {
@@ -1398,9 +1408,9 @@ public class CEAAgent extends JPSAgent {
                 .put(OPENMETEO_LON, longitude);
 
         DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate currentDate = LocalDate.now();
-        String startDate = currentDate.minusYears(1).minusDays(7).format(format);
-        String endDate = currentDate.minusDays(7).format(format);
+        LocalDate currentFirstDate = LocalDate.now().withMonth(1).withDayOfMonth(1);
+        String startDate = currentFirstDate.minusYears(2).format(format);
+        String endDate = currentFirstDate.minusYears(1).format(format);
 
         json.put(OPENMETEO_START, startDate)
                 .put(OPENMETEO_END, endDate);
@@ -1497,9 +1507,42 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Returns the UTC offset of the timestamps of the retrieved historical weather data
-     * @param latitude latitude of the retrieved historical weather data
-     * @param longitude longitude of the retrieved historical weather data
+     * Queries for and returns the coordinate of a weather station
+     * @param stationIRI IRI of weather station
+     * @param route endpoint of the weather station query
+     * @return coordinate of the weather station
+     */
+    private List<Double> getStationCoordinate(String stationIRI, String route) {
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ontoEMS", ontoemsUri)
+                .addPrefix("rdf", rdfUri);
+
+        wb.addWhere(NodeFactory.createURI(stationIRI), "ontoEMS:hasObservationLocation", "?coordinate");
+
+        SelectBuilder sb = new SelectBuilder()
+                .addWhere(wb);
+
+        sb.addVar("?coordinate");
+
+        JSONArray queryResultArray = this.queryStore(route, sb.build().toString());
+
+        if (!queryResultArray.isEmpty()) {
+            String coordinate = queryResultArray.getJSONObject(0).getString("coordinate");
+            String[] split = coordinate.split("#");
+            List<Double> result = new ArrayList<>();
+            result.add(Double.valueOf(split[0]));
+            result.add(Double.valueOf(split[1]));
+            return result;
+        }
+        else{
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Returns the UTC offset of the timestamps of the retrieved weather data
+     * @param latitude latitude of the station of the retrieved weather data
+     * @param longitude longitude of the station of the retrieved weather data
      * @param startDate start date of the retrieved historical weather data as an Instant object
      * @param endDate end date of the retrieved historical weather data as an Instant object
      * @return UTC offset of the timestamps of the retrieved historical weather data in hours
@@ -1533,8 +1576,14 @@ public class CEAAgent extends JPSAgent {
             rd.close();
             JSONObject result = new JSONObject(response.toString());
 
+            ZoneId zoneId = ZoneId.of(result.getString(API_TIMEZONE));
+
+            ZonedDateTime zonedDateTime = startDate.atZone(zoneId);
+
+            ZoneOffset zoneOffset = zonedDateTime.getOffset();
+
             // return offset in hours
-            return result.getDouble(API_OFFSET) / 60 / 60;
+            return zoneOffset.getTotalSeconds() / 60.0 / 60.0;
         }
         catch (IOException e){
             // if failed to get the offset from API, return an approximation based on the longitude
@@ -1587,9 +1636,9 @@ public class CEAAgent extends JPSAgent {
      * Parses weather data into a list
      * @param weatherMap map with the weather parameter IRIs
      * @param result empty list to add the parsed weather data
-     * @return true if the number of data entries is sufficient for CEA requirement (8760 hourly entires), false otherwise
+     * @return true if the timestamps of weather data meet CEA requirements (result will contain the parsed data), false otherwise (result will be empty)
      */
-    private boolean parseWeather(Map<String, List<String>> weatherMap, List<Object> result) {
+    private boolean parseWeather(Map<String, List<String>> weatherMap, List<Object> result, Double latitude, Double longitude) {
         Map<String, List<Double>> weather = new HashMap<>();
 
         boolean getTimes = true;
@@ -1601,7 +1650,7 @@ public class CEAAgent extends JPSAgent {
             TimeSeries<Instant> weatherTS = retrieveData(weatherIRI, (RemoteStoreClient) weatherClients.get(STORE_CLIENT), (RemoteRDBStoreClient) weatherClients.get(RDB_CLIENT), Instant.class);
 
             // want hourly data over a year
-            if (weatherTS.getTimes().size() < 8760) {
+            if (!validateWeatherTimes(weatherTS.getTimes(), latitude, longitude)) {
                 result.clear();
                 return false;
             }
@@ -1616,6 +1665,31 @@ public class CEAAgent extends JPSAgent {
         }
 
         result.add(weather);
+        return true;
+    }
+
+    /**
+     * Validates whether the weather data meet the requirements for CEA
+     * The requirements are, the number of data entries must be at least 8760, and the start date must be the first day of the year
+     * @param weatherTimes list of timestamps
+     * @param latitude latitude of the station of the retrieved weather data
+     * @param longitude longitude of the station of the retrieved weather data
+     * @return true if weatherTimes meet CEA requirements, false otherwise
+     */
+    private boolean validateWeatherTimes(List<Instant> weatherTimes, Double latitude, Double longitude) {
+        if (weatherTimes.size() < 8760) {
+            return false;
+        }
+
+        Double offset = getStationOffset(latitude, longitude, weatherTimes.get(0), weatherTimes.get(weatherTimes.size()-1));
+
+        ZoneOffset zoneOffset = ZoneOffset.ofTotalSeconds((int) (offset * 60 * 60));
+
+        OffsetDateTime startDate = weatherTimes.get(0).atOffset(zoneOffset);
+
+        if (startDate.getMonthValue() != 1 || startDate.getDayOfMonth() != 1) {
+            return false;
+        }
         return true;
     }
 

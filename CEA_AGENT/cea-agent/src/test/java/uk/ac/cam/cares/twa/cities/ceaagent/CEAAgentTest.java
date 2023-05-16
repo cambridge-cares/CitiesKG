@@ -2,6 +2,7 @@ package uk.ac.cam.cares.twa.cities.ceaagent;
 
 import kong.unirest.*;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
+import org.checkerframework.checker.units.qual.C;
 import org.jooq.exception.DataAccessException;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -2187,16 +2188,18 @@ public class CEAAgentTest {
             station.put(new JSONObject().put("station", "testStation"));
             JSONArray weatherIRIs = new JSONArray();
             weatherIRIs.put(new JSONObject().put("weatherParameter", ontoemsUri.get(agent) + "testWeather").put("measure", "testMeasure").put("rdb", "testRDB"));
+            JSONArray coordinate = new JSONArray();
+            coordinate.put(new JSONObject().put("coordinate", "1.0#1.0"));
             JSONArray elevation = new JSONArray();
             elevation.put(new JSONObject().put("elevation", "1.0"));
 
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
-                    .thenReturn(envelope).thenReturn(station).thenReturn(weatherIRIs).thenReturn(elevation);
+                    .thenReturn(envelope).thenReturn(station).thenReturn(weatherIRIs).thenReturn(coordinate).thenReturn(elevation);
 
 
             TimeSeries<Instant> mockTS = mock(TimeSeries.class);
 
-            List<Instant> testTimesList = Collections.nCopies(8760, Instant.now());
+            List<Instant> testTimesList = Collections.nCopies(8760, Instant.parse("2023-01-01T00:00:00.00Z"));
             List<Double> testWeatherData = Collections.nCopies(8760, 0.00);
 
             doReturn(testTimesList).when(mockTS).getTimes();
@@ -2276,7 +2279,7 @@ public class CEAAgentTest {
     public void testParseWeather() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
         CEAAgent agent = spy(new CEAAgent());
 
-        Method parseWeather = agent.getClass().getDeclaredMethod("parseWeather", Map.class, List.class);
+        Method parseWeather = agent.getClass().getDeclaredMethod("parseWeather", Map.class, List.class, Double.class, Double.class);
         assertNotNull(parseWeather);
         parseWeather.setAccessible(true);
 
@@ -2285,8 +2288,8 @@ public class CEAAgentTest {
 
         testMap.put("testWeather", Arrays.asList("testWeatherIRI", "testRDB"));
 
-        // test for when the weather data do not have enough datapoints (<8760)
-        List<OffsetDateTime> testTimesList = Collections.nCopies(2, OffsetDateTime.now());
+        // test for when the weather data do not have enough data points (<8760)
+        List<Instant> testTimesList = Collections.nCopies(2, Instant.now());
         List<Double> testWeatherData = Collections.nCopies(2, 0.00);
 
         Field rdb_client = agent.getClass().getDeclaredField("RDB_CLIENT");
@@ -2306,47 +2309,52 @@ public class CEAAgentTest {
 
         doReturn(mockWeatherClients).when(agent).getWeatherClients(anyString());
 
-        TimeSeries<OffsetDateTime> mockTS = mock(TimeSeries.class);
+        TimeSeries<Instant> mockTS = mock(TimeSeries.class);
         doReturn(testTimesList).when(mockTS).getTimes();
         doReturn(testWeatherData).when(mockTS).getValuesAsDouble(anyString());
 
         doReturn(mockTS).when(agent).retrieveData(anyString(), any(), any(), any());
 
-        // check that the data is not parsed to testList if weather data do not have enough datapoints
-        assertFalse((Boolean) parseWeather.invoke(agent, testMap, testList));
+        // check that the data is not parsed to testList if weather data do not meet CEA requirements
+        assertFalse((Boolean) parseWeather.invoke(agent, testMap, testList, 0.00, 0.00));
         assertEquals(testList.size(), 0);
-
-        // test for when the weather data have enough datapoints (>=8760)
-        testTimesList = Collections.nCopies(8765, OffsetDateTime.now());
-        testWeatherData = Collections.nCopies(8765, 0.00);
-
-        doReturn(testTimesList).when(mockTS).getTimes();
-        doReturn(testWeatherData).when(mockTS).getValuesAsDouble(anyString());
-
-        // test that weather data is correctly parsed, with exactly 8760 data points
-        assertTrue((Boolean) parseWeather.invoke(agent, testMap, testList));
-
-        assertEquals(testList.size(), 2);
-        assertEquals(((Map<String, List<String>>) testList.get(1)).size(), 1);
-        assertTrue(((Map<String, List<String>>) testList.get(1)).containsKey("testWeather"));
-        assertEquals(((Map<String, List<String>>) testList.get(1)).get("testWeather").size(), ((List<OffsetDateTime>) testList.get(0)).size());
-        assertEquals(((List<OffsetDateTime>) testList.get(0)).size(), 8760);
 
         testList = new ArrayList<>();
 
-        testTimesList = Collections.nCopies(8760, OffsetDateTime.now());
+        testTimesList = Collections.nCopies(8760, Instant.parse("2023-01-01T00:00:00.00Z"));
         testWeatherData = Collections.nCopies(8760, 0.00);
 
         doReturn(testTimesList).when(mockTS).getTimes();
         doReturn(testWeatherData).when(mockTS).getValuesAsDouble(anyString());
 
         // test that weather data is correctly parsed, with exactly 8760 data points
-        assertTrue((Boolean) parseWeather.invoke(agent, testMap, testList));
+        assertTrue((Boolean) parseWeather.invoke(agent, testMap, testList, 0.00, 0.00));
 
         assertEquals(testList.size(), 2);
         assertEquals(((Map<String, List<String>>) testList.get(1)).size(), 1);
         assertTrue(((Map<String, List<String>>) testList.get(1)).containsKey("testWeather"));
         assertEquals(((Map<String, List<String>>) testList.get(1)).get("testWeather").size(), ((List<OffsetDateTime>) testList.get(0)).size());
         assertEquals(((List<OffsetDateTime>) testList.get(0)).size(), 8760);
+    }
+
+    @Test
+    public void testValidateWeatherTimes() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+
+        Method validateWeatherTimes = agent.getClass().getDeclaredMethod("validateWeatherTimes", List.class, Double.class, Double.class);
+        assertNotNull(validateWeatherTimes);
+        validateWeatherTimes.setAccessible(true);
+
+        // check validation for requirement of 8760 timestamps
+        List<Instant> testTimesList = Collections.nCopies(2, Instant.parse("2023-01-01T00:00:00.00Z"));
+        assertFalse((Boolean) validateWeatherTimes.invoke(agent, testTimesList, 0.00, 0.00));
+
+        // check validation for requirement of start date to be first day of the year
+        testTimesList = Collections.nCopies(8760, Instant.parse("2023-01-03T00:00:00.00Z"));
+        assertFalse((Boolean) validateWeatherTimes.invoke(agent, testTimesList, 0.00, 0.00));
+
+        // check validation for requirements for both start date and number of time stamps
+        testTimesList = Collections.nCopies(8760, Instant.parse("2023-01-01T00:00:00.00Z"));
+        assertTrue((Boolean) validateWeatherTimes.invoke(agent, testTimesList, 0.00, 0.00));
     }
 }
