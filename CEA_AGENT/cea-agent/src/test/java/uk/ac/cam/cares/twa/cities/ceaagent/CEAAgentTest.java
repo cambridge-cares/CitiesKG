@@ -2,7 +2,6 @@ package uk.ac.cam.cares.twa.cities.ceaagent;
 
 import kong.unirest.*;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
-import org.checkerframework.checker.units.qual.C;
 import org.jooq.exception.DataAccessException;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -2356,5 +2355,21 @@ public class CEAAgentTest {
         // check validation for requirements for both start date and number of time stamps
         testTimesList = Collections.nCopies(8760, Instant.parse("2023-01-01T00:00:00.00Z"));
         assertTrue((Boolean) validateWeatherTimes.invoke(agent, testTimesList, 0.00, 0.00));
+    }
+
+    @Test
+    public void testParseWeatherTimes() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = new CEAAgent();
+
+        Method parseWeatherTimes = agent.getClass().getDeclaredMethod("parseWeatherTimes", List.class, Integer.class);
+        assertNotNull(parseWeatherTimes);
+        parseWeatherTimes.setAccessible(true);
+
+        List<Instant> testTimesList = Collections.nCopies(3, Instant.parse("2023-01-01T00:00:00.00Z"));
+
+        List<OffsetDateTime> result = (List<OffsetDateTime>) parseWeatherTimes.invoke(agent, testTimesList, 3600);
+
+        assertEquals(3600, result.get(0).getOffset().getTotalSeconds());
+        assertEquals(1, result.get(0).getHour());
     }
 }

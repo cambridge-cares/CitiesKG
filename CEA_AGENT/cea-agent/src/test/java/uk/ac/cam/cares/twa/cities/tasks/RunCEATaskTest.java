@@ -362,7 +362,7 @@ public class RunCEATaskTest {
     public void testDataToFile(@TempDir Path tempDir) throws URISyntaxException, NoSuchMethodException, NoSuchFieldException, InvocationTargetException, IllegalAccessException, IOException {
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<>();
-        List<Instant> testTimes = Collections.nCopies(8760, Instant.now());
+        List<OffsetDateTime> testTimes = Collections.nCopies(8760, OffsetDateTime.now());
         Map<String, List<Double>> testWeather = new HashMap<>();
         testWeather.put("testWeather", Collections.nCopies(8760, 0.00));
         testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, testTimes, testWeather, Arrays.asList(0.00, 0.00, 0.00, 0.00)));

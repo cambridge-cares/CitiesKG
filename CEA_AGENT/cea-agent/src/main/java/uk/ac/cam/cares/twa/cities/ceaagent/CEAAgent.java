@@ -168,8 +168,8 @@ public class CEAAgent extends JPSAgent {
     public static final String API_LON = "longitude";
     public static final String API_START = "start_date";
     public static final String API_END = "end_date";
-    public static final String API_TIMEZONE = "timezone";
-    public static final String API_OFFSET = "utc_offset_seconds";
+    private static final String API_TIMEZONE = "timezone";
+    private static final String API_OFFSET = "utc_offset_seconds";
 
     public List<String> TIME_SERIES = Arrays.asList(KEY_GRID_CONSUMPTION,KEY_ELECTRICITY_CONSUMPTION,KEY_HEATING_CONSUMPTION,KEY_COOLING_CONSUMPTION, KEY_PV_ROOF_SUPPLY, KEY_PV_WALL_NORTH_SUPPLY, KEY_PV_WALL_SOUTH_SUPPLY, KEY_PV_WALL_EAST_SUPPLY, KEY_PV_WALL_WEST_SUPPLY, KEY_PVT_PLATE_ROOF_E_SUPPLY, KEY_PVT_PLATE_WALL_NORTH_E_SUPPLY, KEY_PVT_PLATE_WALL_SOUTH_E_SUPPLY, KEY_PVT_PLATE_WALL_EAST_E_SUPPLY, KEY_PVT_PLATE_WALL_WEST_E_SUPPLY, KEY_PVT_PLATE_ROOF_Q_SUPPLY, KEY_PVT_PLATE_WALL_NORTH_Q_SUPPLY, KEY_PVT_PLATE_WALL_SOUTH_Q_SUPPLY, KEY_PVT_PLATE_WALL_EAST_Q_SUPPLY, KEY_PVT_PLATE_WALL_WEST_Q_SUPPLY, KEY_PVT_TUBE_ROOF_E_SUPPLY, KEY_PVT_TUBE_WALL_NORTH_E_SUPPLY, KEY_PVT_TUBE_WALL_SOUTH_E_SUPPLY, KEY_PVT_TUBE_WALL_EAST_E_SUPPLY, KEY_PVT_TUBE_WALL_WEST_E_SUPPLY, KEY_PVT_TUBE_ROOF_Q_SUPPLY, KEY_PVT_TUBE_WALL_NORTH_Q_SUPPLY, KEY_PVT_TUBE_WALL_SOUTH_Q_SUPPLY, KEY_PVT_TUBE_WALL_EAST_Q_SUPPLY, KEY_PVT_TUBE_WALL_WEST_Q_SUPPLY, KEY_THERMAL_PLATE_ROOF_SUPPLY, KEY_THERMAL_PLATE_WALL_NORTH_SUPPLY, KEY_THERMAL_PLATE_WALL_SOUTH_SUPPLY, KEY_THERMAL_PLATE_WALL_EAST_SUPPLY, KEY_THERMAL_PLATE_WALL_WEST_SUPPLY, KEY_THERMAL_TUBE_ROOF_SUPPLY, KEY_THERMAL_TUBE_WALL_NORTH_SUPPLY, KEY_THERMAL_TUBE_WALL_SOUTH_SUPPLY, KEY_THERMAL_TUBE_WALL_EAST_SUPPLY, KEY_THERMAL_TUBE_WALL_WEST_SUPPLY);
     public List<String> SCALARS = Arrays.asList(KEY_PV_ROOF_AREA, KEY_PV_WALL_NORTH_AREA, KEY_PV_WALL_SOUTH_AREA, KEY_PV_WALL_EAST_AREA, KEY_PV_WALL_WEST_AREA, KEY_PVT_PLATE_ROOF_AREA, KEY_PVT_PLATE_WALL_NORTH_AREA, KEY_PVT_PLATE_WALL_SOUTH_AREA, KEY_PVT_PLATE_WALL_EAST_AREA, KEY_PVT_PLATE_WALL_WEST_AREA, KEY_PVT_TUBE_ROOF_AREA, KEY_PVT_TUBE_WALL_NORTH_AREA, KEY_PVT_TUBE_WALL_SOUTH_AREA, KEY_PVT_TUBE_WALL_EAST_AREA, KEY_PVT_TUBE_WALL_WEST_AREA, KEY_THERMAL_PLATE_ROOF_AREA, KEY_THERMAL_PLATE_WALL_NORTH_AREA, KEY_THERMAL_PLATE_WALL_SOUTH_AREA, KEY_THERMAL_PLATE_WALL_EAST_AREA, KEY_THERMAL_PLATE_WALL_WEST_AREA, KEY_THERMAL_TUBE_ROOF_AREA, KEY_THERMAL_TUBE_WALL_NORTH_AREA, KEY_THERMAL_TUBE_WALL_SOUTH_AREA, KEY_THERMAL_TUBE_WALL_EAST_AREA, KEY_THERMAL_TUBE_WALL_WEST_AREA);
@@ -347,7 +347,7 @@ public class CEAAgent extends JPSAgent {
                         List<Object> weather = new ArrayList<>();
 
                         if (getWeather(uri, geometryRoute, weatherRoute, crs, weather)) {
-                            testData.add(new CEAInputData(footprint, height, usage, surrounding, (List<Instant>) weather.get(0), (Map<String, List<Double>>) weather.get(1), (List<Double>) weather.get(2)));
+                            testData.add(new CEAInputData(footprint, height, usage, surrounding, (List<OffsetDateTime>) weather.get(0), (Map<String, List<Double>>) weather.get(1), (List<Double>) weather.get(2)));
                         }
                         else{
                             testData.add(new CEAInputData(footprint, height, usage, surrounding, null, null, null));
@@ -1382,11 +1382,14 @@ public class CEAAgent extends JPSAgent {
                 elevation = Double.parseDouble(stationElevation);
             }
 
-            List<Instant> times = (List<Instant>) result.get(0);
+            List<OffsetDateTime> times = (List<OffsetDateTime>) result.get(0);
 
-            Double offset = getStationOffset(latitude, longitude, times.get(0), times.get(times.size()-1));
+            ZoneOffset zoneOffset = times.get(0).getOffset();
 
-            result.add(Arrays.asList(latitude, longitude, elevation, offset));
+            Integer offset = zoneOffset.getTotalSeconds();
+
+            // store offset in hours
+            result.add(Arrays.asList(latitude, longitude, elevation, offset / 60.0 / 60.0));
 
             return true;
         } catch (Exception e) {
@@ -1540,12 +1543,12 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Returns the UTC offset of the timestamps of the retrieved weather data
+     * Returns UTC offset of the timestamps of the retrieved weather data
      * @param latitude latitude of the station of the retrieved weather data
      * @param longitude longitude of the station of the retrieved weather data
      * @param startDate start date of the retrieved historical weather data as an Instant object
      * @param endDate end date of the retrieved historical weather data as an Instant object
-     * @return UTC offset of the timestamps of the retrieved historical weather data in hours
+     * @return UTC offset of the timestamps of the retrieved historical weather data in seconds
      */
     public Double getStationOffset(Double latitude, Double longitude, Instant startDate, Instant endDate) {
         try {
@@ -1576,14 +1579,8 @@ public class CEAAgent extends JPSAgent {
             rd.close();
             JSONObject result = new JSONObject(response.toString());
 
-            ZoneId zoneId = ZoneId.of(result.getString(API_TIMEZONE));
-
-            ZonedDateTime zonedDateTime = startDate.atZone(zoneId);
-
-            ZoneOffset zoneOffset = zonedDateTime.getOffset();
-
-            // return offset in hours
-            return zoneOffset.getTotalSeconds() / 60.0 / 60.0;
+            // return offset in seconds
+            return result.getDouble(API_OFFSET);
         }
         catch (IOException e){
             // if failed to get the offset from API, return an approximation based on the longitude
@@ -1657,7 +1654,11 @@ public class CEAAgent extends JPSAgent {
 
             if (getTimes) {
                 List<Instant> times = weatherTS.getTimes().subList(0, 8760);
-                result.add(times);
+                Double offset = getStationOffset(latitude, longitude, times.get(0), times.get(times.size()-1));
+                // parse times to OffsetDateTime with the correct offset
+                List<OffsetDateTime> weatherTimes = parseWeatherTimes(times, offset.intValue());
+
+                result.add(weatherTimes);
                 getTimes = false;
             }
 
@@ -1666,6 +1667,24 @@ public class CEAAgent extends JPSAgent {
 
         result.add(weather);
         return true;
+    }
+
+    /**
+     * Parses timestamps of weather data into list of OffsetDateTimes
+     * @param weatherTimes timestamps of weather data
+     * @param offset UTC offset in seconds
+     * @return  timestamps of weather data as a list of OffsetDateTimes
+     */
+    private List<OffsetDateTime> parseWeatherTimes(List<Instant> weatherTimes, Integer offset) {
+        List<OffsetDateTime> result = new ArrayList<>();
+
+        ZoneOffset zoneOffset = ZoneOffset.ofTotalSeconds(offset);
+
+        for (int i = 0; i < weatherTimes.size(); i++) {
+            result.add(weatherTimes.get(i).atOffset(zoneOffset));
+        }
+
+        return result;
     }
 
     /**
@@ -1683,13 +1702,14 @@ public class CEAAgent extends JPSAgent {
 
         Double offset = getStationOffset(latitude, longitude, weatherTimes.get(0), weatherTimes.get(weatherTimes.size()-1));
 
-        ZoneOffset zoneOffset = ZoneOffset.ofTotalSeconds((int) (offset * 60 * 60));
+        ZoneOffset zoneOffset = ZoneOffset.ofTotalSeconds(offset.intValue());
 
         OffsetDateTime startDate = weatherTimes.get(0).atOffset(zoneOffset);
 
         if (startDate.getMonthValue() != 1 || startDate.getDayOfMonth() != 1) {
             return false;
         }
+
         return true;
     }
 

@@ -12,12 +12,12 @@ public class CEAInputData {
     public Map<String, Double> usage;
     public ArrayList<CEAInputData> surrounding;
 
-    public List<Instant> weatherTimes;
+    public List<OffsetDateTime> weatherTimes;
 
     public Map<String, List<Double>> weather;
     public List<Double> weatherMetaData;
 
-    public CEAInputData(String geometry_value, String height_value, Map<String, Double> usage_value, ArrayList<CEAInputData> surrounding_value, List<Instant> weatherTimes_value, Map<String, List<Double>> weather_value, List<Double> weatherMetaData_value) {
+    public CEAInputData(String geometry_value, String height_value, Map<String, Double> usage_value, ArrayList<CEAInputData> surrounding_value, List<OffsetDateTime> weatherTimes_value, Map<String, List<Double>> weather_value, List<Double> weatherMetaData_value) {
         this.geometry = geometry_value;
         this.height = height_value;
         this.usage = usage_value;
@@ -43,7 +43,7 @@ public class CEAInputData {
         return this.surrounding;
     }
 
-    public List<Instant> getWeatherTimes() {return this.weatherTimes;}
+    public List<OffsetDateTime> getWeatherTimes() {return this.weatherTimes;}
 
     public Map<String, List<Double>> getWeather() {return this.weather;}
 
@@ -65,7 +65,7 @@ public class CEAInputData {
         this.surrounding = surrounding_value;
     }
 
-    public void setWeatherTimes(List<Instant> weatherTimes_value) {this.weatherTimes = weatherTimes_value;}
+    public void setWeatherTimes(List<OffsetDateTime> weatherTimes_value) {this.weatherTimes = weatherTimes_value;}
 
     public void setWeather(Map<String, List<Double>> weather_value) {this.weather = weather_value;}
     public void setWeatherMetaData(List<Double> weatherMetaData_value) {this.weatherMetaData = weatherMetaData_value;}

@@ -12,9 +12,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.*;
 import java.lang.Process;
 
@@ -494,11 +492,11 @@ public class RunCEATask implements Runnable {
             if (!(dataInputs.get(i).getSurrounding() == null)) {surroundings.addAll(dataInputs.get(i).getSurrounding());}
             if (noWeather && !(dataInputs.get(i).getWeather() == null) && !(dataInputs.get(i).getWeatherTimes() == null)) {
                 noWeather = false;
-                List<Instant> times = dataInputs.get(i).getWeatherTimes();
+                List<OffsetDateTime> times = dataInputs.get(i).getWeatherTimes();
                 List<Map<String, Integer>> timeMap = new ArrayList<>();
 
                 for (int j = 0; j < times.size(); j++){
-                    OffsetDateTime offsetDateTime = times.get(j).atOffset(ZoneOffset.UTC);
+                    OffsetDateTime offsetDateTime = times.get(j);
                     Map<String, Integer> map = new HashMap<>();
                     map.put("year", offsetDateTime.getYear());
                     map.put("month", offsetDateTime.getMonthValue());

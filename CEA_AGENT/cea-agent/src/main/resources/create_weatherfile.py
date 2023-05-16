@@ -194,23 +194,11 @@ def parse_weather(times, data, offset):
     hour = []
     minute = []
 
-    # time series is retrieve with offset with 0
-    # parse time stamp to correct offset
-    for t in times:
-        dt = datetime.datetime(t['year'], t['month'], t['day'], t['hour'], t['minute'], tzinfo = pytz.FixedOffset(0))
-        # offset is in hours
-        dt = dt.astimezone(pytz.FixedOffset(float(offset) * 60))
-        year.append(dt.strftime("%Y"))
-        month.append(dt.strftime("%m"))
-        day.append(dt.strftime("%d"))
-        hour.append(dt.strftime("%H"))
-        minute.append(dt.strftime("%M"))
-
-    results['year'] = year
-    results['month'] = month
-    results['day'] = day
-    results['hour'] = hour
-    results['minute'] = minute
+    results['year'] = [t['year'] for t in times]
+    results['month'] = [t['month'] for t in times]
+    results['day'] = [t['day'] for t in times]
+    results['hour'] = [t['hour'] for t in times]
+    results['minute'] = [t['minute'] for t in times]
     
     for key, val in data.items():
         if key in ontoems_concepts:
