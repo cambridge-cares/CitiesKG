@@ -582,13 +582,16 @@ function chooseDemoType(obj) {
 
 	switch (selectedDemo) {
 		case "PPF":
-			document.getElementById("demo").style.display = "inline-block";
+			document.getElementById("demo1").style.display = "inline-block";
+			document.getElementById("demo2").style.display = "None";
 			break;
-		case "demo2":
-			document.getElementById("demo").style.display = "None";
+		case "PlotComparison":
+			document.getElementById("demo1").style.display = "None";
+			document.getElementById("demo2").style.display = "inline-block";
 			break;
 		case "demo3":
-			document.getElementById("demo").style.display = "None";
+			document.getElementById("demo1").style.display = "None";
+			document.getElementById("demo2").style.display = "None";
 			break;
 	}
 }
@@ -605,7 +608,7 @@ function resetAllInputs(){
 	let lastQuerySentence = document.getElementsByClassName('querySentence')[0].innerHTML;
 
 	// Clear all the existing checkboxes
-	let demoToolbox = document.getElementById("demo");
+	let demoToolbox = document.getElementById("demo1");
 	//var checkboxes = toolbox.getElementsByClassName('checkbox');
 	let checkedCheckboxes = demoToolbox.querySelectorAll('input[type="checkbox"]:checked');
 	checkedCheckboxes.forEach((checkbox) => {

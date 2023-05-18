@@ -81,6 +81,7 @@
         <!-- URL controller -->
         <script src="utils/UrlController.js"></script>
         <!-- demo UI queries -->
+        <script src="utils/PlotComparison.js"></script>
         <script src="utils/DropdownElement.js"></script>
         <script src="utils/NavigationBox.js"></script>
         <script src="utils/ProcessAgentResult.js"></script>
@@ -528,13 +529,13 @@
         <div id="mySidebar" class="sidebar">
             <a href="javascript:void(0)" class="closebtn" onclick="closeSidebar()">×</a>
             <a href="#" class="navLink" id="PPF" onclick="chooseDemoType(this)" style="color:white;">Programmatic Plot Finder</a>
-            <a href="#" class="navLink" id="demo2" onclick="chooseDemoType(this)">Demonstrator 2</a>
+            <a href="#" class="navLink" id="PlotComparison" onclick="chooseDemoType(this)">5 Plots Comparison</a>
             <a href="#" class="navLink" id="demo3" onclick="chooseDemoType(this)">Demonstrator 3</a>
         </div>
 
         <div id="ProgrammaticPlotFinder">
             <button class="ProgrammaticPlotFinder-submitButton" onclick="openSidebar()">☰ <span id="demoTitle">Programmatic Plot Finder</span></button>
-            <div id="demo" class="programmeFinder_toolbox">
+            <div id="demo1" class="programmeFinder_toolbox" style="display: none;">
                 <div id="programmeFinder_toolbox_upper" style="height: 50%">
                     <button id="exampleQuery" class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams()">Try Example Query</button>
                     <div id="querySentence" class="querySentence">Find plots that could allow...</div>
@@ -589,6 +590,17 @@
                 </div>
                 <div id="resultBox-iframe" class="ProgrammaticPlotFinder-resultBox-iframe"></div>
             </div>
+            <div id="demo2" class="programmeFinder_toolbox" style="display: none;">
+                <button class="ProgrammaticPlotFinder-submitButton" onclick="showSelection()"><span>Show the selection</span></button>
+                <button class="ProgrammaticPlotFinder-submitButton" onclick="clearSelection()"><span>Clear the selection</span></button>
+            </div>
+            <div id="SelectedPlots" class="ProgrammaticPlotFinder-resultBox" >
+                <div id="selectplots-title" class="ProgrammaticPlotFinder-resultBox-title">
+                    <label>Selected Plots</label>
+                </div>
+                
+                <div id="selectedPlotsList"></div>
+            </div> 
         </div>
 
 
