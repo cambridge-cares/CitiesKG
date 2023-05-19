@@ -3,7 +3,7 @@
 
 The CEA Agent can be used to interact with the [City Energy Analyst (CEA)](https://www.cityenergyanalyst.com/)  and the data it produces on building energy demands and installable solar energy generators.
 
-The agent currently queries for building geometry, surrounding buildings geometries and building usage stored in the knowledge graph, which are passed to CEA as inputs. The energy demands and potential energy of solar energy generators (which include photovoltaic panels, photovoltaic-thermal collectors, and solar collectors) calculated by CEA are extracted by the agent and stored on the knowledge graph.
+The agent currently queries for building geometry, surrounding buildings geometries, building usage and historical weather data stored in knowledge graph, which are passed to CEA as inputs. The energy demands and potential energy of solar energy generators (which include photovoltaic panels, photovoltaic-thermal collectors, and solar collectors) calculated by CEA are extracted by the agent and stored on the knowledge graph.
 
 ## Build Instructions
 
@@ -68,9 +68,10 @@ Available at http://localhost:58085/agents/cea/run.
 
 The run endpoint accepts the following request parameters:
 - ```iris```: array of cityObject IRIs.
-- ```geometryEndpoint```: (optional) endpoint where the geospatial information of the cityObjects from ```iris``` are stored; if not specified, agent will default to setting ```geometryEndpoint``` to TheWorldAvatar Blazegraph with the namespace retrieved from the cityObject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```.
-- ```usageEndpoint```: (optional) endpoint where the building usage information of the cityObjects from ```iris``` are stored, if not specified, agent will default to setting ```usageEndpoint``` to be the same as ```geometryEndpoint```.
-- ```ceaEndpoint```: (optional) endpoint where the CEA triples, i.e. energy demand and solar energy generator information, instantiated by the agent are to be stored; if not specified, agent will default to setting ```ceaEndpoint``` to TheWorldAvatar Blazegraph with the namespace retrieved from the cityObject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```.
+- ```geometryEndpoint```: (optional) endpoint where the geospatial information of the cityObjects from ```iris``` is stored; if not specified, agent will default to setting ```geometryEndpoint``` to TheWorldAvatar Blazegraph with the namespace retrieved from the cityObject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```.
+- ```usageEndpoint```: (optional) endpoint where the building usage information of the cityObjects from ```iris``` is stored, if not specified, agent will default to setting ```usageEndpoint``` to be the same as ```geometryEndpoint```.
+- ```ceaEndpoint```: (optional) endpoint where the CEA triples, i.e. energy demand and solar energy generator information, instantiated by the agent is to be stored; if not specified, agent will default to setting ```ceaEndpoint``` to TheWorldAvatar Blazegraph with the namespace retrieved from the cityObject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```.
+- ```weatherEndpoint```: (optional) endpoint where historical weather information is stored; if not specified, agent will default to setting ```weatherEndpoint``` to TheWorldAvatar Blazegraph.
 - ```graphName```: (optional) named graph to which the CEA triples belong to. In the scenario where ```ceaEndpoint``` is not specified, if ```graphName``` is not specified, the default graph is ```http://www.theworldavatar.com:83/citieskg/namespace/{namespace}/sparql/energyprofile/```, where {namespace} is a placeholder for the namespace of the cityObject IRI, e.g. kingslynnEPSG27700. If ```ceaEndpoint``` is specified, the agent will assume no graph usage if ```namedGraph``` is not specified.
 
 After receiving request to the run endpoint, the agent will query for the building geometry, surrounding buildings' geometry and building usage from the endpoints specified in the request parameters. The agent will then run CEA with the queried information as inputs, and send request with the CEA output data to the update endpoint afterwards.
@@ -113,7 +114,7 @@ Available at http://localhost:58085/agents/cea/query.
 
 The query endpoint accepts the following request parameters:
 - ```iris```: array of cityObject IRIs.
-- ```ceaEndpoint```: (optional) endpoint where the CEA triples instantiated by the agent are stored; if not specified, agent will default to setting ```ceaEndpoint``` to TheWorldAvatar Blazegraph with the namespace retrieved from the cityObject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```.
+- ```ceaEndpoint```: (optional) endpoint where the CEA triples instantiated by the agent is stored; if not specified, agent will default to setting ```ceaEndpoint``` to TheWorldAvatar Blazegraph with the namespace retrieved from the cityObject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```.
 - ```graphName```: (optional) named graph to which the CEA triples belong to. In the scenario where ```ceaEndpoint``` is not specified, if ```graphName``` is not specified, the default graph is ```http://www.theworldavatar.com:83/citieskg/namespace/{namespace}/sparql/energyprofile/```, where {namespace} is a placeholder for the namespace of the cityObject IRI, e.g. kingslynnEPSG27700. If ```ceaEndpoint``` is specified, the agent will assume no graph usage if ```namedGraph``` is not specified.
 
 After receiving request sent to the query endpoint, the agent will retrieve energy demand and solar energy generator information calculated by CEA for the cityObject IRIs provided in ```iris```. The energy demand and solar energy generator information will only be returned if the cityObject IRIs provided in ```iris``` has already been passed to the run endpoint of the CEA Agent beforehand.
@@ -205,8 +206,8 @@ Example response:
 }
 ```
 
-## Queries
-In order for the agent to run CEA successfully, the queries below must return a result with an IRI of format `<{PREFIX}cityobject/{UUID}/>` where PREFIX is the prefix to IRIs in the namespace you are working with.
+## Information Retrieved from Knowledge Graph
+The agent will attempt to retrieve information on building geometry, surrounding buildings geometries, building usage and historical weather from knowledge graph to pass as input to CEA. The retrieval is done with SPARQL queries. The agent assumes that the IRIs in the knowledge graph queried to follow a consistent format. The assumption is that the IRIs inside the knowledge graph follow the format of `<{PREFIX}cityobject/{UUID}/>` where PREFIX is the prefix to IRIs in the namespace that the agent is working with.
 
 For example:
 - `http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_b5a7b032-1877-4c2b-9e00-714b33a426f7/` - the PREFIX is: `http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/`
@@ -325,7 +326,17 @@ If no building usage is returned from the query, the default value of ```MULTI_R
 ### Visualisation
 The 3dWebMapClient can be set up to visualise data produced by the CEA Agent (instructions to run are [here](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents#3dcitydb-web-map-client)). The City Information Agent (CIA) is used when a building on the 3dWebMapClient is selected, to query data stored in the KG on the building. If the parameter "context=energy" is included in the url, the query endpoint of CEA will be contacted for energy data. eg `http://localhost:8000/3dwebclient/index.html?city=kingslynn&context=energy` (NB. this currently requires running web map client and CitiesKG/agents from [develop branch](https://github.com/cambridge-cares/CitiesKG/tree/develop/agents))
 
-### Building usage mapping
+### Historical Weather Data
+The agent will attempt to retrieve historical weather data for the location of the building in the request received, to use as input to CEA. Then, the agent will create a EPW file based on the retrieved historical data, which will be passed to CEA as the weather input. The historical weather data need to be at least 1 year duration in hourly format for CEA to run successfully. In the event where the retrieved historical weather data do not satisfy the aforementioned requirement by CEA or where the agent fails to retrieve historical weather data, the agent will run CEA with the default EPW file defined by CEA's own database as the weather input. 
+
+WARNING: Please note that the CEA Agent assumes that the historical weather data is stored in a Postgres database that uses the username and password provided in
+```
+./credentials/
+    postgres_username.txt
+    postgres_password.txt
+```
+
+### Building Usage Mapping
 The agent queries for the building usage type, which are stored with ```OntoBuiltEnv``` concepts, to pass to CEA as input.
 
 In the CEA, there are 19 defined building usage types. In the ```OntoBuiltEnv``` ontology, there are 23 classes for building usage type (see left 2 columns of table below). After querying for the ```OntoBuiltEnv``` concepts, the agent will map the concepts to the CEA defined usage types as shown in the right 2 columns of the following mapping table:

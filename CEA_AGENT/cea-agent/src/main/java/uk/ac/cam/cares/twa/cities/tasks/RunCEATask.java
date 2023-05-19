@@ -12,6 +12,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.lang.Process;
 
@@ -21,15 +22,24 @@ public class RunCEATask implements Runnable {
     private final URI endpointUri;
     private final int threadNumber;
     private final String crs;
+    private Double weather_lat;
+    private Double weather_lon;
+    private Double weather_elevation;
+    private Double weather_offset;
     public static final String CTYPE_JSON = "application/json";
     private Boolean stop = false;
     private Boolean noSurroundings = false;
+    private Boolean noWeather = true;
     private static final String DATA_FILE = "datafile.txt";
     private static final String SURROUNDINGS_FILE = "surroundingdata.txt";
+    private static final String WEATHERTIMES_FILE = "weathertimes.txt";
+    private static final String WEATHERDATA_FILE = "weatherdata.txt";
     private static final String SHAPEFILE_SCRIPT = "create_shapefile.py";
     private static final String TYPOLOGY_SCRIPT = "create_typologyfile.py";
-    private static final String WORKFLOW_SCRIPT = "workflow.yml";
-    private static final String WORKFLOW_SCRIPT2 = "workflow2.yml";
+    private static final String WEATHER_SCRIPT = "create_weatherfile.py";
+    private static final String WORKFLOW_YML = "workflow.yml";
+    private static final String WORKFLOW_YML2 = "workflow2.yml";
+    private static final String WORKFLOW_YML3 = "workflow3.yml";
     private static final String CREATE_WORKFLOW_SCRIPT = "create_cea_workflow.py";
     private static final String FS = System.getProperty("file.separator");
     private Map<String, ArrayList<String>> solarSupply = new HashMap<>();
@@ -469,16 +479,45 @@ public class RunCEATask implements Runnable {
      * @param directory_path directory path
      * @param file_path path to store data file, excluding surrounding data
      * @param surrounding_path path to store surrounding data file
+     * @param weather_path path to store weather data file
      */
-    private void dataToFile(ArrayList<CEAInputData> dataInputs, String directory_path, String file_path, String surrounding_path) {
-        //Parse input data to JSON
+    private void dataToFile(ArrayList<CEAInputData> dataInputs, String directory_path, String file_path, String surrounding_path, String weatherTimes_path, String weather_path) {
+        // parse input data to JSON
         String dataString = "[";
+        String weatherTimes = "";
+        String weatherData = "";
         ArrayList<CEAInputData> surroundings = new ArrayList<>();
 
         for(int i = 0; i < dataInputs.size(); i++) {
             if (!(dataInputs.get(i).getSurrounding() == null)) {surroundings.addAll(dataInputs.get(i).getSurrounding());}
-            dataInputs.get(i).setSurrounding(null);
-            dataString += new Gson().toJson(dataInputs.get(i));
+            if (noWeather && !(dataInputs.get(i).getWeather() == null) && !(dataInputs.get(i).getWeatherTimes() == null)) {
+                noWeather = false;
+                List<OffsetDateTime> times = dataInputs.get(i).getWeatherTimes();
+                List<Map<String, Integer>> timeMap = new ArrayList<>();
+
+                for (int j = 0; j < times.size(); j++){
+                    OffsetDateTime offsetDateTime = times.get(j);
+                    Map<String, Integer> map = new HashMap<>();
+                    map.put("year", offsetDateTime.getYear());
+                    map.put("month", offsetDateTime.getMonthValue());
+                    map.put("day", offsetDateTime.getDayOfMonth());
+                    map.put("hour", offsetDateTime.getHour());
+                    map.put("minute", offsetDateTime.getMinute());
+                    timeMap.add(map);
+                }
+
+                weatherTimes += new Gson().toJson(timeMap);
+                weatherData += new Gson().toJson(dataInputs.get(i).getWeather());
+                weather_lat = dataInputs.get(i).getWeatherMetaData().get(0);
+                weather_lon = dataInputs.get(i).getWeatherMetaData().get(1);
+                weather_elevation = dataInputs.get(i).getWeatherMetaData().get(2);
+                weather_offset = dataInputs.get(i).getWeatherMetaData().get(3);
+            }
+            Map<String, Object> tempMap = new HashMap<>();
+            tempMap.put("geometry", dataInputs.get(i).getGeometry());
+            tempMap.put("height", dataInputs.get(i).getHeight());
+            tempMap.put("usage", dataInputs.get(i).getUsage());
+            dataString += new Gson().toJson(tempMap);
             if(i!=dataInputs.size()-1) dataString += ", ";
         }
         dataString+="]";
@@ -488,12 +527,33 @@ public class RunCEATask implements Runnable {
             throw new JPSRuntimeException(new FileNotFoundException(directory_path));
         }
 
+        // write building geometry data to file_path
         try {
             BufferedWriter f_writer = new BufferedWriter(new FileWriter(file_path));
             f_writer.write(dataString);
             f_writer.close();
         } catch (IOException e) {
             throw new JPSRuntimeException(e);
+        }
+
+        if (!noWeather) {
+            // write timestamps of weather data to weatherTimes_path
+            try {
+                BufferedWriter f_writer = new BufferedWriter(new FileWriter(weatherTimes_path));
+                f_writer.write(weatherTimes);
+                f_writer.close();
+            } catch (IOException e) {
+                throw new JPSRuntimeException(e);
+            }
+
+            // write weather data to weather_path
+            try {
+                BufferedWriter f_writer = new BufferedWriter(new FileWriter(weather_path));
+                f_writer.write(weatherData);
+                f_writer.close();
+            } catch (IOException e) {
+                throw new JPSRuntimeException(e);
+            }
         }
 
         // if there is surrounding data, call dataToFile to store surrounding data as a temporary text file
@@ -516,8 +576,10 @@ public class RunCEATask implements Runnable {
         String dataString = "[";
 
         for(int i = 0; i < dataInputs.size(); i++) {
-            dataInputs.get(i).setSurrounding(null);
-            dataString += new Gson().toJson(dataInputs.get(i));
+            Map<String, String> tempMap = new HashMap<>();
+            tempMap.put("geometry", dataInputs.get(i).getGeometry());
+            tempMap.put("height", dataInputs.get(i).getHeight());
+            dataString += new Gson().toJson(tempMap);
             if(i!=dataInputs.size()-1) dataString += ", ";
         }
         dataString+="]";
@@ -690,14 +752,21 @@ public class RunCEATask implements Runnable {
                 ArrayList<String> args5 = new ArrayList<>();
                 ArrayList<String> args6 = new ArrayList<>();
                 ArrayList<String> args7 = new ArrayList<>();
+                ArrayList<String> args8 = new ArrayList<>();
+                ArrayList<String> args9 = new ArrayList<>();
+                ArrayList<String> args10 = new ArrayList<>();
                 String workflowPath = strTmp + FS + "workflow.yml";
                 String workflowPath2 = strTmp + FS + "workflow2.yml";
+                String workflowPath3 = strTmp + FS + "workflow3.yml";
                 String data_path = strTmp + FS + DATA_FILE;
                 String surroundings_path = strTmp + FS + SURROUNDINGS_FILE;
+                String weatherTimes_path = strTmp + FS + WEATHERTIMES_FILE;
+                String weatherData_path = strTmp + FS + WEATHERDATA_FILE;
 
-                dataToFile(this.inputs, strTmp, data_path, surroundings_path);
+                dataToFile(this.inputs, strTmp, data_path, surroundings_path, weatherTimes_path, weatherData_path);
 
-                String flag = noSurroundings ? "1" : "0";
+                String surroundingsFlag = noSurroundings ? "1" : "0";
+                String weatherFlag = noWeather ? "1" : "0";
 
 
                 if(OS.contains("win")){
@@ -706,12 +775,12 @@ public class RunCEATask implements Runnable {
                     args.add("cmd.exe");
                     args.add("/C");
                     f_path = new File(Objects.requireNonNull(getClass().getClassLoader().getResource(SHAPEFILE_SCRIPT)).toURI()).getAbsolutePath();
-                    args.add("conda activate cea && python " + f_path + " " + data_path + " " + strTmp + " " + crs+" zone.shp");
+                    args.add("conda activate cea && python " + f_path + " " + data_path + " " + strTmp + " " + crs + " zone.shp");
 
                     args2.add("cmd.exe");
                     args2.add("/C");
                     f_path = new File(Objects.requireNonNull(getClass().getClassLoader().getResource(SHAPEFILE_SCRIPT)).toURI()).getAbsolutePath();
-                    args2.add("conda activate cea && python " + f_path + " " + surroundings_path + " " + strTmp + " " + crs+" surroundings.shp");
+                    args2.add("conda activate cea && python " + f_path + " " + surroundings_path + " " + strTmp + " " + crs + " surroundings.shp");
 
                     args3.add("cmd.exe");
                     args3.add("/C");
@@ -725,37 +794,67 @@ public class RunCEATask implements Runnable {
                     args4.add(new File(
                             Objects.requireNonNull(getClass().getClassLoader().getResource(CREATE_WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
                     args4.add(new File(
-                            Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
-                    args4.add("workflow.yml");
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_YML)).toURI()).getAbsolutePath());
+                    args4.add(WORKFLOW_YML);
                     args4.add(strTmp);
-                    args4.add(flag);
+                    args4.add("null");
+                    args4.add("null");
 
                     args5.add("cmd.exe");
                     args5.add("/C");
                     args5.add("conda activate cea && cea workflow --workflow " + workflowPath);
 
-                    args6.add("cmd.exe");
-                    args6.add("/C");
-                    args6.add("conda activate cea && ");
-                    args6.add("python");
-                    args6.add(new File(
-                            Objects.requireNonNull(getClass().getClassLoader().getResource(CREATE_WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
-                    args6.add(new File(
-                            Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_SCRIPT2)).toURI()).getAbsolutePath());
-                    args6.add("workflow2.yml");
-                    args6.add(strTmp);
-                    args6.add("null");
-
+                    if (!noWeather) {
+                        args6.add("cmd.exe");
+                        args6.add("/C");
+                        f_path = new File(Objects.requireNonNull(getClass().getClassLoader().getResource(WEATHER_SCRIPT)).toURI()).getAbsolutePath();
+                        String defaultEPW_path = strTmp + FS + "testProject" + FS + "testScenario" + FS + "inputs" + FS + "weather" + FS + "weather.epw";
+                        args6.add("conda activate cea && python " + f_path + " " + weatherTimes_path + " " + weatherData_path + " " + weather_lat + " " + weather_lon + " " + weather_elevation + " " + weather_offset  + " " + strTmp + " " + "weather.epw" + " " + defaultEPW_path);
+                    }
+                    
                     args7.add("cmd.exe");
                     args7.add("/C");
-                    args7.add("conda activate cea && cea workflow --workflow " + workflowPath2);
+                    args7.add("conda activate cea && ");
+                    args7.add("python");
+                    args7.add(new File(
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(CREATE_WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
+                    args7.add(new File(
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_YML2)).toURI()).getAbsolutePath());
+                    args7.add(WORKFLOW_YML2);
+                    args7.add(strTmp);
+                    args7.add(surroundingsFlag);
+                    args7.add(weatherFlag);
+
+                    args8.add("cmd.exe");
+                    args8.add("/C");
+                    args8.add("conda activate cea && cea workflow --workflow " + workflowPath2);
+
+                    args9.add("cmd.exe");
+                    args9.add("/C");
+                    args9.add("conda activate cea && ");
+                    args9.add("python");
+                    args9.add(new File(
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(CREATE_WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
+                    args9.add(new File(
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_YML3)).toURI()).getAbsolutePath());
+                    args9.add(WORKFLOW_YML3);
+                    args9.add(strTmp);
+                    args9.add("null");
+                    args9.add("null");
+
+                    args10.add("cmd.exe");
+                    args10.add("/C");
+                    args10.add("conda activate cea && cea workflow --workflow " + workflowPath3);
                 }
                 else {
                     String shapefile = FS+"target"+FS+"classes"+FS+SHAPEFILE_SCRIPT;
                     String typologyfile = FS+"target"+FS+"classes"+FS+TYPOLOGY_SCRIPT;
+                    String weatherfile = FS+"target"+FS+"classes"+FS+WEATHER_SCRIPT;
+                    String defaultEPW = strTmp + FS + "testProject" + FS + "testScenario" + FS + "inputs" + FS + "weather" + FS + "weather.epw";
                     String createWorkflowFile = FS+"target"+FS+"classes"+FS+CREATE_WORKFLOW_SCRIPT;
-                    String workflowFile = FS+"target"+FS+"classes"+FS+WORKFLOW_SCRIPT;
-                    String workflowFile2 = FS+"target"+FS+"classes"+FS+WORKFLOW_SCRIPT2;
+                    String workflowFile = FS+"target"+FS+"classes"+FS+ WORKFLOW_YML;
+                    String workflowFile2 = FS+"target"+FS+"classes"+FS+ WORKFLOW_YML2;
+                    String workflowFile3 = FS+"target"+FS+"classes"+FS+ WORKFLOW_YML3;
 
                     args.add("/bin/bash");
                     args.add("-c");
@@ -767,23 +866,37 @@ public class RunCEATask implements Runnable {
 
                     args3.add("/bin/bash");
                     args3.add("-c");
-                    args3.add("export PROJ_LIB=/venv/share/lib && python " + typologyfile +" '"+ data_path +"' " + strTmp);
+                    args3.add("export PROJ_LIB=/venv/share/lib && python " + typologyfile +" "+ data_path +" " + strTmp);
 
                     args4.add("/bin/bash");
                     args4.add("-c");
-                    args4.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile + " " + "workflow.yml" + " " + strTmp + " " + flag);
+                    args4.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile + " " + WORKFLOW_YML + " " + strTmp + " " + "null" + " " + "null");
 
                     args5.add("/bin/bash");
                     args5.add("-c");
                     args5.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath);
 
-                    args6.add("/bin/bash");
-                    args6.add("-c");
-                    args6.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile2 + " " + "workflow2.yml" + " " + strTmp + " " + "null");
-
+                    if (!noWeather) {
+                        args6.add("/bin/bash");
+                        args6.add("-c");
+                        args6.add("export PROJ_LIB=/venv/share/lib && python " + weatherfile + " " + weatherTimes_path + " " + weatherData_path + " " + weather_lat + " " + weather_lon + " " + weather_elevation + " " + weather_offset  + " " + strTmp + " " + "weather.epw" + " " + defaultEPW);
+                    }
+                    
                     args7.add("/bin/bash");
                     args7.add("-c");
-                    args7.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath2);
+                    args7.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile2 + " " + WORKFLOW_YML2 + " " + strTmp + " " + surroundingsFlag + " " + weatherFlag);
+
+                    args8.add("/bin/bash");
+                    args8.add("-c");
+                    args8.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath2);
+
+                    args9.add("/bin/bash");
+                    args9.add("-c");
+                    args9.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile3 + " " + WORKFLOW_YML3 + " " + strTmp + " " + "null" + " " + "null");
+
+                    args10.add("/bin/bash");
+                    args10.add("-c");
+                    args10.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath3);
                 }
 
                 // create the shapefile process and run
@@ -792,27 +905,43 @@ public class RunCEATask implements Runnable {
                 if (!noSurroundings){runProcess(args2);}
                 // create the typologyfile process and run
                 runProcess(args3);
+
+                // if there are weather data retrieved, create EPW file from the retrieved weather data
+                if (!noWeather) {
+                    // create the workflow process to get CEA default weather
+                    runProcess(args4);
+                    // run workflow.yml for CEA to get default weather file
+                    runProcess(args5);
+
+                    // create the weatherfile process and run
+                    runProcess(args6);
+
+                    // delete the temporary CEA files that were used to create weather file
+                    File file = new File(strTmp + FS + "testProject");
+                    deleteDirectoryContents(file);
+                    file.delete();
+                }
+
                 // create the workflow process and run
-                runProcess(args4);
+                runProcess(args7);
 
                 // CEA output file names for PVT plate collectors and PVT tube collectors are the same, so one PVT collector type has to be run first then the output files renamed before running the other PVT collector type
                 // run workflow that runs all CEA scripts with PVT plate collectors
-                runProcess(args5);
+                runProcess(args8);
 
                 // rename PVT output files to PVT plate
                 renamePVT(strTmp+FS+"testProject"+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"potentials"+FS+"solar", "FP");
 
                 // create workflow process for PVT tube collectors
-                runProcess(args6);
+                runProcess(args9);
                 // run CEA for PVT tube collectors
-                runProcess(args7);
+                runProcess(args10);
 
                 // rename PVT output files to PVT tube
                 renamePVT(strTmp+FS+"testProject"+FS+"testScenario"+FS+"outputs"+FS+"data"+FS+"potentials"+FS+"solar", "ET");
 
                 CEAOutputData result = extractTimeSeriesOutputs(strTmp);
                 returnOutputs(extractArea(strTmp,result));
-
             } catch ( NullPointerException | URISyntaxException e) {
                 e.printStackTrace();
                 throw new JPSRuntimeException(e);

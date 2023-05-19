@@ -7,7 +7,7 @@ import os
 import yaml
 
 
-def write_workflow_file(workflow_file, workflow_name, filepath, noSurroundings):
+def write_workflow_file(workflow_file, workflow_name, filepath, noSurroundings, noWeather):
     """
     :param workflow_file: input workflow file to be modified
 
@@ -30,13 +30,18 @@ def write_workflow_file(workflow_file, workflow_name, filepath, noSurroundings):
     with open(workflow_file) as stream:
         data = yaml.safe_load(stream)
 
-    if noSurroundings == '1': # if no surroundings data from knowledge graph, get CEA to query surroundings data from OpenStreetMap
+    if noSurroundings == '0': # CEA to use surroundings.shp, which is created from surroundings data from knowledge graph
+        data[0]['parameters']['surroundings'] = filepath+os.sep+"surroundings.shp"
+    elif noSurroundings == '1': # if no surroundings data from knowledge graph, get CEA to query surroundings data from OpenStreetMap
         dic = {'script':'surroundings-helper', 'parameters':{'scenario':'scenario_path', 'buffer':200.}}
         data.insert(2, dic)
-    elif noSurroundings == 'null': # if there is no need for surroundings
-        pass
-    else: # CEA to use surroundings.shp, which is created from surroundings data from knowledge graph
-        data[0]['parameters']['surroundings'] = filepath+os.sep+"surroundings.shp"
+
+    if noWeather == '0': # CEA to use weather.epw, which is created from weather data from knowledge graph
+        data[1]['parameters']['weather'] = filepath+os.sep+"weather.epw"
+    elif noWeather == '1':
+        data[1]['parameters']['weather'] = "Zuerich-ETHZ_1990-2010_TMY"
+
+
 
     for i in data:
         for j in i:
@@ -53,7 +58,7 @@ def write_workflow_file(workflow_file, workflow_name, filepath, noSurroundings):
 def main(argv):
 
     try:
-        write_workflow_file(argv.workflow_file, argv.workflow_name, argv.cea_file_path, argv.noSurroundings)
+        write_workflow_file(argv.workflow_file, argv.workflow_name, argv.cea_file_path, argv.noSurroundings, argv.noWeather)
     except IOError:
         print('Error while processing file: ' + argv.worflow_file)
 
@@ -66,6 +71,7 @@ if __name__ == '__main__':
     parser.add_argument("workflow_name")
     parser.add_argument("cea_file_path")
     parser.add_argument("noSurroundings")
+    parser.add_argument("noWeather")
 
     # parse the arguments
     args = parser.parse_args()

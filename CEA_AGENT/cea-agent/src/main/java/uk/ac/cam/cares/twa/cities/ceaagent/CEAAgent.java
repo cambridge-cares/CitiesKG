@@ -1,11 +1,17 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
+import kong.unirest.Unirest;
+import kong.unirest.HttpResponse;
+import kong.unirest.UnirestException;
+import org.apache.commons.lang.StringUtils;
+import org.apache.http.protocol.HTTP;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementService;
 import org.jooq.exception.DataAccessException;
 import org.locationtech.jts.geom.util.GeometryFixer;
+import org.locationtech.jts.geom.*;
 import uk.ac.cam.cares.jps.base.config.JPSConstants;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -18,13 +24,12 @@ import org.json.JSONObject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.io.*;
-import java.net.URI;
-import java.net.URL;
-import java.time.OffsetDateTime;
+import java.net.*;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import javax.servlet.annotation.WebServlet;
 import java.util.concurrent.*;
-import java.net.URISyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.sql.Connection;
@@ -40,10 +45,16 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.json.JSONArray;
 
-import org.locationtech.jts.geom.*;
-
 import org.locationtech.jts.operation.buffer.BufferOp;
 import org.locationtech.jts.operation.buffer.BufferParameters;
+
+import org.cts.op.CoordinateOperation;
+import org.cts.op.CoordinateOperationFactory;
+import org.cts.registry.EPSGRegistry;
+import org.cts.registry.RegistryManager;
+import org.cts.CRSFactory;
+import org.cts.crs.CoordinateReferenceSystem;
+import org.cts.crs.GeodeticCRS;
 
 @WebServlet(
         urlPatterns = {
@@ -61,6 +72,7 @@ public class CEAAgent extends JPSAgent {
     public static final String KEY_IRI = "iris";
     public static final String KEY_GEOMETRY = "geometryEndpoint";
     public static final String KEY_USAGE = "usageEndpoint";
+    public static final String KEY_WEATHER = "weatherEndpoint";
     public static final String KEY_CEA = "ceaEndpoint";
     public static final String KEY_GRAPH = "graphName";
     public static final String CITY_OBJECT = "cityobject";
@@ -136,8 +148,28 @@ public class CEAAgent extends JPSAgent {
     public static final String KEY_THERMAL_TUBE_WALL_WEST_SUPPLY = "ThermalTubeWallWestSupply";
     public static final String KEY_TIMES = "times";
     public static final String CEA_OUTPUTS = "ceaOutputs";
+    private static final String CRS_4326 = "EPSG:4326";
     public String customDataType = "<http://localhost/blazegraph/literals/POLYGON-3-15>";
     public String customField = "X0#Y0#Z0#X1#Y1#Z1#X2#Y2#Z2#X3#Y3#Z3#X4#Y4#Z4";
+
+    public static final String STORE_CLIENT = "RemoteStoreClient";
+    public static final String RDB_CLIENT = "RemoteRDBStoreClient";
+
+    public static final String CTYPE_JSON = "application/json";
+    public static final String OPENMETEO_LAT = "latitude";
+    public static final String OPENMETEO_LON = "longitude";
+    public static final String OPENMETEO_START = "start_date";
+    public static final String OPENMETEO_END = "end_date";
+    public static final String OPENMETEO_ENDPOINT_RUN = "run";
+    public static final String OPENMETEO_STATION = "stationIRI";
+
+    public static final String API_URL = "https://archive-api.open-meteo.com/v1/archive";
+    public static final String API_LAT = "latitude";
+    public static final String API_LON = "longitude";
+    public static final String API_START = "start_date";
+    public static final String API_END = "end_date";
+    private static final String API_TIMEZONE = "timezone";
+    private static final String API_OFFSET = "utc_offset_seconds";
 
     public List<String> TIME_SERIES = Arrays.asList(KEY_GRID_CONSUMPTION,KEY_ELECTRICITY_CONSUMPTION,KEY_HEATING_CONSUMPTION,KEY_COOLING_CONSUMPTION, KEY_PV_ROOF_SUPPLY, KEY_PV_WALL_NORTH_SUPPLY, KEY_PV_WALL_SOUTH_SUPPLY, KEY_PV_WALL_EAST_SUPPLY, KEY_PV_WALL_WEST_SUPPLY, KEY_PVT_PLATE_ROOF_E_SUPPLY, KEY_PVT_PLATE_WALL_NORTH_E_SUPPLY, KEY_PVT_PLATE_WALL_SOUTH_E_SUPPLY, KEY_PVT_PLATE_WALL_EAST_E_SUPPLY, KEY_PVT_PLATE_WALL_WEST_E_SUPPLY, KEY_PVT_PLATE_ROOF_Q_SUPPLY, KEY_PVT_PLATE_WALL_NORTH_Q_SUPPLY, KEY_PVT_PLATE_WALL_SOUTH_Q_SUPPLY, KEY_PVT_PLATE_WALL_EAST_Q_SUPPLY, KEY_PVT_PLATE_WALL_WEST_Q_SUPPLY, KEY_PVT_TUBE_ROOF_E_SUPPLY, KEY_PVT_TUBE_WALL_NORTH_E_SUPPLY, KEY_PVT_TUBE_WALL_SOUTH_E_SUPPLY, KEY_PVT_TUBE_WALL_EAST_E_SUPPLY, KEY_PVT_TUBE_WALL_WEST_E_SUPPLY, KEY_PVT_TUBE_ROOF_Q_SUPPLY, KEY_PVT_TUBE_WALL_NORTH_Q_SUPPLY, KEY_PVT_TUBE_WALL_SOUTH_Q_SUPPLY, KEY_PVT_TUBE_WALL_EAST_Q_SUPPLY, KEY_PVT_TUBE_WALL_WEST_Q_SUPPLY, KEY_THERMAL_PLATE_ROOF_SUPPLY, KEY_THERMAL_PLATE_WALL_NORTH_SUPPLY, KEY_THERMAL_PLATE_WALL_SOUTH_SUPPLY, KEY_THERMAL_PLATE_WALL_EAST_SUPPLY, KEY_THERMAL_PLATE_WALL_WEST_SUPPLY, KEY_THERMAL_TUBE_ROOF_SUPPLY, KEY_THERMAL_TUBE_WALL_NORTH_SUPPLY, KEY_THERMAL_TUBE_WALL_SOUTH_SUPPLY, KEY_THERMAL_TUBE_WALL_EAST_SUPPLY, KEY_THERMAL_TUBE_WALL_WEST_SUPPLY);
     public List<String> SCALARS = Arrays.asList(KEY_PV_ROOF_AREA, KEY_PV_WALL_NORTH_AREA, KEY_PV_WALL_SOUTH_AREA, KEY_PV_WALL_EAST_AREA, KEY_PV_WALL_WEST_AREA, KEY_PVT_PLATE_ROOF_AREA, KEY_PVT_PLATE_WALL_NORTH_AREA, KEY_PVT_PLATE_WALL_SOUTH_AREA, KEY_PVT_PLATE_WALL_EAST_AREA, KEY_PVT_PLATE_WALL_WEST_AREA, KEY_PVT_TUBE_ROOF_AREA, KEY_PVT_TUBE_WALL_NORTH_AREA, KEY_PVT_TUBE_WALL_SOUTH_AREA, KEY_PVT_TUBE_WALL_EAST_AREA, KEY_PVT_TUBE_WALL_WEST_AREA, KEY_THERMAL_PLATE_ROOF_AREA, KEY_THERMAL_PLATE_WALL_NORTH_AREA, KEY_THERMAL_PLATE_WALL_SOUTH_AREA, KEY_THERMAL_PLATE_WALL_EAST_AREA, KEY_THERMAL_PLATE_WALL_WEST_AREA, KEY_THERMAL_TUBE_ROOF_AREA, KEY_THERMAL_TUBE_WALL_NORTH_AREA, KEY_THERMAL_TUBE_WALL_SOUTH_AREA, KEY_THERMAL_TUBE_WALL_EAST_AREA, KEY_THERMAL_TUBE_WALL_WEST_AREA);
@@ -149,6 +181,9 @@ public class CEAAgent extends JPSAgent {
     private TimeSeriesClient<OffsetDateTime> tsClient;
     public static final String timeUnit = OffsetDateTime.class.getSimpleName();
     private static final String FS = System.getProperty("file.separator");
+
+    private String dbUser;
+    private String dbPassword;
     private RemoteRDBStoreClient rdbStoreClient;
     private RemoteStoreClient storeClient;
     // Variables fetched from CEAAgentConfig.properties file.
@@ -160,14 +195,19 @@ public class CEAAgent extends JPSAgent {
     private String purlInfrastructureUri;
     private String thinkhomeUri;
     private String ontoBuiltEnvUri;
+    private String ontotimeseriesUri;
+    private String ontoemsUri;
+    private String geoliteralUri;
     private String geoUri;
     private static String unitOntologyUri;
     private String requestUrl;
     private String targetUrl;
     private String geometryRoute;
     private String usageRoute;
+    private String weatherRoute;
     private String ceaRoute;
     private String namedGraph;
+    private String openmeteagentURL;
 
     private Map<String, String> accessAgentRoutes = new HashMap<>();
 
@@ -246,43 +286,45 @@ public class CEAAgent extends JPSAgent {
 
                         // Only set route once - assuming all iris passed in same namespace
                         // Will not be necessary if namespace is passed in request params
-                        if(i==0) {
+                        if (i == 0) {
                             // if KEY_GEOMETRY is not specified in requestParams, geometryRoute defaults to TheWorldAvatar Blazegraph
                             geometryRoute = requestParams.has(KEY_GEOMETRY) ? requestParams.getString(KEY_GEOMETRY) : getRoute(uri);
                             // if KEY_USAGE is not specified in requestParams, geometryRoute defaults to TheWorldAvatar Blazegraph
                             usageRoute = requestParams.has(KEY_USAGE) ? requestParams.getString(KEY_USAGE) : geometryRoute;
-                            if (!requestParams.has(KEY_CEA)){
+                            weatherRoute = requestParams.has(KEY_WEATHER) ? requestParams.getString(KEY_WEATHER) : weatherRoute;
+                            if (!requestParams.has(KEY_CEA)) {
                                 // if KEY_CEA is not specified in requestParams, set ceaRoute to TheWorldAvatar Blazegraph
                                 ceaRoute = getRoute(uri);
                                 // default graph in TheWorldAvatar Blazegraph is energyprofile if no KEY_GRAPH specified in requestParams
-                                namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : getGraph(uri,ENERGY_PROFILE);
+                                namedGraph = requestParams.has(KEY_GRAPH) ? requestParams.getString(KEY_GRAPH) : getGraph(uri, ENERGY_PROFILE);
 
-                            }
-                            else{
+                            } else {
                                 ceaRoute = requestParams.getString(KEY_CEA);
                                 // if KEY_CEA is specified, assume no graph if KEY_GRAPH is not specified in requestParams
-                                if (requestParams.has(KEY_GRAPH)){
-                                    namedGraph =  requestParams.getString(KEY_GRAPH);
+                                if (requestParams.has(KEY_GRAPH)) {
+                                    namedGraph = requestParams.getString(KEY_GRAPH);
                                     // ensures that graph ends with /
-                                    if (!namedGraph.endsWith("/")) {namedGraph = namedGraph + "/";}
-                                }
-                                else{
+                                    if (!namedGraph.endsWith("/")) {
+                                        namedGraph = namedGraph + "/";
+                                    }
+                                } else {
                                     namedGraph = "";
                                 }
                             }
 
                             // check if ceaRoute has quads enabled for querying and updating with graphs
-                            if (!namedGraph.isEmpty()){
+                            if (!namedGraph.isEmpty()) {
                                 checkQuadsEnabled(ceaRoute);
                             }
-                            setStoreClient(ceaRoute);
+                            List<String> routeEndpoints = getRouteEndpoints(ceaRoute);
+                            storeClient = new RemoteStoreClient(routeEndpoints.get(0), routeEndpoints.get(1));
                         }
                         uriStringArray.add(uri);
                         // Set default value of 10m if height can not be obtained from knowledge graph
                         // Will only require one height query if height is represented in data consistently
                         String height = getValue(uri, "HeightMeasuredHeigh", geometryRoute);
-                        height = height.length() == 0 ? getValue(uri, "HeightMeasuredHeight", geometryRoute): height;
-                        height = height.length() == 0 ? getValue(uri, "HeightGenAttr", geometryRoute): height;
+                        height = height.length() == 0 ? getValue(uri, "HeightMeasuredHeight", geometryRoute) : height;
+                        height = height.length() == 0 ? getValue(uri, "HeightGenAttr", geometryRoute) : height;
                         height = height.length() == 0 ? "10.0" : height;
                         // Get footprint from ground thematic surface or find from surface geometries depending on data
                         String footprint = getValue(uri, "Lod0FootprintId", geometryRoute);
@@ -293,12 +335,23 @@ public class CEAAgent extends JPSAgent {
 
                         ArrayList<CEAInputData> surrounding = getSurroundings(uri, geometryRoute, uniqueSurrounding);
 
-                        testData.add(new CEAInputData(footprint, height, usage, surrounding));
-                        if (i==0) {
+                        //just get crs once - assuming all iris in same namespace
+                        if (i == 0) {
                             crs = getValue(uri, "CRS", geometryRoute);
-                            crs = crs == "" ? getValue(uri, "DatabasesrsCRS", geometryRoute) : crs;
-                            if (crs == ""){crs = getNamespace(uri).split("EPSG").length == 2 ? getNamespace(uri).split("EPSG")[1].split("/")[0] : "27700";}
-                        } //just get crs once - assuming all iris in same namespace
+                            crs = crs.isEmpty() ? getValue(uri, "DatabasesrsCRS", geometryRoute) : crs;
+                            if (crs.isEmpty()) {
+                                crs = getNamespace(uri).split("EPSG").length == 2 ? getNamespace(uri).split("EPSG")[1].split("/")[0] : "27700";
+                            }
+                        }
+
+                        List<Object> weather = new ArrayList<>();
+
+                        if (getWeather(uri, geometryRoute, weatherRoute, crs, weather)) {
+                            testData.add(new CEAInputData(footprint, height, usage, surrounding, (List<OffsetDateTime>) weather.get(0), (Map<String, List<Double>>) weather.get(1), (List<Double>) weather.get(2)));
+                        }
+                        else{
+                            testData.add(new CEAInputData(footprint, height, usage, surrounding, null, null, null));
+                        }
                     }
                     // Manually set thread number to 0 - multiple threads not working so needs investigating
                     // Potentially issue is CEA is already multi-threaded
@@ -333,7 +386,8 @@ public class CEAAgent extends JPSAgent {
                                 checkQuadsEnabled(ceaRoute);
                             }
                         }
-                        setStoreClient(ceaRoute);
+                        List<String> routeEndpoints = getRouteEndpoints(ceaRoute);
+                        storeClient = new RemoteStoreClient(routeEndpoints.get(0), routeEndpoints.get(1));
                     }
                     String building = checkBuildingInitialised(uri, ceaRoute);
                     if(building.equals("")){
@@ -347,7 +401,7 @@ public class CEAAgent extends JPSAgent {
                         if (!result.isEmpty()) {
                             String value;
                             if (TIME_SERIES.contains(measurement)) {
-                                value = calculateAnnual(retrieveData(result.get(0)), result.get(0));
+                                value = calculateAnnual(retrieveData(result.get(0), storeClient, rdbStoreClient, OffsetDateTime.class), result.get(0));
                                 if (measurement.contains("ESupply")) {
                                     // PVT annual electricity supply
                                     measurement = "Annual "+ measurement.split("ESupply")[0] + " Electricity Supply";
@@ -371,7 +425,7 @@ public class CEAAgent extends JPSAgent {
                                     }
                                 }
                             } else {
-                                value = getNumericalValue(uri, result.get(0), ceaRoute, namedGraph);
+                                value = getNumericalValue(result.get(0), ceaRoute, namedGraph);
                             }
                             // Return non-zero values
                             if(!(value.equals("0") || value.equals("0.0"))){
@@ -539,6 +593,9 @@ public class CEAAgent extends JPSAgent {
         thinkhomeUri=config.getString("uri.ontology.thinkhome");
         purlInfrastructureUri=config.getString("uri.ontology.purl.infrastructure");
         ontoBuiltEnvUri=config.getString("uri.ontology.ontobuiltenv");
+        ontotimeseriesUri=config.getString("uri.ontology.ontotimeseries");
+        ontoemsUri=config.getString("uri.ontology.ontoems");
+        geoliteralUri=config.getString("uri.ontology.geoliteral");
         geoUri=config.getString("uri.service.geo");
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/", config.getString("berlin.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/", config.getString("singaporeEPSG24500.targetresourceid"));
@@ -546,6 +603,8 @@ public class CEAAgent extends JPSAgent {
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/", config.getString("kingslynnEPSG3857.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/", config.getString("kingslynnEPSG27700.targetresourceid"));
         accessAgentRoutes.put("http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/", config.getString("pirmasensEPSG32633.targetresourceid"));
+        weatherRoute = config.getString("weather.targetresourceid");
+        openmeteagentURL = config.getString("url.openmeteoagent");
     }
 
     /**
@@ -733,10 +792,10 @@ public class CEAAgent extends JPSAgent {
         JSONArray queryResultArray = this.queryStore(route, q.toString());
 
         if(!queryResultArray.isEmpty()){
-            if (value == "Lod0FootprintId" || value == "FootprintThematicSurface"){
+            if (value.equals("Lod0FootprintId") || value.equals("FootprintThematicSurface")) {
                 result = extractFootprint(queryResultArray);
             }
-            else if (value == "FootprintSurfaceGeom") {
+            else if (value.equals("FootprintSurfaceGeom")) {
                 result = extractFootprint(getGroundGeometry(queryResultArray));
             }
             else{
@@ -770,8 +829,8 @@ public class CEAAgent extends JPSAgent {
 
             flag = true;
 
-            for (int j = 5; j < split.length; j += 3){
-                for (int ji = 0;  ji < z.size(); ji++){
+            for (int j = 5; j < split.length; j += 3) {
+                for (int ji = 0;  ji < z.size(); ji++) {
                     if (Math.abs(Double.parseDouble(split[j]) - z.get(ji)) > eps){
                         flag = false;
                         break;
@@ -1166,7 +1225,7 @@ public class CEAAgent extends JPSAgent {
                     footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                     footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
 
-                    temp = new CEAInputData(footprint, height, null, null);
+                    temp = new CEAInputData(footprint, height, null, null, null, null, null);
                     unique.add(uri);
                     surroundings.add(temp);
                 }
@@ -1196,7 +1255,11 @@ public class CEAAgent extends JPSAgent {
         // CEA only support up to three usages for each building
         // convert all usages to CEA defined usages first
 
-        if (queryResultArray.length() == 1){
+        if (queryResultArray.isEmpty()) {
+            usage = toCEAConvention("default");
+            result.put(usage, 1.00);
+        }
+        else if (queryResultArray.length() == 1){
             usage = queryResultArray.getJSONObject(0).get("BuildingUsage").toString().split(ontoBuiltEnvUri)[1].split(">")[0].toUpperCase();
             usage = toCEAConvention(usage);
             result.put(usage, 1.00);
@@ -1232,6 +1295,437 @@ public class CEAAgent extends JPSAgent {
             }
         }
 
+        return result;
+    }
+
+    /**
+     * Retrieves weather data
+     * @param uriString city object id
+     * @param route route to city object geometry data
+     * @param weatherRoute route to weather data
+     * @param crs CRS of city object geometry
+     * @param result list to add the retrieved weather data to
+     * @return true if weather data retrieved, false otherwise
+     */
+    private boolean getWeather(String uriString, String route, String weatherRoute, String crs, List<Object> result) {
+        String envelopeCoordinates = getValue(uriString, "envelope", route);
+
+        Polygon envelopePolygon = (Polygon) toPolygon(envelopeCoordinates);
+
+        Double elevation = envelopePolygon.getCoordinate().getZ();
+
+        Point center = envelopePolygon.getCentroid();
+
+        Coordinate centerCoordinate = center.getCoordinate();
+
+        crs = StringUtils.isNumeric(crs) ? "EPSG:" + crs : crs;
+
+        try {
+            CRSFactory crsFactory = new CRSFactory();
+            RegistryManager registryManager = crsFactory.getRegistryManager();
+            registryManager.addRegistry(new EPSGRegistry());
+
+            CoordinateReferenceSystem sourceCRS = crsFactory.getCRS(crs);
+            CoordinateReferenceSystem targetCRS = crsFactory.getCRS(CRS_4326);
+
+            Set<CoordinateOperation> operations = CoordinateOperationFactory
+                    .createCoordinateOperations((GeodeticCRS) sourceCRS, (GeodeticCRS) targetCRS);
+            double[] transform = new double[3];
+            if (operations.size() != 0) {
+                // Test each transformation method (generally, only one method is available)
+                for (CoordinateOperation op : operations) {
+                    // Transform coord using the op CoordinateOperation from sourceCRS to targetCRS
+                    transform  = op.transform(new double[] {centerCoordinate.getX(), centerCoordinate.getY(), centerCoordinate.getZ()});
+                }
+            }
+
+            // coordinate in (latitude, longitude) format
+            Coordinate coordinate = new Coordinate(transform[1], transform[0], transform[2]);
+
+            String stationIRI = getWeatherStation(coordinate, 2.0, weatherRoute);
+
+            // if no nearby weather station, send request to OpenMeteoAgent to instantiate weather data
+            if (stationIRI.isEmpty()) {
+                stationIRI = runOpenMeteoAgent(String.valueOf(coordinate.getX()), String.valueOf(coordinate.getY()));
+
+                // if request fails
+                if (stationIRI.isEmpty()) {return false;}
+            }
+
+            Map<String, List<String>> weatherMap = getWeatherIRI(stationIRI, weatherRoute);
+
+            List<Double> lat_lon = getStationCoordinate(stationIRI, weatherRoute);
+            Double latitude;
+            Double longitude;
+
+            if (!lat_lon.isEmpty()) {
+                latitude = lat_lon.get(0);
+                longitude = lat_lon.get(1);
+            }
+            else {
+                latitude = coordinate.getX();
+                longitude = coordinate.getY();
+            }
+
+            // if the timestamps of the instantiated weather data does not meet CEA requirements,
+            // send request to OpenMeteoAgent to update weather data with timestamps that meet CEA requirements
+            if (!parseWeather(weatherMap, result, latitude, longitude)) {
+                // if request fails
+                if (runOpenMeteoAgent(String.valueOf(latitude), String.valueOf(longitude)).isEmpty()) {return false;}
+
+                parseWeather(weatherMap, result, latitude, longitude);
+            }
+
+            String stationElevation = getStationElevation(stationIRI, weatherRoute);
+
+            if (!stationElevation.isEmpty()) {
+                elevation = Double.parseDouble(stationElevation);
+            }
+
+            List<OffsetDateTime> times = (List<OffsetDateTime>) result.get(0);
+
+            ZoneOffset zoneOffset = times.get(0).getOffset();
+
+            Integer offset = zoneOffset.getTotalSeconds();
+
+            // store offset in hours
+            result.add(Arrays.asList(latitude, longitude, elevation, offset / 60.0 / 60.0));
+
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Send request to OpenMeteoAgent to instantiate historical weather data over a year
+     * @param latitude latitude of the weather station
+     * @param longitude longitude of the weather station
+     * @return the instantiated weather station IRI
+     */
+    public String runOpenMeteoAgent(String latitude, String longitude) {
+        String url = openmeteagentURL + OPENMETEO_ENDPOINT_RUN;
+
+        JSONObject json = new JSONObject()
+                .put(OPENMETEO_LAT, latitude)
+                .put(OPENMETEO_LON, longitude);
+
+        DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate currentFirstDate = LocalDate.now().withMonth(1).withDayOfMonth(1);
+        String startDate = currentFirstDate.minusYears(2).format(format);
+        String endDate = currentFirstDate.minusYears(1).format(format);
+
+        json.put(OPENMETEO_START, startDate)
+                .put(OPENMETEO_END, endDate);
+
+        try {
+            HttpResponse<String> response = Unirest.post(url)
+                    .header(HTTP.CONTENT_TYPE, CTYPE_JSON)
+                    .body(json.toString())
+                    .socketTimeout(300000)
+                    .asString();
+            int responseStatus = response.getStatus();
+
+            if (responseStatus == HttpURLConnection.HTTP_OK) {
+                JSONObject responseBody = new JSONObject(response.getBody());
+
+                return responseBody.getJSONArray(OPENMETEO_STATION).getString(0);
+            } else {
+                return "";
+            }
+        }
+        catch (UnirestException e) {
+            return "";
+        }
+    }
+
+    /**
+     * Queries for and returns the IRI of weather station located within {radius} kilometers of center
+     * @param center center of the search circle
+     * @param radius radius of the search circle
+     * @param route endpoint of the weather station query
+     * @return IRI of a weather station located within {radius} kilometers of center
+     */
+    private String getWeatherStation(Coordinate center, Double radius, String route) {
+        String result = "";
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("geo", geoUri)
+                .addPrefix("geoliteral", geoliteralUri)
+                .addPrefix("ontoems", ontoemsUri);
+
+        wb.addWhere("?station", "geo:search", "inCircle")
+                .addWhere("?station", "geo:searchDatatype", "geoliteral:lat-lon")
+                .addWhere("?station", "geo:predicate", "ontoems:hasObservationLocation")
+                // PLACEHOLDER because the coordinate will be treated as doubles instead of string otherwise
+                .addWhere("?station", "geo:spatialCircleCenter", center.getX() + "PLACEHOLDER" + center.getY())
+                .addWhere("?station", "geo:spatialCircleRadius", radius);
+
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?station");
+
+        Query query = sb.build();
+
+        // add geospatial service
+        ElementGroup body = new ElementGroup();
+        body.addElement(new ElementService(geoUri + "search", wb.build().getQueryPattern()));
+        query.setQueryPattern(body);
+
+        String queryString = query.toString().replace("PLACEHOLDER", "#");
+
+        JSONArray queryResultArray = this.queryStore(route, queryString);
+
+        if (!queryResultArray.isEmpty()) {
+            result = queryResultArray.getJSONObject(0).getString("station");
+        }
+
+        return result;
+    }
+
+    /**
+     * Queries for and returns the elevation of a weather station
+     * @param stationIRI IRI of weather station
+     * @param route endpoint of the weather station query
+     * @return elevation of the weather station
+     */
+    private String getStationElevation(String stationIRI, String route) {
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ontoEMS", ontoemsUri)
+                .addPrefix("rdf", rdfUri);
+
+        wb.addWhere(NodeFactory.createURI(stationIRI), "ontoEMS:hasObservationElevation", "?elevation");
+
+        SelectBuilder sb = new SelectBuilder()
+                .addWhere(wb);
+
+        sb.addVar("?elevation");
+
+        JSONArray queryResultArray = this.queryStore(route, sb.build().toString());
+
+        if (!queryResultArray.isEmpty()) {
+            return queryResultArray.getJSONObject(0).getString("elevation");
+        }
+        else{
+            return "";
+        }
+    }
+
+    /**
+     * Queries for and returns the coordinate of a weather station
+     * @param stationIRI IRI of weather station
+     * @param route endpoint of the weather station query
+     * @return coordinate of the weather station
+     */
+    private List<Double> getStationCoordinate(String stationIRI, String route) {
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ontoEMS", ontoemsUri)
+                .addPrefix("rdf", rdfUri);
+
+        wb.addWhere(NodeFactory.createURI(stationIRI), "ontoEMS:hasObservationLocation", "?coordinate");
+
+        SelectBuilder sb = new SelectBuilder()
+                .addWhere(wb);
+
+        sb.addVar("?coordinate");
+
+        JSONArray queryResultArray = this.queryStore(route, sb.build().toString());
+
+        if (!queryResultArray.isEmpty()) {
+            String coordinate = queryResultArray.getJSONObject(0).getString("coordinate");
+            String[] split = coordinate.split("#");
+            List<Double> result = new ArrayList<>();
+            result.add(Double.valueOf(split[0]));
+            result.add(Double.valueOf(split[1]));
+            return result;
+        }
+        else{
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Returns UTC offset of the timestamps of the retrieved weather data
+     * @param latitude latitude of the station of the retrieved weather data
+     * @param longitude longitude of the station of the retrieved weather data
+     * @param startDate start date of the retrieved historical weather data as an Instant object
+     * @param endDate end date of the retrieved historical weather data as an Instant object
+     * @return UTC offset of the timestamps of the retrieved historical weather data in seconds
+     */
+    public Double getStationOffset(Double latitude, Double longitude, Instant startDate, Instant endDate) {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+            ZoneId localZone = ZoneId.systemDefault();
+            LocalDate localStart = startDate.atZone(localZone).toLocalDate();
+            LocalDate localEnd = endDate.atZone(localZone).toLocalDate();
+
+            String start = formatter.format(localStart);
+            String end = formatter.format(localEnd);
+
+            String query = API_LAT + "=" + latitude + "&";
+            query = query + API_LON + "=" + longitude + "&";
+            query = query + API_START + "=" + start + "&";
+            query = query + API_END + "=" + end + "&" + API_TIMEZONE + "=auto";
+
+
+            URLConnection connection = new URL(API_URL + "?" + query).openConnection();
+
+            InputStream is = connection.getInputStream();
+            BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+            StringBuffer response = new StringBuffer();
+            String line;
+            while ((line = rd.readLine()) != null && !line.isEmpty()){
+                response.append(line);
+            }
+            rd.close();
+            JSONObject result = new JSONObject(response.toString());
+
+            // return offset in seconds
+            return result.getDouble(API_OFFSET);
+        }
+        catch (IOException e){
+            // if failed to get the offset from API, return an approximation based on the longitude
+            // approximation assumes Earth is rough divided into 24 time zones equally over the globe
+            return longitude / 15;
+        }
+    }
+
+    /**
+     * Queries for and returns the weather data IRI, their weather data type, and the time series database URL of the corresponding weather time series
+     * @param stationIRI IRI of weather station
+     * @param route endpoint for weather query
+     * @return map with weather data type as key, weather data IRI and time series database URL as a list for the map value
+     */
+    private Map<String, List<String>> getWeatherIRI(String stationIRI, String route) {
+        Map<String, List<String>> result = new HashMap<>();
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ontoems", ontoemsUri)
+                .addPrefix("om", unitOntologyUri)
+                .addPrefix("rdf", rdfUri)
+                .addPrefix("ontotimeseries", ontotimeseriesUri);
+
+        wb.addWhere("?station", "ontoems:reports", "?quantity")
+                .addWhere("?quantity", "rdf:type", "?weatherParameter")
+                .addWhere("?quantity", "om:hasValue", "?measure")
+                .addWhere("?measure", "ontotimeseries:hasTimeSeries", "?timeseries")
+                .addWhere("?timeseries", "ontotimeseries:hasRDB", "?rdb");
+
+        SelectBuilder sb = new SelectBuilder()
+                .addVar("?weatherParameter")
+                .addVar("?measure")
+                .addVar("?rdb");
+
+        sb.addWhere(wb);
+
+        sb.setVar(Var.alloc( "station" ), NodeFactory.createURI(stationIRI));
+
+        JSONArray queryResultArray = this.queryStore(route, sb.build().toString());
+
+        if (!queryResultArray.isEmpty()) {
+            for (int i = 0; i < queryResultArray.length(); i++) {
+                result.put(queryResultArray.getJSONObject(i).getString("weatherParameter").split(ontoemsUri)[1], Arrays.asList(queryResultArray.getJSONObject(i).getString("measure"), queryResultArray.getJSONObject(i).getString("rdb")));
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Parses weather data into a list
+     * @param weatherMap map with the weather parameter IRIs
+     * @param result empty list to add the parsed weather data
+     * @return true if the timestamps of weather data meet CEA requirements (result will contain the parsed data), false otherwise (result will be empty)
+     */
+    private boolean parseWeather(Map<String, List<String>> weatherMap, List<Object> result, Double latitude, Double longitude) {
+        Map<String, List<Double>> weather = new HashMap<>();
+
+        boolean getTimes = true;
+
+        for (Map.Entry<String, List<String>> entry : weatherMap.entrySet()) {
+            List<String> value = entry.getValue();
+            String weatherIRI = value.get(0);
+            Map<String, Object> weatherClients = getWeatherClients(value.get(1));
+            TimeSeries<Instant> weatherTS = retrieveData(weatherIRI, (RemoteStoreClient) weatherClients.get(STORE_CLIENT), (RemoteRDBStoreClient) weatherClients.get(RDB_CLIENT), Instant.class);
+
+            // want hourly data over a year
+            if (!validateWeatherTimes(weatherTS.getTimes(), latitude, longitude)) {
+                result.clear();
+                return false;
+            }
+
+            if (getTimes) {
+                List<Instant> times = weatherTS.getTimes().subList(0, 8760);
+                Double offset = getStationOffset(latitude, longitude, times.get(0), times.get(times.size()-1));
+                // parse times to OffsetDateTime with the correct offset
+                List<OffsetDateTime> weatherTimes = parseWeatherTimes(times, offset.intValue());
+
+                result.add(weatherTimes);
+                getTimes = false;
+            }
+
+            weather.put(entry.getKey(),  weatherTS.getValuesAsDouble(weatherIRI).subList(0, 8760));
+        }
+
+        result.add(weather);
+        return true;
+    }
+
+    /**
+     * Parses timestamps of weather data into list of OffsetDateTimes
+     * @param weatherTimes timestamps of weather data
+     * @param offset UTC offset in seconds
+     * @return  timestamps of weather data as a list of OffsetDateTimes
+     */
+    private List<OffsetDateTime> parseWeatherTimes(List<Instant> weatherTimes, Integer offset) {
+        List<OffsetDateTime> result = new ArrayList<>();
+
+        ZoneOffset zoneOffset = ZoneOffset.ofTotalSeconds(offset);
+
+        for (int i = 0; i < weatherTimes.size(); i++) {
+            result.add(weatherTimes.get(i).atOffset(zoneOffset));
+        }
+
+        return result;
+    }
+
+    /**
+     * Validates whether the weather data meet the requirements for CEA
+     * The requirements are, the number of data entries must be at least 8760, and the start date must be the first day of the year
+     * @param weatherTimes list of timestamps
+     * @param latitude latitude of the station of the retrieved weather data
+     * @param longitude longitude of the station of the retrieved weather data
+     * @return true if weatherTimes meet CEA requirements, false otherwise
+     */
+    private boolean validateWeatherTimes(List<Instant> weatherTimes, Double latitude, Double longitude) {
+        if (weatherTimes.size() < 8760) {
+            return false;
+        }
+
+        Double offset = getStationOffset(latitude, longitude, weatherTimes.get(0), weatherTimes.get(weatherTimes.size()-1));
+
+        ZoneOffset zoneOffset = ZoneOffset.ofTotalSeconds(offset.intValue());
+
+        OffsetDateTime startDate = weatherTimes.get(0).atOffset(zoneOffset);
+
+        if (startDate.getMonthValue() != 1 || startDate.getDayOfMonth() != 1) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Gets the RemoteStoreClient and RemoteRDBStoreClient objects for querying weather data
+     * @param db database storing the weather data
+     * @return a map containing a RemoteStoreClient object and RemoteRDBStoreClient object that will allow for the querying of weather data
+     */
+    public Map<String, Object> getWeatherClients(String db) {
+        String weatherDB = isDockerized() ? db.replace("localhost", "host.docker.internal") : db.replace("host.docker.internal", "localhost");
+        RemoteRDBStoreClient weatherRDBClient = new RemoteRDBStoreClient(weatherDB, dbUser, dbPassword);
+        List<String> weatherEndpoints = getRouteEndpoints(weatherRoute);
+        RemoteStoreClient weatherStoreClient = new RemoteStoreClient(weatherEndpoints.get(0), weatherEndpoints.get(1));
+        Map<String, Object> result = new HashMap<>();
+        result.put(RDB_CLIENT, weatherRDBClient);
+        result.put(STORE_CLIENT, weatherStoreClient);
         return result;
     }
 
@@ -1536,13 +2030,12 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * Gets numerical value of specified measurement
-     * @param uriString city object id
      * @param measureUri Uri of the measurement with numerical value in KG
      * @param route route to pass to access agent
      * @param graph graph name
      * @return list of iris
      */
-    public String getNumericalValue(String uriString, String measureUri, String route, String graph) {
+    public String getNumericalValue(String measureUri, String route, String graph){
         String result = "";
 
         WhereBuilder wb = new WhereBuilder().addPrefix("om", unitOntologyUri)
@@ -2131,7 +2624,7 @@ public class CEAAgent extends JPSAgent {
      * @param ontologyUnit unit iri in ontology
      * @return unit as a String
      */
-    public String getUnit(String ontologyUnit){
+    public String getUnit(String ontologyUnit) {
         switch(ontologyUnit) {
             case("http://www.ontology-of-units-of-measure.org/resource/om-2/kilowattHour"):
                 return "kWh";
@@ -2147,12 +2640,13 @@ public class CEAAgent extends JPSAgent {
      * @param dataIri iri in time series database
      * @return time series data
      */
-    public TimeSeries<OffsetDateTime> retrieveData(String dataIri){
-        tsClient = new TimeSeriesClient<>(storeClient, OffsetDateTime.class);
+    public <T> TimeSeries<T> retrieveData(String dataIri, RemoteStoreClient store, RemoteRDBStoreClient rdbStore, Class<T> timeClass) {
+        TimeSeriesClient<T> client = new TimeSeriesClient<>(store, timeClass);
+
         List<String> iris = new ArrayList<>();
         iris.add(dataIri);
-        try (Connection conn = rdbStoreClient.getConnection()) {
-            TimeSeries<OffsetDateTime> data = tsClient.getTimeSeries(iris, conn);
+        try (Connection conn = rdbStore.getConnection()) {
+            TimeSeries<T> data = client.getTimeSeries(iris, conn);
             return data;
         }
         catch (SQLException e) {
@@ -2215,7 +2709,7 @@ public class CEAAgent extends JPSAgent {
 
             geoType = merged.getGeometryType();
 
-            while (geoType != "Polygon" || deflatePolygon(merged, distance).getGeometryType() != "Polygon"){
+            while (!geoType.equals("Polygon") || !deflatePolygon(merged, distance).getGeometryType().equals("Polygon")) {
                 distance += increment;
 
                 for (int i = 0; i < geometries.size(); i++){
@@ -2425,7 +2919,7 @@ public class CEAAgent extends JPSAgent {
      * Sets rdbStoreClient with the database url, username, and password from the file at path
      * @param path timeseriesclient.properties path as string
      */
-    protected void setRDBClient(String path){
+    protected void setRDBClient(String path) {
         try {
             FileInputStream in = new FileInputStream(path);
             Properties props = new Properties();
@@ -2433,6 +2927,8 @@ public class CEAAgent extends JPSAgent {
             in.close();
 
             rdbStoreClient = new RemoteRDBStoreClient(props.getProperty("db.url"), props.getProperty("db.user"), props.getProperty("db.password"));
+            dbUser = props.getProperty("db.user");
+            dbPassword = props.getProperty("db.password");
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -2444,7 +2940,7 @@ public class CEAAgent extends JPSAgent {
      * Sets store client to the query and update endpoint of route, so that the time series client queries and updates from the same endpoint as route
      * @param route access agent route
      */
-    private void setStoreClient(String route){
+    private List<String> getRouteEndpoints(String route) {
         JSONObject queryResult = this.getEndpoints(route);
 
         String queryEndpoint = queryResult.getString(JPSConstants.QUERY_ENDPOINT);
@@ -2455,7 +2951,7 @@ public class CEAAgent extends JPSAgent {
             updateEndpoint = updateEndpoint.replace("host.docker.internal", "localhost");
         }
 
-        storeClient = new RemoteStoreClient(queryEndpoint, updateEndpoint);
+        return Arrays.asList(queryEndpoint, updateEndpoint);
     }
 
     /**
