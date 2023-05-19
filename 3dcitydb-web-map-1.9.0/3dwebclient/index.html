@@ -512,7 +512,18 @@
             .openbtn:hover {
                 background-color: #444;
             }
-
+            
+            #comparisonPanel {
+                width: 1800px;
+                height: 300px;
+                position: absolute;
+                left:5px;
+                bottom:5px;
+                background: rgba(42, 42, 42, 0.5);
+                border: 2px #505050 solid;
+                border-radius: 25px;
+                display: None;
+            }
 
         </style>
     </head>
@@ -593,18 +604,19 @@
             <div id="demo2" class="programmeFinder_toolbox" style="display: none;">
                 <button class="ProgrammaticPlotFinder-submitButton" onclick="showSelection()"><span>Show the selection</span></button>
                 <button class="ProgrammaticPlotFinder-submitButton" onclick="clearSelection()"><span>Clear the selection</span></button>
+                <button class="ProgrammaticPlotFinder-submitButton" onclick="startComparison()"><span>startComparison</span></button>
             </div>
             <div id="SelectedPlots" class="ProgrammaticPlotFinder-resultBox" >
                 <div id="selectplots-title" class="ProgrammaticPlotFinder-resultBox-title">
                     <label>Selected Plots</label>
                 </div>
-                
                 <div id="selectedPlotsList"></div>
             </div> 
         </div>
 
+        <div id ="comparisonPanel"></div>
 
-        <div class="keyGrowthAreas">
+        <div class="keyGrowthAreas" id="keyGrowthAreas">
             <div style="float: left" class="arrow_kga left" onclick="zoomToKeyGrowthAreas('backward')"></div>
             <div id="area" class="area-name" onclick="zoomToKeyGrowthAreas('same')"></div>
             <div style="float: right" class="arrow_kga right" onclick="zoomToKeyGrowthAreas('forward')"></div>

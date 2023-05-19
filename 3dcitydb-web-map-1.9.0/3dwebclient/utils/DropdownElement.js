@@ -584,10 +584,14 @@ function chooseDemoType(obj) {
 		case "PPF":
 			document.getElementById("demo1").style.display = "inline-block";
 			document.getElementById("demo2").style.display = "None";
+			document.getElementById("keyGrowthAreas").style.display = "flex";
+			document.getElementById("comparisonPanel").style.display = "None";
 			break;
 		case "PlotComparison":
 			document.getElementById("demo1").style.display = "None";
 			document.getElementById("demo2").style.display = "inline-block";
+			document.getElementById("keyGrowthAreas").style.display = "None";
+			document.getElementById("comparisonPanel").style.display = "flex";
 			break;
 		case "demo3":
 			document.getElementById("demo1").style.display = "None";
