@@ -34,8 +34,12 @@
         <!-- Make the application on mobile take up the full browser screen and disable user scaling. -->
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
         <title>3DCityDB-Web-Map-Client</title>
+        <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"/>
+        <!--<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">-->
         <link rel="icon" type="image/png" href="../theme/img/favicon.png" sizes="16x16">
         <script src="../ThirdParty/jquery-3.3.1.min.js"></script>
+        <!-- Load bootstrap UI -->
+        <!--<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>-->
         <!-- Load jquery ui datepicker FLATPICKR -->
         <link rel="stylesheet" type="text/css" href="../ThirdParty/flatpickrv4.5.1.css">
         <script type="text/javascript" src="../ThirdParty/flatpickrv4.5.1.js"></script>
@@ -81,8 +85,9 @@
         <!-- URL controller -->
         <script src="utils/UrlController.js"></script>
         <!-- demo UI queries -->
-        <!--<script src="utils/PlotComparison.js"></script>-->
         <script src="utils/ComparisonTable.js"></script>
+        <script src="utils/PlotComparison.js"></script>
+        
         <script src="utils/DropdownElement.js"></script>
         <script src="utils/NavigationBox.js"></script>
         <script src="utils/ProcessAgentResult.js"></script>
@@ -521,10 +526,35 @@
                 position: absolute;
                 left:5px;
                 bottom:0px;
+                padding-top: 60px;
+                transition: 1s ease;
+                
+            }
+            #comparisonHeader {
+                width: 50px;
+                height: 30px;
+                position: absolute;
+                right: 0px; 
+                top: 0px; 
+                color: #dddddd; 
                 background: rgba(42, 42, 42, 0.5);
-                border: 2px #505050 solid;
-                border-radius: 25px;
-                display: None;
+                border: 0px #505050 solid;
+            }
+
+            #comparisonContent {
+                background: rgba(42, 42, 42, 0.5);
+                display: block;
+                width: max-content;
+                height: max-content;
+                position: absolute;
+                bottom: 0px;
+            }
+            .fa-chevron-down {
+                transition: all 0.5s ease;
+            }
+            .arrowActive {
+                transition: all 0.5s ease;
+                transform: rotate(180deg);
             }
 
         </style>
@@ -606,7 +636,8 @@
             <div id="demo2" class="programmeFinder_toolbox" style="display: none;">
                 <button class="ProgrammaticPlotFinder-submitButton" onclick="showSelection()"><span>Show the selection</span></button>
                 <button class="ProgrammaticPlotFinder-submitButton" onclick="clearSelection()"><span>Clear the selection</span></button>
-                <button class="ProgrammaticPlotFinder-submitButton" onclick="startComparison()"><span>startComparison</span></button>
+                <!--<button class="ProgrammaticPlotFinder-submitButton" onclick="startComparison()"><span>startComparison</span></button>-->
+                <button class="ProgrammaticPlotFinder-submitButton" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBottom" aria-controls="offcanvasBottom" onclick="startComparison()">Start Comparison</button>
             </div>
             <div id="SelectedPlots" class="ProgrammaticPlotFinder-resultBox" >
                 <div id="selectplots-title" class="ProgrammaticPlotFinder-resultBox-title">
@@ -616,7 +647,17 @@
             </div> 
         </div>
 
-        <div id ="comparisonPanel"></div>
+        <div id ="comparisonPanel">
+        </div>
+        <div class="offcanvas offcanvas-bottom" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasBottom" aria-labelledby="offcanvasBottomLabel">
+            <div class="offcanvas-header">
+              <h5 class="offcanvas-title" id="offcanvasBottomLabel">Comparison Panel</h5>
+              <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div id="comparisonContent" class="offcanvas-body small">
+              ...
+            </div>
+        </div>
 
         <div class="keyGrowthAreas" id="keyGrowthAreas">
             <div style="float: left" class="arrow_kga left" onclick="zoomToKeyGrowthAreas('backward')"></div>

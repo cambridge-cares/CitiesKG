@@ -61,7 +61,21 @@ function clearSelection() {
 function startComparison(){
     console.log("startComparison clicked!");
     console.log(selectedPlotsId);
+    //createTable();
     if (selectedPlotsId.length == 0){
         window.alert("No plot is selected for comparison !!");
+    }
+}
+
+function expandPanel(){
+    let expandArrow = document.getElementById("expandArrow");
+    expandArrow.classList.toggle("arrowActive");
+
+    if (document.getElementById("comparisonPanel").style.height === "300px"){
+        (document.getElementById("comparisonPanel").style.height === "30px")
+        
+    }else{
+        document.getElementById("comparisonPanel").style.height = "300px";
+        
     }
 }
