@@ -69,12 +69,21 @@ function clearSelection() {
         }
     }
 }
+function setTableVisibilityAndTitle (selectedPlots, status){
+    for (var i = 1; i < selectedPlots.length+1; i++) {
+        let tableVisibility = document.getElementById("table"+ i);
+        tableVisibility.style.display = status;
+        //tableVisibility.getElementsByClassName("whole-row").style.setProperty("color", colorSpaceForPlots[i-1]);
+        //tableVisibility.style.backgroundColor = colorSpaceForPlots[i-1];
+        let selected = '#table'+ i +' .whole-row';
+        document.querySelector(selected).style.setProperty("background-color", colorSpaceForPlots[i-1]);    
+    }
+}
 
 function setTableVisibility(numberOfTable, status){
     for (var i = 1; i < numberOfTable+1; i++) {
         let tableVisibility = document.getElementById("table"+ i);
-        tableVisibility.style.display = status;
-        tableVisibility.style.backgroundColor = colorSpaceForPlots[i-1];
+        tableVisibility.style.display = status;   
     }
 }
 
@@ -87,7 +96,8 @@ function startComparison(){
 
     openBottomNav();
     
-    setTableVisibility(selectedPlotsId.length, "grid");
+    // Set corresponding table visible
+    setTableVisibilityAndTitle(selectedPlotsId, "grid");
 
     // Alert
     //if (selectedPlotsId.length == 0){
@@ -165,8 +175,6 @@ function addPin(customDataSource, pointId, lat, long, parentLayer ,hexColorStrin
         name: pointId,
         iriPrefix: parentLayer._citydbKmlDataSource._iriPrefix,});
 }
-
-
 
 // Unused: as addPin is implemneted
 function pinPoint(customDataSource, pointId, lat, long, parentLayer ,hexColorString){
