@@ -1,7 +1,9 @@
 // global variables
 let selectedPlotsId = [];
+let colorSpaceForPlots = ["#845EC2", "#D65DB1", "#FFC75F", "#0081CF", "#00C9A7"];
 
 
+/*
 function listHighlightedObjects() {
     var highlightingListElement = document.getElementById("selectedPlotsList");
 
@@ -14,7 +16,7 @@ function listHighlightedObjects() {
             highlightingListElement.selectedIndex = 0;
         }
     });
-}
+}*/
 
 
 
@@ -40,6 +42,7 @@ function showSelection() {
         option.style.color = "black";
         option.style.padding = "5px 10px 5px 10px";
         option.innerHTML = highlightedObjects[i];
+        option.style.color = colorSpaceForPlots[i];
         selectedPlotsList.appendChild(option);
         selectedPlotsId.push(highlightedObjects[i]);
     }
@@ -61,6 +64,7 @@ function setTableVisibility(numberOfTable, status){
     for (var i = 1; i < numberOfTable+1; i++) {
         let tableVisibility = document.getElementById("table"+ i);
         tableVisibility.style.display = status;
+        tableVisibility.style.backgroundColor = colorSpaceForPlots[i-1];
     }
 }
 
@@ -74,7 +78,7 @@ function startComparison(){
     openBottomNav();
     
     setTableVisibility(selectedPlotsId.length, "grid");
-    
+
     // Alert
     //if (selectedPlotsId.length == 0){
     //    window.alert("No plot is selected for comparison !!");
