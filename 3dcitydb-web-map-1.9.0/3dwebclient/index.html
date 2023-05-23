@@ -404,10 +404,11 @@
             .ProgrammaticPlotFinder-submitButton:hover {
                 background: #1E90FFFF;
             }
+
             .ProgrammaticPlotFinder-resultBox{
-                display: block;
+                display: flex;
                 position: absolute;
-                min-width: 230px;
+                width: 1000px;
                 top: 120px;
                 left: 5px;
                 background: #303336;
@@ -570,6 +571,7 @@
             .grid-container {
                 display: grid;
                 grid-template-columns: auto auto auto auto auto;
+                margin-top: 30px;
             }
             .grid-item{
                 width: 500px;
@@ -579,23 +581,23 @@
                 text-align: center;
                 font-size: 30px;
                 display: grid;
-                grid-template-columns: auto auto auto;
+                grid-template-columns: 40% 20% 40%;
             }
 
             .grid-container > div > div {
                 background-color: rgba(255, 255, 255, 0.8);
                 border: 1px solid rgba(0, 0, 0, 0.8);
                 text-align: center;
-                padding: 10px 0;
-                font-size: 20px;
+                padding: 5px 0;
+                font-size: 15px;
             }
             
             .item4 {
                 grid-area: 2 / 1 / 2 / 4;
             }
 
-            .item11 {
-                grid-area: 5 / 1 / 5 / 4;
+            .item17 {
+                grid-area: 7 / 1 / 7 / 4;
             }
 
         </style>
@@ -668,47 +670,65 @@
                     <button id="searchButton" class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getInputParams()" style="display: none;">Search Now</button>
                 </div>
             </div>
-            <div id="uiProgrammeFinder-result" class="ProgrammaticPlotFinder-resultBox">
-                <div id="resultBox-title" class="ProgrammaticPlotFinder-resultBox-title">
-                    <label>Search History</label>
+            
+            <div id="demo-result" class="ProgrammaticPlotFinder-resultBox">
+                <div id="uiProgrammeFinder-result">
+                    <div id="resultBox-title" class="ProgrammaticPlotFinder-resultBox-title">
+                        <label>Search History</label>
+                    </div>
+                    <div id="resultBox-iframe" class="ProgrammaticPlotFinder-resultBox-iframe"></div>
                 </div>
-                <div id="resultBox-iframe" class="ProgrammaticPlotFinder-resultBox-iframe"></div>
+
+                <div id="SelectedPlots" style="margin-left: 20px;">
+                    <div id="selectplots-title" class="ProgrammaticPlotFinder-resultBox-title">
+                        <label>Selected Plots</label>
+                    </div>
+                    <div id="selectedPlotsList"></div>
+                </div>
             </div>
+
             <div id="demo2" class="programmeFinder_toolbox" style="display: none;">
                 <button class="ProgrammaticPlotFinder-submitButton" onclick="showSelection()"><span>Show the selection</span></button>
                 <button class="ProgrammaticPlotFinder-submitButton" onclick="clearSelection()"><span>Clear the selection</span></button>
                 <button class="ProgrammaticPlotFinder-submitButton" onclick="startComparison()"><span>startComparison</span></button>
                 <!--<button class="ProgrammaticPlotFinder-submitButton" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBottom" aria-controls="offcanvasBottom" onclick="startComparison()">Start Comparison</button>-->
             </div>
-            <div id="SelectedPlots" class="ProgrammaticPlotFinder-resultBox" >
-                <div id="selectplots-title" class="ProgrammaticPlotFinder-resultBox-title">
-                    <label>Selected Plots</label>
-                </div>
-                <div id="selectedPlotsList"></div>
-            </div> 
+             
         </div>
 
         <div id ="comparisonPanel" class="bottomnav">
             <a href="javascript:void(0)" class="closebtn" onclick="closeBottomNav()">&times;</a>
             <div class="grid-container">
                 <div class="grid-item">
-                    <div class="item1">1</div>
-                    <div class="item2">2</div>
-                    <div class="item3">3</div>
-                    <div class="item4">4</div>
+                    <div class="item1">Present (current and past data)</div>
+                    <div class="item2">&#x394</div>
+                    <div class="item3">Potential Future (planning regulations)</div>
+                    <div class="item4" style="background-color: yellow;">Plot A site area </div>
                     <div class="item5">5</div>
-                    <div class="item6">6</div>
-                    <div class="item7">7</div>
+                    <div class="item6">&#x394</div>
+                    <div class="item7">f allowable parks</div>
                     <div class="item8">8</div>
-                    <div class="item9">9</div>
+                    <div class="item9">&#x394</div>
                     <div class="item10">10</div>
                     <div class="item11">11</div>
-                    <div class="item12">12</div>
-                    <div class="item13">13</div>
+                    <div class="item12">&#x394</div>
+                    <div class="item13">Top 3 land uses by area: xx% typex | yy% typey | zz% typez |</div>
                     <div class="item14">14</div>
-                    <div class="item15">15</div>
+                    <div class="item15">&#x394</div>
                     <div class="item16">16</div>
-                    <div class="item17">17</div>
+                    <div class="item17" style="background-color: yellow;">Context (nnnn meters) n plots</div>
+                    <div class="item18">18</div>
+                    <div class="item19">&#x394</div>
+                    <div class="item20">20</div>
+                    <div class="item21">21</div>
+                    <div class="item22">&#x394</div>
+                    <div class="item23">f MRT stations f allowable parking areas</div>
+                    <div class="item24">24</div>
+                    <div class="item25">&#x394</div>
+                    <div class="item26">26</div>
+                    <div class="item27">27</div>
+                    <div class="item28">&#x394</div>
+                    <div class="item29">Max GFA per landuse: residential park commercial institutional industrial educational</div>
                 </div>
                 <div class="grid-item">table 2</div>
                 <div class="grid-item">table 3</div>

@@ -2,11 +2,6 @@
 let selectedPlotsId = [];
 
 
-
-
-
-
-
 function listHighlightedObjects() {
     var highlightingListElement = document.getElementById("selectedPlotsList");
 
@@ -25,6 +20,10 @@ function listHighlightedObjects() {
 
 function showSelection() { 
     console.log("showSelection clicked!");
+    // Clear the list of "selected plots" before showing selected list
+    var selectedPlotsList = document.getElementById("selectedPlotsList");
+    selectedPlotsList.innerHTML = '';
+
     var highlightedObjects = webMap.getAllHighlightedObjects(); // this will return the selected objects even the plots are unloaded. 
     
     var selectedTitle = document.getElementById("selectplots-title");
