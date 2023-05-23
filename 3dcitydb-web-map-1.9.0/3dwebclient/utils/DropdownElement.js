@@ -570,6 +570,8 @@ function showChooseDevType(){
  *
  */
 function chooseDemoType(obj) {
+
+	//document.getElementById("navigationDiv").style.display = "None";
 	// reset all nav links color
 	let navLinks = document.getElementsByClassName("navLink");
 	for (let i = 0; i < navLinks.length; i++){

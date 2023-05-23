@@ -207,7 +207,7 @@ function initClient() {
 
     // display current infos of active layer in the main menu
     observeActiveLayer();
-
+    
     // set CIA context based on input in url
     var cia_context = (new URL(window.location.href)).searchParams.get('context');
     this.cia_context = cia_context ? cia_context : '';
@@ -409,6 +409,7 @@ function loadSingapore() {
     flyToCameraPosition(cameraPostion);
     // find relevant files and load layers
     getAndLoadLayers('exported_singapore');
+
 }
 
 /**

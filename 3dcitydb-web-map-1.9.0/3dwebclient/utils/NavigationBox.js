@@ -130,6 +130,7 @@ function closeSidebar() {
  *
  */
 function addDisclaimerButton(){
+
     let toolbar = document.getElementsByClassName('cesium-viewer-toolbar');  // HTMLCollection; has to use item(0) to add an additional icon
 
     let wrapper = document.createElement('span');

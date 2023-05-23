@@ -62,9 +62,10 @@ function startComparison(){
     console.log("startComparison clicked!");
     console.log(selectedPlotsId);
     //createTable();
-    if (selectedPlotsId.length == 0){
-        window.alert("No plot is selected for comparison !!");
-    }
+    openBottomNav();
+    //if (selectedPlotsId.length == 0){
+    //    window.alert("No plot is selected for comparison !!");
+    //}
 }
 
 function expandPanel(){
@@ -78,4 +79,14 @@ function expandPanel(){
         document.getElementById("comparisonPanel").style.height = "300px";
         
     }
+}
+
+function openBottomNav() {
+    document.getElementById("comparisonPanel").style.height = "50%";
+    //document.getElementById("main").style.marginBottom = "250px";
+}
+  
+function closeBottomNav() {
+    document.getElementById("comparisonPanel").style.height = "0";
+    //document.getElementById("main").style.marginLeft= "0";
 }
