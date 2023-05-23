@@ -26,6 +26,12 @@ function showSelection() {
     // Clear the list of "selected plots" before showing selected list
     var selectedPlotsList = document.getElementById("selectedPlotsList");
     selectedPlotsList.innerHTML = '';
+    for (let [key, value] of customDataSourceMap){
+        if (key == selectedPlotsUnifier){
+            cesiumViewer.dataSources.remove(value);
+            customDataSourceMap.delete(key);
+        }
+    }
 
     var highlightedObjects = webMap.getAllHighlightedObjects(); // this will return the selected objects even the plots are unloaded. 
     
