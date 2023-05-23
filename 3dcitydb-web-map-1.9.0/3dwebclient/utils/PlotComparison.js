@@ -1,6 +1,7 @@
 // global variables
 let selectedPlotsId = [];
 let colorSpaceForPlots = ["#845EC2", "#D65DB1", "#FFC75F", "#0081CF", "#00C9A7"];
+let labelForPlots = ["A", "B", "C", "D","E"];
 let selectedPlotsUnifier = "SSS_selectedPlots";
 
 /*
@@ -66,7 +67,6 @@ function clearSelection() {
             cesiumViewer.dataSources.remove(value);
             customDataSourceMap.delete(key);
         }
-        
     }
 }
 
@@ -144,17 +144,35 @@ function pinSelectedPlots(cityObjectsArray){
         var lat = (obj.envelope[1] + obj.envelope[3]) / 2.0;
         //console.log(gmlidArray[i] + ": " + lon + ", " + lat);
 
-        pinPoint(customDataSource, id, lat, lon, currentLayer, colorSpaceForPlots[i]);
+        //pinPoint(customDataSource, id, lat, lon, currentLayer, colorSpaceForPlots[i]);
+        addPin(customDataSource, id, lat, lon, currentLayer, colorSpaceForPlots[i], labelForPlots[i]);
     }
     //addEventListeners(customDataSource);
     customDataSourceMap.set(selectedPlotsUnifier, customDataSource);
     cesiumViewer.dataSources.add(customDataSource);
 }
 
+function addPin(customDataSource, pointId, lat, long, parentLayer ,hexColorString, label) {
+    const pinBuilder = new Cesium.PinBuilder();
+    customDataSource.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(long, lat, 5),
+        id: pointId,
+        billboard: {
+            image: pinBuilder.fromText(label, Cesium.Color.fromCssColorString(hexColorString), 48).toDataURL(),
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        },
+        layerId: parentLayer.id,
+        name: pointId,
+        iriPrefix: parentLayer._citydbKmlDataSource._iriPrefix,});
+}
+
+
+
+// Unused: as addPin is implemneted
 function pinPoint(customDataSource, pointId, lat, long, parentLayer ,hexColorString){
 
     customDataSource.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(long, lat, 5),
+        position: Cesium.Cartesian3.fromDegrees(long, lat, 50),
         id: pointId,
         point: {
             pixelSize: 15,
