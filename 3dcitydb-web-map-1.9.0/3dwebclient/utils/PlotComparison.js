@@ -1,7 +1,7 @@
 // global variables
 let selectedPlotsId = [];
 let colorSpaceForPlots = ["#845EC2", "#D65DB1", "#FFC75F", "#0081CF", "#00C9A7"];
-
+let selectedPlotsUnifier = "SSS_selectedPlots";
 
 /*
 function listHighlightedObjects() {
@@ -46,6 +46,8 @@ function showSelection() {
         selectedPlotsList.appendChild(option);
         selectedPlotsId.push(highlightedObjects[i]);
     }
+
+    pinSelectedPlots(selectedPlotsId);
     //highlight will be visible when the plot is visible again. 
     //listHighlightedObjects();
    
@@ -58,6 +60,14 @@ function clearSelection() {
     selectedPlotsList.innerHTML = '';
     console.log("clearSelection clicked!")
     selectedPlotsId=[];
+    
+    for (let [key, value] of customDataSourceMap){
+        if (key == selectedPlotsUnifier){
+            cesiumViewer.dataSources.remove(value);
+            customDataSourceMap.delete(key);
+        }
+        
+    }
 }
 
 function setTableVisibility(numberOfTable, status){
@@ -86,6 +96,9 @@ function startComparison(){
     
 }
 
+
+
+// Control the bottom comparison panel
 function expandPanel(){
     let expandArrow = document.getElementById("expandArrow");
     expandArrow.classList.toggle("arrowActive");
@@ -110,12 +123,49 @@ function closeBottomNav() {
 }
 
 
+// Draw the points on the selected plots
+function pinSelectedPlots(cityObjectsArray){
+
+    // get geolocation
+    var currentLayer = webMap._activeLayer;
+    var testcityobjectsJsonData;
+    if (Cesium.defined(currentLayer)) {
+        testcityobjectsJsonData = currentLayer.cityobjectsJsonData;
+    }
 
 
+    var customDataSource = new Cesium.CustomDataSource(selectedPlotsUnifier);
+    var currentLayer = webMap.activeLayer;
 
+    for (let i = 0; i < cityObjectsArray.length; i++){
+        var obj = testcityobjectsJsonData[cityObjectsArray[i]];
+        var id = cityObjectsArray[i];
+        var lon = (obj.envelope[0] + obj.envelope[2]) / 2.0;
+        var lat = (obj.envelope[1] + obj.envelope[3]) / 2.0;
+        //console.log(gmlidArray[i] + ": " + lon + ", " + lat);
 
-function createCard(){
+        pinPoint(customDataSource, id, lat, lon, currentLayer, colorSpaceForPlots[i]);
+    }
+    //addEventListeners(customDataSource);
+    customDataSourceMap.set(selectedPlotsUnifier, customDataSource);
+    cesiumViewer.dataSources.add(customDataSource);
+}
 
+function pinPoint(customDataSource, pointId, lat, long, parentLayer ,hexColorString){
+
+    customDataSource.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(long, lat, 5),
+        id: pointId,
+        point: {
+            pixelSize: 15,
+            color: Cesium.Color.fromCssColorString(hexColorString),
+            outlineColor: Cesium.Color.BLACK,
+            outlineWidth:1,
+        },
+        layerId: parentLayer.id,
+        name: pointId,
+        iriPrefix: parentLayer._citydbKmlDataSource._iriPrefix,
+    });
 }
 
 
