@@ -57,14 +57,29 @@ function clearSelection() {
     selectedPlotsId=[];
 }
 
+function setTableVisibility(numberOfTable, status){
+    for (var i = 1; i < numberOfTable+1; i++) {
+        let tableVisibility = document.getElementById("table"+ i);
+        tableVisibility.style.display = status;
+    }
+}
+
 function startComparison(){
     console.log("startComparison clicked!");
     console.log(selectedPlotsId);
-    //createTable();
+    
+    // Reset the comparison panel 
+    setTableVisibility(5, "none");
+
     openBottomNav();
+    
+    setTableVisibility(selectedPlotsId.length, "grid");
+    
+    // Alert
     //if (selectedPlotsId.length == 0){
     //    window.alert("No plot is selected for comparison !!");
     //}
+    
 }
 
 function expandPanel(){

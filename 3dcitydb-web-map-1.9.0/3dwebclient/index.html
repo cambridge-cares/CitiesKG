@@ -580,7 +580,7 @@
                 border: 1px solid rgba(0, 0, 0, 0.8);
                 text-align: center;
                 font-size: 30px;
-                display: grid;
+                display: none;
                 grid-template-columns: 40% 20% 40%;
             }
 
@@ -699,7 +699,7 @@
         <div id ="comparisonPanel" class="bottomnav">
             <a href="javascript:void(0)" class="closebtn" onclick="closeBottomNav()">&times;</a>
             <div class="grid-container">
-                <div class="grid-item">
+                <div id="table1" class="grid-item">
                     <div class="item1">Present (current and past data)</div>
                     <div class="item2">&#x394</div>
                     <div class="item3">Potential Future (planning regulations)</div>
@@ -730,10 +730,10 @@
                     <div class="item28">&#x394</div>
                     <div class="item29">Max GFA per landuse: residential park commercial institutional industrial educational</div>
                 </div>
-                <div class="grid-item">table 2</div>
-                <div class="grid-item">table 3</div>
-                <div class="grid-item">table 4</div>
-                <div class="grid-item">table 5</div>
+                <div id="table2" class="grid-item">table 2</div>
+                <div id="table3" class="grid-item">table 3</div>
+                <div id="table4" class="grid-item">table 4</div>
+                <div id="table5" class="grid-item">table 5</div>
             </div> 
         </div>
         <!--<div class="offcanvas offcanvas-bottom" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasBottom" aria-labelledby="offcanvasBottomLabel">
