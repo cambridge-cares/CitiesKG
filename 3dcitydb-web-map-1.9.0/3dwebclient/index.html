@@ -528,9 +528,9 @@
                 z-index: 1;
                 bottom: 0;
                 background-color: #ffffff;
-                overflow-x: hidden;
                 transition: 0.5s;
-                padding-top: 0px;
+                padding-top: 5px;
+                overflow: auto;
             }
             #comparisonPanel .closebtn {
             position: absolute;
@@ -566,6 +566,37 @@
                 transition: all 0.5s ease;
                 transform: rotate(180deg);
             }
+            
+            .grid-container {
+                display: grid;
+                grid-template-columns: auto auto auto auto auto;
+            }
+            .grid-item{
+                width: 500px;
+                margin: 10px;
+                background-color: #2196F3;
+                border: 1px solid rgba(0, 0, 0, 0.8);
+                text-align: center;
+                font-size: 30px;
+                display: grid;
+                grid-template-columns: auto auto auto;
+            }
+
+            .grid-container > div > div {
+                background-color: rgba(255, 255, 255, 0.8);
+                border: 1px solid rgba(0, 0, 0, 0.8);
+                text-align: center;
+                padding: 10px 0;
+                font-size: 20px;
+            }
+            
+            .item1 {
+                grid-area: 1 / 1 / 1 / 4;
+            }
+
+            .item11 {
+                grid-area: 5 / 1 / 5 / 4;
+            }
 
         </style>
     </head>
@@ -582,7 +613,7 @@
         <div id="mySidebar" class="sidebar">
             <a href="javascript:void(0)" class="closebtn" onclick="closeSidebar()">×</a>
             <a href="#" class="navLink" id="PPF" onclick="chooseDemoType(this)" style="color:white;">Programmatic Plot Finder</a>
-            <a href="#" class="navLink" id="PlotComparison" onclick="chooseDemoType(this)">5 Plots Comparison</a>
+            <a href="#" class="navLink" id="PlotComparison" onclick="chooseDemoType(this)">Suitable Site Selecto</a>
             <a href="#" class="navLink" id="demo3" onclick="chooseDemoType(this)">Demonstrator 3</a>
         </div>
 
@@ -659,10 +690,31 @@
 
         <div id ="comparisonPanel" class="bottomnav">
             <a href="javascript:void(0)" class="closebtn" onclick="closeBottomNav()">&times;</a>
-            <a href="#">About</a>
-            <a href="#">Services</a>
-            <a href="#">Clients</a>
-            <a href="#">Contact</a>
+            <div class="grid-container">
+                <div class="grid-item">
+                    <div class="item1">1</div>
+                    <div class="item2">2</div>
+                    <div class="item3">3</div>
+                    <div class="item4">4</div>
+                    <div class="item5">5</div>
+                    <div class="item6">6</div>
+                    <div class="item7">7</div>
+                    <div class="item8">8</div>
+                    <div class="item9">9</div>
+                    <div class="item10">10</div>
+                    <div class="item11">11</div>
+                    <div class="item12">12</div>
+                    <div class="item13">13</div>
+                    <div class="item14">14</div>
+                    <div class="item15">15</div>
+                    <div class="item16">16</div>
+                    <div class="item17">17</div>
+                </div>
+                <div class="grid-item">table 2</div>
+                <div class="grid-item">table 3</div>
+                <div class="grid-item">table 4</div>
+                <div class="grid-item">table 5</div>
+            </div> 
         </div>
         <!--<div class="offcanvas offcanvas-bottom" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasBottom" aria-labelledby="offcanvasBottomLabel">
             <div class="offcanvas-header">
