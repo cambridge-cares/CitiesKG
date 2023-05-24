@@ -704,124 +704,43 @@
              
         </div>
 
+        <template id="table-template">
+            
+                <div class="item1 col-left"><span><b>Present</b><br>(current and past data)</span></div>
+                <div class="item2 col-middle"><span><br>&#x394</span></div>
+                <div class="item3 col-right"><span><b>Future</b><br>(planning regulations)</span></div>
+                <div class="item4 whole-row"><span><b>SELECTED PLOT</b>: {plotid} <br> xxx m2</span></div>
+                <div class="item5 col-left"><span>Land Use and GFA<br>Residential: n m2</span></div>
+                <div class="item6 col-middle">&#x394</div>
+                <div class="item7 col-right"><span>Allowable Land Use and GFA (max)</span><span>Residential: n m2</span></div>
+                <div class="item8 whole-row"><span><b>7.5 MINUTE CITY</b><br>500 m context | n plots</span></div>
+                <div class="item9 col-left"><span>n parks</span> </div>
+                <div class="item10 col-middle">&#x394</div>
+                <div class="item11 col-right"><span>f allowable parks</span></div>
+                <div class="item12 col-left"><span>n MRT stations<br>n bus stops<br>n parking areas</span></div>
+                <div class="item13 col-middle"><span>&#x394<br><br>&#x394</span></div>
+                <div class="item14 col-right"><span>f MRT stations<br><br>f allowable parking areas</span></div>
+                <div class="item15 col-left"><span>n mixed-use plots<br><br>Most Common Mixed Use Programme(max total %)<br></span><span style="float:right;"><br>Programme: n % <br> Programme: n % <br> Programme: n % </span></div>
+                <div class="item16 col-middle"></div>
+                <div class="item17 col-right"><span>Most Common Zoning Type (max total plot area)<br></span>
+                    <span style="float:right;">Park: f % <br>Road: f %</span>
+                    <span style="float:right;">EducationalInstitution: f % <br></span>
+                    <span style="float:right;">BusinessPark: f %<br></span>
+                </div>
+                <div class="item18 col-left">18</div>
+                <div class="item19 col-middle">&#x394</div>
+                <div class="item20 col-right"><span>Development Flexibility<br>average (ntotoGFA/nplots)</span></div>
+            
+        </template>
+
         <div id ="comparisonPanel" class="bottomnav">
             <a href="javascript:void(0)" class="closebtn" onclick="closeBottomNav()">&times;</a>
             <div class="grid-container">
-                <div id="table1" class="grid-item">
-                    <div class="item1 col-left"><span><b>Present</b><br>(current and past data)</span></div>
-                    <div class="item2 col-middle"><span><br>&#x394</span></div>
-                    <div class="item3 col-right"><span><b>Future</b><br>(planning regulations)</span></div>
-                    <div class="item4 whole-row"><span><b>SELECTED PLOT</b>: ${name} <br> xxx m2</span></div>
-                    <div class="item5 col-left"><span>Land Use and GFA<br>Residential: n m2</span></div>
-                    <div class="item6 col-middle">&#x394</div>
-                    <div class="item7 col-right"><span>Allowable Land Use and GFA (max)</span><span>Residential: n m2</span></div>
-                    <div class="item8 whole-row"><span><b>7.5 MINUTE CITY</b><br>500 m context | n plots</span></div>
-                    <div class="item9 col-left"><span>n parks</span> </div>
-                    <div class="item10 col-middle">&#x394</div>
-                    <div class="item11 col-right"><span>f allowable parks</span></div>
-                    <div class="item12 col-left"><span>n MRT stations<br>n bus stops<br>n parking areas</span></div>
-                    <div class="item13 col-middle"><span>&#x394<br><br>&#x394</span></div>
-                    <div class="item14 col-right"><span>f MRT stations<br><br>f allowable parking areas</span></div>
-                    <div class="item15 col-left"><span>n mixed-use plots<br><br>Most Common Mixed Use Programme(max total %)<br></span><span style="float:right;"><br>Programme: n % <br> Programme: n % <br> Programme: n % </span></div>
-                    <div class="item16 col-middle"></div>
-                    <div class="item17 col-right"><span>Most Common Zoning Type (max total plot area)<br></span>
-                        <span style="float:right;">Park: f % <br>Road: f %</span>
-                        <span style="float:right;">EducationalInstitution: f % <br></span>
-                        <span style="float:right;">BusinessPark: f %<br></span>
-                    </div>
-                    <div class="item18 col-left">18</div>
-                    <div class="item19 col-middle">&#x394</div>
-                    <div class="item20 col-right"><span>Development Flexibility<br>average (ntotoGFA/nplots)</span></div>
-                </div>
-                <div id="table2" class="grid-item">
-                    <div class="item1 col-left">Present (current and past data)</div>
-                    <div class="item2 col-middle">&#x394</div>
-                    <div class="item3 col-right">Potential Future (planning regulations)</div>
-                    <div class="item4 whole-row">SELECTED PLOT XXX m2</div>
-                    <div class="item5 col-left">Land Use and GFA</div>
-                    <div class="item6 col-middle">&#x394</div>
-                    <div class="item7 col-right">Allowable Land Use and GFA (max)</div>
-                    <div class="item8 whole-row">7.5 MINUTE CITY | 500 m context | n plots</div>
-                    <div class="item9 col-left">n parks</div>
-                    <div class="item10 col-middle">&#x394</div>
-                    <div class="item11 col-right">f allowable parks</div>
-                    <div class="item12 col-left">n MRT stations | n bus stops |  n parking areas</div>
-                    <div class="item13 col-middle">&#x394</div>
-                    <div class="item14 col-right">f MRT stations | f allowable parking areas</div>
-                    <div class="item15 col-left">n mixed-use plots | Most Common Mixed Use Programme (max total %) Programme: n %</div>
-                    <div class="item16 col-middle"></div>
-                    <div class="item17 col-right">Most Common Zoning Type (max total plot area) | Road: f % | Park: f %</div>
-                    <div class="item18 col-left">18</div>
-                    <div class="item19 col-middle">&#x394</div>
-                    <div class="item20 col-right">20</div>
-                </div>
-
-                <div id="table3" class="grid-item">
-                    <div class="item1 col-left">Present (current and past data)</div>
-                    <div class="item2 col-middle">&#x394</div>
-                    <div class="item3 col-right">Potential Future (planning regulations)</div>
-                    <div class="item4 whole-row">SELECTED PLOT XXX m2</div>
-                    <div class="item5 col-left">Land Use and GFA</div>
-                    <div class="item6 col-middle">&#x394</div>
-                    <div class="item7 col-right">Allowable Land Use and GFA (max)</div>
-                    <div class="item8 whole-row">7.5 MINUTE CITY | 500 m context | n plots</div>
-                    <div class="item9 col-left">n parks</div>
-                    <div class="item10 col-middle">&#x394</div>
-                    <div class="item11 col-right">f allowable parks</div>
-                    <div class="item12 col-left">n MRT stations | n bus stops |  n parking areas</div>
-                    <div class="item13 col-middle">&#x394</div>
-                    <div class="item14 col-right">f MRT stations | f allowable parking areas</div>
-                    <div class="item15 col-left">n mixed-use plots | Most Common Mixed Use Programme (max total %) Programme: n %</div>
-                    <div class="item16 col-middle"></div>
-                    <div class="item17 col-right">Most Common Zoning Type (max total plot area) | Road: f % | Park: f %</div>
-                    <div class="item18 col-left">18</div>
-                    <div class="item19 col-middle">&#x394</div>
-                    <div class="item20 col-right">20</div>
-                </div>
-                <div id="table4" class="grid-item">
-                    <div class="item1 col-left">Present (current and past data)</div>
-                    <div class="item2 col-middle">&#x394</div>
-                    <div class="item3 col-right">Potential Future (planning regulations)</div>
-                    <div class="item4 whole-row">SELECTED PLOT XXX m2</div>
-                    <div class="item5 col-left">Land Use and GFA</div>
-                    <div class="item6 col-middle">&#x394</div>
-                    <div class="item7 col-right">Allowable Land Use and GFA (max)</div>
-                    <div class="item8 whole-row">7.5 MINUTE CITY | 500 m context | n plots</div>
-                    <div class="item9 col-left">n parks</div>
-                    <div class="item10 col-middle">&#x394</div>
-                    <div class="item11 col-right">f allowable parks</div>
-                    <div class="item12 col-left">n MRT stations | n bus stops |  n parking areas</div>
-                    <div class="item13 col-middle">&#x394</div>
-                    <div class="item14 col-right">f MRT stations | f allowable parking areas</div>
-                    <div class="item15 col-left">n mixed-use plots | Most Common Mixed Use Programme (max total %) Programme: n %</div>
-                    <div class="item16 col-middle"></div>
-                    <div class="item17 col-right">Most Common Zoning Type (max total plot area) | Road: f % | Park: f %</div>
-                    <div class="item18 col-left">18</div>
-                    <div class="item19 col-middle">&#x394</div>
-                    <div class="item20 col-right">20</div>
-                </div>
-                <div id="table5" class="grid-item">
-                    <div class="item1 col-left">Present (current and past data)</div>
-                    <div class="item2 col-middle">&#x394</div>
-                    <div class="item3 col-right">Potential Future (planning regulations)</div>
-                    <div class="item4 whole-row">SELECTED PLOT XXX m2</div>
-                    <div class="item5 col-left">Land Use and GFA</div>
-                    <div class="item6 col-middle">&#x394</div>
-                    <div class="item7 col-right">Allowable Land Use and GFA (max)</div>
-                    <div class="item8 whole-row">7.5 MINUTE CITY | 500 m context | n plots</div>
-                    <div class="item9 col-left">n parks</div>
-                    <div class="item10 col-middle">&#x394</div>
-                    <div class="item11 col-right">f allowable parks</div>
-                    <div class="item12 col-left">n MRT stations | n bus stops |  n parking areas</div>
-                    <div class="item13 col-middle">&#x394</div>
-                    <div class="item14 col-right">f MRT stations | f allowable parking areas</div>
-                    <div class="item15 col-left">n mixed-use plots | Most Common Mixed Use Programme (max total %) Programme: n %</div>
-                    <div class="item16 col-middle"></div>
-                    <div class="item17 col-right">Most Common Zoning Type (max total plot area) | Road: f % | Park: f %</div>
-                    <div class="item18 col-left">18</div>
-                    <div class="item19 col-middle">&#x394</div>
-                    <div class="item20 col-right">20</div>
-                </div>
+                <div id="table1" class="grid-item"></div>
+                <div id="table2" class="grid-item"></div>
+                <div id="table3" class="grid-item"></div>
+                <div id="table4" class="grid-item"></div>
+                <div id="table5" class="grid-item"></div>
             </div> 
         </div>
         <!--<div class="offcanvas offcanvas-bottom" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasBottom" aria-labelledby="offcanvasBottomLabel">

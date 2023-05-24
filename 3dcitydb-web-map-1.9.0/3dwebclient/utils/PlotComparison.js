@@ -99,18 +99,56 @@ function startComparison(){
     
     // Reset the comparison panel 
     setTableVisibility(5, "none");
+    // TODO: Empty the content of all the table
+    resetTableContentAll();
 
     openBottomNav();
     
     // Set corresponding table visible
-    setTableVisibilityAndTitle(selectedPlotsId, "grid");
+    setTableVisibility(selectedPlotsId.length, "grid");
+
+    // Copy table template and change the ID
+    createTableContent(selectedPlotsId);
+
+    setPlotIdintoTable(selectedPlotsId);
 
     // Alert
     //if (selectedPlotsId.length == 0){
     //    window.alert("No plot is selected for comparison !!");
-    //}
-    
+    //} 
 }
+
+function resetTableContentAll(){
+    for (var i = 1; i < 6; i++){
+        document.getElementById("table"+i).innerHTML = '';
+    }
+}
+
+
+
+
+
+
+function createTableContent(plotIdList){
+
+    const table_template = document.getElementById("table-template");
+    for (var i = 1; i < plotIdList.length+1; i++){
+        document.getElementById("table"+i).appendChild(table_template.content.cloneNode(true));
+        //console.log(document.getElementById("table"+i));
+    }
+}
+
+function setPlotIdintoTable(selectedPlots){
+    for (var i = 1; i < selectedPlots.length+1; i++) {
+        let tableVisibility = document.getElementById("table"+ i);
+        let selected = '#table'+ i +' .item4';
+        if (tableVisibility.style.display == "grid"){
+            let selectedSpan = document.querySelectorAll(selected)[0].firstChild;
+            selectedSpan.innerText = selectedSpan.innerText.replace('{plotid}', selectedPlots[i-1]); 
+        }
+    }
+}
+
 
 
 
@@ -202,8 +240,8 @@ function pinPoint(customDataSource, pointId, lat, long, parentLayer ,hexColorStr
 
 
 
-function createTable(){
-    let comparisonContent = document.getElementsById('comparisonContent');
+function createTable_backup(){
+    let comparisonContent = document.getElementById('comparisonContent');
     let FirstTable = document.createElement("table");
     FirstTable.style.width = "500px";
     FirstTable.className = "table table-bordered";
@@ -235,7 +273,7 @@ function createTable(){
 
 
 
-function createIndexPanel(){
+function createIndexPanel_backup(){
     let indexTable = document.createElement("table");
     indexTable.className = "table table-hover";
     indexTable.innerHTML = '\
