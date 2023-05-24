@@ -126,9 +126,6 @@ function resetTableContentAll(){
 
 
 
-
-
-
 function createTableContent(plotIdList){
 
     const table_template = document.getElementById("table-template");
@@ -138,13 +135,16 @@ function createTableContent(plotIdList){
     }
 }
 
+
+// set plotId and background color
 function setPlotIdintoTable(selectedPlots){
     for (var i = 1; i < selectedPlots.length+1; i++) {
         let tableVisibility = document.getElementById("table"+ i);
         let selected = '#table'+ i +' .item4';
         if (tableVisibility.style.display == "grid"){
-            let selectedSpan = document.querySelectorAll(selected)[0].firstChild;
-            selectedSpan.innerText = selectedSpan.innerText.replace('{plotid}', selectedPlots[i-1]); 
+            let selectedSpan = document.querySelector(selected).firstChild;
+            document.querySelector(selected).style.setProperty("background-color", colorSpaceForPlots[i-1]);
+            selectedSpan.innerHTML = selectedSpan.innerHTML.replace('{plotid}', selectedPlots[i-1]); 
         }
     }
 }
