@@ -272,10 +272,13 @@ function showResultWindow(resultJson, colorStr){
     }
 }
 
-function updateSelectedDataSources(){
-    // remove all DataSources
+// When click on the checkbox, it will set the datasource visible
+function updateSelectedDataSources(){ 
+    // Only remove ciaResults DataSources, so it does not affect demo2
     for (let [key, value] of customDataSourceMap){
-        cesiumViewer.dataSources.remove(value);
+        if (key.includes('ciaResult')){
+            cesiumViewer.dataSources.remove(value);
+        }
     }
     var ciaResultsArray = document.getElementsByClassName('ciaResults');
     for (let i = 0; i < ciaResultsArray.length; ++i){
