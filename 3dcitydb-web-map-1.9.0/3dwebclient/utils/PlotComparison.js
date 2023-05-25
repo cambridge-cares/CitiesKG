@@ -111,12 +111,39 @@ function startComparison(){
     createTableContent(selectedPlotsId);
 
     setPlotIdintoTable(selectedPlotsId);
+    //queryDistanceFilter(selectedPlotsId);
 
     // Alert
     //if (selectedPlotsId.length == 0){
     //    window.alert("No plot is selected for comparison !!");
     //} 
 }
+
+/** 
+function queryDistanceFilter(selectedPlotsId){
+    for (var i = 0; i < selectedPlotsId.length; i++) {
+
+    const iri = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/" + selectedPlotsId[i] +"/";
+        $.ajax({
+            url: "http://localhost:8080/agents/cityobjectinformation",
+            type: 'POST',
+            data: JSON.stringify({'iris': [iri], 'searchDistance': 500),
+            dataType: 'json',
+            contentType: 'application/json',
+            success: function (data) { //function (data, status_message, xhr)
+                //console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
+                //console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filteredCounts"]);
+                console.log(data["allowableUSEandGFA"]);
+            }
+        });
+    }
+}
+
+*/
+
+
+
+
 
 function resetTableContentAll(){
     for (var i = 1; i < 6; i++){
