@@ -115,8 +115,10 @@ public class CityInformationAgent extends JPSAgent {
         JSONArray returnResults = distanceFilterTask.queryAllowUseAndGFA();
         requestParams.append(ALLOW_USE_GFA, returnResults);
 
-        distanceFilterTask.calcEnvelopCentroid(cityObjectIri);
-
+        JSONArray queryResults = distanceFilterTask.queryDistanceFilter();
+        JSONObject processResults = distanceFilterTask.processGeoSearchResult(queryResults);
+        requestParams.append("distanceFilter", processResults);
+        //System.out.print(queryResults);
         }
         //requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
       }
