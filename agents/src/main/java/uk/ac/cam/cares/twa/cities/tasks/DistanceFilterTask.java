@@ -6,6 +6,7 @@ import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.arq.querybuilder.handlers.WhereHandler;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementService;
@@ -14,7 +15,9 @@ import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.apache.jena.sparql.core.Var;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.twa.cities.model.geo.EnvelopeCentroid;
@@ -149,37 +152,59 @@ public class DistanceFilterTask {
         return envelop;
     }
 
-    public double calcGeomtryArea(String geomStr){
-        List<Coordinate> coords = GeoSpatialProcessor.str2coords(geomStr);
-        GeometryFactory factory = new GeometryFactory();
-
-
-
-        return 0;
-
+    public double calcGeomtryArea(String geomStr, String geomType){
+        Geometry polyon = GeoSpatialProcessor.createGeometry(geomStr, geomType);
+        return polyon.getArea();
     }
 
-    // Process queryDistanceFilter Result
-    public JSONArray processGeoSearchResult(JSONArray results){
+    // Process queryDistanceFilter Result, the results should be sorted
+    public JSONObject processGeoSearchResult(JSONArray results){
 
-        JSONObject geosearchResults = new JSONObject();
-        geosearchResults.put("numOfPlots", results.length());
+        JSONObject geosearch = new JSONObject();
+        geosearch.put("numOfPlots", results.length());
+        JSONArray processedResults = new JSONArray();
+        double totalArea = 0;
+        String previousZone = results.getJSONObject(0).getString("zone");
+        double zoneTotalArea = 0;
+
+        JSONArray zoneAreaArray = new JSONArray();
+
+        ArrayList<String> zoneNameList = new ArrayList<>();
 
         for (int i = 0; i < results.length(); ++i){
             JSONObject obj = results.getJSONObject(i);
             String geomStr = obj.getString("geoms");
-            double geomArea = calcGeomtryArea(geomStr);
+            String geomType = obj.getString("geomType");
+            double geomArea = calcGeomtryArea(geomStr, geomType);
+            obj.put("area", geomArea);
+            totalArea += geomArea;
+            zoneNameList.add(obj.getString("zone"));
+            processedResults.put(obj);
 
+            if (!previousZone.equals(obj.getString("zone"))){
+                JSONObject zoneNameArea = new JSONObject();
+                zoneNameArea.put("zoneName", obj.getString("zone"));
+                zoneNameArea.put("zoneArea", zoneTotalArea);
+                zoneAreaArray.put(zoneNameArea);
+                // reset
+                previousZone = obj.getString("zone");
+                zoneTotalArea = geomArea;
+            }else{
+                zoneTotalArea += geomArea;
+            }
         }
 
+        // Checking
+        if (zoneNameList.size() == results.length()){
+            Set<String> zoneNameSet = new HashSet<>(zoneNameList);
+            geosearch.put("availableZone", zoneNameSet.toArray());
+        }else{
+            throw new RuntimeException("zoneNameList doesn't match with result size");
+        }
+        geosearch.put("areaPerZone",zoneAreaArray);
+        geosearch.put("totalArea", totalArea);
 
-
-
-
-
-
-
-        return null;
+        return geosearch;
     }
 
     public JSONArray queryDistanceFilter(){
@@ -235,10 +260,11 @@ public class DistanceFilterTask {
         WhereBuilder wb2 = new WhereBuilder()
                 .addPrefix("ocgml", ocgml)
                 .addWhere("?surface", "ocgml:cityObjectId", "?gen_obj")
-                .addWhere("?surface", "ocgml:GeometryType", "?geoms");
+                .addWhere("?surface", "ocgml:GeometryType", "?geoms")
+                .addBind("datatype(?geoms)", "?geomType");
 
         String surfaceGeometryGraph = namespaceURl + "/surfacegeometry/";
-        sb.addVar("?geoms").addGraph(NodeFactory.createURI(surfaceGeometryGraph), wb2);
+        sb.addVar("?geoms").addVar("?geomType").addGraph(NodeFactory.createURI(surfaceGeometryGraph), wb2);
 
         // Part 3: ontozone
         WhereBuilder wb3 = new WhereBuilder()
@@ -270,7 +296,7 @@ public class DistanceFilterTask {
         body.addElement(new ElementService(geo + "search", wb.build().getQueryPattern()));
         body.addElement(sb.build().getQueryPattern());  // addElement with sb can include the graph. can avoid using WhereHandler to extend the query / add the graph afterwards (see testing purpose example)
         query.setQueryPattern(body);
-
+        query.addOrderBy(new SortCondition(Var.alloc("zone"), 1));
         return query;
     }
 
