@@ -114,6 +114,9 @@ public class CityInformationAgent extends JPSAgent {
         // Trigger the first query for allowable Landuse and GFA (current set in distanceFilterTask)
         JSONArray returnResults = distanceFilterTask.queryAllowUseAndGFA();
         requestParams.append(ALLOW_USE_GFA, returnResults);
+
+        distanceFilterTask.calcEnvelopCentroid(cityObjectIri);
+
         }
         //requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
       }
