@@ -3,6 +3,8 @@ let selectedPlotsId = [];
 let colorSpaceForPlots = ["#845EC2", "#D65DB1", "#FFC75F", "#0081CF", "#00C9A7"];
 let labelForPlots = ["A", "B", "C", "D","E"];
 let selectedPlotsUnifier = "SSS_selectedPlots";
+let mSquare = ' m<sup>2</sup>';
+
 
 /*
 function listHighlightedObjects() {
@@ -99,7 +101,7 @@ function startComparison(){
     
     // Reset the comparison panel 
     setTableVisibility(5, "none");
-    // TODO: Empty the content of all the table
+    // Empty the content of all the table
     resetTableContentAll();
 
     openBottomNav();
@@ -111,7 +113,7 @@ function startComparison(){
     createTableContent(selectedPlotsId);
 
     setPlotIdintoTable(selectedPlotsId);
-    //queryDistanceFilter(selectedPlotsId);
+    queryDistanceFilter(selectedPlotsId);
 
     // Alert
     //if (selectedPlotsId.length == 0){
@@ -119,27 +121,46 @@ function startComparison(){
     //} 
 }
 
-/** 
-function queryDistanceFilter(selectedPlotsId){
-    for (var i = 0; i < selectedPlotsId.length; i++) {
 
-    const iri = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/" + selectedPlotsId[i] +"/";
+function queryDistanceFilter(selectedPlotsId){
+    for (var k = 0; k < selectedPlotsId.length; ++k) {
+        const iri = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/" + selectedPlotsId[k] +"/";
+        let index = k;  // this makes sure the index will be synchron with the loop
         $.ajax({
             url: "http://localhost:8080/agents/cityobjectinformation",
             type: 'POST',
-            data: JSON.stringify({'iris': [iri], 'searchDistance': 500),
+            data: JSON.stringify({'iris': [iri], 'searchDistance': 500}),
             dataType: 'json',
             contentType: 'application/json',
             success: function (data) { //function (data, status_message, xhr)
-                //console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
-                //console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filteredCounts"]);
-                console.log(data["allowableUSEandGFA"]);
-            }
-        });
+                processAllowableUSEandGFA(index+1, data["allowableUSEandGFA"][0]);
+                //console.log(index);
+                //console.log(iri);
+                //console.log(data["allowableUSEandGFA"][0]);}
+            }});
+        
     }
 }
 
-*/
+// input: Array of JSONobject
+function processAllowableUSEandGFA(tableNum, arrayOfJsonObjects){
+    let selected = '#table'+ tableNum +' .item7';
+    var targetCell = document.querySelector(selected);
+    let textDiv = document.createElement("div");
+    textDiv.style.textAlign = "right";
+
+    for (var i = 0; i < arrayOfJsonObjects.length; i++) {
+        textDiv.appendChild(document.createElement("br"));
+        let textSpan = document.createElement('span');
+        if (arrayOfJsonObjects[i]["zoning_case"] != null){
+            textSpan.innerHTML = arrayOfJsonObjects[i]["zoning_case"] + ": " + arrayOfJsonObjects[i]["gfa_metres"] + mSquare;
+        }else{
+            textSpan.innerHTML = arrayOfJsonObjects[i]["zone"] + ": " + arrayOfJsonObjects[i]["gfa_metres"] + mSquare;
+        }
+        textDiv.appendChild(textSpan);
+    }
+    targetCell.appendChild(textDiv);
+}
 
 
 
