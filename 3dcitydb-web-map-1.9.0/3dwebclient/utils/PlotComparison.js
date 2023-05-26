@@ -134,6 +134,7 @@ function queryDistanceFilter(selectedPlotsId){
             contentType: 'application/json',
             success: function (data) { //function (data, status_message, xhr)
                 processAllowableUSEandGFA(index+1, data["allowableUSEandGFA"][0]);
+                processAreaPerZoneName(index+1, data["distanceFilter"][0]);
                 //console.log(index);
                 //console.log(iri);
                 //console.log(data["allowableUSEandGFA"][0]);}
@@ -163,6 +164,29 @@ function processAllowableUSEandGFA(tableNum, arrayOfJsonObjects){
 }
 
 
+// input: JSONobject
+function processAreaPerZoneName(tableNum, resultsObjects){
+    var target17 = document.querySelector('#table'+ tableNum +' .item17');
+    let textDiv = document.createElement("div");
+    textDiv.style.textAlign = "right";
+    let areaPerZone = resultsObjects["areaPerZone"];
+    let totalArea = resultsObjects["totalArea"];
+
+    for (var i = 0; i < areaPerZone.length; i++) {
+        textDiv.appendChild(document.createElement("br"));
+        let textSpan = document.createElement('span');
+        textSpan.innerHTML = areaPerZone[i]["zoneName"] + ": " + ((areaPerZone[i]["zoneArea"] / totalArea)*100).toFixed(2) + "%";
+        textDiv.appendChild(textSpan);
+    }
+    target17.appendChild(textDiv);
+
+    // number of plots
+    var target8 = document.querySelector('#table'+ tableNum +' .item8');
+    target8.innerHTML = target8.innerHTML.replace("{numOfPlots}", resultsObjects["numOfPlots"]);
+
+}
+
+
 
 
 
@@ -188,11 +212,9 @@ function createTableContent(plotIdList){
 function setPlotIdintoTable(selectedPlots){
     for (var i = 1; i < selectedPlots.length+1; i++) {
         let tableVisibility = document.getElementById("table"+ i);
-        let selected = '#table'+ i +' .item4';
         if (tableVisibility.style.display == "grid"){
-            let selectedSpan = document.querySelector(selected).firstChild;
-            document.querySelector(selected).style.setProperty("background-color", colorSpaceForPlots[i-1]);
-            selectedSpan.innerHTML = selectedSpan.innerHTML.replace('{plotid}', selectedPlots[i-1]); 
+            document.querySelector('#table'+ i +' .item4').style.setProperty("background-color", colorSpaceForPlots[i-1]);
+            document.querySelector('#table'+ i +' .item18').innerHTML = selectedPlots[i-1]; 
         }
     }
 }
