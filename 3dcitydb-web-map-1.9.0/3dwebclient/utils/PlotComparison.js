@@ -149,18 +149,27 @@ function processAllowableUSEandGFA(tableNum, arrayOfJsonObjects){
     var targetCell = document.querySelector(selected);
     let textDiv = document.createElement("div");
     textDiv.style.textAlign = "right";
-
-    for (var i = 0; i < arrayOfJsonObjects.length; i++) {
-        textDiv.appendChild(document.createElement("br"));
-        let textSpan = document.createElement('span');
-        if (arrayOfJsonObjects[i]["zoning_case"] != null){
-            textSpan.innerHTML = arrayOfJsonObjects[i]["zoning_case"] + ": " + arrayOfJsonObjects[i]["gfa_metres"] + mSquare;
-        }else{
-            textSpan.innerHTML = arrayOfJsonObjects[i]["zone"] + ": " + arrayOfJsonObjects[i]["gfa_metres"] + mSquare;
+    textDiv.appendChild(document.createElement("br"));
+    if (arrayOfJsonObjects.length != 0){
+        for (var i = 0; i < arrayOfJsonObjects.length; i++) {
+            let textSpan = document.createElement('span');
+            if (arrayOfJsonObjects[i]["zoning_case"] != null){
+                textSpan.innerHTML = shortenNameIfnecessary(arrayOfJsonObjects[i]["zoning_case"]) + ": " + arrayOfJsonObjects[i]["gfa_metres"] + mSquare;
+            }else{
+                textSpan.innerHTML = shortenNameIfnecessary(arrayOfJsonObjects[i]["zone"]) + ": " + arrayOfJsonObjects[i]["gfa_metres"] + mSquare;
+            }
+            textDiv.appendChild(textSpan);
         }
+        targetCell.appendChild(textDiv);
+    } else {
+        // no GFA is available
+        
+        let textSpan = document.createElement('span');
+        textSpan.innerHTML = "No GFA is available for this plot <br> because of its land use.";
         textDiv.appendChild(textSpan);
+        targetCell.appendChild(textDiv);
     }
-    targetCell.appendChild(textDiv);
+    
 }
 
 
@@ -175,7 +184,7 @@ function processAreaPerZoneName(tableNum, resultsObjects){
     for (var i = 0; i < areaPerZone.length; i++) {
         textDiv.appendChild(document.createElement("br"));
         let textSpan = document.createElement('span');
-        textSpan.innerHTML = areaPerZone[i]["zoneName"] + ": " + ((areaPerZone[i]["zoneArea"] / totalArea)*100).toFixed(2) + "%";
+        textSpan.innerHTML = shortenNameIfnecessary(areaPerZone[i]["zoneName"]) + ": " + ((areaPerZone[i]["zoneArea"] / totalArea)*100).toFixed(2) + "%";
         textDiv.appendChild(textSpan);
     }
     target17.appendChild(textDiv);
@@ -187,7 +196,18 @@ function processAreaPerZoneName(tableNum, resultsObjects){
 }
 
 
+function shortenNameIfnecessary(longname){
 
+    if (longname.length > 22){
+        const words = longname.split(/(?=[A-Z])/);
+        let newWord = [];
+        for (var i = 0; i<words.length; i++){
+            newWord.push(words[i].substring(0,4));
+        }
+        return newWord.join("");   
+    }
+    return longname;
+}
 
 
 function resetTableContentAll(){
