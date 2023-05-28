@@ -149,9 +149,10 @@ function processAllowableUSEandGFA(tableNum, arrayOfJsonObjects){
     var targetCell = document.querySelector(selected);
     let textDiv = document.createElement("div");
     textDiv.style.textAlign = "right";
-    textDiv.appendChild(document.createElement("br"));
+    
     if (arrayOfJsonObjects.length != 0){
         for (var i = 0; i < arrayOfJsonObjects.length; i++) {
+            textDiv.appendChild(document.createElement("br"));
             let textSpan = document.createElement('span');
             if (arrayOfJsonObjects[i]["zoning_case"] != null){
                 textSpan.innerHTML = shortenNameIfnecessary(arrayOfJsonObjects[i]["zoning_case"]) + ": " + arrayOfJsonObjects[i]["gfa_metres"] + mSquare;

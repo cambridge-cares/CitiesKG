@@ -112,12 +112,17 @@ public class CityInformationAgent extends JPSAgent {
 
         DistanceFilterTask distanceFilterTask = new DistanceFilterTask(cityObjectIri, searchDistance, route);
         // Trigger the first query for allowable Landuse and GFA (current set in distanceFilterTask)
-        JSONArray returnResults = distanceFilterTask.queryAllowUseAndGFA();
-        requestParams.append(ALLOW_USE_GFA, returnResults);
+        JSONArray allowGFAResults = distanceFilterTask.queryAllowUseAndGFA();
+        requestParams.append(ALLOW_USE_GFA, allowGFAResults);
 
-        JSONArray queryResults = distanceFilterTask.queryDistanceFilter();
-        JSONObject processResults = distanceFilterTask.processGeoSearchResult(queryResults);
-        requestParams.append("distanceFilter", processResults);
+        JSONArray distanceFilterResults = distanceFilterTask.queryDistanceFilter();
+        JSONObject processedResults = distanceFilterTask.processGeoSearchResult(distanceFilterResults);
+        requestParams.append("distanceFilter", processedResults);
+
+        JSONArray presentGFAResults = distanceFilterTask.queryPresentLandUseGFA();
+        requestParams.append("presentLandUseGFA", presentGFAResults);
+
+
         //System.out.print(queryResults);
         }
         //requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);

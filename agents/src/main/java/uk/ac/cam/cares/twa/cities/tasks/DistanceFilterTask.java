@@ -73,6 +73,41 @@ public class DistanceFilterTask {
         return queryResult;
     }
 
+    public JSONArray queryPresentLandUseGFA(){
+        String sparqlQuery = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>\n" +
+                "\n" +
+                "SELECT ?landuseType ?gfaValue \n" +
+                "WHERE {\n" +
+                "  GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobjectgenericattrib_andrea> {\n" +
+                "    ?subject ocgml:cityObjectId {CITYOBJECTID} \n" +
+                "    ?subject ocgml:attrName ?landuseType.\n" +
+                "    ?subject ocgml:intVal ?gfaValue.\n" +
+                "    \n" +
+                "  }\n" +
+                "}\n";
+
+        sparqlQuery = sparqlQuery.replace("{CITYOBJECTIRI}", this.cityObjectIri);
+        JSONArray queryResult = AccessAgentCaller.queryStore(sparqlEndpoint, sparqlQuery);
+
+        // Process the resultData, don't forward non-zero value
+        JSONArray landuseGFA = new JSONArray();
+
+        for (int i = 0; i < queryResult.length(); ++i){
+            JSONObject obj = queryResult.getJSONObject(i);
+            String gfaType = obj.getString("landuseType");
+            String gfaValue = obj.getString("gfaValue");
+            if (Double.parseDouble(gfaValue) > 0 ) {
+                JSONObject row = new JSONObject();
+                row.put("landuseType", gfaType);
+                row.put("gfaValue", gfaValue);
+                landuseGFA.put(row);
+            }
+        }
+
+        return landuseGFA;
+
+    }
+
     public double[] calcEnvelopCentroid (String cityObjectIri){
         String sparqlQuery = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>\n" +
                 "\n" +
