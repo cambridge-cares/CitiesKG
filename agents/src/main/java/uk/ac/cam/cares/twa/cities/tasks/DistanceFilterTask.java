@@ -270,7 +270,18 @@ public class DistanceFilterTask {
             String queryString = actualquery.toString().replace("PLACEHOLDER", "");
             JSONArray queryResult = AccessAgentCaller.queryStore(sparqlEndpoint, queryString);
 
-            return processGeoSearchResult(queryResult);
+            JSONObject distanceFilterResults = processGeoSearchResult(queryResult);
+
+            Integer allowParks = getAllowParksWithinBounds();
+            distanceFilterResults.append("allowParks", allowParks);
+
+            Integer mrt = getTransportWithinBounds("MRT");
+            distanceFilterResults.append("numOfMrt", mrt);
+
+            Integer busstops = getTransportWithinBounds("BUS_STOP");
+            distanceFilterResults.append("numOfBusstop", busstops);
+
+            return distanceFilterResults;
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -324,7 +335,7 @@ public class DistanceFilterTask {
         return query;
     }
 
-    public JSONArray getAllowParksWithinBounds(){
+    public Integer getAllowParksWithinBounds(){
 
         SelectBuilder sb = new SelectBuilder();
         ElementGroup elementGroup = new ElementGroup();
@@ -351,10 +362,13 @@ public class DistanceFilterTask {
         query.setQueryPattern(elementGroup);
         String queryString = query.toString().replace("PLACEHOLDER", "");
         JSONArray queryResult = AccessAgentCaller.queryStore(sparqlEndpoint, queryString);
-        return queryResult;
+
+        JSONObject obj = queryResult.getJSONObject(0);
+        return obj.getInt("numOfObjs");
+
     }
 
-    public JSONArray getTransportWithinBounds(String MRTorBusstop){
+    public Integer getTransportWithinBounds(String MRTorBusstop){
 
         SelectBuilder sb = new SelectBuilder();
         ElementGroup elementGroup = new ElementGroup();
@@ -384,7 +398,9 @@ public class DistanceFilterTask {
         query.setQueryPattern(elementGroup);
         String queryString = query.toString().replace("PLACEHOLDER", "");
         JSONArray queryResult = AccessAgentCaller.queryStore(sparqlEndpoint, queryString);
-        return queryResult;
+
+        JSONObject obj = queryResult.getJSONObject(0);
+        return obj.getInt("numOfObjs");
     }
 
 

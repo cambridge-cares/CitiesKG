@@ -134,7 +134,8 @@ function queryDistanceFilter(selectedPlotsId){
             contentType: 'application/json',
             success: function (data) { //function (data, status_message, xhr)
                 processAllowableUSEandGFA(index+1, data["allowableUSEandGFA"][0]);
-                processAreaPerZoneName(index+1, data["distanceFilter"][0]);
+                processDistanceFilter(index+1, data["distanceFilter"][0]);
+                processpresentLandUseGFA(index+1, data["presentLandUseGFA"][0]);
                 //console.log(index);
                 //console.log(iri);
                 //console.log(data["allowableUSEandGFA"][0]);}
@@ -142,6 +143,31 @@ function queryDistanceFilter(selectedPlotsId){
         
     }
 }
+
+
+function processpresentLandUseGFA(tableNum, arrayOfJsonObjects){
+    let selected = '#table'+ tableNum +' .item5';
+    var targetCell = document.querySelector(selected);
+    let textDiv = document.createElement("div");
+    textDiv.style.textAlign = "right";
+
+    if (arrayOfJsonObjects.length != 0){
+        for (var i = 0; i < arrayOfJsonObjects.length; i++) {
+            textDiv.appendChild(document.createElement("br"));
+            let textSpan = document.createElement('span');
+            textSpan.innerHTML = shortenNameIfnecessary(arrayOfJsonObjects[i]["landuseType"]) + ": " + arrayOfJsonObjects[i]["gfaValue"] + mSquare;
+            textDiv.appendChild(textSpan);
+        }
+        targetCell.appendChild(textDiv);
+    } else {
+        // no GFA is available
+        let textSpan = document.createElement('span');
+        textSpan.innerHTML = "No GFA is available for this plot.";
+        textDiv.appendChild(textSpan);
+        targetCell.appendChild(textDiv);
+    }
+}
+
 
 // input: Array of JSONobject
 function processAllowableUSEandGFA(tableNum, arrayOfJsonObjects){
@@ -170,12 +196,11 @@ function processAllowableUSEandGFA(tableNum, arrayOfJsonObjects){
         textDiv.appendChild(textSpan);
         targetCell.appendChild(textDiv);
     }
-    
 }
 
 
 // input: JSONobject
-function processAreaPerZoneName(tableNum, resultsObjects){
+function processDistanceFilter(tableNum, resultsObjects){
     var target17 = document.querySelector('#table'+ tableNum +' .item17');
     let textDiv = document.createElement("div");
     textDiv.style.textAlign = "right";
@@ -193,6 +218,19 @@ function processAreaPerZoneName(tableNum, resultsObjects){
     // number of plots
     var target8 = document.querySelector('#table'+ tableNum +' .item8');
     target8.innerHTML = target8.innerHTML.replace("{numOfPlots}", resultsObjects["numOfPlots"]);
+
+    // number of MRT and busstops
+    let numOfMrt = resultsObjects["numOfMrt"];
+    let numOfBusstop = resultsObjects["numOfBusstop"];
+
+    var target12 = document.querySelector('#table'+ tableNum +' .item12');
+    target12.innerHTML = target12.innerHTML.replace("{MRT}", numOfMrt);
+    target12.innerHTML = target12.innerHTML.replace("{BUS}", numOfBusstop);
+
+    // number of allowable Parks
+    let allowParks = resultsObjects["allowParks"];
+    var target11 = document.querySelector('#table'+ tableNum +' .item11');
+    target11.innerHTML = target11.innerHTML.replace("{allowParks}", allowParks);
 
 }
 

@@ -115,23 +115,12 @@ public class CityInformationAgent extends JPSAgent {
         JSONArray allowGFAResults = distanceFilterTask.queryAllowUseAndGFA();
         requestParams.append(ALLOW_USE_GFA, allowGFAResults);
 
-        JSONObject distanceFilter = distanceFilterTask.queryDistanceFilter();
-        requestParams.append("distanceFilter", distanceFilter);
-
         JSONArray presentLandUseGFA = distanceFilterTask.queryPresentLandUseGFA();
         requestParams.append("presentLandUseGFA", presentLandUseGFA);
 
-        JSONArray allowParks = distanceFilterTask.getAllowParksWithinBounds();
-        requestParams.append("allowParks", allowParks);
-
-        JSONArray mrt = distanceFilterTask.getTransportWithinBounds("MRT");
-        requestParams.append("mrt", mrt);
-
-        JSONArray busstops = distanceFilterTask.getTransportWithinBounds("BUS_STOP");
-        requestParams.append("busstops", busstops);
-        //System.out.print(queryResults);
+        JSONObject distanceFilter = distanceFilterTask.queryDistanceFilter();
+        requestParams.append("distanceFilter", distanceFilter);
         }
-        //requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
       }
 
       JSONArray cityObjectInformation = new JSONArray();
