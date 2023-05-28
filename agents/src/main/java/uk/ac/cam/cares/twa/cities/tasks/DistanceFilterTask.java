@@ -8,6 +8,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.path.PathFactory;
+import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementService;
 import org.apache.jena.vocabulary.VOID;
@@ -39,11 +40,14 @@ public class DistanceFilterTask {
     public String namespaceURl = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql";
     public String hint = "http://www.bigdata.com/queryHints#";
 
+    private String lowerBounds;
+    private String upperBounds;
 
     public DistanceFilterTask(String cityObjectIri, double searchDistance, String route){
         this.cityObjectIri = cityObjectIri;
         this.searchDistance = searchDistance / 1000;  // km
         this.sparqlEndpoint = route;
+        prepareBounds();
     }
 
     public JSONArray queryAllowUseAndGFA(){
@@ -75,14 +79,13 @@ public class DistanceFilterTask {
 
     public JSONArray queryPresentLandUseGFA(){
         String sparqlQuery = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>\n" +
-                "\n" +
+                "PREFIX selected_plot: <{CITYOBJECTIRI}>\n" +
                 "SELECT ?landuseType ?gfaValue \n" +
                 "WHERE {\n" +
                 "  GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobjectgenericattrib_andrea> {\n" +
-                "    ?subject ocgml:cityObjectId {CITYOBJECTID} \n" +
+                "    ?subject ocgml:cityObjectId selected_plot: . \n" +
                 "    ?subject ocgml:attrName ?landuseType.\n" +
                 "    ?subject ocgml:intVal ?gfaValue.\n" +
-                "    \n" +
                 "  }\n" +
                 "}\n";
 
@@ -96,9 +99,11 @@ public class DistanceFilterTask {
             JSONObject obj = queryResult.getJSONObject(i);
             String gfaType = obj.getString("landuseType");
             String gfaValue = obj.getString("gfaValue");
-            if (Double.parseDouble(gfaValue) > 0 ) {
+            if (!gfaType.equals("has_Car_Park") && Double.parseDouble(gfaValue) > 0 ) {
+                // GFA_carpark --> carpark
+                String[] landuseName = gfaType.split("_");
                 JSONObject row = new JSONObject();
-                row.put("landuseType", gfaType);
+                row.put("landuseType", landuseName[1]);
                 row.put("gfaValue", gfaValue);
                 landuseGFA.put(row);
             }
@@ -242,24 +247,30 @@ public class DistanceFilterTask {
         return geosearch;
     }
 
-    public JSONArray queryDistanceFilter(){
+    private void prepareBounds(){
         // Get Envelop Center
         double[] envelopCentroid = calcEnvelopCentroid(this.cityObjectIri);
         // Get LowerBounds String
         double[] lowerCorner = createBboxCorner(envelopCentroid[0], envelopCentroid[1], -this.searchDistance, -this.searchDistance);
-        String lowerBounds = createCornerString(lowerCorner[0], lowerCorner[1], 0.0);
+        lowerBounds = createCornerString(lowerCorner[0], lowerCorner[1], 0.0);
         // Get UpperBounds String
         double[] upperCorner = createBboxCorner(envelopCentroid[0], envelopCentroid[1], this.searchDistance, this.searchDistance);
-        String upperBounds = createCornerString(upperCorner[0], upperCorner[1], 1000);
+        upperBounds = createCornerString(upperCorner[0], upperCorner[1], 1000);
 
         // LowerBounds: 1.253371#103.774452#0#1.253371#103.774452#0#1.253371#103.774452#0#1.253371#103.774452#0#1.253371#103.774452#0
         // UpperBounds: 1.335576#103.868351#1000#1.335576#103.868351#1000#1.335576#103.868351#1000#1.335576#103.868351#1000#1.335576#103.868351#1000
+    }
+
+    public JSONObject queryDistanceFilter(){
 
         try {
             Query actualquery= getInfoWithinBoundsQuery(cityObjectIri, lowerBounds, upperBounds);
+            //Query actualquery = getAllowParksWithinBounds(cityObjectIri, lowerBounds, upperBounds);
+            //Query actualquery = getTransportWithinBounds(lowerBounds, upperBounds, "MRT"); // MRT or BUS_STOP
             String queryString = actualquery.toString().replace("PLACEHOLDER", "");
             JSONArray queryResult = AccessAgentCaller.queryStore(sparqlEndpoint, queryString);
-            return queryResult;
+
+            return processGeoSearchResult(queryResult);
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -276,6 +287,107 @@ public class DistanceFilterTask {
         String[] splitUri = uriString.split("/");
         return String.join("/", Arrays.copyOfRange(splitUri, 0, splitUri.length - 2))+"/";
     }
+
+    private Query buildQueryWithinBounds(String lowerBounds, String upperBounds) throws ParseException {
+
+        SelectBuilder sb = new SelectBuilder();
+
+        // Part 1: cityobject
+        WhereBuilder wb1 = new WhereBuilder()
+                .addPrefix("ocgml", ocgml)
+                .addWhere("?cityObject", "ocgml:EnvelopeType", "?envelope");
+
+        String cityObjectGraph = namespaceURl + "/cityobject/";
+        sb.addGraph(NodeFactory.createURI(cityObjectGraph), wb1);
+
+        // SERVICE geo:search
+        // where clause for geospatial search
+        WhereBuilder wb = new WhereBuilder()
+                .addPrefix("ocgml", ocgml)
+                .addPrefix("geo", geo)
+                .addPrefix("hint", hint)
+                .addWhere("?cityObject", "geo:predicate", "ocgml:EnvelopeType")
+                .addWhere("?cityObject", "geo:searchDatatype", customDataType)
+                .addWhere("?cityObject", "geo:customFields", customField)
+                // PLACEHOLDER because lowerBounds and upperBounds would be otherwise added as doubles, not strings
+                .addWhere("?cityObject", "geo:customFieldsLowerBounds", "PLACEHOLDER"+lowerBounds)
+                .addWhere("?cityObject", "geo:customFieldsUpperBounds", "PLACEHOLDER"+upperBounds)
+                .addWhere("hint:Prior", "hint:runFirst", "true");
+
+        Query query = sb.build();
+        // add geospatial service
+        ElementGroup body = new ElementGroup();
+        body.addElement(new ElementService(geo + "search", wb.build().getQueryPattern()));
+        body.addElement(sb.build().getQueryPattern());  // addElement with sb can include the graph. can avoid using WhereHandler to extend the query / add the graph afterwards (see testing purpose example)
+        query.setQueryPattern(body);
+
+        return query;
+    }
+
+    public JSONArray getAllowParksWithinBounds(){
+
+        SelectBuilder sb = new SelectBuilder();
+        ElementGroup elementGroup = new ElementGroup();
+        try {
+            sb.addVar("COUNT(?cityObject)", "?numOfObjs");
+            // ontozone
+            WhereBuilder wb1 = new WhereBuilder()
+                    .addPrefix("zo", zo)
+                    .addWhere("?cityObject", "zo:hasZone", "zo:Park");
+
+            String cityObjectGraph = namespaceURl + "/ontozone/";
+            sb.addGraph(NodeFactory.createURI(cityObjectGraph), wb1);
+
+            Query preparedQuery = buildQueryWithinBounds(lowerBounds, upperBounds);
+            elementGroup = (ElementGroup) preparedQuery.getQueryPattern();
+            //elementGroup.addElement();
+            elementGroup.getElements().add(sb.build().getQueryPattern());
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        Query query = sb.build();
+        query.setQueryPattern(elementGroup);
+        String queryString = query.toString().replace("PLACEHOLDER", "");
+        JSONArray queryResult = AccessAgentCaller.queryStore(sparqlEndpoint, queryString);
+        return queryResult;
+    }
+
+    public JSONArray getTransportWithinBounds(String MRTorBusstop){
+
+        SelectBuilder sb = new SelectBuilder();
+        ElementGroup elementGroup = new ElementGroup();
+        try {
+            sb.addVar("COUNT(?cityObject)", "?numOfObjs");
+            // cityobjectgenericattrib
+            WhereBuilder wb1 = new WhereBuilder()
+                    .addPrefix("ocgml", ocgml)
+                    .addWhere("?attr", "ocgml:cityObjectId", "?cityObject")
+                    .addWhere("?attr", "ocgml:attrName", "TYPE")
+                    .addWhere("?attr", "ocgml:strVal", MRTorBusstop);
+
+            String cityObjectGraph = namespaceURl + "/cityobjectgenericattrib/";
+            sb.addGraph(NodeFactory.createURI(cityObjectGraph), wb1);
+
+            Query preparedQuery = buildQueryWithinBounds(lowerBounds, upperBounds);
+            elementGroup = (ElementGroup) preparedQuery.getQueryPattern();
+            //elementGroup.addElement();
+            elementGroup.getElements().add(sb.build().getQueryPattern());
+
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        Query query = sb.build();
+        query.setQueryPattern(elementGroup);
+        String queryString = query.toString().replace("PLACEHOLDER", "");
+        JSONArray queryResult = AccessAgentCaller.queryStore(sparqlEndpoint, queryString);
+        return queryResult;
+    }
+
+
 
 
     // Query for lower part
