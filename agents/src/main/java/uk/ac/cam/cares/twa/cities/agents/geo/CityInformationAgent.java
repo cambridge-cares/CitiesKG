@@ -118,6 +118,9 @@ public class CityInformationAgent extends JPSAgent {
         JSONArray presentLandUseGFA = distanceFilterTask.queryPresentLandUseGFA();
         requestParams.append("presentLandUseGFA", presentLandUseGFA);
 
+        double plotArea = distanceFilterTask.getPlotArea();
+        requestParams.append("plotArea", plotArea);
+
         JSONObject distanceFilter = distanceFilterTask.queryDistanceFilter();
         requestParams.append("distanceFilter", distanceFilter);
         }

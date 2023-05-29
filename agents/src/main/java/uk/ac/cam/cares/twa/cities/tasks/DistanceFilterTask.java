@@ -194,7 +194,13 @@ public class DistanceFilterTask {
 
     public double calcGeomtryArea(String geomStr, String geomType){
         Geometry polyon = GeoSpatialProcessor.createGeometry(geomStr, geomType);
-        return polyon.getArea();
+
+        GeoSpatialProcessor geop = new GeoSpatialProcessor();
+        Geometry transformed = geop.Transform(polyon, 4326, 3414);
+        double areaInWGS = polyon.getArea();
+        double areaInSqMeter = transformed.getArea();
+
+        return areaInSqMeter;
     }
 
     // Process queryDistanceFilter Result, the results should be sorted
@@ -247,6 +253,33 @@ public class DistanceFilterTask {
         return geosearch;
     }
 
+    public double getPlotArea(){
+
+        String sparqlQuery = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>\n" +
+                "PREFIX selected_plot: <{CITYOBJECTIRI}>\n" +
+                "\n" +
+                "SELECT ?geoms  (DATATYPE(?geoms) AS ?geomType)\n" +
+                "WHERE { \n" +
+                "  GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/>\n" +
+                "        { ?cityObject  ocgml:id  selected_plot: . \n" +
+                "          BIND(iri(replace(str(?cityObject), \"cityobject\", \"genericcityobject\")) AS ?gen_obj)\n" +
+                "        }\n" +
+                "\tGRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/surfacegeometry/>\n" +
+                "        { ?surface  ocgml:cityObjectId  ?gen_obj ;\n" +
+                "                    ocgml:GeometryType  ?geoms .} \n" +
+                "}\n";
+
+        sparqlQuery = sparqlQuery.replace("{CITYOBJECTIRI}", this.cityObjectIri);
+        JSONArray queryResult = AccessAgentCaller.queryStore(sparqlEndpoint, sparqlQuery);
+
+        JSONObject obj = queryResult.getJSONObject(0);
+
+        String geomStr = obj.getString("geoms");
+        String geomType = obj.getString("geomType");
+        double area = calcGeomtryArea(geomStr, geomType);
+
+        return area;
+    }
     private void prepareBounds(){
         // Get Envelop Center
         double[] envelopCentroid = calcEnvelopCentroid(this.cityObjectIri);

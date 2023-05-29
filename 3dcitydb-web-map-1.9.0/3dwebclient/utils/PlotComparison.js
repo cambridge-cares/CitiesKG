@@ -136,6 +136,7 @@ function queryDistanceFilter(selectedPlotsId){
                 processAllowableUSEandGFA(index+1, data["allowableUSEandGFA"][0]);
                 processDistanceFilter(index+1, data["distanceFilter"][0]);
                 processpresentLandUseGFA(index+1, data["presentLandUseGFA"][0]);
+                processPlotArea (index+1, data["plotArea"]);
                 //console.log(index);
                 //console.log(iri);
                 //console.log(data["allowableUSEandGFA"][0]);}
@@ -143,6 +144,17 @@ function queryDistanceFilter(selectedPlotsId){
         
     }
 }
+
+
+
+function processPlotArea(tableNum, plotArea){
+    let selected = '#table'+ tableNum +' .item4';
+    var target4 = document.querySelector(selected);
+    let textspan = target4.firstChild;
+    textspan.innerHTML = textspan.innerHTML.replace("{totalArea}", plotArea);
+}
+
+
 
 
 function processpresentLandUseGFA(tableNum, arrayOfJsonObjects){
