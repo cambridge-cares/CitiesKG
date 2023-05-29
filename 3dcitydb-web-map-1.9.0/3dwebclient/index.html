@@ -711,10 +711,14 @@
             </div>
 
             <div id="demo2" class="programmeFinder_toolbox" style="display: none;">
-                <button class="ProgrammaticPlotFinder-submitButton" onclick="showSelection()"><span>Show the selection</span></button>
-                <button class="ProgrammaticPlotFinder-submitButton" onclick="clearSelection()"><span>Clear the selection</span></button>
-                <button class="ProgrammaticPlotFinder-submitButton" onclick="startComparison()"><span>start Comparison</span></button>
-                <!--<button class="ProgrammaticPlotFinder-submitButton" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBottom" aria-controls="offcanvasBottom" onclick="startComparison()">Start Comparison</button>-->
+                <div id="programmeFinder_toolbox_upper" style="height: 50%">
+                    <div class="querySentence">Please select up to <b>5</b> plots to compare ...</div>
+            </div>
+                <div id="programmeFinder_toolbox_bottom" style="height: 50%">
+                    <button class="ProgrammaticPlotFinder-submitButton" onclick="showSelection()"><span>Show the selection</span></button>
+                    <button class="ProgrammaticPlotFinder-submitButton" onclick="clearSelection()"><span>Clear the selection</span></button>
+                    <button class="ProgrammaticPlotFinder-submitButton" onclick="startComparison()"><span>start Comparison</span></button>
+                </div>
             </div>
              
         </div>

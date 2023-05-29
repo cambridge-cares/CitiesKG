@@ -36,31 +36,37 @@ function showSelection() {
     }
 
     var highlightedObjects = webMap.getAllHighlightedObjects(); // this will return the selected objects even the plots are unloaded. 
-    
-    var selectedTitle = document.getElementById("selectplots-title");
-    selectedTitle.style.visibility = "visible";
-    var selectedPlotsList = document.getElementById("selectedPlotsList");
-    selectedPlotsList.style.visibility = "visible";
-    selectedPlotsList.style.background = "#edffff";
-    
-    // always empty the global variable selectedPlotsId before filling in
-    selectedPlotsId = [];
 
-    for (var i = 0; i < highlightedObjects.length; i++) {
-        var option = document.createElement("option");
-        option.style.color = "black";
-        option.style.padding = "5px 10px 5px 10px";
-        option.innerHTML = highlightedObjects[i];
-        option.style.color = colorSpaceForPlots[i];
-        selectedPlotsList.appendChild(option);
-        selectedPlotsId.push(highlightedObjects[i]);
+    if (highlightedObjects.length > 5){
+        window.alert("Please select up to 5 plots to compare ..");
+    } else {
+        var selectedTitle = document.getElementById("selectplots-title");
+        selectedTitle.style.visibility = "visible";
+        var selectedPlotsList = document.getElementById("selectedPlotsList");
+        selectedPlotsList.style.visibility = "visible";
+        selectedPlotsList.style.background = "#edffff";
+        
+        // always empty the global variable selectedPlotsId before filling in
+        selectedPlotsId = [];
+    
+        for (var i = 0; i < highlightedObjects.length; i++) {
+            var option = document.createElement("option");
+            option.style.color = "black";
+            option.style.padding = "5px 10px 5px 10px";
+            option.innerHTML = highlightedObjects[i];
+            option.style.color = colorSpaceForPlots[i];
+            selectedPlotsList.appendChild(option);
+            selectedPlotsId.push(highlightedObjects[i]);
+        }
+    
+        pinSelectedPlots(selectedPlotsId);
+        //highlight will be visible when the plot is visible again. 
+        //listHighlightedObjects();
+       
+        //console.log(highlightedObjects);
     }
+    
 
-    pinSelectedPlots(selectedPlotsId);
-    //highlight will be visible when the plot is visible again. 
-    //listHighlightedObjects();
-   
-    //console.log(highlightedObjects);
 }
 
 function clearSelection() {
@@ -96,29 +102,30 @@ function setTableVisibility(numberOfTable, status){
 }
 
 function startComparison(){
+    
     console.log("startComparison clicked!");
     console.log(selectedPlotsId);
-    
-    // Reset the comparison panel 
-    setTableVisibility(5, "none");
-    // Empty the content of all the table
-    resetTableContentAll();
-
-    openBottomNav();
-    
-    // Set corresponding table visible
-    setTableVisibility(selectedPlotsId.length, "grid");
-
-    // Copy table template and change the ID
-    createTableContent(selectedPlotsId);
-
-    setPlotIdintoTable(selectedPlotsId);
-    queryDistanceFilter(selectedPlotsId);
-
     // Alert
-    //if (selectedPlotsId.length == 0){
-    //    window.alert("No plot is selected for comparison !!");
-    //} 
+    if (selectedPlotsId.length == 0){
+        window.alert("No plot is selected for comparison !!");
+
+    } else {
+        // Reset the comparison panel 
+        setTableVisibility(5, "none");
+        // Empty the content of all the table
+        resetTableContentAll();
+
+        openBottomNav();
+    
+        // Set corresponding table visible
+        setTableVisibility(selectedPlotsId.length, "grid");
+
+        // Copy table template and change the ID
+        createTableContent(selectedPlotsId);
+
+        setPlotIdintoTable(selectedPlotsId);
+        queryDistanceFilter(selectedPlotsId);
+    }
 }
 
 
@@ -151,7 +158,7 @@ function processPlotArea(tableNum, plotArea){
     let selected = '#table'+ tableNum +' .item4';
     var target4 = document.querySelector(selected);
     let textspan = target4.firstChild;
-    textspan.innerHTML = textspan.innerHTML.replace("{totalArea}", plotArea);
+    textspan.innerHTML = textspan.innerHTML.replace("{totalArea}", plotArea.toFixed(2));
 }
 
 
