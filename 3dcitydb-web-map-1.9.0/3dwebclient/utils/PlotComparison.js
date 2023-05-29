@@ -158,7 +158,7 @@ function processPlotArea(tableNum, plotArea){
     let selected = '#table'+ tableNum +' .item4';
     var target4 = document.querySelector(selected);
     let textspan = target4.firstChild;
-    textspan.innerHTML = textspan.innerHTML.replace("{totalArea}", plotArea.toFixed(2));
+    textspan.innerHTML = textspan.innerHTML.replace("{totalArea}", plotArea[0].toFixed(2));
 }
 
 
