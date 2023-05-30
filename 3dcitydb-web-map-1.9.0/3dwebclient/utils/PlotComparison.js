@@ -140,6 +140,7 @@ function queryDistanceFilter(selectedPlotsId){
             dataType: 'json',
             contentType: 'application/json',
             success: function (data) { //function (data, status_message, xhr)
+                console.log(data);
                 processAllowableUSEandGFA(index+1, data["allowableUSEandGFA"][0]);
                 processDistanceFilter(index+1, data["distanceFilter"][0]);
                 processpresentLandUseGFA(index+1, data["presentLandUseGFA"][0]);
@@ -217,7 +218,6 @@ function processAllowableUSEandGFA(tableNum, arrayOfJsonObjects){
     }
 }
 
-
 // input: JSONobject
 function processDistanceFilter(tableNum, resultsObjects){
     var target17 = document.querySelector('#table'+ tableNum +' .item17');
@@ -225,11 +225,19 @@ function processDistanceFilter(tableNum, resultsObjects){
     textDiv.style.textAlign = "right";
     let areaPerZone = resultsObjects["areaPerZone"];
     let totalArea = resultsObjects["totalArea"];
+    let zoneNameAreaPerArray = [];
 
     for (var i = 0; i < areaPerZone.length; i++) {
+        let zoneNameAreaPerRow = [shortenNameIfnecessary(areaPerZone[i]["zoneName"]), ((areaPerZone[i]["zoneArea"] / totalArea)*100).toFixed(2)];
+        zoneNameAreaPerArray.push(zoneNameAreaPerRow);
+    }
+    let sortedArray = zoneNameAreaPerArray.sort((a,b) => b[1] - a[1]); // descending
+
+    for (var i = 0; i < sortedArray.length; i++) {
         textDiv.appendChild(document.createElement("br"));
         let textSpan = document.createElement('span');
-        textSpan.innerHTML = shortenNameIfnecessary(areaPerZone[i]["zoneName"]) + ": " + ((areaPerZone[i]["zoneArea"] / totalArea)*100).toFixed(2) + "%";
+        //textSpan.innerHTML = shortenNameIfnecessary(areaPerZone[i]["zoneName"]) + ": " + ((areaPerZone[i]["zoneArea"] / totalArea)*100).toFixed(2) + "%";
+        textSpan.innerHTML = sortedArray[i][0] + ": " + sortedArray[i][1] + " %";
         textDiv.appendChild(textSpan);
     }
     target17.appendChild(textDiv);
