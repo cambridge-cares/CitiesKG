@@ -186,6 +186,12 @@ public class CEAAgent extends JPSAgent {
     private String dbPassword;
     private RemoteRDBStoreClient rdbStoreClient;
     private RemoteStoreClient storeClient;
+
+    private String postgisUrl;
+    private String postgisUser;
+    private String postgisPassword;
+    private String postgisCRS;
+
     // Variables fetched from CEAAgentConfig.properties file.
     private String ocgmlUri;
     private String ontoUBEMMPUri;
@@ -1321,26 +1327,11 @@ public class CEAAgent extends JPSAgent {
         crs = StringUtils.isNumeric(crs) ? "EPSG:" + crs : crs;
 
         try {
-            CRSFactory crsFactory = new CRSFactory();
-            RegistryManager registryManager = crsFactory.getRegistryManager();
-            registryManager.addRegistry(new EPSGRegistry());
-
-            CoordinateReferenceSystem sourceCRS = crsFactory.getCRS(crs);
-            CoordinateReferenceSystem targetCRS = crsFactory.getCRS(CRS_4326);
-
-            Set<CoordinateOperation> operations = CoordinateOperationFactory
-                    .createCoordinateOperations((GeodeticCRS) sourceCRS, (GeodeticCRS) targetCRS);
-            double[] transform = new double[3];
-            if (operations.size() != 0) {
-                // Test each transformation method (generally, only one method is available)
-                for (CoordinateOperation op : operations) {
-                    // Transform coord using the op CoordinateOperation from sourceCRS to targetCRS
-                    transform  = op.transform(new double[] {centerCoordinate.getX(), centerCoordinate.getY(), centerCoordinate.getZ()});
-                }
-            }
+            // coordinate in (longitude, latitude) format
+            Coordinate transformedCoordinate = transformCoordinate(centerCoordinate, crs, CRS_4326);
 
             // coordinate in (latitude, longitude) format
-            Coordinate coordinate = new Coordinate(transform[1], transform[0], transform[2]);
+            Coordinate coordinate = new Coordinate(transformedCoordinate.getY(), transformedCoordinate.getX(), transformedCoordinate.getZ());
 
             String stationIRI = getWeatherStation(coordinate, 2.0, weatherRoute);
 
@@ -1711,6 +1702,29 @@ public class CEAAgent extends JPSAgent {
         }
 
         return true;
+    }
+
+    private Coordinate transformCoordinate(Coordinate coordinate, String sourceCRS, String targetCRS) throws Exception{
+        CRSFactory crsFactory = new CRSFactory();
+        RegistryManager registryManager = crsFactory.getRegistryManager();
+        registryManager.addRegistry(new EPSGRegistry());
+
+        CoordinateReferenceSystem source = crsFactory.getCRS(sourceCRS);
+        CoordinateReferenceSystem target = crsFactory.getCRS(targetCRS);
+
+        Set<CoordinateOperation> operations = CoordinateOperationFactory
+                .createCoordinateOperations((GeodeticCRS) source, (GeodeticCRS) target);
+
+        double[] transform = new double[3];
+        if (operations.size() != 0) {
+            // Test each transformation method (generally, only one method is available)
+            for (CoordinateOperation op : operations) {
+                // Transform coord using the op CoordinateOperation from sourceCRS to targetCRS
+                transform  = op.transform(new double[] {coordinate.getX(), coordinate.getY(), coordinate.getZ()});
+            }
+        }
+
+        return new Coordinate(transform[0], transform[1], transform[2]);
     }
 
     /**
