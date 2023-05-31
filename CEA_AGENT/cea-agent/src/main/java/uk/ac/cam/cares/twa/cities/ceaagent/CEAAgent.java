@@ -25,6 +25,8 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
 import java.io.*;
 import java.net.*;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -181,16 +183,14 @@ public class CEAAgent extends JPSAgent {
     private TimeSeriesClient<OffsetDateTime> tsClient;
     public static final String timeUnit = OffsetDateTime.class.getSimpleName();
     private static final String FS = System.getProperty("file.separator");
+    private static final String POSTGIS_PROPS = "postgis.properties";
 
     private String dbUser;
     private String dbPassword;
     private RemoteRDBStoreClient rdbStoreClient;
     private RemoteStoreClient storeClient;
 
-    private String postgisUrl;
-    private String postgisUser;
-    private String postgisPassword;
-    private String postgisCRS;
+    private String postgisTable;
 
     // Variables fetched from CEAAgentConfig.properties file.
     private String ocgmlUri;
@@ -224,7 +224,9 @@ public class CEAAgent extends JPSAgent {
     @Override
     public JSONObject processRequestParameters(JSONObject requestParams) {
         if (validateInput(requestParams)) {
-            setRDBClient(getTimeSeriesPropsPath());
+            rdbStoreClient = getRDBClient(getPropsPath(TIME_SERIES_CLIENT_PROPS));
+            dbUser = rdbStoreClient.getUser();
+            dbPassword = rdbStoreClient.getPassword();
 
             requestUrl = requestParams.getString(KEY_REQ_URL);
             String uriArrayString = requestParams.get(KEY_IRI).toString();
@@ -325,6 +327,7 @@ public class CEAAgent extends JPSAgent {
                             List<String> routeEndpoints = getRouteEndpoints(ceaRoute);
                             storeClient = new RemoteStoreClient(routeEndpoints.get(0), routeEndpoints.get(1));
                         }
+
                         uriStringArray.add(uri);
                         // Set default value of 10m if height can not be obtained from knowledge graph
                         // Will only require one height query if height is represented in data consistently
@@ -352,12 +355,21 @@ public class CEAAgent extends JPSAgent {
 
                         List<Object> weather = new ArrayList<>();
 
+                        CEAInputData ceaInputData = new CEAInputData(footprint, height, usage, surrounding, null, null, null, null);;
+
                         if (getWeather(uri, geometryRoute, weatherRoute, crs, weather)) {
-                            testData.add(new CEAInputData(footprint, height, usage, surrounding, (List<OffsetDateTime>) weather.get(0), (Map<String, List<Double>>) weather.get(1), (List<Double>) weather.get(2)));
+                            ceaInputData.setWeatherTimes((List<OffsetDateTime>) weather.get(0));
+                            ceaInputData.setWeather((Map<String, List<Double>>) weather.get(1));
+                            ceaInputData.setWeatherMetaData((List<Double>) weather.get(2));
                         }
-                        else{
-                            testData.add(new CEAInputData(footprint, height, usage, surrounding, null, null, null));
+
+                        byte[] terrain = getTerrain(uri, geometryRoute, crs);
+
+                        if (terrain != null) {
+                            ceaInputData.setTerrain(terrain);
                         }
+
+                        testData.add(ceaInputData);
                     }
                     // Manually set thread number to 0 - multiple threads not working so needs investigating
                     // Potentially issue is CEA is already multi-threaded
@@ -1231,7 +1243,7 @@ public class CEAAgent extends JPSAgent {
                     footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                     footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
 
-                    temp = new CEAInputData(footprint, height, null, null, null, null, null);
+                    temp = new CEAInputData(footprint, height, null, null, null, null, null, null);
                     unique.add(uri);
                     surroundings.add(temp);
                 }
@@ -1704,6 +1716,22 @@ public class CEAAgent extends JPSAgent {
         return true;
     }
 
+    /**
+     * Gets the RemoteStoreClient and RemoteRDBStoreClient objects for querying weather data
+     * @param db database storing the weather data
+     * @return a map containing a RemoteStoreClient object and RemoteRDBStoreClient object that will allow for the querying of weather data
+     */
+    public Map<String, Object> getWeatherClients(String db) {
+        String weatherDB = isDockerized() ? db.replace("localhost", "host.docker.internal") : db.replace("host.docker.internal", "localhost");
+        RemoteRDBStoreClient weatherRDBClient = new RemoteRDBStoreClient(weatherDB, dbUser, dbPassword);
+        List<String> weatherEndpoints = getRouteEndpoints(weatherRoute);
+        RemoteStoreClient weatherStoreClient = new RemoteStoreClient(weatherEndpoints.get(0), weatherEndpoints.get(1));
+        Map<String, Object> result = new HashMap<>();
+        result.put(RDB_CLIENT, weatherRDBClient);
+        result.put(STORE_CLIENT, weatherStoreClient);
+        return result;
+    }
+
     private Coordinate transformCoordinate(Coordinate coordinate, String sourceCRS, String targetCRS) throws Exception{
         CRSFactory crsFactory = new CRSFactory();
         RegistryManager registryManager = crsFactory.getRegistryManager();
@@ -1728,19 +1756,82 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Gets the RemoteStoreClient and RemoteRDBStoreClient objects for querying weather data
-     * @param db database storing the weather data
-     * @return a map containing a RemoteStoreClient object and RemoteRDBStoreClient object that will allow for the querying of weather data
+     * Gets terrain data for city object
+     * @param uriString city object id
+     * @param route route to city object geometry data
+     * @param crs coordinate reference system used by route
+     * @return terrain data as byte[]
      */
-    public Map<String, Object> getWeatherClients(String db) {
-        String weatherDB = isDockerized() ? db.replace("localhost", "host.docker.internal") : db.replace("host.docker.internal", "localhost");
-        RemoteRDBStoreClient weatherRDBClient = new RemoteRDBStoreClient(weatherDB, dbUser, dbPassword);
-        List<String> weatherEndpoints = getRouteEndpoints(weatherRoute);
-        RemoteStoreClient weatherStoreClient = new RemoteStoreClient(weatherEndpoints.get(0), weatherEndpoints.get(1));
-        Map<String, Object> result = new HashMap<>();
-        result.put(RDB_CLIENT, weatherRDBClient);
-        result.put(STORE_CLIENT, weatherStoreClient);
-        return result;
+    private byte[] getTerrain(String uriString, String route, String crs) {
+        RemoteRDBStoreClient postgisClient = getRDBClient(getPropsPath(POSTGIS_PROPS));
+
+        // query for the coordinate reference system used by the terrain data
+        String sridQuery = String.format("SELECT ST_SRID(rast) as srid FROM public.%s LIMIT 1", postgisTable);
+
+        JSONArray sridResult = postgisClient.executeQuery(sridQuery);
+
+        if (sridResult.isEmpty()) {return null;}
+
+        Integer postgisCRS = sridResult.getJSONObject(0).getInt("srid");
+
+        String envelopeCoordinates = getValue(uriString, "envelope", route);
+
+        Polygon envelopePolygon = (Polygon) toPolygon(envelopeCoordinates);
+
+        Point center = envelopePolygon.getCentroid();
+
+        Coordinate centerCoordinate = center.getCoordinate();
+
+        crs = StringUtils.isNumeric(crs) ? "EPSG:" + crs : crs;
+
+        List<byte[]> result = new ArrayList<>();
+
+        try {
+            Coordinate coordinate = transformCoordinate(centerCoordinate, crs, "EPSG:" + postgisCRS);
+
+            // query for terrain data
+            String terrainQuery = getTerrainQuery(coordinate.getX(), coordinate.getY(), 300.0, postgisCRS, postgisTable);
+
+            try (Connection conn = postgisClient.getConnection()) {
+                Statement stmt = conn.createStatement();
+                ResultSet terrainResult = stmt.executeQuery(terrainQuery);
+                while(terrainResult.next()) {
+                    byte[] rasterBytes = terrainResult.getBytes("data");
+                    result.add(rasterBytes);
+                }
+            }
+
+            if (result.size() == 1) {
+                return result.get(0);
+            }
+            else{
+                return null;
+            }
+        }
+        catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Creates a SQL query string for raster data within a square bounding box of length 2*radius, center point at (x, y)
+     * @param x first coordinate of center point
+     * @param y second coordinate of center point
+     * @param radius length of the square bounding box divided by 2
+     * @param postgisCRS coordinate reference system of the raster data queried
+     * @param table table storing raster data
+     * @return SQL query string
+     */
+    private String getTerrainQuery(Double x, Double y, Double radius, Integer postgisCRS, String table) {
+        // SQL commands for creating a square bounding box
+        String terrainBoundary = String.format("ST_Expand(ST_SetSRID(ST_MakePoint(%f, %f), %d), %f)", x, y, postgisCRS, radius);
+
+        // query result to be converted to TIF format
+        String query = String.format("SELECT ST_AsTIFF(ST_Union(ST_Clip(rast, %s))) as data ", terrainBoundary);
+        query = query + String.format("FROM public.%s ", table);
+        query = query + String.format("WHERE ST_Intersects(rast, %s);", terrainBoundary);
+
+        return query;
     }
 
     /**
@@ -2911,16 +3002,17 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Returns timeseriesclient.properties path as string
-     * @return timeseriesclient.properties path as string
+     * Returns .properties file path as string
+     * @param fileName name of .properties file
+     * @return .properties file path as string
      */
-    private String getTimeSeriesPropsPath(){
+    private String getPropsPath(String fileName){
         try {
             if (System.getProperty("os.name").toLowerCase().contains("win")) {
                 return new File(
-                        Objects.requireNonNull(getClass().getClassLoader().getResource(TIME_SERIES_CLIENT_PROPS)).toURI()).getAbsolutePath();
+                        Objects.requireNonNull(getClass().getClassLoader().getResource(fileName)).toURI()).getAbsolutePath();
             } else {
-                return FS + "target" + FS + "classes" + FS + TIME_SERIES_CLIENT_PROPS;
+                return FS + "target" + FS + "classes" + FS + fileName;
             }
         }
         catch (URISyntaxException e) {
@@ -2930,19 +3022,22 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Sets rdbStoreClient with the database url, username, and password from the file at path
-     * @param path timeseriesclient.properties path as string
+     * Creates and returns a RemoteRDBStoreClient object with the database URL, username, and password from the .properties file at path
+     * @param path .properties file path as string
+     * @return RemoteRDBStoreClient object with the database URL, username, and password from the .properties file at path
      */
-    protected void setRDBClient(String path) {
+    public RemoteRDBStoreClient getRDBClient(String path) {
         try {
             FileInputStream in = new FileInputStream(path);
             Properties props = new Properties();
             props.load(in);
             in.close();
 
-            rdbStoreClient = new RemoteRDBStoreClient(props.getProperty("db.url"), props.getProperty("db.user"), props.getProperty("db.password"));
-            dbUser = props.getProperty("db.user");
-            dbPassword = props.getProperty("db.password");
+            if (path.contains(POSTGIS_PROPS)) {
+                postgisTable = props.getProperty("db.table");
+            }
+
+            return new RemoteRDBStoreClient(props.getProperty("db.url"), props.getProperty("db.user"), props.getProperty("db.password"));
         }
         catch (Exception e) {
             e.printStackTrace();
