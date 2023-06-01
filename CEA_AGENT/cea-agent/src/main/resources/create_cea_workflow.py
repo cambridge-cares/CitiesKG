@@ -7,7 +7,7 @@ import os
 import yaml
 
 
-def write_workflow_file(workflow_file, workflow_name, filepath, noSurroundings, noWeather):
+def write_workflow_file(workflow_file, workflow_name, filepath, noSurroundings, noWeather, noTerrain):
     """
     :param workflow_file: input workflow file to be modified
 
@@ -41,7 +41,11 @@ def write_workflow_file(workflow_file, workflow_name, filepath, noSurroundings, 
     elif noWeather == '1':
         data[1]['parameters']['weather'] = "Zuerich-ETHZ_1990-2010_TMY"
 
-
+    if noTerrain == '0':
+        data[0]['parameters']['terrain'] = filepath+os.sep+"terrain.tif"
+    elif noTerrain == '1':
+        dic = {'script':'terrain-helper', 'parameters':{'scenario':'scenario_path'}}
+        data.insert(2, dic)
 
     for i in data:
         for j in i:
@@ -58,7 +62,7 @@ def write_workflow_file(workflow_file, workflow_name, filepath, noSurroundings, 
 def main(argv):
 
     try:
-        write_workflow_file(argv.workflow_file, argv.workflow_name, argv.cea_file_path, argv.noSurroundings, argv.noWeather)
+        write_workflow_file(argv.workflow_file, argv.workflow_name, argv.cea_file_path, argv.noSurroundings, argv.noWeather, argv.noTerrain)
     except IOError:
         print('Error while processing file: ' + argv.worflow_file)
 
@@ -72,6 +76,7 @@ if __name__ == '__main__':
     parser.add_argument("cea_file_path")
     parser.add_argument("noSurroundings")
     parser.add_argument("noWeather")
+    parser.add_argument("noTerrain")
 
     # parse the arguments
     args = parser.parse_args()
