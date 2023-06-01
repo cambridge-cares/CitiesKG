@@ -13,9 +13,8 @@ public class CEAInputData {
     public List<OffsetDateTime> weatherTimes;
     public Map<String, List<Double>> weather;
     public List<Double> weatherMetaData;
-    public byte[] terrain;
 
-    public CEAInputData(String geometry_value, String height_value, Map<String, Double> usage_value, ArrayList<CEAInputData> surrounding_value, List<OffsetDateTime> weatherTimes_value, Map<String, List<Double>> weather_value, List<Double> weatherMetaData_value, byte[] terrain_value) {
+    public CEAInputData(String geometry_value, String height_value, Map<String, Double> usage_value, ArrayList<CEAInputData> surrounding_value, List<OffsetDateTime> weatherTimes_value, Map<String, List<Double>> weather_value, List<Double> weatherMetaData_value) {
         this.geometry = geometry_value;
         this.height = height_value;
         this.usage = usage_value;
@@ -23,7 +22,6 @@ public class CEAInputData {
         this.weatherTimes = weatherTimes_value;
         this.weather = weather_value;
         this.weatherMetaData = weatherMetaData_value;
-        this.terrain = terrain_value;
     }
 
     public String getGeometry() {
@@ -48,8 +46,6 @@ public class CEAInputData {
 
     public List<Double> getWeatherMetaData() {return this.weatherMetaData;}
 
-    public byte[] getTerrain() { return this.terrain;}
-
     public void setGeometry(String geometry_value) {
         this.geometry = geometry_value;
     }
@@ -71,6 +67,4 @@ public class CEAInputData {
     public void setWeather(Map<String, List<Double>> weather_value) {this.weather = weather_value;}
 
     public void setWeatherMetaData(List<Double> weatherMetaData_value) {this.weatherMetaData = weatherMetaData_value;}
-
-    public void setTerrain(byte[] terrain_value) {this.terrain = terrain_value;}
 }

@@ -286,6 +286,7 @@ public class CEAAgent extends JPSAgent {
                     ArrayList<CEAInputData> testData = new ArrayList<>();
                     ArrayList<String> uriStringArray = new ArrayList<>();
                     List<String> uniqueSurrounding = new ArrayList<>();
+                    List<Coordinate> surroundingCoordinates = new ArrayList<>();
                     String crs= new String();
 
                     for (int i = 0; i < uriArray.length(); i++) {
@@ -342,7 +343,7 @@ public class CEAAgent extends JPSAgent {
                         // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
                         Map<String, Double> usage = getBuildingUsages(uri, usageRoute);
 
-                        ArrayList<CEAInputData> surrounding = getSurroundings(uri, geometryRoute, uniqueSurrounding);
+                        ArrayList<CEAInputData> surrounding = getSurroundings(uri, geometryRoute, uniqueSurrounding, surroundingCoordinates);
 
                         //just get crs once - assuming all iris in same namespace
                         if (i == 0) {
@@ -355,25 +356,17 @@ public class CEAAgent extends JPSAgent {
 
                         List<Object> weather = new ArrayList<>();
 
-                        CEAInputData ceaInputData = new CEAInputData(footprint, height, usage, surrounding, null, null, null, null);;
-
                         if (getWeather(uri, geometryRoute, weatherRoute, crs, weather)) {
-                            ceaInputData.setWeatherTimes((List<OffsetDateTime>) weather.get(0));
-                            ceaInputData.setWeather((Map<String, List<Double>>) weather.get(1));
-                            ceaInputData.setWeatherMetaData((List<Double>) weather.get(2));
+                            testData.add(new CEAInputData(footprint, height, usage, surrounding, (List<OffsetDateTime>) weather.get(0), (Map<String, List<Double>>) weather.get(1), (List<Double>) weather.get(2)));
                         }
-
-                        byte[] terrain = getTerrain(uri, geometryRoute, crs);
-
-                        if (terrain != null) {
-                            ceaInputData.setTerrain(terrain);
+                        else{
+                            testData.add(new CEAInputData(footprint, height, usage, surrounding, null, null, null));
                         }
-
-                        testData.add(ceaInputData);
                     }
+                    byte[] terrain = getTerrain(uriStringArray.get(0), geometryRoute, crs, surroundingCoordinates);
                     // Manually set thread number to 0 - multiple threads not working so needs investigating
                     // Potentially issue is CEA is already multi-threaded
-                    runCEA(testData, uriStringArray, 0, crs);
+                    runCEA(testData, uriStringArray, 0, crs, terrain);
                 }
             } else if (requestUrl.contains(URI_QUERY)) {
 
@@ -627,13 +620,15 @@ public class CEAAgent extends JPSAgent {
 
     /**
      * Runs CEATask on CEAInputData and returns CEAOutputData
-     * @param buildingData input data on building footprint and height
+     * @param buildingData input data on building footprint, height, usage, surrounding and weather
      * @param uris list of input uris
      * @param threadNumber int tracking thread that is running
+     * @param crs coordinate reference system
+     * @param terrain input data on terrain
      */
-    private void runCEA(ArrayList<CEAInputData> buildingData, ArrayList<String> uris, Integer threadNumber, String crs) {
+    private void runCEA(ArrayList<CEAInputData> buildingData, ArrayList<String> uris, Integer threadNumber, String crs, byte[] terrain) {
         try {
-            RunCEATask task = new RunCEATask(buildingData, new URI(targetUrl), uris, threadNumber, crs);
+            RunCEATask task = new RunCEATask(buildingData, new URI(targetUrl), uris, threadNumber, crs, terrain);
             CEAExecutor.execute(task);
         }
         catch(URISyntaxException e){
@@ -1191,9 +1186,10 @@ public class CEAAgent extends JPSAgent {
      * @param uriString city object id
      * @param route route to pass to access agent
      * @param unique array list of unique surrounding buildings
+     * @param surroundingCoordinates list of coordinates that form bounding box for surrounding query, used for terrain calculation
      * @return the surrounding buildings as an ArrayList of CEAInputData
      */
-    private ArrayList<CEAInputData> getSurroundings(String uriString, String route, List<String> unique) {
+    private ArrayList<CEAInputData> getSurroundings(String uriString, String route, List<String> unique, List<Coordinate> surroundingCoordinates) {
         try {
             CEAInputData temp;
             String uri;
@@ -1204,11 +1200,11 @@ public class CEAAgent extends JPSAgent {
 
             Polygon envelopePolygon = (Polygon) toPolygon(envelopeCoordinates);
 
-            Geometry surroundingRing = ((Polygon) inflatePolygon(envelopePolygon, buffer)).getExteriorRing();
+            Geometry boundingBoxGeometry = ((Polygon) inflatePolygon(envelopePolygon, buffer)).getExteriorRing();
 
-            Coordinate[] surroundingCoordinates = surroundingRing.getCoordinates();
+            Coordinate[] boundingBoxCoordinates = boundingBoxGeometry.getCoordinates();
 
-            String boundingBox = coordinatesToString(surroundingCoordinates);
+            String boundingBox = coordinatesToString(boundingBoxCoordinates);
 
             String[] points = boundingBox.split("#");
 
@@ -1243,11 +1239,12 @@ public class CEAAgent extends JPSAgent {
                     footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", route) : footprint;
                     footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", route) : footprint;
 
-                    temp = new CEAInputData(footprint, height, null, null, null, null, null, null);
+                    temp = new CEAInputData(footprint, height, null, null, null, null, null);
                     unique.add(uri);
                     surroundings.add(temp);
                 }
             }
+            surroundingCoordinates.addAll(Arrays.asList(boundingBoxCoordinates));
             return surroundings;
         }
         catch (ParseException e) {
@@ -1762,7 +1759,8 @@ public class CEAAgent extends JPSAgent {
      * @param crs coordinate reference system used by route
      * @return terrain data as byte[]
      */
-    private byte[] getTerrain(String uriString, String route, String crs) {
+    private byte[] getTerrain(String uriString, String route, String crs, List<Coordinate> surroundingCoordinates) {
+
         RemoteRDBStoreClient postgisClient = getRDBClient(getPropsPath(POSTGIS_PROPS));
 
         // query for the coordinate reference system used by the terrain data
@@ -1774,13 +1772,36 @@ public class CEAAgent extends JPSAgent {
 
         Integer postgisCRS = sridResult.getJSONObject(0).getInt("srid");
 
-        String envelopeCoordinates = getValue(uriString, "envelope", route);
+        Coordinate centerCoordinate;
 
-        Polygon envelopePolygon = (Polygon) toPolygon(envelopeCoordinates);
+        Double radius;
 
-        Point center = envelopePolygon.getCentroid();
+        if (!surroundingCoordinates.isEmpty()) {
+            Envelope envelope = new Envelope();
 
-        Coordinate centerCoordinate = center.getCoordinate();
+            for (Coordinate coordinate : surroundingCoordinates) {
+                envelope.expandToInclude(coordinate);
+            }
+            centerCoordinate = envelope.centre();
+
+            Double w = envelope.getWidth();
+            Double h = envelope.getHeight();
+
+            radius = w > h ? w/2 : h/2;
+
+            radius += 30;
+        }
+        else {
+            String envelopeCoordinates = getValue(uriString, "envelope", route);
+
+            Polygon envelopePolygon = (Polygon) toPolygon(envelopeCoordinates);
+
+            Point center = envelopePolygon.getCentroid();
+
+            centerCoordinate = center.getCoordinate();
+
+            radius = 300.0;
+        }
 
         crs = StringUtils.isNumeric(crs) ? "EPSG:" + crs : crs;
 
@@ -1790,7 +1811,7 @@ public class CEAAgent extends JPSAgent {
             Coordinate coordinate = transformCoordinate(centerCoordinate, crs, "EPSG:" + postgisCRS);
 
             // query for terrain data
-            String terrainQuery = getTerrainQuery(coordinate.getX(), coordinate.getY(), 300.0, postgisCRS, postgisTable);
+            String terrainQuery = getTerrainQuery(coordinate.getX(), coordinate.getY(), radius, postgisCRS, postgisTable);
 
             try (Connection conn = postgisClient.getConnection()) {
                 Statement stmt = conn.createStatement();
