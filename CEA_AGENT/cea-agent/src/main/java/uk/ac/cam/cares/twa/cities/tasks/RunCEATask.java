@@ -948,12 +948,12 @@ public class RunCEATask implements Runnable {
                 // create the shapefile process and run
                 runProcess(args);
                 // if there are surrounding data, create the shapefile process for surroundings and run
-                if (!noSurroundings){runProcess(args2);}
+                if (!noSurroundings) {runProcess(args2);}
                 // create the typology file process and run
                 runProcess(args3);
                 // create python script and run to create validate terrain file
                 // (ST_Clip can clip inside pixel, which results in nodata value at the border of the result; the python script trims out the nodata value due to ST_Clip)
-                runProcess(args4);
+                if (!noTerrain) {runProcess(args4);}
 
                 // if there are weather data retrieved, create EPW file from the retrieved weather data
                 if (!noWeather) {
