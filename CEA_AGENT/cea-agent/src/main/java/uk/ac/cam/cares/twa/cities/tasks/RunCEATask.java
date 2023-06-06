@@ -912,7 +912,7 @@ public class RunCEATask implements Runnable {
 
                     args4.add("/bin/bash");
                     args4.add("-c");
-                    args4.add("export PROJ_LIB=/venv/share/lib && python " + terrainScript + " " + strTmp + " " + TERRAIN_FILE);
+                    args4.add("export PROJ_LIB=/venv/share/lib && python " + terrainScript + " " + tempTerrain_path + " " + strTmp + " " + TERRAIN_FILE);
 
                     args5.add("/bin/bash");
                     args5.add("-c");
