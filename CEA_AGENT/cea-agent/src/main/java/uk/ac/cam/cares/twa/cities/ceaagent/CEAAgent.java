@@ -1736,7 +1736,7 @@ public class CEAAgent extends JPSAgent {
      * @param targetCRS target crs for coordinate transformation
      * @return the transformed coordinate in targetCRS
      */
-    private Coordinate transformCoordinate(Coordinate coordinate, String sourceCRS, String targetCRS) throws Exception{
+    private Coordinate transformCoordinate(Coordinate coordinate, String sourceCRS, String targetCRS) throws Exception {
         CRSFactory crsFactory = new CRSFactory();
         RegistryManager registryManager = crsFactory.getRegistryManager();
         registryManager.addRegistry(new EPSGRegistry());
@@ -1772,12 +1772,6 @@ public class CEAAgent extends JPSAgent {
 
         // query for the coordinate reference system used by the terrain data
         String sridQuery = String.format("SELECT ST_SRID(rast) as srid FROM public.%s LIMIT 1", postgisTable);
-
-        JSONArray sridResult = postgisClient.executeQuery(sridQuery);
-
-        if (sridResult.isEmpty()) {return null;}
-
-        Integer postgisCRS = sridResult.getJSONObject(0).getInt("srid");
 
         Coordinate centerCoordinate;
 
@@ -1815,6 +1809,11 @@ public class CEAAgent extends JPSAgent {
         List<byte[]> result = new ArrayList<>();
 
         try {
+            JSONArray sridResult = postgisClient.executeQuery(sridQuery);
+
+            if (sridResult.isEmpty()) {return null;}
+            Integer postgisCRS = sridResult.getJSONObject(0).getInt("srid");
+
             Coordinate coordinate = transformCoordinate(centerCoordinate, crs, "EPSG:" + postgisCRS);
 
             // query for terrain data
