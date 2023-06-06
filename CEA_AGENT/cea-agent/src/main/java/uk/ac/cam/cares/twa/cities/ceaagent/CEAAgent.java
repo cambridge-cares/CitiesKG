@@ -1196,7 +1196,7 @@ public class CEAAgent extends JPSAgent {
             ArrayList<CEAInputData> surroundings = new ArrayList<>();
             String envelopeCoordinates = getValue(uriString, "envelope", route);
 
-            Double buffer = 200.00;
+            Double buffer = 100.00;
 
             Polygon envelopePolygon = (Polygon) toPolygon(envelopeCoordinates);
 
@@ -1729,6 +1729,13 @@ public class CEAAgent extends JPSAgent {
         return result;
     }
 
+    /**
+     * Transform a coordinate from sourceCRS to targetCRS
+     * @param coordinate coordinate to be transformed
+     * @param sourceCRS source crs of coordinate
+     * @param targetCRS target crs for coordinate transformation
+     * @return the transformed coordinate in targetCRS
+     */
     private Coordinate transformCoordinate(Coordinate coordinate, String sourceCRS, String targetCRS) throws Exception{
         CRSFactory crsFactory = new CRSFactory();
         RegistryManager registryManager = crsFactory.getRegistryManager();
@@ -1789,7 +1796,7 @@ public class CEAAgent extends JPSAgent {
 
             radius = w > h ? w/2 : h/2;
 
-            radius += 30;
+            radius += 10;
         }
         else {
             String envelopeCoordinates = getValue(uriString, "envelope", route);
@@ -1800,7 +1807,7 @@ public class CEAAgent extends JPSAgent {
 
             centerCoordinate = center.getCoordinate();
 
-            radius = 300.0;
+            radius = 120.0;
         }
 
         crs = StringUtils.isNumeric(crs) ? "EPSG:" + crs : crs;
