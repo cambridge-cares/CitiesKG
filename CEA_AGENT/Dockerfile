@@ -29,7 +29,7 @@ RUN mvn package
 #==================================================================================================
 # Third stage: copy the downloaded dependency into a new image and build into an app
 #==================================================================================================
-FROM mcr.microsoft.com/openjdk/jdk:17-ubuntu as agent
+FROM mcr.microsoft.com/openjdk/jdk:11-ubuntu as agent
 
 COPY --from=builder /root/cea-agent/target/ ./target/
 
