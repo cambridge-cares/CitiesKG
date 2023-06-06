@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
+import com.bigdata.rdf.sparql.ast.StaticAnalysis;
 import kong.unirest.*;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.jooq.exception.DataAccessException;
@@ -25,7 +26,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -276,8 +279,8 @@ public class CEAAgentTest {
         rdbStoreClient.set(agent, mockRDBClient);
 
         doReturn(mockConnection).when(mockRDBClient).getConnection();
-
-        doNothing().when(agent).setRDBClient(anyString());
+        doReturn(new JSONArray()).when(mockRDBClient).executeQuery(anyString());
+        doReturn(mockRDBClient).when(agent).getRDBClient(anyString());
 
         // Test empty request params
         try {
@@ -765,7 +768,7 @@ public class CEAAgentTest {
             ThreadPoolExecutor executor = mock(ThreadPoolExecutor.class);
 
             CEAAgent agent = new CEAAgent();
-            Method runCEA = agent.getClass().getDeclaredMethod("runCEA", ArrayList.class, ArrayList.class, Integer.class, String.class);
+            Method runCEA = agent.getClass().getDeclaredMethod("runCEA", ArrayList.class, ArrayList.class, Integer.class, String.class, byte[].class);
             assertNotNull(runCEA);
             runCEA.setAccessible(true);
 
@@ -785,7 +788,7 @@ public class CEAAgentTest {
             String test_CRS = "27700";
 
             // Test executor called with run CEA task
-            runCEA.invoke(agent, testData, testArray, test_thread, test_CRS);
+            runCEA.invoke(agent, testData, testArray, test_thread, test_CRS, null);
             verify(executor, times(1)).execute(mockTask.constructed().get(0));
         }
     }
@@ -2021,22 +2024,6 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testGetTimeSeriesPropsPath() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
-        CEAAgent agent = new CEAAgent();
-        Method getTimeSeriesPropsPath = agent.getClass().getDeclaredMethod("getTimeSeriesPropsPath");
-
-        assertNotNull(getTimeSeriesPropsPath);
-        getTimeSeriesPropsPath.setAccessible(true);
-
-        String result = (String) getTimeSeriesPropsPath.invoke(agent);
-
-        Field time_series_client_props = agent.getClass().getDeclaredField("TIME_SERIES_CLIENT_PROPS");
-        time_series_client_props.setAccessible(true);
-
-        assertTrue(result.contains((String) time_series_client_props.get(agent)));
-    }
-
-    @Test
     public void testToCEAConvention() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
     {
         CEAAgent agent = new CEAAgent();
@@ -2091,7 +2078,7 @@ public class CEAAgentTest {
         CEAAgent agent = spy(new CEAAgent());
         String uri = "http://localhost/kings-lynn-open-data/cityobject/UUID_583747b0-1655-4761-8050-4036436a1052/";
 
-        Method getSurroundings = agent.getClass().getDeclaredMethod("getSurroundings", String.class, String.class, List.class);
+        Method getSurroundings = agent.getClass().getDeclaredMethod("getSurroundings", String.class, String.class, List.class, List.class);
         assertNotNull(getSurroundings);
         getSurroundings.setAccessible(true);
 
@@ -2103,18 +2090,21 @@ public class CEAAgentTest {
         JSONArray buildingsArray = new JSONArray().put(new JSONObject().put("cityObject", uri)).put(new JSONObject().put("cityObject", "http://localhost/kings-lynn-open-data/cityobject/UUID_447787a5-1678-4246-8658-4036436c1052/"));
         JSONArray heightArray = new JSONArray().put(new JSONObject().put("HeightMeasuredHeigh", 10.0));
 
+        List testSurroundingCoordinate = new ArrayList<>();
+
 
         try (MockedStatic<AccessAgentCaller> accessAgentCallerMock = mockStatic(AccessAgentCaller.class)) {
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
                     .thenReturn(geometryArray).thenReturn(buildingsArray).thenReturn(heightArray).thenReturn(geometryArray);
 
-            ArrayList<CEAInputData> result = (ArrayList<CEAInputData>) getSurroundings.invoke(agent, uri, "testRoute", unique);
+            ArrayList<CEAInputData> result = (ArrayList<CEAInputData>) getSurroundings.invoke(agent, uri, "testRoute", unique, testSurroundingCoordinate);
 
             assertFalse(result.isEmpty());
             assertTrue(result.get(0).getGeometry().equals(geometry));
             assertTrue(result.get(0).getHeight().equals("10.0"));
             assertNull(result.get(0).getUsage());
             assertNull(result.get(0).getSurrounding());
+            assertFalse(testSurroundingCoordinate.isEmpty());
         }
     }
 
@@ -2371,5 +2361,47 @@ public class CEAAgentTest {
 
         assertEquals(3600, result.get(0).getOffset().getTotalSeconds());
         assertEquals(1, result.get(0).getHour());
+    }
+
+    @Test
+    public void testGetTerrain() throws NoSuchMethodException, SQLException, InvocationTargetException, IllegalAccessException {
+        CEAAgent agent = spy(new CEAAgent());
+
+        Method getTerrain = agent.getClass().getDeclaredMethod("getTerrain", String.class, String.class, String.class, List.class);
+        assertNotNull(getTerrain);
+        getTerrain.setAccessible(true);
+
+        byte[] testBytes = new byte[] {1, 2, 3};
+        JSONArray sridArray = new JSONArray();
+
+        sridArray.put(new JSONObject().put("srid", 32632));
+
+        RemoteRDBStoreClient mockRDBClient = mock(RemoteRDBStoreClient.class);
+        Connection mockConnection = mock(Connection.class);
+        Statement  mockStatement = mock(Statement.class);
+        ResultSet mockResultSet = mock(ResultSet.class);
+
+        doReturn(sridArray).when(mockRDBClient).executeQuery(anyString());
+
+        doReturn(testBytes).when(mockResultSet).getBytes(anyString());
+        when(mockResultSet.next()).thenReturn(true).thenReturn(false);
+        doReturn(mockResultSet).when(mockStatement).executeQuery(anyString());
+        doReturn(mockStatement).when(mockConnection).createStatement();
+        doReturn(mockConnection).when(mockRDBClient).getConnection();
+
+        doReturn(mockRDBClient).when(agent).getRDBClient(anyString());
+
+        List<Coordinate> testSurroundingCoordinates = new ArrayList<>();
+
+        testSurroundingCoordinates.add(new Coordinate(-38583.309964376036, 5475530.947358239));
+        testSurroundingCoordinates.add(new Coordinate(-38590.053145669284, 5475500.099337375));
+        testSurroundingCoordinates.add(new Coordinate(-38570.165186359896, 5475520.409057047));
+
+        byte[] result = (byte[]) getTerrain.invoke(agent, "", "", "32633", testSurroundingCoordinates);
+
+        assertEquals(result.length, testBytes.length);
+        assertEquals(result[0], testBytes[0]);
+        assertEquals(result[1], testBytes[1]);
+        assertEquals(result[2], testBytes[2]);
     }
 }
