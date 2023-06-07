@@ -1,6 +1,5 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,9 +10,7 @@ public class CEAInputData {
     public String height;
     public Map<String, Double> usage;
     public ArrayList<CEAInputData> surrounding;
-
     public List<OffsetDateTime> weatherTimes;
-
     public Map<String, List<Double>> weather;
     public List<Double> weatherMetaData;
 
@@ -68,5 +65,6 @@ public class CEAInputData {
     public void setWeatherTimes(List<OffsetDateTime> weatherTimes_value) {this.weatherTimes = weatherTimes_value;}
 
     public void setWeather(Map<String, List<Double>> weather_value) {this.weather = weather_value;}
+
     public void setWeatherMetaData(List<Double> weatherMetaData_value) {this.weatherMetaData = weatherMetaData_value;}
 }

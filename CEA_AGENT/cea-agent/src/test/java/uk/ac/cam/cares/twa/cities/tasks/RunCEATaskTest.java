@@ -36,7 +36,7 @@ public class RunCEATaskTest {
             testArray.add("testUri");
             Integer test_thread = 0;
             String test_CRS = "27700";
-            task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
+            task = new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null);;
             assertNotNull(task);
         } catch (Exception e) {
             fail();
@@ -53,7 +53,7 @@ public class RunCEATaskTest {
             testArray.add("testUri");
             Integer test_thread = 0;
             String test_CRS = "27700";
-            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
+            RunCEATask task = new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null);;
 
             Field stopField = task.getClass().getDeclaredField("stop");
             stopField.setAccessible(true);
@@ -79,7 +79,7 @@ public class RunCEATaskTest {
 
         Process dummyProcess  = mock(Process.class);
 
-        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray,test_thread, test_CRS));
+        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null));
         try (MockedConstruction<ProcessBuilder> builder = mockConstruction(ProcessBuilder.class,  (mock, context) -> {
             when(mock.start()).thenReturn(dummyProcess);
         })) {
@@ -117,7 +117,7 @@ public class RunCEATaskTest {
             testArray.add("testUri");
             Integer test_thread = 0;
             String test_CRS = "27700";
-            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
+            RunCEATask task = new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null);;
 
             File myTempDir = new File(System.getProperty("java.io.tmpdir"));
             File newDirectory = new File(myTempDir, "new_directory");
@@ -163,7 +163,7 @@ public class RunCEATaskTest {
         testArray.add("testUri");
         Integer test_thread = 0;
         String test_CRS = "27700";
-        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray,test_thread, test_CRS));
+        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null));
         doNothing().when(task).deleteDirectoryContents(any());
 
         for (Map.Entry<String, List<String>> entry : testCEAoutputs.entrySet()) {
@@ -232,7 +232,7 @@ public class RunCEATaskTest {
         testArray.add("testUri");
         Integer test_thread = 0;
         String test_CRS = "27700";
-        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray,test_thread, test_CRS));
+        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null));
 
         try (MockedConstruction<FileReader> fReader = mockConstruction(FileReader.class)) {
             try (MockedConstruction<BufferedReader> bReader = mockConstruction(BufferedReader.class,  (mock, context) -> {
@@ -290,7 +290,7 @@ public class RunCEATaskTest {
             testArray.add("testUri");
             Integer test_thread = 0;
             String test_CRS = "27700";
-            task = new RunCEATask(testData, testURI, testArray, test_thread, test_CRS);
+            task = new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null);
 
             data = new CEAOutputData();
 
@@ -337,7 +337,7 @@ public class RunCEATaskTest {
         testArray.add("testUri");
         Integer test_thread = 0;
         String test_CRS = "27700";
-        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS));
+        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null));
 
         Method run = task.getClass().getDeclaredMethod("run");
 
@@ -370,7 +370,7 @@ public class RunCEATaskTest {
         testArray.add("testUri");
         Integer test_thread = 0;
         String test_CRS = "27700";
-        RunCEATask task = new RunCEATask(testData, testURI, testArray, test_thread, test_CRS);
+        RunCEATask task = new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null);
 
         ArrayList<CEAInputData> surroundings = new ArrayList<>();
         surroundings.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
@@ -405,7 +405,7 @@ public class RunCEATaskTest {
         testArray.add("testUri");
         Integer test_thread = 0;
         String test_CRS = "27700";
-        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS));
+        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null));
 
         String PVTitleRow = "Date,PV_roofs_top_E_kWh,PV_walls_south_E_kWh,Other,PV_walls_north_E_kWh,PV_walls_west_E_kWh,PV_walls_east_E_kWh";
         String PVValuesRow1 = "2005-01-01 00:00:00+00:00,20.0,30.0,40.0,50.0,60.0,70.0";
