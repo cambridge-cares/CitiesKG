@@ -3,11 +3,11 @@
 
 The CEA Agent can be used to interact with the [City Energy Analyst (CEA)](https://www.cityenergyanalyst.com/)  and the data it produces on building energy demands and installable solar energy generators.
 
-The agent currently queries for building geometry, surrounding buildings geometries, building usage and historical weather data stored in knowledge graph, which are passed to CEA as inputs. The energy demands and potential energy of solar energy generators (which include photovoltaic panels, photovoltaic-thermal collectors, and solar collectors) calculated by CEA are extracted by the agent and stored on the knowledge graph.
+The agent currently queries for building geometry, surrounding buildings geometries, building usage and historical weather data stored in knowledge graph, and terrain data from PostGIS, which are passed to CEA as inputs. The energy demands and potential energy of solar energy generators (which include photovoltaic panels, photovoltaic-thermal collectors, and solar collectors) calculated by CEA are extracted by the agent and stored on the knowledge graph.
 
 ## Build Instructions
 
-### maven
+### Maven
 
 The docker image uses TheWorldAvatar maven repository (https://maven.pkg.github.com/cambridge-cares/TheWorldAvatar/).
 You'll need to provide your credentials (github username/personal access token) in single-word text files located:
@@ -17,19 +17,35 @@ You'll need to provide your credentials (github username/personal access token) 
     repo_password.txt
 ```
 
-### postgreSQL
+### PostgreSQL
 
 The agent also requires a postgreSQL database for the time series client to save data in. The address of the database used need to be provided as ```db.url``` in:
 ```
-./cea-agent/src/main/resources
+./cea-agent/src/main/resources/
     timeseriesclient.properties
 ```
 
-The username and password for the postgreSQL database need to be provided in single-word text files in:
+The username and password for the PostgreSQL database need to be provided in single-word text files in:
 ```
 ./credentials/
     postgres_username.txt
     postgres_password.txt
+```
+
+### PostGIS
+
+The agent will attempt to query for terrain data from a PostGIS database, the address of which needs to be provided as ```db.url``` in 
+```
+./cea-agent/src/main/resources/
+    postgis.properties
+```
+Inside the same ```postgis.properties``` file, the default table from which the agent will be querying from needs to be provided as ```db.table```. Please note that the table will have to be in the public schema, since the agent is set up to query the provided table from public schema.
+
+The username and password for the PostGIS database need to be provided in single-word text files in:
+```
+./credentials/
+    postgis_username.txt
+    postgis_password.txt
 ```
 
 ### Access Agent
@@ -72,6 +88,7 @@ The run endpoint accepts the following request parameters:
 - ```usageEndpoint```: (optional) endpoint where the building usage information of the cityObjects from ```iris``` is stored, if not specified, agent will default to setting ```usageEndpoint``` to be the same as ```geometryEndpoint```.
 - ```ceaEndpoint```: (optional) endpoint where the CEA triples, i.e. energy demand and solar energy generator information, instantiated by the agent is to be stored; if not specified, agent will default to setting ```ceaEndpoint``` to TheWorldAvatar Blazegraph with the namespace retrieved from the cityObject IRI and the mapping provided in ```./cea-agent/src/main/resources/CEAAgentConfig.properties```.
 - ```weatherEndpoint```: (optional) endpoint where historical weather information is stored; if not specified, agent will default to setting ```weatherEndpoint``` to TheWorldAvatar Blazegraph.
+- ```terrainTable```: (optional) table from which the agent will attempt to query terrain data; if not specified, it will be set to the default table specified as ```db.table``` in ```./cea-agent/src/main/resources/postgis.properties```. Please ensure that ```terrainTable``` is in public schema, since this is the set-up that the agent assumes.
 - ```graphName```: (optional) named graph to which the CEA triples belong to. In the scenario where ```ceaEndpoint``` is not specified, if ```graphName``` is not specified, the default graph is ```http://www.theworldavatar.com:83/citieskg/namespace/{namespace}/sparql/energyprofile/```, where {namespace} is a placeholder for the namespace of the cityObject IRI, e.g. kingslynnEPSG27700. If ```ceaEndpoint``` is specified, the agent will assume no graph usage if ```namedGraph``` is not specified.
 
 After receiving request to the run endpoint, the agent will query for the building geometry, surrounding buildings' geometry and building usage from the endpoints specified in the request parameters. The agent will then run CEA with the queried information as inputs, and send request with the CEA output data to the update endpoint afterwards.
