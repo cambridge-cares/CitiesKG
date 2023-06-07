@@ -2152,6 +2152,12 @@ public class CEAAgentTest {
         assertNotNull(ontoemsUri);
         ontoemsUri.setAccessible(true);
 
+        Field weatherRoute = agent.getClass().getDeclaredField("weatherRoute");
+        assertNotNull(weatherRoute);
+        weatherRoute.setAccessible(true);
+
+        weatherRoute.set(agent, "testeRoute");
+
         doReturn("").when(agent).runOpenMeteoAgent(anyString(), anyString());
 
         String testCRS = "32633";
