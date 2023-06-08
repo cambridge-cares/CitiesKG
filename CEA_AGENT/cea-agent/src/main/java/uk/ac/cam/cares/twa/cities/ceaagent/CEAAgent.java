@@ -200,7 +200,7 @@ public class CEAAgent extends JPSAgent {
     private String rdfUri;
     private String owlUri;
     private String purlEnaeqUri;
-    private String purlInfrastructureUri;
+    private String botUri;
     private String thinkhomeUri;
     private String ontoBuiltEnvUri;
     private String ontotimeseriesUri;
@@ -271,7 +271,7 @@ public class CEAAgent extends JPSAgent {
 
                         String building = checkBuildingInitialised(uri, ceaRoute);
                         if(building.equals("")){
-                            // Check if DABGEO:Building IRI has already been created in another endpoint
+                            // Check if bot:Building IRI has already been created in another endpoint
                             building = checkBuildingInitialised(uri, geometryRoute);
                             building = initialiseBuilding(uri, building, ceaRoute, namedGraph);
                         }
@@ -607,7 +607,7 @@ public class CEAAgent extends JPSAgent {
         owlUri = config.getString("uri.ontology.owl");
         purlEnaeqUri=config.getString("uri.ontology.purl.enaeq");
         thinkhomeUri=config.getString("uri.ontology.thinkhome");
-        purlInfrastructureUri=config.getString("uri.ontology.purl.infrastructure");
+        botUri=config.getString("uri.ontology.bot");
         ontoBuiltEnvUri=config.getString("uri.ontology.ontobuiltenv");
         ontotimeseriesUri=config.getString("uri.ontology.ontotimeseries");
         ontoemsUri=config.getString("uri.ontology.ontoems");
@@ -2198,7 +2198,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Checks building linked to ontoCityGML is initialised in KG and is a DABGEO:Building instance
+     * Checks building linked to ontoCityGML is initialised in KG and is a bot:Building instance
      * @param uriString city object id
      * @param route route to pass to access agent
      * @return building
@@ -2209,9 +2209,9 @@ public class CEAAgent extends JPSAgent {
 
         wb.addPrefix("rdf", rdfUri)
                 .addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
-                .addPrefix("DABGEO", purlInfrastructureUri)
+                .addPrefix("bot", botUri)
                 .addWhere("?building", "ontoBuiltEnv:hasOntoCityGMLRepresentation", "?s")
-                .addWhere("?building", "rdf:type", "DABGEO:Building");
+                .addWhere("?building", "rdf:type", "bot:Building");
 
         sb.addVar("?building").addWhere(wb);
 
@@ -2226,7 +2226,7 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Initialises building in KG with buildingUri as the DABGEO:Building IRI, and link to ontoCityGMLRepresentation
+     * Initialises building in KG with buildingUri as the bot:Building IRI, and link to ontoCityGMLRepresentation
      * @param uriString city object id
      * @param buildingUri building IRI from other endpoints if exist
      * @param route route to pass to access agent
@@ -2250,9 +2250,9 @@ public class CEAAgent extends JPSAgent {
                 new WhereBuilder()
                         .addPrefix("rdf", rdfUri)
                         .addPrefix("owl", owlUri)
-                        .addPrefix("purlInf", purlInfrastructureUri)
+                        .addPrefix("bot", botUri)
                         .addPrefix("ontoBuiltEnv", ontoBuiltEnvUri)
-                        .addWhere(NodeFactory.createURI(buildingUri), "rdf:type", "purlInf:Building")
+                        .addWhere(NodeFactory.createURI(buildingUri), "rdf:type", "bot:Building")
                         .addWhere(NodeFactory.createURI(buildingUri), "rdf:type", "owl:NamedIndividual")
                         .addWhere(NodeFactory.createURI(buildingUri), "ontoBuiltEnv:hasOntoCityGMLRepresentation", NodeFactory.createURI(getBuildingUri(uriString)));
 
