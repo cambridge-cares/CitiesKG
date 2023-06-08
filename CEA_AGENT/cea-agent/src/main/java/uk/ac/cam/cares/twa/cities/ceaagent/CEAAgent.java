@@ -201,7 +201,6 @@ public class CEAAgent extends JPSAgent {
     private String owlUri;
     private String purlEnaeqUri;
     private String botUri;
-    private String thinkhomeUri;
     private String ontoBuiltEnvUri;
     private String ontotimeseriesUri;
     private String ontoemsUri;
@@ -606,7 +605,6 @@ public class CEAAgent extends JPSAgent {
         rdfUri = config.getString("uri.ontology.rdf");
         owlUri = config.getString("uri.ontology.owl");
         purlEnaeqUri=config.getString("uri.ontology.purl.enaeq");
-        thinkhomeUri=config.getString("uri.ontology.thinkhome");
         botUri=config.getString("uri.ontology.bot");
         ontoBuiltEnvUri=config.getString("uri.ontology.ontobuiltenv");
         ontotimeseriesUri=config.getString("uri.ontology.ontotimeseries");
@@ -1900,7 +1898,7 @@ public class CEAAgent extends JPSAgent {
     public void addSupplyDeviceWhere(WhereBuilder builder, String generatorType, String energyType){
         builder.addWhere("?building", "ontoubemmp:hasDevice", "?SolarGenerators")
                 .addWhere("?SolarGenerators", "rdf:type", generatorType)
-                .addWhere("?SolarGenerators", "thinkhome:producesEnergy", "?supply")
+                .addWhere("?SolarGenerators", "ontoubemmp:producesEnergy", "?supply")
                 .addWhere("?supply", "rdf:type", energyType)
                 .addWhere("?supply", "om:hasValue", "?measure")
                 .addWhere("?measure", "om:hasUnit", "?unit");
@@ -1943,8 +1941,7 @@ public class CEAAgent extends JPSAgent {
                 .addPrefix("rdf", rdfUri)
                 .addPrefix("om", unitOntologyUri)
                 .addPrefix("purlEnaeq", purlEnaeqUri)
-                .addPrefix("ontoubemmp", ontoUBEMMPUri)
-                .addPrefix("thinkhome", thinkhomeUri);
+                .addPrefix("ontoubemmp", ontoUBEMMPUri);
 
         switch(value) {
             case KEY_GRID_CONSUMPTION:
@@ -2343,7 +2340,7 @@ public class CEAAgent extends JPSAgent {
      * @param measure om:measure iri
      */
     public void createSolarGeneratorSupplyUpdate(WhereBuilder builder, String solarGenerators, String quantity, String measure, String energySupply){
-        builder.addWhere(NodeFactory.createURI(solarGenerators), "thinkhome:producesEnergy", NodeFactory.createURI(quantity))
+        builder.addWhere(NodeFactory.createURI(solarGenerators), "ontoubemmp:producesEnergy", NodeFactory.createURI(quantity))
                 .addWhere(NodeFactory.createURI(quantity), "rdf:type", energySupply)
                 .addWhere(NodeFactory.createURI(quantity), "rdf:type", "owl:NamedIndividual")
                 .addWhere(NodeFactory.createURI(quantity), "om:hasDimension", "om:energy-Dimension")
@@ -2397,8 +2394,7 @@ public class CEAAgent extends JPSAgent {
                         .addPrefix("owl", owlUri)
                         .addPrefix("purlEnaeq", purlEnaeqUri)
                         .addPrefix("om", unitOntologyUri)
-                        .addPrefix("thinkhome", thinkhomeUri)
-                        .addPrefix("purlInf", purlInfrastructureUri);
+                        .addPrefix("bot", botUri);
 
         UpdateBuilder ub = new UpdateBuilder();
 
