@@ -90,44 +90,44 @@ public class CEAAgent extends JPSAgent {
     public static final String KEY_ELECTRICITY_CONSUMPTION = "ElectricityConsumption";
     public static final String KEY_HEATING_CONSUMPTION = "HeatingConsumption";
     public static final String KEY_COOLING_CONSUMPTION = "CoolingConsumption";
-    public static final String KEY_SOLAR_SUITABLE_ROOF_AREA = "RoofSolarSuitableArea";
-    public static final String KEY_SOLAR_SUITABLE_WALL_NORTH_AREA = "NorthWallSolarSuitableArea";
-    public static final String KEY_SOLAR_SUITABLE_WALL_SOUTH_AREA = "SouthWallSolarSuitableArea";
-    public static final String KEY_SOLAR_SUITABLE_WALL_EAST_AREA = "EastWallSolarSuitableArea";
-    public static final String KEY_SOLAR_SUITABLE_WALL_WEST_AREA = "WestWallSolarSuitableArea";
+    public static final String KEY_ROOF_SOLAR_SUITABLE_AREA = "RoofSolarSuitableArea";
+    public static final String KEY_SOUTH_WALL_SOLAR_SUITABLE_AREA = "SouthWallSolarSuitableArea";
+    public static final String KEY_NORTH_WALL_SOLAR_SUITABLE_AREA = "NorthWallSolarSuitableArea";
+    public static final String KEY_EAST_WALL_SOLAR_SUITABLE_AREA = "EastWallSolarSuitableArea";
+    public static final String KEY_WEST_WALL_SOLAR_SUITABLE_AREA = "WestWallSolarSuitableArea";
     public static final String KEY_PV_ROOF_SUPPLY= "PVRoofSupply";
-    public static final String KEY_PV_WALL_NORTH_SUPPLY = "PVWallNorthSupply";
     public static final String KEY_PV_WALL_SOUTH_SUPPLY = "PVWallSouthSupply";
+    public static final String KEY_PV_WALL_NORTH_SUPPLY = "PVWallNorthSupply";
     public static final String KEY_PV_WALL_EAST_SUPPLY = "PVWallEastSupply";
     public static final String KEY_PV_WALL_WEST_SUPPLY = "PVWallWestSupply";
     public static final String KEY_PVT_PLATE_ROOF_E_SUPPLY = "PVTPlateRoofESupply";
-    public static final String KEY_PVT_PLATE_WALL_NORTH_E_SUPPLY = "PVTPlateWallNorthESupply";
     public static final String KEY_PVT_PLATE_WALL_SOUTH_E_SUPPLY = "PVTPlateWallSouthESupply";
+    public static final String KEY_PVT_PLATE_WALL_NORTH_E_SUPPLY = "PVTPlateWallNorthESupply";
     public static final String KEY_PVT_PLATE_WALL_EAST_E_SUPPLY = "PVTPlateWallEastESupply";
     public static final String KEY_PVT_PLATE_WALL_WEST_E_SUPPLY = "PVTPlateWallWestESupply";
     public static final String KEY_PVT_PLATE_ROOF_Q_SUPPLY = "PVTPlateRoofQSupply";
-    public static final String KEY_PVT_PLATE_WALL_NORTH_Q_SUPPLY = "PVTPlateWallNorthQSupply";
     public static final String KEY_PVT_PLATE_WALL_SOUTH_Q_SUPPLY = "PVTPlateWallSouthQSupply";
+    public static final String KEY_PVT_PLATE_WALL_NORTH_Q_SUPPLY = "PVTPlateWallNorthQSupply";
     public static final String KEY_PVT_PLATE_WALL_EAST_Q_SUPPLY = "PVTPlateWallEastQSupply";
     public static final String KEY_PVT_PLATE_WALL_WEST_Q_SUPPLY = "PVTPlateWallWestQSupply";
     public static final String KEY_PVT_TUBE_ROOF_E_SUPPLY = "PVTTubeRoofESupply";
-    public static final String KEY_PVT_TUBE_WALL_NORTH_E_SUPPLY = "PVTTubeWallNorthESupply";
     public static final String KEY_PVT_TUBE_WALL_SOUTH_E_SUPPLY = "PVTTubeWallSouthESupply";
+    public static final String KEY_PVT_TUBE_WALL_NORTH_E_SUPPLY = "PVTTubeWallNorthESupply";
     public static final String KEY_PVT_TUBE_WALL_EAST_E_SUPPLY = "PVTTubeWallEastESupply";
     public static final String KEY_PVT_TUBE_WALL_WEST_E_SUPPLY = "PVTTubeWallWestESupply";
     public static final String KEY_PVT_TUBE_ROOF_Q_SUPPLY = "PVTTubeRoofQSupply";
-    public static final String KEY_PVT_TUBE_WALL_NORTH_Q_SUPPLY = "PVTTubeWallNorthQSupply";
     public static final String KEY_PVT_TUBE_WALL_SOUTH_Q_SUPPLY = "PVTTubeWallSouthQSupply";
+    public static final String KEY_PVT_TUBE_WALL_NORTH_Q_SUPPLY = "PVTTubeWallNorthQSupply";
     public static final String KEY_PVT_TUBE_WALL_EAST_Q_SUPPLY = "PVTTubeWallEastQSupply";
     public static final String KEY_PVT_TUBE_WALL_WEST_Q_SUPPLY = "PVTTubeWallWestQSupply";
     public static final String KEY_THERMAL_PLATE_ROOF_SUPPLY= "ThermalPlateRoofSupply";
-    public static final String KEY_THERMAL_PLATE_WALL_NORTH_SUPPLY = "ThermalPlateWallNorthSupply";
     public static final String KEY_THERMAL_PLATE_WALL_SOUTH_SUPPLY = "ThermalPlateWallSouthSupply";
+    public static final String KEY_THERMAL_PLATE_WALL_NORTH_SUPPLY = "ThermalPlateWallNorthSupply";
     public static final String KEY_THERMAL_PLATE_WALL_EAST_SUPPLY = "ThermalPlateWallEastSupply";
     public static final String KEY_THERMAL_PLATE_WALL_WEST_SUPPLY = "ThermalPlateWallWestSupply";
     public static final String KEY_THERMAL_TUBE_ROOF_SUPPLY= "ThermalTubeRoofSupply";
-    public static final String KEY_THERMAL_TUBE_WALL_NORTH_SUPPLY = "ThermalTubeWallNorthSupply";
     public static final String KEY_THERMAL_TUBE_WALL_SOUTH_SUPPLY = "ThermalTubeWallSouthSupply";
+    public static final String KEY_THERMAL_TUBE_WALL_NORTH_SUPPLY = "ThermalTubeWallNorthSupply";
     public static final String KEY_THERMAL_TUBE_WALL_EAST_SUPPLY = "ThermalTubeWallEastSupply";
     public static final String KEY_THERMAL_TUBE_WALL_WEST_SUPPLY = "ThermalTubeWallWestSupply";
     public static final String KEY_TIMES = "times";
@@ -156,7 +156,7 @@ public class CEAAgent extends JPSAgent {
     private static final String API_OFFSET = "utc_offset_seconds";
 
     public List<String> TIME_SERIES = Arrays.asList(KEY_GRID_CONSUMPTION,KEY_ELECTRICITY_CONSUMPTION,KEY_HEATING_CONSUMPTION,KEY_COOLING_CONSUMPTION, KEY_PV_ROOF_SUPPLY, KEY_PV_WALL_NORTH_SUPPLY, KEY_PV_WALL_SOUTH_SUPPLY, KEY_PV_WALL_EAST_SUPPLY, KEY_PV_WALL_WEST_SUPPLY, KEY_PVT_PLATE_ROOF_E_SUPPLY, KEY_PVT_PLATE_WALL_NORTH_E_SUPPLY, KEY_PVT_PLATE_WALL_SOUTH_E_SUPPLY, KEY_PVT_PLATE_WALL_EAST_E_SUPPLY, KEY_PVT_PLATE_WALL_WEST_E_SUPPLY, KEY_PVT_PLATE_ROOF_Q_SUPPLY, KEY_PVT_PLATE_WALL_NORTH_Q_SUPPLY, KEY_PVT_PLATE_WALL_SOUTH_Q_SUPPLY, KEY_PVT_PLATE_WALL_EAST_Q_SUPPLY, KEY_PVT_PLATE_WALL_WEST_Q_SUPPLY, KEY_PVT_TUBE_ROOF_E_SUPPLY, KEY_PVT_TUBE_WALL_NORTH_E_SUPPLY, KEY_PVT_TUBE_WALL_SOUTH_E_SUPPLY, KEY_PVT_TUBE_WALL_EAST_E_SUPPLY, KEY_PVT_TUBE_WALL_WEST_E_SUPPLY, KEY_PVT_TUBE_ROOF_Q_SUPPLY, KEY_PVT_TUBE_WALL_NORTH_Q_SUPPLY, KEY_PVT_TUBE_WALL_SOUTH_Q_SUPPLY, KEY_PVT_TUBE_WALL_EAST_Q_SUPPLY, KEY_PVT_TUBE_WALL_WEST_Q_SUPPLY, KEY_THERMAL_PLATE_ROOF_SUPPLY, KEY_THERMAL_PLATE_WALL_NORTH_SUPPLY, KEY_THERMAL_PLATE_WALL_SOUTH_SUPPLY, KEY_THERMAL_PLATE_WALL_EAST_SUPPLY, KEY_THERMAL_PLATE_WALL_WEST_SUPPLY, KEY_THERMAL_TUBE_ROOF_SUPPLY, KEY_THERMAL_TUBE_WALL_NORTH_SUPPLY, KEY_THERMAL_TUBE_WALL_SOUTH_SUPPLY, KEY_THERMAL_TUBE_WALL_EAST_SUPPLY, KEY_THERMAL_TUBE_WALL_WEST_SUPPLY);
-    public List<String> SCALARS = Arrays.asList(KEY_SOLAR_SUITABLE_ROOF_AREA, KEY_SOLAR_SUITABLE_WALL_SOUTH_AREA, KEY_SOLAR_SUITABLE_WALL_NORTH_AREA, KEY_SOLAR_SUITABLE_WALL_EAST_AREA, KEY_SOLAR_SUITABLE_WALL_WEST_AREA);
+    public List<String> SCALARS = Arrays.asList(KEY_ROOF_SOLAR_SUITABLE_AREA, KEY_SOUTH_WALL_SOLAR_SUITABLE_AREA, KEY_NORTH_WALL_SOLAR_SUITABLE_AREA, KEY_EAST_WALL_SOLAR_SUITABLE_AREA, KEY_WEST_WALL_SOLAR_SUITABLE_AREA);
 
     public final int NUM_CEA_THREADS = 1;
     private final ThreadPoolExecutor CEAExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUM_CEA_THREADS);
@@ -537,6 +537,36 @@ public class CEAAgent extends JPSAgent {
                 requestParams.get(KEY_PV_WALL_NORTH_SUPPLY).toString().isEmpty() ||
                 requestParams.get(KEY_PV_WALL_EAST_SUPPLY).toString().isEmpty() ||
                 requestParams.get(KEY_PV_WALL_WEST_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_PLATE_ROOF_E_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_PLATE_ROOF_Q_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_PLATE_WALL_SOUTH_E_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_PLATE_WALL_SOUTH_Q_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_PLATE_WALL_NORTH_E_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_PLATE_WALL_NORTH_Q_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_PLATE_WALL_EAST_E_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_PLATE_WALL_EAST_Q_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_PLATE_WALL_WEST_E_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_PLATE_WALL_WEST_Q_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_TUBE_ROOF_E_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_TUBE_ROOF_Q_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_TUBE_WALL_SOUTH_E_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_TUBE_WALL_SOUTH_Q_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_TUBE_WALL_NORTH_E_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_TUBE_WALL_NORTH_Q_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_TUBE_WALL_EAST_E_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_TUBE_WALL_EAST_Q_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_TUBE_WALL_WEST_E_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_PVT_TUBE_WALL_WEST_Q_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_THERMAL_PLATE_ROOF_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_THERMAL_PLATE_WALL_SOUTH_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_THERMAL_PLATE_WALL_NORTH_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_THERMAL_PLATE_WALL_EAST_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_THERMAL_PLATE_WALL_WEST_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_THERMAL_TUBE_ROOF_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_THERMAL_TUBE_WALL_SOUTH_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_THERMAL_TUBE_WALL_NORTH_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_THERMAL_TUBE_WALL_EAST_SUPPLY).toString().isEmpty() ||
+                requestParams.get(KEY_THERMAL_TUBE_WALL_WEST_SUPPLY).toString().isEmpty() ||
                 requestParams.get(KEY_TIMES).toString().isEmpty();
         return error;
     }
@@ -1909,19 +1939,19 @@ public class CEAAgent extends JPSAgent {
                 .addPrefix("obs", ontobuiltstructureUri);
 
         switch(value) {
-            case KEY_SOLAR_SUITABLE_ROOF_AREA:
+            case KEY_ROOF_SOLAR_SUITABLE_AREA:
                 addSupplyDeviceAreaWhere(wb, building, "obs:RoofFacade");
                 break;
-            case KEY_SOLAR_SUITABLE_WALL_SOUTH_AREA:
+            case KEY_SOUTH_WALL_SOLAR_SUITABLE_AREA:
                 addSupplyDeviceAreaWhere(wb, building, "obs:SouthWallFacade");
                 break;
-            case KEY_SOLAR_SUITABLE_WALL_NORTH_AREA:
+            case KEY_NORTH_WALL_SOLAR_SUITABLE_AREA:
                 addSupplyDeviceAreaWhere(wb, building, "obs:NorthWallFacade");
                 break;
-            case KEY_SOLAR_SUITABLE_WALL_EAST_AREA:
+            case KEY_EAST_WALL_SOLAR_SUITABLE_AREA:
                 addSupplyDeviceAreaWhere(wb, building, "obs:EastWallFacade");
                 break;
-            case KEY_SOLAR_SUITABLE_WALL_WEST_AREA:
+            case KEY_WEST_WALL_SOLAR_SUITABLE_AREA:
                 addSupplyDeviceAreaWhere(wb, building, "obs:WestWallFacade");
                 break;
             case KEY_GRID_CONSUMPTION:
@@ -2292,86 +2322,86 @@ public class CEAAgent extends JPSAgent {
         UpdateBuilder ub = new UpdateBuilder();
 
         //Device uris
-        String pvRoofthermalTubeWallSouthCollectorUri = "PVRoofPanel_" + UUID.randomUUID() + "/";
-        String pvWallSouththermalTubeWallSouthCollectorUri = "PVWallSouthPanel_" + UUID.randomUUID() + "/";
-        String pvWallNorththermalTubeWallSouthCollectorUri = "PVWallNorthPanel_" + UUID.randomUUID() + "/";
-        String pvWallEastthermalTubeWallSouthCollectorUri = "PVWallEastPanel_" + UUID.randomUUID() + "/";
-        String pvWallWestthermalTubeWallSouthCollectorUri = "PVWallWestPanel_" + UUID.randomUUID() + "/";
-        String pvtPlateRoofthermalTubeWallSouthCollectorUri = "PVTPlateRoofCollector_" + UUID.randomUUID() + "/";
-        String pvtPlateWallSouththermalTubeWallSouthCollectorUri = "PVTPlateWallSouthCollector_" + UUID.randomUUID() + "/";
-        String pvtPlateWallNorththermalTubeWallSouthCollectorUri = "PVTPlateWallNorthCollector_" + UUID.randomUUID() + "/";
-        String pvtPlateWallEastthermalTubeWallSouthCollectorUri = "PVTPlateWallEastCollector_" + UUID.randomUUID() + "/";
-        String pvtPlateWallWestthermalTubeWallSouthCollectorUri = "PVTPlateWallWestCollector_" + UUID.randomUUID() + "/";
-        String pvtTubeRoofthermalTubeWallSouthCollectorUri = "PVTTubeRoofCollector_" + UUID.randomUUID() + "/";
-        String pvtTubeWallSouththermalTubeWallSouthCollectorUri = "PVTTubeWallSouthCollector_" + UUID.randomUUID() + "/";
-        String pvtTubeWallNorththermalTubeWallSouthCollectorUri = "PVTTubeWallNorthCollector_" + UUID.randomUUID() + "/";
-        String pvtTubeWallEastthermalTubeWallSouthCollectorUri = "PVTTubeWallEastCollector_" + UUID.randomUUID() + "/";
-        String pvtTubeWallWestthermalTubeWallSouthCollectorUri = "PVTTubeWallWestCollector_" + UUID.randomUUID() + "/";
-        String thermalPlateRoofthermalTubeWallSouthCollectorUri = "ThermalPlateRoofCollector_" + UUID.randomUUID() + "/";
-        String thermalPlateWallSouththermalTubeWallSouthCollectorUri = "ThermalPlateWallSouthCollector_" + UUID.randomUUID() + "/";
-        String thermalPlateWallNorththermalTubeWallSouthCollectorUri = "ThermalPlateWallNorthCollector_" + UUID.randomUUID() + "/";
-        String thermalPlateWallEastthermalTubeWallSouthCollectorUri = "ThermalPlateWallEastCollector_" + UUID.randomUUID() + "/";
-        String thermalPlateWallWestthermalTubeWallSouthCollectorUri = "ThermalPlateWallWestCollector_" + UUID.randomUUID() + "/";
-        String thermalTubeRoofthermalTubeWallSouthCollectorUri = "ThermalTubeRoofCollector_" + UUID.randomUUID() + "/";
-        String thermalTubeWallSouththermalTubeWallSouthCollectorUri = "ThermalTubeWallSouthCollector_" + UUID.randomUUID() + "/";
-        String thermalTubeWallNorththermalTubeWallSouthCollectorUri = "ThermalTubeWallNorthCollector_" + UUID.randomUUID() + "/";
-        String thermalTubeWallEastthermalTubeWallSouthCollectorUri = "ThermalTubeWallEastCollector_" + UUID.randomUUID() + "/";
-        String thermalTubeWallWestthermalTubeWallSouthCollectorUri = "ThermalTubeWallWestCollector_" + UUID.randomUUID() + "/";
+        String pvRoofPanelUri = "PVRoofPanel_" + UUID.randomUUID() + "/";
+        String pvWallSouthPanelUri = "PVWallSouthPanel_" + UUID.randomUUID() + "/";
+        String pvWallNorthPanelUri = "PVWallNorthPanel_" + UUID.randomUUID() + "/";
+        String pvWallEastPanelUri = "PVWallEastPanel_" + UUID.randomUUID() + "/";
+        String pvWallWestPanelUri = "PVWallWestPanel_" + UUID.randomUUID() + "/";
+        String pvtPlateRoofCollectorUri = "PVTPlateRoofCollector_" + UUID.randomUUID() + "/";
+        String pvtPlateWallSouthCollectorUri = "PVTPlateWallSouthCollector_" + UUID.randomUUID() + "/";
+        String pvtPlateWallNorthCollectorUri = "PVTPlateWallNorthCollector_" + UUID.randomUUID() + "/";
+        String pvtPlateWallEastCollectorUri = "PVTPlateWallEastCollector_" + UUID.randomUUID() + "/";
+        String pvtPlateWallWestCollectorUri = "PVTPlateWallWestCollector_" + UUID.randomUUID() + "/";
+        String pvtTubeRoofCollectorUri = "PVTTubeRoofCollector_" + UUID.randomUUID() + "/";
+        String pvtTubeWallSouthCollectorUri = "PVTTubeWallSouthCollector_" + UUID.randomUUID() + "/";
+        String pvtTubeWallNorthCollectorUri = "PVTTubeWallNorthCollector_" + UUID.randomUUID() + "/";
+        String pvtTubeWallEastCollectorUri = "PVTTubeWallEastCollector_" + UUID.randomUUID() + "/";
+        String pvtTubeWallWestCollectorUri = "PVTTubeWallWestCollector_" + UUID.randomUUID() + "/";
+        String thermalPlateRoofCollectorUri = "ThermalPlateRoofCollector_" + UUID.randomUUID() + "/";
+        String thermalPlateWallSouthCollectorUri = "ThermalPlateWallSouthCollector_" + UUID.randomUUID() + "/";
+        String thermalPlateWallNorthCollectorUri = "ThermalPlateWallNorthCollector_" + UUID.randomUUID() + "/";
+        String thermalPlateWallEastCollectorUri = "ThermalPlateWallEastCollector_" + UUID.randomUUID() + "/";
+        String thermalPlateWallWestCollectorUri = "ThermalPlateWallWestCollector_" + UUID.randomUUID() + "/";
+        String thermalTubeRoofCollectorUri = "ThermalTubeRoofCollector_" + UUID.randomUUID() + "/";
+        String thermalTubeWallSouthCollectorUri = "ThermalTubeWallSouthCollector_" + UUID.randomUUID() + "/";
+        String thermalTubeWallNorthCollectorUri = "ThermalTubeWallNorthCollector_" + UUID.randomUUID() + "/";
+        String thermalTubeWallEastCollectorUri = "ThermalTubeWallEastCollector_" + UUID.randomUUID() + "/";
+        String thermalTubeWallWestCollectorUri = "ThermalTubeWallWestCollector_" + UUID.randomUUID() + "/";
 
 
         if (!graph.isEmpty()){
-            pvRoofthermalTubeWallSouthCollectorUri = graph + pvRoofthermalTubeWallSouthCollectorUri;
-            pvWallSouththermalTubeWallSouthCollectorUri = graph + pvWallSouththermalTubeWallSouthCollectorUri;
-            pvWallNorththermalTubeWallSouthCollectorUri = graph + pvWallNorththermalTubeWallSouthCollectorUri;
-            pvWallEastthermalTubeWallSouthCollectorUri = graph + pvWallEastthermalTubeWallSouthCollectorUri;
-            pvWallWestthermalTubeWallSouthCollectorUri = graph + pvWallWestthermalTubeWallSouthCollectorUri;
-            pvtPlateRoofthermalTubeWallSouthCollectorUri = graph + pvtPlateRoofthermalTubeWallSouthCollectorUri;
-            pvtPlateWallSouththermalTubeWallSouthCollectorUri = graph + pvtPlateWallSouththermalTubeWallSouthCollectorUri;
-            pvtPlateWallNorththermalTubeWallSouthCollectorUri = graph + pvtPlateWallNorththermalTubeWallSouthCollectorUri;
-            pvtPlateWallEastthermalTubeWallSouthCollectorUri = graph + pvtPlateWallEastthermalTubeWallSouthCollectorUri;
-            pvtPlateWallWestthermalTubeWallSouthCollectorUri = graph + pvtPlateWallWestthermalTubeWallSouthCollectorUri;
-            pvtTubeRoofthermalTubeWallSouthCollectorUri = graph + pvtTubeRoofthermalTubeWallSouthCollectorUri;
-            pvtTubeWallSouththermalTubeWallSouthCollectorUri = graph + pvtTubeWallSouththermalTubeWallSouthCollectorUri;
-            pvtTubeWallNorththermalTubeWallSouthCollectorUri = graph + pvtTubeWallNorththermalTubeWallSouthCollectorUri;
-            pvtTubeWallEastthermalTubeWallSouthCollectorUri = graph + pvtTubeWallEastthermalTubeWallSouthCollectorUri;
-            pvtTubeWallWestthermalTubeWallSouthCollectorUri = graph + pvtTubeWallWestthermalTubeWallSouthCollectorUri;
-            thermalPlateRoofthermalTubeWallSouthCollectorUri = graph + thermalPlateRoofthermalTubeWallSouthCollectorUri;
-            thermalPlateWallSouththermalTubeWallSouthCollectorUri = graph + thermalPlateWallSouththermalTubeWallSouthCollectorUri;
-            thermalPlateWallNorththermalTubeWallSouthCollectorUri = graph + thermalPlateWallNorththermalTubeWallSouthCollectorUri;
-            thermalPlateWallEastthermalTubeWallSouthCollectorUri = graph + thermalPlateWallEastthermalTubeWallSouthCollectorUri;
-            thermalPlateWallWestthermalTubeWallSouthCollectorUri = graph + thermalPlateWallWestthermalTubeWallSouthCollectorUri;
-            thermalTubeRoofthermalTubeWallSouthCollectorUri = graph + thermalTubeRoofthermalTubeWallSouthCollectorUri;
-            thermalTubeWallSouththermalTubeWallSouthCollectorUri = graph + thermalTubeWallSouththermalTubeWallSouthCollectorUri;
-            thermalTubeWallNorththermalTubeWallSouthCollectorUri = graph + thermalTubeWallNorththermalTubeWallSouthCollectorUri;
-            thermalTubeWallEastthermalTubeWallSouthCollectorUri = graph + thermalTubeWallEastthermalTubeWallSouthCollectorUri;
-            thermalTubeWallWestthermalTubeWallSouthCollectorUri = graph + thermalTubeWallWestthermalTubeWallSouthCollectorUri;
+            pvRoofPanelUri = graph + pvRoofPanelUri;
+            pvWallSouthPanelUri = graph + pvWallSouthPanelUri;
+            pvWallNorthPanelUri = graph + pvWallNorthPanelUri;
+            pvWallEastPanelUri = graph + pvWallEastPanelUri;
+            pvWallWestPanelUri = graph + pvWallWestPanelUri;
+            pvtPlateRoofCollectorUri = graph + pvtPlateRoofCollectorUri;
+            pvtPlateWallSouthCollectorUri = graph + pvtPlateWallSouthCollectorUri;
+            pvtPlateWallNorthCollectorUri = graph + pvtPlateWallNorthCollectorUri;
+            pvtPlateWallEastCollectorUri = graph + pvtPlateWallEastCollectorUri;
+            pvtPlateWallWestCollectorUri = graph + pvtPlateWallWestCollectorUri;
+            pvtTubeRoofCollectorUri = graph + pvtTubeRoofCollectorUri;
+            pvtTubeWallSouthCollectorUri = graph + pvtTubeWallSouthCollectorUri;
+            pvtTubeWallNorthCollectorUri = graph + pvtTubeWallNorthCollectorUri;
+            pvtTubeWallEastCollectorUri = graph + pvtTubeWallEastCollectorUri;
+            pvtTubeWallWestCollectorUri = graph + pvtTubeWallWestCollectorUri;
+            thermalPlateRoofCollectorUri = graph + thermalPlateRoofCollectorUri;
+            thermalPlateWallSouthCollectorUri = graph + thermalPlateWallSouthCollectorUri;
+            thermalPlateWallNorthCollectorUri = graph + thermalPlateWallNorthCollectorUri;
+            thermalPlateWallEastCollectorUri = graph + thermalPlateWallEastCollectorUri;
+            thermalPlateWallWestCollectorUri = graph + thermalPlateWallWestCollectorUri;
+            thermalTubeRoofCollectorUri = graph + thermalTubeRoofCollectorUri;
+            thermalTubeWallSouthCollectorUri = graph + thermalTubeWallSouthCollectorUri;
+            thermalTubeWallNorthCollectorUri = graph + thermalTubeWallNorthCollectorUri;
+            thermalTubeWallEastCollectorUri = graph + thermalTubeWallEastCollectorUri;
+            thermalTubeWallWestCollectorUri = graph + thermalTubeWallWestCollectorUri;
         }
         else{
-            pvRoofthermalTubeWallSouthCollectorUri = ontoUBEMMPUri + pvRoofthermalTubeWallSouthCollectorUri;
-            pvWallSouththermalTubeWallSouthCollectorUri = ontoUBEMMPUri + pvWallSouththermalTubeWallSouthCollectorUri;
-            pvWallNorththermalTubeWallSouthCollectorUri = ontoUBEMMPUri + pvWallNorththermalTubeWallSouthCollectorUri;
-            pvWallEastthermalTubeWallSouthCollectorUri = ontoUBEMMPUri + pvWallEastthermalTubeWallSouthCollectorUri;
-            pvWallWestthermalTubeWallSouthCollectorUri = ontoUBEMMPUri + pvWallWestthermalTubeWallSouthCollectorUri;
-            pvtPlateRoofthermalTubeWallSouthCollectorUri = ontoUBEMMPUri + pvtPlateRoofthermalTubeWallSouthCollectorUri;
-            pvtPlateWallSouththermalTubeWallSouthCollectorUri = ontoUBEMMPUri + pvtPlateWallSouththermalTubeWallSouthCollectorUri;
-            pvtPlateWallNorththermalTubeWallSouthCollectorUri = ontoUBEMMPUri + pvtPlateWallNorththermalTubeWallSouthCollectorUri;
-            pvtPlateWallEastthermalTubeWallSouthCollectorUri = ontoUBEMMPUri + pvtPlateWallEastthermalTubeWallSouthCollectorUri;
-            pvtPlateWallWestthermalTubeWallSouthCollectorUri = ontoUBEMMPUri + pvtPlateWallWestthermalTubeWallSouthCollectorUri;
-            pvtTubeRoofthermalTubeWallSouthCollectorUri = ontoUBEMMPUri + pvtTubeRoofthermalTubeWallSouthCollectorUri;
-            pvtTubeWallSouththermalTubeWallSouthCollectorUri = ontoUBEMMPUri + pvtTubeWallSouththermalTubeWallSouthCollectorUri;
-            pvtTubeWallNorththermalTubeWallSouthCollectorUri = ontoUBEMMPUri + pvtTubeWallNorththermalTubeWallSouthCollectorUri;
-            pvtTubeWallEastthermalTubeWallSouthCollectorUri = ontoUBEMMPUri + pvtTubeWallEastthermalTubeWallSouthCollectorUri;
-            pvtTubeWallWestthermalTubeWallSouthCollectorUri = ontoUBEMMPUri + pvtTubeWallWestthermalTubeWallSouthCollectorUri;
-            thermalPlateRoofthermalTubeWallSouthCollectorUri = ontoUBEMMPUri + thermalPlateRoofthermalTubeWallSouthCollectorUri;
-            thermalPlateWallSouththermalTubeWallSouthCollectorUri = ontoUBEMMPUri + thermalPlateWallSouththermalTubeWallSouthCollectorUri;
-            thermalPlateWallNorththermalTubeWallSouthCollectorUri = ontoUBEMMPUri + thermalPlateWallNorththermalTubeWallSouthCollectorUri;
-            thermalPlateWallEastthermalTubeWallSouthCollectorUri = ontoUBEMMPUri + thermalPlateWallEastthermalTubeWallSouthCollectorUri;
-            thermalPlateWallWestthermalTubeWallSouthCollectorUri = ontoUBEMMPUri + thermalPlateWallWestthermalTubeWallSouthCollectorUri;
-            thermalTubeRoofthermalTubeWallSouthCollectorUri = ontoUBEMMPUri + thermalTubeRoofthermalTubeWallSouthCollectorUri;
-            thermalTubeWallSouththermalTubeWallSouthCollectorUri = ontoUBEMMPUri + thermalTubeWallSouththermalTubeWallSouthCollectorUri;
-            thermalTubeWallNorththermalTubeWallSouthCollectorUri = ontoUBEMMPUri + thermalTubeWallNorththermalTubeWallSouthCollectorUri;
-            thermalTubeWallEastthermalTubeWallSouthCollectorUri = ontoUBEMMPUri + thermalTubeWallEastthermalTubeWallSouthCollectorUri;
-            thermalTubeWallWestthermalTubeWallSouthCollectorUri = ontoUBEMMPUri + thermalTubeWallWestthermalTubeWallSouthCollectorUri;
+            pvRoofPanelUri = ontoUBEMMPUri + pvRoofPanelUri;
+            pvWallSouthPanelUri = ontoUBEMMPUri + pvWallSouthPanelUri;
+            pvWallNorthPanelUri = ontoUBEMMPUri + pvWallNorthPanelUri;
+            pvWallEastPanelUri = ontoUBEMMPUri + pvWallEastPanelUri;
+            pvWallWestPanelUri = ontoUBEMMPUri + pvWallWestPanelUri;
+            pvtPlateRoofCollectorUri = ontoUBEMMPUri + pvtPlateRoofCollectorUri;
+            pvtPlateWallSouthCollectorUri = ontoUBEMMPUri + pvtPlateWallSouthCollectorUri;
+            pvtPlateWallNorthCollectorUri = ontoUBEMMPUri + pvtPlateWallNorthCollectorUri;
+            pvtPlateWallEastCollectorUri = ontoUBEMMPUri + pvtPlateWallEastCollectorUri;
+            pvtPlateWallWestCollectorUri = ontoUBEMMPUri + pvtPlateWallWestCollectorUri;
+            pvtTubeRoofCollectorUri = ontoUBEMMPUri + pvtTubeRoofCollectorUri;
+            pvtTubeWallSouthCollectorUri = ontoUBEMMPUri + pvtTubeWallSouthCollectorUri;
+            pvtTubeWallNorthCollectorUri = ontoUBEMMPUri + pvtTubeWallNorthCollectorUri;
+            pvtTubeWallEastCollectorUri = ontoUBEMMPUri + pvtTubeWallEastCollectorUri;
+            pvtTubeWallWestCollectorUri = ontoUBEMMPUri + pvtTubeWallWestCollectorUri;
+            thermalPlateRoofCollectorUri = ontoUBEMMPUri + thermalPlateRoofCollectorUri;
+            thermalPlateWallSouthCollectorUri = ontoUBEMMPUri + thermalPlateWallSouthCollectorUri;
+            thermalPlateWallNorthCollectorUri = ontoUBEMMPUri + thermalPlateWallNorthCollectorUri;
+            thermalPlateWallEastCollectorUri = ontoUBEMMPUri + thermalPlateWallEastCollectorUri;
+            thermalPlateWallWestCollectorUri = ontoUBEMMPUri + thermalPlateWallWestCollectorUri;
+            thermalTubeRoofCollectorUri = ontoUBEMMPUri + thermalTubeRoofCollectorUri;
+            thermalTubeWallSouthCollectorUri = ontoUBEMMPUri + thermalTubeWallSouthCollectorUri;
+            thermalTubeWallNorthCollectorUri = ontoUBEMMPUri + thermalTubeWallNorthCollectorUri;
+            thermalTubeWallEastCollectorUri = ontoUBEMMPUri + thermalTubeWallEastCollectorUri;
+            thermalTubeWallWestCollectorUri = ontoUBEMMPUri + thermalTubeWallWestCollectorUri;
         }
 
         Map<String, String> facades = new HashMap<>();
@@ -2395,29 +2425,29 @@ public class CEAAgent extends JPSAgent {
             scalarIris.put(measurement, measure);
 
             switch(measurement){
-                case(KEY_SOLAR_SUITABLE_ROOF_AREA):
+                case(KEY_ROOF_SOLAR_SUITABLE_AREA):
                     createFacadeUpdate(wb, buildingUri, facade, "obs:RoofFacade");
-                    createSolarSuitableAreaUpdate(wb, facade, quantity, measure, scalars.get(KEY_SOLAR_SUITABLE_ROOF_AREA).get(uriCounter));
+                    createSolarSuitableAreaUpdate(wb, facade, quantity, measure, scalars.get(KEY_ROOF_SOLAR_SUITABLE_AREA).get(uriCounter));
                     facades.put("Roof", facade);
                     break;
-                case(KEY_SOLAR_SUITABLE_WALL_SOUTH_AREA):
+                case(KEY_SOUTH_WALL_SOLAR_SUITABLE_AREA):
                     createFacadeUpdate(wb, buildingUri, facade, "obs:SouthWallFacade");
-                    createSolarSuitableAreaUpdate(wb, facade, quantity, measure, scalars.get(KEY_SOLAR_SUITABLE_WALL_SOUTH_AREA).get(uriCounter));
+                    createSolarSuitableAreaUpdate(wb, facade, quantity, measure, scalars.get(KEY_SOUTH_WALL_SOLAR_SUITABLE_AREA).get(uriCounter));
                     facades.put("SouthWall", facade);
                     break;
-                case(KEY_SOLAR_SUITABLE_WALL_NORTH_AREA):
+                case(KEY_NORTH_WALL_SOLAR_SUITABLE_AREA):
                     createFacadeUpdate(wb, buildingUri, facade, "obs:NorthWallFacade");
-                    createSolarSuitableAreaUpdate(wb, facade, quantity, measure, scalars.get(KEY_SOLAR_SUITABLE_WALL_NORTH_AREA).get(uriCounter));
+                    createSolarSuitableAreaUpdate(wb, facade, quantity, measure, scalars.get(KEY_NORTH_WALL_SOLAR_SUITABLE_AREA).get(uriCounter));
                     facades.put("NorthWall", facade);
                     break;
-                case(KEY_SOLAR_SUITABLE_WALL_EAST_AREA):
+                case(KEY_EAST_WALL_SOLAR_SUITABLE_AREA):
                     createFacadeUpdate(wb, buildingUri, facade, "obs:EastWallFacade");
-                    createSolarSuitableAreaUpdate(wb, facade, quantity, measure, scalars.get(KEY_SOLAR_SUITABLE_WALL_EAST_AREA).get(uriCounter));
+                    createSolarSuitableAreaUpdate(wb, facade, quantity, measure, scalars.get(KEY_EAST_WALL_SOLAR_SUITABLE_AREA).get(uriCounter));
                     facades.put("EastWall", facade);
                     break;
-                case(KEY_SOLAR_SUITABLE_WALL_WEST_AREA):
+                case(KEY_WEST_WALL_SOLAR_SUITABLE_AREA):
                     createFacadeUpdate(wb, buildingUri, facade, "obs:WestWallFacade");
-                    createSolarSuitableAreaUpdate(wb, facade, quantity, measure, scalars.get(KEY_SOLAR_SUITABLE_WALL_WEST_AREA).get(uriCounter));
+                    createSolarSuitableAreaUpdate(wb, facade, quantity, measure, scalars.get(KEY_WEST_WALL_SOLAR_SUITABLE_AREA).get(uriCounter));
                     facades.put("WestWall", facade);
                     break;
             }
@@ -2430,109 +2460,109 @@ public class CEAAgent extends JPSAgent {
                 createConsumptionUpdate(wb, buildingUri, "ontoubemmp:" + measurement, quantity, tsIris.get(measurement));
             }
             else if (measurement.equals(KEY_PV_ROOF_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("Roof"), pvRoofthermalTubeWallSouthCollectorUri, "ontoubemmp:PVPanel", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("Roof"), pvRoofPanelUri, "ontoubemmp:PVPanel", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
             }
             else if (measurement.equals(KEY_PV_WALL_SOUTH_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("SouthWall"), pvWallSouththermalTubeWallSouthCollectorUri, "ontoubemmp:PVPanel", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("SouthWall"), pvWallSouthPanelUri, "ontoubemmp:PVPanel", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
             }
             else if (measurement.equals(KEY_PV_WALL_NORTH_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("NorthWall"), pvWallNorththermalTubeWallSouthCollectorUri, "ontoubemmp:PVPanel", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("NorthWall"), pvWallNorthPanelUri, "ontoubemmp:PVPanel", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
             }
             else if (measurement.equals(KEY_PV_WALL_EAST_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("EastWall"), pvWallEastthermalTubeWallSouthCollectorUri, "ontoubemmp:PVPanel", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("EastWall"), pvWallEastPanelUri, "ontoubemmp:PVPanel", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
             }
             else if (measurement.equals(KEY_PV_WALL_WEST_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("WestWall"), pvWallWestthermalTubeWallSouthCollectorUri, "ontoubemmp:PVPanel", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("WestWall"), pvWallWestPanelUri, "ontoubemmp:PVPanel", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
             }
             else if (measurement.equals(KEY_PVT_PLATE_ROOF_E_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("Roof"), pvtPlateRoofthermalTubeWallSouthCollectorUri, quantity, "ontoubemmp:PVTPlateCollector", tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("Roof"), pvtPlateRoofCollectorUri, quantity, "ontoubemmp:PVTPlateCollector", tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
             }
             else if (measurement.equals(KEY_PVT_PLATE_WALL_SOUTH_E_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("SouthWall"), pvtPlateWallSouththermalTubeWallSouthCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("SouthWall"), pvtPlateWallSouthCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
             }
             else if (measurement.equals(KEY_PVT_PLATE_WALL_NORTH_E_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("NorthWall"), pvtPlateWallNorththermalTubeWallSouthCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("NorthWall"), pvtPlateWallNorthCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
             }
             else if (measurement.equals(KEY_PVT_PLATE_WALL_EAST_E_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("EastWall"), pvtPlateWallEastthermalTubeWallSouthCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("EastWall"), pvtPlateWallEastCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
             }
             else if (measurement.equals(KEY_PVT_PLATE_WALL_WEST_E_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("WestWall"), pvtPlateWallWestthermalTubeWallSouthCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("WestWall"), pvtPlateWallWestCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
             }
             else if (measurement.equals(KEY_PVT_PLATE_ROOF_Q_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("Roof"), pvtPlateRoofthermalTubeWallSouthCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("Roof"), pvtPlateRoofCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_PVT_PLATE_WALL_SOUTH_Q_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("SouthWall"), pvtPlateWallSouththermalTubeWallSouthCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("SouthWall"), pvtPlateWallSouthCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_PVT_PLATE_WALL_NORTH_Q_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("NorthWall"), pvtPlateWallNorththermalTubeWallSouthCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("NorthWall"), pvtPlateWallNorthCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_PVT_PLATE_WALL_EAST_Q_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("EastWall"), pvtPlateWallEastthermalTubeWallSouthCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("EastWall"), pvtPlateWallEastCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_PVT_PLATE_WALL_WEST_Q_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("WestWall"), pvtPlateWallWestthermalTubeWallSouthCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("WestWall"), pvtPlateWallWestCollectorUri, "ontoubemmp:PVTPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_PVT_TUBE_ROOF_E_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("Roof"), pvtTubeRoofthermalTubeWallSouthCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("Roof"), pvtTubeRoofCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
             }
             else if (measurement.equals(KEY_PVT_TUBE_WALL_SOUTH_E_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("SouthWall"), pvtTubeWallSouththermalTubeWallSouthCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("SouthWall"), pvtTubeWallSouthCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
             }
             else if (measurement.equals(KEY_PVT_TUBE_WALL_NORTH_E_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("NorthWall"), pvtTubeWallNorththermalTubeWallSouthCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("NorthWall"), pvtTubeWallNorthCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
             }
             else if (measurement.equals(KEY_PVT_TUBE_WALL_EAST_E_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("EastWall"), pvtTubeWallEastthermalTubeWallSouthCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("EastWall"), pvtTubeWallEastCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
             }
             else if (measurement.equals(KEY_PVT_TUBE_WALL_WEST_E_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("WestWall"), pvtTubeWallWestthermalTubeWallSouthCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("WestWall"), pvtTubeWallWestCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:ElectricitySupply");
             }
             else if (measurement.equals(KEY_PVT_TUBE_ROOF_Q_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("Roof"), pvtTubeRoofthermalTubeWallSouthCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("Roof"), pvtTubeRoofCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_PVT_TUBE_WALL_SOUTH_Q_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("SouthWall"), pvtTubeWallSouththermalTubeWallSouthCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("SouthWall"), pvtTubeWallSouthCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_PVT_TUBE_WALL_NORTH_Q_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("NorthWall"), pvtTubeWallNorththermalTubeWallSouthCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("NorthWall"), pvtTubeWallNorthCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_PVT_TUBE_WALL_EAST_Q_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("EastWall"), pvtTubeWallEastthermalTubeWallSouthCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("EastWall"), pvtTubeWallEastCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_PVT_TUBE_WALL_WEST_Q_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("WestWall"), pvtTubeWallWestthermalTubeWallSouthCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("WestWall"), pvtTubeWallWestCollectorUri, "ontoubemmp:PVTTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_THERMAL_PLATE_ROOF_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("Roof"), thermalPlateRoofthermalTubeWallSouthCollectorUri, "ontoubemmp:ThermalPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("Roof"), thermalPlateRoofCollectorUri, "ontoubemmp:ThermalPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_THERMAL_PLATE_WALL_SOUTH_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("SouthWall"), thermalPlateWallSouththermalTubeWallSouthCollectorUri, "ontoubemmp:ThermalPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("SouthWall"), thermalPlateWallSouthCollectorUri, "ontoubemmp:ThermalPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_THERMAL_PLATE_WALL_NORTH_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("NorthWall"), thermalPlateWallNorththermalTubeWallSouthCollectorUri, "ontoubemmp:ThermalPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("NorthWall"), thermalPlateWallNorthCollectorUri, "ontoubemmp:ThermalPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_THERMAL_PLATE_WALL_EAST_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("EastWall"), thermalPlateWallEastthermalTubeWallSouthCollectorUri, "ontoubemmp:ThermalPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("EastWall"), thermalPlateWallEastCollectorUri, "ontoubemmp:ThermalPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_THERMAL_PLATE_WALL_WEST_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("WestWall"), thermalPlateWallWestthermalTubeWallSouthCollectorUri, "ontoubemmp:ThermalPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("WestWall"), thermalPlateWallWestCollectorUri, "ontoubemmp:ThermalPlateCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_THERMAL_TUBE_ROOF_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("Roof"), thermalTubeRoofthermalTubeWallSouthCollectorUri, "ontoubemmp:ThermalTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("Roof"), thermalTubeRoofCollectorUri, "ontoubemmp:ThermalTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_THERMAL_TUBE_WALL_SOUTH_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("SouthWall"), thermalTubeWallSouththermalTubeWallSouthCollectorUri, "ontoubemmp:ThermalTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("SouthWall"), thermalTubeWallSouthCollectorUri, "ontoubemmp:ThermalTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_THERMAL_TUBE_WALL_NORTH_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("NorthWall"), thermalTubeWallNorththermalTubeWallSouthCollectorUri, "ontoubemmp:ThermalTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("NorthWall"), thermalTubeWallNorthCollectorUri, "ontoubemmp:ThermalTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_THERMAL_TUBE_WALL_EAST_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("EastWall"), thermalTubeWallEastthermalTubeWallSouthCollectorUri, "ontoubemmp:ThermalTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("EastWall"), thermalTubeWallEastCollectorUri, "ontoubemmp:ThermalTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
             else if (measurement.equals(KEY_THERMAL_TUBE_WALL_WEST_SUPPLY)){
-                createSolarGeneratorSupplyUpdate(wb, facades.get("WestWall"), thermalTubeWallWestthermalTubeWallSouthCollectorUri, "ontoubemmp:ThermalTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
+                createSolarGeneratorSupplyUpdate(wb, facades.get("WestWall"), thermalTubeWallWestCollectorUri, "ontoubemmp:ThermalTubeCollector", quantity, tsIris.get(measurement), "ontoubemmp:HeatSupply");
             }
         }
 
