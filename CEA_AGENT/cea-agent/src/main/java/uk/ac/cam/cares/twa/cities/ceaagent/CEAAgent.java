@@ -1799,7 +1799,7 @@ public class CEAAgent extends JPSAgent {
 
             radius = w > h ? w/2 : h/2;
 
-            radius += 10;
+            radius += 30;
         }
         else {
             String envelopeCoordinates = getValue(uriString, "envelope", route);
@@ -1810,7 +1810,7 @@ public class CEAAgent extends JPSAgent {
 
             centerCoordinate = center.getCoordinate();
 
-            radius = 120.0;
+            radius = 160.0;
         }
 
         crs = StringUtils.isNumeric(crs) ? "EPSG:" + crs : crs;
