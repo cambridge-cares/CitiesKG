@@ -692,9 +692,9 @@ public class RunCEATask implements Runnable {
                 ArrayList<String> args10 = new ArrayList<>();
                 ArrayList<String> args11 = new ArrayList<>();
                 
-                String workflowPath = strTmp + FS + "workflow.yml";
-                String workflowPath2 = strTmp + FS + "workflow2.yml";
-                String workflowPath3 = strTmp + FS + "workflow3.yml";
+                String workflowPath = strTmp + FS + WORKFLOW_YML;
+                String workflowPath2 = strTmp + FS + WORKFLOW_YML2;
+                String workflowPath3 = strTmp + FS + WORKFLOW_YML3;
                 String data_path = strTmp + FS + DATA_FILE;
                 String surroundings_path = strTmp + FS + SURROUNDINGS_FILE;
                 String weatherTimes_path = strTmp + FS + WEATHERTIMES_FILE;
