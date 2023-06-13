@@ -141,18 +141,9 @@ public class RunCEATaskTest {
     public void testExtractArea() throws Exception {
         String PVTitle = "PV_roofs_top_m2,PV_walls_south_m2,PV_walls_north_m2,Other,PV_walls_east_m2,PV_walls_west_m2";
         String PVValues = "10.0,20.0,30.0,40.0,50.0,60.0";
-        String PVTTitle = "PVT_roofs_top_m2,PVT_walls_south_m2,PVT_walls_north_m2,Other,PVT_walls_east_m2,PVT_walls_west_m2";
-        String PVTValues = "11.0,21.0,31.0,41.0,51.0,61.0";
-        String SCFPTitle = "SC_FP_roofs_top_m2,SC_FP_walls_south_m2,SC_FP_walls_north_m2,Other,SC_FP_walls_east_m2,SC_FP_walls_west_m2";
-        String SCFPValues = "12.0,22.0,32.0,42.0,52.0,62.0";
-        String SCETTitle = "SC_ET_roofs_top_m2,SC_ET_walls_south_m2,SC_ET_walls_north_m2,Other,SC_ET_walls_east_m2,SC_ET_walls_west_m2";
-        String SCETValues = "13.0,23.0,33.0,43.0,53.0,63.0";
-        
+
         Map<String, List<String>> testCEAoutputs = new HashMap<>();
         testCEAoutputs.put("PV", Arrays.asList(PVTitle, PVValues));
-        testCEAoutputs.put("PVT", Arrays.asList(PVTTitle, PVTValues));
-        testCEAoutputs.put("SCFP", Arrays.asList(SCFPTitle, SCFPValues));
-        testCEAoutputs.put("SCET", Arrays.asList(SCETTitle, SCETValues));
         CEAOutputData data = new CEAOutputData();
         String tmpDir = "test";
 
@@ -175,36 +166,12 @@ public class RunCEATaskTest {
                     CEAOutputData result = (CEAOutputData) extractArea.invoke(task, tmpDir, data);
                     
                     String[] testValues = entry.getValue().get(1).split(",");
-                    if (entry.getKey().equals("PV")) {
-                        assertTrue(result.PVRoofArea.contains(testValues[0]));
-                        assertTrue(result.PVWallSouthArea.contains(testValues[1]));
-                        assertTrue(result.PVWallNorthArea.contains(testValues[2]));
-                        assertTrue(result.PVWallEastArea.contains(testValues[4]));
-                        assertTrue(result.PVWallWestArea.contains(testValues[5]));
-                    } else if (entry.getKey().equals("PVT")) {
-                        assertTrue(result.PVTPlateRoofArea.contains(testValues[0]));
-                        assertTrue(result.PVTPlateWallSouthArea.contains(testValues[1]));
-                        assertTrue(result.PVTPlateWallNorthArea.contains(testValues[2]));
-                        assertTrue(result.PVTPlateWallEastArea.contains(testValues[4]));
-                        assertTrue(result.PVTPlateWallWestArea.contains(testValues[5]));
-                        assertTrue(result.PVTTubeRoofArea.contains(testValues[0]));
-                        assertTrue(result.PVTTubeWallSouthArea.contains(testValues[1]));
-                        assertTrue(result.PVTTubeWallNorthArea.contains(testValues[2]));
-                        assertTrue(result.PVTTubeWallEastArea.contains(testValues[4]));
-                        assertTrue(result.PVTTubeWallWestArea.contains(testValues[5]));
-                    } else if (entry.getKey().equals("SCFP")) {
-                        assertTrue(result.ThermalPlateRoofArea.contains(testValues[0]));
-                        assertTrue(result.ThermalPlateWallSouthArea.contains(testValues[1]));
-                        assertTrue(result.ThermalPlateWallNorthArea.contains(testValues[2]));
-                        assertTrue(result.ThermalPlateWallEastArea.contains(testValues[4]));
-                        assertTrue(result.ThermalPlateWallWestArea.contains(testValues[5]));
-                    } else if (entry.getKey().equals("SCET")) {
-                        assertTrue(result.ThermalTubeRoofArea.contains(testValues[0]));
-                        assertTrue(result.ThermalTubeWallSouthArea.contains(testValues[1]));
-                        assertTrue(result.ThermalTubeWallNorthArea.contains(testValues[2]));
-                        assertTrue(result.ThermalTubeWallEastArea.contains(testValues[4]));
-                        assertTrue(result.ThermalTubeWallWestArea.contains(testValues[5]));
-                    }
+
+                    assertTrue(result.RoofSolarSuitableArea.contains(testValues[0]));
+                    assertTrue(result.SouthWallSolarSuitableArea.contains(testValues[1]));
+                    assertTrue(result.NorthWallSolarSuitableArea.contains(testValues[2]));
+                    assertTrue(result.EastWallSolarSuitableArea.contains(testValues[4]));
+                    assertTrue(result.WestWallSolarSuitableArea.contains(testValues[5]));
 
                     assertTrue(result.targetUrl.contains(testURI.toString()));
                     assertTrue(result.iris.get(0).contains(testArray.get(0)));
