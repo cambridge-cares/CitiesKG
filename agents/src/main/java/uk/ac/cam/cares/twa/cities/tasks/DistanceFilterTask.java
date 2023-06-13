@@ -82,7 +82,7 @@ public class DistanceFilterTask {
                 "PREFIX selected_plot: <{CITYOBJECTIRI}>\n" +
                 "SELECT ?landuseType ?gfaValue \n" +
                 "WHERE {\n" +
-                "  GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobjectgenericattrib_andrea> {\n" +
+                "  GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobjectgenericattrib_andrea_v2> {\n" +
                 "    ?subject ocgml:cityObjectId selected_plot: . \n" +
                 "    ?subject ocgml:attrName ?landuseType.\n" +
                 "    ?subject ocgml:intVal ?gfaValue.\n" +
