@@ -44,9 +44,9 @@ public class RunCEATask implements Runnable {
     private static final String TYPOLOGY_SCRIPT = "create_typologyfile.py";
     private static final String TERRAIN_SCRIPT = "validate_tif_file.py";
     private static final String WEATHER_SCRIPT = "create_weatherfile.py";
-    private static final String WORKFLOW_YML = "workflow.yml";
-    private static final String WORKFLOW_YML2 = "workflow2.yml";
-    private static final String WORKFLOW_YML3 = "workflow3.yml";
+    private static final String WORKFLOW_YML = "workflow_reference_weather.yml";
+    private static final String WORKFLOW_YML2 = "workflow2_main.yml";
+    private static final String WORKFLOW_YML3 = "workflow3_pvt_tube.yml";
     private static final String CREATE_WORKFLOW_SCRIPT = "create_cea_workflow.py";
     private static final String FS = System.getProperty("file.separator");
     private Map<String, ArrayList<String>> solarSupply = new HashMap<>();
@@ -810,11 +810,11 @@ public class RunCEATask implements Runnable {
 
                     args.add("/bin/bash");
                     args.add("-c");
-                    args.add("export PROJ_LIB=/venv/share/lib && python " + shapefile + " " + data_path + " " +strTmp+ " " +crs+" zone.shp");
+                    args.add("export PROJ_LIB=/venv/share/lib && python " + shapefile + " " + data_path + " " +strTmp+ " " + crs + " zone.shp");
 
                     args2.add("/bin/bash");
                     args2.add("-c");
-                    args2.add("export PROJ_LIB=/venv/share/lib && python " + shapefile + " " + surroundings_path + " " +strTmp+ " " +crs+" surroundings.shp");
+                    args2.add("export PROJ_LIB=/venv/share/lib && python " + shapefile + " " + surroundings_path + " " +strTmp+ " " + crs + " surroundings.shp");
 
                     args3.add("/bin/bash");
                     args3.add("-c");
@@ -872,7 +872,7 @@ public class RunCEATask implements Runnable {
                     // run workflow.yml for CEA to get default weather file
                     runProcess(args6);
 
-                    // create the weatherfile process and run
+                    // create the weather file process and run
                     runProcess(args7);
 
                     // delete the temporary CEA files that were used to create weather file
