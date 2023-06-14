@@ -1,6 +1,5 @@
 package uk.ac.cam.cares.twa.cities.ceaagent;
 
-import com.bigdata.rdf.sparql.ast.StaticAnalysis;
 import kong.unirest.*;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.jooq.exception.DataAccessException;
@@ -77,11 +76,6 @@ public class CEAAgentTest {
         Field KEY_ELECTRICITY_CONSUMPTION;
         Field KEY_HEATING_CONSUMPTION;
         Field KEY_COOLING_CONSUMPTION;
-        Field KEY_PV_ROOF_AREA;
-        Field KEY_PV_WALL_NORTH_AREA;
-        Field KEY_PV_WALL_SOUTH_AREA;
-        Field KEY_PV_WALL_EAST_AREA;
-        Field KEY_PV_WALL_WEST_AREA;
         Field KEY_PV_ROOF_SUPPLY;
         Field KEY_PV_WALL_NORTH_SUPPLY;
         Field KEY_PV_WALL_SOUTH_SUPPLY;
@@ -151,16 +145,6 @@ public class CEAAgentTest {
             assertEquals(KEY_HEATING_CONSUMPTION.get(agent), "HeatingConsumption");
             KEY_COOLING_CONSUMPTION = agent.getClass().getDeclaredField("KEY_COOLING_CONSUMPTION");
             assertEquals(KEY_COOLING_CONSUMPTION.get(agent), "CoolingConsumption");
-            KEY_PV_ROOF_AREA = agent.getClass().getDeclaredField("KEY_PV_ROOF_AREA");
-            assertEquals(KEY_PV_ROOF_AREA.get(agent), "PVRoofArea");
-            KEY_PV_WALL_NORTH_AREA = agent.getClass().getDeclaredField("KEY_PV_WALL_NORTH_AREA");
-            assertEquals(KEY_PV_WALL_NORTH_AREA.get(agent), "PVWallNorthArea");
-            KEY_PV_WALL_SOUTH_AREA = agent.getClass().getDeclaredField("KEY_PV_WALL_SOUTH_AREA");
-            assertEquals(KEY_PV_WALL_SOUTH_AREA.get(agent), "PVWallSouthArea");
-            KEY_PV_WALL_EAST_AREA = agent.getClass().getDeclaredField("KEY_PV_WALL_EAST_AREA");
-            assertEquals(KEY_PV_WALL_EAST_AREA.get(agent), "PVWallEastArea");
-            KEY_PV_WALL_WEST_AREA = agent.getClass().getDeclaredField("KEY_PV_WALL_WEST_AREA");
-            assertEquals(KEY_PV_WALL_WEST_AREA.get(agent), "PVWallWestArea");
             KEY_PV_ROOF_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_ROOF_SUPPLY");
             assertEquals(KEY_PV_ROOF_SUPPLY.get(agent), "PVRoofSupply");
             KEY_PV_WALL_NORTH_SUPPLY = agent.getClass().getDeclaredField("KEY_PV_WALL_NORTH_SUPPLY");
@@ -223,19 +207,10 @@ public class CEAAgentTest {
             owlUri = agent.getClass().getDeclaredField("owlUri");
             owlUri.setAccessible(true);
             assertEquals(owlUri.get(agent), config.getString("uri.ontology.owl"));
-            purlEnaeqUri = agent.getClass().getDeclaredField("purlEnaeqUri");
-            purlEnaeqUri.setAccessible(true);
-            assertEquals(purlEnaeqUri.get(agent), config.getString("uri.ontology.purl.enaeq"));
-            purlInfrastructureUri = agent.getClass().getDeclaredField("purlInfrastructureUri");
-            purlInfrastructureUri.setAccessible(true);
-            assertEquals(purlInfrastructureUri.get(agent), config.getString("uri.ontology.purl.infrastructure"));
-            thinkhomeUri = agent.getClass().getDeclaredField("thinkhomeUri");
-            thinkhomeUri.setAccessible(true);
-            assertEquals(thinkhomeUri.get(agent), config.getString("uri.ontology.thinkhome"));
             unitOntologyUri = agent.getClass().getDeclaredField("unitOntologyUri");
             unitOntologyUri.setAccessible(true);
             assertEquals(unitOntologyUri.get(agent), config.getString("uri.ontology.om"));
-            ontoBuiltEnvUri = agent.getClass().getDeclaredField("ontoBuiltEnvUri");
+            ontoBuiltEnvUri = agent.getClass().getDeclaredField("ontobuiltenvUri");
             ontoBuiltEnvUri.setAccessible(true);
             assertEquals(ontoBuiltEnvUri.get(agent), config.getString("uri.ontology.ontobuiltenv"));
 
@@ -340,66 +315,46 @@ public class CEAAgentTest {
         requestParams.put(CEAAgent.KEY_ELECTRICITY_CONSUMPTION, arrayMock);
         requestParams.put(CEAAgent.KEY_HEATING_CONSUMPTION, arrayMock);
         requestParams.put(CEAAgent.KEY_COOLING_CONSUMPTION, arrayMock);
-        requestParams.put(CEAAgent.KEY_PV_ROOF_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_PV_ROOF_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_PV_WALL_SOUTH_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_PV_WALL_SOUTH_SUPPLY,arrayMock);
-        requestParams.put(CEAAgent.KEY_PV_WALL_NORTH_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_PV_WALL_NORTH_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_PV_WALL_EAST_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_PV_WALL_EAST_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_PV_WALL_WEST_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_PV_WALL_WEST_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_PVT_PLATE_ROOF_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_PLATE_ROOF_E_SUPPLY, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_PLATE_ROOF_Q_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_SOUTH_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_SOUTH_E_SUPPLY,arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_SOUTH_Q_SUPPLY,arrayMock);
-        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_NORTH_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_NORTH_E_SUPPLY, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_NORTH_Q_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_EAST_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_EAST_E_SUPPLY, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_EAST_Q_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_WEST_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_WEST_E_SUPPLY, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_WEST_Q_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_PVT_TUBE_ROOF_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_TUBE_ROOF_E_SUPPLY, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_TUBE_ROOF_Q_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_SOUTH_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_SOUTH_E_SUPPLY,arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_SOUTH_Q_SUPPLY,arrayMock);
-        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_NORTH_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_NORTH_E_SUPPLY, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_NORTH_Q_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_EAST_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_EAST_E_SUPPLY, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_EAST_Q_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_WEST_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_WEST_E_SUPPLY, arrayMock);
         requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_WEST_Q_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_ROOF_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_THERMAL_PLATE_ROOF_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_SOUTH_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_SOUTH_SUPPLY,arrayMock);
-        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_NORTH_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_NORTH_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_EAST_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_EAST_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_WEST_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_WEST_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_ROOF_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_THERMAL_TUBE_ROOF_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_SOUTH_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_SOUTH_SUPPLY,arrayMock);
-        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_NORTH_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_NORTH_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_EAST_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_EAST_SUPPLY, arrayMock);
-        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_WEST_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_WEST_SUPPLY, arrayMock);
+        requestParams.put(CEAAgent.KEY_ROOF_SOLAR_SUITABLE_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_SOUTH_WALL_SOLAR_SUITABLE_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_NORTH_WALL_SOLAR_SUITABLE_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_EAST_WALL_SOLAR_SUITABLE_AREA, arrayMock);
+        requestParams.put(CEAAgent.KEY_WEST_WALL_SOLAR_SUITABLE_AREA, arrayMock);
         requestParams.put(CEAAgent.KEY_TIMES, arrayMock);
 
         Field namedGraph = agent.getClass().getDeclaredField("namedGraph");
@@ -459,7 +414,7 @@ public class CEAAgentTest {
             String testReturnValue = "testAnnual";
             TimeSeries<OffsetDateTime> timeSeries = mock(TimeSeries.class);
 
-            doReturn(testList).when(agent).getDataIRI(anyString(), anyString(), anyString(), anyString());
+            doReturn(testList).when(agent).getDataIRI(anyString(), anyString(), anyString());
             doReturn(testReturnValue).when(agent).calculateAnnual(any(), anyString());
             doReturn(timeSeries).when(agent).retrieveData(anyString(), any(), any(), any());
             doReturn(testUnit).when(agent).getUnit(anyString());
@@ -597,16 +552,41 @@ public class CEAAgentTest {
         requestParams.put(CEAAgent.KEY_ELECTRICITY_CONSUMPTION, "");
         requestParams.put(CEAAgent.KEY_HEATING_CONSUMPTION, "");
         requestParams.put(CEAAgent.KEY_COOLING_CONSUMPTION, "");
-        requestParams.put(CEAAgent.KEY_PV_ROOF_AREA, "");
         requestParams.put(CEAAgent.KEY_PV_ROOF_SUPPLY, "");
-        requestParams.put(CEAAgent.KEY_PV_WALL_SOUTH_AREA, "");
         requestParams.put(CEAAgent.KEY_PV_WALL_SOUTH_SUPPLY, "");
-        requestParams.put(CEAAgent.KEY_PV_WALL_NORTH_AREA, "");
         requestParams.put(CEAAgent.KEY_PV_WALL_NORTH_SUPPLY, "");
-        requestParams.put(CEAAgent.KEY_PV_WALL_EAST_AREA, "");
         requestParams.put(CEAAgent.KEY_PV_WALL_EAST_SUPPLY, "");
-        requestParams.put(CEAAgent.KEY_PV_WALL_WEST_AREA, "");
         requestParams.put(CEAAgent.KEY_PV_WALL_WEST_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_ROOF_E_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_ROOF_Q_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_SOUTH_E_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_SOUTH_Q_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_NORTH_E_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_NORTH_Q_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_EAST_E_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_EAST_Q_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_WEST_E_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_WEST_Q_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_ROOF_E_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_ROOF_Q_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_SOUTH_E_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_SOUTH_Q_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_NORTH_E_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_NORTH_Q_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_EAST_E_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_EAST_Q_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_WEST_E_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_WEST_Q_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_ROOF_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_SOUTH_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_NORTH_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_EAST_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_WEST_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_ROOF_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_SOUTH_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_NORTH_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_EAST_SUPPLY, "");
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_WEST_SUPPLY, "");
         requestParams.put(CEAAgent.KEY_TIMES, "");
 
         // check failure with empty request params
@@ -626,16 +606,41 @@ public class CEAAgentTest {
         requestParams.put(CEAAgent.KEY_ELECTRICITY_CONSUMPTION, "test");
         requestParams.put(CEAAgent.KEY_HEATING_CONSUMPTION, "test");
         requestParams.put(CEAAgent.KEY_COOLING_CONSUMPTION, "test");
-        requestParams.put(CEAAgent.KEY_PV_ROOF_AREA, "test");
         requestParams.put(CEAAgent.KEY_PV_ROOF_SUPPLY, "test");
-        requestParams.put(CEAAgent.KEY_PV_WALL_SOUTH_AREA, "test");
         requestParams.put(CEAAgent.KEY_PV_WALL_SOUTH_SUPPLY, "test");
-        requestParams.put(CEAAgent.KEY_PV_WALL_NORTH_AREA, "test");
         requestParams.put(CEAAgent.KEY_PV_WALL_NORTH_SUPPLY, "test");
-        requestParams.put(CEAAgent.KEY_PV_WALL_EAST_AREA, "test");
         requestParams.put(CEAAgent.KEY_PV_WALL_EAST_SUPPLY, "test");
-        requestParams.put(CEAAgent.KEY_PV_WALL_WEST_AREA, "test");
         requestParams.put(CEAAgent.KEY_PV_WALL_WEST_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_ROOF_E_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_ROOF_Q_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_SOUTH_E_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_SOUTH_Q_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_NORTH_E_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_NORTH_Q_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_EAST_E_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_EAST_Q_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_WEST_E_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_PLATE_WALL_WEST_Q_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_ROOF_E_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_ROOF_Q_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_SOUTH_E_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_SOUTH_Q_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_NORTH_E_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_NORTH_Q_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_EAST_E_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_EAST_Q_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_WEST_E_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_PVT_TUBE_WALL_WEST_Q_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_ROOF_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_SOUTH_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_NORTH_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_EAST_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_THERMAL_PLATE_WALL_WEST_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_ROOF_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_SOUTH_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_NORTH_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_EAST_SUPPLY, "test");
+        requestParams.put(CEAAgent.KEY_THERMAL_TUBE_WALL_WEST_SUPPLY, "test");
         requestParams.put(CEAAgent.KEY_TIMES, "test");
 
         // should pass now
@@ -1230,13 +1235,13 @@ public class CEAAgentTest {
         Field unitOntology = agent.getClass().getDeclaredField("unitOntologyUri");
         unitOntology.setAccessible(true);
         String unitOntologyUri = (String) unitOntology.get(agent);
-        Field purlEnaeq = agent.getClass().getDeclaredField("purlEnaeqUri");
-        purlEnaeq.setAccessible(true);
-        String purlEnaeqUri = (String) purlEnaeq.get(agent);
+        Field ontoUBEMMP = agent.getClass().getDeclaredField("ontoUBEMMPUri");
+        ontoUBEMMP.setAccessible(true);
+        String ontoUBEMMPUri = (String) ontoUBEMMP.get(agent);
 
         wb.addPrefix("rdf", rdfUri)
                 .addPrefix("om", unitOntologyUri)
-                .addPrefix("purlEnaeq", purlEnaeqUri);
+                .addPrefix("ontoubemmp", ontoUBEMMPUri);
 
         addBuildingConsumptionWhere.invoke(agent,  wb, energyType );
 
@@ -1250,50 +1255,12 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testAddConsumptionDeviceWhere() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
-        CEAAgent agent = new CEAAgent();
-        Method addConsumptionDeviceWhere = agent.getClass().getDeclaredMethod("addConsumptionDeviceWhere", WhereBuilder.class, String.class);
-        assertNotNull(addConsumptionDeviceWhere);
-
-        String system = "test_system";
-
-        WhereBuilder wb = new WhereBuilder();
-        Field rdf = agent.getClass().getDeclaredField("rdfUri");
-        rdf.setAccessible(true);
-        String rdfUri = (String) rdf.get(agent);
-        Field unitOntology = agent.getClass().getDeclaredField("unitOntologyUri");
-        unitOntology.setAccessible(true);
-        String unitOntologyUri = (String) unitOntology.get(agent);
-        Field purlEnaeq = agent.getClass().getDeclaredField("purlEnaeqUri");
-        purlEnaeq.setAccessible(true);
-        String purlEnaeqUri = (String) purlEnaeq.get(agent);
-        Field ontoUBEMMP = agent.getClass().getDeclaredField("ontoUBEMMPUri");
-        ontoUBEMMP.setAccessible(true);
-        String ontoUBEMMPUri = (String) ontoUBEMMP.get(agent);
-
-
-        wb.addPrefix("rdf", rdfUri)
-                .addPrefix("om", unitOntologyUri)
-                .addPrefix("purlEnaeq", purlEnaeqUri)
-                .addPrefix("ontoubemmp", ontoUBEMMPUri);
-
-        addConsumptionDeviceWhere.invoke(agent,  wb, system );
-
-        String result = wb.build().toString().replaceAll("\\s", "");
-
-        //test string contains expected where data
-        String expected_where = "WHERE";
-        String expected_triple = "?device" + "rdf:type\"" + system +"\"";
-        assertTrue( result.contains(expected_where));
-        assertTrue( result.contains(expected_triple));
-    }
-
-    @Test
     public void testAddSupplyDeviceWhere() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
         CEAAgent agent = new CEAAgent();
-        Method addSupplyDeviceWhere = agent.getClass().getDeclaredMethod("addSupplyDeviceWhere", WhereBuilder.class, String.class, String.class);
+        Method addSupplyDeviceWhere = agent.getClass().getDeclaredMethod("addSupplyDeviceWhere", WhereBuilder.class, String.class, String.class, String.class);
         assertNotNull(addSupplyDeviceWhere);
 
+        String facade = "test_facade";
         String panelType = "test_type";
         String energyType = "test_energy";
 
@@ -1307,16 +1274,16 @@ public class CEAAgentTest {
         Field ontoUBEMMP = agent.getClass().getDeclaredField("ontoUBEMMPUri");
         ontoUBEMMP.setAccessible(true);
         String ontoUBEMMPUri = (String) ontoUBEMMP.get(agent);
-        Field thinkhome = agent.getClass().getDeclaredField("thinkhomeUri");
-        thinkhome.setAccessible(true);
-        String thinkhomeUri = (String) thinkhome.get(agent);
+        Field ontobuiltstructure = agent.getClass().getDeclaredField("ontobuiltstructureUri");
+        ontobuiltstructure.setAccessible(true);
+        String ontobuiltstructureUri = (String) ontobuiltstructure.get(agent);
 
         wb.addPrefix("rdf", rdfUri)
                 .addPrefix("om", unitOntologyUri)
-                .addPrefix("ontoubemmp", ontoUBEMMPUri)
-                .addPrefix("thinkhome", thinkhomeUri);
+                .addPrefix("obs", ontobuiltstructureUri)
+                .addPrefix("ontoubemmp", ontoUBEMMPUri);
 
-        addSupplyDeviceWhere.invoke(agent, wb, panelType, energyType);
+        addSupplyDeviceWhere.invoke(agent, wb, panelType, energyType, facade);
 
         String result = wb.build().toString().replaceAll("\\s", "");
 
@@ -1324,6 +1291,7 @@ public class CEAAgentTest {
         String expected_where = "WHERE";
         String expected_panel = "?SolarGenerators" + "rdf:type\"" + panelType +"\"";
         String expected_energy = "?supply" + "rdf:type\"" + energyType +"\"";
+        assertTrue(result.contains(facade));
         assertTrue(result.contains(expected_where));
         assertTrue(result.contains(expected_panel));
         assertTrue(result.contains(expected_energy));
@@ -1335,8 +1303,8 @@ public class CEAAgentTest {
         Method addSupplyDeviceAreaWhere = agent.getClass().getDeclaredMethod("addSupplyDeviceAreaWhere", WhereBuilder.class, String.class, String.class);
         assertNotNull(addSupplyDeviceAreaWhere);
 
-        String generatorType = "test_type";
-        String areaType = "test_area";
+        String building = "building_IRI";
+        String facadeType = "test_facade";
 
         WhereBuilder wb = new WhereBuilder();
 
@@ -1346,25 +1314,29 @@ public class CEAAgentTest {
         Field unitOntology = agent.getClass().getDeclaredField("unitOntologyUri");
         unitOntology.setAccessible(true);
         String unitOntologyUri = (String) unitOntology.get(agent);
+        Field ontobuiltstructure = agent.getClass().getDeclaredField("ontobuiltstructureUri");
+        ontobuiltstructure.setAccessible(true);
+        String ontobuiltstructureUri = (String) ontobuiltstructure.get(agent);
         Field ontoUBEMMP = agent.getClass().getDeclaredField("ontoUBEMMPUri");
         ontoUBEMMP.setAccessible(true);
         String ontoUBEMMPUri = (String) ontoUBEMMP.get(agent);
 
         wb.addPrefix("rdf", rdfUri)
                 .addPrefix("om", unitOntologyUri)
+                .addPrefix("obs", ontobuiltstructureUri)
                 .addPrefix("ontoubemmp", ontoUBEMMPUri);
 
-        addSupplyDeviceAreaWhere.invoke(agent,  wb, generatorType, areaType);
+        addSupplyDeviceAreaWhere.invoke(agent,  wb, building, facadeType);
 
         String result = wb.build().toString().replaceAll("\\s", "");
 
         //test string contains expected where data
         String expected_where = "WHERE";
-        String expected_generator = "?SolarGenerators" + "rdf:type\"" + generatorType +"\"";
-        String expected_area = "?area" + "rdf:type\"" + areaType +"\"";
+        String expected_facade = "obs:hasFacade" + "?facade";
+        String expected_facadeType = "?facade" + "rdf:type\"" + facadeType + "\"";
         assertTrue( result.contains(expected_where));
-        assertTrue( result.contains(expected_generator));
-        assertTrue( result.contains(expected_area));
+        assertTrue( result.contains(expected_facade));
+        assertTrue( result.contains(expected_facadeType));
     }
 
     @Test
@@ -1425,21 +1397,21 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testGetDataIri() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void testGetDataIRI() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
 
-        String test_value = "PVRoofArea";
+        String test_value = "PVRoofSupply";
         String measure = "measure";
         String test_measure = "testUri";
         String unit = "unit";
-        String test_unit = "m^2";
+        String test_unit = "kWh";
         String route = "test_route";
         String building = "test_building";
 
         JSONArray expected = new JSONArray().put(new JSONObject().put(measure, test_measure).put(unit, test_unit));
         JSONArray expectedBlank = new JSONArray();
 
-        Method getDataIRI = agent.getClass().getDeclaredMethod("getDataIRI", String.class, String.class, String.class, String.class);
+        Method getDataIRI = agent.getClass().getDeclaredMethod("getDataIRI", String.class, String.class, String.class);
         assertNotNull(getDataIRI);
         getDataIRI.setAccessible(true);
 
@@ -1448,14 +1420,14 @@ public class CEAAgentTest {
             //test with mocked AccessAgentCaller when it returns data
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
                     .thenReturn(expected);
-            ArrayList<String> result = (ArrayList<String>) getDataIRI.invoke(agent, building, test_value, route, "");
+            ArrayList<String> result = (ArrayList<String>) getDataIRI.invoke(agent, building, test_value, route);
             assertTrue(result.contains(test_measure));
             assertTrue(result.contains(test_unit));
 
             //test with mocked AccessAgentCaller when there is nothing returned
             accessAgentCallerMock.when(() -> AccessAgentCaller.queryStore(anyString(), anyString()))
                     .thenReturn((expectedBlank));
-            result = (ArrayList<String>) getDataIRI.invoke(agent, building, test_value, route, "");
+            result = (ArrayList<String>) getDataIRI.invoke(agent, building, test_value, route);
 
             assertTrue(result.isEmpty());
         }
@@ -1533,7 +1505,7 @@ public class CEAAgentTest {
         String route = "test_route";
 
         String uriString = "http://127.0.0.1:9999/blazegraph/namespace/kings-lynn-open-data/sparql/cityobject/UUID_test/";
-        Field ontoBuiltEnvUri = agent.getClass().getDeclaredField("ontoBuiltEnvUri");
+        Field ontoBuiltEnvUri = agent.getClass().getDeclaredField("ontobuiltenvUri");
         ontoBuiltEnvUri.setAccessible(true);
         String expected = ontoBuiltEnvUri.get(agent) + "Building";
 
@@ -1558,14 +1530,14 @@ public class CEAAgentTest {
 
         WhereBuilder wb = new WhereBuilder()
                 .addPrefix("rdf", "rdfUri")
-                .addPrefix("purlEnaeq", "purlEnaeqUri")
+                .addPrefix("ontoubemmp", "ontoubemmpUri")
                 .addPrefix("om", "unitOntologyUri");
 
         createConsumptionUpdate.invoke(agent,  wb, consumer, type, quantity, measure );
 
         String result = wb.build().toString();
 
-        assertTrue(result.contains("purlEnaeq:consumesEnergy"));
+        assertTrue(result.contains("ontoubemmp:consumesEnergy"));
         assertTrue(result.contains("om:hasValue"));
         assertTrue(result.contains(consumer));
         assertTrue(result.contains(type));
@@ -1574,102 +1546,66 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testCreateDeviceConsumptionUpdate() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void testCreateSolarGeneratorSupplyUpdate() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
-        Method createDeviceConsumptionUpdate = agent.getClass().getDeclaredMethod("createDeviceConsumptionUpdate", WhereBuilder.class, String.class, String.class, String.class, String.class, String.class, String.class);
-        assertNotNull(createDeviceConsumptionUpdate);
-
-        String building = "building_IRI";
-        String device = "device_IRI";
-        String consumptionType = "test_type_1";
-        String deviceType = "test_type_2";
-        String quantity = "quantity_IRI";
-        String measure = "measure_IRI";
-
-        WhereBuilder wb = new WhereBuilder()
-                .addPrefix("ontoubemmp", "ontoUBEMMPUri")
-                .addPrefix("rdf", "rdfUri")
-                .addPrefix("owl", "owlUri")
-                .addPrefix("purlEnaeq", "purlEnaeqUri")
-                .addPrefix("om", "unitOntologyUri");
-
-        createDeviceConsumptionUpdate.invoke(agent,  wb, building, device, deviceType, consumptionType, quantity, measure);
-
-        String result = wb.build().toString();
-
-        assertTrue(result.contains("ontoubemmp:hasDevice"));
-        assertTrue(result.contains(building));
-        assertTrue(result.contains(device));
-        assertTrue(result.contains(consumptionType));
-        assertTrue(result.contains(deviceType));
-        assertTrue(result.contains(quantity));
-        assertTrue(result.contains(measure));
-    }
-
-    @Test
-    public void testCreatePVPanelSupplyUpdate() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        CEAAgent agent = new CEAAgent();
-        Method createSolarGeneratorSupplyUpdate = agent.getClass().getDeclaredMethod("createSolarGeneratorSupplyUpdate", WhereBuilder.class, String.class, String.class, String.class, String.class);
+        Method createSolarGeneratorSupplyUpdate = agent.getClass().getDeclaredMethod("createSolarGeneratorSupplyUpdate", WhereBuilder.class, String.class, String.class, String.class, String.class, String.class, String.class);
         assertNotNull(createSolarGeneratorSupplyUpdate);
 
+        String facade = "facade_IRI";
         String PVPanels = "panels_IRI";
+        String generatorType = "PV";
         String quantity = "quantity_IRI";
         String measure = "measure_IRI";
+
         WhereBuilder wb =
                 new WhereBuilder()
                         .addPrefix("rdf", "rdfUri")
                         .addPrefix("om", "unitOntologyUri")
-                        .addPrefix("thinkhome", "thinkhomeUri");
+                        .addPrefix("ontoubemmp", "ontoubemmpUri");
 
-        createSolarGeneratorSupplyUpdate.invoke(agent,  wb, PVPanels, quantity, measure, "test_energy");
+        createSolarGeneratorSupplyUpdate.invoke(agent,  wb, facade, PVPanels, generatorType, quantity, measure, "test_energy");
 
         String result = wb.build().toString();
 
-        assertTrue( result.contains("thinkhome:producesEnergy"));
-        assertTrue( result.contains("om:hasValue"));
+        assertTrue(result.contains("producesEnergy"));
+        assertTrue(result.contains("hasValue"));
+        assertTrue(result.contains(facade));
         assertTrue(result.contains(PVPanels));
+        assertTrue(result.contains(generatorType));
         assertTrue(result.contains(quantity));
         assertTrue(result.contains(measure));
         assertTrue(result.contains("test_energy"));
     }
 
     @Test
-    public void testCreateSolarGeneratorAreaUpdate() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void testCreateSolarSuitableAreaUpdate() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CEAAgent agent = new CEAAgent();
-        Method createSolarGeneratorAreaUpdate = agent.getClass().getDeclaredMethod("createSolarGeneratorAreaUpdate", WhereBuilder.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class);
+        Method createSolarGeneratorAreaUpdate = agent.getClass().getDeclaredMethod("createSolarSuitableAreaUpdate", WhereBuilder.class, String.class, String.class, String.class, String.class);
         assertNotNull(createSolarGeneratorAreaUpdate);
 
-        String building = "building_IRI";
-        String panelType = "test_type";
+        String facade = "facade_IRI";
         String value = "test_value";
-        String PVPanels = "panels_IRI";
         String quantity = "quantity_IRI";
         String measure = "measure_IRI";
-        String area = "test_area";
 
         WhereBuilder wb = new WhereBuilder()
                 .addPrefix("ontoubemmp", "ontoUBEMMPUri")
                 .addPrefix("rdf", "rdfUri")
                 .addPrefix("om", "unitOntologyUri");
 
-        createSolarGeneratorAreaUpdate.invoke(agent,  wb, building, PVPanels, panelType, quantity, measure, value, area);
+        createSolarGeneratorAreaUpdate.invoke(agent,  wb, facade, quantity, measure, value);
 
         String result = wb.build().toString();
 
-        assertTrue( result.contains("ontoubemmp:hasDevice"));
-        assertTrue( result.contains("ontoubemmp:hasArea"));
         assertTrue( result.contains("om:hasDimension"));
         assertTrue( result.contains("om:hasValue"));
         assertTrue( result.contains("om:hasNumericalValue"));
         assertTrue( result.contains("om:hasUnit"));
         assertTrue( result.contains("om:squareMetre"));
-        assertTrue(result.contains(building));
-        assertTrue(result.contains(PVPanels));
-        assertTrue(result.contains(value));
-        assertTrue(result.contains(building));
+        assertTrue(result.contains(facade));
         assertTrue(result.contains(quantity));
         assertTrue(result.contains(measure));
-        assertTrue(result.contains(area));
+        assertTrue(result.contains(value));
     }
 
     @Test
@@ -1686,7 +1622,7 @@ public class CEAAgentTest {
         ArrayList<String> testList = mock(ArrayList.class);
         when(testList.get(0)).thenReturn(testIri);
         when(testList.get(1)).thenReturn(testUnit);
-        doReturn(testList).when(agent).getDataIRI(anyString(), anyString(), anyString(), anyString());
+        doReturn(testList).when(agent).getDataIRI(anyString(), anyString(), anyString());
 
         LinkedHashMap<String, String> tsIris = new LinkedHashMap();
         LinkedHashMap<String, String> scalarIris = new LinkedHashMap();
