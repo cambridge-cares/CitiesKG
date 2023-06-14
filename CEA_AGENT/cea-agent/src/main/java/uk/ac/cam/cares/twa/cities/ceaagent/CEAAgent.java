@@ -2409,8 +2409,8 @@ public class CEAAgent extends JPSAgent {
         // save om:Measure uris for scalars and create om:Quantity uris for scalars and time series
         // (time series om:Measure iris already created in createTimeSeries)
         for (String measurement: SCALARS) {
-            String measure = measurement+"Value_" + UUID.randomUUID() + "/";
-            String quantity = measurement+"Quantity_" + UUID.randomUUID() + "/";
+            String measure = measurement + UUID.randomUUID() + "/";
+            String quantity = measurement + "Quantity_" + UUID.randomUUID() + "/";
             String facade = measurement.split("SolarSuitableArea")[0] + UUID.randomUUID() + "/";
             if (!graph.isEmpty()){
                 measure = graph + measure;
