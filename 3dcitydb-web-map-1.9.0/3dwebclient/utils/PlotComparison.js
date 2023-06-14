@@ -249,15 +249,22 @@ function processDistanceFilter(tableNum, resultsObjects){
     // number of MRT and busstops
     let numOfMrt = resultsObjects["numOfMrt"];
     let numOfBusstop = resultsObjects["numOfBusstop"];
+    let numOfCarParks = resultsObjects["numOfCarPark"];
 
     var target12 = document.querySelector('#table'+ tableNum +' .item12');
     target12.innerHTML = target12.innerHTML.replace("{MRT}", numOfMrt);
     target12.innerHTML = target12.innerHTML.replace("{BUS}", numOfBusstop);
+    target12.innerHTML = target12.innerHTML.replace("{CARPARK}", numOfCarParks);
 
     // number of allowable Parks
     let allowParks = resultsObjects["allowParks"];
     var target11 = document.querySelector('#table'+ tableNum +' .item11');
     target11.innerHTML = target11.innerHTML.replace("{allowParks}", allowParks);
+
+    // number of present Parks
+    let presentParks = resultsObjects["numOfPresentParks"];
+    var target9 = document.querySelector('#table'+ tableNum +' .item9');
+    target9.innerHTML = target9.innerHTML.replace("{presentParks}", presentParks);
 
 }
 

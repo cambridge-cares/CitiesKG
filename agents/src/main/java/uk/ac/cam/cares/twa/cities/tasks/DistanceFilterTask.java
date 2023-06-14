@@ -99,8 +99,7 @@ public class DistanceFilterTask {
             JSONObject obj = queryResult.getJSONObject(i);
             String gfaType = obj.getString("landuseType");
             String gfaValue = obj.getString("gfaValue");
-            if (!gfaType.equals("has_Car_Park") && Double.parseDouble(gfaValue) > 0 ) {
-                // GFA_carpark --> carpark
+            if (gfaType.contains("GFA") && Double.parseDouble(gfaValue) > 0 ) {
                 String[] landuseName = gfaType.split("_");
                 JSONObject row = new JSONObject();
                 row.put("landuseType", landuseName[1]);
@@ -308,6 +307,12 @@ public class DistanceFilterTask {
             Integer allowParks = getAllowParksWithinBounds();
             distanceFilterResults.append("allowParks", allowParks);
 
+            Integer nPark = getAttributesWithinBounds("cityobjectgenericattrib_andrea_v2", "total_NPark");
+            distanceFilterResults.append("numOfPresentParks", nPark);
+
+            Integer carPark = getAttributesWithinBounds("cityobjectgenericattrib_andrea_v2", "total_CarPark");
+            distanceFilterResults.append("numOfCarPark", carPark);
+
             Integer mrt = getTransportWithinBounds("MRT");
             distanceFilterResults.append("numOfMrt", mrt);
 
@@ -367,6 +372,52 @@ public class DistanceFilterTask {
 
         return query;
     }
+
+    // graphName: "/cityobjectgenericattrib_andrea_v2/"
+
+    public Integer getAttributesWithinBounds(String graphName, String attrName){
+        SelectBuilder sb = new SelectBuilder();
+        ElementGroup elementGroup = new ElementGroup();
+        try {
+            //sb.addVar("COUNT(?cityObject)", "?numOfObjs");
+            sb.addVar("?cityObject").addVar("?attrValue");
+            // cityobjectgenericattrib
+            WhereBuilder wb1 = new WhereBuilder()
+                .addPrefix("ocgml", ocgml)
+                .addWhere("?attr", "ocgml:cityObjectId", "?cityObject")
+                .addWhere("?attr", "ocgml:attrName", attrName)
+                .addWhere("?attr", "ocgml:intVal", "?attrValue");
+
+            String cityObjectGraph = namespaceURl + "/" + graphName;    // andrea data with "/"
+            sb.addGraph(NodeFactory.createURI(cityObjectGraph), wb1);
+
+            Query preparedQuery = buildQueryWithinBounds(lowerBounds, upperBounds);
+            elementGroup = (ElementGroup) preparedQuery.getQueryPattern();
+            //elementGroup.addElement();
+            elementGroup.getElements().add(sb.build().getQueryPattern());
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        Query query = sb.build();
+        query.setQueryPattern(elementGroup);
+        String queryString = query.toString().replace("PLACEHOLDER", "");
+        JSONArray queryResult = AccessAgentCaller.queryStore(sparqlEndpoint, queryString);
+
+        int totalAttrValue = 0;
+
+        for (int i = 0; i < queryResult.length(); ++i) {
+            JSONObject obj = queryResult.getJSONObject(i);
+            String cityObject = obj.getString("cityObject");
+            String attrValue = obj.getString("attrValue");
+            totalAttrValue += Double.parseDouble(attrValue);
+        }
+        return totalAttrValue;
+        //JSONObject obj = queryResult.getJSONObject(0);
+        //return obj.getInt("numOfObjs");
+    }
+
 
     public Integer getAllowParksWithinBounds(){
 
