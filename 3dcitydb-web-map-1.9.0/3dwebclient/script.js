@@ -1243,7 +1243,8 @@ function createInfoTable(res, citydbLayer) {
                 var iValue = kvp[key];
                 // check if this value is a valid URL
                 if (isValidUrl(iValue)) {
-                    let link = "https://fcl.ethz.ch/research/research-projects/cities-knowledge-graph.html";
+                    //let link = "https://fcl.ethz.ch/research/research-projects/cities-knowledge-graph.html"; //http://www.theworldavatar.com:83/citieskg/#explore:singaporeEPSG4326:http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d/
+                    let link = "http://www.theworldavatar.com:83/citieskg/#explore:singaporeEPSG4326:" + iValue;
                     iValue = '<a href=' + link + ' target="_blank">' + iValue + '</a>';
                 }
                 html += '<tr><td>' + key + '</td><td>' + iValue + '</td></tr>';
