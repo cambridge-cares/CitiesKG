@@ -270,7 +270,11 @@ function processDistanceFilter(tableNum, resultsObjects){
     let deltaParks = allowParks - presentParks;
 
     var target10 = document.querySelector('#table'+ tableNum +' .item10');
-    target10.innerHTML = target10.innerHTML.replace("{DeltaParks}", "+" + deltaParks);
+    var signForDelta = "";
+    if (deltaParks >=0){
+        signForDelta = "+";
+    }
+    target10.innerHTML = target10.innerHTML.replace("{DeltaParks}", signForDelta + deltaParks);
 }
 
 

@@ -103,7 +103,7 @@ public class DistanceFilterTask {
                 String[] landuseName = gfaType.split("_");
                 JSONObject row = new JSONObject();
                 row.put("landuseType", landuseName[1]);
-                row.put("gfaValue", gfaValue);
+                row.put("gfaValue", Double.parseDouble(gfaValue));
                 landuseGFA.put(row);
             }
         }
@@ -307,10 +307,10 @@ public class DistanceFilterTask {
             Integer allowParks = getAllowParksWithinBounds();
             distanceFilterResults.append("allowParks", allowParks);
 
-            Integer nPark = getAttributesWithinBounds("cityobjectgenericattrib_andrea_v2", "total_NPark");
+            Integer nPark = getAttributesWithinBounds("cityobjectgenericattrib_andrea", "total_NPark");
             distanceFilterResults.append("numOfPresentParks", nPark);
 
-            Integer carPark = getAttributesWithinBounds("cityobjectgenericattrib_andrea_v2", "total_CarPark");
+            Integer carPark = getAttributesWithinBounds("cityobjectgenericattrib_andrea", "total_CarPark");
             distanceFilterResults.append("numOfCarPark", carPark);
 
             Integer mrt = getTransportWithinBounds("MRT");
@@ -388,7 +388,7 @@ public class DistanceFilterTask {
                 .addWhere("?attr", "ocgml:attrName", attrName)
                 .addWhere("?attr", "ocgml:intVal", "?attrValue");
 
-            String cityObjectGraph = namespaceURl + "/" + graphName;    // andrea data with "/"
+            String cityObjectGraph = namespaceURl + "/" + graphName + "/";    // andrea data with "/"
             sb.addGraph(NodeFactory.createURI(cityObjectGraph), wb1);
 
             Query preparedQuery = buildQueryWithinBounds(lowerBounds, upperBounds);
