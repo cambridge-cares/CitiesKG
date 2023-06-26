@@ -2679,63 +2679,61 @@ public class CEAAgent extends JPSAgent {
         double distance = 0.00001;
         double increment = 0.00001;
 
-        Polygon footprintPolygon;
-        Geometry footprintRing;
-        Coordinate[] footprintCoordinates;
-        ArrayList<Geometry> geometries = new ArrayList<>();
+        Polygon exteriorPolygon;
+        List<Polygon> exteriors = new ArrayList<>();
+        List<LinearRing> holes = new ArrayList<>();
+        LinearRing exteriorRing;
         GeometryFactory geoFac = new GeometryFactory();
-        GeometryCollection geoCol;
-        Geometry merged;
-        Geometry temp;
         String geoType;
 
-        if (results.length() == 1){
-            footprintPolygon = (Polygon) toPolygon(ignoreHole(results.getJSONObject(0).get("geometry").toString(), results.getJSONObject(0).get("datatype").toString()));
+        if (results.length() == 1) {
+            stringToGeometries(results.getJSONObject(0).get("geometry").toString(), results.getJSONObject(0).get("datatype").toString(), exteriors, holes);
+            exteriorPolygon = exteriors.get(0);
+            exteriorRing = exteriorPolygon.getExteriorRing();
         }
-
         else {
             for (int i = 0; i < results.length(); i++) {
-                temp = toPolygon(ignoreHole(results.getJSONObject(i).get("geometry").toString(), results.getJSONObject(i).get("datatype").toString()));
-                if (!temp.isValid()){
-                    temp = GeometryFixer.fix(temp);
-                }
-                geometries.add(temp);
+                stringToGeometries(results.getJSONObject(i).get("geometry").toString(), results.getJSONObject(i).get("datatype").toString(), exteriors, holes);
             }
 
-            geoCol = (GeometryCollection) geoFac.buildGeometry(geometries);
+            GeometryCollection geoCol = (GeometryCollection) geoFac.buildGeometry(exteriors);
 
-            merged = geoCol.union();
+            Geometry merged = geoCol.union();
 
             geoType = merged.getGeometryType();
 
             while (!geoType.equals("Polygon") || !deflatePolygon(merged, distance).getGeometryType().equals("Polygon")) {
                 distance += increment;
 
-                for (int i = 0; i < geometries.size(); i++){
-                    temp = inflatePolygon(geometries.get(i), distance);
-                    if (!temp.isValid()){
-                        temp = GeometryFixer.fix(temp);
+                for (int i = 0; i < exteriors.size(); i++) {
+                    Polygon temp = (Polygon) inflatePolygon(exteriors.get(i), distance);
+                    if (!temp.isValid()) {
+                        temp = (Polygon) GeometryFixer.fix(temp);
                     }
-                    geometries.set(i, temp);
+                    exteriors.set(i, temp);
                 }
 
-                geoCol = (GeometryCollection) geoFac.buildGeometry(geometries);
+                geoCol = (GeometryCollection) geoFac.buildGeometry(exteriors);
                 merged = geoCol.union();
                 geoType = merged.getGeometryType();
             }
 
-            footprintPolygon = (Polygon) deflatePolygon(merged, distance);
+            exteriorPolygon = (Polygon) deflatePolygon(merged, distance);
 
-            if (!footprintPolygon.isValid()){
-                footprintPolygon = (Polygon) GeometryFixer.fix(footprintPolygon);
+            if (!exteriorPolygon.isValid()) {
+                exteriorPolygon = (Polygon) GeometryFixer.fix(exteriorPolygon);
             }
+
+            exteriorRing = exteriorPolygon.getExteriorRing();
         }
 
-        footprintRing = footprintPolygon.getExteriorRing();
-
-        footprintCoordinates = footprintRing.getCoordinates();
-
-        return coordinatesToString(footprintCoordinates);
+        if (holes.size() == 0) {
+            return exteriorPolygon.toString();
+        }
+        else{
+            LinearRing[] holeRings = holes.toArray(new LinearRing[holes.size()]);
+            return geoFac.createPolygon(exteriorRing, holeRings).toString();
+        }
     }
 
     /**
@@ -2757,6 +2755,41 @@ public class CEAAgent extends JPSAgent {
         }
 
         return gF.createPolygon(coordinates);
+    }
+
+    private void stringToGeometries(String geometry, String polygonType, List<Polygon> exteriors, List<LinearRing> holes) {
+        GeometryFactory geometryFactory = new GeometryFactory();
+        int ind = 0;
+        int k = 0;
+
+        String[] points = geometry.split("#");
+        String[] split = polygonType.split("-");
+
+        int num = Integer.parseInt(split[1]);
+
+        // exterior ring
+        Coordinate[] exterior = new Coordinate[Integer.parseInt(split[2])/num];
+
+        while (ind < Integer.parseInt(split[2])) {
+            exterior[k] = new Coordinate(Double.parseDouble(points[ind]), Double.parseDouble(points[ind+1]));
+            ind += 3;
+            k++;
+        }
+        exteriors.add(geometryFactory.createPolygon(exterior));
+
+        int sum = Integer.parseInt(split[2]);
+        // holes
+        for (int i = 3; i < split.length; i++){
+            Coordinate[] hole = new Coordinate[Integer.parseInt(split[i])/num];
+            k = 0;
+            sum += Integer.parseInt(split[i]);
+            while (ind < sum) {
+                hole[k] = new Coordinate(Double.parseDouble(points[ind]), Double.parseDouble(points[ind+1]));
+                ind += 3;
+                k++;
+            }
+            holes.add(geometryFactory.createLinearRing(hole));
+        }
     }
 
     /**
@@ -2781,13 +2814,11 @@ public class CEAAgent extends JPSAgent {
      * @return inflated polygon
      */
     private Geometry inflatePolygon(Geometry geom, Double distance){
-        ArrayList<Double> zCoordinate = getPolygonZ(geom);
         BufferParameters bufferParameters = new BufferParameters();
         bufferParameters.setEndCapStyle(BufferParameters.CAP_ROUND);
         bufferParameters.setJoinStyle(BufferParameters.JOIN_MITRE);
         Geometry buffered = BufferOp.bufferOp(geom, distance, bufferParameters);
         buffered.setUserData(geom.getUserData());
-        setPolygonZ(buffered, zCoordinate);
         return buffered;
     }
 
@@ -2798,13 +2829,11 @@ public class CEAAgent extends JPSAgent {
      * @return deflated polygon
      */
     private Geometry deflatePolygon(Geometry geom, Double distance){
-        ArrayList<Double> zCoordinate = getPolygonZ(geom);
         BufferParameters bufferParameters = new BufferParameters();
         bufferParameters.setEndCapStyle(BufferParameters.CAP_ROUND);
         bufferParameters.setJoinStyle(BufferParameters.JOIN_MITRE);
         Geometry buffered = BufferOp.bufferOp(geom, distance * -1, bufferParameters);
         buffered.setUserData(geom.getUserData());
-        setPolygonZ(buffered, zCoordinate);
         return buffered;
     }
 
@@ -2822,51 +2851,6 @@ public class CEAAgent extends JPSAgent {
         }
 
         return output;
-    }
-
-    /**
-     * Sets a polygon's z coordinates to the values from zInput
-     * @param geom polygon geometry
-     * @param zInput ArrayList of values representing z coordinates
-     */
-    private void setPolygonZ(Geometry geom, ArrayList<Double> zInput){
-        Double newZ = Double.NaN;
-
-        for (int i = 0; i < zInput.size(); i++){
-            if (!zInput.get(i).isNaN()){
-                newZ = zInput.get(i);
-                break;
-            }
-        }
-
-        if(newZ.isNaN()){newZ = 10.0;}
-
-        if (geom.getNumPoints() < zInput.size()) {
-            while (geom.getNumPoints() != zInput.size()) {
-                zInput.remove(zInput.size()-1);
-            }
-        }
-        else {
-            while (geom.getNumPoints() != zInput.size()) {
-                zInput.add(1, newZ);
-            }
-        }
-
-        Collections.replaceAll(zInput, Double.NaN, newZ);
-        geom.apply(new CoordinateSequenceFilter() {
-            @Override
-            public void filter(CoordinateSequence cSeq, int i) {
-                cSeq.getCoordinate(i).setZ(zInput.get(i));
-            }
-            @Override
-            public boolean isDone() {
-                return false;
-            }
-            @Override
-            public boolean isGeometryChanged() {
-                return false;
-            }
-        });
     }
 
     /**
