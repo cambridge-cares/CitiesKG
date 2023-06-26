@@ -2838,48 +2838,6 @@ public class CEAAgent extends JPSAgent {
     }
 
     /**
-     * Extracts the z coordinates of the polygon vertices
-     * @param geom polygon geometry
-     * @return the z coordinates of the polygon vertices
-     */
-    private static ArrayList<Double> getPolygonZ(Geometry geom){
-        Coordinate[] coordinates = geom.getCoordinates();
-        ArrayList<Double> output = new ArrayList<>();
-
-        for (int i = 0; i < coordinates.length; i++){
-            output.add(coordinates[i].getZ());
-        }
-
-        return output;
-    }
-
-    /**
-     * Returns the ground geometry's exterior ring
-     * @param geometry ground geometry
-     * @param polygonType polygon datatype, such as "<...\POLYGON-3-45-15>"
-     * @return ground geometry with no holes
-     */
-    private String ignoreHole(String geometry, String polygonType){
-        int num;
-        int ind;
-        int count = 1;
-
-        String[] split = polygonType.split("-");
-
-        if (split.length < 4){return geometry;}
-
-        num = Integer.parseInt(split[2]);
-
-        ind = geometry.indexOf("#");
-
-        while (count != num){
-            ind = geometry.indexOf("#", ind + 1);
-            count++;
-        }
-        return geometry.substring(0, ind);
-    }
-
-    /**
      * Returns .properties file path as string
      * @param fileName name of .properties file
      * @return .properties file path as string
