@@ -45,8 +45,8 @@ public class RunCEATask implements Runnable {
     private static final String TERRAIN_SCRIPT = "validate_tif_file.py";
     private static final String WEATHER_SCRIPT = "create_weatherfile.py";
     private static final String WORKFLOW_YML = "workflow_reference_weather.yml";
-    private static final String WORKFLOW_YML2 = "workflow2_main.yml";
-    private static final String WORKFLOW_YML3 = "workflow3_pvt_tube.yml";
+    private static final String WORKFLOW_YML1 = "workflow1_main.yml";
+    private static final String WORKFLOW_YML2 = "workflow2_pvt_tube.yml";
     private static final String CREATE_WORKFLOW_SCRIPT = "create_cea_workflow.py";
     private static final String FS = System.getProperty("file.separator");
     private Map<String, ArrayList<String>> solarSupply = new HashMap<>();
@@ -699,8 +699,8 @@ public class RunCEATask implements Runnable {
                 ArrayList<String> args10 = new ArrayList<>();
                 
                 String workflowPath = strTmp + FS + WORKFLOW_YML;
+                String workflowPath1 = strTmp + FS + WORKFLOW_YML1;
                 String workflowPath2 = strTmp + FS + WORKFLOW_YML2;
-                String workflowPath3 = strTmp + FS + WORKFLOW_YML3;
                 String data_path = strTmp + FS + DATA_FILE;
                 String surroundings_path = strTmp + FS + SURROUNDINGS_FILE;
                 String weatherTimes_path = strTmp + FS + WEATHERTIMES_FILE;
@@ -774,8 +774,8 @@ public class RunCEATask implements Runnable {
                     args7.add(new File(
                             Objects.requireNonNull(getClass().getClassLoader().getResource(CREATE_WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
                     args7.add(new File(
-                            Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_YML2)).toURI()).getAbsolutePath());
-                    args7.add(WORKFLOW_YML2);
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_YML1)).toURI()).getAbsolutePath());
+                    args7.add(WORKFLOW_YML1);
                     args7.add(strTmp);
                     args7.add(surroundingsFlag);
                     args7.add(weatherFlag);
@@ -783,7 +783,7 @@ public class RunCEATask implements Runnable {
 
                     args8.add("cmd.exe");
                     args8.add("/C");
-                    args8.add("conda activate cea && cea workflow --workflow " + workflowPath2);
+                    args8.add("conda activate cea && cea workflow --workflow " + workflowPath1);
 
                     args9.add("cmd.exe");
                     args9.add("/C");
@@ -792,8 +792,8 @@ public class RunCEATask implements Runnable {
                     args9.add(new File(
                             Objects.requireNonNull(getClass().getClassLoader().getResource(CREATE_WORKFLOW_SCRIPT)).toURI()).getAbsolutePath());
                     args9.add(new File(
-                            Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_YML3)).toURI()).getAbsolutePath());
-                    args9.add(WORKFLOW_YML3);
+                            Objects.requireNonNull(getClass().getClassLoader().getResource(WORKFLOW_YML2)).toURI()).getAbsolutePath());
+                    args9.add(WORKFLOW_YML2);
                     args9.add(strTmp);
                     args9.add("null");
                     args9.add("null");
@@ -801,7 +801,7 @@ public class RunCEATask implements Runnable {
 
                     args10.add("cmd.exe");
                     args10.add("/C");
-                    args10.add("conda activate cea && cea workflow --workflow " + workflowPath3);
+                    args10.add("conda activate cea && cea workflow --workflow " + workflowPath2);
                 }
                 else {
                     String shapefile = FS + "target" + FS + "classes" + FS + SHAPEFILE_SCRIPT;
@@ -811,8 +811,8 @@ public class RunCEATask implements Runnable {
                     String defaultEPW = strTmp + FS + "testProject" + FS + "testScenario" + FS + "inputs" + FS + "weather" + FS + "weather.epw";
                     String createWorkflowFile = FS + "target" + FS + "classes" + FS + CREATE_WORKFLOW_SCRIPT;
                     String workflowFile = FS + "target" + FS + "classes" + FS +  WORKFLOW_YML;
-                    String workflowFile2 = FS + "target" + FS + "classes" + FS +  WORKFLOW_YML2;
-                    String workflowFile3 = FS + "target" + FS + "classes" + FS +  WORKFLOW_YML3;
+                    String workflowFile1 = FS + "target" + FS + "classes" + FS + WORKFLOW_YML1;
+                    String workflowFile2 = FS + "target" + FS + "classes" + FS + WORKFLOW_YML2;
 
                     args.add("/bin/bash");
                     args.add("-c");
@@ -846,19 +846,19 @@ public class RunCEATask implements Runnable {
                     
                     args7.add("/bin/bash");
                     args7.add("-c");
-                    args7.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile2 + " " + WORKFLOW_YML2 + " " + strTmp + " " + surroundingsFlag + " " + weatherFlag + " " + terrainFlag);
+                    args7.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile1 + " " + WORKFLOW_YML1 + " " + strTmp + " " + surroundingsFlag + " " + weatherFlag + " " + terrainFlag);
 
                     args8.add("/bin/bash");
                     args8.add("-c");
-                    args8.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath2);
+                    args8.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath1);
 
                     args9.add("/bin/bash");
                     args9.add("-c");
-                    args9.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile3 + " " + WORKFLOW_YML3 + " " + strTmp + " " + "null" + " " + "null" + " " + "null");
+                    args9.add("export PROJ_LIB=/venv/share/lib && python " + createWorkflowFile + " " + workflowFile2 + " " + WORKFLOW_YML2 + " " + strTmp + " " + "null" + " " + "null" + " " + "null");
 
                     args10.add("/bin/bash");
                     args10.add("-c");
-                    args10.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath3);
+                    args10.add("export PATH=/venv/bin:/venv/cea/bin:/venv/Daysim:$PATH && source /venv/bin/activate && cea workflow --workflow " + workflowPath2);
                 }
 
                 // create the shapefile process and run
