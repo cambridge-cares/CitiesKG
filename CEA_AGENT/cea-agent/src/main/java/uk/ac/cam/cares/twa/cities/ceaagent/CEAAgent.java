@@ -320,10 +320,12 @@ public class CEAAgent extends JPSAgent {
                         height = height.length() == 0 ? getValue(uri, "HeightMeasuredHeight", geometryRoute) : height;
                         height = height.length() == 0 ? getValue(uri, "HeightGenAttr", geometryRoute) : height;
                         height = height.length() == 0 ? "10.0" : height;
+
                         // Get footprint from ground thematic surface or find from surface geometries depending on data
                         String footprint = getValue(uri, "Lod0FootprintId", geometryRoute);
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintThematicSurface", geometryRoute) : footprint;
                         footprint = footprint.length() == 0 ? getValue(uri, "FootprintSurfaceGeom", geometryRoute) : footprint;
+
                         // Get building usage, set default usage of MULTI_RES if not available in knowledge graph
                         Map<String, Double> usage = getBuildingUsages(uri, usageRoute);
 
@@ -1222,7 +1224,17 @@ public class CEAAgent extends JPSAgent {
             String lowerBounds = lowerPoints + lowerPoints + lowerPoints + lowerPoints + lowerPoints;
             lowerBounds = lowerBounds.substring(0, lowerBounds.length() - 1 );
 
-            String upperPoints = points[6] + "#" + points[7] + "#" + String.valueOf(Double.parseDouble(points[8])+100) + "#";
+            Double maxZ;
+
+            if (points[8].equals("NaN")) {
+                // highest elevation on Earth is 8848
+                maxZ = 8850.0;
+            }
+            else{
+                maxZ = Double.parseDouble(points[8])+200;
+            }
+
+            String upperPoints = points[6] + "#" + points[7] + "#" + maxZ + "#";
 
             String upperBounds = upperPoints + upperPoints + upperPoints + upperPoints + upperPoints;
             upperBounds = upperBounds.substring(0, upperBounds.length() - 1);
@@ -1421,8 +1433,8 @@ public class CEAAgent extends JPSAgent {
 
         DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate currentFirstDate = LocalDate.now().withMonth(1).withDayOfMonth(1);
-        String startDate = currentFirstDate.minusYears(2).format(format);
-        String endDate = currentFirstDate.minusYears(1).format(format);
+        String startDate = currentFirstDate.minusYears(1).format(format);
+        String endDate = currentFirstDate.format(format);
 
         json.put(OPENMETEO_START, startDate)
                 .put(OPENMETEO_END, endDate);
@@ -2683,7 +2695,7 @@ public class CEAAgent extends JPSAgent {
         List<Polygon> exteriors = new ArrayList<>();
         List<LinearRing> holes = new ArrayList<>();
         LinearRing exteriorRing;
-        GeometryFactory geoFac = new GeometryFactory();
+        GeometryFactory geometryFactory = new GeometryFactory();
         String geoType;
 
         if (results.length() == 1) {
@@ -2696,7 +2708,7 @@ public class CEAAgent extends JPSAgent {
                 stringToGeometries(results.getJSONObject(i).get("geometry").toString(), results.getJSONObject(i).get("datatype").toString(), exteriors, holes);
             }
 
-            GeometryCollection geoCol = (GeometryCollection) geoFac.buildGeometry(exteriors);
+            GeometryCollection geoCol = (GeometryCollection) geometryFactory.buildGeometry(exteriors);
 
             Geometry merged = geoCol.union();
 
@@ -2713,7 +2725,7 @@ public class CEAAgent extends JPSAgent {
                     exteriors.set(i, temp);
                 }
 
-                geoCol = (GeometryCollection) geoFac.buildGeometry(exteriors);
+                geoCol = (GeometryCollection) geometryFactory.buildGeometry(exteriors);
                 merged = geoCol.union();
                 geoType = merged.getGeometryType();
             }
@@ -2732,7 +2744,7 @@ public class CEAAgent extends JPSAgent {
         }
         else{
             LinearRing[] holeRings = holes.toArray(new LinearRing[holes.size()]);
-            return geoFac.createPolygon(exteriorRing, holeRings).toString();
+            return geometryFactory.createPolygon(exteriorRing, holeRings).toString();
         }
     }
 
@@ -2743,7 +2755,7 @@ public class CEAAgent extends JPSAgent {
      */
     private Geometry toPolygon(String points){
         int ind = 0;
-        GeometryFactory gF = new GeometryFactory();
+        GeometryFactory geometryFactory = new GeometryFactory();
 
         String[] arr = points.split("#");
 
@@ -2754,7 +2766,7 @@ public class CEAAgent extends JPSAgent {
             ind++;
         }
 
-        return gF.createPolygon(coordinates);
+        return geometryFactory.createPolygon(coordinates);
     }
 
     private void stringToGeometries(String geometry, String polygonType, List<Polygon> exteriors, List<LinearRing> holes) {
