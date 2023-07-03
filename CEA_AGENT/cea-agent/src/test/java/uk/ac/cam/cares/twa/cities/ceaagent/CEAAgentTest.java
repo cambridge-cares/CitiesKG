@@ -6,6 +6,8 @@ import org.jooq.exception.DataAccessException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import uk.ac.cam.cares.jps.base.config.JPSConstants;
@@ -276,7 +278,7 @@ public class CEAAgentTest {
         String measure_footprint = "geometry";
         String test_footprint = "559267.200000246#313892.7999989044#0.0#559280.5400002463#313892.7999989044#0.0#559280.5400002463#313908.7499989033#0.0#559267.200000246#313908.7499989033#0.0#559267.200000246#313892.7999989044#0.0";
         String measure_datatype = "datatype";
-        String test_datatype = "<http://localhost/blazegraph/literals/POLYGON-3-15>";
+        String test_datatype = "http://localhost/blazegraph/literals/POLYGON-3-15";
         String measure_usage = "BuildingUsage";
         String test_usage1 = "<https://www.theworldavatar.com/kg/ontobuiltenv/Office>";
         String test_usage2 = "<https://www.theworldavatar.com/kg/ontobuiltenv/Office>";
@@ -1726,29 +1728,16 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testExtractFootprint() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void testExtractFootprint() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, ParseException {
         CEAAgent agent = new CEAAgent();
         Method extractFootprint = agent.getClass().getDeclaredMethod("extractFootprint", JSONArray.class);
 
         assertNotNull(extractFootprint);
         extractFootprint.setAccessible(true);
 
-        double tolerance = 0.001;
-
         String geometry1 = "1.0#1.0#0.0#2.0#1.0#0.0#2.0#2.0#0.0#1.0#1.0#0.0";
         String geometry2 = "1.0#1.0#0.0#1.0#2.0#0.0#2.0#2.0#0.0#1.0#1.0#0.0";
-        String polygonType = "<http://localhost/blazegraph/literals/POLYGON-3-12>";
-
-        // expected string with the vertices in different order in clockwise orientation
-        String expected1 = "1.0#1.0#0.0#1.0#2.0#0.0#2.0#2.0#0.0#2.0#1.0#0.0#1.0#1.0#0.0";
-        String expected2 = "1.0#2.0#0.0#2.0#2.0#0.0#2.0#1.0#0.0#1.0#1.0#0.0#1.0#2.0#0.0";
-        String expected3 = "2.0#2.0#0.0#2.0#1.0#0.0#1.0#1.0#0.0#1.0#2.0#0.0#2.0#2.0#0.0";
-        String expected4 = "2.0#1.0#0.0#1.0#1.0#0.0#1.0#2.0#0.0#2.0#2.0#0.0#2.0#1.0#0.0";
-
-        boolean flag1 = true;
-        boolean flag2 = true;
-        boolean flag3 = true;
-        boolean flag4 = true;
+        String polygonType = "http://localhost/blazegraph/literals/POLYGON-3-12";
 
         JSONArray testArray = new JSONArray();
         testArray.put(new JSONObject().put("geometry", geometry1).put("datatype", polygonType));
@@ -1756,23 +1745,13 @@ public class CEAAgentTest {
 
         String result = (String) extractFootprint.invoke(agent, testArray);
 
-        String[] rSplit = result.split("#");
-        String[] eSplit1 = result.split("#");
-        String[] eSplit2 = result.split("#");
-        String[] eSplit3 = result.split("#");
-        String[] eSplit4 = result.split("#");
+        WKTReader wktReader = new WKTReader();
 
-        assertTrue(rSplit.length == eSplit1.length);
+        Geometry geometry = wktReader.read(result);
 
-        for (int i = 0; i < rSplit.length; i++){
-            if (Math.abs(Double.valueOf(rSplit[i]) - Double.valueOf(eSplit1[i])) > tolerance){flag1 = false;}
-            if (Math.abs(Double.valueOf(rSplit[i]) - Double.valueOf(eSplit2[i])) > tolerance){flag2 = false;}
-            if (Math.abs(Double.valueOf(rSplit[i]) - Double.valueOf(eSplit3[i])) > tolerance){flag3 = false;}
-            if (Math.abs(Double.valueOf(rSplit[i]) - Double.valueOf(eSplit4[i])) > tolerance){flag4 = false;}
-        }
+        Coordinate[] coordinates = geometry.getCoordinates();
 
-        // checking if extractFootprint returns the expected geometry, which vertex the string starts from does not matter if the result and the expected string represents the same geometry
-        assertTrue(flag1 || flag2 || flag3 || flag4);
+        assertEquals(coordinates.length, 5);
     }
 
     @Test
@@ -1878,88 +1857,6 @@ public class CEAAgentTest {
     }
 
     @Test
-    public void testGetPolygonZ() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        CEAAgent agent = new CEAAgent();
-        Method getPolygonZ = agent.getClass().getDeclaredMethod("getPolygonZ", Geometry.class);
-
-        assertNotNull(getPolygonZ);
-        getPolygonZ.setAccessible(true);
-
-        GeometryFactory gF = new GeometryFactory();
-        Coordinate[] coordinates = new Coordinate[4];
-
-        coordinates[0] = new Coordinate(1.0, 1.0, 3.01);
-        coordinates[1] = new Coordinate(2.0, 1.0, 3.02);
-        coordinates[2] = new Coordinate(2.0, 2.0, 3.03);
-        coordinates[3] = new Coordinate(1.0, 1.0, 3.01);
-
-        Polygon polygon = gF.createPolygon(coordinates);
-
-        ArrayList<Double> expected = new ArrayList<>();
-
-        expected.add(3.01);
-        expected.add(3.02);
-        expected.add(3.03);
-        expected.add(3.01);
-
-        assertEquals(expected, getPolygonZ.invoke(agent, polygon));
-    }
-
-    @Test
-    public void testSetPolygonZ() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        CEAAgent agent = new CEAAgent();
-        Method setPolygonZ = agent.getClass().getDeclaredMethod("setPolygonZ", Geometry.class, ArrayList.class);
-
-        assertNotNull(setPolygonZ);
-        setPolygonZ.setAccessible(true);
-
-        GeometryFactory gF = new GeometryFactory();
-        Coordinate[] coordinates = new Coordinate[4];
-
-        coordinates[0] = new Coordinate(1.0, 1.0, 3.01);
-        coordinates[1] = new Coordinate(2.0, 1.0, 3.02);
-        coordinates[2] = new Coordinate(2.0, 2.0, 3.03);
-        coordinates[3] = new Coordinate(1.0, 1.0, 3.01);
-
-        Polygon result = gF.createPolygon(coordinates);
-
-        coordinates[0] = new Coordinate(1.0, 1.0, 0.0);
-        coordinates[1] = new Coordinate(2.0, 1.0, 0.0);
-        coordinates[2] = new Coordinate(2.0, 2.0, 0.0);
-        coordinates[3] = new Coordinate(1.0, 1.0, 0.0);
-
-        Polygon expected = gF.createPolygon(coordinates);
-
-        ArrayList<Double> z = new ArrayList<>();
-
-        z.add(0.0);
-        z.add(0.0);
-        z.add(0.0);
-        z.add(0.0);
-
-        setPolygonZ.invoke(agent, result, z);
-
-        assertEquals(expected, result);
-    }
-
-    @Test
-    public void testIgnoreHole() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        CEAAgent agent = new CEAAgent();
-        Method ignoreHole = agent.getClass().getDeclaredMethod("ignoreHole", String.class, String.class);
-
-        assertNotNull(ignoreHole);
-        ignoreHole.setAccessible(true);
-
-        String geometry = "1.0#1.0#2.0#2.0#3.0#3.0#4.0#4.0#5.0#5.0#6.0#6.0";
-        String polygonType = "<http://localhost/blazegraph/literals/POLYGON-2-6-6>";
-        String expected = "1.0#1.0#2.0#2.0#3.0#3.0";
-
-        String result = (String) ignoreHole.invoke(agent, geometry, polygonType);
-
-        assertEquals(expected, result);
-    }
-
-    @Test
     public void testToCEAConvention() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
     {
         CEAAgent agent = new CEAAgent();
@@ -2022,7 +1919,7 @@ public class CEAAgentTest {
         List<String> unique = new ArrayList<>();
         unique.add(uri);
 
-        JSONArray geometryArray = new JSONArray().put(new JSONObject().put("envelope", geometry).put("geometry", geometry).put("datatype", "<http://localhost/blazegraph/literals/POLYGON-3-15>"));
+        JSONArray geometryArray = new JSONArray().put(new JSONObject().put("envelope", geometry).put("geometry", geometry).put("datatype", "http://localhost/blazegraph/literals/POLYGON-3-15"));
         JSONArray buildingsArray = new JSONArray().put(new JSONObject().put("cityObject", uri)).put(new JSONObject().put("cityObject", "http://localhost/kings-lynn-open-data/cityobject/UUID_447787a5-1678-4246-8658-4036436c1052/"));
         JSONArray heightArray = new JSONArray().put(new JSONObject().put("HeightMeasuredHeigh", 10.0));
 
@@ -2036,7 +1933,6 @@ public class CEAAgentTest {
             ArrayList<CEAInputData> result = (ArrayList<CEAInputData>) getSurroundings.invoke(agent, uri, "testRoute", unique, testSurroundingCoordinate);
 
             assertFalse(result.isEmpty());
-            assertTrue(result.get(0).getGeometry().equals(geometry));
             assertTrue(result.get(0).getHeight().equals("10.0"));
             assertNull(result.get(0).getUsage());
             assertNull(result.get(0).getSurrounding());

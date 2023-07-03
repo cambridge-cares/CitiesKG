@@ -31,18 +31,11 @@ def create_shapefile(geometries, heights, crs, shapefile):
     names = []
     i = 0
     floors_ag = []
+    geometry = []
 
     # Convert geometry data to arrays of points
     for geom in geometries:
-
-        split_data = geom.split("#")
-        number_points = int((len(split_data)/3) - 1)
-        points = [[] for i in range(number_points)]
-        for a in range(number_points):
-            for b in range(3):
-                points[a].append(float(split_data[a * 3 + b]))
-
-        geometry_values.append(str(points))
+        geometry.append(shapely.wkt.loads(geom))
         floors_bg.append(0)
         height_bg.append(0)
         floor_height.append(3.2)  # approximate floor-to-floor height
@@ -72,14 +65,10 @@ def create_shapefile(geometries, heights, crs, shapefile):
     zone_data = {'Name': names,
                  'floors_bg': floors_bg,
                  'floors_ag': floors_ag,
-                 'geometry': geometry_values,
                  'height_bg': height_bg,
                  'height_ag': heights}
 
     df = pd.DataFrame(data=zone_data)
-
-    geometry = [shapely.geometry.polygon.Polygon(json.loads(g)) for g in df.geometry]
-    df.drop('geometry', axis=1)
 
     # crs is ESPG coordinate reference system id
     crs = CRS.from_user_input(int(crs))
