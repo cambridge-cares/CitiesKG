@@ -26,6 +26,11 @@ import org.apache.jena.sparql.lang.sparql_11.ParseException;
 
 import java.util.*;
 
+/**
+ * A task that executes the queries for suitable site selector
+ *
+ * @author <a href="mailto:shiying.li@sec.ethz.ch">Shiying Li</a>
+ */
 public class DistanceFilterTask {
 
     private String cityObjectIri;
@@ -50,6 +55,11 @@ public class DistanceFilterTask {
         prepareBounds();
     }
 
+    /**
+     * Query for allowable Landuse and its GFA of a plot (future)
+     *
+     * @return JSONArray that contains zone, gfa, zoning case
+     */
     public JSONArray queryAllowUseAndGFA(){
         String sparqlQuery =
                 "PREFIX opr: <http://www.theworldavatar.com/ontology/ontoplanningreg/OntoPlanningReg.owl#>\n" +
@@ -77,6 +87,11 @@ public class DistanceFilterTask {
         return queryResult;
     }
 
+    /**
+     * Query for existing Landuse and its GFA of a plot (present)
+     *
+     * @return JSONArray that contains landuseType, gfaValue
+     */
     public JSONArray queryPresentLandUseGFA(){
         String sparqlQuery = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>\n" +
                 "PREFIX selected_plot: <{CITYOBJECTIRI}>\n" +
@@ -112,6 +127,12 @@ public class DistanceFilterTask {
 
     }
 
+    /**
+     * Get the envelop of a cityobject and calculate its centroid
+     *
+     * @param cityObjectIri the iri of a cityobject
+     * @return double[] that contains long and lat
+     */
     public double[] calcEnvelopCentroid (String cityObjectIri){
         String sparqlQuery = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>\n" +
                 "\n" +
@@ -134,7 +155,15 @@ public class DistanceFilterTask {
         return centroid;  // long, lat
     }
 
-
+    /**
+     * Get the corner point of a bounding box based on a given point and the displacement
+     *
+     * @param longitude - longitude of the given point
+     * @param latitude - latitude of the given point
+     * @param dx - displacement along latitude
+     * @param dy - displacement along
+     * @return double[] that contains the corner points of a bounding box in long, lat
+     */
     private double[] createBboxCorner(double longitude, double latitude, double dx, double dy){
         double radius_earth = 6378f; // km
 
