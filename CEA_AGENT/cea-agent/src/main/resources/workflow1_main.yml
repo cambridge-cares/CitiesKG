@@ -4,6 +4,7 @@
     scenario: testScenario
     output-path: directory_path
     zone: filepath_zone
+    terrain:
     streets:
     typology: filepath_typology
 - script: weather-helper
