@@ -25,6 +25,7 @@ import org.apache.jena.sparql.path.PathFactory;
 import org.apache.jena.graph.Node;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.openrdf.query.algebra.In;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.config.JPSConstants;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
@@ -32,6 +33,7 @@ import uk.ac.cam.cares.ogm.models.ModelContext;
 import uk.ac.cam.cares.jps.base.http.Http;
 import uk.ac.cam.cares.twa.cities.AccessAgentMapping;
 import uk.ac.cam.cares.twa.cities.model.geo.CityObject;
+import uk.ac.cam.cares.twa.cities.tasks.DistanceFilterTask;
 
 
 /**
@@ -70,6 +72,8 @@ public class CityInformationAgent extends JPSAgent {
   private static final String TOTAL_GFA =  "TotalGFA";
   private static final String MAX_CAP = "max_cap";
   private static final String MIN_CAP = "min_cap";
+  private static final String SEARCH_DISTANCE = "searchDistance";
+  private static final String ALLOW_USE_GFA = "allowableUSEandGFA"; // return to frontend
 
   @Getter private String route;
   private boolean lazyload;
@@ -93,26 +97,8 @@ public class CityInformationAgent extends JPSAgent {
       for (Object iri : iris) {
         uris.add(iri.toString());
       }
-      JSONArray cityObjectInformation = new JSONArray();
-      for (String cityObjectIri : uris) {
-        String route = AccessAgentMapping.getTargetResourceID(cityObjectIri);
-        if (route != null) {
-          this.route =  route;
-        }
-        ModelContext context = new ModelContext(this.route, AccessAgentMapping.getNamespaceEndpoint(cityObjectIri));
-        CityObject cityObject = context.createHollowModel(CityObject.class, cityObjectIri);
-        if (lazyload) {
-          context.pullAll(cityObject);
-        } else {
-          context.recursivePullAll(cityObject, 1);
-        }
-        cityObject.setEnvelopeType(null);
-        ArrayList<CityObject> cityObjectList = new ArrayList<>();
-        cityObjectList.add(cityObject);
-        cityObjectInformation.put(cityObjectList);
-      }
-      requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
 
+      // Programmatic Plot Finder
       if (requestParams.keySet().contains(KEY_CONTEXT)) {
         Set<String> agentURLs = requestParams.getJSONObject(KEY_CONTEXT).keySet();
         for (String agentURL : agentURLs) {
@@ -159,18 +145,64 @@ public class CityInformationAgent extends JPSAgent {
           else {
             for (String key : agentKeyValuePairs.keySet()) {
               requestBody.put(key, agentKeyValuePairs.get(key));
-            }
-            String[] params = new String[0];
-            HttpPost request =  Http.post(agentURL, requestBody, "application/json","application/json", params);
-            try {
+              String[] params = new String[0];
+              HttpPost request =  Http.post(agentURL, requestBody, "application/json","application/json", params);
               response = new JSONObject(Http.execute(request));
-              // specific agent response added to the city information response.
               requestParams.append(agentURL, response);
-            } catch (Exception e){
-              // ignore if no response from context endpoint
             }
           }
         }
+      }
+
+      // Suitable Site Selector: Distance Filter Task
+      else if (requestParams.keySet().contains(SEARCH_DISTANCE)){
+        // Set the route based on the IRI
+        for (String cityObjectIri : uris) {
+          String route = AccessAgentMapping.getTargetResourceID(cityObjectIri);  // remember to change back to TWA after development
+          if (route != null) {
+            this.route =  route;
+          }
+
+          // Get the distance
+          Integer searchDistance = requestParams.getInt(SEARCH_DISTANCE);
+
+          DistanceFilterTask distanceFilterTask = new DistanceFilterTask(cityObjectIri, searchDistance, route);
+          // Trigger the first query for allowable Landuse and GFA (current set in distanceFilterTask)
+          JSONArray allowGFAResults = distanceFilterTask.queryAllowUseAndGFA();
+          requestParams.append(ALLOW_USE_GFA, allowGFAResults);
+
+          JSONArray presentLandUseGFA = distanceFilterTask.queryPresentLandUseGFA();
+          requestParams.append("presentLandUseGFA", presentLandUseGFA);
+
+          double plotArea = distanceFilterTask.getPlotArea();
+          requestParams.append("plotArea", plotArea);
+
+          JSONObject distanceFilter = distanceFilterTask.queryDistanceFilter();
+          requestParams.append("distanceFilter", distanceFilter);
+        }
+      }
+
+      // Get detailed Information of clicked plot --> createInfoTable
+      else {
+        JSONArray cityObjectInformation = new JSONArray();
+        for (String cityObjectIri : uris) {
+          String route = AccessAgentMapping.getTargetResourceID(cityObjectIri);
+          if (route != null) {
+            this.route = route;
+          }
+          ModelContext context = new ModelContext(this.route, AccessAgentMapping.getNamespaceEndpoint(cityObjectIri));
+          CityObject cityObject = context.createHollowModel(CityObject.class, cityObjectIri);
+          if (lazyload) {
+            context.pullAll(cityObject);
+          } else {
+            context.recursivePullAll(cityObject, 1);
+          }
+          cityObject.setEnvelopeType(null);
+          ArrayList<CityObject> cityObjectList = new ArrayList<>();
+          cityObjectList.add(cityObject);
+          cityObjectInformation.put(cityObjectList);
+        }
+        requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
       }
     }
     return requestParams;
@@ -246,7 +278,7 @@ public class CityInformationAgent extends JPSAgent {
     sb.setDistinct(true);
     String namespaceURl = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql";
     String ontoZoneGraph = namespaceURl + "/ontozone/";
-    String buildableSpaceGraph = namespaceURl + "/buildablespace/";
+    String buildableSpaceGraph = namespaceURl + "/buildablespace2/";
     getOntoZoneFilterQuery(predicate, onto_class, sb, ontoZoneGraph);
     if (gfa_case) {
       getGFAFilterQuery(sb, buildableSpaceGraph);
