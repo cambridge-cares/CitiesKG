@@ -9,10 +9,10 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementService;
+import org.citydb.config.internal.Internal;
 import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.apache.jena.sparql.core.Var;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
@@ -30,23 +30,24 @@ import java.util.*;
 public class DistanceFilterTask {
 
     private final String cityObjectIri;
-    private final double searchDistance;
+    private final double distanceInKM;
     private final String sparqlEndpoint;
     public String customDataType = "<http://localhost/blazegraph/literals/POLYGON-3-15>";
     public String customField = "X0#Y0#Z0#X1#Y1#Z1#X2#Y2#Z2#X3#Y3#Z3#X4#Y4#Z4";
     public String ocgml = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
     public String geo = "http://www.bigdata.com/rdf/geospatial#";
     public String zo = "http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#";
-    public String obs = "http://www.theworldavatar.com/ontology/ontobuildablespace/OntoBuildableSpace.owl#";
     public String namespaceURl = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql";
     public String hint = "http://www.bigdata.com/queryHints#";
+    private Integer WGS84InDeg = 4326;
+    private Integer SGInMeter = 3414;
 
     private String lowerBounds;
     private String upperBounds;
 
     public DistanceFilterTask(String cityObjectIri, double searchDistance, String route){
         this.cityObjectIri = cityObjectIri;
-        this.searchDistance = searchDistance / 1000;  // km
+        this.distanceInKM = searchDistance / 1000;  // km
         this.sparqlEndpoint = route;
         prepareBounds();
     }
@@ -125,10 +126,9 @@ public class DistanceFilterTask {
     /**
      * Get the envelop of a cityobject and calculate its centroid
      *
-     * @param cityObjectIri the iri of a cityobject
      * @return double[] that contains long and lat
      */
-    public double[] calcEnvelopCentroid (String cityObjectIri){
+    public double[] calcEnvelopCentroid (){
         String sparqlQuery = "PREFIX ocgml: <http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#>\n" +
                 "\n" +
                 "PREFIX selected_plot: <{CITYOBJECTIRI}>\n" +
@@ -145,9 +145,7 @@ public class DistanceFilterTask {
         String envelopStr = queryResult.getJSONObject(0).getString("Envelope");
         // envelope = [Xmin, Xmax, Ymin, Ymax]
         double[] envelop = getEnvelopFromString(envelopStr);
-        double[] centroid = EnvelopeCentroid.calcCentroid(envelop); //long, long, lat, lat
-        //System.out.print(centroid);
-        return centroid;  // long, lat
+        return EnvelopeCentroid.calcCentroid(Objects.requireNonNull(envelop)); //[long, long, lat, lat] --> [long, lat]
     }
 
     /**
@@ -155,8 +153,8 @@ public class DistanceFilterTask {
      *
      * @param longitude - longitude of the given point
      * @param latitude - latitude of the given point
-     * @param dx - displacement along latitude
-     * @param dy - displacement along
+     * @param dx - displacement along longitude with unit "km"
+     * @param dy - displacement along latitude with unit "km"
      * @return double[] that contains the corner points of a bounding box in long, lat
      */
     private double[] createBboxCorner(double longitude, double latitude, double dx, double dy){
@@ -178,12 +176,12 @@ public class DistanceFilterTask {
      * @return String - A string form x0#y0#z0#x0#y0#z0#x0#y0#z0#x0#y0#z0#x0#y0#z0
      */
     private String createCornerString(double longitude, double latitude, double height){
-        String cornerStr = "";
+        StringBuilder cornerStr = new StringBuilder();
         for (int i = 0; i < 4; ++i) {
-            cornerStr += latitude + "#" + longitude + "#" + height + "#";
+            cornerStr.append(latitude).append("#").append(longitude).append("#").append(height).append("#");
         }
-        cornerStr += latitude + "#" + longitude + "#" + height;
-        return cornerStr;
+        cornerStr.append(latitude).append("#").append(longitude).append("#").append(height);
+        return cornerStr.toString();
     }
 
     /**
@@ -217,23 +215,15 @@ public class DistanceFilterTask {
      * @param geomType - geometry type that defines how to understand geometry string.
      * @return double - Area coverage from a given geometry retrieved from blazegraph
      */
-    public double calcGeometryArea(String geomStr, String geomType){
+    public double calcGeometryArea(String geomStr, String geomType, Integer EPSGInMeter){
         Geometry polyon = GeoSpatialProcessor.createGeometry(geomStr, geomType);
 
         GeoSpatialProcessor geop = new GeoSpatialProcessor();
-        Geometry transformed = geop.Transform(polyon, 4326, 3414);
-        double areaInWGS = polyon.getArea();
-        double areaInSqMeter = transformed.getArea();
-
-        return areaInSqMeter;
+        Geometry transformed = geop.Transform(polyon, WGS84InDeg, EPSGInMeter);
+        return transformed.getArea();
     }
 
-    /**
-     * Process queryDistanceFilter Result, the results should be sorted and aggregated, for "Most Common Zoning Type"
-     *
-     * @param results - raw results in form of JSONArray returned by blazegraph []
-     * @return JSONObject - processed and aggregated result: JSONArray: areaPerZone & JSONObject: totalArea
-     */
+
     public JSONObject processGeoSearchResult(JSONArray results){
 
         JSONObject geosearch = new JSONObject();
@@ -251,7 +241,7 @@ public class DistanceFilterTask {
             JSONObject obj = results.getJSONObject(i);
             String geomStr = obj.getString("geoms");
             String geomType = obj.getString("geomType");
-            double geomArea = calcGeometryArea(geomStr, geomType);
+            double geomArea = calcGeometryArea(geomStr, geomType, SGInMeter);
             obj.put("area", geomArea);
             totalArea += geomArea;
             zoneNameList.add(obj.getString("zone"));
@@ -311,7 +301,7 @@ public class DistanceFilterTask {
 
         String geomStr = obj.getString("geoms");
         String geomType = obj.getString("geomType");
-        return calcGeometryArea(geomStr, geomType);
+        return calcGeometryArea(geomStr, geomType, SGInMeter);
     }
 
     /**
@@ -321,12 +311,12 @@ public class DistanceFilterTask {
      */
     private void prepareBounds(){
         // Get Envelop Center
-        double[] envelopCentroid = calcEnvelopCentroid(this.cityObjectIri);
+        double[] envelopCentroid = calcEnvelopCentroid();
         // Get LowerBounds String
-        double[] lowerCorner = createBboxCorner(envelopCentroid[0], envelopCentroid[1], -this.searchDistance, -this.searchDistance);
+        double[] lowerCorner = createBboxCorner(envelopCentroid[0], envelopCentroid[1], -this.distanceInKM, -this.distanceInKM);
         lowerBounds = createCornerString(lowerCorner[0], lowerCorner[1], 0.0);
         // Get UpperBounds String
-        double[] upperCorner = createBboxCorner(envelopCentroid[0], envelopCentroid[1], this.searchDistance, this.searchDistance);
+        double[] upperCorner = createBboxCorner(envelopCentroid[0], envelopCentroid[1], this.distanceInKM, this.distanceInKM);
         upperBounds = createCornerString(upperCorner[0], upperCorner[1], 1000);
 
         }
