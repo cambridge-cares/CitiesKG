@@ -108,11 +108,15 @@ public class Transform {
 
     double[][] points = polygon.GetBoundary().GetPoints();
 
+    return getEnvelopeFromPoints(points);
+  }
+
+  public static double[] getEnvelopeFromPoints(double[][] pointsArray){
     List<Double> xCoords = new ArrayList<>();
     List<Double> yCoords = new ArrayList<>();
     List<Double> zCoords = new ArrayList<>();
 
-    for (double[] coords : points){
+    for (double[] coords : pointsArray){
       xCoords.add(coords[0]);
       yCoords.add(coords[1]);
       zCoords.add(coords[2]);
@@ -123,9 +127,7 @@ public class Transform {
     double new_ymin = Collections.min(yCoords);
     double new_ymax = Collections.max(yCoords);
 
-    double[] transformed = new double[]{new_ymin, new_ymax, new_xmin, new_xmax};
-
-    return transformed;
+    return new double[]{new_ymin, new_ymax, new_xmin, new_xmax};
   }
-
 }
+

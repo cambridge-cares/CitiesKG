@@ -7,20 +7,15 @@ import org.apache.jena.arq.querybuilder.handlers.WhereHandler;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
-import org.apache.jena.sparql.path.PathFactory;
-import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementService;
-import org.apache.jena.vocabulary.VOID;
 import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.apache.jena.sparql.core.Var;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
-import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.twa.cities.model.geo.EnvelopeCentroid;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 
@@ -33,9 +28,9 @@ import java.util.*;
  */
 public class DistanceFilterTask {
 
-    private String cityObjectIri;
-    private double searchDistance;
-    private String sparqlEndpoint;
+    private final String cityObjectIri;
+    private final double searchDistance;
+    private final String sparqlEndpoint;
     public String customDataType = "<http://localhost/blazegraph/literals/POLYGON-3-15>";
     public String customField = "X0#Y0#Z0#X1#Y1#Z1#X2#Y2#Z2#X3#Y3#Z3#X4#Y4#Z4";
     public String ocgml = "http://www.theworldavatar.com/ontology/ontocitygml/citieskg/OntoCityGML.owl#";
@@ -83,8 +78,7 @@ public class DistanceFilterTask {
 
         //JSONArray returnedCityObjects =  new JSONArray();
         sparqlQuery = sparqlQuery.replace("{CITYOBJECTIRI}", this.cityObjectIri);
-        JSONArray queryResult = AccessAgentCaller.queryStore(sparqlEndpoint, sparqlQuery); // string
-        return queryResult;
+        return AccessAgentCaller.queryStore(sparqlEndpoint, sparqlQuery);
     }
 
     /**
@@ -185,9 +179,9 @@ public class DistanceFilterTask {
     private String createCornerString(double longitude, double latitude, double height){
         String cornerStr = "";
         for (int i = 0; i < 4; ++i) {
-            cornerStr += Double.toString(latitude) + "#" + Double.toString(longitude) + "#" + Double.toString(height) + "#";
+            cornerStr += latitude + "#" + longitude + "#" + height + "#";
         }
-        cornerStr += Double.toString(latitude) + "#" + Double.toString(longitude) + "#" + Double.toString(height);
+        cornerStr += latitude + "#" + longitude + "#" + height;
         return cornerStr;
     }
 
@@ -211,7 +205,7 @@ public class DistanceFilterTask {
             return null;
         }
 
-        Coordinate[] coordinates = points.toArray(new Coordinate[0]);
+        //Coordinate[] coordinates = points.toArray(new Coordinate[0]);
 
         // [Xmin, Xmax, Ymin, Ymax]
         List<Double> xCoords = new ArrayList<>();
@@ -253,10 +247,10 @@ public class DistanceFilterTask {
     }
 
     /**
-     * Process queryDistanceFilter Result, the results should be sorted and aggregated
+     * Process queryDistanceFilter Result, the results should be sorted and aggregated, for "Most Common Zoning Type"
      *
      * @param results - raw results in form of JSONArray returned by blazegraph []
-     * @return JSONObject - processed and aggregated result
+     * @return JSONObject - processed and aggregated result: JSONArray: areaPerZone & JSONObject: totalArea
      */
     public JSONObject processGeoSearchResult(JSONArray results){
 
@@ -335,14 +329,13 @@ public class DistanceFilterTask {
 
         String geomStr = obj.getString("geoms");
         String geomType = obj.getString("geomType");
-        double area = calcGeometryArea(geomStr, geomType);
-
-        return area;
+        return calcGeometryArea(geomStr, geomType);
     }
 
     /**
      * Prepare the boundary string for the geospatial search
-     *
+     * exmaple LowerBounds: 1.253371#103.774452#0#1.253371#103.774452#0#1.253371#103.774452#0#1.253371#103.774452#0#1.253371#103.774452#0
+     * example UpperBounds: 1.335576#103.868351#1000#1.335576#103.868351#1000#1.335576#103.868351#1000#1.335576#103.868351#1000#1.335576#103.868351#1000
      */
     private void prepareBounds(){
         // Get Envelop Center
@@ -354,9 +347,7 @@ public class DistanceFilterTask {
         double[] upperCorner = createBboxCorner(envelopCentroid[0], envelopCentroid[1], this.searchDistance, this.searchDistance);
         upperBounds = createCornerString(upperCorner[0], upperCorner[1], 1000);
 
-        // LowerBounds: 1.253371#103.774452#0#1.253371#103.774452#0#1.253371#103.774452#0#1.253371#103.774452#0#1.253371#103.774452#0
-        // UpperBounds: 1.335576#103.868351#1000#1.335576#103.868351#1000#1.335576#103.868351#1000#1.335576#103.868351#1000#1.335576#103.868351#1000
-    }
+        }
 
     /**
      * Query different cityobjects within a distance range (e.g., 500m)
@@ -466,7 +457,7 @@ public class DistanceFilterTask {
     // graphName: "/cityobjectgenericattrib_andrea_v2/"
 
     /**
-     * Retrieve the count for a given attrName
+     * Retrieve the count for a given attrName using preparedQuery for geospatial search
      *
      * @param graphName - graphName string
      * @param attrName - interested attrName string
@@ -511,11 +502,13 @@ public class DistanceFilterTask {
             totalAttrValue += Double.parseDouble(attrValue);
         }
         return totalAttrValue;
-        //JSONObject obj = queryResult.getJSONObject(0);
-        //return obj.getInt("numOfObjs");
     }
 
-
+    /**
+     * Retrieve the count of allowable parks within bounds using preparedQuery for geospatial search
+     *
+     * @return Integer - the count for allowable parks
+     */
     public Integer getAllowParksWithinBounds(){
 
         SelectBuilder sb = new SelectBuilder();
@@ -549,6 +542,12 @@ public class DistanceFilterTask {
 
     }
 
+    /**
+     * Retrieve the count of either MRT or BUS_STOP within bounds using preparedQuery for geospatial search
+     *
+     * @param MRTorBusstop - string either MRT or BUS_STOP
+     * @return Integer - the count for existing public transport, either MRT or BUS_STOP
+     */
     public Integer getTransportWithinBounds(String MRTorBusstop){
 
         SelectBuilder sb = new SelectBuilder();
@@ -584,10 +583,14 @@ public class DistanceFilterTask {
         return obj.getInt("numOfObjs");
     }
 
-
-
-
-    // Query for lower part
+    /**
+     * Build the query to retrieve information within given bounds
+     *
+     * @param uriString - string either MRT or BUS_STOP
+     * @param lowerBounds - lowerBounds string
+     * @param upperBounds - upperBounds string
+     * @return Query -
+     */
     private Query getInfoWithinBoundsQuery(String uriString, String lowerBounds, String upperBounds) throws ParseException {
         SelectBuilder sb = new SelectBuilder().addVar("?cityObject");
 
