@@ -18,6 +18,7 @@ import org.apache.jena.sparql.core.Var;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.model.geo.EnvelopeCentroid;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
+import uk.ac.cam.cares.twa.cities.model.geo.Transform;
 
 import java.util.*;
 
@@ -193,39 +194,20 @@ public class DistanceFilterTask {
      */
     public static double[] getEnvelopFromString(String envelopStr){
         String[] pointXYZList = envelopStr.split("#");
-        List<Coordinate> points = new LinkedList<>();
+        List<Double[]> points = new LinkedList<>();
 
         if (pointXYZList.length % 3 == 0) {
             // 3d coordinates
             for (int i = 0; i < pointXYZList.length; i = i + 3) {
-                points.add(new Coordinate(Double.parseDouble(pointXYZList[i]), Double.parseDouble(pointXYZList[i + 1]), Double.parseDouble(pointXYZList[i + 2])));
+                points.add(new Double[]{Double.parseDouble(pointXYZList[i]), Double.parseDouble(pointXYZList[i + 1]), Double.parseDouble(pointXYZList[i + 2])});
             }
         }else {
             System.out.println("InputString has no valid format");
             return null;
         }
 
-        //Coordinate[] coordinates = points.toArray(new Coordinate[0]);
-
-        // [Xmin, Xmax, Ymin, Ymax]
-        List<Double> xCoords = new ArrayList<>();
-        List<Double> yCoords = new ArrayList<>();
-        List<Double> zCoords = new ArrayList<>();
-
-        for (Coordinate coords : points){
-            xCoords.add(coords.getX());
-            yCoords.add(coords.getY());
-            zCoords.add(coords.getZ());
-        }
-
-        double new_xmin = Collections.min(xCoords);
-        double new_xmax = Collections.max(xCoords);
-        double new_ymin = Collections.min(yCoords);
-        double new_ymax = Collections.max(yCoords);
-
-        double[] envelop = new double[]{new_ymin, new_ymax, new_xmin, new_xmax};
-
-        return envelop;
+        double[][] pointsArray = (double[][]) points.toArray();
+        return Transform.getEnvelopeFromPoints(pointsArray);
     }
 
     /**
