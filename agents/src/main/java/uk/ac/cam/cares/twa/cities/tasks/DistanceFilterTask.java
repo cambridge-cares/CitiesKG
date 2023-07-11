@@ -318,8 +318,7 @@ public class DistanceFilterTask {
         // Get UpperBounds String
         double[] upperCorner = createBboxCorner(envelopCentroid[0], envelopCentroid[1], this.distanceInKM, this.distanceInKM);
         upperBounds = createCornerString(upperCorner[0], upperCorner[1], 1000);
-
-        }
+    }
 
     /**
      * Query different cityobjects within a distance range (e.g., 500m)
