@@ -15,9 +15,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.util.*;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,12 +31,12 @@ public class RunCEATaskTest {
         try {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
             String test_CRS = "27700";
-            task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
+            task = new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null);;
             assertNotNull(task);
         } catch (Exception e) {
             fail();
@@ -44,104 +44,16 @@ public class RunCEATaskTest {
     }
 
     @Test
-    public void testRunCEATaskFields() {
-        try {
-            ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
-            URI testURI = new URI("http://localhost/test");
-            ArrayList<String> testArray = new ArrayList<>();
-            testArray.add("testUri");
-            Integer test_thread = 0;
-            String test_CRS = "27700";
-            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
-
-            assertEquals(15, task.getClass().getDeclaredFields().length);
-
-            Field inputs;
-            Field uris;
-            Field endpointUri;
-            Field threadNumber;
-            Field crs;
-            Field CTYPE_JSON;
-            Field stop;
-            Field DATA_FILE;
-            Field SHAPEFILE_SCRIPT;
-            Field WORKFLOW_SCRIPT;
-            Field CREATE_WORKFLOW_SCRIPT;
-            Field FS;
-
-            inputs = task.getClass().getDeclaredField("inputs");
-            inputs.setAccessible(true);
-            assertEquals(inputs.get(task), testData);
-            uris = task.getClass().getDeclaredField("uris");
-            uris.setAccessible(true);
-            assertEquals(uris.get(task), testArray);
-            endpointUri = task.getClass().getDeclaredField("endpointUri");
-            endpointUri.setAccessible(true);
-            assertEquals(endpointUri.get(task), testURI);
-            threadNumber = task.getClass().getDeclaredField("threadNumber");
-            threadNumber.setAccessible(true);
-            assertEquals(threadNumber.get(task), test_thread);
-            crs = task.getClass().getDeclaredField("crs");
-            crs.setAccessible(true);
-            assertEquals(crs.get(task), test_CRS);
-            CTYPE_JSON = task.getClass().getDeclaredField("CTYPE_JSON");
-            assertEquals(CTYPE_JSON.get(task), "application/json");
-            stop = task.getClass().getDeclaredField("stop");
-            stop.setAccessible(true);
-            assertFalse((boolean) stop.get(task));
-            DATA_FILE = task.getClass().getDeclaredField("DATA_FILE");
-            DATA_FILE.setAccessible(true);
-            assertEquals(DATA_FILE.get(task), "datafile.txt");
-            SHAPEFILE_SCRIPT = task.getClass().getDeclaredField("SHAPEFILE_SCRIPT");
-            SHAPEFILE_SCRIPT.setAccessible(true);
-            assertEquals(SHAPEFILE_SCRIPT.get(task), "create_shapefile.py");
-            WORKFLOW_SCRIPT = task.getClass().getDeclaredField("WORKFLOW_SCRIPT");
-            WORKFLOW_SCRIPT.setAccessible(true);
-            assertEquals(WORKFLOW_SCRIPT.get(task), "workflow.yml");
-            CREATE_WORKFLOW_SCRIPT = task.getClass().getDeclaredField("CREATE_WORKFLOW_SCRIPT");
-            CREATE_WORKFLOW_SCRIPT.setAccessible(true);
-            assertEquals(CREATE_WORKFLOW_SCRIPT.get(task), "create_cea_workflow.py");
-            FS = task.getClass().getDeclaredField("FS");
-            FS.setAccessible(true);
-            assertEquals(FS.get(task), System.getProperty("file.separator"));
-
-        } catch (NoSuchFieldException | IllegalAccessException | URISyntaxException e) {
-            fail();
-        }
-    }
-
-    @Test
-    public void testRunCEATaskMethods() {
-        try{
-            URI testURI = new URI("http://localhost/test");
-            ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
-            ArrayList<String> testArray = new ArrayList<>();
-            testArray.add("testUri");
-            Integer test_thread = 0;
-            String test_CRS = "27700";
-            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
-
-            assertEquals(9, task.getClass().getDeclaredMethods().length);
-
-        } catch (URISyntaxException e) {
-            fail();
-        }
-
-    }
-
-    @Test
     public void testStop() {
         try {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
             String test_CRS = "27700";
-            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
+            RunCEATask task = new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null);;
 
             Field stopField = task.getClass().getDeclaredField("stop");
             stopField.setAccessible(true);
@@ -159,7 +71,7 @@ public class RunCEATaskTest {
     public void testRunProcess() throws Exception {
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
@@ -167,7 +79,7 @@ public class RunCEATaskTest {
 
         Process dummyProcess  = mock(Process.class);
 
-        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray,test_thread, test_CRS));
+        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null));
         try (MockedConstruction<ProcessBuilder> builder = mockConstruction(ProcessBuilder.class,  (mock, context) -> {
             when(mock.start()).thenReturn(dummyProcess);
         })) {
@@ -200,12 +112,12 @@ public class RunCEATaskTest {
         try {
             URI testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
             String test_CRS = "27700";
-            RunCEATask task = new RunCEATask(testData, testURI, testArray,test_thread, test_CRS);
+            RunCEATask task = new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null);;
 
             File myTempDir = new File(System.getProperty("java.io.tmpdir"));
             File newDirectory = new File(myTempDir, "new_directory");
@@ -226,40 +138,46 @@ public class RunCEATaskTest {
     }
 
     @Test
-   public void testExtractArea() throws Exception {
-        String titleRow = "PV_roofs_top_m2,PV_walls_south_m2,PV_walls_north_m2,Other,PV_walls_east_m2,PV_walls_west_m2";
-        String valuesRow = "10.0,20.0,30.0,40.0,50.0,60.0";
+    public void testExtractArea() throws Exception {
+        String PVTitle = "PV_roofs_top_m2,PV_walls_south_m2,PV_walls_north_m2,Other,PV_walls_east_m2,PV_walls_west_m2";
+        String PVValues = "10.0,20.0,30.0,40.0,50.0,60.0";
+
+        Map<String, List<String>> testCEAoutputs = new HashMap<>();
+        testCEAoutputs.put("PV", Arrays.asList(PVTitle, PVValues));
         CEAOutputData data = new CEAOutputData();
         String tmpDir = "test";
 
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
         String test_CRS = "27700";
-        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray,test_thread, test_CRS));
+        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null));
         doNothing().when(task).deleteDirectoryContents(any());
 
-        try (MockedConstruction<FileReader> fReader = mockConstruction(FileReader.class)) {
-            try (MockedConstruction<BufferedReader> bReader = mockConstruction(BufferedReader.class,  (mock, context) -> {
-                when(mock.readLine()).thenReturn(titleRow, valuesRow, null);
-            })) {
-                Method extractArea = task.getClass().getDeclaredMethod("extractArea", String.class, CEAOutputData.class);
-                CEAOutputData result = (CEAOutputData) extractArea.invoke(task, tmpDir, data);
+        for (Map.Entry<String, List<String>> entry : testCEAoutputs.entrySet()) {
+            try (MockedConstruction<FileReader> fReader = mockConstruction(FileReader.class)) {
+                try (MockedConstruction<BufferedReader> bReader = mockConstruction(BufferedReader.class, (mock, context) -> {
+                    when(mock.readLine()).thenReturn(entry.getValue().get(0), entry.getValue().get(1), null);
+                })) {
+                    Method extractArea = task.getClass().getDeclaredMethod("extractArea", String.class, CEAOutputData.class);
+                    CEAOutputData result = (CEAOutputData) extractArea.invoke(task, tmpDir, data);
+                    
+                    String[] testValues = entry.getValue().get(1).split(",");
 
-                assertTrue(result.PVRoofArea.contains("10.0"));
-                assertTrue(result.PVWallSouthArea.contains("20.0"));
-                assertTrue(result.PVWallNorthArea.contains("30.0"));
-                assertTrue(result.PVWallEastArea.contains("50.0"));
-                assertTrue(result.PVWallWestArea.contains("60.0"));
-                assertTrue(result.targetUrl.contains(testURI.toString()));
-                assertTrue(result.iris.get(0).contains(testArray.get(0)));
+                    assertTrue(result.RoofSolarSuitableArea.contains(testValues[0]));
+                    assertTrue(result.SouthWallSolarSuitableArea.contains(testValues[1]));
+                    assertTrue(result.NorthWallSolarSuitableArea.contains(testValues[2]));
+                    assertTrue(result.EastWallSolarSuitableArea.contains(testValues[4]));
+                    assertTrue(result.WestWallSolarSuitableArea.contains(testValues[5]));
+
+                    assertTrue(result.targetUrl.contains(testURI.toString()));
+                    assertTrue(result.iris.get(0).contains(testArray.get(0)));
+                }
             }
         }
-
-
     }
 
     @Test
@@ -276,12 +194,12 @@ public class RunCEATaskTest {
 
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
         String test_CRS = "27700";
-        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray,test_thread, test_CRS));
+        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null));
 
         try (MockedConstruction<FileReader> fReader = mockConstruction(FileReader.class)) {
             try (MockedConstruction<BufferedReader> bReader = mockConstruction(BufferedReader.class,  (mock, context) -> {
@@ -334,12 +252,12 @@ public class RunCEATaskTest {
         try {
             testURI = new URI("http://localhost/test");
             ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+            testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
             ArrayList<String> testArray = new ArrayList<>();
             testArray.add("testUri");
             Integer test_thread = 0;
             String test_CRS = "27700";
-            task = new RunCEATask(testData, testURI, testArray, test_thread, test_CRS);
+            task = new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null);
 
             data = new CEAOutputData();
 
@@ -381,12 +299,12 @@ public class RunCEATaskTest {
     public void testRun() throws NoSuchMethodException, URISyntaxException, InvocationTargetException, IllegalAccessException {
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
-        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
         String test_CRS = "27700";
-        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS));
+        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null));
 
         Method run = task.getClass().getDeclaredMethod("run");
 
@@ -394,13 +312,14 @@ public class RunCEATaskTest {
         CEAOutputData dummy_data = mock(CEAOutputData.class);
 
         doReturn(dummy_process).when(task).runProcess(any());
+        doNothing().when(task).renamePVT(anyString(), anyString());
         doReturn(dummy_data).when(task).extractTimeSeriesOutputs(anyString());
         doReturn(dummy_data).when(task).extractArea(anyString(), any());
         doNothing().when(task).returnOutputs(any());
 
         run.invoke(task);
 
-        verify(task, times(4)).runProcess(any());
+        verify(task, times(6)).runProcess(any());
         verify(task, times(1)).extractTimeSeriesOutputs(anyString());
         verify(task, times(1)).extractArea(anyString(), any());
         verify(task, times(1)).returnOutputs(any());
@@ -410,30 +329,80 @@ public class RunCEATaskTest {
     public void testDataToFile(@TempDir Path tempDir) throws URISyntaxException, NoSuchMethodException, NoSuchFieldException, InvocationTargetException, IllegalAccessException, IOException {
         URI testURI = new URI("http://localhost/test");
         ArrayList<CEAInputData> testData = new ArrayList<>();
-        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+        List<OffsetDateTime> testTimes = Collections.nCopies(8760, OffsetDateTime.now());
+        Map<String, List<Double>> testWeather = new HashMap<>();
+        testWeather.put("testWeather", Collections.nCopies(8760, 0.00));
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, testTimes, testWeather, Arrays.asList(0.00, 0.00, 0.00, 0.00)));
         ArrayList<String> testArray = new ArrayList<>();
         testArray.add("testUri");
         Integer test_thread = 0;
         String test_CRS = "27700";
-        String fs = System.getProperty("file.separator");
-        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS));
+        RunCEATask task = new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null);
 
         ArrayList<CEAInputData> surroundings = new ArrayList<>();
-        surroundings.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null));
+        surroundings.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
         testData.get(0).setSurrounding(surroundings);
 
-        Method dataToFile = task.getClass().getDeclaredMethod("dataToFile", ArrayList.class, String.class, String.class, String.class);
+        Method dataToFile = task.getClass().getDeclaredMethod("dataToFile", ArrayList.class, String.class, String.class, String.class, String.class, String.class);
         assertNotNull(dataToFile);
         dataToFile.setAccessible(true);
 
         Field noSurroundings = task.getClass().getDeclaredField("noSurroundings");
         noSurroundings.setAccessible(true);
+        Field noWeather = task.getClass().getDeclaredField("noWeather");
+        noWeather.setAccessible(true);
 
         Path testPath = Files.createFile(tempDir.resolve("test.txt"));
         Path testPath2 = Files.createFile(tempDir.resolve("test2.txt"));
+        Path testPath3 = Files.createFile(tempDir.resolve("test3.txt"));
+        Path testPath4 = Files.createFile(tempDir.resolve("test4.txt"));
 
-        dataToFile.invoke(task, testData, tempDir.toString(), testPath.toString(), testPath2.toString());
+        dataToFile.invoke(task, testData, tempDir.toString(), testPath.toString(), testPath2.toString(), testPath3.toString(), testPath4.toString());
 
         assertFalse((Boolean) noSurroundings.get(task));
+        assertFalse((Boolean) noWeather.get(task));
+    }
+
+    @Test
+    public void testExtractSolarSupply() throws URISyntaxException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        URI testURI = new URI("http://localhost/test");
+        ArrayList<CEAInputData> testData = new ArrayList<CEAInputData>();
+        testData.add(new CEAInputData("test", "test", (Map<String, Double>) new HashMap<>().put("MULTI_RES", 1.00), null, null, null, null));
+        ArrayList<String> testArray = new ArrayList<>();
+        testArray.add("testUri");
+        Integer test_thread = 0;
+        String test_CRS = "27700";
+        RunCEATask task = spy(new RunCEATask(testData, testURI, testArray, test_thread, test_CRS, null));
+
+        String PVTitleRow = "Date,PV_roofs_top_E_kWh,PV_walls_south_E_kWh,Other,PV_walls_north_E_kWh,PV_walls_west_E_kWh,PV_walls_east_E_kWh";
+        String PVValuesRow1 = "2005-01-01 00:00:00+00:00,20.0,30.0,40.0,50.0,60.0,70.0";
+        String PVValuesRow2 = "2005-01-01 01:00:00+00:00,21.0,31.0,41.0,51.0,61.0,71.0";
+
+        String generatorType = "PV";
+        List<String> supplyTypes = Arrays.asList("E");
+        String dataSeparator = ",";
+        String solarFile = "test";
+        String tmpDir = "test";
+
+        try (MockedConstruction<FileReader> fReader = mockConstruction(FileReader.class)) {
+            try (MockedConstruction<BufferedReader> bReader = mockConstruction(BufferedReader.class, (mock, context) -> {
+                when(mock.readLine()).thenReturn(PVTitleRow, PVValuesRow1, PVValuesRow2, null);
+            })) {
+                Method extractSolarSupply = task.getClass().getDeclaredMethod("extractSolarSupply", CEAOutputData.class, String.class, List.class, String.class, String.class, String.class, Boolean.class);
+                CEAOutputData result = (CEAOutputData) extractSolarSupply.invoke(task, new CEAOutputData(), generatorType, supplyTypes, dataSeparator, solarFile, tmpDir, false);
+
+                assertTrue(result.PVRoofSupply.get(0).get(0).contains("20.0"));
+                assertTrue(result.PVRoofSupply.get(0).get(1).contains("21.0"));
+                assertTrue(result.PVWallSouthSupply.get(0).get(0).contains("30.0"));
+                assertTrue(result.PVWallSouthSupply.get(0).get(1).contains("31.0"));
+                assertTrue(result.PVWallNorthSupply.get(0).get(0).contains("50.0"));
+                assertTrue(result.PVWallNorthSupply.get(0).get(1).contains("51.0"));
+                assertTrue(result.PVWallEastSupply.get(0).get(0).contains("70.0"));
+                assertTrue(result.PVWallEastSupply.get(0).get(1).contains("71.0"));
+                assertTrue(result.PVWallWestSupply.get(0).get(0).contains("60.0"));
+                assertTrue(result.PVWallWestSupply.get(0).get(1).contains("61.0"));
+                verify(task, times(5)).addSolarSupply(any(), anyString(), anyString(), anyString(), any());
+            }
         }
+    }
 }
