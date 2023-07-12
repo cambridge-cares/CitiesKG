@@ -56,9 +56,7 @@ var UrlController = /** @class */ (function () {
             "ionToken": "it",
             "bingToken": "bt",
             "debug": "db",
-            "googleClientId": "gid",
-            // added to zoom into particular region within demo area.
-            "region":"reg"
+            "googleClientId": "gid"
         };
     }
     // return only the shortened name of the URL parameters
