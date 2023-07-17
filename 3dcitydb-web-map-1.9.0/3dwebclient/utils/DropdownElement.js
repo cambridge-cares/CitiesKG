@@ -6,6 +6,10 @@
  *
  * Credit to 3DCityDB-Web-Map: http://www.3dcitydb.org/
  *
+ * Copyright 2020 - 2023
+ * Singapore ETH Center
+ * and
+ * Cambridge centre for Advanced Research and Education in Singapore LTD.
  *
  * This work is jointly developed by the following research partners:
  * Singapore ETH Center

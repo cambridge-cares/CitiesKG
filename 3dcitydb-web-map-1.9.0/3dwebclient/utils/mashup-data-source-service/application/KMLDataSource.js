@@ -77,8 +77,8 @@ var KMLDataSource = /** @class */ (function (_super) {
         }
 
         if (jQuery.isArray(contextResponse) && contextResponse.length > 0) {
-            if (jQuery.isArray(contextResponse[0]['ceaOutputs']) && contextResponse[0]['ceaOutputs'].length > 0) {
-                var energydata = contextResponse[0]['ceaOutputs'][0];
+            if (jQuery.isArray(contextResponse[0]['energyprofile']) && contextResponse[0]['energyprofile'].length > 0) {
+                var energydata = contextResponse[0]['energyprofile'][0];
                 for (var key in energydata) {
                     if (key == null) {
                         continue;
