@@ -98,7 +98,54 @@ public class CityInformationAgent extends JPSAgent {
         uris.add(iri.toString());
       }
 
-      // Programmatic Plot Finder
+      if (requestParams.keySet().contains(SEARCH_DISTANCE)){
+
+        // Set the route based on the IRI
+        for (String cityObjectIri : uris) {
+        String route = AccessAgentMapping.getTargetResourceID(cityObjectIri);  // remember to change back to TWA after development
+        if (route != null) {
+          this.route =  route;
+        }
+
+        // Get the distance
+        Integer searchDistance = requestParams.getInt(SEARCH_DISTANCE);
+
+        DistanceFilterTask distanceFilterTask = new DistanceFilterTask(cityObjectIri, searchDistance, route);
+        // Trigger the first query for allowable Landuse and GFA (current set in distanceFilterTask)
+        JSONArray allowGFAResults = distanceFilterTask.queryAllowUseAndGFA();
+        requestParams.append(ALLOW_USE_GFA, allowGFAResults);
+
+        JSONArray presentLandUseGFA = distanceFilterTask.queryPresentLandUseGFA();
+        requestParams.append("presentLandUseGFA", presentLandUseGFA);
+
+        double plotArea = distanceFilterTask.getPlotArea();
+        requestParams.append("plotArea", plotArea);
+
+        JSONObject distanceFilter = distanceFilterTask.queryDistanceFilter();
+        requestParams.append("distanceFilter", distanceFilter);
+        }
+      }
+
+      JSONArray cityObjectInformation = new JSONArray();
+      for (String cityObjectIri : uris) {
+        String route = AccessAgentMapping.getTargetResourceID(cityObjectIri);
+        if (route != null) {
+          this.route =  route;
+        }
+        ModelContext context = new ModelContext(this.route, AccessAgentMapping.getNamespaceEndpoint(cityObjectIri));
+        CityObject cityObject = context.createHollowModel(CityObject.class, cityObjectIri);
+        if (lazyload) {
+          context.pullAll(cityObject);
+        } else {
+          context.recursivePullAll(cityObject, 1);
+        }
+        cityObject.setEnvelopeType(null);
+        ArrayList<CityObject> cityObjectList = new ArrayList<>();
+        cityObjectList.add(cityObject);
+        cityObjectInformation.put(cityObjectList);
+      }
+      requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
+
       if (requestParams.keySet().contains(KEY_CONTEXT)) {
         Set<String> agentURLs = requestParams.getJSONObject(KEY_CONTEXT).keySet();
         for (String agentURL : agentURLs) {
@@ -152,57 +199,6 @@ public class CityInformationAgent extends JPSAgent {
             }
           }
         }
-      }
-
-      // Suitable Site Selector: Distance Filter Task
-      else if (requestParams.keySet().contains(SEARCH_DISTANCE)){
-        // Set the route based on the IRI
-        for (String cityObjectIri : uris) {
-          String route = AccessAgentMapping.getTargetResourceID(cityObjectIri);  // remember to change back to TWA after development
-          if (route != null) {
-            this.route =  route;
-          }
-
-          // Get the distance
-          Integer searchDistance = requestParams.getInt(SEARCH_DISTANCE);
-
-          DistanceFilterTask distanceFilterTask = new DistanceFilterTask(cityObjectIri, searchDistance, route);
-          // Trigger the first query for allowable Landuse and GFA (current set in distanceFilterTask)
-          JSONArray allowGFAResults = distanceFilterTask.queryAllowUseAndGFA();
-          requestParams.append(ALLOW_USE_GFA, allowGFAResults);
-
-          JSONArray presentLandUseGFA = distanceFilterTask.queryPresentLandUseGFA();
-          requestParams.append("presentLandUseGFA", presentLandUseGFA);
-
-          double plotArea = distanceFilterTask.getPlotArea();
-          requestParams.append("plotArea", plotArea);
-
-          JSONObject distanceFilter = distanceFilterTask.queryDistanceFilter();
-          requestParams.append("distanceFilter", distanceFilter);
-        }
-      }
-
-      // Get detailed Information of clicked plot --> createInfoTable
-      else {
-        JSONArray cityObjectInformation = new JSONArray();
-        for (String cityObjectIri : uris) {
-          String route = AccessAgentMapping.getTargetResourceID(cityObjectIri);
-          if (route != null) {
-            this.route = route;
-          }
-          ModelContext context = new ModelContext(this.route, AccessAgentMapping.getNamespaceEndpoint(cityObjectIri));
-          CityObject cityObject = context.createHollowModel(CityObject.class, cityObjectIri);
-          if (lazyload) {
-            context.pullAll(cityObject);
-          } else {
-            context.recursivePullAll(cityObject, 1);
-          }
-          cityObject.setEnvelopeType(null);
-          ArrayList<CityObject> cityObjectList = new ArrayList<>();
-          cityObjectList.add(cityObject);
-          cityObjectInformation.put(cityObjectList);
-        }
-        requestParams.append(KEY_CITY_OBJECT_INFORMATION, cityObjectInformation);
       }
     }
     return requestParams;
