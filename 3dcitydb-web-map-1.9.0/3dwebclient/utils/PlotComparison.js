@@ -159,7 +159,7 @@ function processPlotArea(tableNum, plotArea){
     let selected = '#table'+ tableNum +' .item4';
     var target4 = document.querySelector(selected);
     let textspan = target4.firstChild;
-    textspan.innerHTML = textspan.innerHTML.replace("{totalArea}", plotArea[0].toFixed(2));
+    textspan.innerHTML = textspan.innerHTML.replace("{totalArea}", plotArea[0].toFixed(0));
 }
 
 
@@ -175,14 +175,14 @@ function processpresentLandUseGFA(tableNum, arrayOfJsonObjects){
         for (var i = 0; i < arrayOfJsonObjects.length; i++) {
             textDiv.appendChild(document.createElement("br"));
             let textSpan = document.createElement('span');
-            textSpan.innerHTML = shortenNameIfnecessary(arrayOfJsonObjects[i]["landuseType"]) + ": " + arrayOfJsonObjects[i]["gfaValue"] + mSquare;
+            textSpan.innerHTML = shortenNameIfnecessary(arrayOfJsonObjects[i]["landuseType"]) + ": " + arrayOfJsonObjects[i]["gfaValue"].toFixed(0) + mSquare;
             textDiv.appendChild(textSpan);
         }
         targetCell.appendChild(textDiv);
     } else {
         // no GFA is available
         let textSpan = document.createElement('span');
-        textSpan.innerHTML = "No GFA is available for this plot.";
+        textSpan.innerHTML = "No GFA data available.";
         textDiv.appendChild(textSpan);
         targetCell.appendChild(textDiv);
     }
@@ -212,7 +212,7 @@ function processAllowableUSEandGFA(tableNum, arrayOfJsonObjects){
         // no GFA is available
         
         let textSpan = document.createElement('span');
-        textSpan.innerHTML = "No GFA is available for this plot <br> because of its land use.";
+        textSpan.innerHTML = "No GFA data available.";
         textDiv.appendChild(textSpan);
         targetCell.appendChild(textDiv);
     }
@@ -266,6 +266,15 @@ function processDistanceFilter(tableNum, resultsObjects){
     var target9 = document.querySelector('#table'+ tableNum +' .item9');
     target9.innerHTML = target9.innerHTML.replace("{presentParks}", presentParks);
 
+    // Calculate the delta about parks
+    let deltaParks = allowParks - presentParks;
+
+    var target10 = document.querySelector('#table'+ tableNum +' .item10');
+    var signForDelta = "";
+    if (deltaParks >=0){
+        signForDelta = "+";
+    }
+    target10.innerHTML = target10.innerHTML.replace("{DeltaParks}", signForDelta + deltaParks);
 }
 
 

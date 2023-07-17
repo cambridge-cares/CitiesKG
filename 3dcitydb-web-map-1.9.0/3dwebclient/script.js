@@ -61,7 +61,7 @@ var cesiumViewerOptions = {
     timeline: false,
     animation: false,
     fullscreenButton: false,
-    shadows: (shadows == "true"),
+    shadows: (shadows === "true"),
     terrainShadows: parseInt(terrainShadows),
     clockViewModel: new Cesium.ClockViewModel(clock),
     terrainProvider: maptiler
@@ -142,6 +142,12 @@ Cesium.knockout.applyBindings(addSplashWindowModel, document.getElementById('cit
 var splashController = new SplashController(addSplashWindowModel);
 splashController.setCookie("ignoreSplashWindow", "true")
 
+
+// Added by Shiying
+var filteredObjects = {};
+var _customDataSourceCounter = 0;
+const dataSourcePrefix = "ciaResult_";
+var customDataSourceMap = new Map();
 /*---------------------------------  Load Configurations and Layers  ----------------------------------------*/
 
 initClient();
@@ -226,7 +232,7 @@ function initClient() {
 
         var cesiumWorldTerrainString = urlController.getUrlParaValue('cesiumWorldTerrain', window.location.href, CitydbUtil);
         var maptilerTerrainString = urlController.getUrlParaValue('maptiler', window.location.href, CitydbUtil);
-        if(cesiumWorldTerrainString == "true") {
+        if(cesiumWorldTerrainString === "true") {
             // if the Cesium World Terrain is given in the URL --> activate, else other terrains
             cesiumViewer.terrainProvider = Cesium.createWorldTerrain();
             var baseLayerPickerViewModel = cesiumViewer.baseLayerPicker.viewModel;
@@ -263,20 +269,27 @@ function initClient() {
     // If the web client has a layer, add an onclick event to the home button to fly to this layer
     var cesiumHomeButton = document.getElementsByClassName("cesium-button cesium-toolbar-button cesium-home-button")[0];
     cesiumHomeButton.onclick = function () {
-        zoomToDefaultCameraPosition();
+        //zoomToDefaultCameraPosition();
+        zoomToCREATE();
     }
 }
 
+
+/**
+ * Added by CKG:
+ * Loading different kml datasets for different cities
+ * @param {String} city - input value for the field
+ */
 function loadCity(city) {
-    if (city == 'pirmasens') {
+    if (city === 'pirmasens') {
         loadPirmasens();
-    } else if (city == 'berlin') {
+    } else if (city === 'berlin') {
         loadBerlin();
-    } else if (city == 'kingslynn') {
+    } else if (city === 'kingslynn') {
         loadKingsLynn();
-    } else if (city == 'singapore') {
+    } else if (city === 'singaporeEPSG4326') {
         loadSingapore();
-    } else if (city == 'jurongisland'){
+    } else if (city === 'jurongisland'){
         loadJurongIsland();
     }
 }
@@ -342,26 +355,6 @@ function loadKingsLynn() {
     getAndLoadLayers('exported_kingslynn');
 }
 
-function loadSingapore() {
-    // set title
-    document.title = 'Singapore';
-
-    // set camera view
-    var cameraPostion = {
-        latitude: 1.286014,
-        longitude: 103.836364,
-        height: 2000,
-        heading: 345.2992773976952,
-        pitch: -44.26228062802528,
-        roll: 359.933888621294
-    }
-
-    flyToCameraPosition(cameraPostion);
-
-    // find relevant files and load layers
-    getAndLoadLayers('exported_singapore');
-}
-
 function loadJurongIsland() {
     // set title
     document.title = 'Jurong Island';
@@ -379,11 +372,51 @@ function loadJurongIsland() {
     flyToCameraPosition(cameraPostion);
 
     // find relevant files and load layers
-
     getAndLoadLayers('exported_jurong_island');
 }
 
-// send get request to server to discover files in specified folder, create and load layers
+function loadSingapore() {
+    // set title
+    document.title = 'Singapore';
+    // set camera view
+    var cameraPostion = {
+        latitude:  1.279,
+        longitude: 103.84,
+        height: 2800,
+        heading: 360,
+        pitch: -60,
+        roll: 356,
+    }
+    // need decoder to make sure there is a string on which .replace() can be called. Replace is needed to format spaces.
+    var regionStr = urlController.getUrlParaValue('region', window.location.href, CitydbUtil);
+    var latitudeStr = urlController.getUrlParaValue('latitude', window.location.href, CitydbUtil);
+    var longitudeStr = urlController.getUrlParaValue('longitude', window.location.href, CitydbUtil);
+
+    if (latitudeStr && longitudeStr) {
+        cameraPostion['latitude'] = parseFloat(latitudeStr);
+        cameraPostion['longitude'] = parseFloat(longitudeStr);
+    }
+    var zoomed_area = document.getElementById('area');
+    if (regionStr in cameraPositions){
+        cameraPostion = cameraPositions[regionStr];
+        area_counter = Object.keys(cameraPositions).findIndex(p => p === regionStr);
+        zoomed_area.innerHTML = regionStr.replaceAll('_', ' ');
+    }
+    else {
+        zoomed_area.innerHTML = 'Singapore River Valley';
+    }
+
+    flyToCameraPosition(cameraPostion);
+    // find relevant files and load layers
+    getAndLoadLayers('exported_singapore');
+
+}
+
+/**
+ * modified by CKG:
+ * send get request to server to discover files in specified folder, create and load layers
+ * @param {String} folder - relative path to directory which contains cities model
+ */
 function getAndLoadLayers(folder) {
     var url = this.location.origin;
     var _layers = new Array();
@@ -402,8 +435,8 @@ function getAndLoadLayers(folder) {
         cityobjectsJsonUrl: '',
         minLodPixels: '',
         maxLodPixels: '',
-        maxSizeOfCachedTiles: 200,
-        maxCountOfVisibleTiles: 200
+        maxSizeOfCachedTiles: 1000,  //initial value: 200
+        maxCountOfVisibleTiles: 1000 //initial value: 200
     }
 
     var reqUrl = url + '/files/';
@@ -415,6 +448,7 @@ function getAndLoadLayers(folder) {
                 if (data[i].match(new RegExp("\\w*_\\w*_MasterJSON.json"))) {
                     filepathname = folderpath + data[i]
                     options.url = filepathname;
+                    options.cityobjectsJsonUrl = folderpath + "test_extruded.json"
                     options.name = (new URL(window.location.href)).searchParams.get('city');
                     _layers.push(new CitydbKmlLayer(options));
                     loadLayerGroup(_layers);
@@ -500,8 +534,8 @@ function adjustIonFeatures() {
                 }
             }
 
-            // Set default imagery to ESRI World Imagery
-            cesiumViewer.baseLayerPicker.viewModel.selectedImagery = imageryProviders[3];
+            // Ayda: Set default imagery to ESRI World Imagery --> imageryProviders[3]
+            cesiumViewer.baseLayerPicker.viewModel.selectedImagery = imageryProviders[8];
 
             // Disable auto-complete of OSM Geocoder due to OSM usage limitations
             // see https://operations.osmfoundation.org/policies/nominatim/#unacceptable-use
@@ -541,8 +575,9 @@ function inspectTileStatus() {
                 }
             }
         }
-        showedTilesInspector.innerHTML = 'Number of showed Tiles: ' + numberOfshowedTiles;
-        cachedTilesInspector.innerHTML = 'Number of cached Tiles: ' + numberOfCachedTiles;
+        //Ayda: currently user does not need to know about the tiling.
+        //showedTilesInspector.innerHTML = 'Number of showed Tiles: ' + numberOfshowedTiles;
+        //cachedTilesInspector.innerHTML = 'Number of cached Tiles: ' + numberOfCachedTiles;
 
         var loadingTilesInspector = document.getElementById('citydb_loadingTilesInspector');
         if (numberOfTasks > 0 || !tilesLoaded) {
@@ -550,6 +585,7 @@ function inspectTileStatus() {
         } else {
             loadingTilesInspector.style.display = 'none';
         }
+
     }, 200);
 }
 
@@ -567,88 +603,7 @@ function listHighlightedObjects() {
     });
 }
 
-//---Extended Web-Map-Client part---//
-
-function computeDistance() {
-    var iriArr = [];
-    var highlightedObjects = webMap.getAllHighlighted3DObjects();
-    var centroids = [];
-    for (var i = 0; i < highlightedObjects.length; i++) {
-        var entity = highlightedObjects[i][0];
-        console.log(entity.polygon);
-        var positions = entity.polygon.hierarchy._value.positions;
-        var center = Cesium.BoundingSphere.fromPoints(positions).center;
-        console.log(center);
-        centroids.push(center);
-        var iri = entity._iriPrefix + entity._name;
-        iri = iri.endsWith('/') ? iri : iri + '/';
-        iri = iri.replace(new RegExp('_(\\w*Surface)'), '');
-        iriArr.push(iri);
-    };
-    console.log(centroids);
-
-    var redLine = cesiumViewer.entities.add({
-        name: "Distance line",
-        polyline: {
-            positions: centroids,
-            width: 2,
-            material: new Cesium.PolylineDashMaterialProperty({
-                color: Cesium.Color.WHITE,
-                dashLength: 15,
-            }),
-            clampToGround: true,
-        }
-    });
-
-    var labelText = '';
-    var label = cesiumViewer.entities.add({
-        name: 'Distance label',
-        position: getMidpoint(centroids[0], centroids[1]),
-        label: {
-            font : 'bold 22px arial',
-            showBackground : false,
-            heightReference :Cesium.HeightReference.CLAMP_TO_GROUND,
-            horizontalOrigin : Cesium.HorizontalOrigin.CENTER,
-            verticalOrigin : Cesium.VerticalOrigin.CENTER,
-            pixelOffset : new Cesium.Cartesian2(0, 20),
-            eyeOffset: new Cesium.Cartesian3(0,0,-50),
-            text: labelText,
-            fillColor : Cesium.Color.WHITE,
-            backgroundColor : new Cesium.Color(0.0, 0.0, 0.0, 0.7),
-            showBackground : true,
-        }
-    });
-
-    jQuery.ajax({
-        url:"http://localhost:8080/agents/distance",
-        type: 'POST',
-        data: JSON.stringify({iris: iriArr}),
-        dataType: 'json',
-        contentType: 'application/json',
-        success: function(data, status_message, xhr){
-            console.log(data["distances"]);
-            var distance = Math.round(data["distances"][0]);
-            label.label.text = distance.toString() + " " + "m";
-        }
-    });
-
-}
-
-function getMidpoint(point1, point2) {
-    var geodesic = new Cesium.EllipsoidGeodesic();
-    var scratch = new Cesium.Cartographic();
-
-    var point1cart = Cesium.Cartographic.fromCartesian(point1);
-    var point2cart = Cesium.Cartographic.fromCartesian(point2);
-
-    geodesic.setEndPoints(point1cart, point2cart);
-    var midpointCartographic = geodesic.interpolateUsingFraction(0.5, scratch);
-    return Cesium.Cartesian3.fromRadians(midpointCartographic.longitude, midpointCartographic.latitude);
-
-}
-
-//---Extended Web-Map-Client part---//
-
+//--- End of Extended Web-Map-Client part---//
 function listHiddenObjects() {
     var hidddenListElement = document.getElementById("citydb_hiddenlist");
 
@@ -868,6 +823,20 @@ function addEventListeners(layer) {
     });
 }
 
+// Ayda: home button zoom in to CREATE Tower
+function zoomToCREATE(){
+    var cameraPosition = {
+        latitude: 1.295,
+        longitude: 103.776,
+        height: 1000,
+        heading: 345.2992773976952,
+        pitch: -44.26228062802528,
+        roll: 359.933888621294
+    }
+
+    return flyToCameraPosition(cameraPosition);
+}
+
 function zoomToDefaultCameraPosition() {
     var deferred = Cesium.when.defer();
     var latitudeStr = urlController.getUrlParaValue('latitude', window.location.href, CitydbUtil);
@@ -942,7 +911,6 @@ function zoomToDefaultCameraPosition_expired() {
     } else {
         // default camera postion
         deferred.resolve("fly to the default camera position");
-        ;
     }
     return deferred;
 }
@@ -1040,7 +1008,7 @@ function zoomToObjectById(gmlId, callBackFunc, errorCallbackFunc) {
         } else {
             // TODO
             var thematicDataUrl = webMap.activeLayer.thematicDataUrl;
-            webmap._activeLayer.dataSourceController.fetchData(gmlId, function (result) {
+            webMap._activeLayer.dataSourceController.fetchData(gmlId, function (result) {
                 if (!result) {
                     if (Cesium.defined(errorCallbackFunc)) {
                         errorCallbackFunc.call(this);
@@ -1275,7 +1243,13 @@ function createInfoTable(res, citydbLayer) {
                 var iValue = kvp[key];
                 // check if this value is a valid URL
                 if (isValidUrl(iValue)) {
-                    iValue = '<a href="' + iValue + '" target="_blank">' + iValue + '</a>';
+                    //let link = "https://fcl.ethz.ch/research/research-projects/cities-knowledge-graph.html"; //http://www.theworldavatar.com:83/citieskg/#explore:singaporeEPSG4326:http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_fddf5c91-cdd6-436a-95e6-aa1fa199b75d/
+                    let link = "http://www.theworldavatar.com:83/citieskg/#explore:singaporeEPSG4326:" + iValue;
+                    iValue = '<a href=' + link + ' target="_blank">' + iValue + '</a>';
+                    //iValue = '<a href="' + iValue + '" target="_blank">' + iValue + '</a>';
+                    //let link = "https://fcl.ethz.ch/research/research-projects/cities-knowledge-graph.html";
+                    //iValue = '<a href=' + link + ' target="_blank">' + iValue + '</a>';
+
                 }
                 html += '<tr><td>' + key + '</td><td>' + iValue + '</td></tr>';
             }
