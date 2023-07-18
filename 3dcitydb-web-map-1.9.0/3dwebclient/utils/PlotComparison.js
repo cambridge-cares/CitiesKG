@@ -175,7 +175,7 @@ function processpresentLandUseGFA(tableNum, arrayOfJsonObjects){
         for (var i = 0; i < arrayOfJsonObjects.length; i++) {
             textDiv.appendChild(document.createElement("br"));
             let textSpan = document.createElement('span');
-            textSpan.innerHTML = shortenNameIfnecessary(arrayOfJsonObjects[i]["landuseType"]) + ": " + arrayOfJsonObjects[i]["gfaValue"].toFixed(0) + mSquare;
+            textSpan.innerHTML = shortenNameIfnecessary(arrayOfJsonObjects[i]["landuseType"]) + ": " + arrayOfJsonObjects[i]["gfaValue"] + mSquare;
             textDiv.appendChild(textSpan);
         }
         targetCell.appendChild(textDiv);
