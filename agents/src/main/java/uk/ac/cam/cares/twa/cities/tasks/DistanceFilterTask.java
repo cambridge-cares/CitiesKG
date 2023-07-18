@@ -1,19 +1,20 @@
 package uk.ac.cam.cares.twa.cities.tasks;
 
+
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.arq.querybuilder.handlers.WhereHandler;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
-import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementService;
+import org.citydb.config.internal.Internal;
 import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
+import org.apache.jena.sparql.core.Var;
 import uk.ac.cam.cares.jps.base.query.AccessAgentCaller;
 import uk.ac.cam.cares.twa.cities.model.geo.EnvelopeCentroid;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
@@ -119,6 +120,7 @@ public class DistanceFilterTask {
         }
 
         return landuseGFA;
+
     }
 
     /**
@@ -164,6 +166,7 @@ public class DistanceFilterTask {
         return new double[]{newLongitude, newLatitude};
     }
 
+
     /**
      * Create a string to describe a point in form of envelop by repeating the same xyz with 5 times
      *
@@ -189,20 +192,24 @@ public class DistanceFilterTask {
      */
     public static double[] getEnvelopFromString(String envelopStr){
         String[] pointXYZList = envelopStr.split("#");
-        List<Double[]> points = new LinkedList<>();
+        double[][] double3DArray;
 
         if (pointXYZList.length % 3 == 0) {
+            int numOfPoints = pointXYZList.length / 3;
+            double3DArray = new double[numOfPoints][3];
+            int indexNum = 0;
             // 3d coordinates
             for (int i = 0; i < pointXYZList.length; i = i + 3) {
-                points.add(new Double[]{Double.parseDouble(pointXYZList[i]), Double.parseDouble(pointXYZList[i + 1]), Double.parseDouble(pointXYZList[i + 2])});
+                double3DArray[indexNum][0] = Double.parseDouble(pointXYZList[i]);
+                double3DArray[indexNum][1] = Double.parseDouble(pointXYZList[i+1]);
+                double3DArray[indexNum][2] = Double.parseDouble(pointXYZList[i+2]);
+                indexNum++;
             }
+            return Transform.getEnvelopeFromPoints(double3DArray);
         }else {
             System.out.println("InputString has no valid format");
             return null;
         }
-
-        double[][] pointsArray = (double[][]) points.toArray();
-        return Transform.getEnvelopeFromPoints(pointsArray);
     }
 
     /**
@@ -422,10 +429,12 @@ public class DistanceFilterTask {
         return query;
     }
 
+    // graphName: "/cityobjectgenericattrib_andrea_v2/"
+
     /**
      * Retrieve the count for a given attrName using preparedQuery for geospatial search
      *
-     * @param graphName - graphName string, example graphname: "/cityobjectgenericattrib_andrea_v2/"
+     * @param graphName - graphName string
      * @param attrName - interested attrName string
      * @return Integer - result number for the given attribute
      */
@@ -650,5 +659,6 @@ public class DistanceFilterTask {
         wh2.addGraph(NodeFactory.createURI(getGraph(uriString,"cityobject")), wh);
         return wh2.getQuery();
     }
+
 
 }
