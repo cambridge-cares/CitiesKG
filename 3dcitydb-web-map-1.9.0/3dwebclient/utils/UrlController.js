@@ -58,7 +58,9 @@ var UrlController = /** @class */ (function () {
             "debug": "db",
             "googleClientId": "gid",
             // added to zoom into particular region within demo area.
-            "region":"reg"
+            "region": "reg",
+            "allowsUse": "au",
+            "allowsProgramme": "ap"
         };
     }
     // return only the shortened name of the URL parameters

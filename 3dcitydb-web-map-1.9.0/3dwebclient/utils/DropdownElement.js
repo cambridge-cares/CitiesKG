@@ -496,6 +496,21 @@ function getValidPlots(){
 	});
 }
 
+/**
+ * Execute a query from URL with URL parameter: "allowsUse" or allowsProgramme
+ *
+ */
+function queryFromURL(allowsParameter){
+	// prepare the input_parameters
+	input_parameters = {TotalGFA:'', min_cap: 'false', max_cap: 'false'}
+	let allowsObj = {};
+	for(var key in allowsParameter){
+		allowsObj[allowsParameter[key]] = '';
+		input_parameters[key] = allowsObj;
+	}
+	console.log("QueryFromURL ", input_parameters);
+	getValidPlots();
+}
 
 /**
  * Throw error notification if the inputs or input combinations are wrong

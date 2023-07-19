@@ -391,6 +391,9 @@ function loadSingapore() {
     var regionStr = urlController.getUrlParaValue('region', window.location.href, CitydbUtil);
     var latitudeStr = urlController.getUrlParaValue('latitude', window.location.href, CitydbUtil);
     var longitudeStr = urlController.getUrlParaValue('longitude', window.location.href, CitydbUtil);
+    // decoder for Admin Panel
+    var allowsUseStr = urlController.getUrlParaValue('allowsUse', window.location.href, CitydbUtil);
+    var allowsProgrammeStr = urlController.getUrlParaValue('allowsProgramme', window.location.href, CitydbUtil);
 
     if (latitudeStr && longitudeStr) {
         cameraPostion['latitude'] = parseFloat(latitudeStr);
@@ -404,6 +407,14 @@ function loadSingapore() {
     }
     else {
         zoomed_area.innerHTML = 'Singapore River Valley';
+    }
+
+    if (allowsUseStr){
+        // trigger the send of the query
+        queryFromURL({'allowsUse': allowsUseStr});
+    }
+    if (allowsProgrammeStr){
+        queryFromURL({'allowsProgramme': allowsProgrammeStr});
     }
 
     flyToCameraPosition(cameraPostion);
