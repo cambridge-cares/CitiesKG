@@ -268,6 +268,10 @@ function showResultWindow(resultJson, colorStr){
         closebtns[i].addEventListener("click", function() {
             console.log("this has been removed: " + this.parentNode.id);
             this.parentNode.remove();
+            if (closebtns.length == 0){
+                var resultBoxTitle = document.getElementById("resultBox-title");
+                resultBoxTitle.style.visibility = "hidden";
+            }
         });
     }
 }
