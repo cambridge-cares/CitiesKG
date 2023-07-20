@@ -214,7 +214,7 @@
                 z-index: 99980;
                 transition: 1s ease;
             }
-            .programmeFinder_toolbox {
+            .inputToolbox {
                 width: max-content;
                 height: 70px;
                 max-height: 70px;
@@ -530,6 +530,7 @@
                 background-color: rgba(42, 42, 42, 0.5);
                 transition: 0.5s;
                 padding-top: 5px;
+                overflow: auto;
             }
             #comparisonPanel .closebtn {
             position: absolute;
@@ -550,7 +551,7 @@
                 display: grid;
                 grid-template-columns: auto auto auto auto auto;
                 margin-top: 25px;
-                overflow: auto;
+
             }
             .grid-item{
                 width: 500px;
@@ -643,7 +644,7 @@
 
         <div id="ProgrammaticPlotFinder">
             <button class="ProgrammaticPlotFinder-submitButton" onclick="openSidebar()">☰ <span id="demoTitle">Programmatic Plot Finder</span></button>
-            <div id="demo1" class="programmeFinder_toolbox" style="display: none;">
+            <div id="demo1" class="inputToolbox" style="display: none;">
                 <div id="programmeFinder_toolbox_upper" style="height: 50%">
                     <button id="exampleQuery" class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams()">Try Example Query</button>
                     <div id="querySentence" class="querySentence">Find plots that could allow...</div>
@@ -701,7 +702,7 @@
                     <div id="resultBox-iframe" class="ProgrammaticPlotFinder-resultBox-iframe"></div>
                 </div>
 
-                <div id="SelectedPlots" style="margin-left: 20px;">
+                <div id="SelectedPlots" style="margin-left: 20px; z-index: -1;">
                     <div id="selectplots-title" class="ProgrammaticPlotFinder-resultBox-title">
                         <label>Selected Plots</label>
                     </div>
@@ -709,11 +710,11 @@
                 </div>
             </div>
 
-            <div id="demo2" class="programmeFinder_toolbox" style="display: none;">
-                <div id="programmeFinder_toolbox_upper" style="height: 50%">
+            <div id="demo2" class="inputToolbox" style="display: none;">
+                <div style="height: 50%">
                     <div class="querySentence">Select up to <b>5</b> plots to compare ...Hold down the Ctrl key and click on the plot to select</div>
-            </div>
-                <div id="programmeFinder_toolbox_bottom" style="height: 50%">
+                </div>
+                <div style="height: 50%">
                     <button class="ProgrammaticPlotFinder-submitButton" onclick="showSelection()"><span>Show the selection</span></button>
                     <button class="ProgrammaticPlotFinder-submitButton" onclick="clearSelection()"><span>Clear the selection</span></button>
                     <button class="ProgrammaticPlotFinder-submitButton" onclick="startComparison()"><span>start Comparison</span></button>
