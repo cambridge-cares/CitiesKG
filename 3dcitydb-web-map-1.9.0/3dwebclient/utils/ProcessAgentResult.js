@@ -212,10 +212,6 @@ function processInfoContext(resultjson){
 }
 
 
-
-
-
-
 /************************ Process CIA Agent Results **************************************/
 
 function showResultWindow(resultJson, colorStr){
@@ -244,7 +240,7 @@ function showResultWindow(resultJson, colorStr){
 
     var colorbox = document.createElement('div');
     colorbox.className = "colorbox";
-    colorbox.style = "width: 10px; height: 10px; display: inline-block;";
+    colorbox.style = "width: 12px; height: 12px; display: inline-block;";
     colorbox.style.backgroundColor = colorStr;
     colorbox.title = colorStr;
     listItem.appendChild(colorbox);
