@@ -123,13 +123,15 @@ function closeSidebar() {
     document.getElementById("ProgrammaticPlotFinder").style.marginLeft= "0";
 }
 
-/*************************************************** Introduction Box ****************************************/
+/*************************************************** Instruction Box ****************************************/
 
 /**
- * Define disclaimer button
+ * Add the instructionButton to the cesium-viewer-toolbar
+ * and define the content of instruction container, which appears when man clicks on the instructionButton
+ *
  *
  */
-function addDisclaimerButton(){
+function createInstructionContainer(){
 
     let toolbar = document.getElementsByClassName('cesium-viewer-toolbar');  // HTMLCollection; has to use item(0) to add an additional icon
 
@@ -141,17 +143,18 @@ function addDisclaimerButton(){
     instructionIcon.src = '../3dwebclient/utils/image-source/infoIcon.png';
     instructionIcon.style = "width:29px; height:29px;";
 
-    var disclaimerButton = document.createElement('button');
-    disclaimerButton.type = 'button';
-    disclaimerButton.className = 'cesium-button cesium-toolbar-button cesium-navigation-help-button';
-    disclaimerButton.setAttribute('data-bind', 'attr: { title: tooltip }');
-    disclaimerButton.appendChild(instructionIcon);
+    var instructionButton = document.createElement('button');
+    instructionButton.type = 'button';
+    instructionButton.className = 'cesium-button cesium-toolbar-button cesium-navigation-help-button';
+    //instructionButton.setAttribute('data-bind', 'click:command');
+    instructionButton.title = "Description & Disclaimer";
+    instructionButton.appendChild(instructionIcon);
 
-    wrapper.appendChild(disclaimerButton);
+    wrapper.appendChild(instructionButton);
 
     createTapMenu();
 
-    disclaimerButton.onclick = function(){
+    instructionButton.onclick = function(){
         //instructionContainer.classList.add('cesium-navigation-help-visible');
         if (instructionContainer.style.display !== "none"){
             instructionContainer.style.display = "none";
@@ -163,18 +166,19 @@ function addDisclaimerButton(){
 }
 
 /**
- * Define Tap menu for the introduction box on the right-hand side
+ * Define Tap menu for the introduction box on the upper right corner
  *
  */
 function createTapMenu(){
     // Define the instruction DIV
     var instructionContainer = document.getElementById('instructionContainer');
     instructionContainer.className = 'cesium-navigation-help cesium-navigation-help-visible';
-    instructionContainer.setAttribute('data-bind', 'css: { "cesium-navigation-help-visible" : showInstructions}');
-    instructionContainer.style = 'width: 25%; max-width: 430px; height: auto; top: 43px; right: 8px; filter:none; z-index:99999; display: block';
+    //instructionContainer.setAttribute('data-bind', 'css: { "cesium-navigation-help-visible" : showInstructions}');
+    instructionContainer.style = 'width: 20%; max-width: 400px; top: 43px; right: 8px; filter:none; z-index:99999; display: block';
 
     // By default: descriptionTap is selected
     let descriptionTap = createTapButton("Description");
+    descriptionTap.style.borderRadius = "10px 0 0 0";
     descriptionTap.onclick = function (event) {
         activeTap(event, 'Description');
     }
@@ -186,6 +190,7 @@ function createTapMenu(){
     };
 
     let disclaimerTap = createTapButton("Disclaimer");
+    disclaimerTap.style.borderRadius = "0 10px 0 0";
     disclaimerTap.onclick = function(event){
         activeTap(event, 'Disclaimer');
     };
@@ -210,7 +215,7 @@ function createTapMenu(){
             The unit of GFA is square meters (sqm), see following table for more details.</div>\
             <div class="cesium-navigation-help-zoom" style="padding: 15px 5px 20px 5px; text-align: center; color: #ffffff">Example GFA Values</div>\
             <hr width=50% style="margin-top: -10px; border-color: grey;">\
-            <table id=exampleGFA style="color: #ffffff; margin: auto;">\
+            <table id=exampleGFA style="color: #ffffff; margin: 0 5px 0 5px;">\
             <tr><th style="width:50%">Name</th><th style="width:50%">GFA (sqm)</th></tr>\
             <tr><td>Takashimaya</td><td>164,600</td></tr>\
 						<tr><td>Singapore National Gallery</td><td>64,000</td></tr>\
