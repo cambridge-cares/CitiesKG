@@ -214,7 +214,7 @@
                 z-index: 99980;
                 transition: 1s ease;
             }
-            .programmeFinder_toolbox {
+            .inputToolbox {
                 width: max-content;
                 height: 70px;
                 max-height: 70px;
@@ -388,7 +388,7 @@
                 transform: rotate(135deg);
                 -webkit-transform: rotate(135deg);
             }
-            .ProgrammaticPlotFinder-submitButton{
+            .inputSubmitButton{
                 float: left;
                 height: 30px;
                 background: #303336;
@@ -401,7 +401,7 @@
                 white-space: nowrap;
                 font-size: 15px;
             }
-            .ProgrammaticPlotFinder-submitButton:hover {
+            .inputSubmitButton:hover {
                 background: #1E90FFFF;
             }
 
@@ -417,7 +417,7 @@
                 visibility: hidden;
                 opacity: 1;
             }
-            .ProgrammaticPlotFinder-resultBox-title{
+            .resultBox-title{
                 display: block;
                 height: 20px;
                 padding: 5px 30px 5px 25px;
@@ -530,6 +530,7 @@
                 background-color: rgba(42, 42, 42, 0.5);
                 transition: 0.5s;
                 padding-top: 5px;
+                overflow: auto;
             }
             #comparisonPanel .closebtn {
             position: absolute;
@@ -550,10 +551,10 @@
                 display: grid;
                 grid-template-columns: auto auto auto auto auto;
                 margin-top: 25px;
-                overflow: auto;
+
             }
             .grid-item{
-                width: 500px;
+                width: 450px;
                 margin: 0px 10px 0px;
                 /**background-color: #2196F3;**/
                 /**border: 1px solid rgba(0, 0, 0, 0.8);**/
@@ -569,7 +570,7 @@
                 /**background-color: rgba(255, 255, 255, 0.8);**/
                 /**border: 1px solid rgba(0, 0, 0, 0.8);**/
                 text-align: center;
-                font-size: 13px;
+                font-size: 12px;
             }
             
             .col-left {
@@ -609,7 +610,7 @@
 
             .grid-cell span {
                 align-self: center;
-                font-size: 15px;
+                font-size: 14px;
             }
             .item4 {
                 grid-area: 2 / 1 / 2 / 4;
@@ -642,10 +643,10 @@
         </div>
 
         <div id="ProgrammaticPlotFinder">
-            <button class="ProgrammaticPlotFinder-submitButton" onclick="openSidebar()">☰ <span id="demoTitle">Programmatic Plot Finder</span></button>
-            <div id="demo1" class="programmeFinder_toolbox" style="display: none;">
+            <button class="inputSubmitButton" onclick="openSidebar()">☰ <span id="demoTitle">Programmatic Plot Finder</span></button>
+            <div id="demo1" class="inputToolbox" style="display: none;">
                 <div id="programmeFinder_toolbox_upper" style="height: 50%">
-                    <button id="exampleQuery" class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getExampleParams()">Try Example Query</button>
+                    <button id="exampleQuery" class="inputSubmitButton" type="submit" value="Submit" onclick="getExampleParams()">Try Example Query</button>
                     <div id="querySentence" class="querySentence">Find plots that could allow...</div>
                 </div>
                 <div id="programmeFinder_toolbox_bottom" style="height: 50%">
@@ -689,34 +690,34 @@
                             <option value="no_cap">all results (*)</option>
                         </select>
                     </div>
-                    <button id="searchButton" class="ProgrammaticPlotFinder-submitButton" type="submit" value="Submit" onclick="getInputParams()" style="display: none;">Search Now</button>
+                    <button id="searchButton" class="inputSubmitButton" type="submit" value="Submit" onclick="getInputParams()" style="display: none;">Search Now</button>
                 </div>
             </div>
             
             <div id="demo-result" class="ProgrammaticPlotFinder-resultBox">
                 <div id="uiProgrammeFinder-result">
-                    <div id="resultBox-title" class="ProgrammaticPlotFinder-resultBox-title">
+                    <div id="resultBox-title" class="resultBox-title">
                         <label>Search History</label>
                     </div>
                     <div id="resultBox-iframe" class="ProgrammaticPlotFinder-resultBox-iframe"></div>
                 </div>
 
-                <div id="SelectedPlots" style="margin-left: 20px;">
-                    <div id="selectplots-title" class="ProgrammaticPlotFinder-resultBox-title">
+                <div id="SelectedPlots" style="margin-left: 20px; z-index: -1; font-size: 14px;">
+                    <div id="selectplots-title" class="resultBox-title">
                         <label>Selected Plots</label>
                     </div>
                     <div id="selectedPlotsList"></div>
                 </div>
             </div>
 
-            <div id="demo2" class="programmeFinder_toolbox" style="display: none;">
-                <div id="programmeFinder_toolbox_upper" style="height: 50%">
+            <div id="demo2" class="inputToolbox" style="display: none;">
+                <div style="height: 50%">
                     <div class="querySentence">Select up to <b>5</b> plots to compare ...Hold down the Ctrl key and click on the plot to select</div>
-            </div>
-                <div id="programmeFinder_toolbox_bottom" style="height: 50%">
-                    <button class="ProgrammaticPlotFinder-submitButton" onclick="showSelection()"><span>Show the selection</span></button>
-                    <button class="ProgrammaticPlotFinder-submitButton" onclick="clearSelection()"><span>Clear the selection</span></button>
-                    <button class="ProgrammaticPlotFinder-submitButton" onclick="startComparison()"><span>start Comparison</span></button>
+                </div>
+                <div style="height: 50%">
+                    <button class="inputSubmitButton" onclick="showSelection()"><span>Show the selection</span></button>
+                    <button class="inputSubmitButton" onclick="clearSelection()"><span>Clear the selection</span></button>
+                    <button class="inputSubmitButton" onclick="startComparison()"><span>start Comparison</span></button>
                 </div>
             </div>
              

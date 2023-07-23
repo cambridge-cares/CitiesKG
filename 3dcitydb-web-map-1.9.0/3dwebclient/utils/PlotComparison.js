@@ -41,7 +41,7 @@ function showSelection() {
         window.alert("Please select up to 5 plots to compare ..");
     } else {
         var selectedTitle = document.getElementById("selectplots-title");
-        selectedTitle.style.visibility = "visible";
+        selectedTitle.style.visibility = "visible"; 
         var selectedPlotsList = document.getElementById("selectedPlotsList");
         selectedPlotsList.style.visibility = "visible";
         selectedPlotsList.style.background = "#edffff";
@@ -73,9 +73,12 @@ function clearSelection() {
     clearhighlight();
     var selectedPlotsList = document.getElementById("selectedPlotsList");
     selectedPlotsList.innerHTML = '';
+    var selectedTitle = document.getElementById("selectplots-title");
+    selectedTitle.style.visibility = "hidden"; 
     console.log("clearSelection clicked!")
     selectedPlotsId=[];
     
+
     for (let [key, value] of customDataSourceMap){
         if (key == selectedPlotsUnifier){
             cesiumViewer.dataSources.remove(value);
