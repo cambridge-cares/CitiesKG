@@ -246,7 +246,8 @@ function createTapMenu(){
   						<span style="font-weight:bold; font-style: italic;">Programmes</span>\
   						<p>More specific land uses that are allowed in one or more broader land use categories. For example, ‘restaurant’, ‘bar’ and ‘bookstore’ are programmes. No use quantums \
   						are attached to programmes.</p></div>\
-						<div style="padding: 10px 5px 5px 5px;"><img src="../3dwebclient/utils/image-source/class_diagram.png" style="width: 100%;"/></div>\
+						<div style="padding: 10px 5px 5px 5px;"><a href="../3dwebclient/utils/image-source/class_diagram.png" target="_blank">\
+						<img src="../3dwebclient/utils/image-source/class_diagram.png" style="width: 100%;"/></a>></div>\
 						';
     instructionContainer.appendChild(terminologyContent);
 
