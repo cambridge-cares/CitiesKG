@@ -512,6 +512,19 @@ function queryFromURL(allowsParameter){
 	getValidPlots();
 }
 
+function processURLparam(concept){
+	const conceptArray = concept.split('/');
+	let searchType = conceptArray[0];
+	let searchKeyword = conceptArray[conceptArray.length-1];
+
+	let protegeTypes = ['LandUse', 'Programme', 'ZoningType'];
+	let searchPredicates = ['allowsUse', 'allowsProgramme', ''];
+
+	let searchPattern = {};
+	searchPattern[searchPredicates[protegeTypes.indexOf(searchType)]] = searchKeyword;
+	return searchPattern;
+}
+
 /**
  * Throw error notification if the inputs or input combinations are wrong
  *
