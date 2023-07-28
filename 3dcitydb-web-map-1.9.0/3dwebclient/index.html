@@ -530,13 +530,18 @@
                 background-color: rgba(42, 42, 42, 0.5);
                 transition: 0.5s;
                 padding-top: 5px;
-                overflow: auto;
+                flex-direction: column;
+
             }
             #comparisonPanel .closebtn {
-            position: absolute;
-            top: -5px;
-            right: 1%;
-            font-size: 36px;
+                position: absolute;
+                top: 0px;
+                right: 10px;
+                color: white;
+                font-size: 30px;
+            }
+            #comparisonPanel .closebtn:hover{
+                color: dodgerblue;
             }
 
             .fa-chevron-down {
@@ -550,7 +555,6 @@
             .grid-container {
                 display: grid;
                 grid-template-columns: auto auto auto auto auto;
-                margin-top: 25px;
 
             }
             .grid-item{
@@ -753,14 +757,18 @@
         </template>
 
         <div id ="comparisonPanel" class="bottomnav">
-            <div class="grid-container">
-                <div id="table1" class="grid-item"></div>
-                <div id="table2" class="grid-item"></div>
-                <div id="table3" class="grid-item"></div>
-                <div id="table4" class="grid-item"></div>
-                <div id="table5" class="grid-item"></div>
+            <div style="width: 100%; height: 30px;">
+                <span class="closebtn" onclick="closeBottomNav()">×</span>
             </div>
-            <a href="javascript:void(0)" class="closebtn" onclick="closeBottomNav()">×</a>
+            <div style="display: flex; overflow: auto;">
+                <div class="grid-container">
+                    <div id="table1" class="grid-item"></div>
+                    <div id="table2" class="grid-item"></div>
+                    <div id="table3" class="grid-item"></div>
+                    <div id="table4" class="grid-item"></div>
+                    <div id="table5" class="grid-item"></div>
+                </div>
+            </div>
         </div>
         <!--<div class="offcanvas offcanvas-bottom" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasBottom" aria-labelledby="offcanvasBottomLabel">
             <div class="offcanvas-header">
