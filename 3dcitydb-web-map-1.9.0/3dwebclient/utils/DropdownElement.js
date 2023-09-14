@@ -582,18 +582,22 @@ function chooseDemoType(obj) {
 	obj.style.color = "white";
 	document.getElementById("demoTitle").innerText = obj.innerText;
 
+	var imageryProviders = cesiumViewer.baseLayerPicker.viewModel.imageryProviderViewModels;
+
 	switch (selectedDemo) {
 		case "PPF":
 			document.getElementById("demo1").style.display = "inline-block";
 			document.getElementById("demo2").style.display = "None";
 			document.getElementById("keyGrowthAreas").style.display = "flex";
 			document.getElementById("comparisonPanel").style.display = "None";
+			cesiumViewer.baseLayerPicker.viewModel.selectedImagery = imageryProviders[8];  // Basemap: StamenToner
 			break;
 		case "PlotComparison":
 			document.getElementById("demo1").style.display = "None";
 			document.getElementById("demo2").style.display = "inline-block";
 			document.getElementById("keyGrowthAreas").style.display = "None";
 			document.getElementById("comparisonPanel").style.display = "flex";
+			cesiumViewer.baseLayerPicker.viewModel.selectedImagery = imageryProviders[6];  // Basemap: OSM
 			break;
 		case "demo3":
 			document.getElementById("demo1").style.display = "None";
