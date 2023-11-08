@@ -1,3 +1,6 @@
+<p align="center"><a href="https://fcl.ethz.ch/research/research-projects/cities-knowledge-graph.html" target="_blank" rel="noopener noreferrer"><img width="100%" src="./web/media/CKG_logo_noBG.png" alt="Cities Knowledge Graph logo"></a></p>
+
+
 3D City Database Importer/Exporter
 ==================================
 
