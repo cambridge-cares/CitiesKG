@@ -1,6 +1,11 @@
 package uk.ac.cam.cares.twa.cities;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Properties;
 
 public class AccessAgentMapping {
 
@@ -31,10 +36,20 @@ public class AccessAgentMapping {
      */
     public static String getTargetResourceID(String iriString) {
         String namespaceEndpoint = getNamespaceEndpoint(iriString);
+        Properties properties = new Properties();
+        String sg_endpoint = null;  // outside of docker environment
+        try{
+            properties.load(new FileInputStream("config.properties"));
+            sg_endpoint = properties.getProperty("singapore.targetResourceId");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         switch(namespaceEndpoint) {
             case "http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/": return AccessAgentMappingEnum.BERLIN.TARGET_RESOURCE_ID;
             case "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG24500/sparql/": return AccessAgentMappingEnum.SINGAPORE_EPSG_24500.TARGET_RESOURCE_ID;
-            case "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/": return "http://localhost:48888/singaporeEPSG4326"; // AccessAgentMappingEnum.SINGAPORE_EPSG_4326.TARGET_RESOURCE_ID; //
+            case "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/": return "http://host.docker.internal:48888/singaporeEPSG4326"; // AccessAgentMappingEnum.SINGAPORE_EPSG_4326.TARGET_RESOURCE_ID; //
             case "http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG3857/sparql/": return AccessAgentMappingEnum.KINGSLYNN_EPSG_3857.TARGET_RESOURCE_ID;
             case "http://www.theworldavatar.com:83/citieskg/namespace/kingslynnEPSG27700/sparql/": return AccessAgentMappingEnum.KINGSLYNN_EPSG_27700.TARGET_RESOURCE_ID;
             case "http://www.theworldavatar.com:83/citieskg/namespace/pirmasensEPSG32633/sparql/": return AccessAgentMappingEnum.PIRMASENS_EPSG_32633.TARGET_RESOURCE_ID;
