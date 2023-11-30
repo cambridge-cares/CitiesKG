@@ -20,12 +20,12 @@ venv/lib/
 venv/bin/
 venv/include
 
-db/blazegraph.jar
-db/citiesKG.jnl
-db/rules.log
-db/vocabularies/target/
+../db/blazegraph.jar
+../db/citiesKG.jnl
+../db/rules.log
+../db/vocabularies/target/
 db/*.gml
-db/appearance
+../db/appearance
 
 
 # Web-Map-Client node modules
@@ -33,11 +33,11 @@ db/appearance
 
 impexp-core/test_config.properties
 
-*/target/
+ckg_agents_code/agents/target/
 */*/target/
 
-db/RWStore.properties
-db/vocabularies/src/main/resources/config.properties
+../db/RWStore.properties
+../db/vocabularies/src/main/resources/config.properties
 ${tomcatPath}/
 
 # Visualisation files
@@ -46,3 +46,6 @@ ${tomcatPath}/
 */3dwebclient/*.kml
 */3dwebclient/exported_*
 
+# ignore the credentials
+ckg_agents_code/.m2/
+ckg_agents_code/webapps/

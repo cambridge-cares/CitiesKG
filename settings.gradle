@@ -1,9 +1,0 @@
-include 'impexp-core'
-include 'impexp-config'
-include 'impexp-plugin-api'
-include 'impexp-client'
-include 'impexp-client-common'
-include 'impexp-kml-collada-plugin'
-include 'JUnitTest'
-
-

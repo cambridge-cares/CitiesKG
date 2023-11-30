@@ -1,4 +1,0 @@
-POST http://localhost:8080/agents/distance
-Content-Type: application/json
-
-{"iris":["http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/BLDG_0003000a001a53b7/", "http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/BLDG_00030000000779b5/"]}
