@@ -1,0 +1,14 @@
+.idea/
+examples/
+
+3dwebclient/exported_ura/
+3dwebclient/images/
+3dwebclient/kmlManhattanExample/
+3dwebclient/Railway_Scene_LoD3/
+3dwebclient/test/
+3dwebclient/testdata_geometry/
+3dwebclient/ura_example/
+3dwebclient/ura_example_old/
+3dwebclient/ura_footprint_clean.kml
+3dwebclient/charlottenberg_extruded_blaze.kml
+

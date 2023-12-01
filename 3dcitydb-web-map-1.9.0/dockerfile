@@ -1,0 +1,16 @@
+FROM node:16
+
+# Wokrking Dir
+WORKDIR /usr/src/app
+
+# Copy Package Json Files
+COPY package*.json ./
+
+# COPY Source Files
+COPY . .
+
+# Expose the API PORT
+EXPOSE 8080
+
+CMD ["node", "server.js"]
+
