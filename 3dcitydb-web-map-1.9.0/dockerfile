@@ -5,7 +5,7 @@ WORKDIR /usr/src/app
 
 # Copy Package Json Files
 COPY package*.json .
-COPY package-lock.json .
+
 
 # COPY Source Files
 COPY . .
