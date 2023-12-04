@@ -4,13 +4,17 @@ FROM node:16
 WORKDIR /usr/src/app
 
 # Copy Package Json Files
-COPY package*.json ./
+COPY package*.json .
+COPY package-lock.json .
 
 # COPY Source Files
 COPY . .
 
+# Install node modules
+RUN npm install
+
 # Expose the API PORT
-EXPOSE 8080
+EXPOSE 8000
 
 CMD ["node", "server.js"]
 

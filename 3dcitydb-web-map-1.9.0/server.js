@@ -167,8 +167,8 @@
         res.send(files);
     });
 
-    var server = app.listen(argv.port, 'localhost', function() {
-    	console.log('Cesium development server running publicly.  Connect to localhost:%d/', server.address().port);
+    var server = app.listen(argv.port, '0.0.0.0', function() {
+    	console.log('Cesium development server running publicly.  Connect to %s:%d/', server.address().address, server.address().port);
     });
 
     server.on('error', function (e) {
