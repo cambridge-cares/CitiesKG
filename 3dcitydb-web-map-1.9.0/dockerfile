@@ -9,6 +9,7 @@ COPY package*.json .
 
 # COPY Source Files
 COPY . .
+RUN mkdir -p exported_singapore
 
 # Install node modules
 RUN npm install

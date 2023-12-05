@@ -25,3 +25,5 @@ services:
       - "8000:8000"
     environment:
       LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
+    volumes:
+      - ./3dcitydb-web-map-1.9.0/3dwebclient/exported_singapore:/usr/src/app/3dwebclient/exported_singapore
