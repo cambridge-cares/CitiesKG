@@ -9,7 +9,7 @@ COPY package*.json .
 
 # COPY Source Files
 COPY . .
-RUN mkdir -p exported_singapore
+RUN mkdir -p datastore
 
 # Install node modules
 RUN npm install

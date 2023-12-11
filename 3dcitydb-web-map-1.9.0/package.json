@@ -13,9 +13,6 @@
   "description": "3DCityDB-Web-Map-Client ==================================",
   "version": "1.0.0",
   "main": "server.js",
-  "directories": {
-    "example": "examples"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC"

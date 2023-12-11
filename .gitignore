@@ -43,7 +43,7 @@ ${tomcatPath}/
 # Visualisation files
 */3dwebclient/test/*
 */3dwebclient/*.png
-*/3dwebclient/*.kml
+*/3dwebclient/datastore/*.kml
 */3dwebclient/exported_*
 
 # ignore the credentials
