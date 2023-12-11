@@ -1,29 +1,65 @@
 version: "1.0.0"
 
 services:
-  backend:
-    image: ckg-agent:1.0.0
-    container_name: ckg-agent
-    pull_policy: if_not_present
-    build:
-      context: "./ckg_agents_code"
-    # expose
-    ports:
-      - "8080:8080"
-    environment:
-      LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
-
-
   frontend:
     image: nodejs:1.0.0
     container_name: nodejs
     pull_policy: if_not_present
     build:
       context: "./3dcitydb-web-map-1.9.0"
-    # expose
     ports:
-      - "8000:8000"
+      - 8000:8000
     environment:
       LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
     volumes:
-      - ./3dcitydb-web-map-1.9.0/3dwebclient/exported_singapore:/usr/src/app/3dwebclient/exported_singapore
+      - ./3dcitydb-web-map-1.9.0/3dwebclient/datastore:/usr/src/app/3dwebclient/datastore
+
+  backend_cia:
+    image: ckg-agent:1.0.0
+    container_name: ckg-agent
+    pull_policy: if_not_present
+    build:
+      context: "./ckg_agents_code"
+    ports:
+      - 8080:8080
+    environment:
+      LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
+
+  # access-agent
+  access-agent:
+    image: ghcr.io/cambridge-cares/access-agent:1.7.0
+    container_name: access-agent
+    pull_policy: if_not_present
+    environment:
+      LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
+      STOREROUTER_ENDPOINT: "http://blazegraph-access-agent:8080/blazegraph/namespace/kb/sparql"
+      RDB_STOREROUTER_ENDPOINT: "http://www.theworldavatar.com/blazegraph/namespace/ontordbrouter/sparql"
+      pull_policy: if_not_present
+    ports:
+      - 48888:8080
+    networks:
+      - default
+
+  # Blazegraph
+  blazegraph:
+    image: docker.cmclinnovations.com/blazegraph:1.0.0-SNAPSHOT
+    container_name: "blazegraph-access-agent"
+    environment:
+      LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
+    pull_policy: if_not_present
+    restart: unless-stopped
+    volumes:
+      - blazegraph_data:/data
+    ports:
+      - 48889:8080
+    networks:
+      - default
+
+# Volumes
+volumes:
+  blazegraph_data:
+
+# Networks
+networks:
+  default:
+    name: access_agent
