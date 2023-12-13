@@ -12,7 +12,7 @@ services:
     environment:
       LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
     volumes:
-      - ./3dcitydb-web-map-1.9.0/3dwebclient/datastore:/usr/src/app/3dwebclient/datastore
+      - ./3dcitydb-web-map-1.9.0/3dwebclient:/usr/src/app/3dwebclient
 
   backend_cia:
     image: ckg-agent:1.0.0
