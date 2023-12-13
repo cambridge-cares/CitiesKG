@@ -1,0 +1,7 @@
+[
+	{
+		"label": "singaporeEPSG4326",
+		"queryEndpoint": "http://host.docker.internal:48889/blazegraph/namespace/singaporeEPSG4326/sparql",
+		"updateEndpoint": "http://host.docker.internal:48889/blazegraph/namespace/singaporeEPSG4326/sparql"
+	}
+]
