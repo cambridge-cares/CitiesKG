@@ -590,7 +590,7 @@ function chooseDemoType(obj) {
 			document.getElementById("demo2").style.display = "None";
 			document.getElementById("keyGrowthAreas").style.display = "flex";
 			document.getElementById("comparisonPanel").style.display = "None";
-			cesiumViewer.baseLayerPicker.viewModel.selectedImagery = imageryProviders[8];  // Basemap: StamenToner
+			cesiumViewer.baseLayerPicker.viewModel.selectedImagery = imageryProviders[6];  // Basemap: 8 for StamenToner (disabled atm)
 			break;
 		case "PlotComparison":
 			document.getElementById("demo1").style.display = "None";
