@@ -1,6 +1,5 @@
 .idea/
 
-3dwebclient/exported_ura/
 3dwebclient/images/
 3dwebclient/kmlManhattanExample/
 3dwebclient/Railway_Scene_LoD3/
@@ -13,4 +12,4 @@
 
 
 index.js
-3dwebclient/exported_singapore/
+3dwebclient/singaporeEPSG4326/
