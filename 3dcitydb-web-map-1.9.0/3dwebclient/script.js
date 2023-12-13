@@ -445,7 +445,6 @@ function getAndLoadLayers(folder) {
 
     $.get(reqUrl, function (data) {
         // if data includes 'Tiles', only add MasterJSON as layer, else add all files
-        console.log(reqUrl);
         if (data.includes("Tiles")) {
             for (let i = 0; i < data.length; i++) {
                 if (data[i].match(new RegExp("\\w*_\\w*_MasterJSON.json"))) {
