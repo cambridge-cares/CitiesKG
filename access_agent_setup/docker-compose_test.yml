@@ -15,7 +15,6 @@ services:
     networks:
       - default
 
-      
   # Blazegraph
   blazegraph:
     image: docker.cmclinnovations.com/blazegraph:1.0.0-SNAPSHOT
@@ -26,18 +25,15 @@ services:
     restart: unless-stopped
     volumes:
       - blazegraph_data:/data
-      - ../access_agent_setup:/usr/src/app/access_agent_setup
     ports:
       - 48889:8080
     networks:
       - default
-    command:
-      - bash /usr/src/app/access_agent_setup/uploadRouting.sh
 
 # Volumes
 volumes:
   blazegraph_data:
-  
+
 networks:
   default:
     name: access_agent
