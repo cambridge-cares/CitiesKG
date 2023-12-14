@@ -33,11 +33,10 @@ db/*.gml
 
 impexp-core/test_config.properties
 
-ckg_agents_code/agents/target/
+agents/target/
+*/target/
 */*/target/
 
-../db/RWStore.properties
-../db/vocabularies/src/main/resources/config.properties
 ${tomcatPath}/
 
 # Visualisation files
@@ -47,5 +46,7 @@ ${tomcatPath}/
 */3dwebclient/exported_*
 
 # ignore the credentials
-ckg_agents_code/.m2/
-ckg_agents_code/webapps/
+.m2/
+webapps/
+
+CEA_AGENT/
