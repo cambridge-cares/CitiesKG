@@ -47,6 +47,6 @@ ${tomcatPath}/
 
 # ignore the credentials
 .m2/
-webapps/
+agents/webapps/
 
 CEA_AGENT/
