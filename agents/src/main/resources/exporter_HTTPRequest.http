@@ -1,0 +1,26 @@
+POST http://localhost:8080/agents/export/kml
+Content-Type: application/json
+
+// specify "gmlid" with a list of gmlids or * to export the whole namespace, e.g., ["http://10.25.182.103:9999/blazegraph/namespace/URA_testdata/sparql/cityobject/*/"]
+// as query the list of top id could take long especially for berlin case
+// if gmlid is pointing to a local directory. it makes it contains a list of gmlid to be exported
+// specify "outputpath": a local directory where the data can be export, the path need to be valid
+// ["http://10.25.182.103:9999/blazegraph/namespace/URA_testdata/sparql/cityobject/*/"]
+// "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\chunk_gmlid_1000"
+// http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/BLDG_00030000000235fa/
+// http://www.theworldavatar.com:83/citieskg/namespace/berlin/sparql/cityobject/BLDG_000300000002360c/
+// gmlid should contain the serverInfo with * and the path to the directory of prepared_gmlid
+// ["*", "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder\\chunk_gmlid_1000"]
+// Note: make sure the namespace is the same as IRI in the DB "http://127.0.0.1:9999/blazegraph/namespace/testdata/sparql/",
+// lod : 5 as default = highest LOD available
+// displayform: footprint, extruded, geometry
+//  "directory":  "C:\\Users\\Shiying\\Documents\\CKG\\Exported_data\\testfolder",
+// sg_data" :UUID_0d0b9792-823f-484d-bfbe-ab4d1003cf66
+
+{ "namespace" : "http://127.0.0.1:9999/blazegraph/namespace/test/sparql/",
+  "gmlid":  ["*"],
+  "lod": 2,
+  "displayform": "geometry"
+}
+
+
