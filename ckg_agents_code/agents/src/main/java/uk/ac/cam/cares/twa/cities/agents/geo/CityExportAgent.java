@@ -372,7 +372,7 @@ public class CityExportAgent extends JPSAgent {
         //int databaseCRS = Integer.valueOf(srsName.split(":")[1]);
         int databaseCRS;
         if (srid == 4326){
-            ResourceBundle config = ResourceBundle.getBundle("config");
+            ResourceBundle config = ResourceBundle.getBundle("CKGAgentConfig");
             databaseCRS = Integer.parseInt(config.getString("crsInMeter.singapore"));
         } else {
             databaseCRS = srid;
@@ -389,7 +389,7 @@ public class CityExportAgent extends JPSAgent {
 
         int databaseCRS;
         if (srid == 4326){
-            ResourceBundle config = ResourceBundle.getBundle("config");
+            ResourceBundle config = ResourceBundle.getBundle("CKGAgentConfig");
             databaseCRS = Integer.parseInt(config.getString("crsInMeter.singapore"));
         } else {
             databaseCRS = srid;

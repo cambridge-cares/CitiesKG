@@ -55,10 +55,10 @@ public class CityInformationAgentTest {
             // test readConfig
             Field route = agent.getClass().getDeclaredField("route");
             route.setAccessible(true);
-            assertEquals(ResourceBundle.getBundle("config").getString("uri.route"), route.get(agent));
+            assertEquals(ResourceBundle.getBundle("CKGAgentConfig").getString("uri.route"), route.get(agent));
             Field lazyload = agent.getClass().getDeclaredField("lazyload");
             lazyload.setAccessible(true);
-            assertEquals(Boolean.getBoolean(ResourceBundle.getBundle("config").getString("loading.status")), lazyload.get(agent));
+            assertEquals(Boolean.getBoolean(ResourceBundle.getBundle("CKGAgentConfig").getString("loading.status")), lazyload.get(agent));
         } catch (NoSuchFieldException | IllegalAccessException e) {
             fail();
         }
@@ -114,7 +114,7 @@ public class CityInformationAgentTest {
             Field route = agent.getClass().getDeclaredField("route");
             route.setAccessible(true);
             agent.processRequestParameters(requestParams);
-            assertEquals(ResourceBundle.getBundle("config").getString("uri.route"), route.get(agent));
+            assertEquals(ResourceBundle.getBundle("CKGAgentConfig").getString("uri.route"), route.get(agent));
         } catch (Exception e) {
             fail();
         } finally {

@@ -139,13 +139,13 @@ public class DistanceAgentTest {
             // test readConfig
             Field ocgmlUri = distanceAgent.getClass().getDeclaredField("ocgmlUri");
             ocgmlUri.setAccessible(true);
-            assertEquals(ResourceBundle.getBundle("config").getString("uri.ontology.ontocitygml"), ocgmlUri.get(distanceAgent));
+            assertEquals(ResourceBundle.getBundle("CKGAgentConfig").getString("uri.ontology.ontocitygml"), ocgmlUri.get(distanceAgent));
             Field unitOntology = distanceAgent.getClass().getDeclaredField("unitOntology");
             unitOntology.setAccessible(true);
-            assertEquals(ResourceBundle.getBundle("config").getString("uri.ontology.om"), unitOntology.get(distanceAgent));
+            assertEquals(ResourceBundle.getBundle("CKGAgentConfig").getString("uri.ontology.om"), unitOntology.get(distanceAgent));
             Field route = distanceAgent.getClass().getDeclaredField("route");
             route.setAccessible(true);
-            assertEquals(ResourceBundle.getBundle("config").getString("uri.route"), route.get(distanceAgent));
+            assertEquals(ResourceBundle.getBundle("CKGAgentConfig").getString("uri.route"), route.get(distanceAgent));
 
             Field context = distanceAgent.getClass().getDeclaredField("context");
             context.setAccessible(true);
@@ -195,7 +195,7 @@ public class DistanceAgentTest {
             Field route = distanceAgent.getClass().getDeclaredField("route");
             route.setAccessible(true);
             distanceAgent.processRequestParameters(requestParams);
-            assertEquals(ResourceBundle.getBundle("config").getString("uri.route"), route.get(distanceAgent));
+            assertEquals(ResourceBundle.getBundle("CKGAgentConfig").getString("uri.route"), route.get(distanceAgent));
         } catch (Exception e) {
             fail();
         } finally {

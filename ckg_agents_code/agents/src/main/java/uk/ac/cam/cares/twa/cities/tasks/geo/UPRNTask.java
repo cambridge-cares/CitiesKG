@@ -48,7 +48,7 @@ public class UPRNTask implements Runnable {
 
   // for Features API
   private static final String FEATURES_API_ENDPOINT = "https://api.os.uk/features/v1/wfs";
-  private final String osApiKey = ResourceBundle.getBundle("config").getString("os.api.key");
+  private final String osApiKey = ResourceBundle.getBundle("CKGAgentConfig").getString("os.api.key");
 
   private static final GeometryFactory geometryFactory = new GeometryFactory();
   private static final CoordinateReferenceSystem epsg27700;

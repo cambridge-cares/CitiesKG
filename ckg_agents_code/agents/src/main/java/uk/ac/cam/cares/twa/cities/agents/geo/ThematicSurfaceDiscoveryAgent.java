@@ -96,7 +96,7 @@ public class ThematicSurfaceDiscoveryAgent extends JPSAgent {
 
   public ThematicSurfaceDiscoveryAgent() {
     super();
-    targetResourceId = ResourceBundle.getBundle("config").getString("uri.route");
+    targetResourceId = ResourceBundle.getBundle("CKGAgentConfig").getString("uri.route");
   }
 
   @Override

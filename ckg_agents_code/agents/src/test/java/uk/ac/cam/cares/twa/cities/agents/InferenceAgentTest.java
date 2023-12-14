@@ -255,7 +255,7 @@ public class InferenceAgentTest {
     InferenceAgent agent = Mockito.mock(
         InferenceAgent.class,
         Mockito.CALLS_REAL_METHODS);
-    agent.route = ResourceBundle.getBundle("config").getString("uri.route");
+    agent.route = ResourceBundle.getBundle("CKGAgentConfig").getString("uri.route");
     JSONObject requestParams = new JSONObject()
         .put("requestUrl", "http://localhost:8080/agents/inference/graph")
         .put("targetIRI", "http://127.0.0.1:9999/blazegraph/namespace/test/sparql/")
@@ -301,7 +301,7 @@ public class InferenceAgentTest {
     InferenceAgent agent = Mockito.mock(
         InferenceAgent.class,
         Mockito.CALLS_REAL_METHODS);
-    agent.route = ResourceBundle.getBundle("config").getString("uri.route");
+    agent.route = ResourceBundle.getBundle("CKGAgentConfig").getString("uri.route");
 
     JSONObject requestParams = new JSONObject().put("sourceIRI", "http://www.test.com/srciri/")
         .put("destinationIRI", "http://www.test.com/dstiri/")
@@ -358,7 +358,7 @@ public class InferenceAgentTest {
     InferenceAgent agent = Mockito.mock(
         InferenceAgent.class,
         Mockito.CALLS_REAL_METHODS);
-    agent.route = ResourceBundle.getBundle("config").getString("uri.route");
+    agent.route = ResourceBundle.getBundle("CKGAgentConfig").getString("uri.route");
     JSONArray result = new JSONArray().put(new JSONObject().put("o",
         "http://www.theworldavatar.com/ontologies/OntoInfer.owl#PageRankTask"));
     try (MockedStatic<AccessAgentCaller> aacMock = Mockito.mockStatic(AccessAgentCaller.class)) {
@@ -421,7 +421,7 @@ public class InferenceAgentTest {
       aacMock.when(() -> AccessAgentCaller.queryStore(ArgumentMatchers.anyString(),
               ArgumentMatchers.anyString()))
           .thenReturn(result);
-      agent.route = ResourceBundle.getBundle("config").getString("uri.route");
+      agent.route = ResourceBundle.getBundle("CKGAgentConfig").getString("uri.route");
       agent.getAllTargetData(IRI.create("http://127.0.0.1:9999/blazegraph/namespace/test/sparql/"),
           "testgraph", result);
       assertEquals(result.toList().size(), 0);

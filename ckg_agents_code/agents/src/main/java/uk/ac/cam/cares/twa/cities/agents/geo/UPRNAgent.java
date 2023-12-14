@@ -34,7 +34,7 @@ public class UPRNAgent extends JPSAgent {
   private static final String QM = "?";
   private static final String SRS = "srs";
 
-  private final String targetResourceId = ResourceBundle.getBundle("config").getString("uri.route");
+  private final String targetResourceId = ResourceBundle.getBundle("CKGAgentConfig").getString("uri.route");
 
   @Getter private String buildingIri;
   @Getter private String namespaceIri;

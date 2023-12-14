@@ -72,7 +72,7 @@ public class DistanceAgent extends JPSAgent {
   private static final String QST_MARK = "?";
   private static final String COLON = ":";
 
-  // Variables fetched from config.properties file.
+  // Variables fetched from CKGAgentConfig.properties file.
   private static String ocgmlUri;
   private static String unitOntology;
   private static String route;
@@ -148,9 +148,9 @@ public class DistanceAgent extends JPSAgent {
     throw new BadRequestException();
   }
 
-  /** reads variable values relevant for DistanceAgent class from config.properties file. */
+  /** reads variable values relevant for DistanceAgent class from CKGAgentConfig.properties file. */
   private void readConfig() {
-    ResourceBundle config = ResourceBundle.getBundle("config");
+    ResourceBundle config = ResourceBundle.getBundle("CKGAgentConfig");
     route = config.getString("uri.route");
     ocgmlUri = config.getString("uri.ontology.ontocitygml");
     unitOntology = config.getString("uri.ontology.om");
