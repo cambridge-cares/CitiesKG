@@ -1,5 +1,10 @@
 .idea/
-.m2/
 ${tomcatPath}/
 CEA_AGENT/
 db/
+
+*/target/
+*/build/
+
+agents/README-resources/
+*/webapps
