@@ -3,27 +3,27 @@
 FROM maven:3.8.6-openjdk-8-slim as builder
 
 # Copy all files into root's home, including the source, pom file, ./m2 directory and credentials
-RUN mkdir ckg_agents
+WORKDIR /root
+ADD .m2 ./.m2
+
+# create ckg_agents dirctory if not exists
+WORKDIR /root/ckg_agents
+
+ADD agents ./agents
+ADD access_agent_setup ./access_agent_setup
+ADD impexp-client ./impexp-client
+ADD impexp-client-common ./impexp-client-common
+ADD impexp-config ./impexp-config
+ADD impexp-core ./impexp-core
+ADD impexp-kml-collada-plugin ./impexp-kml-collada-plugin
+ADD impexp-plugin-api ./impexp-plugin-api
+ADD utils ./utils
+ADD pom.xml ./
 
 
-# Populate settings templates with credentials, repo name
-ADD ../.m2 /ckg_agents/.m2
-ADD . /ckg_agents/agents
-ADD ../access_agent_setup /ckg_agents/access_agent_setup
-ADD ../impexp-client /ckg_agents/impexp-client
-ADD ../impexp-client-common /ckg_agents/impexp-client-common
-ADD ../impexp-config /ckg_agents/impexp-config
-ADD ../impexp-core /ckg_agents/impexp-core
-ADD ../impexp-kml-collada-plugin /ckg_agents/impexp-kml-collada-plugin
-ADD ../impexp-plugin-api /ckg_agents/impexp-plugin-api
-ADD ../utils /ckg_agents/utils
-ADD ../pom.xml /ckg_agents_code
-
-
-WORKDIR /ckg_agents_code
 # build
-#RUN --mount=type=cache mvn initialize
-RUN --mount=type=cache,target=/webapps mvn clean install -DskipTests
+#RUN --mount=type=cache,target=/root/.m2/repository mvn initialize
+RUN --mount=type=cache,target=/root/.m2/repository mvn clean install -DskipTests
 
 LABEL maintainer="shiying.li@sec.ethz.ch"
 #==================================================================================================
@@ -32,9 +32,9 @@ LABEL maintainer="shiying.li@sec.ethz.ch"
 #==================================================================================================
 FROM tomcat:9.0 as agent
 
-COPY --from=builder /webapps/agents##0.3.1.war $CATALINA_HOME/webapps/
+#COPY --from=builder /webapps/agents##0.3.1.war $CATALINA_HOME/webapps/
 #COPY --from=builder /access_agent_setup /ckg_agents_code/access_agent_setup
-COPY --from=builder /ckg_agents_code /ckg_agents_code
+COPY --from=builder /root /ckg_root
 
 EXPOSE 8080
 
