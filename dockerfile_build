@@ -22,7 +22,7 @@ ADD pom.xml ./
 
 
 # build
-#RUN --mount=type=cache,target=/root/.m2/repository mvn initialize
+RUN --mount=type=cache,target=/root/.m2/repository mvn initialize
 RUN --mount=type=cache,target=/root/.m2/repository mvn clean install -DskipTests
 
 LABEL maintainer="shiying.li@sec.ethz.ch"
@@ -32,9 +32,9 @@ LABEL maintainer="shiying.li@sec.ethz.ch"
 #==================================================================================================
 FROM tomcat:9.0 as agent
 
-#COPY --from=builder /webapps/agents##0.3.1.war $CATALINA_HOME/webapps/
+COPY --from=builder /root/webapps/agents##0.3.1.war $CATALINA_HOME/webapps/
 #COPY --from=builder /access_agent_setup /ckg_agents_code/access_agent_setup
-COPY --from=builder /root /ckg_root
+#COPY --from=builder /root /ckg_root
 
 EXPOSE 8080
 
