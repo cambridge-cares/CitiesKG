@@ -3,7 +3,7 @@
 FROM maven:3.8.6-openjdk-8-slim as builder
 
 # Copy all files into root's home, including the source, pom file, ./m2 directory and credentials
-ADD ./ /root
+ADD . /root
 
 # Populate settings templates with credentials, repo name
 #WORKDIR /root/.m2
@@ -12,7 +12,7 @@ ADD ./ /root
 #RUN sed -i "s|REPO_USERNAME|$(cat ../credentials/repo_username.txt)|;s|REPO_PASSWORD|$(cat ../credentials/repo_password.txt|xargs mvn --encrypt-password)|" settings.xml
 
 # build
-WORKDIR /root
+#WORKDIR /root
 #RUN --mount=type=cache,target=/root/webapps mvn clean install -DskipTests
 
 LABEL maintainer="shiying.li@sec.ethz.ch"
@@ -22,11 +22,13 @@ LABEL maintainer="shiying.li@sec.ethz.ch"
 #==================================================================================================
 FROM tomcat:9.0 as agent
 
-WORKDIR /bin
+RUN mkdir agents
 
 COPY --from=builder /root/webapps/agents##0.3.1.war $CATALINA_HOME/webapps/
 
 EXPOSE 8080
+
+WORKDIR /bin
 
 # Start the Tomcat server
 ENTRYPOINT ["catalina.sh", "run"]
