@@ -1,28 +1,19 @@
-# First stage: build war file
+# This dockerfile requires pre-built war file located in webapps/ directory, which will be copied into docker.
+
+
+# First stage: Add the source directory including war file into docker
 #==================================================================================================
 FROM maven:3.8.6-openjdk-8-slim as builder
 
 # Copy all files into root's home, including the source, pom file, ./m2 directory and credentials
 ADD . /root
 
-# Populate settings templates with credentials, repo name
-#WORKDIR /root/.m2
-# (Note that | rather than / is used as the sed delimiter, since encrypted passwords can contain the latter, but not the former
-#RUN sed -i "s|MASTER_PASSWORD|$(mvn --encrypt-master-password master_password)|" settings-security.xml
-#RUN sed -i "s|REPO_USERNAME|$(cat ../credentials/repo_username.txt)|;s|REPO_PASSWORD|$(cat ../credentials/repo_password.txt|xargs mvn --encrypt-password)|" settings.xml
-
-# build
-#WORKDIR /root
-#RUN --mount=type=cache,target=/root/webapps mvn clean install -DskipTests
-
 LABEL maintainer="shiying.li@sec.ethz.ch"
 #==================================================================================================
 
-# Second stage: copy the downloaded dependency into a new image and build into an app
+# Second stage: copy the pre-built war file into a new image and build into an app
 #==================================================================================================
 FROM tomcat:9.0 as agent
-
-RUN mkdir agents
 
 COPY --from=builder /root/webapps/agents##0.3.1.war $CATALINA_HOME/webapps/
 

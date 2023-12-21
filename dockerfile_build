@@ -1,3 +1,6 @@
+# This dockerfile intends to build the war file within the docker from source. Need to make sure that you have the credential setup within the docker, which is required to
+# to pull the dependency for compiling the code. Building from source is a recommended way.
+
 # First stage: build war file
 #==================================================================================================
 FROM maven:3.8.6-openjdk-8-slim as builder
