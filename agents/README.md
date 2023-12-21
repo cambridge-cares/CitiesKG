@@ -20,13 +20,13 @@ These detailed instructions describes the setup on a windows machine, for Mac OS
 * Java JRE or JDK >= 1.8
 * [Tomcat 9](https://www.liquidweb.com/kb/installing-tomcat-9-on-windows/)
 * [Maven](https://maven.apache.org/) - Dependency Management >= 3.8.4
-* Python 3
+* Python 3 (for the import agent)
+* Credential in /.m2 (required before compiling the code)
 
 JDK or JRE will need to be installed on the Windows Server before you can configure Tomcat 9 on the server.
 If Java and Maven are installed correctly and set as [environment variables](https://docs.oracle.com/en/database/oracle/machine-learning/oml4r/1.5.1/oread/creating-and-modifying-environment-variables-on-windows.html#GUID-DD6F9982-60D5-48F6-8270-A27EC53807D0), you should be able to check the version information using the following commands on the IDE terminal or CMD window.
 
 In order to use those commands via CLI (Command Line Interface), Maven, Java, Tomcat and Python should be added to *Path* in system variable. And additionally JAVA_HOME should also be configured.
-
 
 For checking Java version, type this command on CMD:
 ```
@@ -51,15 +51,31 @@ Default locale: en_SG, platform encoding: Cp1252
 OS name: "windows 10", version: "10.0", arch: "amd64", family: "windows"
 ```
 
-
 For [Tomcat 9]((https://www.liquidweb.com/kb/installing-tomcat-9-on-windows/)), check the link and learn how to deploy the artifact to tomcat server.
 
 After the tomcat installation, you can find the folder "C:\Program Files\Apache Software Foundation\Tomcat 9.0". 
 This folder is by default not accessible, in order to make it executable, you need to click on the folder and open the folder to view once.  
 
+Setting up the credential for dependency library /.m2
+Create a personal access token on github and apply it to the following commands, copy the generated encrypted password into credential template in .m2/. 
+The generated encrypted password appears with {}.
+
+Replace the <MASTER_PASSWORD> in the .m2/settings-security.xml with the generated string
+```
+mvn --encrypt-master-password <personal access token>
+```
+
+Replace the <PASSWORD> in the .m2/settings.xml with the generated string
+
+```
+mvn --encrypt-password <personal access token>
+```
+
+After the modification, copy these two files into \.m2\ located in the system directory C:\Users\. 
+This step will allow you to compile the code within docker and locally. 
 
 
-### Install and Build
+### Install and Build (agents)
 
 1. Additional dependencies used by agents are JPS_BASE_LIB and AsynchronousWatcherService, which provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository. You may skip this step if both dependencies have been set up before. 
 
@@ -103,7 +119,7 @@ this folder contains all the libraries provided by the server.
 If this step has not been done, you might get a `NoClassDefFoundError`. 
 
 
-### Running a local blazegraph with Java 11
+### Running and accessing a local blazegraph with Java 11
 Run a blazegraph on your local machine for testing and development using one of the following methods:
 1. Deploy a [blazegraph.war](https://github.com/blazegraph/database/releases/tag/BLAZEGRAPH_2_1_6_RC) file on your Tomcat server. The blazegraph will be accessible at localhost:8080/blazegraph (Change port to your Tomcat port).
 OR
@@ -175,122 +191,23 @@ Executing this request, will create a directory at the specified location. When 
 
 Please note that splitting of large files into smaller chunks to improve performance will not work if the `.gml` file contains the `core:` namespace tag in front of CityGML features. Please remove those manually beforehand.
 
-## Thematic Surface Discovery Agent User Guide
-
-### Configuration
-
-In the `resources/config.properties` file, the property `uri.route` must be specified. This is the target resource 
-ID which queries and updates will be addressed to. By default, this is an AccessAgent string, where e.g. 
-`http://localhost:48888/churchill` is interpreted as "using an AccessAgent instance hosted at `http://localhost:48888`, 
-access the knowledge graph `churchill` registered in ontokgrouter". Therefore, an AccessAgent instance is required to use this.
-
-### Request
-
-Example HTTPRequest for ThematicSurfaceDiscoveryAgent:
-```
-PUT http://localhost:8080/agents/discovery/thematicsurface
-Content-Type: application/json
-
-{ "namespace": "http://localhost:9999/blazegraph/namespace/churchill/sparql/",
-  "cityObjectIRI": "http://localhost:9999/blazegraph/namespace/building/..../",
-  "lod2": "true",
-  "threshold": "5",
-  "mode": "validate" }
-```
-
-Parameters:
-
-- `namespace`: target namespace, e.g. "http://localhost:9999/blazegraph/namespace/churchill/sparql/", which is used to prefix named graph IRIs and newly created object IRIs. Typically the same as configured `uri.route`, but not necessarily.
-- `mode`: "restructure", "validate" or "footprint". See sections below.
-- `lod1`, `lod2`, `lod3`, `lod4` (optional): optionally specify one or more levels of detail to target by providing `true`. All other LoDs are ignored. If no LoD is specified, all are targeted.
-- `cityObjectIRI` (optional): optionally specify a single building to target. If omitted, all buildings in the 
-  namespace are targeted. `namespace` is still necessary even with `cityObjectIRI` specified.
-- `threshold` (optional): the threshold angle in degrees; if the angle between a polygon's normal and the horizontal plane exceeds this, it is no longer considered a wall. Defaults to 15 if omitted.
-
-### Restructure mode
-
-In restructure mode, building(s)' `lodXMultiSurface`s are converted into thematic surfaces by reparenting their largest possible thematically homogeneous geometry subtrees to newly created thematic surfaces. `Building.lod1MultiSurfaceId` and `Building.lod2MultiSurfaceId` map to `ThematicSurface.lod2MultiSurfaceId` as thematic surfaces do not have an LoD 1 property; else, the LoD of the linking property is preserved in the conversion.
-
-Before:
-
-![Before](README-resources/tsda-restructure-before.png)
-
-Red, blue and green indicate classified roof, wall and ground surfaces, where a composite surface whose components
-are all the same theme is also considered that theme. Brown is a "mixed" composite surface with components of
-different themes, and is therefore destroyed in the conversion. After:
-
-![After](README-resources/tsda-restructure-after.png)
-
-### Validate mode
-
-In validate mode, building(s)' thematic surfaces are inspected and their themes classified using the same algorithm as restructure mode. The classifications are tagged onto bottom-level (leaf node) SurfaceGeometries by `rdfs:comment` properties. This allows comparison and debugging in Blazegraph workbench using a query e.g.
-
-```
-SELECT ?class ?comment (COUNT(*) AS ?count) WHERE {
-  ?surfaceGeometry ocgml:cityObjectId ?cityObject;
-            ocgml:GeometryType ?geometryType.
-  ?cityObject  ocgml:objectClassId ?class.
-  OPTIONAL{?surfaceGeometry rdfs:comment ?comment}
-  FILTER(!ISBLANK(?geometryType))
-} GROUP BY ?class ?comment
-```
-
-which counts all the combinations of original data themes and classified themes.
-
-### Footprint mode
-
-Footprint mode inspects building(s)' `lodXMultiSurface`s, identifying themes as in restructure mode, and then
-*copies* identifies ground surfaces into a new SurfaceGeometry tree which is linked to the building by
-`lod0FootprintId`. Unlike restructure mode, this does not destroy the old `lodXMultiSurface`. This is useful if the
-large triple overhead of a full thematicisation is not desired, but footprints are needed to be extracted for other use.
-
-## UPRN Agent User Guide
-
-An AccessAgent instance is required, similar to the steps described in the Thematic Surface Discovery Agent [configuration](#configuration)
-
-### HTTP Request
-
-Example HTTP Request for UPRN Agent:
-```
-PUT http://localhost:8080/agents/uprn
-Content-Type: application/json
-
-{ "namespace": "http://localhost:9999/blazegraph/namespace/churchill/sparql/",
-  "cityObjectIRI": "http://localhost:9999/blazegraph/namespace/churchill/sparql/building/..../" }
-```
-Parameters:
-
-- `namespace`: target namespace, e.g. "http://localhost:9999/blazegraph/namespace/churchill/sparql/", which is used to prefix named graph IRIs and newly created object IRIs. Typically the same as configured `uri.route`, but not necessarily.
-- `cityObjectIRI` (optional): optionally specify a single building to target. If omitted, all buildings in the
-  `namespace` are targeted. `namespace` is still necessary even with `cityObjectIRI` specified. Even though the parameter is called cityObjectIRI, it actually refers to a building IRI.
-
-## 3DCityDB-Web-Map-Client
-
-We use the 3DCityDB-Web-Map-Client to visualise *CityExportAgent* exported .kml data. We extended original code with new functions and interface elements for displaying analytical capabilities of the *DistanceAgent*. The extended Web-Map-client version can be found in CitiesKG project directory `/CitiesKG/3dcitydb-web-map-1.9.0/`.
-
-### Documentation
-
-A complete and comprehensive documentation on the 3DCityDB-Web-Map-Client is available online here (https://github.com/3dcitydb/3dcitydb-web-map) and here (https://3dcitydb-docs.readthedocs.io/en/release-v4.2.3/webmap/index.html).
-
-### Getting Started
-
-In order to use the extended 3DCityDB-Web-Map-Client for city agents make sure that:
-
-* Your browser support WebGL (visit http://get.webgl.org/ for checking it).
-* Open source JavaScript runtime environment Node.js is installed on your machine (visit https://nodejs.org/en/ to download the latest version). 
-* The extended web-map-client does not have node_modules folder thus, download original web-map-client via the following GitHub link (https://github.com/3dcitydb/3dcitydb-web-map/releases) and copy node_modules folder in `/CitiesKG/3dcitydb-web-map-1.9.0/`.
-
-To run the web-map-client, in a shell environment navigate to the folder where *server.js* file is located `/CitiesKG/3dcitydb-web-map-1.9.0/` and simply run the following command to launch the server:
-
-```
- node server.js
-```
-
-The web-map-client is now available via the URL (http://localhost:8080/3dwebclient/index.html). Place the .kml file in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/` and add the web link of the .kml file in `URL(*)` input field of the web-map-client Toolbox widget. In the input field `Name(*)`, a proper layer name must be specified as well. After clicking AddLayer, the .kml file will be visualised in the web-map-client.
-
 Solutions to common issues:
 * DistanceAgent and CityInformationAgent URL, used in POST request, is hardcoded in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/script.js` and `CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/utils/mashup-data-source-service/application/KMLDataSource.js` respectively. If agents are deployed on another port than 8080, agent URL needs to be updated accordingly in the respective files.
 * If *DistanceAgent* is used with .kml files that were generated not by *ExporterAgent*, .kml file should have `<name>` value exactly same way as it is stored in the KG.
+
+## Dockerfile and Docker-compose file
+In order to create a better automated pipeline for development and deployment, we introduce the docker mechanism. 
+
+
+
+
+
+
+
+
+
+
+
 
 ## Contributing
 
@@ -303,7 +220,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 ## Authors and Contributors
 
 * **Arkadiusz Chadzynski** - *CityImportAgent*
-* **Shiying Li** - *CityExporterAgent*
+* **Shiying Li** - *CityExporterAgent (Authoer of this tutorial)*
 * **Ayda Grišiūtė** - *DistanceAgent*
 
 See also the list of [contributors](https://www.theworldavatar.com/citieskg/contributors) who participated in this project.
@@ -311,7 +228,6 @@ See also the list of [contributors](https://www.theworldavatar.com/citieskg/cont
 ## License
 
 This project is licensed under the XYZ  License - see the [LICENSE.md](LICENSE.md) file for details
-
 
 [JPS_AWS]: https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/AsynchronousWatcherService
 [http://localhost:8080]: http://localhost:8080
