@@ -3,5 +3,13 @@ ${tomcatPath}/
 CEA_AGENT/
 db/
 
+<<<<<<< HEAD
 credentials/
 */target/
+=======
+*/target/
+*/build/
+
+agents/README-resources/
+*/webapps
+>>>>>>> 2eb143a78927636681c80e9038d7dda8e5d892d8

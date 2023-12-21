@@ -3,22 +3,27 @@
 FROM maven:3.8.6-openjdk-8-slim as builder
 
 # Copy all files into root's home, including the source, pom file, ./m2 directory and credentials
-ADD ./ /root/agents
+WORKDIR /root
+ADD .m2 ./.m2
 
-# Populate settings templates with credentials, repo name
-#ADD ../.m2 /root/.m2
-#COPY ../impexp-client /root/impexp-client
-#ADD ../impexp-client-common /root/impexp-client-common
-#ADD ../impexp-config /root/impexp-config
-#ADD ../impexp-core /root/impexp-core
-#ADD ../impexp-kml-collada-plugin /root/impexp-kml-collada-plugin
-#ADD ../impexp-plugin-api /root/impexp-plugin-api
-#ADD ../utils /root/utils
-ADD ../pom.xml /root/pom.xml
+# create ckg_agents dirctory if not exists
+WORKDIR /root/ckg_agents
+
+ADD agents ./agents
+ADD access_agent_setup ./access_agent_setup
+ADD impexp-client ./impexp-client
+ADD impexp-client-common ./impexp-client-common
+ADD impexp-config ./impexp-config
+ADD impexp-core ./impexp-core
+ADD impexp-kml-collada-plugin ./impexp-kml-collada-plugin
+ADD impexp-plugin-api ./impexp-plugin-api
+ADD utils ./utils
+ADD pom.xml ./
+
 
 # build
-WORKDIR /root
-#RUN --mount=type=cache,target=/root/webapps mvn clean install -DskipTests
+RUN --mount=type=cache,target=/root/.m2/repository mvn initialize
+RUN --mount=type=cache,target=/root/.m2/repository mvn clean install -DskipTests
 
 LABEL maintainer="shiying.li@sec.ethz.ch"
 #==================================================================================================
@@ -27,12 +32,13 @@ LABEL maintainer="shiying.li@sec.ethz.ch"
 #==================================================================================================
 FROM tomcat:9.0 as agent
 
-WORKDIR /bin
-
-COPY --from=builder /root/agents/webapps/agents##0.3.1.war $CATALINA_HOME/webapps/
+COPY --from=builder /root/webapps/agents##0.3.1.war $CATALINA_HOME/webapps/
+#COPY --from=builder /access_agent_setup /ckg_agents_code/access_agent_setup
+#COPY --from=builder /root /ckg_root
 
 EXPOSE 8080
 
+WORKDIR /bin
 # Start the Tomcat server
 ENTRYPOINT ["catalina.sh", "run"]
 #==================================================================================================
