@@ -1,5 +1,7 @@
 .idea/
-.m2/
 ${tomcatPath}/
 CEA_AGENT/
 db/
+
+credentials/
+*/target/
