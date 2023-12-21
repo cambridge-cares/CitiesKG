@@ -19,12 +19,12 @@ services:
     container_name: ckg-agent
     pull_policy: if_not_present
     build:
-      context: "./ckg_agents_code"
+      context: "./agents"
+      dockerfile: "./agents/dockerfile_war"
     ports:
       - 8080:8080
     environment:
       LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
-
 
   # access-agent
   access-agent:
