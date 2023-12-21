@@ -1,3 +1,30 @@
+Cities Knowledge Graph
+=======================
+
+TODO: Introduction to CKG project
+
+Folder structure for different parts of demo
+
+Docker compoase file
+
+Reference to 3dcitydb importer/exporter
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 3D City Database Importer/Exporter
 ==================================
 
