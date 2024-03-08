@@ -6,21 +6,21 @@ services:
     container_name: nodejs
     pull_policy: if_not_present
     build:
-      context: "./3dcitydb-web-map-1.9.0"
+      context: "../3dcitydb-web-map-1.9.0"
     ports:
       - 8000:8000
     environment:
       LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
     volumes:
-      - ./3dcitydb-web-map-1.9.0/3dwebclient:/usr/src/app/3dwebclient
+      - ../3dcitydb-web-map-1.9.0/3dwebclient:/usr/src/app/3dwebclient
 
   backend_cia:
     image: ckg-agent:1.0.0
     container_name: ckg-agent
     pull_policy: if_not_present
     build:
-      context: "./agents"
-      dockerfile: "./agents/dockerfile_war"
+      context: "../agents"
+      dockerfile: "../agents/dockerfile_war"
     ports:
       - 8080:8080
     environment:

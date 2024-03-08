@@ -1,5 +1,6 @@
 #! /bin/bash
 
+# Step 0: Spin up the container, which execute the docker-compose.yml
 docker compose up -d --no-build
 # Step 1: Initalize Access Agent by execute the upload the routing file in access_agent_setup directory
 # Make sure that the routing information is correct in routing.json
