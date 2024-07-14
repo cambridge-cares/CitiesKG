@@ -6,7 +6,8 @@
 FROM maven:3.8.6-openjdk-8-slim as builder
 
 # Copy all files into root's home, including the source, pom file, ./m2 directory and credentials
-ADD . /root
+# It depends where the . means, as same as where docker build command is called
+ADD ./webapps /root/webapps
 
 LABEL maintainer="shiying.li@sec.ethz.ch"
 #==================================================================================================
