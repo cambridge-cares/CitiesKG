@@ -79,7 +79,7 @@
                     <configuration>
                         <warName>${project.artifactId}##${project.version}</warName>
                         <!--suppress UnresolvedMavenProperty -->
-                        <outputDirectory>webapps</outputDirectory>
+                        <outputDirectory>agents/webapps</outputDirectory>
                         <webResources>
                             <resource>
                                 <directory>${basedir}/WEB-INF</directory>
