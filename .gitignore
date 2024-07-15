@@ -45,8 +45,11 @@ ${tomcatPath}/
 */3dwebclient/datastore/*
 */3dwebclient/exported_*
 
-# ignore the credentials
-.m2/
-agents/webapps/
 
+# For docker branch
+# ignore the personalized credentials for cares maven library
+.m2/
+
+# not to upload the war file
+webapps/
 CEA_AGENT/
