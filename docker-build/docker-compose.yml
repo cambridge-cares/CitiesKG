@@ -3,7 +3,7 @@ version: "1.0.0"
 services:
   frontend:
     image: nodejs:1.0.0
-    container_name: nodejs
+    container_name: Frontend
     pull_policy: if_not_present
     build:
       context: "../3dcitydb-web-map-1.9.0"
@@ -16,7 +16,7 @@ services:
 
   backend_cia:
     image: ckg-agent:1.0.0
-    container_name: ckg-agent
+    container_name: Backend_CKGagents
     pull_policy: if_not_present
     build:
       context: "../agents"
@@ -43,7 +43,7 @@ services:
 
   # Blazegraph
   blazegraph:
-    image: docker.cmclinnovations.com/blazegraph:1.0.0-SNAPSHOT
+    image: ghcr.io/cambridge-cares/blazegraph:1.1.0
     container_name: "blazegraph-access-agent"
     environment:
       LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"

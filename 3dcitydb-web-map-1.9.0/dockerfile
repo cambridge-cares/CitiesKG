@@ -1,6 +1,6 @@
 FROM node:16
 
-# Wokrking Dir
+# Working Dir
 WORKDIR /usr/src/app
 
 # Copy Package Json Files
