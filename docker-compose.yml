@@ -1,3 +1,4 @@
+version: "3"
 services:
   frontend:
     image: nodejs:1.0.0
@@ -11,6 +12,8 @@ services:
       LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
     volumes:
       - ./3dcitydb-web-map-1.9.0/3dwebclient:/usr/src/app/3dwebclient
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   
   ckg_agents:
     image: ckg-agent:1.0.0

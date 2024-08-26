@@ -41,6 +41,7 @@
     var fs = require('fs');
     var path = require('path');
 
+
     var yargs = require('yargs').options({
         'port' : {
             'default' : 8000,
@@ -79,9 +80,12 @@
     });
 
     var app = express();
-    app.use(compression());
+    //app.use(compression());
     app.use(express.static(__dirname));
-
+	
+    var axios = require('axios');
+    app.use(express.json());
+	
     function getRemoteUrlFromParam(req) {
         var remoteUrl = req.params[0];
         if (remoteUrl) {
@@ -166,11 +170,36 @@
         var files = fs.readdirSync(dir);
         res.send(files);
     });
+    
+    app.post('/agents/cityobjectinformation', async (req, res)=> {
+	    console.log("Request body: ", req.body);
+	    try {
+		    const localServerUrl = 'http://host.docker.internal:8080/agents/cityobjectinformation';
+		    const response = await axios.post(localServerUrl, req.body);
+		
+		    console.log("Response data: ", response.data);
+		    res.send(response.data);
+	    } catch (error) {
+		    console.error("Error forwarding request: ", error.message);
+
+		    res.send(error.message);
+	    }
+    });
+
+    app.get('/', (req, res)=> {
+	    console.log("Got a request from /");
+	    res.send("Hello from server.js");
+	});
+   
+   app.get('/agents/cityobjectinformation', (req, res)=> {
+	    console.log("Got a request to agents/cityobjectinformation");
+	    res.send("Hello from agent of the server.js");
+   });
 
     var server = app.listen(argv.port, '0.0.0.0', function() {
     	console.log('Cesium development server running publicly.  Connect to %s:%d/', server.address().address, server.address().port);
     });
-
+ 
     server.on('error', function (e) {
         if (e.code === 'EADDRINUSE') {
             console.log('Error: Port %d is already in use, select a different port.', argv.port);
