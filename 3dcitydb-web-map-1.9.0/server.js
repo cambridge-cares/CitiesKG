@@ -50,6 +50,7 @@
     app.use(express.static(__dirname));
     app.use(express.urlencoded({'extended': true}));
 
+
     var yargs = require('yargs').options({
         'port' : {
             'default' : 8000,
@@ -79,7 +80,7 @@
 
     // eventually this mime type configuration will need to change
     // https://github.com/visionmedia/send/commit/d2cb54658ce65948b0ed6e5fb5de69d022bef941
-    /*
+
     var mime = express.static.mime;
     mime.define({
         'application/json' : ['czml', 'json', 'geojson', 'topojson'],
@@ -87,7 +88,7 @@
         'model/vnd.gltf.binary' : ['bgltf'],
         'text/plain' : ['glsl']
     });
-*/
+
     function getRemoteUrlFromParam(req) {
         var remoteUrl = req.params[0];
         if (remoteUrl) {
@@ -206,12 +207,37 @@
         var files = fs.readdirSync(dir);
         res.send(files);
     });
+    
+    app.post('/agents/cityobjectinformation', async (req, res)=> {
+	    console.log("Request body: ", req.body);
+	    try {
+		    const localServerUrl = 'http://host.docker.internal:8080/agents/cityobjectinformation';
+		    const response = await axios.post(localServerUrl, req.body);
+		
+		    console.log("Response data: ", response.data);
+		    res.send(response.data);
+	    } catch (error) {
+		    console.error("Error forwarding request: ", error.message);
+
+		    res.send(error.message);
+	    }
+    });
+
+    app.get('/', (req, res)=> {
+	    console.log("Got a request from /");
+	    res.send("Hello from server.js");
+	});
+   
+   app.get('/agents/cityobjectinformation', (req, res)=> {
+	    console.log("Got a request to agents/cityobjectinformation");
+	    res.send("Hello from agent of the server.js");
+   });
 
 
     var server = app.listen(argv.port, '0.0.0.0', function() {
         console.log('Cesium development server running publicly.  Connect to %s:%d/', server.address().address, server.address().port);
     });
-
+ 
     server.on('error', function (e) {
         if (e.code === 'EADDRINUSE') {
             console.log('Error: Port %d is already in use, select a different port.', argv.port);

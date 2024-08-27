@@ -237,7 +237,7 @@ var KMLDataSource = /** @class */ (function (_super) {
         //     }});
         /* original
         jQuery.ajax({
-            url: "http://localhost:8080/agents/cityobjectinformation",
+            url: "http://ckg.sec.sg/agents/cityobjectinformation",
             //url: "http://www.theworldavatar.com/agents/cityobjectinformation",
             type: 'POST',
             data: JSON.stringify(cia_data),

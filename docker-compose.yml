@@ -1,5 +1,4 @@
-version: "1.0.0"
-
+version: "3"
 services:
   frontend:
     image: nodejs:1.0.0
@@ -13,6 +12,8 @@ services:
       LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
     volumes:
       - ./3dcitydb-web-map-1.9.0/3dwebclient:/usr/src/app/3dwebclient
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   ckg_agents:
     image: ckg-agent:1.0.0
@@ -25,7 +26,9 @@ services:
       - 8080:8080
     environment:
       LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
-
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  
   # access-agent
   access-agent:
     image: ghcr.io/cambridge-cares/access-agent:1.7.0
@@ -40,6 +43,8 @@ services:
       - 48888:8080
     networks:
       - default
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   # Blazegraph
   blazegraph:
@@ -55,7 +60,7 @@ services:
       - 48889:8080
     networks:
       - default
-
+    
 # Volumes
 volumes:
   blazegraph_data:
