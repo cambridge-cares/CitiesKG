@@ -53,3 +53,6 @@ ${tomcatPath}/
 # not to upload the war file
 webapps/
 CEA_AGENT/
+
+# ignore different version
+package.json

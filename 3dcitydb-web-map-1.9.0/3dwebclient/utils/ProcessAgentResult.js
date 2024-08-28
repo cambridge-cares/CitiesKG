@@ -389,18 +389,24 @@ function computeDistance() {
         }
     });
 
-    jQuery.ajax({
-        url:"http://localhost:8080/agents/distance",
-        type: 'POST',
-        data: JSON.stringify({iris: iriArr}),
-        dataType: 'json',
-        contentType: 'application/json',
-        success: function(data, status_message, xhr){
-            console.log(data["distances"]);
-            var distance = Math.round(data["distances"][0]);
-            label.label.text = distance.toString() + " " + "m";
-        }
+
+    SendPostRequestToServer("/agents/distance", {iris: iriArr}, function (response) {
+        console.log(response["distances"]);
+        var distance = Math.round(data["distances"][0]);
+        label.label.text = distance.toString() + " " + "m";
     });
+    // jQuery.ajax({
+    //     url:"http://localhost:8080/agents/distance",
+    //     type: 'POST',
+    //     data: JSON.stringify({iris: iriArr}),
+    //     dataType: 'json',
+    //     contentType: 'application/json',
+    //     success: function(data, status_message, xhr){
+    //         console.log(data["distances"]);
+    //         var distance = Math.round(data["distances"][0]);
+    //         label.label.text = distance.toString() + " " + "m";
+    //     }
+    // });
 
 }
 

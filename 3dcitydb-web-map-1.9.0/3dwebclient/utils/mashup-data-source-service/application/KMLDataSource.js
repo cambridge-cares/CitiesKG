@@ -1,3 +1,5 @@
+
+
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -205,6 +207,22 @@ var KMLDataSource = /** @class */ (function (_super) {
 
         var cia_data = context_url ? {iris: [iri], context: context_obj} : {iris: [iri]};
 
+        SendPostRequestToServer ("/agents/cityobjectinformation", cia_data, function(response){
+            callback(response);
+        });
+        // Test: Move the call to localhost to server side - server.js
+        // jQuery.ajax({
+        //     url: "/agents/cityobjectinformation",
+        //     //url: "http://www.theworldavatar.com/agents/cityobjectinformation",
+        //     type: 'POST',
+        //     data: JSON.stringify(cia_data),
+        //     dataType: 'json',
+        //     contentType: 'application/json',
+        //     success: function (data) {
+        //         console.log("success: ", data);
+        //         callback(data);
+        //     }});
+        /* original
         jQuery.ajax({
             url: "http://ckg.sec.sg/agents/cityobjectinformation",
             //url: "http://www.theworldavatar.com/agents/cityobjectinformation",
@@ -216,6 +234,7 @@ var KMLDataSource = /** @class */ (function (_super) {
                 console.log(data);
                 callback(data);
             }});
+        */
     };
 
 

@@ -1,23 +1,23 @@
 /*
  * 3DCityDB-Web-Map
  * http://www.3dcitydb.org/
- * 
+ *
  * Copyright 2015 - 2017
  * Chair of Geoinformatics
  * Technical University of Munich, Germany
  * https://www.gis.bgu.tum.de/
- * 
+ *
  * The 3DCityDB-Web-Map is jointly developed with the following
  * cooperation partners:
- * 
+ *
  * virtualcitySYSTEMS GmbH, Berlin <http://www.virtualcitysystems.de/>
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *     
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,6 +40,15 @@
     var request = require('request');
     var fs = require('fs');
     var path = require('path');
+    var axios = require('axios');
+    var http = require('http');
+
+
+    var app = express();
+    app.use(express.json());  // This allows JSON being read into req.body in expressJS, otherwise req.body remains empty
+    //app.use(compression());
+    app.use(express.static(__dirname));
+    app.use(express.urlencoded({'extended': true}));
 
 
     var yargs = require('yargs').options({
@@ -71,6 +80,7 @@
 
     // eventually this mime type configuration will need to change
     // https://github.com/visionmedia/send/commit/d2cb54658ce65948b0ed6e5fb5de69d022bef941
+
     var mime = express.static.mime;
     mime.define({
         'application/json' : ['czml', 'json', 'geojson', 'topojson'],
@@ -79,13 +89,6 @@
         'text/plain' : ['glsl']
     });
 
-    var app = express();
-    //app.use(compression());
-    app.use(express.static(__dirname));
-	
-    var axios = require('axios');
-    app.use(express.json());
-	
     function getRemoteUrlFromParam(req) {
         var remoteUrl = req.params[0];
         if (remoteUrl) {
@@ -120,6 +123,68 @@
             bypassUpstreamProxyHosts[host.toLowerCase()] = true;
         });
     }
+
+    app.get('/agents/cityobjectinformation', async (req, res) => {
+
+        res.send("Hello from server.js");
+    });
+
+    const fetchFromLocalhost = async (req, res) => {
+        console.log("Log from fetchLocalhost!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        let response = null
+        //const localServerUrl = 'http://host.docker.internal:8080/agents/cityobjectinformation';  // this is for inside of the container
+        const localServerUrl = 'http://localhost:8080/agents/cityobjectinformation';
+
+        console.log("Request JSON: ", req.body)
+        console.log("Forwarding to: ", localServerUrl);
+        try {
+            response = await axios.post(localServerUrl, req.body);
+            //response = await axios.post("https://reqres.in/api/users", req.body);
+            console.log("Response: ", response.data)
+            return response.data  // could triggered app crashes if input is wrong
+        } catch (error) {
+            console.error(error)
+        }
+
+    }
+
+    const fetchFromBlazegraph = async (req, res) => {
+        let response = null
+        //const localServerUrl = 'http://host.docker.internal:48888/access-agent/access';  // this is for inside of the container
+        const localServerUrl = 'http://localhost:48888/access-agent/access';
+
+        console.log("Request JSON: ", req.body)
+        console.log("Forwarding to: ", localServerUrl);
+        try {
+            response = await axios.post(localServerUrl, req.body);
+            //response = await axios.post("https://reqres.in/api/users", req.body);
+            console.log("Response: ", response.data)
+            return response.data  // could triggered app crashes if input is wrong
+        } catch (error) {
+            console.error(error)
+        }
+
+    }
+    app.post('/agents/cityobjectinformation', async (req, res) => {
+        const result = await fetchFromLocalhost(req, res)
+        res.send(result)
+    })
+
+    app.post('/agents/distance', async (req, res) => {
+        const result = await fetchFromLocalhost(req, res)
+        res.send(result)
+    })
+
+    app.post('/access-agent/access', async (req, res) => {
+
+        const result = await fetchFromBlazegraph(req, res)
+        res.send(result)
+    })
+
+    app.get('/', async (req, res) => {
+
+        res.send("Hello from server.js")
+    })
 
     app.get('/proxy/*', function(req, res, next) {
         // look for request like http://localhost:8080/proxy/http://example.com/file?query=1
@@ -170,21 +235,6 @@
         var files = fs.readdirSync(dir);
         res.send(files);
     });
-    
-    app.post('/agents/cityobjectinformation', async (req, res)=> {
-	    console.log("Request body: ", req.body);
-	    try {
-		    const localServerUrl = 'http://host.docker.internal:8080/agents/cityobjectinformation';
-		    const response = await axios.post(localServerUrl, req.body);
-		
-		    console.log("Response data: ", response.data);
-		    res.send(response.data);
-	    } catch (error) {
-		    console.error("Error forwarding request: ", error.message);
-
-		    res.send(error.message);
-	    }
-    });
 
     app.get('/', (req, res)=> {
 	    console.log("Got a request from /");
@@ -196,8 +246,9 @@
 	    res.send("Hello from agent of the server.js");
    });
 
+
     var server = app.listen(argv.port, '0.0.0.0', function() {
-    	console.log('Cesium development server running publicly.  Connect to %s:%d/', server.address().address, server.address().port);
+        console.log('Cesium development server running publicly.  Connect to %s:%d/', server.address().address, server.address().port);
     });
  
     server.on('error', function (e) {
@@ -223,7 +274,7 @@
         if (isFirstSig) {
             console.log('Cesium development server shutting down.');
             server.close(function() {
-              process.exit(0);
+                process.exit(0);
             });
             isFirstSig = false;
         } else {
@@ -233,4 +284,3 @@
     });
 
 })();
-

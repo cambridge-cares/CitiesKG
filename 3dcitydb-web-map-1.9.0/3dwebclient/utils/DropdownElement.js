@@ -47,6 +47,7 @@ const cameraPositions = {
 
 let requestCounter = 0;
 
+
 /**
  * Build SPARQL to retrieve the dropdown list for given predicate
  * @param {String} predicate - 'allowsUse' or 'allowsProgramme'
@@ -106,32 +107,50 @@ function getDropdownElements(predicate, may_predicate, element_type, dropdown_ty
 			appendElement(checkbox_lines[index], predicate, element_type, dropdown_type)
 		}
 	} else {
-		$.ajax({
-			url:"http://www.theworldavatar.com:83/access-agent/access",
-			//url:"http://localhost:48888/access-agent/access",
-			type: 'POST',
-			data: JSON.stringify({targetresourceiri:CONTEXT + "-" + CITY , sparqlquery: buildDropdownQuery(predicate, may_predicate)}),
-			//data: JSON.stringify({targetresourceiri:"http://localhost:48888/test" , sparqlquery: buildDropdownQuery(predicate, may_predicate)}),
-			dataType: 'json',
-			contentType: 'application/json',
-			success: function(data, status_message, xhr){
-				console.log(data["result"])
-				let results = JSON.parse(data["result"]);
-				let checkbox_lines = [];
-				storeDropdownElements(dropdown_type, results);
-				for (let index in results) {
-					let checkbox_line = removePrefix(results[index]["g"]);
-					checkbox_lines.push(checkbox_line);
-				}
-				checkbox_lines.sort();
-				for (let index in checkbox_lines) {
-					appendElement(checkbox_lines[index], predicate, element_type, dropdown_type)
-				}
-			},
-			error: function(XMLHttpRequest, textStatus, errorThrown) {
-				alert("Status: " + textStatus); alert("Error: " + errorThrown);
+		// For first-time users, the content of the dropdown list needs to be pulled from the database
+		let jsonObject = {targetresourceiri:CONTEXT + "-" + CITY , sparqlquery: buildDropdownQuery(predicate, may_predicate)};
+
+		SendPostRequestToServer("/access-agent/access", jsonObject, function(response){
+			console.log(response["result"])
+			let results = JSON.parse(response["result"]);
+			let checkbox_lines = [];
+			storeDropdownElements(dropdown_type, results);
+			for (let index in results) {
+				let checkbox_line = removePrefix(results[index]["g"]);
+				checkbox_lines.push(checkbox_line);
+			}
+			checkbox_lines.sort();
+			for (let index in checkbox_lines) {
+				appendElement(checkbox_lines[index], predicate, element_type, dropdown_type)
 			}
 		});
+
+		// $.ajax({
+		// 	url:"http://www.theworldavatar.com:83/access-agent/access",
+		// 	//url:"http://localhost:48888/access-agent/access",
+		// 	type: 'POST',
+		// 	data: JSON.stringify(jsonObject),
+		// 	//data: JSON.stringify({targetresourceiri:"http://localhost:48888/test" , sparqlquery: buildDropdownQuery(predicate, may_predicate)}),
+		// 	dataType: 'json',
+		// 	contentType: 'application/json',
+		// 	success: function(data, status_message, xhr){
+		// 		console.log(data["result"])
+		// 		let results = JSON.parse(data["result"]);
+		// 		let checkbox_lines = [];
+		// 		storeDropdownElements(dropdown_type, results);
+		// 		for (let index in results) {
+		// 			let checkbox_line = removePrefix(results[index]["g"]);
+		// 			checkbox_lines.push(checkbox_line);
+		// 		}
+		// 		checkbox_lines.sort();
+		// 		for (let index in checkbox_lines) {
+		// 			appendElement(checkbox_lines[index], predicate, element_type, dropdown_type)
+		// 		}
+		// 	},
+		// 	error: function(XMLHttpRequest, textStatus, errorThrown) {
+		// 		alert("Status: " + textStatus); alert("Error: " + errorThrown);
+		// 	}
+		// });
 	}
 }
 
@@ -482,17 +501,13 @@ function getInputParams() {
  */
 function getValidPlots(){
 	const iri = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/";
-	$.ajax({
-		url: "http://localhost:8080/agents/cityobjectinformation",
-		type: 'POST',
-		data: JSON.stringify({'iris': [iri], 'context': {"http://www.theworldavatar.com:83/access-agent/access": input_parameters}}),
-		dataType: 'json',
-		contentType: 'application/json',
-		success: function (data) { //function (data, status_message, xhr)
-			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
-			console.log(data["http://www.theworldavatar.com:83/access-agent/access"]["filteredCounts"]);
-			processCIAResult(data);
-		}
+
+	let requestData = {'iris': [iri], 'context': {"http://www.theworldavatar.com:83/access-agent/access": input_parameters}};
+
+	SendPostRequestToServer ("/agents/cityobjectinformation", requestData, function(response){
+		console.log(response["http://www.theworldavatar.com:83/access-agent/access"]["filtered"]);
+		console.log(response["http://www.theworldavatar.com:83/access-agent/access"]["filteredCounts"]);
+		processCIAResult(response);
 	});
 }
 
