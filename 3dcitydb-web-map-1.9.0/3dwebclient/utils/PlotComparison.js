@@ -136,23 +136,28 @@ function queryDistanceFilter(selectedPlotsId){
     for (var k = 0; k < selectedPlotsId.length; ++k) {
         const iri = "http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/" + selectedPlotsId[k] +"/";
         let index = k;  // this makes sure the index will be synchron with the loop
-        $.ajax({
-            url: "http://localhost:8080/agents/cityobjectinformation",
-            type: 'POST',
-            data: JSON.stringify({'iris': [iri], 'searchDistance': 500}),
-            dataType: 'json',
-            contentType: 'application/json',
-            success: function (data) { //function (data, status_message, xhr)
-                console.log(data);
-                processAllowableUSEandGFA(index+1, data["allowableUSEandGFA"][0]);
-                processDistanceFilter(index+1, data["distanceFilter"][0]);
-                processpresentLandUseGFA(index+1, data["presentLandUseGFA"][0]);
-                processPlotArea (index+1, data["plotArea"]);
-                //console.log(index);
-                //console.log(iri);
-                //console.log(data["allowableUSEandGFA"][0]);}
-            }});
-        
+
+        let searchDistance = {'iris': [iri], 'searchDistance': 500};
+        SendPostRequestToServer("/agents/cityobjectinformation", searchDistance, function(response){
+            processAllowableUSEandGFA(index+1, response["allowableUSEandGFA"][0]);
+            processDistanceFilter(index+1, response["distanceFilter"][0]);
+            processpresentLandUseGFA(index+1, response["presentLandUseGFA"][0]);
+            processPlotArea (index+1, response["plotArea"]);
+        });
+
+        // $.ajax({
+        //     url: "http://localhost:8080/agents/cityobjectinformation",
+        //     type: 'POST',
+        //     data: JSON.stringify({'iris': [iri], 'searchDistance': 500}),
+        //     dataType: 'json',
+        //     contentType: 'application/json',
+        //     success: function (data) { //function (data, status_message, xhr)
+        //         console.log(data);
+        //         processAllowableUSEandGFA(index+1, data["allowableUSEandGFA"][0]);
+        //         processDistanceFilter(index+1, data["distanceFilter"][0]);
+        //         processpresentLandUseGFA(index+1, data["presentLandUseGFA"][0]);
+        //         processPlotArea (index+1, data["plotArea"]);
+        //     }});
     }
 }
 
