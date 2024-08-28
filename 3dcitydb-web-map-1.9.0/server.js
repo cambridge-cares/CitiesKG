@@ -148,8 +148,36 @@
 
     }
 
+    const fetchFromBlazegraph = async (req, res) => {
+        let response = null
+        //const localServerUrl = 'http://host.docker.internal:48888/access-agent/access';  // this is for inside of the container
+        const localServerUrl = 'http://localhost:48888/access-agent/access';
+
+        console.log("Request JSON: ", req.body)
+        console.log("Forwarding to: ", localServerUrl);
+        try {
+            response = await axios.post(localServerUrl, req.body);
+            //response = await axios.post("https://reqres.in/api/users", req.body);
+            console.log("Response: ", response.data)
+            return response.data  // could triggered app crashes if input is wrong
+        } catch (error) {
+            console.error(error)
+        }
+
+    }
     app.post('/agents/cityobjectinformation', async (req, res) => {
         const result = await fetchFromLocalhost(req, res)
+        res.send(result)
+    })
+
+    app.post('/agents/distance', async (req, res) => {
+        const result = await fetchFromLocalhost(req, res)
+        res.send(result)
+    })
+
+    app.post('/access-agent/access', async (req, res) => {
+
+        const result = await fetchFromBlazegraph(req, res)
         res.send(result)
     })
 
@@ -206,21 +234,6 @@
         var dir = path.join(__dirname, '3dwebclient', split[2]);
         var files = fs.readdirSync(dir);
         res.send(files);
-    });
-    
-    app.post('/agents/cityobjectinformation', async (req, res)=> {
-	    console.log("Request body: ", req.body);
-	    try {
-		    const localServerUrl = 'http://host.docker.internal:8080/agents/cityobjectinformation';
-		    const response = await axios.post(localServerUrl, req.body);
-		
-		    console.log("Response data: ", response.data);
-		    res.send(response.data);
-	    } catch (error) {
-		    console.error("Error forwarding request: ", error.message);
-
-		    res.send(error.message);
-	    }
     });
 
     app.get('/', (req, res)=> {
