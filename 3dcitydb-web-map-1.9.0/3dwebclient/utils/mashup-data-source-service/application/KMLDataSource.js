@@ -1,3 +1,5 @@
+
+
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -190,20 +192,6 @@ var KMLDataSource = /** @class */ (function (_super) {
                 break;
         }
     };
-    //
-    ///url: "http://www.theworldavatar.com/agents/cityobjectinformation",
-    function SendPostRequestToServer (relativeUrl, jsonObject, HandleResponse){
-        jQuery.ajax({
-            url: relativeUrl,
-            type: 'POST',
-            data: JSON.stringify(jsonObject),
-            dataType: 'json',
-            contentType: 'application/json',
-            success: function (data) {
-                console.log("success: ", data);
-                HandleResponse(data);
-            }});
-    }
 
     KMLDataSource.prototype.queryUsingId = function (id, callback, limit, clickedObject) {
         console.log(clickedObject);
@@ -218,9 +206,8 @@ var KMLDataSource = /** @class */ (function (_super) {
         context_obj[context_url] = {};
 
         var cia_data = context_url ? {iris: [iri], context: context_obj} : {iris: [iri]};
-        var serverUrl = "/agents/cityobjectinformation";
 
-        SendPostRequestToServer (serverUrl, cia_data, function(response){
+        SendPostRequestToServer ("/agents/cityobjectinformation", cia_data, function(response){
             callback(response);
         });
         // Test: Move the call to localhost to server side - server.js
