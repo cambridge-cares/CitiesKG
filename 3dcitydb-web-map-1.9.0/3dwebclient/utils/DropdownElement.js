@@ -58,7 +58,7 @@ function buildDropdownQuery(predicate, may_predicate){
 	return "PREFIX zo:<http://www.theworldavatar.com/ontology/ontozoning/OntoZoning.owl#> "
 			+ "SELECT DISTINCT ?g WHERE { GRAPH <http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/ontozone/> "
 			+ "{ ?zone zo:" + predicate + " | zo:" + may_predicate+ " ?g . } }"
-}
+};
 
 /**
  * Check if the Key predicate already exists in the local storage
@@ -108,7 +108,7 @@ function getDropdownElements(predicate, may_predicate, element_type, dropdown_ty
 		}
 	} else {
 		// For first-time users, the content of the dropdown list needs to be pulled from the database
-		let jsonObject = {targetresourceiri:CONTEXT + "-" + CITY , sparqlquery: buildDropdownQuery(predicate, may_predicate)};
+		let jsonObject = {'targetresourceiri': "http://localhost:48888/singaporeEPSG4326", 'sparqlquery': buildDropdownQuery(predicate, may_predicate)};
 
 		SendPostRequestToServer("/access-agent/access", jsonObject, function(response){
 			console.log(response["result"])

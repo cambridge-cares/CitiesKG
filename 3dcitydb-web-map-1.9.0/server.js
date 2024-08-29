@@ -130,10 +130,10 @@
     });
 
     const fetchFromLocalhost = async (req, res) => {
-        console.log("Log from fetchLocalhost!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        
         let response = null
-        //const localServerUrl = 'http://host.docker.internal:8080/agents/cityobjectinformation';  // this is for inside of the container
-        const localServerUrl = 'http://localhost:8080/agents/cityobjectinformation';
+        const localServerUrl = 'http://host.docker.internal:8080/agents/cityobjectinformation';  // this is for inside of the container
+        //const localServerUrl = 'http://localhost:8080/agents/cityobjectinformation';
 
         console.log("Request JSON: ", req.body)
         console.log("Forwarding to: ", localServerUrl);
@@ -150,8 +150,8 @@
 
     const fetchFromBlazegraph = async (req, res) => {
         let response = null
-        //const localServerUrl = 'http://host.docker.internal:48888/access-agent/access';  // this is for inside of the container
-        const localServerUrl = 'http://localhost:48888/access-agent/access';
+        const localServerUrl = 'http://host.docker.internal:48888/access-agent/access';  // this is for inside of the container
+        //const localServerUrl = 'http://localhost:48888/access-agent/access';
 
         console.log("Request JSON: ", req.body)
         console.log("Forwarding to: ", localServerUrl);

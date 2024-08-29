@@ -15,7 +15,8 @@ function SendPostRequestToServer (relativeUrl, jsonObject, HandleResponse) {
             HandleResponse(data);
         },
         error: function(XMLHttpRequest, textStatus, errorThrown) {
-            alert("Status: " + textStatus); alert("Error: " + errorThrown);
+            	alert("Error coming from "+ relativeUrl);
+		alert("Status: " + textStatus); alert("Error: " + errorThrown);
         }
     });
 }
