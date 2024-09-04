@@ -6,6 +6,10 @@
  *
  * Credit to 3DCityDB-Web-Map: http://www.3dcitydb.org/
  *
+ * Copyright 2020 - 2023
+ * Singapore ETH Center
+ * and
+ * Cambridge centre for Advanced Research and Education in Singapore LTD.
  *
  * This work is jointly developed by the following research partners:
  * Singapore ETH Center
@@ -566,6 +570,8 @@ function showChooseDevType(){
  *
  */
 function chooseDemoType(obj) {
+
+	//document.getElementById("navigationDiv").style.display = "None";
 	// reset all nav links color
 	let navLinks = document.getElementsByClassName("navLink");
 	for (let i = 0; i < navLinks.length; i++){
@@ -576,15 +582,26 @@ function chooseDemoType(obj) {
 	obj.style.color = "white";
 	document.getElementById("demoTitle").innerText = obj.innerText;
 
+	var imageryProviders = cesiumViewer.baseLayerPicker.viewModel.imageryProviderViewModels;
+
 	switch (selectedDemo) {
 		case "PPF":
-			document.getElementById("demo").style.display = "inline-block";
+			document.getElementById("demo1").style.display = "inline-block";
+			document.getElementById("demo2").style.display = "None";
+			document.getElementById("keyGrowthAreas").style.display = "flex";
+			document.getElementById("comparisonPanel").style.display = "None";
+			cesiumViewer.baseLayerPicker.viewModel.selectedImagery = imageryProviders[8];  // Basemap: StamenToner
 			break;
-		case "demo2":
-			document.getElementById("demo").style.display = "None";
+		case "PlotComparison":
+			document.getElementById("demo1").style.display = "None";
+			document.getElementById("demo2").style.display = "inline-block";
+			document.getElementById("keyGrowthAreas").style.display = "None";
+			document.getElementById("comparisonPanel").style.display = "flex";
+			cesiumViewer.baseLayerPicker.viewModel.selectedImagery = imageryProviders[6];  // Basemap: OSM
 			break;
 		case "demo3":
-			document.getElementById("demo").style.display = "None";
+			document.getElementById("demo1").style.display = "None";
+			document.getElementById("demo2").style.display = "None";
 			break;
 	}
 }
@@ -601,7 +618,7 @@ function resetAllInputs(){
 	let lastQuerySentence = document.getElementsByClassName('querySentence')[0].innerHTML;
 
 	// Clear all the existing checkboxes
-	let demoToolbox = document.getElementById("demo");
+	let demoToolbox = document.getElementById("demo1");
 	//var checkboxes = toolbox.getElementsByClassName('checkbox');
 	let checkedCheckboxes = demoToolbox.querySelectorAll('input[type="checkbox"]:checked');
 	checkedCheckboxes.forEach((checkbox) => {

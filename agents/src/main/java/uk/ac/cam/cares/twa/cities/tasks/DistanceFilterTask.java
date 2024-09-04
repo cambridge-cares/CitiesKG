@@ -192,20 +192,24 @@ public class DistanceFilterTask {
      */
     public static double[] getEnvelopFromString(String envelopStr){
         String[] pointXYZList = envelopStr.split("#");
-        List<Double[]> points = new LinkedList<>();
+        double[][] double3DArray;
 
         if (pointXYZList.length % 3 == 0) {
+            int numOfPoints = pointXYZList.length / 3;
+            double3DArray = new double[numOfPoints][3];
+            int indexNum = 0;
             // 3d coordinates
             for (int i = 0; i < pointXYZList.length; i = i + 3) {
-                points.add(new Double[]{Double.parseDouble(pointXYZList[i]), Double.parseDouble(pointXYZList[i + 1]), Double.parseDouble(pointXYZList[i + 2])});
+                double3DArray[indexNum][0] = Double.parseDouble(pointXYZList[i]);
+                double3DArray[indexNum][1] = Double.parseDouble(pointXYZList[i+1]);
+                double3DArray[indexNum][2] = Double.parseDouble(pointXYZList[i+2]);
+                indexNum++;
             }
+            return Transform.getEnvelopeFromPoints(double3DArray);
         }else {
             System.out.println("InputString has no valid format");
             return null;
         }
-
-        double[][] pointsArray = (double[][]) points.toArray();
-        return Transform.getEnvelopeFromPoints(pointsArray);
     }
 
     /**

@@ -43,7 +43,7 @@ public class CityInformationAgentTest {
     public void testNewCityInformationAgentFields() {
         CityInformationAgent agent = new CityInformationAgent();
 
-        assertEquals(37, agent.getClass().getDeclaredFields().length);
+        assertEquals(35, agent.getClass().getDeclaredFields().length);
 
         try {
             assertEquals("/cityobjectinformation", agent.getClass().getDeclaredField("URI_CITY_OBJECT_INFORMATION").get(agent));
