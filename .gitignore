@@ -44,7 +44,7 @@ ${tomcatPath}/
 */3dwebclient/*.png
 */3dwebclient/datastore/*
 */3dwebclient/exported_*
-
+*/3dwebclient/singaporeEPSG4326/
 
 # For docker branch
 # ignore the personalized credentials for cares maven library
