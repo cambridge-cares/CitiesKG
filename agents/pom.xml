@@ -46,7 +46,7 @@
         <testSourceDirectory>src/test/java</testSourceDirectory>
         <testResources>
             <testResource>
-                <directory>${project.basedir}/src/test/resources</directory>
+                <directory>src/test/resources</directory>
             </testResource>
             <testResource>
                 <directory>${project.basedir}/../utils</directory>
@@ -79,7 +79,7 @@
                     <configuration>
                         <warName>${project.artifactId}##${project.version}</warName>
                         <!--suppress UnresolvedMavenProperty -->
-                        <outputDirectory>${tomcatPath}/webapps</outputDirectory>
+                        <outputDirectory>webapps</outputDirectory>
                         <webResources>
                             <resource>
                                 <directory>${basedir}/WEB-INF</directory>

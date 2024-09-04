@@ -13,7 +13,6 @@ import org.apache.logging.log4j.Logger;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -49,7 +48,7 @@ public class UPRNTask implements Runnable {
 
   // for Features API
   private static final String FEATURES_API_ENDPOINT = "https://api.os.uk/features/v1/wfs";
-  private final String osApiKey = ResourceBundle.getBundle("config").getString("os.api.key");
+  private final String osApiKey = ResourceBundle.getBundle("CKGAgentConfig").getString("os.api.key");
 
   private static final GeometryFactory geometryFactory = new GeometryFactory();
   private static final CoordinateReferenceSystem epsg27700;

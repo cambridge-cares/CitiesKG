@@ -36,7 +36,7 @@ public class CitiesKGVocabularyTest extends TestCase {
             log.setAccessible(true);
             err.setAccessible(true);
             assertEquals("uk.ac.cam.cares.jps.cities.db.CitiesKGVocabulary", ((Logger) log.get(vocab)).getName());
-            assertEquals("config.properties", vocab.getClass().getDeclaredField("CFG_PATH").get(vocab));
+            assertEquals("CKGAgentConfig.properties", vocab.getClass().getDeclaredField("CFG_PATH").get(vocab));
             assertEquals("db.uris", vocab.getClass().getDeclaredField("CFG_KEY_URIS").get(vocab));
             assertEquals("Could not load ", err.get(vocab));
         } catch (NoSuchFieldException | IllegalAccessException e) {
@@ -56,7 +56,7 @@ public class CitiesKGVocabularyTest extends TestCase {
             assertNotNull(vocab.getClass().getDeclaredMethod("getPropertyFromPath", String.class, String.class));
             Method getURIs = vocab.getClass().getDeclaredMethod("getPropertyFromPath", String.class, String.class);
             getURIs.setAccessible(true);
-            assertEquals(JSONArray.class, getURIs.invoke(vocab, "config.properties", "db.uris").getClass());
+            assertEquals(JSONArray.class, getURIs.invoke(vocab, "CKGAgentConfig.properties", "db.uris").getClass());
 
             try {
                 getURIs.invoke(vocab, "non-existent", "db.uris");
@@ -65,7 +65,7 @@ public class CitiesKGVocabularyTest extends TestCase {
             }
 
             try {
-                getURIs.invoke(vocab, "config.properties", "non-existent");
+                getURIs.invoke(vocab, "CKGAgentConfig.properties", "non-existent");
             } catch (InvocationTargetException e) {
                 assertEquals(e.getTargetException().getStackTrace()[2].getClassName(), "org.json.JSONArray");
             }

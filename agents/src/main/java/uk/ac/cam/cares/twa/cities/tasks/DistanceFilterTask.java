@@ -9,7 +9,6 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementService;
-import org.citydb.config.internal.Internal;
 import org.citydb.database.adapter.blazegraph.GeoSpatialProcessor;
 import org.json.JSONArray;
 import org.json.JSONObject;

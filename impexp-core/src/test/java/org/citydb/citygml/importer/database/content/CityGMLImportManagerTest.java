@@ -1,13 +1,6 @@
 package org.citydb.citygml.importer.database.content;
 
-import org.citydb.citygml.importer.CityGMLImportException;
-import org.hsqldb.jdbc.JDBCConnection;
 import org.junit.jupiter.api.Test;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.*;
 

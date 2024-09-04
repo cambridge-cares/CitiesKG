@@ -1,11 +1,7 @@
 package uk.ac.cam.cares.twa.cities.tasks.geo;
 
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.BlockingQueue;
 import org.apache.commons.io.FileUtils;
 import org.citydb.ImpExp;
-import org.eclipse.jetty.server.Server;
-import org.json.JSONObject;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import java.io.File;
 import java.io.IOException;

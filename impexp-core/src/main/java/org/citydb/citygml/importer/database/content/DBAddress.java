@@ -27,7 +27,6 @@
  */
 package org.citydb.citygml.importer.database.content;
 
-import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;

@@ -424,7 +424,7 @@ public class KmlExporterManager {
 				if (useTiling && 
 						config.getProject().getKmlExporter().isOneFilePerObject() &&
 						!config.getProject().getKmlExporter().isExportAsKmz())
-					parentFrame.append(".."); // one up
+					parentFrame.append("main"); // one up
 				else
 					parentFrame.append("."); // same folder
 				parentFrame.append('/').append(BalloonTemplateHandler.balloonDirectoryName);
@@ -538,7 +538,7 @@ public class KmlExporterManager {
 				while (iterator.hasNext()) {
 					String imageFilename = iterator.next();
 					byte[] ordImageBytes = textureExportAdapter.getInByteArray(colladaBundle.getUnsupportedTexImageIds().get(imageFilename), imageFilename);
-					zipEntry = imageFilename.startsWith("..") ?
+					zipEntry = imageFilename.startsWith("main") ?
 							new ZipEntry(imageFilename.substring(3)): // skip .. and File.separator
 								new ZipEntry(colladaBundle.getId() + "/" + imageFilename);
 							zipOut.putNextEntry(zipEntry);
@@ -555,7 +555,7 @@ public class KmlExporterManager {
 					BufferedImage texImage = colladaBundle.getTexImages().get(imageFilename).getBufferedImage();
 					String imageType = imageFilename.substring(imageFilename.lastIndexOf('.') + 1);
 
-					zipEntry = imageFilename.startsWith("..") ?
+					zipEntry = imageFilename.startsWith("main") ?
 							new ZipEntry(imageFilename.substring(3)): // skip .. and File.separator
 								new ZipEntry(colladaBundle.getId() + "/" + imageFilename);
 							zipOut.putNextEntry(zipEntry);

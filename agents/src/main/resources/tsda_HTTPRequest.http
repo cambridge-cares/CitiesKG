@@ -1,7 +1,7 @@
 PUT http://localhost:8080/agents/discovery/thematicsurface
 Content-Type: application/json
 
-// the config.properties in this folder must also have uri.route set to your target resource
+// the CKGAgentConfig.properties in this folder must also have uri.route set to your target resource
 // specification of no lod arguments -> all of lods 1, 2, 3, 4 "true".
 // specify "cityObjectIRI": "http://localhost:9999/blazegraph/namespace/building/..../" to only process one building.
 // specify "mode": "restructure" to convert lodXMultiSurfaces into thematic surfaces

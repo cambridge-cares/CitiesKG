@@ -1,38 +1,21 @@
 package uk.ac.cam.cares.twa.cities.agents.geo;
 
 import lombok.Getter;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
-import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.graph.NodeFactory;
-import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
-import org.geotools.geometry.jts.JTS;
-import org.geotools.referencing.CRS;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 import uk.ac.cam.cares.jps.base.agent.JPSAgent;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.ogm.models.ModelContext;
 import uk.ac.cam.cares.ogm.models.SPARQLUtils;
 import uk.ac.cam.cares.twa.cities.model.geo.*;
-import uk.ac.cam.cares.twa.cities.models.osid.UPRN;
 import uk.ac.cam.cares.twa.cities.tasks.geo.UPRNTask;
 
 import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.HttpMethod;
-import java.io.IOException;
-import java.math.BigInteger;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -51,7 +34,7 @@ public class UPRNAgent extends JPSAgent {
   private static final String QM = "?";
   private static final String SRS = "srs";
 
-  private final String targetResourceId = ResourceBundle.getBundle("config").getString("uri.route");
+  private final String targetResourceId = ResourceBundle.getBundle("CKGAgentConfig").getString("uri.route");
 
   @Getter private String buildingIri;
   @Getter private String namespaceIri;

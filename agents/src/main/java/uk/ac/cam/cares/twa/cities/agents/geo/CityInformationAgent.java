@@ -254,10 +254,10 @@ public class CityInformationAgent extends JPSAgent {
 
 
   /**
-   * reads variable values relevant for CityInformationAgent class from config.properties file.
+   * reads variable values relevant for CityInformationAgent class from CKGAgentConfig.properties file.
    */
   private void readConfig() {
-    ResourceBundle config = ResourceBundle.getBundle("config");
+    ResourceBundle config = ResourceBundle.getBundle("CKGAgentConfig");
     lazyload = Boolean.getBoolean(config.getString("loading.status"));
     route = config.getString("uri.route");
     zo = config.getString("uri.ontology.ontozoning");

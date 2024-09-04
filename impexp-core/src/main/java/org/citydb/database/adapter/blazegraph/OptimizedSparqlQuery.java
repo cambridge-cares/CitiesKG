@@ -7,16 +7,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import javax.xml.transform.Result;
 import oracle.jdbc.proxy.annotation.Pre;
-import org.apache.jena.arq.querybuilder.AbstractQueryBuilder;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
-import org.apache.jena.arq.querybuilder.WhereBuilder;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
-import org.citydb.sqlbuilder.select.Select;
-import org.postgresql.jdbc2.ArrayAssistantRegistry;
 
 public class OptimizedSparqlQuery {
   private static final String QST_MARK = "?";

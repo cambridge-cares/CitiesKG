@@ -20,13 +20,13 @@ These detailed instructions describes the setup on a windows machine, for Mac OS
 * Java JRE or JDK >= 1.8
 * [Tomcat 9](https://www.liquidweb.com/kb/installing-tomcat-9-on-windows/)
 * [Maven](https://maven.apache.org/) - Dependency Management >= 3.8.4
-* Python 3
+* Python 3 (for the import agent)
+* Credential in /.m2 (required before compiling the code)
 
 JDK or JRE will need to be installed on the Windows Server before you can configure Tomcat 9 on the server.
 If Java and Maven are installed correctly and set as [environment variables](https://docs.oracle.com/en/database/oracle/machine-learning/oml4r/1.5.1/oread/creating-and-modifying-environment-variables-on-windows.html#GUID-DD6F9982-60D5-48F6-8270-A27EC53807D0), you should be able to check the version information using the following commands on the IDE terminal or CMD window.
 
 In order to use those commands via CLI (Command Line Interface), Maven, Java, Tomcat and Python should be added to *Path* in system variable. And additionally JAVA_HOME should also be configured.
-
 
 For checking Java version, type this command on CMD:
 ```
@@ -51,15 +51,31 @@ Default locale: en_SG, platform encoding: Cp1252
 OS name: "windows 10", version: "10.0", arch: "amd64", family: "windows"
 ```
 
-
 For [Tomcat 9]((https://www.liquidweb.com/kb/installing-tomcat-9-on-windows/)), check the link and learn how to deploy the artifact to tomcat server.
 
 After the tomcat installation, you can find the folder "C:\Program Files\Apache Software Foundation\Tomcat 9.0". 
 This folder is by default not accessible, in order to make it executable, you need to click on the folder and open the folder to view once.  
 
+Setting up the credential for dependency library /.m2
+Create a personal access token on github and apply it to the following commands, copy the generated encrypted password into credential template in .m2/. 
+The generated encrypted password appears with {}.
+
+Replace the <MASTER_PASSWORD> in the .m2/settings-security.xml with the generated string
+```
+mvn --encrypt-master-password <personal access token>
+```
+
+Replace the <PASSWORD> in the .m2/settings.xml with the generated string
+
+```
+mvn --encrypt-password <personal access token>
+```
+
+After the modification, copy these two files into \.m2\ located in the system directory C:\Users\. 
+This step will allow you to compile the code within docker and locally. 
 
 
-### Install and Build
+### Install and Build (agents)
 
 1. Additional dependencies used by agents are JPS_BASE_LIB and AsynchronousWatcherService, which provided by the *TheWorldAvatar* (TWA) project. Both dependencies need to be compiled and installed to the .m2 repository. You may skip this step if both dependencies have been set up before. 
 
@@ -103,7 +119,7 @@ this folder contains all the libraries provided by the server.
 If this step has not been done, you might get a `NoClassDefFoundError`. 
 
 
-### Running a local blazegraph with Java 11
+### Running and accessing a local blazegraph with Java 11
 Run a blazegraph on your local machine for testing and development using one of the following methods:
 1. Deploy a [blazegraph.war](https://github.com/blazegraph/database/releases/tag/BLAZEGRAPH_2_1_6_RC) file on your Tomcat server. The blazegraph will be accessible at localhost:8080/blazegraph (Change port to your Tomcat port).
 OR
@@ -175,34 +191,26 @@ Executing this request, will create a directory at the specified location. When 
 
 Please note that splitting of large files into smaller chunks to improve performance will not work if the `.gml` file contains the `core:` namespace tag in front of CityGML features. Please remove those manually beforehand.
 
-
-## 3DCityDB-Web-Map-Client
-
-We use the 3DCityDB-Web-Map-Client to visualise *CityExportAgent* exported .kml data. We extended original code with new functions and interface elements for displaying analytical capabilities of the *DistanceAgent*. The extended Web-Map-client version can be found in CitiesKG project directory `/CitiesKG/3dcitydb-web-map-1.9.0/`.
-
-### Documentation
-
-A complete and comprehensive documentation on the 3DCityDB-Web-Map-Client is available online here (https://github.com/3dcitydb/3dcitydb-web-map) and here (https://3dcitydb-docs.readthedocs.io/en/release-v4.2.3/webmap/index.html).
-
-### Getting Started
-
-In order to use the extended 3DCityDB-Web-Map-Client for city agents make sure that:
-
-* Your browser support WebGL (visit http://get.webgl.org/ for checking it).
-* Open source JavaScript runtime environment Node.js is installed on your machine (visit https://nodejs.org/en/ to download the latest version). 
-* The extended web-map-client does not have node_modules folder thus, download original web-map-client via the following GitHub link (https://github.com/3dcitydb/3dcitydb-web-map/releases) and copy node_modules folder in `/CitiesKG/3dcitydb-web-map-1.9.0/`.
-
-To run the web-map-client, in a shell environment navigate to the folder where *server.js* file is located `/CitiesKG/3dcitydb-web-map-1.9.0/` and simply run the following command to launch the server:
-
-```
- node server.js
-```
-
-The web-map-client is now available via the URL (http://localhost:8080/3dwebclient/index.html). Place the .kml file in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/` and add the web link of the .kml file in `URL(*)` input field of the web-map-client Toolbox widget. In the input field `Name(*)`, a proper layer name must be specified as well. After clicking AddLayer, the .kml file will be visualised in the web-map-client.
-
+<<<<<<< HEAD
+=======
 Solutions to common issues:
 * DistanceAgent and CityInformationAgent URL, used in POST request, is hardcoded in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/script.js` and `CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/utils/mashup-data-source-service/application/KMLDataSource.js` respectively. If agents are deployed on another port than 8080, agent URL needs to be updated accordingly in the respective files.
 * If *DistanceAgent* is used with .kml files that were generated not by *ExporterAgent*, .kml file should have `<name>` value exactly same way as it is stored in the KG.
+
+## Dockerfile and Docker-compose file
+In order to create a better automated pipeline for development and deployment, we introduce the docker mechanism. 
+>>>>>>> 233-dockerize-the-cia-agent
+
+
+
+
+
+
+
+
+
+
+
 
 ## Contributing
 
@@ -216,6 +224,10 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 * **Shiying Li** (Main Developer) - *CityExporterAgent* *Cesium Demo*
 * **Arkadiusz Chadzynski** - *CityImportAgent*
+<<<<<<< HEAD
+=======
+* **Shiying Li** - *CityExporterAgent (Authoer of this tutorial)*
+>>>>>>> 233-dockerize-the-cia-agent
 * **Ayda Grišiūtė** - *DistanceAgent*
 
 See also the list of [contributors](https://www.theworldavatar.com/citieskg/contributors) who participated in this project.
@@ -223,7 +235,6 @@ See also the list of [contributors](https://www.theworldavatar.com/citieskg/cont
 ## License
 
 This project is licensed under the XYZ  License - see the [LICENSE.md](LICENSE.md) file for details
-
 
 [JPS_AWS]: https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/AsynchronousWatcherService
 [http://localhost:8080]: http://localhost:8080

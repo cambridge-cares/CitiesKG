@@ -27,12 +27,10 @@
  */
 package org.citydb.citygml.importer.database.content;
 
-import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkLinearRing;
 import org.citydb.citygml.common.database.xlink.DBXlinkSolidGeometry;
 import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceGeometry;
 import org.citydb.citygml.importer.CityGMLImportException;
-import org.citydb.citygml.importer.database.SequenceHelper;
 import org.citydb.citygml.importer.util.LocalAppearanceHandler;
 import org.citydb.citygml.importer.util.RingValidator;
 import org.citydb.config.Config;

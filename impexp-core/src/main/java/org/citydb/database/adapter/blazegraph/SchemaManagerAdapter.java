@@ -6,9 +6,7 @@ import org.citydb.database.adapter.AbstractSchemaManagerAdapter;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;

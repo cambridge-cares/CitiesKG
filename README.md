@@ -1,12 +1,25 @@
-<p align="center"><a href="https://fcl.ethz.ch/research/research-projects/cities-knowledge-graph.html" target="_blank" rel="noopener noreferrer"><img width="50%" src="./web/media/CKG_Logo.png" alt="Cities Knowledge Graph logo"></a></p>
+
+<p align="center"><a href="https://fcl.ethz.ch/research/research-projects/cities-knowledge-graph.html" target="_blank" rel="noopener noreferrer"><img width="50%" src="web/media/CKG_Logo.png" alt="Cities Knowledge Graph logo"></a></p>
+
+Cities Knowledge Graph
+=======================
 
 ## Introduction ##
 
-*'PLACEHOLDER'* 
 This research aims to harness rapidly growing and diversifying data streams to improve the planning and design of cities. It will do so by developing an innovative digital platform, known as the Cities Knowledge Graph (CKG), designed to combine data and share knowledge about cities, and to inject new precision and responsiveness to static instruments of planning, such as the city master-​plan.
 
 
-## 3D City Database Importer/Exporter ##
+
+TODO: Introduction to CKG project
+
+Folder structure for different parts of demo
+
+Docker compoase file
+
+Reference to 3dcitydb importer/exporter
+
+3D City Database Importer/Exporter
+
 
 The 3D City Database Importer/Exporter is a Java based front-end for the [3D City Database](https://github.com/3dcitydb/3dcitydb). It allows for high-performance loading and extracting 3D city model data.
 

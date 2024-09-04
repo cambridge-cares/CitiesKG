@@ -409,7 +409,7 @@ function loadSingapore() {
 
     flyToCameraPosition(cameraPostion);
     // find relevant files and load layers
-    getAndLoadLayers('exported_singapore');
+    getAndLoadLayers('singaporeEPSG4326');
 
 }
 
@@ -440,9 +440,11 @@ function getAndLoadLayers(folder) {
         maxCountOfVisibleTiles: 1000 //initial value: 200
     }
 
-    var reqUrl = url + '/files/';
+    // Modified by CKG: the kml needs to be retrieved from "http://localhost:8000/files/"
+    // $.get can only view the first level of files, the subfolder of datastore can not be explored directly
+    var reqUrl = url + '/files/' + folder;
 
-    $.get(reqUrl + folder, function (data) {
+    $.get(reqUrl, function (data) {
         // if data includes 'Tiles', only add MasterJSON as layer, else add all files
         if (data.includes("Tiles")) {
             for (let i = 0; i < data.length; i++) {
@@ -535,8 +537,8 @@ function adjustIonFeatures() {
                 }
             }
 
-            // Ayda: Set default imagery to ESRI World Imagery --> imageryProviders[3]
-            cesiumViewer.baseLayerPicker.viewModel.selectedImagery = imageryProviders[8];
+            // Modified by CKG: load the imagery and basemap, 6 means openstreetmap on the list
+            cesiumViewer.baseLayerPicker.viewModel.selectedImagery = imageryProviders[6];
 
             // Disable auto-complete of OSM Geocoder due to OSM usage limitations
             // see https://operations.osmfoundation.org/policies/nominatim/#unacceptable-use

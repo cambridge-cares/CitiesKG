@@ -35,8 +35,10 @@ public class ADEInfoRow {
     private static final ImageIcon isNotSupported;
 
     static {
-        isSupported = new ImageIcon(ADEInfoRow.class.getResource("/org/citydb/gui/images/common/done.png"));
-        isNotSupported = new ImageIcon(ADEInfoRow.class.getResource("/org/citydb/gui/images/common/clear.png"));
+        isSupported = new ImageIcon(ADEInfoRow.class.getResource(
+            "/org/citydb/gui/images/common/done.png"));
+        isNotSupported = new ImageIcon(ADEInfoRow.class.getResource(
+            "/org/citydb/gui/images/common/clear.png"));
     }
 
     private final String id;

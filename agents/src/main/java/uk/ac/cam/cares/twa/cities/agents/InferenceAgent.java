@@ -136,7 +136,7 @@ public abstract class InferenceAgent extends JPSAgent {
     if (validateInput(requestParams)) {
       try {
         // setup route for AccessAgent and check if targetIri has the trailing /
-        route = ResourceBundle.getBundle("config").getString("uri.route");
+        route = ResourceBundle.getBundle("CKGAgentConfig").getString("uri.route");
         String targetIRI = requestParams.getString(KEY_TARGET_IRI).endsWith("/")
             ? requestParams.getString(KEY_TARGET_IRI)
             : requestParams.getString(KEY_TARGET_IRI).concat("/");

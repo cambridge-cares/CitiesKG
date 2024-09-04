@@ -134,13 +134,19 @@ public class Map {
 			hintIcons[i].setOpaque(false);
 		}
 		
-		hintIcons[0].setIcon(new ImageIcon(getClass().getResource("/org/citydb/gui/images/map/selection.png")));
-		hintIcons[1].setIcon(new ImageIcon(getClass().getResource("/org/citydb/gui/images/map/waypoint_small.png")));
-		hintIcons[2].setIcon(new ImageIcon(getClass().getResource("/org/citydb/gui/images/map/magnifier.png")));
-		hintIcons[3].setIcon(new ImageIcon(getClass().getResource("/org/citydb/gui/images/map/magnifier_plus_selection.png")));
+		hintIcons[0].setIcon(new ImageIcon(getClass().getResource(
+        "/org/citydb/gui/images/map/selection.png")));
+		hintIcons[1].setIcon(new ImageIcon(getClass().getResource(
+        "/org/citydb/gui/images/map/waypoint_small.png")));
+		hintIcons[2].setIcon(new ImageIcon(getClass().getResource(
+        "/org/citydb/gui/images/map/magnifier.png")));
+		hintIcons[3].setIcon(new ImageIcon(getClass().getResource(
+        "/org/citydb/gui/images/map/magnifier_plus_selection.png")));
 		hintIcons[4].setIcon(new ImageIcon(getClass().getResource("/org/citydb/gui/images/map/move.png")));
-		hintIcons[5].setIcon(new ImageIcon(getClass().getResource("/org/citydb/gui/images/map/center.png")));
-		hintIcons[6].setIcon(new ImageIcon(getClass().getResource("/org/citydb/gui/images/map/popup.png")));
+		hintIcons[5].setIcon(new ImageIcon(getClass().getResource(
+        "/org/citydb/gui/images/map/center.png")));
+		hintIcons[6].setIcon(new ImageIcon(getClass().getResource(
+        "/org/citydb/gui/images/map/popup.png")));
 
 		gridBagConstraints = GuiUtil.setConstraints(0, 0, 0, 0, GridBagConstraints.HORIZONTAL, 5, 5, 1, 5);
 		gridBagConstraints.anchor = GridBagConstraints.NORTH;

@@ -27,7 +27,6 @@
  */
 package org.citydb.citygml.importer.database.content;
 
-import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.common.database.xlink.DBXlinkSurfaceDataToTexImage;
 import org.citydb.citygml.common.database.xlink.DBXlinkTextureAssociation;
 import org.citydb.citygml.common.database.xlink.DBXlinkTextureAssociationTarget;

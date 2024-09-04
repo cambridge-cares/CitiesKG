@@ -1,0 +1,21 @@
+FROM node:16
+
+# Working Dir
+WORKDIR /usr/src/app
+
+# Copy Package Json Files
+COPY package*.json .
+
+
+# COPY Source Files
+COPY . .
+RUN mkdir -p datastore
+
+# Install node modules
+RUN npm install
+
+# Expose the API PORT
+EXPOSE 8000
+
+CMD ["node", "server.js"]
+
