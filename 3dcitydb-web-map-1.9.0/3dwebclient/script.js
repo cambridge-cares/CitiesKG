@@ -79,6 +79,7 @@ if ((!Cesium.defined(Cesium.BingMapsApi.defaultKey) || Cesium.BingMapsApi.defaul
 }
 
 var cesiumViewer = new Cesium.Viewer('cesiumContainer', cesiumViewerOptions);
+const cesiumScene = cesiumViewer.scene;
 
 adjustIonFeatures();
 
