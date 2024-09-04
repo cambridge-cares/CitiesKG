@@ -52,4 +52,6 @@ ${tomcatPath}/
 
 # not to upload the war file
 webapps/
+cookie
+db/rules.log
 CEA_AGENT/
