@@ -27,16 +27,25 @@ This research is supported by the National Research Foundation, Prime Ministerâ€
 - **agents folder**: containing the implementation of various agents including CityInformationAgent, CityImportAgent, CityExportAgent, etc. 
 - **access_agent_setup**: containing the code for updating the routing path for access agent
 
-## Deployment of the agents
-maven build 
+## Deployment of the agents and GUI locally (On-premises)
+The backend of the project is developed in Java and can be running locally inside of tomcat server. The frontend including Graphical user interface can be deployed locally within NodeJS server. 
+For building and running, more details are referred to [here](https://github.com/cambridge-cares/CitiesKG/blob/233-dockerize-the-cia-agent/agents/README.md)
 
 
-## Deployment of the project
-Docker compose file
+## Deployment of the project with docker
+For deployment of the project into a new laptop, our researcher also create docker file which allows you to build docker image and run the container without any installation hassle. 
+It allows you to test and try out our demo faster. For Windows OS, you would need to download Docker Desktop. For Linux OS, you can download Docker server. 
 
+To spin up the dockers, you could run the following code in the main directory. The [docker-compose.yml](https://github.com/cambridge-cares/CitiesKG/blob/233-dockerize-the-cia-agent/docker-compose.yml) 
+contains the definition of the containers / services:
+```
+docker-compose up 
+```
+After any changes in the code, you need to rebuild the docker image. Before rebuild, you need to remove the old image first: 
+```
+docker-compose up --build
+```
 
-The 3D City Database Importer/Exporter comes with both a Graphical User Interface (GUI) and a Command Line Interface (CLI). The CLI 
-allows for employing the tool in batch processing workflows and third party applications.
 
 ## License
 
