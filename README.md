@@ -49,11 +49,12 @@ docker-compose up --build
 
 ## Authors and Contributors
 
-* **Shiying Li** (Main Developer) - *CityExporterAgent* *Cesium Demo*
+* **Pieter Herthogs** - Project Leader
+* **Shiying Li** - Software Developer - *CityExporterAgent*, *CKG Demonstration*, *CityInformationAgent*
 * **Arkadiusz Chadzynski** - *CityImportAgent*
-* **Ayda Grišiūtė** - *DistanceAgent*
+* **Ayda Grišiūtė** - *DistanceAgent*, *CityInformationAgent*
 
-See also the list of [contributors](https://www.theworldavatar.com/citieskg/contributors) who participated in this project.
+
 
 ## License
 
