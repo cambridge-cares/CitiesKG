@@ -191,15 +191,12 @@ Executing this request, will create a directory at the specified location. When 
 
 Please note that splitting of large files into smaller chunks to improve performance will not work if the `.gml` file contains the `core:` namespace tag in front of CityGML features. Please remove those manually beforehand.
 
-<<<<<<< HEAD
-=======
+
 Solutions to common issues:
 * DistanceAgent and CityInformationAgent URL, used in POST request, is hardcoded in `/CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/script.js` and `CitiesKG/3dcitydb-web-map-1.9.0/3dwebclient/utils/mashup-data-source-service/application/KMLDataSource.js` respectively. If agents are deployed on another port than 8080, agent URL needs to be updated accordingly in the respective files.
 * If *DistanceAgent* is used with .kml files that were generated not by *ExporterAgent*, .kml file should have `<name>` value exactly same way as it is stored in the KG.
 
-## Dockerfile and Docker-compose file
-In order to create a better automated pipeline for development and deployment, we introduce the docker mechanism. 
->>>>>>> 233-dockerize-the-cia-agent
+
 
 
 
@@ -220,22 +217,4 @@ Please read [CONTRIBUTING.md](https://www.theworldavatar.com/citieskg/contributi
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the (https://www.theworldavatar.com/citieskg/releases).
 
-## Authors and Contributors
 
-* **Shiying Li** (Main Developer) - *CityExporterAgent* *Cesium Demo*
-* **Arkadiusz Chadzynski** - *CityImportAgent*
-<<<<<<< HEAD
-=======
-* **Shiying Li** - *CityExporterAgent (Authoer of this tutorial)*
->>>>>>> 233-dockerize-the-cia-agent
-* **Ayda Grišiūtė** - *DistanceAgent*
-
-See also the list of [contributors](https://www.theworldavatar.com/citieskg/contributors) who participated in this project.
-
-## License
-
-This project is licensed under the XYZ  License - see the [LICENSE.md](LICENSE.md) file for details
-
-[JPS_AWS]: https://github.com/cambridge-cares/TheWorldAvatar/tree/develop/AsynchronousWatcherService
-[http://localhost:8080]: http://localhost:8080
-[Preprint]: https://como.ceb.cam.ac.uk/preprints/283/
