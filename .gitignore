@@ -43,7 +43,7 @@ ${tomcatPath}/
 */3dwebclient/test/*
 */3dwebclient/*.png
 */3dwebclient/datastore/*
-*/3dwebclient/exported_*
+*/3dwebclient/singaporeEPSG4326
 
 
 # For docker branch
