@@ -132,8 +132,8 @@
     const fetchFromLocalhost = async (req, res) => {
         
         let response = null
-        //const localServerUrl = 'http://host.docker.internal:8080/agents/cityobjectinformation';  // this is for inside of the container
-        const localServerUrl = 'http://localhost:8080/agents/cityobjectinformation';
+        const localServerUrl = 'http://host.docker.internal:8080/agents/cityobjectinformation';  // this is for inside of the container
+        //const localServerUrl = 'http://localhost:8080/agents/cityobjectinformation';
 
         console.log("Request JSON: ", req.body)
         console.log("Forwarding to: ", localServerUrl);
