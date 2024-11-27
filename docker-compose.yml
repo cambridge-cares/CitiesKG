@@ -8,6 +8,7 @@ services:
       context: "./3dcitydb-web-map-1.9.0"
     ports:
       - 8000:8000
+    restart: unless-stopped
     environment:
       LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
     volumes:
@@ -24,6 +25,7 @@ services:
       dockerfile: "./dockerfile_war"
     ports:
       - 8080:8080
+    restart: unless-stopped
     environment:
       LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
     extra_hosts:
@@ -41,7 +43,8 @@ services:
       pull_policy: if_not_present
     ports:
       - 48888:8080
-    networks:
+    restart: unless-stopped
+      networks:
       - default
     extra_hosts:
       - "host.docker.internal:host-gateway"
