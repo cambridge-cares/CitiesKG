@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLOntology;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ConsistencyCheckingTaskTest {

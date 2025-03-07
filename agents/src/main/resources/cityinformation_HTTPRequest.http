@@ -1,0 +1,4 @@
+POST http://localhost:8080/agents/cityobjectinformation
+Content-Type: application/json
+
+{"iris":["http://www.theworldavatar.com:83/citieskg/namespace/singaporeEPSG4326/sparql/cityobject/UUID_63fd2f79-2cb6-4494-a5b0-996ececdbd31/"]}

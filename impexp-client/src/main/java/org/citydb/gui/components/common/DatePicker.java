@@ -10,7 +10,6 @@ import org.jdesktop.swingx.JXDatePicker;
 import org.jdesktop.swingx.JXMonthView;
 import org.jdesktop.swingx.plaf.basic.CalendarHeaderHandler;
 import org.jdesktop.swingx.plaf.basic.SpinningCalendarHeaderHandler;
-import org.jdesktop.swingx.prompt.PromptSupport;
 
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -32,8 +31,10 @@ public class DatePicker extends JXDatePicker implements EventHandler {
 
     static {
         UIManager.put("JXDatePicker.border", UIManager.getLookAndFeel().getDefaults().getBorder("TextField.border"));
-        UIManager.put("JXMonthView.monthDownFileName", new ImageIcon(DatePicker.class.getResource("/org/citydb/gui/images/common/left_arrow.png")));
-        UIManager.put("JXMonthView.monthUpFileName", new ImageIcon(DatePicker.class.getResource("/org/citydb/gui/images/common/right_arrow.png")));
+        UIManager.put("JXMonthView.monthDownFileName", new ImageIcon(DatePicker.class.getResource(
+            "/org/citydb/gui/images/common/left_arrow.png")));
+        UIManager.put("JXMonthView.monthUpFileName", new ImageIcon(DatePicker.class.getResource(
+            "/org/citydb/gui/images/common/right_arrow.png")));
         UIManager.put(CalendarHeaderHandler.uiControllerID, SpinningCalendarHeaderHandler.class.getName());
         UIManager.put(SpinningCalendarHeaderHandler.ARROWS_SURROUND_MONTH, Boolean.TRUE);
     }

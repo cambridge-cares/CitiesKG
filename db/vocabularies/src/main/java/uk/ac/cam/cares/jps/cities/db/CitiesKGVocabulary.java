@@ -28,7 +28,7 @@ import java.util.Properties;
  */
 public class CitiesKGVocabulary extends BigdataCoreVocabulary_v20160317 {
     private static final transient Logger log = Logger.getLogger(CitiesKGVocabulary.class);
-    public final static String CFG_PATH = "config.properties";
+    public final static String CFG_PATH = "CKGAgentConfig.properties";
     public final static String CFG_KEY_URIS = "db.uris";
     protected final String CFG_ERR = "Could not load ";
 

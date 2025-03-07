@@ -5,7 +5,6 @@ import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.citydb.citygml.importer.database.content.DBObjectTestHelper;
 import org.citydb.database.adapter.AbstractDatabaseAdapter;
 import org.citydb.database.adapter.blazegraph.OptimizedSparqlQuery;
-import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;

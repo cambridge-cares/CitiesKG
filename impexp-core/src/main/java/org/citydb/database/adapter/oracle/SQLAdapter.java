@@ -34,7 +34,6 @@ import org.citydb.database.adapter.BlobExportAdapter;
 import org.citydb.database.adapter.BlobImportAdapter;
 import org.citydb.database.adapter.BlobType;
 import org.citydb.query.filter.selection.operator.spatial.SpatialOperatorName;
-import org.citydb.sqlbuilder.SQLStatement;
 import org.citydb.sqlbuilder.expression.IntegerLiteral;
 import org.citydb.sqlbuilder.expression.PlaceHolder;
 import org.citydb.sqlbuilder.expression.StringLiteral;
@@ -44,7 +43,6 @@ import org.citydb.sqlbuilder.select.operator.comparison.ComparisonFactory;
 import org.citydb.sqlbuilder.select.projection.Function;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class SQLAdapter extends AbstractSQLAdapter {

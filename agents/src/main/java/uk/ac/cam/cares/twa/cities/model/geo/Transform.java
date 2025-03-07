@@ -1,5 +1,6 @@
 package uk.ac.cam.cares.twa.cities.model.geo;
 
+import gov.nasa.worldwind.ogc.kml.KMLPolygon;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

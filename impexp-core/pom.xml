@@ -58,13 +58,13 @@
               </configuration>
             </execution>
            <execution>
-               <id>sdoapi-19.3.0.0r</id>
+               <id>sdoapi-19.3.0.0</id>
                <phase>initialize</phase>
                <goals>
                  <goal>install-file</goal>
                </goals>
                <configuration>
-               <file>${project.basedir}/lib/sdoapi-19.3.0.0.jar</file>
+               <file>lib/sdoapi-19.3.0.0.jar</file>
                  <groupId>com.oracle.spatial</groupId>
                  <artifactId>sdoapi</artifactId>
                  <version>19.3.0.0</version>

@@ -34,7 +34,6 @@ import org.citydb.sqlbuilder.SQLStatement;
 import org.citydb.sqlbuilder.expression.PlaceHolder;
 import org.citydb.sqlbuilder.schema.Column;
 import org.citydb.sqlbuilder.select.PredicateToken;
-import org.citydb.sqlbuilder.select.Select;
 import org.citydb.sqlbuilder.select.projection.Function;
 
 import java.sql.Connection;

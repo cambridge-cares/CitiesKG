@@ -94,14 +94,12 @@ import org.citygml4j.model.citygml.CityGML;
 import org.citygml4j.model.gml.GMLClass;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.apache.commons.io.FileUtils;
 
 public class Importer implements EventHandler {
 	private final Logger log = Logger.getInstance();

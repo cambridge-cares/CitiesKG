@@ -1,0 +1,13 @@
+.idea/
+${tomcatPath}/
+CEA_AGENT/
+db/
+
+
+credentials/
+*/target/
+*/build/
+
+agents/README-resources/
+*/webapps
+

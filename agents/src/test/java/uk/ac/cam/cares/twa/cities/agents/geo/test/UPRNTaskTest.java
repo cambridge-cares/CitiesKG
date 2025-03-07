@@ -3,14 +3,12 @@ package uk.ac.cam.cares.twa.cities.agents.geo.test;
 import junit.framework.TestCase;
 import org.json.JSONObject;
 import org.locationtech.jts.geom.Coordinate;
-import uk.ac.cam.cares.twa.cities.agents.geo.UPRNAgent;
 import uk.ac.cam.cares.ogm.models.ModelContext;
 import uk.ac.cam.cares.twa.cities.model.geo.CityObject;
 import uk.ac.cam.cares.twa.cities.model.geo.GeometryType;
 import uk.ac.cam.cares.twa.cities.models.osid.UPRN;
 import uk.ac.cam.cares.twa.cities.tasks.geo.UPRNTask;
 
-import javax.ws.rs.HttpMethod;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 

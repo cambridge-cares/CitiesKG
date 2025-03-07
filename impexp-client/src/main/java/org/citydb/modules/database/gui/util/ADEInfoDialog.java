@@ -115,11 +115,13 @@ public class ADEInfoDialog extends JDialog {
             JLabel statusText = new JLabel();
             if (adeInfo.hasDatabaseSupport() && adeInfo.hasImpexpSupport()) {
                 statusText.setText(Language.I18N.getString("db.dialog.ade.status.ok"));
-                statusText.setIcon(new ImageIcon(ADEInfoRow.class.getResource("/org/citydb/gui/images/common/done.png")));
+                statusText.setIcon(new ImageIcon(ADEInfoRow.class.getResource(
+                    "/org/citydb/gui/images/common/done.png")));
             } else {
                 statusText.setText(adeInfo.hasDatabaseSupport() ? Language.I18N.getString("db.dialog.ade.status.noImpExp") :
                         Language.I18N.getString("db.dialog.ade.status.noDB"));
-                statusText.setIcon(new ImageIcon(ADEInfoRow.class.getResource("/org/citydb/gui/images/common/error_outline.png")));
+                statusText.setIcon(new ImageIcon(ADEInfoRow.class.getResource(
+                    "/org/citydb/gui/images/common/error_outline.png")));
             }
 
             // Top-level feature types
@@ -147,7 +149,7 @@ public class ADEInfoDialog extends JDialog {
             }
 
             JLabel objectClassIdLabel = new JLabel("ObjectClassId");
-            JTextField objectClassIdText = createTextField(lowerObjectClassId + " .. " + upperObjectClassId);
+            JTextField objectClassIdText = createTextField(lowerObjectClassId + " " + upperObjectClassId);
 
             // XML schema information
             JXTitledSeparator xmlSeparator = new JXTitledSeparator(Language.I18N.getString("db.dialog.ade.label.xml.schema"));

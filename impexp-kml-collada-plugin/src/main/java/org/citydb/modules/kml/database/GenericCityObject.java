@@ -56,9 +56,6 @@ import org.citydb.modules.kml.util.AffineTransformer;
 import org.citydb.modules.kml.util.BalloonTemplateHandler;
 import org.citydb.modules.kml.util.ElevationServiceHandler;
 import org.citydb.query.Query;
-import org.citydb.util.Util;
-import org.citygml4j.geometry.Matrix;
-import org.citygml4j.geometry.Point;
 
 import javax.vecmath.Point3d;
 import javax.xml.bind.JAXBException;

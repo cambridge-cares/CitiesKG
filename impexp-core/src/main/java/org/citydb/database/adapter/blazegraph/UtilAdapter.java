@@ -2,7 +2,6 @@ package org.citydb.database.adapter.blazegraph;
 
 import org.apache.jena.arq.querybuilder.ExprFactory;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
-import org.apache.jena.ext.com.google.common.primitives.Doubles;
 import org.citydb.config.geometry.BoundingBox;
 import org.citydb.config.geometry.GeometryObject;
 import org.citydb.config.project.database.DatabaseSrs;
@@ -12,7 +11,6 @@ import org.citydb.database.adapter.AbstractUtilAdapter;
 import org.citydb.database.adapter.IndexStatusInfo;
 import org.citydb.database.connection.DatabaseMetaData;
 import org.citydb.database.version.DatabaseVersion;
-import org.citygml4j.factory.DimensionMismatchException;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateXY;
 import org.locationtech.jts.geom.CoordinateXYZM;

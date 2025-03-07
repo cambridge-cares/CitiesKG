@@ -42,7 +42,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import org.citygml4j.model.gml.base.AbstractGML;
 
 public class LocalAppearanceHandler {
 	private final CityGMLImportManager importer;

@@ -20,7 +20,8 @@ public class UtilitiesTest {
         // set up a directory and file for testGetInputFiles and testGetInputDir
         try {
             this.testDir.mkdirs();
-            File testFileResource = new File(Objects.requireNonNull(this.getClass().getResource("/summary_1.csv")).getFile());
+            File testFileResource = new File(Objects.requireNonNull(this.getClass().getResource(
+                "/summary_1.csv")).getFile());
             Files.copy(testFileResource.toPath(), this.testFile.toPath());
         } catch (IOException e) {
             fail();

@@ -51,7 +51,8 @@ public class EnvelopeCentroidTest {
     @Test
     public void testCalcEnvelope() throws IOException, XMLStreamException {
         // test case for multigeom
-        KMLRoot kmlRoot = KMLRoot.create(Objects.requireNonNull(this.getClass().getResource("/testoutput.kml")).getFile());
+        KMLRoot kmlRoot = KMLRoot.create(Objects.requireNonNull(this.getClass().getResource(
+            "/testoutput.kml")).getFile());
         kmlRoot.parse();
         KMLAbstractContainer abCon = (KMLAbstractContainer) kmlRoot.getFeature();
 

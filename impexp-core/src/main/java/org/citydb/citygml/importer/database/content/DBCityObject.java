@@ -27,7 +27,6 @@
  */
 package org.citydb.citygml.importer.database.content;
 
-import org.apache.jena.graph.NodeFactory;
 import org.citydb.ade.model.LineageProperty;
 import org.citydb.ade.model.ReasonForUpdateProperty;
 import org.citydb.ade.model.UpdatingPersonProperty;

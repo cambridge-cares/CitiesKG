@@ -289,12 +289,14 @@ public class XSLTransformationPanel extends AbstractPreferencesComponent {
             browseButton.setMargin(new Insets(0, browseButton.getInsets().left, 0, browseButton.getInsets().right));
 
             addButton = new JButton();
-            ImageIcon add = new ImageIcon(getClass().getResource("/org/citydb/gui/images/common/add.png"));
+            ImageIcon add = new ImageIcon(getClass().getResource(
+                "/org/citydb/gui/images/common/add.png"));
             addButton.setIcon(add);
             addButton.setMargin(new Insets(0, 0, 0, 0));
 
             removeButton = new JButton();
-            ImageIcon remove = new ImageIcon(getClass().getResource("/org/citydb/gui/images/common/remove.png"));
+            ImageIcon remove = new ImageIcon(getClass().getResource(
+                "/org/citydb/gui/images/common/remove.png"));
             removeButton.setIcon(remove);
             removeButton.setMargin(new Insets(0, 0, 0, 0));
 

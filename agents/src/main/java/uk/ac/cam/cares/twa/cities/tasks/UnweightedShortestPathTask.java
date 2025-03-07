@@ -203,7 +203,7 @@ public class UnweightedShortestPathTask implements UninitialisedDataAndResultQue
      * @return fresh update builder.
      */
     private UpdateBuilder persistUpdate(UpdateBuilder ub) {
-        AccessAgentCaller.updateStore(ResourceBundle.getBundle("config").getString("uri.route"),
+        AccessAgentCaller.updateStore(ResourceBundle.getBundle("CKGAgentConfig").getString("uri.route"),
             ub.build().toString());
         ub = prepareUpdateBuilder();
 

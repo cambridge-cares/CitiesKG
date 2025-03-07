@@ -57,7 +57,8 @@ class KMLTilingTaskTest {
         if (unsortedKmlFile) {
             try {
                 if (!this.unsortedDir.exists()) this.unsortedDir.mkdirs();
-                File kml = new File(Objects.requireNonNull(this.getClass().getResource("/testoutput.kml")).getFile());
+                File kml = new File(Objects.requireNonNull(this.getClass().getResource(
+                    "/testoutput.kml")).getFile());
                 Files.copy(kml.toPath(), this.unsortedKmlFile.toPath());
             } catch (IOException e) {
                 fail();
@@ -67,7 +68,8 @@ class KMLTilingTaskTest {
         if (summcsv) {
             try {
                 if (!this.sortedDir.exists()) this.sortedDir.mkdirs();
-                File csv = new File(Objects.requireNonNull(this.getClass().getResource("/summary_1.csv")).getFile());
+                File csv = new File(Objects.requireNonNull(this.getClass().getResource(
+                    "/summary_1.csv")).getFile());
                 Files.copy(csv.toPath(), this.summcsv.toPath());
             } catch (IOException e) {
                 fail();
@@ -77,7 +79,8 @@ class KMLTilingTaskTest {
         if (sortedcsv) {
             try {
                 if (!this.sortedDir.exists()) this.sortedDir.mkdirs();
-                File csv = new File(Objects.requireNonNull(this.getClass().getResource("/sorted_summary_1.csv")).getFile());
+                File csv = new File(Objects.requireNonNull(this.getClass().getResource(
+                    "/sorted_summary_1.csv")).getFile());
                 Files.copy(csv.toPath(), this.sortedcsv.toPath());
             } catch (IOException e) {
                 fail();

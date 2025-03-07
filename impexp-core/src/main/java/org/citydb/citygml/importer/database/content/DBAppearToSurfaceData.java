@@ -32,7 +32,6 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.apache.jena.graph.NodeFactory;
 import org.citydb.citygml.importer.CityGMLImportException;
 import org.citydb.config.Config;
 import org.citydb.database.adapter.blazegraph.SchemaManagerAdapter;

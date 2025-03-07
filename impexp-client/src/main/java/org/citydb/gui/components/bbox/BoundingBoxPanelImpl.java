@@ -107,17 +107,20 @@ public class BoundingBoxPanelImpl extends BoundingBoxPanel implements EventHandl
         actionPanel.setLayout(new GridBagLayout());
 
         map = new JButton();
-        ImageIcon mapIcon = new ImageIcon(getClass().getResource("/org/citydb/gui/images/common/map_select.png"));
+        ImageIcon mapIcon = new ImageIcon(getClass().getResource(
+            "/org/citydb/gui/images/common/map_select.png"));
         map.setIcon(mapIcon);
         map.setMargin(new Insets(1, 1, 1, 1));
 
         copy = new JButton();
-        ImageIcon copyIcon = new ImageIcon(getClass().getResource("/org/citydb/gui/images/common/bbox_copy.png"));
+        ImageIcon copyIcon = new ImageIcon(getClass().getResource(
+            "/org/citydb/gui/images/common/bbox_copy.png"));
         copy.setIcon(copyIcon);
         copy.setMargin(new Insets(1, 1, 1, 1));
 
         paste = new JButton();
-        ImageIcon pasteIcon = new ImageIcon(getClass().getResource("/org/citydb/gui/images/common/bbox_paste.png"));
+        ImageIcon pasteIcon = new ImageIcon(getClass().getResource(
+            "/org/citydb/gui/images/common/bbox_paste.png"));
         paste.setIcon(pasteIcon);
         paste.setMargin(new Insets(1, 1, 1, 1));
 
