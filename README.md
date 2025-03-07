@@ -18,6 +18,7 @@ Cities Knowledge Graph is an Intra-CREATE collaborative project under the urban 
 
 This research is supported by the National Research Foundation, Prime Minister’s Office, Singapore under its external pageCampus for Research Excellence and Technological Enterprise (CREATE) programme.
 
+Project video on YouTube: https://www.youtube.com/watch?v=ZHqEi9pEAnk&t=19s
 
 ## Structure of project folder 
 
